@@ -7,6 +7,7 @@ import {
   Volume2Icon, SendIcon,
 } from '@/components/icons';
 import { NavAuthButtons } from '@/components/landing/nav-auth-buttons';
+import { GeoTagline, GeoHostingBadge } from '@/components/landing/geo-tagline';
 import { Avatar, Button, Card, Link, Separator } from '@heroui/react';
 
 /* ── Data ─────────────────────────────────────────────────── */
@@ -74,7 +75,7 @@ export default function Home() {
                 sécurisée
               </span>
               ,{' '}
-              <span className="text-accent">française.</span>
+              <GeoTagline />
             </h1>
 
             <p className="mx-auto mb-10 max-w-md text-base leading-relaxed text-muted">
@@ -99,8 +100,8 @@ export default function Home() {
 
             {/* Trust strip */}
             <div className="mt-10 flex flex-wrap items-center justify-center gap-5 text-xs text-muted">
-              {['AES-256', '🇫🇷 Hébergé en France', 'RGPD conforme', '100 % open source'].map((b) => (
-                <span key={b} className="flex items-center gap-1.5">
+              {(['AES-256', <GeoHostingBadge key="host" />, 'RGPD conforme', '100 % open source'] as const).map((b, i) => (
+                <span key={i} className="flex items-center gap-1.5">
                   <HugeiconsIcon icon={CheckIcon} size={12} className="text-success" />
                   {b}
                 </span>

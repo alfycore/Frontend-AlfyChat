@@ -116,6 +116,15 @@ interface Conversation {
   participants?: string[];
 }
 
+const PRESENCE_DOT: Record<string, string> = {
+  online: 'bg-green-500',
+  idle: 'bg-yellow-500',
+  dnd: 'bg-red-500',
+  offline: 'bg-[var(--muted)]/40',
+  invisible: 'bg-[var(--muted)]/40',
+};
+const presenceDot = (status?: string) => PRESENCE_DOT[status ?? 'offline'] ?? PRESENCE_DOT.offline;
+
 interface ChannelListProps {
   serverId: string | null;
   selectedChannel: string | null;
@@ -293,6 +302,7 @@ export function ChannelList({
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [presenceMap, setPresenceMap] = useState<Map<string, string>>(new Map());
   const [showGroupCreate, setShowGroupCreate] = useState(false);
   const [serverName, setServerName] = useState('Serveur');
   const [serverBannerUrl, setServerBannerUrl] = useState<string | null>(null);
@@ -504,6 +514,12 @@ export function ChannelList({
       });
     };
     const handleRefresh = () => loadConversationsRef.current();
+    const handlePresence = (data: any) => {
+      const userId = data?.userId;
+      const status = data?.status;
+      if (!userId) return;
+      setPresenceMap((prev) => { const next = new Map(prev); next.set(userId, status); return next; });
+    };
     socketService.on('message:new', handleMessageNew);
     socketService.onGroupCreate(handleRefresh);
     socketService.onFriendAccepted(handleRefresh);
@@ -511,6 +527,7 @@ export function ChannelList({
     socketService.onGroupDelete(handleRefresh);
     socketService.onGroupMemberAdd(handleRefresh);
     socketService.onGroupMemberRemove(handleRefresh);
+    socketService.onPresenceUpdate(handlePresence);
     return () => {
       socketService.off('message:new', handleMessageNew);
       socketService.off('GROUP_CREATE', handleRefresh);
@@ -519,6 +536,7 @@ export function ChannelList({
       socketService.off('GROUP_DELETE', handleRefresh);
       socketService.off('GROUP_MEMBER_ADD', handleRefresh);
       socketService.off('GROUP_MEMBER_REMOVE', handleRefresh);
+      socketService.off('PRESENCE_UPDATE', handlePresence);
     };
   }, [serverId, user]);
 
@@ -674,7 +692,7 @@ export function ChannelList({
     const groupConversations = conversations.filter((c) => c.type === 'group');
 
     return (
-      <div className="flex w-60 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl">
+      <div className="flex h-full w-60 flex-col overflow-hidden border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl">
         {/* Header */}
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)]/40 px-3">
           <span className="text-[13px] font-bold">{t.channelList.messagesTitle}</span>
@@ -747,9 +765,6 @@ export function ChannelList({
                       </div>
                       <div className="min-w-0 flex-1 text-left">
                         <p className="truncate text-[13px]">{conv.recipientName}</p>
-                        {conv.lastMessage && (
-                          <p className="truncate text-[11px] text-muted/60">{conv.lastMessage}</p>
-                        )}
                       </div>
                       {groupUnread > 0 && (
                         <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 text-[10px]">
@@ -791,20 +806,20 @@ export function ChannelList({
                         : 'text-muted hover:bg-surface-secondary/70 hover:text-[var(--foreground)]',
                     )}
                   >
-                    <Avatar className="size-8 shrink-0">
-                      <Avatar.Image
-                        src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined}
+                    <div className="relative shrink-0">
+                      <Avatar className="size-8">
+                        <Avatar.Image
+                          src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined}
+                        />
+                        <Avatar.Fallback className="text-xs">
+                          {conv.recipientName?.[0] || '?'}
+                        </Avatar.Fallback>
+                      </Avatar>
+                      <span
+                        className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)] ${presenceDot(presenceMap.get(conv.recipientId))}`}
                       />
-                      <Avatar.Fallback className="text-xs">
-                        {conv.recipientName?.[0] || '?'}
-                      </Avatar.Fallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1 text-left">
-                      <p className="truncate">{conv.recipientName || t.channelList.user}</p>
-                      {conv.lastMessage && (
-                        <p className="truncate text-[11px] text-muted/60">{conv.lastMessage}</p>
-                      )}
                     </div>
+                    <p className="min-w-0 flex-1 truncate text-left">{conv.recipientName || t.channelList.user}</p>
                     {dmUnread > 0 && (
                       <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 text-[10px]">
                         {dmUnread}

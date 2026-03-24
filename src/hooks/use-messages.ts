@@ -200,6 +200,9 @@ export function useMessages(channelId?: string, recipientId?: string) {
     // Rejoindre la conversation WebSocket
     if (recipientId) {
       socketService.joinConversation(recipientId);
+      // Pré-charger le bundle E2EE en parallèle avec les messages
+      // → supprime la latence du fetch de clé lors du 1er chiffrement/déchiffrement
+      ensureSignalSession(recipientId);
     } else if (channelId) {
       socketService.joinConversation(undefined, channelId);
     }
@@ -394,7 +397,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
   const loadMessages = async () => {
     setIsLoading(true);
     try {
-      const response = await api.getMessages(channelId, recipientId);
+      // Pour les DMs : lancer le fetch du bundle E2EE en même temps que les messages
+      // Comme ça quand les messages arrivent, la clé est souvent déjà en cache
+      const bundlePromise = recipientId ? ensureSignalSession(recipientId) : Promise.resolve(true);
+      const [response] = await Promise.all([api.getMessages(channelId, recipientId), bundlePromise]);
       if (response.success && response.data) {
         const rawMessages = response.data as any[];
         // Utiliser la ref pour avoir l'ID courant (évite closure périmée)

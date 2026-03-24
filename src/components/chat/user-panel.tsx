@@ -47,8 +47,9 @@ export function UserPanel({ user }: UserPanelProps) {
   };
 
   return (
-    <div className="flex h-[52px] shrink-0 items-center gap-1 border-t border-[var(--border)]/30 bg-[var(--background)]/80 px-1.5 backdrop-blur-xl md:gap-1 md:px-2">
+    <div className="flex h-[52px] shrink-0 items-center gap-1 overflow-hidden border-t border-[var(--border)]/30 bg-[var(--background)]/80 px-1.5 backdrop-blur-xl md:gap-1 md:px-2">
       {/* Avatar + user info */}
+      <div className="min-w-0 flex-1">
       <Dropdown>
         <Dropdown.Trigger>
           <div className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30">
@@ -95,9 +96,10 @@ export function UserPanel({ user }: UserPanelProps) {
           </Dropdown.Menu>
         </Dropdown.Popover>
       </Dropdown>
+      </div>
 
       {/* Audio controls */}
-      <div className="flex items-center">
+      <div className="flex shrink-0 items-center">
         <Tooltip delay={0}>
             <Button
               isIconOnly
