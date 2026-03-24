@@ -7,7 +7,8 @@ import { InputGroup, Popover, ScrollShadow, Tabs } from '@heroui/react';
 
 // Clés API publiques (rate-limited, usage frontend uniquement)
 const TENOR_API_KEY = 'AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ';
-const GIPHY_API_KEY = 'dc6zaTOxFJmzC';
+const GIPHY_API_KEY = 'mUaaGxrenI6xna63x7dqfSEsVqFyvqXU';
+const PAGE_SIZE = 30;
 
 interface GifResult {
   id: string;
@@ -28,17 +29,25 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
   const [search, setSearch] = useState('');
   const [gifs, setGifs] = useState<GifResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [provider, setProvider] = useState<'tenor' | 'giphy'>('tenor');
+  const [hasMore, setHasMore] = useState(true);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
+  // Tenor uses a cursor string, Giphy uses numeric offset
+  const tenorNextRef = useRef<string>('');
+  const giphyOffsetRef = useRef<number>(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const fetchTenorGifs = useCallback(async (query: string) => {
+  const fetchTenorGifs = useCallback(async (query: string, next?: string) => {
     try {
-      const endpoint = query
-        ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&limit=20&media_filter=gif,tinygif`
-        : `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&limit=20&media_filter=gif,tinygif`;
+      let endpoint = query
+        ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&limit=${PAGE_SIZE}&media_filter=gif,tinygif`
+        : `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&limit=${PAGE_SIZE}&media_filter=gif,tinygif`;
+      if (next) endpoint += `&pos=${next}`;
 
       const res = await fetch(endpoint);
       const data = await res.json();
+      tenorNextRef.current = data.next || '';
 
       return (data.results || []).map((item: any) => ({
         id: item.id,
@@ -54,14 +63,15 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
     }
   }, []);
 
-  const fetchGiphyGifs = useCallback(async (query: string) => {
+  const fetchGiphyGifs = useCallback(async (query: string, offset: number = 0) => {
     try {
       const endpoint = query
-        ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&rating=g`
-        : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`;
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=${PAGE_SIZE}&offset=${offset}&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=${PAGE_SIZE}&offset=${offset}&rating=g`;
 
       const res = await fetch(endpoint);
       const data = await res.json();
+      giphyOffsetRef.current = offset + (data.data?.length || 0);
 
       return (data.data || []).map((item: any) => ({
         id: item.id,
@@ -78,12 +88,32 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
   }, []);
 
   const loadGifs = useCallback(
-    async (query: string) => {
-      setIsLoading(true);
-      const results =
-        provider === 'tenor' ? await fetchTenorGifs(query) : await fetchGiphyGifs(query);
-      setGifs(results);
-      setIsLoading(false);
+    async (query: string, append = false) => {
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+        tenorNextRef.current = '';
+        giphyOffsetRef.current = 0;
+      }
+
+      const results = provider === 'tenor'
+        ? await fetchTenorGifs(query, append ? tenorNextRef.current : undefined)
+        : await fetchGiphyGifs(query, append ? giphyOffsetRef.current : 0);
+
+      setHasMore(results.length >= PAGE_SIZE);
+
+      if (append) {
+        setGifs(prev => {
+          const existingIds = new Set(prev.map(g => g.id));
+          const newGifs = results.filter((g: GifResult) => !existingIds.has(g.id));
+          return [...prev, ...newGifs];
+        });
+        setIsLoadingMore(false);
+      } else {
+        setGifs(results);
+        setIsLoading(false);
+      }
     },
     [provider, fetchTenorGifs, fetchGiphyGifs]
   );
@@ -92,6 +122,9 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
     if (open) {
       loadGifs('');
       setSearch('');
+    } else {
+      setGifs([]);
+      setHasMore(true);
     }
   }, [open, provider, loadGifs]);
 
@@ -105,6 +138,11 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [search, open, loadGifs]);
+
+  const handleLoadMore = useCallback(() => {
+    if (isLoadingMore || !hasMore) return;
+    loadGifs(search, true);
+  }, [isLoadingMore, hasMore, search, loadGifs]);
 
   const handleSelect = (gif: GifResult) => {
     onSelect(gif.url);
@@ -139,7 +177,14 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
           </InputGroup>
         </div>
 
-        <GifGrid gifs={gifs} isLoading={isLoading} onSelect={handleSelect} />
+        <GifGrid
+          gifs={gifs}
+          isLoading={isLoading}
+          isLoadingMore={isLoadingMore}
+          hasMore={hasMore}
+          onSelect={handleSelect}
+          onLoadMore={handleLoadMore}
+        />
         <p className="mt-1 text-center text-[10px] text-[var(--muted)]/50">
           Powered by {provider === 'tenor' ? 'Tenor' : 'GIPHY'}
         </p>
@@ -151,12 +196,35 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
 function GifGrid({
   gifs,
   isLoading,
+  isLoadingMore,
+  hasMore,
   onSelect,
+  onLoadMore,
 }: {
   gifs: GifResult[];
   isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
   onSelect: (gif: GifResult) => void;
+  onLoadMore: () => void;
 }) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, isLoading, onLoadMore]);
+
   if (isLoading) {
     return (
       <div className="flex h-60 items-center justify-center">
@@ -191,6 +259,12 @@ function GifGrid({
             />
           </button>
         ))}
+      </div>
+      {/* Sentinel for infinite scroll */}
+      <div ref={sentinelRef} className="flex h-8 items-center justify-center">
+        {isLoadingMore && (
+          <HugeiconsIcon icon={Loader2Icon} size={18} className="animate-spin text-[var(--muted)]" />
+        )}
       </div>
     </ScrollShadow>
   );

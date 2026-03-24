@@ -358,7 +358,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         {/* Tabs */}
         <Tabs className="flex flex-1 flex-col overflow-hidden">
           <Tabs.ListContainer>
-            <Tabs.List className="shrink-0 gap-1 px-3   md:px-4">
+            <Tabs.List className="shrink-0 ">
               <Tabs.Tab id="friends">
                 <div className="flex items-center gap-1.5">
                   <HugeiconsIcon icon={UsersIcon} size={14} />

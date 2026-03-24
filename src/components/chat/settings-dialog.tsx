@@ -667,8 +667,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     {/* Banner + Avatar card */}
                     <Card>
                       <div
-                        className="relative h-28 overflow-hidden rounded-t-2xl sm:h-36"
+                        className="relative h-28 cursor-pointer overflow-hidden rounded-t-2xl sm:h-36"
                         style={{ backgroundColor: cardColor }}
+                        onClick={() => bannerInputRef.current?.click()}
                       >
                         {bannerPreview ? (
                           <img src={bannerPreview} alt={t.settings.banner} className="size-full object-cover" />

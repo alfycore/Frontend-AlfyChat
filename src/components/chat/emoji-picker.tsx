@@ -7,7 +7,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { SmileIcon } from '@/components/icons';
 
 // ==========================================
-// EMOJI DATA
+// EMOJI DATA — Version étendue
 // ==========================================
 
 const EMOJI_CATEGORIES: { name: string; icon: string; emojis: string[] }[] = [
@@ -34,7 +34,8 @@ const EMOJI_CATEGORIES: { name: string; icon: string; emojis: string[] }[] = [
       '😲', '😳', '🥺', '🥹', '😦', '😧', '😨', '😰', '😥', '😢',
       '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤',
       '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹',
-      '👺', '👻', '👽', '👾', '🤖', '🫢', '🫨', '🫩',
+      '👺', '👻', '👽', '👾', '🤖', '🫢', '🫨', '🫩', '😶‍🌫️', '🫠',
+      '🫣', '🫧', '🫗', '🪬', '🫙',
     ],
   },
   {
@@ -160,6 +161,14 @@ const EMOJI_CATEGORIES: { name: string; icon: string; emojis: string[] }[] = [
       '🏴', '🏁', '🚩', '🏳️‍🌈', '🏳️‍⚧️', '☢️', '☣️', '⚛️', '🔯', '♾️',
       '♠️', '♥️', '♦️', '♣️', '🃏', '🀄', '🎴', '🔇', '🔈', '🔉',
       '🔊', '📢', '📣', '⬆️', '⬇️', '⬅️', '➡️', '↗️', '↘️',
+      '↙️', '↖️', '↕️', '↔️', '🔄', '🔃', '🔙', '🔚', '🔛', '🔜',
+      '🔝', '⏩', '⏪', '⏫', '⏬', '▶️', '◀️', '🔀', '🔁', '🔂',
+      '⏸️', '⏹️', '⏺️', '⏭️', '⏮️', '🔅', '🔆', '📶', '📳', '📴',
+      '⚕️', '♿', '🚮', '🚰', '🚹', '🚺', '🚻', '🚼', '🛗', '🚾',
+      '⚜️', '🔰', '⭕', '✳️', '❇️', '🔱', '📛', '🟠', '🟡', '🟢',
+      '🔵', '🟣', '🟤', '⚫', '⚪', '🟥', '🟧', '🟨', '🟩', '🟦',
+      '🟪', '🟫', '⬛', '⬜', '◾', '◽', '🔶', '🔷', '🔸', '🔹',
+      '🔺', '🔻', '💠', '🔘', '🔳', '🔲', '©️', '®️', '™️',
     ],
   },
   {
@@ -304,6 +313,13 @@ const EMOJI_SEARCH_NAMES: Record<string, string> = {
   '🫢': 'oops surprise main bouche yeux ouverts',
   '🫨': 'secoue tremble vibration',
   '🫩': 'visage legerement sourcil',
+  '😶‍🌫️': 'nuage brouillard cache invisible',
+  '🫠': 'fondre liquide chaleur',
+  '🫣': 'regarder entre doigts timide',
+  '🫧': 'bulles savon leger',
+  '🫗': 'verser liquide vider',
+  '🪬': 'main fatma hamsa protection',
+  '🫙': 'bocal pot verre conserve',
   // Gestes
   '👋': 'salut coucou au revoir main',
   '🤚': 'main levee stop paume',
@@ -998,6 +1014,47 @@ const EMOJI_SEARCH_NAMES: Record<string, string> = {
   '➡️': 'fleche droite right',
   '↗️': 'fleche haut droite',
   '↘️': 'fleche bas droite',
+  '↙️': 'fleche bas gauche',
+  '↖️': 'fleche haut gauche',
+  '↕️': 'fleche haut bas vertical',
+  '↔️': 'fleche gauche droite horizontal',
+  '🔄': 'rotation recharger refresh',
+  '🔃': 'rotation sens horaire',
+  '🔙': 'retour back',
+  '🔚': 'fin end',
+  '🔛': 'marche on actif',
+  '🔜': 'bientot soon',
+  '🔝': 'haut top',
+  '🔅': 'luminosite faible dim',
+  '🔆': 'luminosite forte bright',
+  '📶': 'signal antenne reseau',
+  '⚕️': 'medical sante croix',
+  '♿': 'handicape fauteuil roulant',
+  '⚜️': 'fleur lys royal',
+  '🔰': 'debutant nouveau symbole japonais',
+  '⭕': 'cercle rouge',
+  '✳️': 'asterisque etoile croix',
+  '❇️': 'etincelle sparkle',
+  '🔱': 'trident embleme',
+  '📛': 'badge nom',
+  '🟠': 'cercle orange',
+  '🟡': 'cercle jaune',
+  '🟢': 'cercle vert',
+  '🔵': 'cercle bleu',
+  '🟣': 'cercle violet',
+  '🟤': 'cercle marron',
+  '⚫': 'cercle noir',
+  '⚪': 'cercle blanc',
+  '🟥': 'carre rouge',
+  '🟧': 'carre orange',
+  '🟨': 'carre jaune',
+  '🟩': 'carre vert',
+  '🟦': 'carre bleu',
+  '🟪': 'carre violet',
+  '🟫': 'carre marron',
+  '©️': 'copyright droit auteur',
+  '®️': 'marque deposee registered',
+  '™️': 'trademark marque commerciale',
   // Drapeaux
   '🇫🇷': 'france francais drapeau french',
   '🇺🇸': 'etats-unis usa americain drapeau',
@@ -1243,77 +1300,77 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
           </Button>
         )}
       </Popover.Trigger>
-      <Popover.Content placement="top end" className="w-80 overflow-hidden rounded-2xl border border-[var(--border)]/40 bg-[var(--surface)]/95 p-0 shadow-2xl backdrop-blur-xl sm:w-96">
-        <div className="flex">
-          {/* Left: search + emoji grid */}
-          <div className="flex min-w-0 flex-1 flex-col">
-            {/* Search */}
-            <div className="p-2 pb-0">
-              <InputGroup className="h-8 rounded-lg border-[var(--border)]/60 bg-[var(--background)]/60 text-sm backdrop-blur-sm">
-                <InputGroup.Input
-                  ref={searchInputRef}
-                  placeholder="Rechercher un emoji..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </InputGroup>
-            </div>
-
-            {/* Emoji grid */}
-            <ScrollShadow className="h-64 sm:h-72">
-              <div className="p-2">
-                {filteredCategories.length === 0 ? (
-                  <p className="py-8 text-center text-[13px] text-[var(--muted)]/60">
-                    Aucun emoji trouvé
-                  </p>
-                ) : (
-                  filteredCategories.map((category, catIndex) => (
-                    <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-3">
-                      <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
-                        <Twemoji emoji={category.icon} size={12} />
-                        {category.name}
-                      </p>
-                      <div className="grid grid-cols-8 gap-0.5 sm:grid-cols-9">
-                        {category.emojis.map((emoji, emojiIndex) => (
-                          <button
-                            key={`${catIndex}-${emojiIndex}`}
-                            type="button"
-                            className="flex size-8 items-center justify-center rounded-lg transition-all duration-150 hover:scale-110 hover:bg-[var(--surface-secondary)]/60 active:scale-90"
-                            onClick={() => handleSelect(emoji)}
-                            title={EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji}
-                          >
-                            <Twemoji emoji={emoji} size={22} />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </ScrollShadow>
-          </div>
-
-          {/* Right sidebar: category icons */}
-          {!search && (
-            <div className="flex flex-col gap-0.5 overflow-y-auto border-l border-[var(--border)]/40 px-1 py-1.5">
-              {navCategories.map((cat) => (
-                <button
-                  key={`nav-${cat.catIndex}`}
-                  type="button"
-                  className={`shrink-0 rounded-lg p-1.5 transition-all duration-200 ${
-                    activeCategory === cat.catIndex
-                      ? 'bg-[var(--accent)]/15'
-                      : 'hover:bg-[var(--surface-secondary)]/60'
-                  }`}
-                  onClick={() => scrollToCategory(cat.catIndex)}
-                  title={cat.name}
-                >
-                  <Twemoji emoji={cat.icon} size={18} />
-                </button>
-              ))}
-            </div>
-          )}
+      <Popover.Content placement="top end" className="w-[340px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/98 p-0 shadow-2xl backdrop-blur-2xl sm:w-[380px]">
+        {/* Search bar */}
+        <div className="border-b border-[var(--border)]/20 px-3 pt-3 pb-2">
+          <InputGroup className="h-9 rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
+            <InputGroup.Input
+              ref={searchInputRef}
+              placeholder="Rechercher un emoji..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-3"
+            />
+          </InputGroup>
         </div>
+
+        {/* Category tabs - horizontal at top */}
+        {!search && (
+          <div className="flex items-center gap-0.5 overflow-x-auto border-b border-[var(--border)]/20 px-2 py-1.5 scrollbar-none">
+            {navCategories.map((cat) => (
+              <button
+                key={`nav-${cat.catIndex}`}
+                type="button"
+                className={`flex shrink-0 items-center justify-center rounded-lg p-1.5 transition-all duration-150 ${
+                  activeCategory === cat.catIndex
+                    ? 'bg-[var(--accent)]/15 ring-1 ring-[var(--accent)]/20'
+                    : 'opacity-60 hover:opacity-100 hover:bg-[var(--surface-secondary)]/50'
+                }`}
+                onClick={() => scrollToCategory(cat.catIndex)}
+                title={cat.name}
+              >
+                <Twemoji emoji={cat.icon} size={18} />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Emoji grid */}
+        <ScrollShadow className="h-[280px] sm:h-[320px]">
+          <div className="px-2.5 py-2">
+            {filteredCategories.length === 0 ? (
+              <div className="flex h-48 flex-col items-center justify-center gap-2">
+                <span className="text-3xl">🔍</span>
+                <p className="text-[13px] text-[var(--muted)]/60">
+                  Aucun emoji trouvé
+                </p>
+              </div>
+            ) : (
+              filteredCategories.map((category, catIndex) => (
+                <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2">
+                  <div className="sticky top-0 z-10 mb-1 bg-[var(--surface)]/95 py-1 backdrop-blur-md">
+                    <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-semibold text-[var(--muted)]/70">
+                      {category.name}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-8 gap-px sm:grid-cols-9">
+                    {category.emojis.map((emoji, emojiIndex) => (
+                      <button
+                        key={`${catIndex}-${emojiIndex}`}
+                        type="button"
+                        className="group flex aspect-square items-center justify-center rounded-lg transition-all duration-100 hover:scale-[1.15] hover:bg-[var(--accent)]/10 active:scale-95"
+                        onClick={() => handleSelect(emoji)}
+                        title={EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji}
+                      >
+                        <Twemoji emoji={emoji} size={24} className="transition-transform group-hover:drop-shadow-sm" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollShadow>
       </Popover.Content>
     </Popover>
   );

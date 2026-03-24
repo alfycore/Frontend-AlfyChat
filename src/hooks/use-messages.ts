@@ -219,6 +219,21 @@ export function useMessages(channelId?: string, recipientId?: string) {
       // Utiliser la ref pour éviter la closure périmée
       const currentUserId = userIdRef.current;
       const senderId = message.senderId || message.authorId;
+      const isSelf = senderId === currentUserId;
+
+      // Pour nos propres messages DM : ne pas re-décrypter si déjà confirmé
+      // (message:sent a déjà remplacé le pending avec le plaintext)
+      if (isSelf && message.e2eeType) {
+        // Vérifier si le message est déjà confirmé dans la liste
+        setMessages((prev) => {
+          // Si déjà confirmé avec cet ID (non-pending) → ignorer le doublon
+          if (prev.some(m => m.id === message.id && !m.pending)) return prev;
+          // Si un pending existe encore, laisser message:sent le gérer
+          if (prev.some(m => m.pending && m.authorId === senderId)) return prev;
+          return prev;
+        });
+        return;
+      }
 
       // Déchiffrer le message Signal si nécessaire
       const { content, e2ee } = await decryptMessage(
@@ -309,6 +324,14 @@ export function useMessages(channelId?: string, recipientId?: string) {
     };
     socketService.on('message:sent', handleMessageSent);
 
+    // Écouter les erreurs de message (rate-limit, etc.)
+    const handleMessageError = (data: any) => {
+      console.warn('⚠️ Erreur message:', data);
+      // Retirer les messages pending (optimistes) car le serveur les a rejetés
+      setMessages((prev) => prev.filter(m => !m.pending));
+    };
+    socketService.on('message:error', handleMessageError);
+
     // Écouter les modifications
     const handleMessageEdit = (data: any) => {
       const { messageId, content, updatedAt } = data as { messageId: string; content: string; updatedAt: string };
@@ -385,6 +408,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
     return () => {
       socketService.off('message:new', handleNewMessage);
       socketService.off('message:sent', handleMessageSent);
+      socketService.off('message:error', handleMessageError);
       socketService.off('message:edited', handleMessageEdit);
       socketService.off('message:deleted', handleMessageDelete);
       socketService.off('typing:update', handleTyping);

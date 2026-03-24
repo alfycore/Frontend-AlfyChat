@@ -609,6 +609,9 @@ class SocketService {
   onMessageDelete(callback: (data: unknown) => void): void {
     this.on('message:deleted', callback);
   }
+  onMessageError(callback: (data: unknown) => void): void {
+    this.on('message:error', callback);
+  }
   onTyping(callback: (data: unknown) => void): void {
     this.on('typing:update', callback);
   }
