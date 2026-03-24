@@ -27,7 +27,12 @@ const state: NotificationState = {
 
 const listeners = new Set<Listener>();
 
+// Snapshot mis en cache — ne change de référence que quand notify() est appelé
+let cachedSnapshot: NotificationState = { ...state, unread: new Map(state.unread) };
+
 function notify() {
+  // Créer un nouveau snapshot stable AVANT d'appeler les listeners
+  cachedSnapshot = { ...state, unread: new Map(state.unread) };
   listeners.forEach((l) => l());
 }
 
@@ -37,9 +42,9 @@ export function subscribe(listener: Listener): () => void {
   return () => listeners.delete(listener);
 }
 
-/** Retourner une copie snapshot de l'état (pour React useSyncExternalStore). */
+/** Retourner le snapshot mis en cache (référence stable entre deux notify()). */
 export function getSnapshot(): NotificationState {
-  return { ...state, unread: new Map(state.unread) };
+  return cachedSnapshot;
 }
 
 // ── Active conversation ───────────────────────────────────────────────────────
