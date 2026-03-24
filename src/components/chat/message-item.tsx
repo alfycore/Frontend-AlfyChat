@@ -39,13 +39,24 @@ export type MessageData = {
 export const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
-  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  if (date < oneWeekAgo) {
-    const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-    return `${dateStr} à ${time}`;
+
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
+  const oneWeekAgo = new Date(startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  if (date >= startOfToday) {
+    return time;
   }
-  return time;
+  if (date >= startOfYesterday) {
+    return `hier à ${time}`;
+  }
+  if (date >= oneWeekAgo) {
+    const diffDays = Math.floor((startOfToday.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+    return `il y a ${diffDays} jours à ${time}`;
+  }
+  const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return `${dateStr} à ${time}`;
 };
 
 // ── Props ─────────────────────────────────────────────────────────────────────
