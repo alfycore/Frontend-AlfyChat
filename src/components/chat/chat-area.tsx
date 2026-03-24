@@ -105,6 +105,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     removeReaction,
     startTyping,
     stopTyping,
+    hasMoreMessages,
+    isLoadingMoreMessages,
+    loadMoreMessages,
   } = useMessages(channelId || undefined, recipientId);
 
   const scrollToBottom = useCallback(() => {
@@ -173,6 +176,30 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       return () => el.removeEventListener('scroll', checkIfAtBottom);
     }
   }, [checkIfAtBottom]);
+
+  // Charger les messages plus anciens quand l'utilisateur scrolle en haut
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const handleScrollTop = () => {
+      checkIfAtBottom();
+      if (el.scrollTop < 120 && hasMoreMessages && !isLoadingMoreMessages) {
+        const prevHeight = el.scrollHeight;
+        loadMoreMessages().then(() => {
+          // Maintenir la position de scroll après ajout de messages en haut
+          requestAnimationFrame(() => {
+            if (scrollRef.current) {
+              scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+            }
+          });
+        });
+      }
+    };
+
+    el.addEventListener('scroll', handleScrollTop);
+    return () => el.removeEventListener('scroll', handleScrollTop);
+  }, [checkIfAtBottom, hasMoreMessages, isLoadingMoreMessages, loadMoreMessages]);
 
   useEffect(() => {
     if (!messagesContainerRef.current) return;
@@ -473,6 +500,15 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         ) : (
           <div className="space-y-0.5" ref={messagesContainerRef}>
+            {/* Indicateur de chargement des anciens messages */}
+            {isLoadingMoreMessages && (
+              <div className="flex items-center justify-center py-3">
+                <div className="flex items-center gap-2 text-[var(--muted)]">
+                  <div className="size-3.5 animate-spin rounded-full border-2 border-[var(--muted)]/30 border-t-[var(--muted)]" />
+                  <span className="text-[12px]">Chargement des anciens messages…</span>
+                </div>
+              </div>
+            )}
             {dedupedMessages.map((message) => {
               const isEditing = editingMessageId === message.id;
               return (

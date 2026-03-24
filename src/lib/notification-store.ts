@@ -1,0 +1,119 @@
+/**
+ * notification-store.ts
+ * Module global (sans React) qui suit :
+ * - la conversation actuellement ouverte (activeConversationId / activeRecipientId)
+ * - les compteurs de messages non-lus par conversation
+ *
+ * Ce store est intentionnellement SANS Zustand/Redux pour éviter les
+ * imports circulaires. Les composants s'y abonnent via `subscribe`.
+ */
+
+type Listener = () => void;
+
+interface NotificationState {
+  /** recipientId du DM actuellement ouvert, ou null */
+  activeRecipientId: string | null;
+  /** groupId du groupe actuellement ouvert, ou null */
+  activeGroupId: string | null;
+  /** Map<conversationKey, unreadCount> — clé = recipientId ou 'group:groupId' */
+  unread: Map<string, number>;
+}
+
+const state: NotificationState = {
+  activeRecipientId: null,
+  activeGroupId: null,
+  unread: new Map(),
+};
+
+const listeners = new Set<Listener>();
+
+function notify() {
+  listeners.forEach((l) => l());
+}
+
+/** S'abonner aux changements du store (retourne un unsubscribe). */
+export function subscribe(listener: Listener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+/** Retourner une copie snapshot de l'état (pour React useSyncExternalStore). */
+export function getSnapshot(): NotificationState {
+  return { ...state, unread: new Map(state.unread) };
+}
+
+// ── Active conversation ───────────────────────────────────────────────────────
+
+/**
+ * Appeler quand l'utilisateur entre dans un DM.
+ * Efface automatiquement le compteur non-lu pour ce destinataire.
+ */
+export function setActiveDM(recipientId: string | null) {
+  state.activeRecipientId = recipientId;
+  state.activeGroupId = null;
+  if (recipientId) {
+    state.unread.delete(recipientId);
+  }
+  notify();
+}
+
+/**
+ * Appeler quand l'utilisateur entre dans un groupe.
+ */
+export function setActiveGroup(groupId: string | null) {
+  state.activeGroupId = groupId;
+  state.activeRecipientId = null;
+  if (groupId) {
+    state.unread.delete(`group:${groupId}`);
+  }
+  notify();
+}
+
+/** Retourner vrai si le DM avec ce recipientId est actuellement ouvert. */
+export function isDMActive(recipientId: string): boolean {
+  return state.activeRecipientId === recipientId;
+}
+
+/** Retourner vrai si ce groupe est actuellement ouvert. */
+export function isGroupActive(groupId: string): boolean {
+  return state.activeGroupId === groupId;
+}
+
+// ── Unread counts ─────────────────────────────────────────────────────────────
+
+/** Incrémenter le compteur non-lu pour une conversation. */
+export function incrementUnread(key: string) {
+  const current = state.unread.get(key) ?? 0;
+  state.unread.set(key, current + 1);
+  notify();
+}
+
+/** Remettre à zéro le compteur non-lu pour une conversation. */
+export function clearUnread(key: string) {
+  if (state.unread.has(key)) {
+    state.unread.delete(key);
+    notify();
+  }
+}
+
+/** Lire le compteur non-lu pour une conversation. */
+export function getUnread(key: string): number {
+  return state.unread.get(key) ?? 0;
+}
+
+/** Lire tous les compteurs non-lus. */
+export function getAllUnread(): ReadonlyMap<string, number> {
+  return state.unread;
+}
+
+// ── React hook ────────────────────────────────────────────────────────────────
+
+import { useSyncExternalStore } from 'react';
+
+/**
+ * Hook React pour s'abonner au store de notifications.
+ * Déclenche un re-render uniquement quand le store change.
+ */
+export function useNotificationStore() {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}

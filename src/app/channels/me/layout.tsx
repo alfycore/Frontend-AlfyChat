@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { CallProvider, useCallContext } from '@/hooks/use-call-context';
 import { MobileNavProvider, useMobileNav } from '@/hooks/use-mobile-nav';
 import { useNotification } from '@/hooks/use-notification';
+import { setActiveDM, setActiveGroup } from '@/lib/notification-store';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { MemberList } from '@/components/chat/member-list';
@@ -30,8 +31,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
   // Initialiser le système de notifications
   useNotification();
 
-  // Dériver le recipientId depuis l'URL
+  // Dériver le recipientId et groupId depuis l'URL
   const recipientId = params?.recipientId as string | undefined;
+  const groupId = params?.groupId as string | undefined;
 
   const handleSelectServer = useCallback((id: string | null) => {
     if (id) {
@@ -41,7 +43,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
   const [selectedServer] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<string | null>(
-    recipientId ? `dm:${recipientId}` : 'friends'
+    groupId ? `group:${groupId}` : recipientId ? `dm:${recipientId}` : 'friends'
   );
 
   // Appels (depuis le context global)
@@ -89,14 +91,30 @@ function LayoutInner({ children }: { children: ReactNode }) {
     callType: 'voice' | 'video';
   } | null>(null);
 
-  // Synchroniser selectedChannel avec l'URL
+  // Synchroniser selectedChannel avec l'URL + mettre à jour le store de notifications
   useEffect(() => {
-    if (recipientId) {
+    if (groupId) {
+      setSelectedChannel(`group:${groupId}`);
+      setActiveGroup(groupId);
+      setActiveDM(null);
+    } else if (recipientId) {
       setSelectedChannel(`dm:${recipientId}`);
+      setActiveDM(recipientId);
+      setActiveGroup(null);
     } else if (pathname === '/channels/me' || pathname === '/channels/me/') {
       setSelectedChannel('friends');
+      setActiveDM(null);
+      setActiveGroup(null);
     }
-  }, [recipientId, pathname]);
+  }, [groupId, recipientId, pathname]);
+
+  // Nettoyage quand le layout est démonté (navigation vers server, etc.)
+  useEffect(() => {
+    return () => {
+      setActiveDM(null);
+      setActiveGroup(null);
+    };
+  }, []);
 
   // Fermer la sidebar mobile quand on navigue
   useEffect(() => {
@@ -125,7 +143,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
       const newRecipientId = channel.replace('dm:', '');
       router.push(`/channels/me/${newRecipientId}`);
     } else if (channel?.startsWith('group:')) {
-      setSelectedChannel(channel);
+      const newGroupId = channel.replace('group:', '');
+      router.push(`/channels/me/g/${newGroupId}`);
     } else {
       setSelectedChannel(channel);
     }
@@ -226,7 +245,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         {selectedChannel?.startsWith('group:') ? (
           <GroupChatArea
             groupId={selectedChannel.replace('group:', '')}
-            onLeave={() => setSelectedChannel('friends')}
+            onLeave={() => router.push('/channels/me')}
           />
         ) : (
           children

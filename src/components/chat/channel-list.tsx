@@ -37,6 +37,13 @@ import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import {
+  useNotificationStore,
+  clearUnread,
+  incrementUnread,
+  isDMActive,
+  isGroupActive,
+} from '@/lib/notification-store';
+import {
   Avatar,
   Button,
   Chip,
@@ -106,7 +113,6 @@ interface Conversation {
   recipientAvatar?: string;
   lastMessage?: string;
   lastMessageAt?: string;
-  unreadCount: number;
   participants?: string[];
 }
 
@@ -332,7 +338,6 @@ export function ChannelList({
                 recipientAvatar: (userRes.data as any).avatarUrl,
                 lastMessage: conv.lastMessage,
                 lastMessageAt: conv.lastMessageAt || conv.updatedAt,
-                unreadCount: 0,
               };
             }
           }
@@ -345,7 +350,6 @@ export function ChannelList({
               recipientAvatar: conv.avatarUrl,
               lastMessage: conv.lastMessage,
               lastMessageAt: conv.lastMessageAt || conv.updatedAt,
-              unreadCount: 0,
               participants: conv.participants,
             };
           }
@@ -356,7 +360,6 @@ export function ChannelList({
             recipientName: conv.name || 'Conversation',
             lastMessage: conv.lastMessage,
             lastMessageAt: conv.lastMessageAt || conv.updatedAt,
-            unreadCount: 0,
           };
         }),
       );
@@ -376,10 +379,8 @@ export function ChannelList({
     loadConversationsRef.current = loadConversations;
   }, [loadConversations]);
 
-  const selectedChannelRef = useRef<string | null>(selectedChannel);
-  useEffect(() => {
-    selectedChannelRef.current = selectedChannel;
-  }, [selectedChannel]);
+  // Store de notifications (badges non-lus)
+  const notifStore = useNotificationStore();
 
   // ── Channels (server mode) ───────────────────────────────────────────────
 
@@ -462,17 +463,17 @@ export function ChannelList({
     }
   }, [serverId, loadChannels, loadConversations]);
 
+  // Quand l'utilisateur sélectionne une conversation → vider son compteur non-lu
   useEffect(() => {
     if (!selectedChannel || serverId) return;
-    setConversations((prev) =>
-      prev.map((c) => {
-        const isActive =
-          c.type === 'group'
-            ? selectedChannel === 'group:' + c.id
-            : selectedChannel === c.recipientId || selectedChannel === 'dm:' + c.recipientId;
-        return isActive ? { ...c, unreadCount: 0 } : c;
-      }),
-    );
+    if (selectedChannel.startsWith('dm:')) {
+      clearUnread(selectedChannel.replace('dm:', ''));
+    } else if (selectedChannel.startsWith('group:')) {
+      clearUnread(`group:${selectedChannel.replace('group:', '')}`);
+    } else if (selectedChannel !== 'friends') {
+      // Cas où selectedChannel = recipientId directement
+      clearUnread(selectedChannel);
+    }
   }, [selectedChannel, serverId]);
 
   // Socket: DM events
@@ -484,7 +485,6 @@ export function ChannelList({
       const msgAuthorId = message.senderId || message.authorId;
       const msgRecipientId = message.recipientId;
       const createdAt = message.createdAt || new Date().toISOString();
-      const isOwnMessage = user && msgAuthorId === user.id;
       setConversations((prev) => {
         const idx = prev.findIndex(
           (c) =>
@@ -492,18 +492,13 @@ export function ChannelList({
             (user && (c.recipientId === msgAuthorId || c.recipientId === msgRecipientId)),
         );
         if (idx === -1) {
+          // Conversation inconnue : recharger la liste sans toucher aux compteurs
           loadConversationsRef.current();
           return prev;
         }
         const conv = prev[idx];
-        const sel = selectedChannelRef.current;
-        const isActive =
-          conv.type === 'group'
-            ? sel === 'group:' + conv.id
-            : sel === conv.recipientId || sel === 'dm:' + conv.recipientId;
-        const newUnread = isOwnMessage || isActive ? conv.unreadCount : conv.unreadCount + 1;
         const updated = [...prev];
-        updated[idx] = { ...conv, lastMessage: content, lastMessageAt: createdAt, unreadCount: newUnread };
+        updated[idx] = { ...conv, lastMessage: content, lastMessageAt: createdAt };
         const [moved] = updated.splice(idx, 1);
         return [moved, ...updated];
       });
@@ -735,6 +730,7 @@ export function ChannelList({
                 </p>
                 {groupConversations.map((conv) => {
                   const isActive = selectedChannel === `group:${conv.id}`;
+                  const groupUnread = notifStore.unread.get(`group:${conv.id}`) ?? 0;
                   return (
                     <button
                       key={conv.id}
@@ -755,9 +751,9 @@ export function ChannelList({
                           <p className="truncate text-[11px] text-muted/60">{conv.lastMessage}</p>
                         )}
                       </div>
-                      {conv.unreadCount > 0 && (
+                      {groupUnread > 0 && (
                         <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 text-[10px]">
-                          {conv.unreadCount}
+                          {groupUnread}
                         </Chip>
                       )}
                     </button>
@@ -783,6 +779,7 @@ export function ChannelList({
                 const isActive =
                   selectedChannel === conv.recipientId ||
                   selectedChannel === `dm:${conv.recipientId}`;
+                const dmUnread = notifStore.unread.get(conv.recipientId) ?? 0;
                 return (
                   <button
                     key={conv.id}
@@ -808,9 +805,9 @@ export function ChannelList({
                         <p className="truncate text-[11px] text-muted/60">{conv.lastMessage}</p>
                       )}
                     </div>
-                    {conv.unreadCount > 0 && (
+                    {dmUnread > 0 && (
                       <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 text-[10px]">
-                        {conv.unreadCount}
+                        {dmUnread}
                       </Chip>
                     )}
                   </button>

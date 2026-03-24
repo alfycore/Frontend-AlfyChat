@@ -1,92 +1,139 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { socketService } from '@/lib/socket';
+import {
+  isDMActive,
+  isGroupActive,
+  incrementUnread,
+} from '@/lib/notification-store';
 
 /**
  * Hook global de notifications.
- * Écoute les événements socket (messages, amis, appels) et affiche des toasts.
- * Joue un son de notification configurable.
+ *
+ * Règles :
+ * - Son + toast uniquement si l'utilisateur N'EST PAS dans la conversation concernée.
+ * - Incrémente le compteur non-lu dans le notification-store (lu par channel-list).
+ * - Utilise usePathname() (Next.js) pour le chemin réel — fiable même avec App Router.
+ * - Déduplique les événements via un Set d'IDs de messages traités (évite double-trigger
+ *   quand le message arrive à la fois via la room conversation et la room user:${id}).
  */
 export function useNotification() {
-  const currentPathRef = useRef('');
-  const notifSoundRef = useRef<HTMLAudioElement | null>(null);
+  const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
 
-  // Initialiser le son de notification
+  // Garder la ref synchronisée avec le pathname Next.js (toujours à jour)
   useEffect(() => {
-    // Créer un son de notification simple via AudioContext
-    notifSoundRef.current = null; // On utilisera AudioContext à la place
-  }, []);
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  // Contexte audio partagé — un seul par session
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Set pour dédupliquer les messages (même id reçu 2x à cause des 2 rooms)
+  const seenIdsRef = useRef<Set<string>>(new Set());
 
   const playNotificationSound = useCallback(() => {
     try {
-      const ctx = new AudioContext();
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      oscillator.connect(gain);
-      gain.connect(ctx.destination);
-      oscillator.frequency.value = 600;
-      gain.gain.value = 0.08;
-      oscillator.type = 'sine';
-      oscillator.start();
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      oscillator.stop(ctx.currentTime + 0.3);
-      setTimeout(() => ctx.close(), 500);
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioContext();
+      }
+      const ctx = audioCtxRef.current;
+
+      // Son de notification : deux bips courts
+      const playBeep = (startTime: number, freq: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.12, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.18);
+        osc.start(startTime);
+        osc.stop(startTime + 0.18);
+      };
+
+      const now = ctx.currentTime;
+      playBeep(now, 880);
+      playBeep(now + 0.22, 1100);
     } catch {
-      // AudioContext not available
+      // AudioContext non disponible (SSR, autoplay bloqué, etc.)
     }
   }, []);
 
-  // Mettre à jour le chemin actuel
   useEffect(() => {
-    const updatePath = () => {
-      currentPathRef.current = window.location.pathname;
-    };
-    updatePath();
-    // Écouter les changements de navigation
-    const observer = new MutationObserver(updatePath);
-    observer.observe(document.querySelector('head title') || document.head, {
-      childList: true, subtree: true, characterData: true,
-    });
-    window.addEventListener('popstate', updatePath);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('popstate', updatePath);
-    };
-  }, []);
-
-  useEffect(() => {
-    // ── Nouveau message ──
+    // ── Nouveau message (DM ou groupe) ───────────────────────────────────────
     const handleNewMessage = (data: any) => {
       const payload = data?.payload || data;
       if (!payload) return;
 
+      // Déduplication par ID de message
+      const msgId = payload.id || payload.messageId;
+      if (msgId) {
+        if (seenIdsRef.current.has(msgId)) return;
+        seenIdsRef.current.add(msgId);
+        // Nettoyer après 10 s pour éviter la fuite mémoire
+        setTimeout(() => seenIdsRef.current.delete(msgId), 10_000);
+      }
+
       const senderId = payload.senderId || payload.authorId;
       const myId = (window as any).__alfychat_user_id;
-      // Ne pas notifier pour nos propres messages
-      if (senderId === myId) return;
 
-      // Ne pas notifier si on est déjà dans cette conversation
-      const currentPath = currentPathRef.current;
-      if (payload.recipientId && currentPath.includes(payload.recipientId)) return;
-      if (payload.conversationId && currentPath.includes(payload.conversationId)) return;
+      // Ne pas notifier pour ses propres messages
+      if (myId && senderId === myId) return;
 
-      const senderName = payload.authorName || payload.senderName || 'Quelqu\'un';
-      const content = payload.content || 'Nouveau message';
-      const truncated = content.length > 80 ? content.substring(0, 80) + '…' : content;
+      // Déterminer de quelle conversation vient ce message
+      const recipientId: string | undefined = payload.recipientId;
+      const groupId: string | undefined = payload.groupId || payload.channelId;
+      const currentPath = pathnameRef.current;
+
+      // Vérifier si l'utilisateur est actuellement dans cette conversation
+      // Critère 1 : notification-store (source de vérité)
+      // Critère 2 : fallback URL (si le store n'a pas encore été alimenté)
+      let isViewing = false;
+
+      if (recipientId) {
+        isViewing =
+          isDMActive(recipientId) ||
+          currentPath.includes(`/channels/me/${recipientId}`);
+      } else if (groupId) {
+        isViewing =
+          isGroupActive(groupId) ||
+          currentPath.includes(groupId);
+      }
+
+      if (isViewing) return;
+
+      // ── Incrémenter le badge non-lu ──────────────────────────────────────
+      if (recipientId) {
+        incrementUnread(recipientId);
+      } else if (groupId) {
+        incrementUnread(`group:${groupId}`);
+      }
+
+      // ── Toast + son ──────────────────────────────────────────────────────
+      const senderName =
+        payload.authorName || payload.senderName || 'Nouveau message';
+      const content = payload.content || '';
+      const truncated =
+        content.length > 80 ? content.substring(0, 80) + '…' : content;
 
       toast.message(senderName, {
-        description: truncated,
+        description: truncated || undefined,
         duration: 4000,
       });
+
       playNotificationSound();
     };
 
-    // ── Demande d'ami ──
+    // ── Demande d'ami ────────────────────────────────────────────────────────
     const handleFriendRequest = (data: any) => {
       const payload = data?.payload || data;
-      const name = payload?.fromUsername || payload?.username || 'Quelqu\'un';
+      const name =
+        payload?.fromUsername || payload?.username || 'Quelqu\'un';
       toast.info('Demande d\'ami', {
         description: `${name} vous a envoyé une demande d'ami`,
         duration: 5000,
@@ -94,20 +141,21 @@ export function useNotification() {
       playNotificationSound();
     };
 
-    // ── Ami accepté ──
+    // ── Ami accepté ──────────────────────────────────────────────────────────
     const handleFriendAccepted = (data: any) => {
       const payload = data?.payload || data;
-      const name = payload?.username || payload?.displayName || 'Un utilisateur';
-      toast.success('Ami ajouté', {
-        description: `${name} a accepté votre demande`,
+      const name =
+        payload?.username || payload?.displayName || 'Un utilisateur';
+      toast.success('Ami ajouté !', {
+        description: `${name} a accepté votre demande d'ami`,
         duration: 4000,
       });
     };
 
-    // ── Erreur de connexion ──
+    // ── Connexion / déconnexion ──────────────────────────────────────────────
     const handleDisconnect = () => {
       toast.error('Déconnecté', {
-        description: 'Connexion au serveur perdue. Reconnexion...',
+        description: 'Connexion au serveur perdue. Reconnexion en cours…',
         duration: 5000,
       });
     };
@@ -133,18 +181,25 @@ export function useNotification() {
       socketService.off('connect', handleReconnect);
     };
   }, [playNotificationSound]);
+
+  // Nettoyer l'AudioContext à la destruction du composant
+  useEffect(() => {
+    return () => {
+      audioCtxRef.current?.close().catch(() => {});
+    };
+  }, []);
 }
 
 /** Fonctions utilitaires pour déclencher des toasts manuellement */
 export const notify = {
-  success: (title: string, description?: string) => 
+  success: (title: string, description?: string) =>
     toast.success(title, { description, duration: 3000 }),
-  error: (title: string, description?: string) => 
+  error: (title: string, description?: string) =>
     toast.error(title, { description, duration: 5000 }),
-  info: (title: string, description?: string) => 
+  info: (title: string, description?: string) =>
     toast.info(title, { description, duration: 4000 }),
-  warning: (title: string, description?: string) => 
+  warning: (title: string, description?: string) =>
     toast.warning(title, { description, duration: 4000 }),
-  message: (title: string, description?: string) => 
+  message: (title: string, description?: string) =>
     toast.message(title, { description, duration: 4000 }),
 };

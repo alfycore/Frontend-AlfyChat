@@ -150,6 +150,8 @@ export function useMessages(channelId?: string, recipientId?: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
   const [hasOlderArchived, setHasOlderArchived] = useState(false);
   const [isLoadingArchived, setIsLoadingArchived] = useState(false);
 
@@ -428,11 +430,65 @@ export function useMessages(channelId?: string, recipientId?: string) {
           })
         );
         setMessages(decrypted);
+        setHasMoreMessages(rawMessages.length >= 50);
       }
     } finally {
       setIsLoading(false);
     }
   };
+
+  const loadMoreMessages = useCallback(async () => {
+    if (!hasMoreMessages || isLoadingMoreMessages) return;
+    const oldest = messages[0];
+    if (!oldest) return;
+
+    setIsLoadingMoreMessages(true);
+    try {
+      const response = await api.getMessages(channelId, recipientId, 50, oldest.createdAt);
+      if (response.success && response.data) {
+        const rawMessages = response.data as any[];
+        const currentUserId = userIdRef.current || user?.id || '';
+
+        const decrypted = await Promise.all(
+          rawMessages.map(async (m) => {
+            const { content, e2ee } = await decryptMessage(
+              {
+                content: m.content,
+                senderContent: m.senderContent,
+                e2eeType: m.e2eeType,
+                senderId: m.senderId || m.authorId,
+              },
+              currentUserId
+            );
+            return {
+              id: m.id,
+              content,
+              e2ee,
+              authorId: m.senderId || m.authorId,
+              channelId: m.channelId,
+              conversationId: m.conversationId,
+              recipientId: m.recipientId,
+              replyToId: m.replyToId,
+              createdAt: m.createdAt,
+              updatedAt: m.updatedAt,
+              isEdited: !!m.isEdited,
+              reactions: groupReactions(m.reactions || []),
+              sender: m.sender,
+            };
+          })
+        );
+
+        setMessages((prev) => {
+          const existing = new Set(prev.map((m) => m.id));
+          const newMsgs = decrypted.filter((m) => !existing.has(m.id));
+          return [...newMsgs, ...prev];
+        });
+        setHasMoreMessages(rawMessages.length >= 50);
+      }
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  }, [hasMoreMessages, isLoadingMoreMessages, messages, channelId, recipientId, user]);
 
   const sendMessage = useCallback(
     async (content: string, replyToId?: string) => {
@@ -608,6 +664,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
     startTyping,
     stopTyping,
     refresh: loadMessages,
+    // Pagination serveur
+    hasMoreMessages,
+    isLoadingMoreMessages,
+    loadMoreMessages,
     // Système hybride DM
     hasOlderArchived,
     isLoadingArchived,
