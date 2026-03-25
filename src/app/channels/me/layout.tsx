@@ -16,6 +16,7 @@ import { CallBar } from '@/components/chat/call-bar';
 import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
 import { GroupChatArea } from '@/components/chat/group-chat-area';
 import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
+import { SettingsDialog } from '@/components/chat/settings-dialog';
 
 /**
  * Layout partagé pour /channels/me et /channels/me/[recipientId].
@@ -27,7 +28,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { isMobile, showSidebar, showMemberList, closeSidebar, closeMemberList, closeAll } = useMobileNav();
+  const { isMobile, showSidebar, showMemberList, showSettings, closeSidebar, closeMemberList, closeSettings, closeAll } = useMobileNav();
 
   // Initialiser le système de notifications
   useNotification();
@@ -272,6 +273,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── MOBILE BOTTOM NAV ── */}
       <MobileBottomNav />
+
+      {/* ── SETTINGS DIALOG (mobile: ouvre depuis la bottom nav) ── */}
+      <SettingsDialog open={showSettings} onOpenChange={(open) => { if (!open) closeSettings(); }} />
     </div>
   );
 }

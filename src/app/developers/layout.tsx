@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { HugeiconsIcon, type IconSvgObject } from '@hugeicons/react';
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import {
   BotIcon,
   BookOpenIcon,
@@ -20,7 +20,7 @@ import { Button, Separator } from '@heroui/react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-type NavItem = { href: string; icon: IconSvgObject; label: string };
+type NavItem = { href: string; icon: IconSvgElement; label: string };
 type NavSection = { label: string; items: NavItem[] };
 
 const NAV_SECTIONS: NavSection[] = [

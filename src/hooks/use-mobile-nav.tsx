@@ -7,12 +7,15 @@ interface MobileNavContextValue {
   isMobile: boolean;
   showSidebar: boolean;
   showMemberList: boolean;
+  showSettings: boolean;
   openSidebar: () => void;
   closeSidebar: () => void;
   toggleSidebar: () => void;
   openMemberList: () => void;
   closeMemberList: () => void;
   toggleMemberList: () => void;
+  openSettings: () => void;
+  closeSettings: () => void;
   closeAll: () => void;
 }
 
@@ -22,6 +25,7 @@ export function MobileNavProvider({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
   const [showSidebar, setShowSidebar] = useState(false);
   const [showMemberList, setShowMemberList] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Sur mobile, fermer les panneaux quand on change de page
   useEffect(() => {
@@ -53,9 +57,18 @@ export function MobileNavProvider({ children }: { children: ReactNode }) {
     setShowSidebar(false);
   }, []);
 
+  const openSettings = useCallback(() => {
+    setShowSettings(true);
+    setShowSidebar(false);
+    setShowMemberList(false);
+  }, []);
+
+  const closeSettings = useCallback(() => setShowSettings(false), []);
+
   const closeAll = useCallback(() => {
     setShowSidebar(false);
     setShowMemberList(false);
+    setShowSettings(false);
   }, []);
 
   return (
@@ -64,12 +77,15 @@ export function MobileNavProvider({ children }: { children: ReactNode }) {
         isMobile,
         showSidebar,
         showMemberList,
+        showSettings,
         openSidebar,
         closeSidebar,
         toggleSidebar,
         openMemberList,
         closeMemberList,
         toggleMemberList,
+        openSettings,
+        closeSettings,
         closeAll,
       }}
     >
@@ -86,12 +102,15 @@ export function useMobileNav(): MobileNavContextValue {
       isMobile: false,
       showSidebar: false,
       showMemberList: false,
+      showSettings: false,
       openSidebar: () => {},
       closeSidebar: () => {},
       toggleSidebar: () => {},
       openMemberList: () => {},
       closeMemberList: () => {},
       toggleMemberList: () => {},
+      openSettings: () => {},
+      closeSettings: () => {},
       closeAll: () => {},
     };
   }

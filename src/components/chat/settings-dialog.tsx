@@ -9,7 +9,7 @@ import {
   SunIcon, MoonIcon, MonitorIcon, RotateCcwIcon, PipetteIcon,
   RotateCwIcon, GlobeIcon, SearchIcon, HelpCircleIcon, LockIcon,
   Trash2Icon, KeyRoundIcon, ZapIcon, CalendarIcon, ClockIcon,
-  MoreHorizontalIcon, AlertTriangleIcon, ChevronDownIcon,
+  MoreHorizontalIcon, AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon,
 } from '@/components/icons';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/components/locale-provider';
@@ -276,6 +276,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   /* -- Language -- */
   const [langSearch, setLangSearch] = useState('');
+
+  /* -- Mobile nav -- */
+  const [mobileShowMenu, setMobileShowMenu] = useState(true);
+  useEffect(() => { if (open) setMobileShowMenu(true); }, [open]);
 
   /* -- Computed -- */
   /* -- Effects -- */
@@ -612,25 +616,70 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
             {/* ------ Mobile nav ------ */}
             <div className="flex w-full flex-col">
-              <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--border)]/40 px-2 py-1.5 sm:hidden">
-                {NAV_TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      'flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
-                      activeTab === tab.id ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'text-[var(--muted)]',
-                    )}
-                  >
-                    <HugeiconsIcon icon={tab.icon} size={14} />
-                    {tab.shortLabel}
-                  </button>
-                ))}
-              </div>
+
+              {/* ── Mobile : menu principal (iOS-style) ── */}
+              {mobileShowMenu && (
+                <div className="flex flex-1 flex-col overflow-y-auto pb-8 sm:hidden">
+                  {/* User header */}
+                  <div className="flex items-center gap-3 border-b border-[var(--border)]/40 bg-[var(--surface)]/60 px-4 py-4">
+                    <Avatar size="md" className="size-12 shrink-0">
+                      <Avatar.Image src={avatarPreview || undefined} alt={displayName} />
+                      <Avatar.Fallback>{displayName?.[0]?.toUpperCase() || '?'}</Avatar.Fallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-[var(--foreground)]">{displayName || user.username}</p>
+                      <p className="truncate text-xs text-[var(--muted)]">@{user.username}</p>
+                    </div>
+                  </div>
+
+                  {/* Nav rows */}
+                  <nav className="flex flex-col gap-0.5 p-3">
+                    {NAV_TABS.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => { setActiveTab(tab.id); setMobileShowMenu(false); }}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 transition-colors active:bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)]"
+                      >
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/10">
+                          <HugeiconsIcon icon={tab.icon} size={18} className="text-[var(--accent)]" />
+                        </span>
+                        <span className="flex-1 text-left text-sm font-medium text-[var(--foreground)]">{tab.label}</span>
+                        <HugeiconsIcon icon={ChevronRightIcon} size={16} className="text-[var(--muted)]/40" />
+                      </button>
+                    ))}
+                  </nav>
+
+                  {/* Logout */}
+                  <div className="mt-auto px-3 pb-2">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 transition-colors active:bg-red-500/10 hover:bg-red-500/10"
+                    >
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
+                        <HugeiconsIcon icon={LogOutIcon} size={18} className="text-red-500" />
+                      </span>
+                      <span className="flex-1 text-left text-sm font-medium text-red-500">{t.settings.logout}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Mobile : header section avec retour ── */}
+              {!mobileShowMenu && (
+                <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)]/40 px-3 sm:hidden">
+                  <Button isIconOnly variant="ghost" size="sm" onPress={() => setMobileShowMenu(true)}>
+                    <HugeiconsIcon icon={ArrowLeftIcon} size={18} />
+                  </Button>
+                  <h2 className="text-sm font-semibold text-[var(--foreground)]">
+                    {NAV_TABS.find((tab) => tab.id === activeTab)?.label}
+                  </h2>
+                </div>
+              )}
 
               {/* ------ Content ------ */}
-              <ScrollShadow className="flex-1 overflow-y-auto p-4 sm:p-6" hideScrollBar>
+              <ScrollShadow className={cn('flex-1 overflow-y-auto p-4 sm:p-6', mobileShowMenu && 'hidden sm:block')} hideScrollBar>
 
                 {/* --------- PROFIL --------- */}
                 {activeTab === 'profile' && (

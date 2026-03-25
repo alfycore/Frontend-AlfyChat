@@ -15,22 +15,22 @@ const TABS = [
 export function MobileBottomNav() {
   const pathname  = usePathname();
   const router    = useRouter();
-  const { showSidebar, openSidebar, closeSidebar } = useMobileNav();
+  const { showSidebar, showSettings, openSidebar, closeSidebar, openSettings, closeSettings } = useMobileNav();
 
-  const isSettings = pathname.startsWith('/channels/me/settings');
-  const isFriends  = (pathname === '/channels/me' || pathname === '/channels/me/') && !showSidebar;
-  const isMessages = (!isFriends && !isSettings) || showSidebar;
+  const isFriends  = (pathname === '/channels/me' || pathname === '/channels/me/') && !showSidebar && !showSettings;
+  const isMessages = (!isFriends && !showSettings) || showSidebar;
 
   const isActive = (id: string) => {
     if (id === 'messages') return isMessages;
     if (id === 'friends')  return isFriends;
-    if (id === 'settings') return isSettings;
+    if (id === 'settings') return showSettings;
     return false;
   };
 
   const handlePress = (id: string) => {
     if (id === 'messages') {
-      if (isSettings || isFriends) {
+      closeSettings();
+      if (isFriends) {
         closeSidebar();
         router.push('/channels/me');
         setTimeout(openSidebar, 50);
@@ -41,10 +41,11 @@ export function MobileBottomNav() {
       }
     } else if (id === 'friends') {
       closeSidebar();
+      closeSettings();
       router.push('/channels/me');
     } else if (id === 'settings') {
       closeSidebar();
-      router.push('/channels/me/settings');
+      openSettings();
     }
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   UsersIcon,
@@ -77,6 +77,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const { isMobile, openSidebar } = useMobileNav();
   const { user: currentUser } = useAuth();
   const { t, tx } = useTranslation();
+  const tabsListRef = useRef<HTMLDivElement>(null);
+  const [compactTabs, setCompactTabs] = useState(false);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<{ received: FriendRequest[]; sent: FriendRequest[] }>({
     received: [],
@@ -87,6 +89,16 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const [addFriendInput, setAddFriendInput] = useState('');
   const [addFriendLoading, setAddFriendLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const el = tabsListRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) =>
+      setCompactTabs(entry.contentRect.width < 340)
+    );
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     loadFriends();
@@ -358,49 +370,65 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         {/* Tabs */}
         <Tabs className="p-3">
           <Tabs.ListContainer>
+            <div ref={tabsListRef} className="min-w-0">
             <Tabs.List className="shrink-0 ">
-              <Tabs.Tab id="friends">
-                <div className="flex items-center gap-1.5">
-                  <HugeiconsIcon icon={UsersIcon} size={14} />
-                  {t.friends.tabFriends}
-                  <Chip size="sm" variant="soft" className="">
-                    {friends.length}
-                  </Chip>
-                </div>
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab id="requests">
-                <div className="flex items-center gap-1.5">
-                  <HugeiconsIcon icon={ClockIcon} size={14} />
-                  {t.friends.tabRequests}
-                  {requests.received.length > 0 && (
-                    <Chip color="danger" size="sm" className=" ">
-                      {requests.received.length}
-                    </Chip>
-                  )}
-                </div>
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab id="blocked">
-                <div className="flex items-center gap-1.5">
-                  <HugeiconsIcon icon={ShieldOffIcon} size={14} />
-                  {t.friends.tabBlocked}
-                  {blockedUsers.length > 0 && (
-                    <Chip size="sm" variant="soft" className=" ">
-                      {blockedUsers.length}
-                    </Chip>
-                  )}
-                </div>
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab id="add">
-                <div className="flex items-center gap-1.5">
-                  <HugeiconsIcon icon={UserPlusIcon} size={14} />
-                  {t.friends.tabAdd}
-                </div>
-                <Tabs.Indicator />
-              </Tabs.Tab>
+              <Tooltip delay={0}>
+                <Tabs.Tab id="friends">
+                  <div className="flex items-center gap-1.5">
+                    <HugeiconsIcon icon={UsersIcon} size={14} />
+                    {!compactTabs && <span>{t.friends.tabFriends}</span>}
+                    {!compactTabs && (
+                      <Chip size="sm" variant="soft">
+                        {friends.length}
+                      </Chip>
+                    )}
+                  </div>
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                {compactTabs && <Tooltip.Content>{t.friends.tabFriends}</Tooltip.Content>}
+              </Tooltip>
+              <Tooltip delay={0}>
+                <Tabs.Tab id="requests">
+                  <div className="flex items-center gap-1.5">
+                    <HugeiconsIcon icon={ClockIcon} size={14} />
+                    {!compactTabs && <span>{t.friends.tabRequests}</span>}
+                    {!compactTabs && requests.received.length > 0 && (
+                      <Chip color="danger" size="sm">
+                        {requests.received.length}
+                      </Chip>
+                    )}
+                  </div>
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                {compactTabs && <Tooltip.Content>{t.friends.tabRequests}</Tooltip.Content>}
+              </Tooltip>
+              <Tooltip delay={0}>
+                <Tabs.Tab id="blocked">
+                  <div className="flex items-center gap-1.5">
+                    <HugeiconsIcon icon={ShieldOffIcon} size={14} />
+                    {!compactTabs && <span>{t.friends.tabBlocked}</span>}
+                    {!compactTabs && blockedUsers.length > 0 && (
+                      <Chip size="sm" variant="soft">
+                        {blockedUsers.length}
+                      </Chip>
+                    )}
+                  </div>
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                {compactTabs && <Tooltip.Content>{t.friends.tabBlocked}</Tooltip.Content>}
+              </Tooltip>
+              <Tooltip delay={0}>
+                <Tabs.Tab id="add">
+                  <div className="flex items-center gap-1.5">
+                    <HugeiconsIcon icon={UserPlusIcon} size={14} />
+                    {!compactTabs && <span>{t.friends.tabAdd}</span>}
+                  </div>
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                {compactTabs && <Tooltip.Content>{t.friends.tabAdd}</Tooltip.Content>}
+              </Tooltip>
             </Tabs.List>
+            </div>
           </Tabs.ListContainer>
 
           {/* ── Friends Tab ─────────────────────────────── */}
