@@ -1137,9 +1137,8 @@ export default function AdminPage() {
                               </td>
                               <td className="px-3 py-2 text-right">
                                 <Button
-                                  variant="ghost"
+                                  variant="primary"
                                   size="sm"
-                                  variant="success"
                                   onPress={() => handleUnbanIP(ban.ip)}
                                 >
                                   <HugeiconsIcon icon={ShieldCheckIcon} size={16} />
