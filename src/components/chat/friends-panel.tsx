@@ -94,7 +94,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     const el = tabsListRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) =>
-      setCompactTabs(entry.contentRect.width < 340)
+      setCompactTabs(entry.contentRect.width < 420)
     );
     ro.observe(el);
     return () => ro.disconnect();
@@ -348,7 +348,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       {/* ══════════════════════════════════════════════════════
           CENTER — Header + Tabs
          ══════════════════════════════════════════════════════ */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div ref={tabsListRef} className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/40 bg-[var(--background)]/60 px-2 backdrop-blur-sm md:px-4">
           {isMobile && (
@@ -370,7 +370,6 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         {/* Tabs */}
         <Tabs className="p-3">
           <Tabs.ListContainer>
-            <div ref={tabsListRef} className="min-w-0">
             <Tabs.List className="shrink-0 ">
               <Tooltip delay={0}>
                 <Tabs.Tab id="friends">
@@ -428,7 +427,6 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                 {compactTabs && <Tooltip.Content>{t.friends.tabAdd}</Tooltip.Content>}
               </Tooltip>
             </Tabs.List>
-            </div>
           </Tabs.ListContainer>
 
           {/* ── Friends Tab ─────────────────────────────── */}

@@ -233,7 +233,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       </div>
 
       {/* ── CONTENU PRINCIPAL ── */}
-      <div className="flex min-w-0 flex-1 flex-col pb-16 md:pb-0">
+      <div className={`flex min-w-0 flex-1 flex-col ${recipientId ? '' : 'pb-16'} md:pb-0`}>
         {/* Mini barre verte d'appel */}
         {callStatus !== 'idle' && callStatus !== 'ended' && callStatus !== 'ringing' && (() => {
           const isInCallConversation = recipientId && (
@@ -271,8 +271,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* ── MOBILE BOTTOM NAV ── */}
-      <MobileBottomNav />
+      {/* ── MOBILE BOTTOM NAV ── masqué dans les MP ── */}
+      {!recipientId && <MobileBottomNav />}
 
       {/* ── SETTINGS DIALOG (mobile: ouvre depuis la bottom nav) ── */}
       <SettingsDialog open={showSettings} onOpenChange={(open) => { if (!open) closeSettings(); }} />
