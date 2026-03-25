@@ -9,7 +9,7 @@ import {
   SunIcon, MoonIcon, MonitorIcon, RotateCcwIcon, PipetteIcon,
   RotateCwIcon, GlobeIcon, SearchIcon, HelpCircleIcon, LockIcon,
   Trash2Icon, KeyRoundIcon, ZapIcon, CalendarIcon, ClockIcon,
-  MoreHorizontalIcon, AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon,
+  MoreHorizontalIcon, AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon, ArrowLeftIcon,
 } from '@/components/icons';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/components/locale-provider';
