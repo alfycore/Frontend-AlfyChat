@@ -1139,7 +1139,7 @@ export default function AdminPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  color="success"
+                                  variant="success"
                                   onPress={() => handleUnbanIP(ban.ip)}
                                 >
                                   <HugeiconsIcon icon={ShieldCheckIcon} size={16} />
