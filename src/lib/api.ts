@@ -617,23 +617,112 @@ class ApiService {
   }
 
   // ============ BOTS ============
-  async getBots() {
-    return this.request('/api/bots');
+  async getMyBots() {
+    return this.request('/api/bots/me');
   }
 
-  async createBot(data: { name: string; description?: string; avatarUrl?: string }) {
+  async getPublicBots(search?: string, tag?: string) {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (tag) params.set('tag', tag);
+    const qs = params.toString();
+    return this.request(`/api/bots/public${qs ? `?${qs}` : ''}`);
+  }
+
+  async getBotById(botId: string) {
+    return this.request(`/api/bots/${botId}`);
+  }
+
+  async createBot(data: { name: string; description?: string; prefix?: string }) {
     return this.request('/api/bots', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async getBotToken(botId: string) {
-    return this.request(`/api/bots/${botId}/token`);
+  async updateBot(botId: string, data: {
+    name?: string; description?: string; prefix?: string;
+    isPublic?: boolean; tags?: string[];
+    websiteUrl?: string; supportServerUrl?: string; privacyPolicyUrl?: string;
+    avatarUrl?: string;
+  }) {
+    return this.request(`/api/bots/${botId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteBot(botId: string) {
+    return this.request(`/api/bots/${botId}`, { method: 'DELETE' });
   }
 
   async regenerateBotToken(botId: string) {
-    return this.request(`/api/bots/${botId}/token/regenerate`, { method: 'POST' });
+    return this.request(`/api/bots/${botId}/regenerate-token`, { method: 'POST' });
+  }
+
+  async updateBotStatus(botId: string, status: string) {
+    return this.request(`/api/bots/${botId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Bot commands
+  async getBotCommands(botId: string) {
+    return this.request(`/api/bots/${botId}/commands`);
+  }
+
+  async createBotCommand(botId: string, data: { name: string; description: string; usage?: string; cooldown?: number; permissions?: number }) {
+    return this.request(`/api/bots/${botId}/commands`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateBotCommand(botId: string, commandId: string, data: Record<string, unknown>) {
+    return this.request(`/api/bots/${botId}/commands/${commandId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteBotCommand(botId: string, commandId: string) {
+    return this.request(`/api/bots/${botId}/commands/${commandId}`, { method: 'DELETE' });
+  }
+
+  // Bot servers
+  async addBotToServer(botId: string, serverId: string, permissions?: number) {
+    return this.request(`/api/bots/${botId}/servers`, {
+      method: 'POST',
+      body: JSON.stringify({ serverId, permissions: permissions || 0 }),
+    });
+  }
+
+  async removeBotFromServer(botId: string, serverId: string) {
+    return this.request(`/api/bots/${botId}/servers/${serverId}`, { method: 'DELETE' });
+  }
+
+  async getBotsInServer(serverId: string) {
+    return this.request(`/api/bots/servers/${serverId}`);
+  }
+
+  // Bot certification
+  async requestBotCertification(botId: string, reason: string) {
+    return this.request(`/api/bots/${botId}/certification`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async getPendingCertifications() {
+    return this.request('/api/bots/certification/pending');
+  }
+
+  async reviewBotCertification(requestId: string, status: 'approved' | 'rejected', note?: string) {
+    return this.request(`/api/bots/certification/${requestId}/review`, {
+      method: 'POST',
+      body: JSON.stringify({ status, note }),
+    });
   }
 
   // ============ ADMIN ============
@@ -744,6 +833,29 @@ class ApiService {
 
   async deleteInviteLink(linkId: string) {
     return this.request(`/api/admin/invite-links/${linkId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ============ GATEWAY ADMIN (Rate Limit & IP Bans) ============
+
+  async getGatewayStats() {
+    return this.request<{
+      bannedIPs: Array<{ ip: string; reason: string; bannedBy: string; bannedAt: string }>;
+      rateLimitStats: { totalBlocked: number; activeWindows: number };
+      config: { window: number; max: number };
+    }>('/api/admin/gateway/stats');
+  }
+
+  async banIP(ip: string, reason?: string) {
+    return this.request('/api/admin/gateway/ban-ip', {
+      method: 'POST',
+      body: JSON.stringify({ ip, reason }),
+    });
+  }
+
+  async unbanIP(ip: string) {
+    return this.request(`/api/admin/gateway/ban-ip/${encodeURIComponent(ip)}`, {
       method: 'DELETE',
     });
   }

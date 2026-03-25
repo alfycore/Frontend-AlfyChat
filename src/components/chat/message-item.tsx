@@ -17,7 +17,7 @@ import { resolveMediaUrl } from '@/lib/api';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type Reaction = { emoji: string; userIds: string[]; count: number };
-export type MessageSender = { id: string; username: string; displayName?: string; avatarUrl?: string };
+export type MessageSender = { id: string; username: string; displayName?: string; avatarUrl?: string; isBot?: boolean; isVerifiedBot?: boolean };
 export type MessageData = {
   id: string;
   content: string;
@@ -228,8 +228,22 @@ export const MessageItem = memo(function MessageItem({
         })()}
 
         {/* Author + timestamp */}
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-[var(--foreground)] md:text-sm">{displayName}</span>
+          {message.sender?.isBot && (
+            <span className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[8px] font-bold uppercase leading-none ${
+              message.sender.isVerifiedBot
+                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                : 'bg-[var(--muted)]/15 text-[var(--muted)] border border-[var(--muted)]/30'
+            }`}>
+              {message.sender.isVerifiedBot && (
+                <svg className="size-2" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 0l2.5 3.5L14.5 2l-1.5 4L16 8l-3.5 2.5L14.5 14l-4-1.5L8 16l-2.5-3.5L1.5 14l1.5-4L0 8l3.5-2.5L1.5 2l4 1.5L8 0z"/>
+                </svg>
+              )}
+              BOT
+            </span>
+          )}
           <span className="text-[10px] tabular-nums text-[var(--muted)]/50 md:text-[11px]">
             {formatTime(message.createdAt)}
           </span>

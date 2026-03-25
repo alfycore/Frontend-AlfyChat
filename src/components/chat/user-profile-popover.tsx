@@ -51,6 +51,8 @@ interface UserProfileData {
   cardColor?: string;
   badges?: UserBadge[];
   showBadges?: boolean;
+  isBot?: boolean;
+  isVerifiedBot?: boolean;
   createdAt?: string;
 }
 
@@ -359,9 +361,26 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
             {/* ──── Identity ──── */}
             <div className="space-y-3 px-4   pb-1">
               <div>
-                <h3 className="truncate text-[15px] font-bold leading-tight">
-                  {profile.displayName}
-                </h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="truncate text-[15px] font-bold leading-tight">
+                    {profile.displayName}
+                  </h3>
+                  {profile.isBot && (
+                    <span className={cn(
+                      'inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-bold uppercase leading-none',
+                      profile.isVerifiedBot
+                        ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                        : 'bg-[var(--muted)]/15 text-[var(--muted)] border border-[var(--muted)]/30'
+                    )}>
+                      {profile.isVerifiedBot && (
+                        <svg className="size-2.5" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M8 0l2.5 3.5L14.5 2l-1.5 4L16 8l-3.5 2.5L14.5 14l-4-1.5L8 16l-2.5-3.5L1.5 14l1.5-4L0 8l3.5-2.5L1.5 2l4 1.5L8 0z"/>
+                        </svg>
+                      )}
+                      BOT
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-[var(--muted)]">@{profile.username}</p>
               </div>
 

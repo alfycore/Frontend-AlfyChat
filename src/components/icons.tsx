@@ -45,6 +45,7 @@ export { UserGroupIcon as UsersIcon } from '@hugeicons/core-free-icons';
 
 // ── Key ──
 export { Key01Icon as KeyRoundIcon } from '@hugeicons/core-free-icons';
+export { Key01Icon as KeyIcon } from '@hugeicons/core-free-icons';
 
 // ── Loading ──
 export { Loading03Icon as Loader2Icon } from '@hugeicons/core-free-icons';
@@ -139,6 +140,10 @@ export { Award01Icon as AwardIcon } from '@hugeicons/core-free-icons';
 export { BotIcon } from '@hugeicons/core-free-icons';
 export { Bug01Icon as BugIcon } from '@hugeicons/core-free-icons';
 export { HelpCircleIcon } from '@hugeicons/core-free-icons';
+export { SourceCodeIcon as CodeIcon } from '@hugeicons/core-free-icons';
+export { BookOpen01Icon as BookOpenIcon } from '@hugeicons/core-free-icons';
+export { TerminalIcon } from '@hugeicons/core-free-icons';
+export { Tag01Icon as TagIcon } from '@hugeicons/core-free-icons';
 
 // ── Theme ──
 export { Moon01Icon as MoonIcon } from '@hugeicons/core-free-icons';

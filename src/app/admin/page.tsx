@@ -25,6 +25,8 @@ import {
   MailIcon,
   CopyIcon,
   ShieldCheckIcon,
+  ShieldAlertIcon,
+  BanIcon,
 } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
@@ -70,7 +72,7 @@ const BOOTSTRAP_ICONS = [
   { value: 'bi-moon-fill', label: 'Lune' },
 ];
 
-type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'settings';
+type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'security' | 'settings';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -119,6 +121,13 @@ export default function AdminPage() {
   const [inviteCreating, setInviteCreating] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
+  // Security (Gateway)
+  const [bannedIPs, setBannedIPs] = useState<Array<{ ip: string; reason: string; bannedBy: string; bannedAt: string }>>([]);
+  const [rateLimitStats, setRateLimitStats] = useState<{ totalBlocked: number; activeWindows: number } | null>(null);
+  const [rateLimitConfig, setRateLimitConfig] = useState<{ window: number; max: number } | null>(null);
+  const [banIPValue, setBanIPValue] = useState('');
+  const [banReasonValue, setBanReasonValue] = useState('');
+
   useEffect(() => {
     if (user && user.role !== 'admin') {
       router.push('/channels/me');
@@ -164,6 +173,14 @@ export default function AdminPage() {
         ]);
         if (settingsRes.success && settingsRes.data) setSiteSettings(settingsRes.data as Record<string, string>);
         if (linksRes.success && linksRes.data) setInviteLinks(linksRes.data as any[]);
+      } else if (activeTab === 'security') {
+        const res = await api.getGatewayStats();
+        if (res.success && res.data) {
+          const d = res.data as any;
+          setBannedIPs(d.bannedIPs || []);
+          setRateLimitStats(d.rateLimitStats || null);
+          setRateLimitConfig(d.config || null);
+        }
       }
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -299,6 +316,32 @@ export default function AdminPage() {
       if (res.success) loadData();
     } catch (error) {
       console.error('Erreur review:', error);
+    }
+  };
+
+  // ============ Security (IP Ban) ============
+  const handleBanIP = async () => {
+    if (!banIPValue.trim()) return;
+    try {
+      const res = await api.banIP(banIPValue.trim(), banReasonValue.trim() || undefined);
+      if (res.success) {
+        setBanIPValue('');
+        setBanReasonValue('');
+        loadData();
+      }
+    } catch (error) {
+      console.error('Erreur ban IP:', error);
+    }
+  };
+
+  const handleUnbanIP = async (ip: string) => {
+    try {
+      const res = await api.unbanIP(ip);
+      if (res.success) {
+        setBannedIPs((prev) => prev.filter((b) => b.ip !== ip));
+      }
+    } catch (error) {
+      console.error('Erreur unban IP:', error);
     }
   };
 
@@ -462,6 +505,7 @@ export default function AdminPage() {
                 { id: 'users', label: 'Utilisateurs', icon: UsersIcon },
                 { id: 'discovery', label: 'Découverte', icon: CompassIcon },
                 { id: 'server-badges', label: 'Badges serveurs', icon: ServerIcon },
+                { id: 'security', label: 'Sécurité', icon: ShieldAlertIcon },
                 { id: 'settings', label: 'Paramètres', icon: SettingsIcon },
               ] as const
             ).map((tab) => (
@@ -982,6 +1026,131 @@ export default function AdminPage() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Sécurité */}
+            {activeTab === 'security' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-[var(--foreground)]">Sécurité &amp; Rate Limiting</h2>
+
+                {/* Stats cards */}
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                    <div className="px-5 py-4">
+                      <p className="text-sm text-[var(--muted)]">IPs bannies</p>
+                      <p className="text-3xl font-semibold text-red-500">{bannedIPs.length}</p>
+                    </div>
+                  </Card>
+                  <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                    <div className="px-5 py-4">
+                      <p className="text-sm text-[var(--muted)]">Requêtes bloquées (rate limit)</p>
+                      <p className="text-3xl font-semibold text-orange-500">{rateLimitStats?.totalBlocked ?? 0}</p>
+                    </div>
+                  </Card>
+                  <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                    <div className="px-5 py-4">
+                      <p className="text-sm text-[var(--muted)]">Config rate limit</p>
+                      <p className="text-lg font-semibold text-[var(--foreground)]">
+                        {rateLimitConfig ? `${rateLimitConfig.max} req / ${rateLimitConfig.window}s` : '—'}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">
+                        {rateLimitStats?.activeWindows ?? 0} fenêtres actives
+                      </p>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Ban IP form */}
+                <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                  <div className="px-5 py-4">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
+                      <HugeiconsIcon icon={BanIcon} size={20} className="text-red-500" />
+                      Bannir une IP
+                    </h3>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                      L&apos;IP sera bloquée au niveau du gateway (HTTP + WebSocket).
+                    </p>
+                  </div>
+                  <div className="px-5 pb-4">
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <input
+                        type="text"
+                        placeholder="Adresse IP (ex: 192.168.1.1)"
+                        value={banIPValue}
+                        onChange={(e) => setBanIPValue(e.target.value)}
+                        className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder-[var(--muted)] outline-none focus:border-[var(--accent)]"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Raison (optionnel)"
+                        value={banReasonValue}
+                        onChange={(e) => setBanReasonValue(e.target.value)}
+                        className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder-[var(--muted)] outline-none focus:border-[var(--accent)]"
+                      />
+                      <Button
+                        color="danger"
+                        onPress={handleBanIP}
+                        isDisabled={!banIPValue.trim()}
+                      >
+                        <HugeiconsIcon icon={BanIcon} size={16} />
+                        Bannir
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Banned IPs list */}
+                <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                  <div className="px-5 py-4">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
+                      <HugeiconsIcon icon={ShieldAlertIcon} size={20} className="text-orange-500" />
+                      IPs bannies ({bannedIPs.length})
+                    </h3>
+                  </div>
+                  <div className="overflow-x-auto px-5 pb-4">
+                    {bannedIPs.length === 0 ? (
+                      <p className="py-8 text-center text-sm text-[var(--muted)]">
+                        Aucune IP bannie pour le moment.
+                      </p>
+                    ) : (
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[var(--border)]">
+                            <th className="px-3 py-2 text-left font-medium text-[var(--muted)]">IP</th>
+                            <th className="px-3 py-2 text-left font-medium text-[var(--muted)]">Raison</th>
+                            <th className="px-3 py-2 text-left font-medium text-[var(--muted)]">Banni par</th>
+                            <th className="px-3 py-2 text-left font-medium text-[var(--muted)]">Date</th>
+                            <th className="px-3 py-2 text-right font-medium text-[var(--muted)]">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bannedIPs.map((ban) => (
+                            <tr key={ban.ip} className="border-b border-[var(--border)]/40 hover:bg-[var(--background)]">
+                              <td className="px-3 py-2 font-mono text-[var(--foreground)]">{ban.ip}</td>
+                              <td className="px-3 py-2 text-[var(--muted)]">{ban.reason || '—'}</td>
+                              <td className="px-3 py-2 text-[var(--muted)]">{ban.bannedBy || 'Système'}</td>
+                              <td className="px-3 py-2 text-[var(--muted)]">
+                                {ban.bannedAt ? new Date(ban.bannedAt).toLocaleString('fr-FR') : '—'}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  color="success"
+                                  onPress={() => handleUnbanIP(ban.ip)}
+                                >
+                                  <HugeiconsIcon icon={ShieldCheckIcon} size={16} />
+                                  Débannir
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </Card>
               </div>
