@@ -356,14 +356,14 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         </div>
 
         {/* Tabs */}
-        <Tabs className="flex flex-1 flex-col overflow-hidden">
+        <Tabs className="p-3">
           <Tabs.ListContainer>
             <Tabs.List className="shrink-0 ">
               <Tabs.Tab id="friends">
                 <div className="flex items-center gap-1.5">
                   <HugeiconsIcon icon={UsersIcon} size={14} />
                   {t.friends.tabFriends}
-                  <Chip size="sm" variant="soft" className="min-w-5 text-[10px]">
+                  <Chip size="sm" variant="soft" className="">
                     {friends.length}
                   </Chip>
                 </div>
@@ -374,7 +374,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   <HugeiconsIcon icon={ClockIcon} size={14} />
                   {t.friends.tabRequests}
                   {requests.received.length > 0 && (
-                    <Chip color="danger" size="sm" className="min-w-5 text-[10px]">
+                    <Chip color="danger" size="sm" className=" ">
                       {requests.received.length}
                     </Chip>
                   )}
@@ -386,7 +386,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   <HugeiconsIcon icon={ShieldOffIcon} size={14} />
                   {t.friends.tabBlocked}
                   {blockedUsers.length > 0 && (
-                    <Chip size="sm" variant="soft" className="min-w-5 text-[10px]">
+                    <Chip size="sm" variant="soft" className=" ">
                       {blockedUsers.length}
                     </Chip>
                   )}
@@ -772,7 +772,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
             {t.friends.onlineSidebar}
           </span>
-          <Chip size="sm" variant="soft" className="ml-auto min-w-5 text-[10px]">
+          <Chip size="sm" variant="soft" className="ml-auto  ">
             {onlineFriends.length}
           </Chip>
         </div>

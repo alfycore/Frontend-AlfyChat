@@ -1,0 +1,152 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  BotIcon,
+  BookOpenIcon,
+  KeyIcon,
+  ZapIcon,
+  CodeIcon,
+  ServerIcon,
+  TerminalIcon,
+  ShieldCheckIcon,
+  TagIcon,
+  ArrowLeftIcon,
+} from '@/components/icons';
+import { useAuth } from '@/hooks/use-auth';
+import { Button, Separator } from '@heroui/react';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+
+const NAV_SECTIONS = [
+  {
+    label: 'DÉVELOPPEMENT',
+    items: [
+      { href: '/developers/bots', icon: BotIcon, label: 'Mes Bots' },
+    ],
+  },
+  {
+    label: 'DOCUMENTATION',
+    items: [
+      { href: '/developers/docs/introduction',  icon: BookOpenIcon,    label: 'Introduction' },
+      { href: '/developers/docs/auth',           icon: KeyIcon,         label: 'Authentification' },
+      { href: '/developers/docs/quickstart',     icon: ZapIcon,         label: 'Démarrage rapide' },
+      { href: '/developers/docs/endpoints',      icon: CodeIcon,        label: 'Référence API' },
+      { href: '/developers/docs/websocket',      icon: ServerIcon,      label: 'WebSocket' },
+      { href: '/developers/docs/commands',       icon: TerminalIcon,    label: 'Commandes' },
+      { href: '/developers/docs/certification',  icon: ShieldCheckIcon, label: 'Certification' },
+      { href: '/developers/docs/errors',         icon: TagIcon,         label: 'Erreurs & Limits' },
+    ],
+  },
+] as const;
+
+export default function DevelopersLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, isLoading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) router.push('/login');
+  }, [user, authLoading, router]);
+
+  if (authLoading || !user) return null;
+
+  return (
+    <div className="flex min-h-screen bg-background text-foreground">
+      {/* ── Sidebar ── */}
+      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-border/60 bg-surface/30 backdrop-blur-xl md:flex">
+        {/* Logo */}
+        <div className="flex items-center gap-2 border-b border-border/60 px-4 py-4">
+          <Link href="/" className="flex items-center gap-2 no-underline">
+            <img src="/logo/Alfychat.svg" alt="AlfyChat" width={20} height={20} />
+            <span className="font-[family-name:var(--font-krona)] text-xs text-foreground">AlfyChat</span>
+          </Link>
+          <Separator orientation="vertical" className="mx-1 h-4" />
+          <span className="text-[11px] font-bold text-accent">Devs</span>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-2 py-3">
+          {NAV_SECTIONS.map((section, si) => (
+            <div key={section.label} className={cn('mb-4', si > 0 && 'mt-2')}>
+              <p className="mb-1 px-2 text-[9px] font-bold uppercase tracking-widest text-muted/40">
+                {section.label}
+              </p>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const active = pathname.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all no-underline',
+                        active
+                          ? 'bg-accent/12 text-accent'
+                          : 'text-muted/80 hover:bg-surface hover:text-foreground',
+                      )}
+                    >
+                      <HugeiconsIcon icon={item.icon} size={14} className="shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t border-border/60 p-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start gap-2 text-xs text-muted"
+            onPress={() => router.push('/channels/me')}
+          >
+            <HugeiconsIcon icon={ArrowLeftIcon} size={13} />
+            Retour à l&apos;app
+          </Button>
+        </div>
+      </aside>
+
+      {/* ── Mobile header ── */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl md:hidden">
+          <Link href="/" className="flex items-center gap-1.5 no-underline">
+            <img src="/logo/Alfychat.svg" alt="AlfyChat" width={18} height={18} />
+          </Link>
+          <div className="flex flex-1 gap-1 overflow-x-auto">
+            {NAV_SECTIONS.flatMap((s) => s.items.slice(0, 2)).map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium no-underline',
+                  pathname === item.href || pathname.startsWith(item.href)
+                    ? 'bg-accent/12 text-accent'
+                    : 'text-muted hover:text-foreground',
+                )}
+              >
+                <HugeiconsIcon icon={item.icon} size={12} />
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          <Button size="sm" variant="ghost" isIconOnly onPress={() => router.push('/channels/me')}>
+            <HugeiconsIcon icon={ArrowLeftIcon} size={14} />
+          </Button>
+        </header>
+
+        {/* ── Main content ── */}
+        <main className="flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+

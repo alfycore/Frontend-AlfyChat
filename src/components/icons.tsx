@@ -142,7 +142,7 @@ export { Bug01Icon as BugIcon } from '@hugeicons/core-free-icons';
 export { HelpCircleIcon } from '@hugeicons/core-free-icons';
 export { SourceCodeIcon as CodeIcon } from '@hugeicons/core-free-icons';
 export { BookOpen01Icon as BookOpenIcon } from '@hugeicons/core-free-icons';
-export { TerminalIcon } from '@hugeicons/core-free-icons';
+export { ComputerTerminalIcon as TerminalIcon } from '@hugeicons/core-free-icons';
 export { Tag01Icon as TagIcon } from '@hugeicons/core-free-icons';
 
 // ── Theme ──

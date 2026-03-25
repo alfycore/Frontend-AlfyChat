@@ -100,31 +100,7 @@ export function UserPanel({ user }: UserPanelProps) {
 
       {/* Audio controls */}
       <div className="flex shrink-0 items-center">
-        <Tooltip delay={0}>
-            <Button
-              isIconOnly
-              size="sm"
-              variant="tertiary"
-              className={`size-7 rounded-md ${isMuted ? 'text-red-500' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
-              onPress={() => setIsMuted(!isMuted)}
-            >
-              {isMuted ? <HugeiconsIcon icon={MicOffIcon} size={15} /> : <HugeiconsIcon icon={MicIcon} size={15} />}
-            </Button>
-            <Tooltip.Content placement="top">{isMuted ? t.userPanel.unmuteMic : t.userPanel.muteMic}</Tooltip.Content>
-        </Tooltip>
 
-        <Tooltip delay={0}>
-            <Button
-              isIconOnly
-              size="sm"
-              variant="tertiary"
-              className={`size-7 rounded-md ${isDeafened ? 'text-red-500' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
-              onPress={() => setIsDeafened(!isDeafened)}
-            >
-              {isDeafened ? <HugeiconsIcon icon={VolumeXIcon} size={15} /> : <HugeiconsIcon icon={Volume2Icon} size={15} />}
-            </Button>
-            <Tooltip.Content placement="top">{isDeafened ? t.userPanel.unmuteAudio : t.userPanel.muteAudio}</Tooltip.Content>
-        </Tooltip>
 
         <Tooltip delay={0}>
             <Button

@@ -15,6 +15,7 @@ import { MemberList } from '@/components/chat/member-list';
 import { CallBar } from '@/components/chat/call-bar';
 import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
 import { GroupChatArea } from '@/components/chat/group-chat-area';
+import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
 
 /**
  * Layout partagé pour /channels/me et /channels/me/[recipientId].
@@ -231,7 +232,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       </div>
 
       {/* ── CONTENU PRINCIPAL ── */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col pb-16 md:pb-0">
         {/* Mini barre verte d'appel */}
         {callStatus !== 'idle' && callStatus !== 'ended' && callStatus !== 'ringing' && (() => {
           const isInCallConversation = recipientId && (
@@ -268,6 +269,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
           <MemberList serverId={selectedServer} />
         </div>
       )}
+
+      {/* ── MOBILE BOTTOM NAV ── */}
+      <MobileBottomNav />
     </div>
   );
 }

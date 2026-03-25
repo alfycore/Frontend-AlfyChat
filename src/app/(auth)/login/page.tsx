@@ -235,15 +235,15 @@ export default function LoginPage() {
                     <div className="flex flex-col items-center gap-4">
                       <InputOTP maxLength={6} value={totpCode} onChange={setTotpCode} autoFocus>
                         <InputOTP.Group>
-                          <InputOTP.Slot index={0} />
-                          <InputOTP.Slot index={1} />
-                          <InputOTP.Slot index={2} />
+                          <InputOTP.Slot index={0} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
+                          <InputOTP.Slot index={1} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
+                          <InputOTP.Slot index={2} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
                         </InputOTP.Group>
                         <InputOTP.Separator />
                         <InputOTP.Group>
-                          <InputOTP.Slot index={3} />
-                          <InputOTP.Slot index={4} />
-                          <InputOTP.Slot index={5} />
+                          <InputOTP.Slot index={3} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
+                          <InputOTP.Slot index={4} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
+                          <InputOTP.Slot index={5} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
                         </InputOTP.Group>
                       </InputOTP>
                       <p className="text-xs text-[var(--muted)]">
@@ -295,7 +295,7 @@ export default function LoginPage() {
                   {/* Email */}
                   <TextField fullWidth name="email" isRequired value={email} onChange={setEmail}>
                     <Label>Adresse email</Label>
-                    <InputGroup fullWidth>
+                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
                         <HugeiconsIcon icon={MailIcon} size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -311,7 +311,7 @@ export default function LoginPage() {
                         Oublie ?
                       </Link>
                     </div>
-                    <InputGroup fullWidth>
+                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
                         <HugeiconsIcon icon={KeyRoundIcon} size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>

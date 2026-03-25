@@ -221,7 +221,7 @@ function RegisterContent() {
                   {/* Email */}
                   <TextField fullWidth name="email" isRequired value={email} onChange={setEmail}>
                     <Label>Adresse email</Label>
-                    <InputGroup fullWidth>
+                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
                         <HugeiconsIcon icon={MailIcon} size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -239,7 +239,7 @@ function RegisterContent() {
                       onChange={(v: string) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                     >
                       <Label>Identifiant</Label>
-                      <InputGroup fullWidth>
+                      <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                         <InputGroup.Prefix>
                           <HugeiconsIcon icon={AtSignIcon} size={16} className="text-[var(--muted)]" />
                         </InputGroup.Prefix>
@@ -249,7 +249,7 @@ function RegisterContent() {
 
                     <TextField fullWidth name="displayName" value={displayName} onChange={setDisplayName}>
                       <Label>Nom d&apos;affichage</Label>
-                      <InputGroup fullWidth>
+                      <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                         <InputGroup.Prefix>
                           <HugeiconsIcon icon={UserIcon} size={16} className="text-[var(--muted)]" />
                         </InputGroup.Prefix>
@@ -261,7 +261,7 @@ function RegisterContent() {
                   {/* Mot de passe */}
                   <TextField fullWidth name="password" isRequired value={password} onChange={setPassword}>
                     <Label>Mot de passe</Label>
-                    <InputGroup fullWidth>
+                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
                         <HugeiconsIcon icon={KeyRoundIcon} size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -287,7 +287,7 @@ function RegisterContent() {
                   {/* Confirmation */}
                   <TextField fullWidth name="confirmPassword" isRequired value={confirmPassword} onChange={setConfirmPassword}>
                     <Label>Confirmer le mot de passe</Label>
-                    <InputGroup fullWidth>
+                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
                         <HugeiconsIcon icon={KeyRoundIcon} size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -304,11 +304,11 @@ function RegisterContent() {
                     onChange={setAcceptTerms}
                     name="terms"
                   >
-                    <Checkbox.Control>
+                    <Checkbox.Control className='bg-[var(--surface-secondary)] border-[var(--border)] data-[state=checked]:border-[var(--accent)]'>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
                     <Checkbox.Content>
-                      <span className="text-sm text-[var(--foreground)]">
+                      <span className="">
                         J&apos;accepte les{' '}
                         <Link href="/terms" className="text-sm font-medium text-[var(--accent)]">
                           conditions d&apos;utilisation

@@ -592,16 +592,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
         <div className={`flex items-end gap-1 rounded-xl border border-[var(--border)]/40 bg-[var(--surface)]/60 px-1.5 py-1 backdrop-blur-xl transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${replyingTo ? 'rounded-t-none' : ''}`}>
           {/* E2EE indicator */}
-          <Tooltip delay={0}>
-            <div
-              data-tour="encryption"
-              className="mb-0.5 flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-green-500/70"
-            >
-              <HugeiconsIcon icon={ShieldCheckIcon} size={14} />
-              <span className="hidden text-[10px] font-medium sm:inline">E2EE</span>
-            </div>
-            <Tooltip.Content>Chiffrement de bout en bout activé — clé éphémère</Tooltip.Content>
-          </Tooltip>
+          
 
           {/* Text input */}
           <TextArea
