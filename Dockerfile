@@ -1,4 +1,8 @@
-FROM oven/bun:1-alpine AS builder
+FROM node:24-alpine AS builder
+
+# Install Bun (avoids Docker Hub pull of oven/bun image)
+RUN apk add --no-cache curl unzip bash \
+    && curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
 
 WORKDIR /app
 COPY package.json bun.lockb* ./

@@ -20,7 +20,10 @@ import { Button, Separator } from '@heroui/react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-const NAV_SECTIONS = [
+type NavItem = { href: string; icon: unknown; label: string };
+type NavSection = { label: string; items: NavItem[] };
+
+const NAV_SECTIONS: NavSection[] = [
   {
     label: 'DÉVELOPPEMENT',
     items: [
@@ -40,7 +43,7 @@ const NAV_SECTIONS = [
       { href: '/developers/docs/errors',         icon: TagIcon,         label: 'Erreurs & Limits' },
     ],
   },
-] as const;
+];
 
 export default function DevelopersLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -120,7 +123,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
             <img src="/logo/Alfychat.svg" alt="AlfyChat" width={18} height={18} />
           </Link>
           <div className="flex flex-1 gap-1 overflow-x-auto">
-            {(NAV_SECTIONS.flatMap((s) => s.items.slice(0, 2)) as any).map((item: any) => (
+            {NAV_SECTIONS.flatMap((s) => s.items.slice(0, 2)).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
