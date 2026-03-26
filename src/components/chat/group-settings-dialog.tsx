@@ -87,11 +87,26 @@ export function GroupSettingsDialog({
     if (open && group) {
       setGroupName(group.name);
       setSection(initialSection || 'general');
-      setShowAddMembers(initialSection === 'members');
+      setFriendSearch('');
       setSelectedFriendIds(new Set());
-      if (initialSection === 'members') loadFriends();
+      if (initialSection === 'members') {
+        setShowAddMembers(true);
+        // loadFriends will be called by the showAddMembers button handler; trigger here too
+        api.getFriends().then((response) => {
+          if (response.success && response.data) {
+            setFriends(
+              (response.data as Friend[]).filter(
+                (f) => !group?.participantIds.includes(f.id),
+              ),
+            );
+          }
+        }).catch(() => {});
+      } else {
+        setShowAddMembers(false);
+      }
     }
-  }, [open, group, initialSection]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, group?.id, initialSection]);
 
   useEffect(() => {
     if (!open || !group) return;

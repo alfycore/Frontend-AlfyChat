@@ -430,10 +430,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
         const currentUserId = userIdRef.current || user?.id || '';
 
         // Afficher immédiatement les messages non-chiffrés (canaux serveur)
-        // Les messages DM chiffrés affichent un placeholder pendant le déchiffrement
+        // Les messages DM chiffrés affichent un placeholder vide pendant le déchiffrement
         const immediate = rawMessages.map((m) => ({
           id: m.id,
-          content: m.e2eeType ? '🔒 Déchiffrement...' : m.content,
+          content: m.e2eeType ? '' : m.content,
           e2ee: !!m.e2eeType,
           authorId: m.senderId || m.authorId,
           channelId: m.channelId,
@@ -496,7 +496,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
         // Afficher immédiatement les messages non-chiffrés
         const immediate = rawMessages.map((m) => ({
           id: m.id,
-          content: m.e2eeType ? '🔒 Déchiffrement...' : m.content,
+          content: m.e2eeType ? '' : m.content,
           e2ee: !!m.e2eeType,
           authorId: m.senderId || m.authorId,
           channelId: m.channelId,

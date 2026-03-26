@@ -229,7 +229,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
     setReplyingTo(null);
     stopTyping();
     isAtBottomRef.current = true;
-    setTimeout(scrollToBottom, 50);
+    scrollToBottom();
   };
 
   const handleSetEditInput = useCallback((value: SetStateAction<string>) => {
@@ -289,7 +289,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const handleGifSelect = (gifUrl: string) => {
     sendMessage(gifUrl);
     isAtBottomRef.current = true;
-    setTimeout(scrollToBottom, 50);
+    scrollToBottom();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

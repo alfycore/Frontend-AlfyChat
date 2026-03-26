@@ -228,7 +228,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     setReplyingTo(null);
     stopTyping();
     isAtBottomRef.current = true;
-    setTimeout(scrollToBottom, 50);
+    scrollToBottom();
   };
 
   const handleSetEditInput = useCallback((value: SetStateAction<string>) => {

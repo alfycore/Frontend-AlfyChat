@@ -121,7 +121,7 @@ export const MessageItem = memo(function MessageItem({
   }
 
   return (
-    <div className={`group relative flex items-start gap-3 rounded-xl px-3 py-2 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/25 md:gap-3.5 md:px-4 md:py-2.5 ${message.pending ? 'opacity-50' : ''}`}>
+    <div className={`group relative flex items-start gap-3 rounded-xl px-3 py-2 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/25 md:gap-3.5 md:px-4 md:py-2.5`}>
       {/* Action toolbar — floats top-right on hover */}
       <div className="absolute -top-3 right-2 z-10 flex items-center gap-0.5 rounded-lg border border-[var(--border)]/50 bg-[var(--surface)]/95 px-0.5 py-0.5 opacity-0 shadow-lg shadow-black/5 backdrop-blur-xl transition-all duration-150 group-hover:opacity-100">
         <Tooltip delay={0}>
@@ -248,7 +248,7 @@ export const MessageItem = memo(function MessageItem({
             {formatTime(message.createdAt)}
           </span>
           {message.pending && (
-            <HugeiconsIcon icon={ClockIcon} size={11} className="animate-pulse text-[var(--muted)]/50" />
+            <HugeiconsIcon icon={ClockIcon} size={11} className="text-[var(--muted)]/30" />
           )}
           {!!message.isEdited && (
             <span className="text-[10px] text-[var(--muted)]/40">(modifié)</span>
