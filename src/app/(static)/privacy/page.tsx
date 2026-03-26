@@ -3,7 +3,27 @@ import { Separator, Link } from '@heroui/react';
 
 export const metadata = {
   title: 'Politique de Confidentialité — AlfyChat',
+  description: "Politique de confidentialité de la plateforme AlfyChat, portée par l'association AlfyCore (loi 1901). RGPD, données personnelles, droits des utilisateurs.",
 };
+
+const TOC = [
+  { n: '1',  title: 'Qui sommes-nous ? — Responsable de traitement' },
+  { n: '2',  title: 'Données collectées' },
+  { n: '3',  title: 'Finalités et bases légales du traitement' },
+  { n: '4',  title: 'Durées de conservation' },
+  { n: '5',  title: 'Chiffrement de bout en bout et confidentialité technique' },
+  { n: '6',  title: 'Hébergement et transferts de données' },
+  { n: '7',  title: 'Partage de données avec des tiers' },
+  { n: '8',  title: 'Cookies et technologies de traçage' },
+  { n: '9',  title: 'Sécurité des données' },
+  { n: '10', title: 'Données des mineurs' },
+  { n: '11', title: 'Vos droits (RGPD)' },
+  { n: '12', title: 'Droit à la portabilité et export' },
+  { n: '13', title: "Droit d'opposition et de limitation" },
+  { n: '14', title: "Réclamation auprès d'une autorité de contrôle" },
+  { n: '15', title: 'Modifications de la présente politique' },
+  { n: '16', title: 'Contact — Délégué à la Protection des Données' },
+];
 
 export default function PrivacyPage() {
   return (

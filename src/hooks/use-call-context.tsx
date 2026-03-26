@@ -21,6 +21,7 @@ interface CallContextValue {
   mediaError?: string;
   callDuration: number;
   initiateCall: (recipientId: string, type: 'voice' | 'video', conversationId?: string, recipientName?: string) => Promise<void>;
+  initiateGroupCall: (conversationId: string, type: 'voice' | 'video', groupName?: string) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => void;
   endCall: () => void;
@@ -51,6 +52,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
     screenStream,
     mediaError,
     initiateCall,
+    initiateGroupCall,
     acceptCall,
     declineCall,
     endCall,
@@ -91,6 +93,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         mediaError,
         callDuration,
         initiateCall,
+        initiateGroupCall,
         acceptCall,
         declineCall,
         endCall,

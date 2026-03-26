@@ -253,16 +253,16 @@ class SocketService {
     this.on('socket:reconnected', callback);
   }
 
-  sendWebRTCOffer(callId: string, offer: RTCSessionDescriptionInit): void {
-    this.socket?.emit('WEBRTC_OFFER', { callId, offer });
+  sendWebRTCOffer(callId: string, offer: RTCSessionDescriptionInit, targetUserId?: string): void {
+    this.socket?.emit('WEBRTC_OFFER', { callId, offer, targetUserId });
   }
 
-  sendWebRTCAnswer(callId: string, answer: RTCSessionDescriptionInit): void {
-    this.socket?.emit('WEBRTC_ANSWER', { callId, answer });
+  sendWebRTCAnswer(callId: string, answer: RTCSessionDescriptionInit, targetUserId?: string): void {
+    this.socket?.emit('WEBRTC_ANSWER', { callId, answer, targetUserId });
   }
 
-  sendICECandidate(callId: string, candidate: RTCIceCandidateInit): void {
-    this.socket?.emit('WEBRTC_ICE_CANDIDATE', { callId, candidate });
+  sendICECandidate(callId: string, candidate: RTCIceCandidateInit, targetUserId?: string): void {
+    this.socket?.emit('WEBRTC_ICE_CANDIDATE', { callId, candidate, targetUserId });
   }
 
   // Serveurs

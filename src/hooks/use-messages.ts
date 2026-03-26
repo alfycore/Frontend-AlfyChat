@@ -161,6 +161,11 @@ export function useMessages(channelId?: string, recipientId?: string) {
     userIdRef.current = user?.id ?? '';
   }, [user?.id]);
 
+  // File FIFO des plaintexts DM en attente de confirmation.
+  // Évite le bug rapid-send où plusieurs messages envoyés rapidement
+  // faisaient afficher le ciphertext brut à la place du texte clair.
+  const pendingContentsRef = useRef<string[]>([]);
+
   /** Calcule le conversationId pour envoyer avec les réactions */
   const getConversationId = useCallback((): string | null => {
     if (channelId) return channelId;
@@ -294,18 +299,26 @@ export function useMessages(channelId?: string, recipientId?: string) {
         const authorId = data.message.senderId || data.message.authorId;
         const isDM = !!data.message.e2eeType;
 
+        // Dépiler le plaintext correspondant (ordre FIFO = ordre d'envoi)
+        const plaintext = isDM ? pendingContentsRef.current.shift() : undefined;
+
         setMessages((prev) => {
-          // Récupérer le plaintext depuis le message optimiste (avant chiffrement)
-          const pendingMsg = prev.find(m => m.pending && m.authorId === authorId);
-          // Retirer tous les messages pending de cet auteur
-          const withoutPending = prev.filter(m => !(m.pending && m.authorId === authorId));
+          // Retirer UN SEUL message pending de cet auteur (le plus ancien)
+          let removed = false;
+          const withoutOnePending = prev.filter(m => {
+            if (!removed && m.pending && m.authorId === authorId) {
+              removed = true;
+              return false;
+            }
+            return true;
+          });
           // Éviter les doublons
-          if (withoutPending.some(m => m.id === data.message.id)) return withoutPending;
+          if (withoutOnePending.some(m => m.id === data.message.id)) return withoutOnePending;
 
           const confirmedMessage: Message = {
             id: data.message.id,
-            // Pour les DMs : conserver le plaintext du message optimiste
-            content: isDM ? (pendingMsg?.content ?? data.message.content) : data.message.content,
+            // Pour les DMs : utiliser le plaintext de la file FIFO
+            content: isDM ? (plaintext ?? data.message.content) : data.message.content,
             e2ee: isDM,
             authorId,
             channelId: data.message.channelId,
@@ -318,7 +331,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
             reactions: groupedReactions,
             sender: data.message.sender,
           };
-          return [...withoutPending, confirmedMessage];
+          return [...withoutOnePending, confirmedMessage];
         });
       }
     };
@@ -598,6 +611,8 @@ export function useMessages(channelId?: string, recipientId?: string) {
           }
 
           const encrypted = await signalService.encrypt(recipientId, content, user.id);
+          // Empiler le plaintext dans la file FIFO avant d'envoyer
+          pendingContentsRef.current.push(content);
           socketService.sendMessage({
             channelId,
             recipientId,

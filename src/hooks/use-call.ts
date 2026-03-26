@@ -135,17 +135,19 @@ export function useCall(options: UseCallOptions = {}) {
   const [state, setState] = useState<CallState>(INITIAL_STATE);
 
   // ── Refs for stable access across async operations ──
-  const pcRef = useRef<RTCPeerConnection | null>(null);
+  // Mesh: one RTCPeerConnection per remote participant
+  const pcsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const originalVideoTrackRef = useRef<MediaStreamTrack | null>(null);
   const callIdRef = useRef<string | null>(null);
   const callTypeRef = useRef<'voice' | 'video' | null>(null);
-  const iceCandidateQueueRef = useRef<RTCIceCandidateInit[]>([]);
-  const remoteDescSetRef = useRef(false);
+  // Per-peer ICE queue and signaling state tracking
+  const iceQueuesRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
+  const remoteDescSetMapRef = useRef<Map<string, boolean>>(new Map());
+  const makingOfferMapRef = useRef<Map<string, boolean>>(new Map());
+  const settingRemoteMapRef = useRef<Map<string, boolean>>(new Map());
   const cleaningUpRef = useRef(false);
-  const makingOfferRef = useRef(false);
-  const settingRemoteRef = useRef(false);
   const callTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep refs synced with state
@@ -233,38 +235,32 @@ export function useCall(options: UseCallOptions = {}) {
     cleaningUpRef.current = true;
     console.log('[CALL] Cleanup');
 
-    // Clear call timeout
     if (callTimeoutRef.current) {
       clearTimeout(callTimeoutRef.current);
       callTimeoutRef.current = null;
     }
 
-    // Teardown PeerConnection
-    const pc = pcRef.current;
-    if (pc) {
+    // Close all peer connections
+    pcsRef.current.forEach((pc) => {
       pc.onicecandidate = null;
       pc.ontrack = null;
       pc.onconnectionstatechange = null;
       pc.oniceconnectionstatechange = null;
       pc.onnegotiationneeded = null;
       pc.close();
-      pcRef.current = null;
-    }
+    });
+    pcsRef.current.clear();
+    iceQueuesRef.current.clear();
+    remoteDescSetMapRef.current.clear();
+    makingOfferMapRef.current.clear();
+    settingRemoteMapRef.current.clear();
 
-    // Stop screen share
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current = null;
     originalVideoTrackRef.current = null;
 
-    // Stop local media
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current = null;
-
-    // Reset refs
-    remoteDescSetRef.current = false;
-    iceCandidateQueueRef.current = [];
-    makingOfferRef.current = false;
-    settingRemoteRef.current = false;
 
     setState({ ...INITIAL_STATE });
     cleaningUpRef.current = false;
@@ -274,17 +270,16 @@ export function useCall(options: UseCallOptions = {}) {
   // FLUSH ICE CANDIDATES
   // ──────────────────────────────────────────────
 
-  const flushIceCandidates = useCallback(async () => {
-    const pc = pcRef.current;
-    if (!pc || !remoteDescSetRef.current) return;
+  const flushIceCandidates = useCallback(async (peerId: string) => {
+    const pc = pcsRef.current.get(peerId);
+    if (!pc || !remoteDescSetMapRef.current.get(peerId)) return;
 
-    const queue = iceCandidateQueueRef.current;
-    iceCandidateQueueRef.current = [];
+    const queue = iceQueuesRef.current.get(peerId) ?? [];
+    iceQueuesRef.current.set(peerId, []);
 
     if (queue.length > 0) {
-      console.log(`[CALL] Flushing ${queue.length} queued ICE candidates`);
+      console.log(`[CALL] Flushing ${queue.length} queued ICE candidates for ${peerId}`);
     }
-
     for (const candidate of queue) {
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
@@ -298,13 +293,16 @@ export function useCall(options: UseCallOptions = {}) {
   // CREATE PEER CONNECTION
   // ──────────────────────────────────────────────
 
-  const createPeerConnection = useCallback((): RTCPeerConnection => {
-    console.log('[CALL] Creating RTCPeerConnection');
+  const createPeerConnection = useCallback((peerId: string): RTCPeerConnection => {
+    console.log('[CALL] Creating RTCPeerConnection for peer:', peerId);
 
-    // Close previous if any
-    if (pcRef.current) {
-      pcRef.current.close();
-      pcRef.current = null;
+    // Close previous PC for this peer if any
+    const existing = pcsRef.current.get(peerId);
+    if (existing) {
+      existing.onicecandidate = null;
+      existing.ontrack = null;
+      existing.onconnectionstatechange = null;
+      existing.close();
     }
 
     const pc = new RTCPeerConnection({
@@ -312,102 +310,75 @@ export function useCall(options: UseCallOptions = {}) {
       iceCandidatePoolSize: 10,
     });
 
-    // ── ICE candidates → send via signaling ──
+    // ── ICE candidates → send to this specific peer ──
     pc.onicecandidate = (event) => {
       if (event.candidate && callIdRef.current) {
-        socketService.sendICECandidate(callIdRef.current, event.candidate.toJSON());
+        socketService.sendICECandidate(callIdRef.current, event.candidate.toJSON(), peerId);
       }
     };
 
-    // ── Remote tracks ──
+    // ── Remote tracks keyed by peerId ──
     pc.ontrack = (event) => {
-      console.log('[CALL] Remote track:', event.track.kind, 'streams:', event.streams.length);
       const remoteStream = event.streams[0];
       if (!remoteStream) return;
-
       setState((prev) => {
         const newStreams = new Map(prev.remoteStreams);
-        newStreams.set('remote', remoteStream);
+        newStreams.set(peerId, remoteStream);
         return { ...prev, remoteStreams: newStreams };
       });
-
-      // Listen for track changes on this stream (renegotiation)
       remoteStream.onaddtrack = () => {
         setState((prev) => {
-          const newStreams = new Map(prev.remoteStreams);
-          newStreams.set('remote', remoteStream);
-          return { ...prev, remoteStreams: newStreams };
-        });
-      };
-      remoteStream.onremovetrack = () => {
-        setState((prev) => {
-          const newStreams = new Map(prev.remoteStreams);
-          newStreams.set('remote', remoteStream);
-          return { ...prev, remoteStreams: newStreams };
+          const s = new Map(prev.remoteStreams);
+          s.set(peerId, remoteStream);
+          return { ...prev, remoteStreams: s };
         });
       };
     };
 
     // ── Connection state ──
     pc.onconnectionstatechange = () => {
-      console.log('[CALL] Connection state:', pc.connectionState);
-      switch (pc.connectionState) {
-        case 'connected':
-          setState((prev) => ({ ...prev, status: 'connected' }));
-          break;
-        case 'failed':
-          console.error('[CALL] Connection failed — attempting ICE restart');
-          if (callIdRef.current && !makingOfferRef.current) {
-            makingOfferRef.current = true;
-            pc.restartIce();
-            pc.createOffer({ iceRestart: true })
-              .then((offer) => pc.setLocalDescription(offer))
-              .then(() => {
-                if (callIdRef.current && pc.localDescription) {
-                  socketService.sendWebRTCOffer(callIdRef.current, pc.localDescription);
-                }
-              })
-              .catch((err) => {
-                console.error('[CALL] ICE restart failed:', err);
-                cleanup();
-              })
-              .finally(() => {
-                makingOfferRef.current = false;
-              });
-          } else if (!callIdRef.current) {
-            cleanup();
-          }
-          break;
-        case 'disconnected':
-          console.warn('[CALL] Disconnected — waiting for recovery...');
-          break;
+      console.log(`[CALL] PC[${peerId}] state:`, pc.connectionState);
+      if (pc.connectionState === 'connected') {
+        setState((prev) => ({ ...prev, status: 'connected' }));
+      } else if (pc.connectionState === 'failed') {
+        console.error(`[CALL] PC[${peerId}] failed — attempting ICE restart`);
+        const making = makingOfferMapRef.current.get(peerId);
+        if (!making && callIdRef.current) {
+          makingOfferMapRef.current.set(peerId, true);
+          pc.restartIce();
+          pc.createOffer({ iceRestart: true })
+            .then((offer) => pc.setLocalDescription(offer))
+            .then(() => {
+              if (callIdRef.current && pc.localDescription) {
+                socketService.sendWebRTCOffer(callIdRef.current, pc.localDescription, peerId);
+              }
+            })
+            .catch((err) => console.error('[CALL] ICE restart failed:', err))
+            .finally(() => makingOfferMapRef.current.set(peerId, false));
+        }
       }
     };
 
     pc.oniceconnectionstatechange = () => {
-      console.log('[CALL] ICE state:', pc.iceConnectionState);
-      if (pc.iceConnectionState === 'failed') {
-        pc.restartIce();
-      }
+      if (pc.iceConnectionState === 'failed') pc.restartIce();
     };
 
-    // ── Renegotiation (camera added mid-call etc.) ──
+    // ── Renegotiation (mid-call track changes) ──
     pc.onnegotiationneeded = async () => {
-      if (makingOfferRef.current || settingRemoteRef.current) return;
+      if (makingOfferMapRef.current.get(peerId) || settingRemoteMapRef.current.get(peerId)) return;
       if (pc.signalingState !== 'stable') return;
-
       try {
-        makingOfferRef.current = true;
+        makingOfferMapRef.current.set(peerId, true);
         const offer = await pc.createOffer();
         if (pc.signalingState !== 'stable') return;
         await pc.setLocalDescription(offer);
         if (callIdRef.current) {
-          socketService.sendWebRTCOffer(callIdRef.current, offer);
+          socketService.sendWebRTCOffer(callIdRef.current, offer, peerId);
         }
       } catch (err) {
         console.error('[CALL] Renegotiation error:', err);
       } finally {
-        makingOfferRef.current = false;
+        makingOfferMapRef.current.set(peerId, false);
       }
     };
 
@@ -418,9 +389,9 @@ export function useCall(options: UseCallOptions = {}) {
       });
     }
 
-    pcRef.current = pc;
-    remoteDescSetRef.current = false;
-    iceCandidateQueueRef.current = [];
+    pcsRef.current.set(peerId, pc);
+    remoteDescSetMapRef.current.set(peerId, false);
+    iceQueuesRef.current.set(peerId, []);
 
     return pc;
   }, [cleanup]);
@@ -434,7 +405,6 @@ export function useCall(options: UseCallOptions = {}) {
     const handleIncoming = (data: unknown) => {
       const p = parsePayload(data);
       console.log('[CALL] Incoming call:', p);
-
       setState((prev) => {
         if (prev.status !== 'idle') {
           console.warn('[CALL] Already in a call, ignoring incoming');
@@ -455,26 +425,48 @@ export function useCall(options: UseCallOptions = {}) {
       });
     };
 
-    // ── Call accepted (we are initiator → create offer) ──
-    const handleAccepted = async (data: unknown) => {
+    // ── Someone accepted the call — UI state update only ──
+    // Actual PC creation happens in handleParticipantJoined (for existing) or handleOffer (for new joiner)
+    const handleAccepted = (data: unknown) => {
       const p = parsePayload(data);
-      console.log('[CALL] Call accepted by:', p.userId);
+      const joinedId = p.userId as string;
+      console.log('[CALL] Call accepted by:', joinedId);
+      setState((prev) => ({
+        ...prev,
+        status: prev.status === 'calling' ? 'connecting' : prev.status,
+        participants: prev.participants.includes(joinedId)
+          ? prev.participants
+          : [...prev.participants, joinedId],
+      }));
+    };
 
-      setState((prev) => ({ ...prev, status: 'connecting' }));
+    // ── New participant joined → existing participants must create PC + offer ──
+    const handleParticipantJoined = async (data: unknown) => {
+      const p = parsePayload(data);
+      const newPeerId = p.userId as string;
+      if (newPeerId === userId) return;
+      console.log('[CALL] New participant joined, creating PC for:', newPeerId);
 
-      makingOfferRef.current = true;
-      const pc = createPeerConnection();
+      setState((prev) => ({
+        ...prev,
+        status: 'connecting',
+        participants: prev.participants.includes(newPeerId)
+          ? prev.participants
+          : [...prev.participants, newPeerId],
+      }));
+
+      const pc = createPeerConnection(newPeerId);
       try {
+        makingOfferMapRef.current.set(newPeerId, true);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         if (callIdRef.current) {
-          socketService.sendWebRTCOffer(callIdRef.current, offer);
+          socketService.sendWebRTCOffer(callIdRef.current, offer, newPeerId);
         }
       } catch (err) {
-        console.error('[CALL] Error creating offer:', err);
-        cleanup();
+        console.error('[CALL] Error creating offer for new participant:', err);
       } finally {
-        makingOfferRef.current = false;
+        makingOfferMapRef.current.set(newPeerId, false);
       }
     };
 
@@ -484,80 +476,105 @@ export function useCall(options: UseCallOptions = {}) {
       cleanup();
     };
 
-    // ── Call ended ──
+    // ── Whole call ended ──
     const handleEnded = () => {
-      console.log('[CALL] Call ended by remote');
+      console.log('[CALL] Call ended');
       cleanup();
     };
 
-    // ── WebRTC offer (we are receiver → create answer) ──
+    // ── One peer left the call (partial leave) ──
+    const handlePeerLeft = (data: unknown) => {
+      const p = parsePayload(data);
+      const leftId = p.userId as string;
+      if (leftId === userId) return;
+      console.log('[CALL] Peer left:', leftId);
+
+      const pc = pcsRef.current.get(leftId);
+      if (pc) { pc.close(); pcsRef.current.delete(leftId); }
+      iceQueuesRef.current.delete(leftId);
+      remoteDescSetMapRef.current.delete(leftId);
+
+      setState((prev) => {
+        const newStreams = new Map(prev.remoteStreams);
+        newStreams.delete(leftId);
+        const remaining = prev.participants.filter((id) => id !== leftId);
+        if (remaining.length === 0) return { ...INITIAL_STATE };
+        return { ...prev, participants: remaining, remoteStreams: newStreams };
+      });
+    };
+
+    // ── WebRTC offer received → create PC for sender + answer ──
     const handleOffer = async (data: unknown) => {
       const p = parsePayload(data);
-      console.log('[CALL] Received offer from:', p.fromUserId);
+      const fromUserId = p.fromUserId as string;
+      if (fromUserId === userId) return;
+      console.log('[CALL] Received offer from:', fromUserId);
 
-      settingRemoteRef.current = true;
-
-      let pc = pcRef.current;
+      let pc = pcsRef.current.get(fromUserId);
       if (!pc) {
-        pc = createPeerConnection();
+        pc = createPeerConnection(fromUserId);
+        setState((prev) => ({
+          ...prev,
+          status: 'connecting',
+          participants: prev.participants.includes(fromUserId)
+            ? prev.participants
+            : [...prev.participants, fromUserId],
+        }));
       }
 
+      settingRemoteMapRef.current.set(fromUserId, true);
       try {
-        // Glare: rollback our local offer if colliding
         if (pc.signalingState === 'have-local-offer') {
           console.warn('[CALL] Glare — rolling back local offer');
           await pc.setLocalDescription({ type: 'rollback' });
         }
-
-        await pc.setRemoteDescription(
-          new RTCSessionDescription(p.offer as RTCSessionDescriptionInit),
-        );
-        remoteDescSetRef.current = true;
-        await flushIceCandidates();
-
+        await pc.setRemoteDescription(new RTCSessionDescription(p.offer as RTCSessionDescriptionInit));
+        remoteDescSetMapRef.current.set(fromUserId, true);
+        await flushIceCandidates(fromUserId);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         if (callIdRef.current) {
-          socketService.sendWebRTCAnswer(callIdRef.current, answer);
+          socketService.sendWebRTCAnswer(callIdRef.current, answer, fromUserId);
         }
       } catch (err) {
-        console.error('[CALL] Error handling offer:', err);
+        console.error('[CALL] Error handling offer from', fromUserId, ':', err);
       } finally {
-        settingRemoteRef.current = false;
+        settingRemoteMapRef.current.set(fromUserId, false);
       }
     };
 
-    // ── WebRTC answer (we are initiator) ──
+    // ── WebRTC answer received ──
     const handleAnswer = async (data: unknown) => {
       const p = parsePayload(data);
-      console.log('[CALL] Received answer from:', p.fromUserId);
+      const fromUserId = p.fromUserId as string;
+      if (fromUserId === userId) return;
+      console.log('[CALL] Received answer from:', fromUserId);
 
-      const pc = pcRef.current;
+      const pc = pcsRef.current.get(fromUserId);
       if (!pc) return;
-
       try {
-        await pc.setRemoteDescription(
-          new RTCSessionDescription(p.answer as RTCSessionDescriptionInit),
-        );
-        remoteDescSetRef.current = true;
-        await flushIceCandidates();
+        await pc.setRemoteDescription(new RTCSessionDescription(p.answer as RTCSessionDescriptionInit));
+        remoteDescSetMapRef.current.set(fromUserId, true);
+        await flushIceCandidates(fromUserId);
       } catch (err) {
         console.error('[CALL] Error handling answer:', err);
       }
     };
 
-    // ── ICE candidate ──
+    // ── ICE candidate received ──
     const handleICE = async (data: unknown) => {
       const p = parsePayload(data);
+      const fromUserId = p.fromUserId as string;
+      if (fromUserId === userId) return;
       const candidate = p.candidate as RTCIceCandidateInit | undefined;
       if (!candidate) return;
 
-      const pc = pcRef.current;
-      if (!pc || !remoteDescSetRef.current) {
-        iceCandidateQueueRef.current.push(candidate);
+      const pc = pcsRef.current.get(fromUserId);
+      if (!pc || !remoteDescSetMapRef.current.get(fromUserId)) {
+        if (!iceQueuesRef.current.has(fromUserId)) iceQueuesRef.current.set(fromUserId, []);
+        iceQueuesRef.current.get(fromUserId)!.push(candidate);
         return;
       }
-
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
@@ -570,53 +587,37 @@ export function useCall(options: UseCallOptions = {}) {
       if (callIdRef.current) {
         console.log('[CALL] Socket reconnected — rejoining call:', callIdRef.current);
         socketService.rejoinCall(callIdRef.current);
-        const pc = pcRef.current;
-        if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'disconnected')) {
-          pc.restartIce();
-        }
-      }
-    };
-
-    // ── Peer reconnected ──
-    const handlePeerReconnected = async (data: unknown) => {
-      const p = parsePayload(data);
-      console.log('[CALL] Peer reconnected:', p.userId);
-      const pc = pcRef.current;
-      if (!pc || !callIdRef.current || makingOfferRef.current) return;
-
-      try {
-        makingOfferRef.current = true;
-        const offer = await pc.createOffer({ iceRestart: true });
-        await pc.setLocalDescription(offer);
-        socketService.sendWebRTCOffer(callIdRef.current, offer);
-      } catch (err) {
-        console.warn('[CALL] Peer reconnect offer error:', err);
-      } finally {
-        makingOfferRef.current = false;
+        pcsRef.current.forEach((pc) => {
+          if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+            pc.restartIce();
+          }
+        });
       }
     };
 
     // Register listeners
     socketService.onCall(handleIncoming);
     socketService.onCallAccepted(handleAccepted);
+    socketService.on('CALL_PARTICIPANT_JOINED', handleParticipantJoined);
     socketService.onCallRejected(handleRejected);
     socketService.onCallEnded(handleEnded);
+    socketService.on('CALL_LEAVE', handlePeerLeft);
     socketService.onWebRTCOffer(handleOffer);
     socketService.onWebRTCAnswer(handleAnswer);
     socketService.onICECandidate(handleICE);
     socketService.onReconnected(handleReconnect);
-    socketService.on('CALL_PEER_RECONNECTED', handlePeerReconnected);
 
     return () => {
       socketService.off('CALL_INCOMING', handleIncoming);
       socketService.off('CALL_ACCEPT', handleAccepted);
+      socketService.off('CALL_PARTICIPANT_JOINED', handleParticipantJoined);
       socketService.off('CALL_REJECT', handleRejected);
       socketService.off('CALL_END', handleEnded);
+      socketService.off('CALL_LEAVE', handlePeerLeft);
       socketService.off('WEBRTC_OFFER', handleOffer);
       socketService.off('WEBRTC_ANSWER', handleAnswer);
       socketService.off('WEBRTC_ICE_CANDIDATE', handleICE);
       socketService.off('socket:reconnected', handleReconnect);
-      socketService.off('CALL_PEER_RECONNECTED', handlePeerReconnected);
     };
   }, [createPeerConnection, flushIceCandidates, cleanup]);
 
@@ -759,18 +760,15 @@ export function useCall(options: UseCallOptions = {}) {
 
   /** Toggle camera on/off */
   const toggleVideo = useCallback(async () => {
-    const pc = pcRef.current;
     const stream = localStreamRef.current;
     if (!stream) return;
 
     const existingTrack = stream.getVideoTracks()[0];
 
     if (existingTrack) {
-      // Toggle existing video track
       existingTrack.enabled = !existingTrack.enabled;
       setState((prev) => ({ ...prev, isVideoOff: !existingTrack.enabled }));
     } else {
-      // Acquire camera and add it mid-call
       if (!hasMediaDevices()) return;
 
       try {
@@ -782,10 +780,8 @@ export function useCall(options: UseCallOptions = {}) {
 
         stream.addTrack(camTrack);
 
-        // Add to PeerConnection — onnegotiationneeded will handle renegotiation
-        if (pc) {
-          pc.addTrack(camTrack, stream);
-        }
+        // Add track to all active peer connections
+        pcsRef.current.forEach((pc) => pc.addTrack(camTrack, stream));
 
         setState((prev) => ({
           ...prev,
@@ -811,9 +807,8 @@ export function useCall(options: UseCallOptions = {}) {
 
   /** Start screen sharing */
   const startScreenShare = useCallback(async () => {
-    const pc = pcRef.current;
     const stream = localStreamRef.current;
-    if (!pc || !stream) return;
+    if (!stream) return;
 
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
@@ -824,30 +819,22 @@ export function useCall(options: UseCallOptions = {}) {
       const screenTrack = screenStream.getVideoTracks()[0];
       screenStreamRef.current = screenStream;
 
-      // Save original video track to restore later
       const existingVideoTrack = stream.getVideoTracks()[0];
-      if (existingVideoTrack) {
-        originalVideoTrackRef.current = existingVideoTrack;
-      }
+      if (existingVideoTrack) originalVideoTrackRef.current = existingVideoTrack;
 
-      // Replace or add screen track
-      const videoSender = pc.getSenders().find((s) => s.track?.kind === 'video');
-      if (videoSender) {
-        await videoSender.replaceTrack(screenTrack);
-      } else {
-        pc.addTrack(screenTrack, stream);
-      }
+      // Replace or add screen track in all peer connections
+      pcsRef.current.forEach((pc) => {
+        const videoSender = pc.getSenders().find((s) => s.track?.kind === 'video');
+        if (videoSender) {
+          videoSender.replaceTrack(screenTrack);
+        } else {
+          pc.addTrack(screenTrack, stream);
+        }
+      });
 
-      setState((prev) => ({
-        ...prev,
-        isScreenSharing: true,
-        screenStream,
-      }));
+      setState((prev) => ({ ...prev, isScreenSharing: true, screenStream }));
 
-      // Handle user stopping share via browser UI
-      screenTrack.onended = () => {
-        stopScreenShare();
-      };
+      screenTrack.onended = () => stopScreenShare();
     } catch {
       // User cancelled the picker — not an error
     }
@@ -855,25 +842,19 @@ export function useCall(options: UseCallOptions = {}) {
 
   /** Stop screen sharing */
   const stopScreenShare = useCallback(async () => {
-    const pc = pcRef.current;
-
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current = null;
 
-    // Restore original video track
-    if (pc && originalVideoTrackRef.current) {
-      const videoSender = pc.getSenders().find((s) => s.track?.kind === 'video');
-      if (videoSender) {
-        await videoSender.replaceTrack(originalVideoTrackRef.current);
-      }
+    const originalTrack = originalVideoTrackRef.current;
+    if (originalTrack) {
+      pcsRef.current.forEach((pc) => {
+        const videoSender = pc.getSenders().find((s) => s.track?.kind === 'video');
+        if (videoSender) videoSender.replaceTrack(originalTrack);
+      });
       originalVideoTrackRef.current = null;
     }
 
-    setState((prev) => ({
-      ...prev,
-      isScreenSharing: false,
-      screenStream: null,
-    }));
+    setState((prev) => ({ ...prev, isScreenSharing: false, screenStream: null }));
   }, []);
 
   /** Switch audio input device live */
@@ -895,12 +876,13 @@ export function useCall(options: UseCallOptions = {}) {
       const newTrack = newStream.getAudioTracks()[0];
       const oldTrack = localStreamRef.current.getAudioTracks()[0];
 
-      // Replace in PeerConnection
-      const pc = pcRef.current;
-      if (pc) {
+      // Replace in all peer connections
+      const replacePromises: Promise<void>[] = [];
+      pcsRef.current.forEach((pc) => {
         const sender = pc.getSenders().find((s) => s.track?.kind === 'audio');
-        if (sender) await sender.replaceTrack(newTrack);
-      }
+        if (sender) replacePromises.push(sender.replaceTrack(newTrack));
+      });
+      await Promise.all(replacePromises);
 
       if (oldTrack) {
         localStreamRef.current.removeTrack(oldTrack);
@@ -913,9 +895,52 @@ export function useCall(options: UseCallOptions = {}) {
     }
   }, []);
 
+  /** Initiate a group call — rings all members in the conversation simultaneously */
+  const initiateGroupCall = useCallback(
+    async (conversationId: string, type: 'voice' | 'video', groupName?: string) => {
+      console.log('[CALL] Initiating group call:', conversationId, type);
+
+      setState((prev) => ({
+        ...prev,
+        type,
+        status: 'calling',
+        callerName: groupName,
+        callConversationId: conversationId,
+        mediaError: undefined,
+      }));
+
+      const stream = await requestMedia(type);
+      if (!stream) return;
+
+      localStreamRef.current = stream;
+      setState((prev) => ({ ...prev, localStream: stream }));
+
+      socketService.initiateCall(
+        { conversationId, type },
+        (response: Record<string, unknown>) => {
+          console.log('[CALL] Group call initiate response:', response);
+          if (response?.callId || response?.id) {
+            setState((prev) => ({
+              ...prev,
+              callId: (response.callId || response.id) as string,
+            }));
+          } else if (response?.error) {
+            console.error('[CALL] Group call error:', response.error);
+            setState((prev) => ({
+              ...prev,
+              mediaError: `Erreur serveur : ${response.error}`,
+            }));
+          }
+        },
+      );
+    },
+    [requestMedia, userId],
+  );
+
   return {
     ...state,
     initiateCall,
+    initiateGroupCall,
     acceptCall,
     declineCall,
     endCall,
