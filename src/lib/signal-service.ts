@@ -372,11 +372,19 @@ class SignalService {
     if (!bundle) throw new Error(`[Signal] Bundle introuvable en cache pour ${recipientId}`);
     if (!bundle.ecdhKey) throw new Error(`[Signal] Le destinataire ${recipientId} n'a pas de clé ECDH P-256`);
 
-    // Chiffrer pour le destinataire via ECDH direct P-256 (pas de session Double Ratchet)
+    // Chiffrer pour le destinataire via ECDH direct P-256
     const content = await this.encryptECDH(plaintext, bundle.ecdhKey);
 
-    // Chiffrer pour l'expéditeur (AES-GCM avec clé locale)
-    const senderContent = await this.encryptForSelf(plaintextBuffer);
+    // Chiffrer pour l'expéditeur en utilisant SA PROPRE clé ECDH P-256
+    // → déchiffrable sur tout appareil ayant le même bundle (multi-device)
+    let senderContent: string;
+    const ownEcdhKP = await signalStore.getECDHKeyPair();
+    if (ownEcdhKP) {
+      senderContent = await this.encryptECDH(plaintext, ownEcdhKP.pubKey);
+    } else {
+      // Fallback AES si la clé ECDH est absente (ne devrait pas arriver)
+      senderContent = await this.encryptForSelf(plaintextBuffer);
+    }
 
     return {
       content,
@@ -404,11 +412,15 @@ class SignalService {
     const isSender = senderId === currentUserId;
 
     if (isSender && senderContent) {
-      // Format AES-GCM (senderContent)
+      // Nouveau format ECDH P-256 (multi-device) : chiffré avec la propre clé ECDH de l'expéditeur
+      if (senderContent.startsWith('ecdh:')) {
+        return this.decryptECDH(senderContent);
+      }
+      // Format AES-GCM local (ancien format single-device)
       if (senderContent.startsWith('aes:')) {
         return this.decryptForSelf(senderContent);
       }
-      // Ancien format Signal (messages envoyés avant la migration)
+      // Très ancien format Signal Double Ratchet
       return this.decryptSenderCopy(currentUserId, senderContent, e2eeType);
     }
 

@@ -369,6 +369,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Initialise les clés Signal E2EE à chaque connexion.
    * Vérifie le bundle côté serveur et le (re)crée si absent.
+   * En cas de multi-appareil, re-synchronise les clés depuis le backup serveur
+   * une fois par session pour garantir la cohérence entre appareils.
    */
   async function initSignalKeys(password: string) {
     try {
@@ -377,18 +379,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const serverHasBundle = status?.hasBundle === true;
 
       if (serverHasBundle) {
-        // Le serveur a un bundle — essayer de restaurer les clés locales
-        const alreadyInit = await signalService.isInitialized();
+        // ── Synchronisation multi-appareil ──────────────────────────────────
+        // Une fois par session (sessionStorage), télécharger le backup serveur
+        // et le ré-importer pour s'assurer que tous les appareils partagent
+        // les mêmes clés (ECDH P-256, selfEncryptionKey, etc.)
+        const alreadySynced = sessionStorage.getItem('signal_synced_this_session') === '1';
+        const alreadyInit   = await signalService.isInitialized();
 
-        if (!alreadyInit) {
-          // Pas de clés locales : restaurer depuis le backup chiffré
+        if (!alreadyInit || !alreadySynced) {
+          // Télécharger le backup chiffré depuis le serveur
           const backupRes = await api.downloadPrivateBundle();
           const encryptedBundle = backupRes?.encryptedBundle ?? null;
 
           if (encryptedBundle) {
-            console.log('[Signal] Restauration des clés depuis le backup...');
+            console.log('[Signal] Synchronisation des clés multi-appareil...');
             await signalService.decryptAndImportPrivateBundle(encryptedBundle, password);
-            console.log('[Signal] Clés restaurées ✓');
+            sessionStorage.setItem('signal_synced_this_session', '1');
+            console.log('[Signal] Clés synchronisées ✓');
 
             // Vérifier que la clé ECDH P-256 existe après restauration
             const { signalStore } = await import('../lib/signal-store');
@@ -397,39 +404,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               console.log('[Signal] Clé ECDH absente du backup, ajout...');
               await signalService.addMissingECDHKey(password);
             }
-          } else {
-            // Backup absent → regénérer tout
+          } else if (!alreadyInit) {
+            // Backup absent et pas de clés locales → regénérer tout
             console.log('[Signal] Pas de backup, regénération complète...');
             await signalService.reset();
             await generateAndPublishBundle(password);
+            sessionStorage.setItem('signal_synced_this_session', '1');
           }
-        } else {
-          // Clés locales OK — vérifier si la clé ECDH est présente
-          const { signalStore } = await import('../lib/signal-store');
-          const localECDH = await signalStore.getECDHKeyPair();
-          if (!localECDH) {
-            console.log('[Signal] Clé ECDH manquante, ajout sans reset...');
-            await signalService.addMissingECDHKey(password);
-          }
+        }
 
-          // Vérifier le stock de prekeys
-          if ((status!.prekeyCount ?? 0) < signalService.lowPrekeyThreshold) {
-            const startId = await signalService.getNextPreKeyId();
-            const newPrekeys = await signalService.generateOneTimePrekeys(
-              startId,
-              signalService.prekeyBatchSize
-            );
-            await api.replenishSignalPrekeys(newPrekeys);
-            const encryptedBlob = await signalService.encryptPrivateBundle(password);
-            await api.uploadPrivateBundle(encryptedBlob);
-            console.log(`[Signal] ${newPrekeys.length} prekeys rechargées ✓`);
-          }
+        // Vérifier le stock de prekeys
+        if ((status!.prekeyCount ?? 0) < signalService.lowPrekeyThreshold) {
+          const startId = await signalService.getNextPreKeyId();
+          const newPrekeys = await signalService.generateOneTimePrekeys(
+            startId,
+            signalService.prekeyBatchSize
+          );
+          await api.replenishSignalPrekeys(newPrekeys);
+          const encryptedBlob = await signalService.encryptPrivateBundle(password);
+          await api.uploadPrivateBundle(encryptedBlob);
+          console.log(`[Signal] ${newPrekeys.length} prekeys rechargées ✓`);
         }
       } else {
         // Pas de bundle côté serveur → reset local et générer tout
         console.log('[Signal] Aucun bundle serveur, génération complète...');
         await signalService.reset();
         await generateAndPublishBundle(password);
+        sessionStorage.setItem('signal_synced_this_session', '1');
       }
     } catch (err) {
       console.error('[Signal] Erreur initialisation clés:', err);
