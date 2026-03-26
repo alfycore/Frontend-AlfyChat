@@ -867,6 +867,30 @@ class ApiService {
     });
   }
 
+  // ============ CHANGELOGS ============
+
+  async getChangelogs(limit = 50, offset = 0) {
+    return this.request<any[]>(`/api/users/changelogs?limit=${limit}&offset=${offset}`);
+  }
+
+  async createChangelog(data: {
+    version: string;
+    title: string;
+    content: string;
+    type: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking';
+  }) {
+    return this.request('/api/admin/changelogs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteChangelog(changelogId: string) {
+    return this.request(`/api/admin/changelogs/${changelogId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Paramètres d'inscription publics (pas d'auth)
   async getRegisterSettings() {
     return this.request('/api/auth/register/settings');

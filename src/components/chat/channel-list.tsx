@@ -32,6 +32,7 @@ import {
   MediaIcon,
   PencilIcon,
   Trash2Icon,
+  FileTextIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -734,6 +735,20 @@ export function ChannelList({
                 <HugeiconsIcon icon={UsersIcon} size={15} />
               </div>
               Amis
+            </button>
+
+            {/* Changelogs button */}
+            <button
+              onClick={() => router.push('/changelogs')}
+              className={cn(
+                'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors',
+                'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
+              )}
+            >
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-secondary)] text-[var(--muted)]">
+                <HugeiconsIcon icon={FileTextIcon} size={15} />
+              </div>
+              Changelogs
             </button>
 
             <div className="px-1 py-1">

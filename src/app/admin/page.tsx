@@ -27,6 +27,7 @@ import {
   ShieldCheckIcon,
   ShieldAlertIcon,
   BanIcon,
+  FileTextIcon,
 } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
@@ -72,7 +73,7 @@ const BOOTSTRAP_ICONS = [
   { value: 'bi-moon-fill', label: 'Lune' },
 ];
 
-type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'security' | 'settings';
+type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'security' | 'changelogs' | 'settings';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -128,6 +129,16 @@ export default function AdminPage() {
   const [banIPValue, setBanIPValue] = useState('');
   const [banReasonValue, setBanReasonValue] = useState('');
 
+  // Changelogs
+  const [changelogs, setChangelogs] = useState<any[]>([]);
+  const [changelogForm, setChangelogForm] = useState({
+    version: '',
+    title: '',
+    content: '',
+    type: 'feature' as 'feature' | 'fix' | 'improvement' | 'security' | 'breaking',
+  });
+  const [changelogSubmitting, setChangelogSubmitting] = useState(false);
+
   useEffect(() => {
     if (user && user.role !== 'admin') {
       router.push('/channels/me');
@@ -181,6 +192,9 @@ export default function AdminPage() {
           setRateLimitStats(d.rateLimitStats || null);
           setRateLimitConfig(d.config || null);
         }
+      } else if (activeTab === 'changelogs') {
+        const res = await api.getChangelogs();
+        if (res.success && res.data) setChangelogs(res.data as any[]);
       }
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -506,6 +520,7 @@ export default function AdminPage() {
                 { id: 'discovery', label: 'Découverte', icon: CompassIcon },
                 { id: 'server-badges', label: 'Badges serveurs', icon: ServerIcon },
                 { id: 'security', label: 'Sécurité', icon: ShieldAlertIcon },
+                { id: 'changelogs', label: 'Changelogs', icon: FileTextIcon },
                 { id: 'settings', label: 'Paramètres', icon: SettingsIcon },
               ] as const
             ).map((tab) => (
@@ -1152,6 +1167,153 @@ export default function AdminPage() {
                     )}
                   </div>
                 </Card>
+              </div>
+            )}
+
+            {/* Changelogs */}
+            {activeTab === 'changelogs' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-[var(--foreground)]">Changelogs</h2>
+
+                {/* Formulaire de création */}
+                <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                  <div className="px-5 py-4">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
+                      <HugeiconsIcon icon={PlusIcon} size={20} className="text-[var(--accent)]" />
+                      Publier un changelog
+                    </h3>
+                  </div>
+                  <div className="px-5 pb-5 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-1.5">
+                        <label className="text-xs font-medium text-[var(--muted)]">Version</label>
+                        <input
+                          className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                          placeholder="v1.2.0"
+                          value={changelogForm.version}
+                          onChange={(e) => setChangelogForm({ ...changelogForm, version: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <label className="text-xs font-medium text-[var(--muted)]">Type</label>
+                        <select
+                          className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                          value={changelogForm.type}
+                          onChange={(e) => setChangelogForm({ ...changelogForm, type: e.target.value as any })}
+                        >
+                          <option value="feature">✨ Nouveauté</option>
+                          <option value="improvement">⚡ Amélioration</option>
+                          <option value="fix">🐛 Correctif</option>
+                          <option value="security">🔒 Sécurité</option>
+                          <option value="breaking">💥 Changement majeur</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <label className="text-xs font-medium text-[var(--muted)]">Titre</label>
+                      <input
+                        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        placeholder="Amélioration des appels vidéo"
+                        value={changelogForm.title}
+                        onChange={(e) => setChangelogForm({ ...changelogForm, title: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <label className="text-xs font-medium text-[var(--muted)]">Contenu (Markdown supporté)</label>
+                      <textarea
+                        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
+                        placeholder="- Correction du bug de connexion&#10;- Amélioration des performances&#10;- Nouvelle interface..."
+                        rows={5}
+                        value={changelogForm.content}
+                        onChange={(e) => setChangelogForm({ ...changelogForm, content: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        isDisabled={!changelogForm.version || !changelogForm.title || !changelogForm.content || changelogSubmitting}
+                        onPress={async () => {
+                          setChangelogSubmitting(true);
+                          try {
+                            const res = await api.createChangelog(changelogForm);
+                            if (res.success) {
+                              setChangelogForm({ version: '', title: '', content: '', type: 'feature' });
+                              const updated = await api.getChangelogs();
+                              if (updated.success && updated.data) setChangelogs(updated.data as any[]);
+                            }
+                          } catch (e) { console.error(e); }
+                          setChangelogSubmitting(false);
+                        }}
+                      >
+                        <HugeiconsIcon icon={PlusIcon} size={16} className="mr-1" />
+                        Publier
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Liste des changelogs */}
+                {changelogs.length === 0 ? (
+                  <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                    <div className="p-8 text-center">
+                      <HugeiconsIcon icon={FileTextIcon} size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+                      <p className="text-lg font-medium text-[var(--foreground)]">Aucun changelog</p>
+                      <p className="text-sm text-[var(--muted)]">Publiez votre premier changelog ci-dessus.</p>
+                    </div>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {changelogs.map((cl) => {
+                      const typeColors: Record<string, string> = {
+                        feature: 'bg-blue-500/15 text-blue-400',
+                        improvement: 'bg-purple-500/15 text-purple-400',
+                        fix: 'bg-orange-500/15 text-orange-400',
+                        security: 'bg-red-500/15 text-red-400',
+                        breaking: 'bg-red-700/15 text-red-500',
+                      };
+                      const typeLabels: Record<string, string> = {
+                        feature: '✨ Nouveauté',
+                        improvement: '⚡ Amélioration',
+                        fix: '🐛 Correctif',
+                        security: '🔒 Sécurité',
+                        breaking: '💥 Majeur',
+                      };
+                      return (
+                        <Card key={cl.id} className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                          <div className="flex items-start justify-between gap-4 p-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-mono font-bold text-[var(--accent)]">{cl.version}</span>
+                                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeColors[cl.type] || typeColors.feature}`}>
+                                  {typeLabels[cl.type] || cl.type}
+                                </span>
+                                <span className="text-xs text-[var(--muted)]">
+                                  {new Date(cl.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                </span>
+                                {cl.author_username && (
+                                  <span className="text-xs text-[var(--muted)]">· @{cl.author_username}</span>
+                                )}
+                              </div>
+                              <p className="font-semibold text-[var(--foreground)]">{cl.title}</p>
+                              <p className="mt-1 text-sm text-[var(--muted)] whitespace-pre-line line-clamp-3">{cl.content}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              isIconOnly
+                              onPress={async () => {
+                                if (!confirm('Supprimer ce changelog ?')) return;
+                                await api.deleteChangelog(cl.id);
+                                setChangelogs((prev) => prev.filter((c) => c.id !== cl.id));
+                              }}
+                            >
+                              <HugeiconsIcon icon={Trash2Icon} size={16} className="text-red-500" />
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
