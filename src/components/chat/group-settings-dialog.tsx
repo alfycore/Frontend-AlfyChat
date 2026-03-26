@@ -59,6 +59,7 @@ interface GroupSettingsDialogProps {
   group: GroupInfo | null;
   isOwner: boolean;
   myRole?: string;
+  initialSection?: 'general' | 'members';
   onUpdate?: () => void;
   onLeave?: () => void;
 }
@@ -69,6 +70,7 @@ export function GroupSettingsDialog({
   group,
   isOwner,
   myRole,
+  initialSection,
   onUpdate,
   onLeave,
 }: GroupSettingsDialogProps) {
@@ -84,10 +86,12 @@ export function GroupSettingsDialog({
   useEffect(() => {
     if (open && group) {
       setGroupName(group.name);
-      setShowAddMembers(false);
+      setSection(initialSection || 'general');
+      setShowAddMembers(initialSection === 'members');
       setSelectedFriendIds(new Set());
+      if (initialSection === 'members') loadFriends();
     }
-  }, [open, group]);
+  }, [open, group, initialSection]);
 
   useEffect(() => {
     if (!open || !group) return;

@@ -260,6 +260,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isRevokingAll, setIsRevokingAll] = useState(false);
 
+  /* -- Change password -- */
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
   /* -- 2FA -- */
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const [twoFALoading, setTwoFALoading] = useState(false);
@@ -534,6 +540,37 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!user) return;
+    if (!currentPassword.trim() || !newPassword.trim()) {
+      toast.danger('Veuillez remplir tous les champs');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.danger('Les mots de passe ne correspondent pas');
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.danger('Le nouveau mot de passe doit faire au moins 8 caractères');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const result = await api.changePassword(user.id, { currentPassword, newPassword });
+      if (result.success) {
+        toast.success('Mot de passe modifié avec succès');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        toast.danger((result as any).error || 'Mot de passe actuel incorrect');
+      }
+    } catch {
+      toast.danger('Erreur lors du changement de mot de passe');
+    }
+    setIsChangingPassword(false);
+  };
+
   const handleRevokeAllSessions = async () => {
     setIsRevokingAll(true);
     try {
@@ -679,7 +716,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               )}
 
               {/* ------ Content ------ */}
-              <ScrollShadow className={cn('flex-1 overflow-y-auto bg-[var(--background)] p-4 sm:p-6', mobileShowMenu && 'hidden sm:block')} hideScrollBar>
+              <div className={cn('flex-1 overflow-y-auto bg-[var(--background)] p-4 sm:p-6', mobileShowMenu && 'hidden sm:block')} >
 
                 {/* --------- PROFIL --------- */}
                 {activeTab === 'profile' && (
@@ -1693,6 +1730,62 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       </Card.Content>
                     </Card>
 
+                    {/* Change Password */}
+                    <Card variant="secondary">
+                      <Card.Header>
+                        <Card.Title className="flex items-center gap-2">
+                          <HugeiconsIcon icon={KeyRoundIcon} size={16} />
+                          Changer le mot de passe
+                        </Card.Title>
+                        <Card.Description>Modifiez votre mot de passe de connexion.</Card.Description>
+                      </Card.Header>
+                      <Card.Content className="space-y-3">
+                        <TextField className="w-full">
+                          <Label>Mot de passe actuel</Label>
+                          <InputGroup fullWidth variant="secondary">
+                            <InputGroup.Input
+                              type="password"
+                              placeholder="••••••••"
+                              value={currentPassword}
+                              onChange={(e) => setCurrentPassword(e.target.value)}
+                            />
+                          </InputGroup>
+                        </TextField>
+                        <TextField className="w-full">
+                          <Label>Nouveau mot de passe</Label>
+                          <InputGroup fullWidth variant="secondary">
+                            <InputGroup.Input
+                              type="password"
+                              placeholder="••••••••"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                            />
+                          </InputGroup>
+                          <Description className="text-xs text-[var(--muted)]">Minimum 8 caractères</Description>
+                        </TextField>
+                        <TextField className="w-full">
+                          <Label>Confirmer le nouveau mot de passe</Label>
+                          <InputGroup fullWidth variant="secondary">
+                            <InputGroup.Input
+                              type="password"
+                              placeholder="••••••••"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                          </InputGroup>
+                        </TextField>
+                        <Button
+                          size="sm"
+                          onPress={handleChangePassword}
+                          isDisabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+                          className="gap-2"
+                        >
+                          {isChangingPassword ? <Spinner size="sm" color="current" /> : <HugeiconsIcon icon={KeyRoundIcon} size={14} />}
+                          Modifier le mot de passe
+                        </Button>
+                      </Card.Content>
+                    </Card>
+
                     {/* 2FA TOTP */}
                     <Card variant="secondary">
                       <Card.Header>
@@ -2081,7 +2174,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   </div>
                 )}
 
-              </ScrollShadow>
+              </div>
             </div>
           </div>
         </Modal.Dialog>

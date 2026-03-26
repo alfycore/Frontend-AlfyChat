@@ -421,48 +421,62 @@ export function useMessages(channelId?: string, recipientId?: string) {
   const loadMessages = async () => {
     setIsLoading(true);
     try {
-      // Pour les DMs : lancer le fetch du bundle E2EE en même temps que les messages
-      // Comme ça quand les messages arrivent, la clé est souvent déjà en cache
+      // Lancer le fetch du bundle E2EE en parallèle avec les messages
       const bundlePromise = recipientId ? ensureSignalSession(recipientId) : Promise.resolve(true);
-      const [response] = await Promise.all([api.getMessages(channelId, recipientId), bundlePromise]);
+      const response = await api.getMessages(channelId, recipientId);
+
       if (response.success && response.data) {
         const rawMessages = response.data as any[];
-        // Utiliser la ref pour avoir l'ID courant (évite closure périmée)
         const currentUserId = userIdRef.current || user?.id || '';
 
-        // Déchiffrer les messages Signal en parallèle
-        const decrypted = await Promise.all(
-          rawMessages.map(async (m) => {
-            const { content, e2ee } = await decryptMessage(
-              {
-                content: m.content,
-                senderContent: m.senderContent,
-                e2eeType: m.e2eeType,
-                senderId: m.senderId || m.authorId,
-              },
-              currentUserId
-            );
-            return {
-              id: m.id,
-              content,
-              e2ee,
-              authorId: m.senderId || m.authorId,
-              channelId: m.channelId,
-              conversationId: m.conversationId,
-              recipientId: m.recipientId,
-              replyToId: m.replyToId,
-              createdAt: m.createdAt,
-              updatedAt: m.updatedAt,
-              isEdited: !!m.isEdited,
-              reactions: groupReactions(m.reactions || []),
-              sender: m.sender,
-            };
-          })
-        );
-        setMessages(decrypted);
+        // Afficher immédiatement les messages non-chiffrés (canaux serveur)
+        // Les messages DM chiffrés affichent un placeholder pendant le déchiffrement
+        const immediate = rawMessages.map((m) => ({
+          id: m.id,
+          content: m.e2eeType ? '🔒 Déchiffrement...' : m.content,
+          e2ee: !!m.e2eeType,
+          authorId: m.senderId || m.authorId,
+          channelId: m.channelId,
+          conversationId: m.conversationId,
+          recipientId: m.recipientId,
+          replyToId: m.replyToId,
+          createdAt: m.createdAt,
+          updatedAt: m.updatedAt,
+          isEdited: !!m.isEdited,
+          reactions: groupReactions(m.reactions || []),
+          sender: m.sender,
+        }));
+        setMessages(immediate);
         setHasMoreMessages(rawMessages.length >= 50);
+        // Afficher sans attendre le déchiffrement → latence perçue = 0
+        setIsLoading(false);
+
+        // Déchiffrer en arrière-plan (bundle déjà en cours de chargement)
+        const encryptedMsgs = rawMessages.filter((m) => m.e2eeType);
+        if (encryptedMsgs.length > 0) {
+          await bundlePromise;
+          await Promise.all(
+            encryptedMsgs.map(async (m) => {
+              const { content, e2ee } = await decryptMessage(
+                {
+                  content: m.content,
+                  senderContent: m.senderContent,
+                  e2eeType: m.e2eeType,
+                  senderId: m.senderId || m.authorId,
+                },
+                currentUserId
+              );
+              // Mettre à jour chaque message au fur et à mesure qu'il est déchiffré
+              setMessages((prev) =>
+                prev.map((msg) => (msg.id === m.id ? { ...msg, content, e2ee } : msg))
+              );
+            })
+          );
+        }
+      } else {
+        setIsLoading(false);
       }
-    } finally {
+    } catch {
       setIsLoading(false);
     }
   };
@@ -479,41 +493,51 @@ export function useMessages(channelId?: string, recipientId?: string) {
         const rawMessages = response.data as any[];
         const currentUserId = userIdRef.current || user?.id || '';
 
-        const decrypted = await Promise.all(
-          rawMessages.map(async (m) => {
-            const { content, e2ee } = await decryptMessage(
-              {
-                content: m.content,
-                senderContent: m.senderContent,
-                e2eeType: m.e2eeType,
-                senderId: m.senderId || m.authorId,
-              },
-              currentUserId
-            );
-            return {
-              id: m.id,
-              content,
-              e2ee,
-              authorId: m.senderId || m.authorId,
-              channelId: m.channelId,
-              conversationId: m.conversationId,
-              recipientId: m.recipientId,
-              replyToId: m.replyToId,
-              createdAt: m.createdAt,
-              updatedAt: m.updatedAt,
-              isEdited: !!m.isEdited,
-              reactions: groupReactions(m.reactions || []),
-              sender: m.sender,
-            };
-          })
-        );
+        // Afficher immédiatement les messages non-chiffrés
+        const immediate = rawMessages.map((m) => ({
+          id: m.id,
+          content: m.e2eeType ? '🔒 Déchiffrement...' : m.content,
+          e2ee: !!m.e2eeType,
+          authorId: m.senderId || m.authorId,
+          channelId: m.channelId,
+          conversationId: m.conversationId,
+          recipientId: m.recipientId,
+          replyToId: m.replyToId,
+          createdAt: m.createdAt,
+          updatedAt: m.updatedAt,
+          isEdited: !!m.isEdited,
+          reactions: groupReactions(m.reactions || []),
+          sender: m.sender,
+        }));
 
         setMessages((prev) => {
           const existing = new Set(prev.map((m) => m.id));
-          const newMsgs = decrypted.filter((m) => !existing.has(m.id));
+          const newMsgs = immediate.filter((m) => !existing.has(m.id));
           return [...newMsgs, ...prev];
         });
         setHasMoreMessages(rawMessages.length >= 50);
+
+        // Déchiffrer en arrière-plan
+        const encryptedMsgs = rawMessages.filter((m) => m.e2eeType);
+        if (encryptedMsgs.length > 0) {
+          if (recipientId) await ensureSignalSession(recipientId);
+          await Promise.all(
+            encryptedMsgs.map(async (m) => {
+              const { content, e2ee } = await decryptMessage(
+                {
+                  content: m.content,
+                  senderContent: m.senderContent,
+                  e2eeType: m.e2eeType,
+                  senderId: m.senderId || m.authorId,
+                },
+                currentUserId
+              );
+              setMessages((prev) =>
+                prev.map((msg) => (msg.id === m.id ? { ...msg, content, e2ee } : msg))
+              );
+            })
+          );
+        }
       }
     } finally {
       setIsLoadingMoreMessages(false);

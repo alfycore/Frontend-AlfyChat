@@ -12,10 +12,12 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   UsersRoundIcon, SendIcon, SmileIcon, MoreHorizontalIcon, ReplyIcon, XIcon,
   LogOutIcon, SettingsIcon, CrownIcon, ImageIcon as ImageIcn, MenuIcon,
+  UserPlusIcon, PhoneIcon, VideoIcon,
 } from '@/components/icons';
 import { useMessages } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { useCallContext } from '@/hooks/use-call-context';
 import { notify } from '@/hooks/use-notification';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -69,6 +71,8 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
   const [showMembers, setShowMembers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsInitialSection, setSettingsInitialSection] = useState<'general' | 'members'>('general');
+  const [showCallPicker, setShowCallPicker] = useState<'voice' | 'video' | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -89,6 +93,11 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
     startTyping,
     stopTyping,
   } = useMessages(groupId, undefined);
+
+  const {
+    initiateCall,
+    callStatus,
+  } = useCallContext();
 
   const loadGroupInfo = useCallback(async () => {
     try {
@@ -309,6 +318,17 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
   const isOwner = user?.id === groupInfo?.ownerId;
   const myRole = groupInfo?.participants.find((p) => p.userId === user?.id)?.role;
+  const canManageMembers = isOwner || myRole === 'admin';
+
+  const handleOpenAddMembers = () => {
+    setSettingsInitialSection('members');
+    setShowSettings(true);
+  };
+
+  const handleInitiateCall = (memberId: string, type: 'voice' | 'video') => {
+    setShowCallPicker(null);
+    initiateCall(memberId, type, groupId, groupInfo?.name);
+  };
 
   if (!user) return null;
 
@@ -342,14 +362,49 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
+            {canManageMembers && (
+              <Tooltip delay={0}>
+                <Button
+                  isIconOnly size="sm" variant="ghost"
+                  onPress={handleOpenAddMembers}
+                  className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
+                >
+                  <HugeiconsIcon icon={UserPlusIcon} size={16} />
+                </Button>
+                <Tooltip.Content>Ajouter un membre</Tooltip.Content>
+              </Tooltip>
+            )}
+
             <Tooltip delay={0}>
               <Button
-                isIconOnly
-                size="sm"
-                variant="ghost"
+                isIconOnly size="sm" variant="ghost"
+                onPress={() => setShowCallPicker('voice')}
+                className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
+                isDisabled={callStatus !== 'idle'}
+              >
+                <HugeiconsIcon icon={PhoneIcon} size={15} />
+              </Button>
+              <Tooltip.Content>Appel vocal</Tooltip.Content>
+            </Tooltip>
+
+            <Tooltip delay={0}>
+              <Button
+                isIconOnly size="sm" variant="ghost"
+                onPress={() => setShowCallPicker('video')}
+                className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
+                isDisabled={callStatus !== 'idle'}
+              >
+                <HugeiconsIcon icon={VideoIcon} size={15} />
+              </Button>
+              <Tooltip.Content>Appel vidéo</Tooltip.Content>
+            </Tooltip>
+
+            <Tooltip delay={0}>
+              <Button
+                isIconOnly size="sm" variant="ghost"
                 onPress={() => setShowMembers(!showMembers)}
-                className="size-8 rounded-lg"
+                className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 <HugeiconsIcon icon={UsersRoundIcon} size={16} />
               </Button>
@@ -370,7 +425,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 <Dropdown.Menu
                   aria-label="Options groupe"
                   onAction={(key) => {
-                    if (key === 'settings') setShowSettings(true);
+                    if (key === 'settings') { setSettingsInitialSection('general'); setShowSettings(true); }
                     if (key === 'leave') handleLeaveGroup();
                   }}
                 >
@@ -558,9 +613,47 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
         group={groupInfo}
         isOwner={isOwner}
         myRole={myRole}
+        initialSection={settingsInitialSection}
         onUpdate={loadGroupInfo}
         onLeave={handleLeaveGroup}
       />
+
+      {/* ── Call member picker ── */}
+      {showCallPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowCallPicker(null)}>
+          <div className="w-80 rounded-2xl border border-[var(--border)]/60 bg-[var(--background)] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">
+                {showCallPicker === 'voice' ? 'Appel vocal' : 'Appel vidéo'} — choisir un membre
+              </h3>
+              <button onClick={() => setShowCallPicker(null)} className="text-[var(--muted)] hover:text-[var(--foreground)]">
+                <HugeiconsIcon icon={XIcon} size={16} />
+              </button>
+            </div>
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {groupInfo?.participants
+                .filter((p) => p.userId !== user.id)
+                .map((p) => (
+                  <button
+                    key={p.userId}
+                    onClick={() => handleInitiateCall(p.userId, showCallPicker!)}
+                    className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-[var(--surface-secondary)]/60"
+                  >
+                    <Avatar size="sm" className="size-8">
+                      <Avatar.Image src={p.avatarUrl ? resolveMediaUrl(p.avatarUrl) : undefined} />
+                      <Avatar.Fallback>{(p.displayName || p.username)?.[0] || '?'}</Avatar.Fallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-[var(--foreground)]">{p.displayName || p.username}</p>
+                      <p className="truncate text-xs text-[var(--muted)]">@{p.username}</p>
+                    </div>
+                    <HugeiconsIcon icon={showCallPicker === 'voice' ? PhoneIcon : VideoIcon} size={15} className="text-[var(--accent)]" />
+                  </button>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

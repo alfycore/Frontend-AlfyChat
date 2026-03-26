@@ -286,6 +286,13 @@ class ApiService {
     return this.request(`/api/users/search?q=${encodeURIComponent(query)}`);
   }
 
+  async changePassword(userId: string, data: { currentPassword: string; newPassword: string }) {
+    return this.request(`/api/users/${userId}/change-password`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // ============ RGPD ============
   async exportMyData() {
     return this.request('/api/rgpd/export', { method: 'POST' });
