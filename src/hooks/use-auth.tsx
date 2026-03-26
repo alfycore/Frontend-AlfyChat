@@ -299,8 +299,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (data: { email: string; username: string; password: string; displayName?: string; inviteCode?: string; turnstileToken?: string }) => {
     // Générer le keypair E2EE avant l'inscription
     let e2eeFields: { publicKey?: string; encryptedPrivateKey?: string; keySalt?: string } = {};
+    let rawPrivateKey: string | null = null;
     try {
       const keypair = await generateKeypair();
+      rawPrivateKey = keypair.privateKey;
       const salt = generateSalt();
       const aesKey = await deriveKey(data.password, salt);
       const encPrivKey = await encryptPrivateKey(keypair.privateKey, aesKey);
@@ -315,11 +317,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const response = await api.register({ ...data, ...e2eeFields });
 
-    if (response.success) {
-      return login(data.email, data.password);
+    if (!response.success) {
+      return { success: false, error: response.error };
     }
 
-    return { success: false, error: response.error };
+    // Utiliser directement les tokens retournés par l'inscription
+    // (évite un 2ème appel /login qui peut échouer si email non vérifié, turnstile, etc.)
+    const regData = response.data as any;
+    const accessToken = regData?.tokens?.accessToken;
+    const refreshToken = regData?.tokens?.refreshToken;
+    const userData = regData?.user;
+
+    if (accessToken && refreshToken && userData) {
+      localStorage.setItem('alfychat_token', accessToken);
+      localStorage.setItem('alfychat_refresh_token', refreshToken);
+      if (regData.tokens?.sessionId) localStorage.setItem('alfychat_session_id', regData.tokens.sessionId);
+      setUser(userData as User);
+      socketService.connect(accessToken);
+
+      if (rawPrivateKey) {
+        setPrivateKey(rawPrivateKey);
+        sessionStorage.setItem(E2EE_SESSION_KEY, rawPrivateKey);
+      }
+
+      try {
+        await initSignalKeys(data.password);
+      } catch (err) {
+        console.error('[Signal] Erreur init clés après inscription:', err);
+      }
+
+      return { success: true };
+    }
+
+    // Fallback : tokens absents dans la réponse (ne devrait pas arriver)
+    return login(data.email, data.password);
   };
 
   const logout = async () => {

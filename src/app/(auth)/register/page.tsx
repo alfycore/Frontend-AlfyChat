@@ -121,6 +121,9 @@ function RegisterContent() {
       });
       if (result.success) {
         router.push('/channels/me');
+      } else if ((result as any).emailNotVerified) {
+        // Compte créé mais email à vérifier → rediriger vers login avec message
+        router.push('/login?emailVerification=1&email=' + encodeURIComponent(email));
       } else {
         setError(result.error || "Erreur lors de l'inscription");
         if (turnstileWidgetId.current && (window as any).turnstile) {
