@@ -569,10 +569,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={onOpenChange} variant="blur">
       <Modal.Container size="lg" scroll="inside">
-        <Modal.Dialog className="h-[85vh] max-w-5xl overflow-hidden p-0">
+        <Modal.Dialog className="h-[85vh] max-w-5xl overflow-hidden bg-[var(--background)] p-0">
           <Modal.CloseTrigger />
 
-          <div className="flex h-full">
+          <div className="flex h-full bg-[var(--background)]">
             {/* ------ Sidebar ------ */}
             <aside className="hidden w-56 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--surface)] sm:flex">
               <div className="px-4 pt-5 pb-3">
@@ -679,7 +679,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               )}
 
               {/* ------ Content ------ */}
-              <ScrollShadow className={cn('flex-1 overflow-y-auto p-4 sm:p-6', mobileShowMenu && 'hidden sm:block')} hideScrollBar>
+              <ScrollShadow className={cn('flex-1 overflow-y-auto bg-[var(--background)] p-4 sm:p-6', mobileShowMenu && 'hidden sm:block')} hideScrollBar>
 
                 {/* --------- PROFIL --------- */}
                 {activeTab === 'profile' && (
