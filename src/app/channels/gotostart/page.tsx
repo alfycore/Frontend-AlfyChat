@@ -178,7 +178,7 @@ export default function GotoStartPage() {
               </Button>
               <Button
                 size="lg"
-                variant="bordered"
+                variant="outline"
                 className="w-full rounded-2xl px-10 font-semibold sm:w-auto"
                 onPress={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
               >
@@ -338,7 +338,7 @@ export default function GotoStartPage() {
                         <p className="truncate text-sm font-medium text-[var(--foreground)]">{srv.name}</p>
                         <p className="text-xs text-[var(--muted)]">{srv.members} membres</p>
                       </div>
-                      <Button size="sm" variant="bordered" className="h-7 shrink-0 rounded-xl px-3 text-xs">
+                      <Button size="sm" variant="outline" className="h-7 shrink-0 rounded-xl px-3 text-xs">
                         Rejoindre
                       </Button>
                     </div>

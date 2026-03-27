@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import { useResizablePanel } from '@/hooks/use-resizable-panel';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { MessageCircleIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
@@ -22,12 +23,33 @@ import { SettingsDialog } from '@/components/chat/settings-dialog';
  * Mobile-first : sidebar en overlay avec swipe support.
  */
 
+// ── Poignée de redimensionnement ─────────────────────────────────────────────
+function ResizeHandle({ onMouseDown, isResizing }: { onMouseDown: (e: React.MouseEvent) => void; isResizing?: boolean }) {
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      className={`group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-transparent transition-colors hover:bg-[var(--accent)]/20 active:bg-[var(--accent)]/30 ${isResizing ? 'bg-[var(--accent)]/30' : ''}`}
+    >
+      <div className="h-8 w-0.5 rounded-full bg-[var(--border)] transition-all group-hover:h-12 group-hover:bg-[var(--accent)]/60 group-active:bg-[var(--accent)]" />
+    </div>
+  );
+}
+
 function LayoutInner({ children }: { children: ReactNode }) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { isMobile, showSidebar, showMemberList, showSettings, closeSidebar, closeMemberList, closeSettings, closeAll } = useMobileNav();
+  const { isMobile, showSidebar, showMemberList, showSettings, closeSettings, closeAll } = useMobileNav();
+
+  const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
+    storageKey: 'alfychat_me_sidebar_width',
+    defaultWidth: 240,
+    minWidth: 160,
+    maxWidth: 400,
+    side: 'right',
+    disabled: isMobile,
+  });
 
   // Initialiser le système de notifications
   useNotification();
@@ -215,25 +237,38 @@ function LayoutInner({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* ── SIDEBAR (ServerList + ChannelList) ── */}
-      {/* Desktop: toujours visible | Mobile: overlay slide-in */}
-      <div
-        className={`
-          ${isMobile
-            ? `fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${
-                showSidebar ? 'translate-x-0' : '-translate-x-full'
-              }`
-            : 'flex'
-          }
-        `}
-      >
-        <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
-        <ChannelList
-          serverId={selectedServer}
-          selectedChannel={selectedChannel}
-          onSelectChannel={handleSelectChannel}
-        />
-      </div>
+      {/* ── SIDEBAR desktop : ServerList fixe + ChannelList redimensionnable ── */}
+      {!isMobile && (
+        <>
+          <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+          <div style={{ width: channelListWidth }} className="h-full shrink-0">
+            <ChannelList
+              serverId={selectedServer}
+              selectedChannel={selectedChannel}
+              onSelectChannel={handleSelectChannel}
+            />
+          </div>
+          <ResizeHandle onMouseDown={onChannelResize} />
+        </>
+      )}
+
+      {/* ── SIDEBAR mobile : overlay slide-in (largeur fixe) ── */}
+      {isMobile && (
+        <div
+          className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${
+            showSidebar ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+          <div className="h-full w-60 shrink-0">
+            <ChannelList
+              serverId={selectedServer}
+              selectedChannel={selectedChannel}
+              onSelectChannel={handleSelectChannel}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ── CONTENU PRINCIPAL ── */}
       <div className={`flex min-w-0 flex-1 flex-col ${recipientId ? '' : 'pb-16'} md:pb-0`}>

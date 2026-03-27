@@ -691,7 +691,7 @@ export function ChannelList({
     const groupConversations = conversations.filter((c) => c.type === 'group');
 
     return (
-      <div className="flex h-full w-60 flex-col overflow-hidden border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl">
+      <div className="flex h-full w-full flex-col overflow-hidden border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl">
         {/* Header */}
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)]/40 px-3">
           <span className="text-[13px] font-bold">{t.channelList.messagesTitle}</span>
@@ -874,7 +874,7 @@ export function ChannelList({
   // ── Server mode ───────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full w-60 flex-col overflow-hidden border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl">
+    <div className="flex h-full w-full flex-col overflow-hidden border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl">
       {/* Server banner */}
       {serverBannerUrl ? (
         <div className="relative h-20 w-full shrink-0 overflow-hidden">

@@ -1,6 +1,18 @@
 ﻿'use client';
 
 import { useState, useEffect, useCallback, ReactNode } from 'react';
+import { useResizablePanel } from '@/hooks/use-resizable-panel';
+
+function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      className="group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-transparent transition-colors hover:bg-[var(--accent)]/20 active:bg-[var(--accent)]/30"
+    >
+      <div className="h-8 w-0.5 rounded-full bg-[var(--border)] transition-all group-hover:h-12 group-hover:bg-[var(--accent)]/60 group-active:bg-[var(--accent)]" />
+    </div>
+  );
+}
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { Skeleton, Spinner } from '@heroui/react';
 import { MessageCircleIcon } from '@/components/icons';
@@ -24,6 +36,24 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const params = useParams();
   const { isMobile, showSidebar, showMemberList, closeAll } = useMobileNav();
+
+  const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
+    storageKey: 'alfychat_server_sidebar_width',
+    defaultWidth: 240,
+    minWidth: 160,
+    maxWidth: 400,
+    side: 'right',
+    disabled: isMobile,
+  });
+
+  const { width: memberListWidth, onMouseDown: onMemberResize } = useResizablePanel({
+    storageKey: 'alfychat_server_memberlist_width',
+    defaultWidth: 224,
+    minWidth: 160,
+    maxWidth: 360,
+    side: 'left',
+    disabled: isMobile,
+  });
 
   useNotification();
 
@@ -173,62 +203,78 @@ function LayoutInner({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* Sidebar (ServerList + ChannelList) */}
-      <div
-        className={
-          isMobile
-            ? `fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${
-                showSidebar ? 'translate-x-0' : '-translate-x-full'
-              }`
-            : 'flex h-full shrink-0'
-        }
-      >
-        <ServerList
-          selectedServer={serverId}
-          onSelectServer={handleSelectServer}
-        />
-        <div className="flex flex-col shrink-0">
-          <ChannelList
-            serverId={serverId}
-            selectedChannel={channelId ?? null}
-            onSelectChannel={handleSelectChannel}
-            onOpenSettings={() => setServerSettingsOpen(true)}
-          />
-          <VoiceControlBar />
+      {/* ── SIDEBAR desktop : ServerList fixe + ChannelList redimensionnable ── */}
+      {!isMobile && (
+        <>
+          <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
+          <div style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col">
+            <ChannelList
+              serverId={serverId}
+              selectedChannel={channelId ?? null}
+              onSelectChannel={handleSelectChannel}
+              onOpenSettings={() => setServerSettingsOpen(true)}
+            />
+            <VoiceControlBar />
+          </div>
+          <ResizeHandle onMouseDown={onChannelResize} />
+        </>
+      )}
+
+      {/* ── SIDEBAR mobile : overlay ── */}
+      {isMobile && (
+        <div
+          className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${
+            showSidebar ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
+          <div className="flex h-full w-60 shrink-0 flex-col">
+            <ChannelList
+              serverId={serverId}
+              selectedChannel={channelId ?? null}
+              onSelectChannel={handleSelectChannel}
+              onOpenSettings={() => setServerSettingsOpen(true)}
+            />
+            <VoiceControlBar />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {children}
       </div>
 
-      {/* Server settings dialog (depuis le nom du serveur) */}
+      {/* Server settings dialog */}
       {serverSettingsOpen && (
         <ServerSettingsDialog
           serverId={serverId}
           open={serverSettingsOpen}
           onOpenChange={setServerSettingsOpen}
-          onServerUpdated={() => {
-            // Le broadcast WebSocket (SERVER_UPDATE) est émis par le dialog lui-même
-            // → channel-list et server-list réagissent via leurs listeners
-            setServerSettingsOpen(false);
-          }}
+          onServerUpdated={() => setServerSettingsOpen(false)}
         />
       )}
 
-      {/* Member list */}
-      <div
-        className={
-          isMobile
-            ? `fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-in-out ${
-                showMemberList ? 'translate-x-0' : 'translate-x-full'
-              }`
-            : 'h-full shrink-0'
-        }
-      >
-        <MemberList serverId={serverId} />
-      </div>
+      {/* ── MEMBER LIST desktop : redimensionnable ── */}
+      {!isMobile && (
+        <>
+          <ResizeHandle onMouseDown={onMemberResize} />
+          <div style={{ width: memberListWidth }} className="h-full shrink-0">
+            <MemberList serverId={serverId} />
+          </div>
+        </>
+      )}
+
+      {/* ── MEMBER LIST mobile : overlay ── */}
+      {isMobile && (
+        <div
+          className={`fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-in-out ${
+            showMemberList ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <MemberList serverId={serverId} />
+        </div>
+      )}
     </div>
   );
 }

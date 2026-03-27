@@ -208,7 +208,7 @@ export function MemberList({ serverId }: MemberListProps) {
 
   if (isLoading) {
     return (
-      <div className="w-56 border-l border-[var(--border)]/30 bg-[var(--background)]/80 backdrop-blur-xl">
+      <div className="w-full border-l border-[var(--border)]/30 bg-[var(--background)]/80 backdrop-blur-xl">
         <div className="space-y-1.5 p-3 pt-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2 px-2">
@@ -241,7 +241,7 @@ export function MemberList({ serverId }: MemberListProps) {
   const remainingOnline = onlineMembers.filter((m) => !assignedIds.has(m.id));
 
   return (
-    <div className="flex h-full w-56 flex-col border-l border-[var(--border)]/30 bg-[var(--background)]/80 backdrop-blur-xl">
+    <div className="flex h-full w-full flex-col border-l border-[var(--border)]/30 bg-[var(--background)]/80 backdrop-blur-xl">
       <ScrollShadow className="flex-1">
         <div className="p-2 pt-3">
           {/* Role-based sections */}
