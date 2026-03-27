@@ -869,6 +869,14 @@ class ApiService {
 
   // ============ CHANGELOGS ============
 
+  async getMonitoringStats() {
+    return this.request<any>('/api/admin/monitoring');
+  }
+
+  async getMonitoringServiceHistory(service: string, hours = 24) {
+    return this.request<any>(`/api/admin/monitoring/service/${service}?hours=${hours}`);
+  }
+
   async getChangelogs(limit = 50, offset = 0) {
     return this.request<any[]>(`/api/users/changelogs?limit=${limit}&offset=${offset}`);
   }

@@ -74,7 +74,7 @@ const BOOTSTRAP_ICONS = [
   { value: 'bi-moon-fill', label: 'Lune' },
 ];
 
-type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'security' | 'changelogs' | 'settings';
+type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'security' | 'changelogs' | 'settings' | 'monitoring';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -122,6 +122,9 @@ export default function AdminPage() {
   const [inviteExpiry, setInviteExpiry] = useState('48');
   const [inviteCreating, setInviteCreating] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+
+  // Monitoring
+  const [monitoringData, setMonitoringData] = useState<any>(null);
 
   // Security (Gateway)
   const [bannedIPs, setBannedIPs] = useState<Array<{ ip: string; reason: string; bannedBy: string; bannedAt: string }>>([]);
@@ -197,6 +200,9 @@ export default function AdminPage() {
       } else if (activeTab === 'changelogs') {
         const res = await api.getChangelogs();
         if (res.success && res.data) setChangelogs(res.data as any[]);
+      } else if (activeTab === 'monitoring') {
+        const res = await api.getMonitoringStats();
+        if (res.success && res.data) setMonitoringData(res.data);
       }
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -521,6 +527,7 @@ export default function AdminPage() {
                 { id: 'users', label: 'Utilisateurs', icon: UsersIcon },
                 { id: 'discovery', label: 'Découverte', icon: CompassIcon },
                 { id: 'server-badges', label: 'Badges serveurs', icon: ServerIcon },
+                { id: 'monitoring', label: 'Monitoring', icon: BarChart3Icon },
                 { id: 'security', label: 'Sécurité', icon: ShieldAlertIcon },
                 { id: 'changelogs', label: 'Changelogs', icon: FileTextIcon },
                 { id: 'settings', label: 'Paramètres', icon: SettingsIcon },
@@ -1329,6 +1336,117 @@ export default function AdminPage() {
             )}
 
             {/* Paramètres */}
+            {/* Monitoring */}
+            {activeTab === 'monitoring' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-[var(--foreground)]">Monitoring des services</h2>
+                  <Button variant="outline" onPress={loadData}>Actualiser</Button>
+                </div>
+
+                {monitoringData && (
+                  <>
+                    {/* Connected users */}
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                        <div className="px-5 py-4">
+                          <p className="text-sm text-[var(--muted)]">Utilisateurs connectés</p>
+                          <p className="text-3xl font-semibold text-green-500">{monitoringData.connectedUsers.current}</p>
+                        </div>
+                      </Card>
+                      <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                        <div className="px-5 py-4">
+                          <p className="text-sm text-[var(--muted)]">Pic (24h)</p>
+                          <p className="text-3xl font-semibold text-[var(--foreground)]">{monitoringData.connectedUsers.peak24h}</p>
+                        </div>
+                      </Card>
+                      <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                        <div className="px-5 py-4">
+                          <p className="text-sm text-[var(--muted)]">Dernière vérification</p>
+                          <p className="text-sm font-medium text-[var(--foreground)] mt-2">
+                            {new Date(monitoringData.checkedAt).toLocaleTimeString('fr-FR')}
+                          </p>
+                        </div>
+                      </Card>
+                    </div>
+
+                    {/* User stats history mini-chart (text table) */}
+                    {monitoringData.connectedUsers.history.length > 0 && (
+                      <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                        <div className="px-5 py-4">
+                          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-3">Historique connexions (24h)</h3>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-[var(--border)]">
+                                  <th className="pb-2 text-left text-[var(--muted)] font-medium">Heure</th>
+                                  <th className="pb-2 text-right text-[var(--muted)] font-medium">Connectés</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {monitoringData.connectedUsers.history.slice(-20).map((row: any) => (
+                                  <tr key={row.id} className="border-b border-[var(--border)]/40">
+                                    <td className="py-1.5 text-[var(--muted)]">
+                                      {new Date(row.recorded_at).toLocaleString('fr-FR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </td>
+                                    <td className="py-1.5 text-right text-[var(--foreground)] font-medium">{row.connected_users}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </Card>
+                    )}
+
+                    {/* Services */}
+                    <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                      <div className="px-5 py-4">
+                        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-3">État des services</h3>
+                        <div className="space-y-2">
+                          {monitoringData.services.map((svc: any) => (
+                            <div key={svc.service} className="flex items-center justify-between rounded-lg border border-[var(--border)] px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={`size-2.5 rounded-full ${
+                                    svc.status === 'up' ? 'bg-green-500' :
+                                    svc.status === 'degraded' ? 'bg-yellow-500' :
+                                    'bg-red-500'
+                                  }`}
+                                />
+                                <span className="font-medium text-[var(--foreground)] capitalize">{svc.service}</span>
+                              </div>
+                              <div className="flex items-center gap-6 text-sm text-[var(--muted)]">
+                                {svc.response_time_ms != null && (
+                                  <span>{svc.response_time_ms} ms</span>
+                                )}
+                                <span
+                                  className={`font-medium ${
+                                    svc.status === 'up' ? 'text-green-500' :
+                                    svc.status === 'degraded' ? 'text-yellow-500' :
+                                    'text-red-500'
+                                  }`}
+                                >
+                                  {svc.status === 'up' ? 'En ligne' : svc.status === 'degraded' ? 'Dégradé' : 'Hors ligne'}
+                                </span>
+                                <span>{new Date(svc.checked_at).toLocaleTimeString('fr-FR')}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </Card>
+                  </>
+                )}
+
+                {!monitoringData && !loading && (
+                  <div className="flex h-40 items-center justify-center text-[var(--muted)]">
+                    Aucune donnée de monitoring disponible.
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'settings' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-[var(--foreground)]">Paramètres du site</h2>
