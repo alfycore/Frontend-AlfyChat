@@ -29,7 +29,7 @@ export default function ChangelogsPage() {
   useEffect(() => {
     api
       .getChangelogs(100, 0)
-      .then((data) => setChangelogs(data))
+      .then((res) => setChangelogs(res.data ?? []))
       .catch(() => setChangelogs([]))
       .finally(() => setLoading(false));
   }, []);
