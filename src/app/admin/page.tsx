@@ -1465,9 +1465,9 @@ export default function AdminPage() {
                                   color: 'var(--foreground)',
                                 }}
                                 labelStyle={{ color: 'var(--muted)', marginBottom: 4 }}
-                                formatter={(value: any, name: string) => {
+                                formatter={(value: any, name: any) => {
                                   const labels: Record<string, string> = { avg: 'Moy.', max: 'Max', min: 'Min' };
-                                  return [value, labels[name] ?? name];
+                                  return [value, labels[String(name)] ?? name];
                                 }}
                               />
                               <Area
