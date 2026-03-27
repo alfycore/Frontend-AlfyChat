@@ -249,6 +249,24 @@ class SocketService {
     this.socket?.emit('CALL_REJOIN', { callId });
   }
 
+  // ── Appels groupe LiveKit SFU ──
+
+  initiateGroupCall(channelId: string, type: 'voice' | 'video'): void {
+    this.socket?.emit('GROUP_CALL_INITIATE', { channelId, type });
+  }
+
+  joinGroupCall(callId: string): void {
+    this.socket?.emit('GROUP_CALL_JOIN', { callId });
+  }
+
+  leaveGroupCall(callId: string): void {
+    this.socket?.emit('GROUP_CALL_LEAVE', { callId });
+  }
+
+  endGroupCall(callId: string): void {
+    this.socket?.emit('GROUP_CALL_END', { callId });
+  }
+
   onReconnected(callback: (data: unknown) => void): void {
     this.on('socket:reconnected', callback);
   }
