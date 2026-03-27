@@ -13,7 +13,6 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ShieldIcon,
   UsersIcon,
@@ -495,7 +494,7 @@ export default function AdminPage() {
         <Card className="w-96 border border-[var(--border)] bg-[var(--surface)] p-0">
           <div className="px-5 py-4">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-              <HugeiconsIcon icon={ShieldIcon} size={20} className="text-red-500" />
+              <ShieldIcon size={20} className="text-red-500" />
               Accès refusé
             </h3>
             <p className="mt-1 text-sm text-[var(--muted)]">
@@ -522,7 +521,7 @@ export default function AdminPage() {
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <HugeiconsIcon icon={ShieldIcon} size={28} className="shrink-0 text-[var(--accent)] sm:size-8" />
+              <ShieldIcon size={28} className="shrink-0 text-[var(--accent)] sm:size-8" />
               <div className="min-w-0">
                 <h1 className="truncate text-lg font-bold text-[var(--foreground)] sm:text-2xl">
                   Administration
@@ -571,7 +570,7 @@ export default function AdminPage() {
                     : 'border-transparent text-[var(--muted)] hover:text-[var(--foreground)]'
                 }`}
               >
-                <HugeiconsIcon icon={tab.icon} size={14} className="sm:size-4" />
+                <tab.icon size={14} className="sm:size-4" />
                 <span className="sm:hidden">{tab.shortLabel}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
               </button>
@@ -637,7 +636,7 @@ export default function AdminPage() {
                       setShowBadgeDialog(true);
                     }}
                   >
-                    <HugeiconsIcon icon={PlusIcon} size={16} className="mr-2" />
+                    <PlusIcon size={16} className="mr-2" />
                     Créer un badge
                   </Button>
                 </div>
@@ -645,7 +644,7 @@ export default function AdminPage() {
                 {badges.length === 0 ? (
                   <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                     <div className="p-8 text-center">
-                      <HugeiconsIcon icon={AwardIcon} size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+                      <AwardIcon size={48} className="mx-auto mb-4 text-[var(--muted)]" />
                       <p className="text-lg font-medium text-[var(--foreground)]">Aucun badge</p>
                       <p className="text-sm text-[var(--muted)]">
                         Créez votre premier badge personnalisé.
@@ -720,7 +719,7 @@ export default function AdminPage() {
                                     isIconOnly
                                     onPress={() => openEditBadge(badge)}
                                   >
-                                    <HugeiconsIcon icon={Edit2Icon} size={16} />
+                                    <Edit2Icon size={16} />
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -728,7 +727,7 @@ export default function AdminPage() {
                                     isIconOnly
                                     onPress={() => handleDeleteBadge(badge.id)}
                                   >
-                                    <HugeiconsIcon icon={Trash2Icon} size={16} className="text-red-500" />
+                                    <Trash2Icon size={16} className="text-red-500" />
                                   </Button>
                                 </div>
                               </td>
@@ -763,9 +762,9 @@ export default function AdminPage() {
                           });
                         }}
                       >
-                        {s === 'pending' && <HugeiconsIcon icon={ClockIcon} size={12} className="mr-1" />}
-                        {s === 'approved' && <HugeiconsIcon icon={CheckCircle2Icon} size={12} className="mr-1" />}
-                        {s === 'rejected' && <HugeiconsIcon icon={XCircleIcon} size={12} className="mr-1" />}
+                        {s === 'pending' && <ClockIcon size={12} className="mr-1" />}
+                        {s === 'approved' && <CheckCircle2Icon size={12} className="mr-1" />}
+                        {s === 'rejected' && <XCircleIcon size={12} className="mr-1" />}
                         {s === 'pending' ? 'En attente' : s === 'approved' ? 'Approuvées' : 'Rejetées'}
                       </Button>
                     ))}
@@ -775,7 +774,7 @@ export default function AdminPage() {
                 {applications.length === 0 ? (
                   <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                     <div className="p-8 text-center">
-                      <HugeiconsIcon icon={CompassIcon} size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+                      <CompassIcon size={48} className="mx-auto mb-4 text-[var(--muted)]" />
                       <p className="text-lg font-medium text-[var(--foreground)]">Aucune candidature</p>
                       <p className="text-sm text-[var(--muted)]">
                         Aucune candidature {appStatusFilter === 'pending' ? 'en attente' : appStatusFilter === 'approved' ? 'approuvée' : 'rejetée'} pour le moment.
@@ -824,7 +823,7 @@ export default function AdminPage() {
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 onPress={() => handleReviewApplication(app.id, 'approved')}
                               >
-                                <HugeiconsIcon icon={CheckCircle2Icon} size={12} className="mr-1" />
+                                <CheckCircle2Icon size={12} className="mr-1" />
                                 Approuver
                               </Button>
                               <Button
@@ -832,7 +831,7 @@ export default function AdminPage() {
                                 variant="danger"
                                 onPress={() => handleReviewApplication(app.id, 'rejected')}
                               >
-                                <HugeiconsIcon icon={XCircleIcon} size={12} className="mr-1" />
+                                <XCircleIcon size={12} className="mr-1" />
                                 Rejeter
                               </Button>
                             </div>
@@ -863,7 +862,7 @@ export default function AdminPage() {
                 {discoverServers.length === 0 ? (
                   <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                     <div className="p-8 text-center">
-                      <HugeiconsIcon icon={ServerIcon} size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+                      <ServerIcon size={48} className="mx-auto mb-4 text-[var(--muted)]" />
                       <p className="text-lg font-medium text-[var(--foreground)]">Aucun serveur trouvé</p>
                       <p className="text-sm text-[var(--muted)]">
                         Aucun serveur enregistré sur AlfyChat.
@@ -905,10 +904,10 @@ export default function AdminPage() {
                                     <div className="flex items-center gap-1.5">
                                       <p className="font-medium text-[var(--foreground)]">{server.name}</p>
                                       {(server.is_certified || server.isCertified) && (
-                                        <HugeiconsIcon icon={CheckCircle2Icon} size={14} className="text-blue-500" />
+                                        <CheckCircle2Icon size={14} className="text-blue-500" />
                                       )}
                                       {(server.is_partnered || server.isPartnered) && (
-                                        <HugeiconsIcon icon={HandshakeIcon} size={14} className="text-purple-500" />
+                                        <HandshakeIcon size={14} className="text-purple-500" />
                                       )}
                                     </div>
                                     <p className="text-xs text-[var(--muted)] line-clamp-1">
@@ -972,7 +971,7 @@ export default function AdminPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1">
-                    <HugeiconsIcon icon={SearchIcon} size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                    <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                     <input
                       className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] pl-9 pr-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
                       placeholder="Rechercher un utilisateur..."
@@ -1073,7 +1072,7 @@ export default function AdminPage() {
                                 onPress={() => openAssignDialog(u)}
                                 aria-label="Gérer les badges"
                               >
-                                <HugeiconsIcon icon={AwardIcon} size={16} />
+                                <AwardIcon size={16} />
                               </Button>
                             </td>
                           </tr>
@@ -1121,7 +1120,7 @@ export default function AdminPage() {
                 <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                   <div className="px-5 py-4">
                     <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-                      <HugeiconsIcon icon={BanIcon} size={20} className="text-red-500" />
+                      <BanIcon size={20} className="text-red-500" />
                       Bannir une IP
                     </h3>
                     <p className="mt-1 text-sm text-[var(--muted)]">
@@ -1149,7 +1148,7 @@ export default function AdminPage() {
                         onPress={handleBanIP}
                         isDisabled={!banIPValue.trim()}
                       >
-                        <HugeiconsIcon icon={BanIcon} size={16} />
+                        <BanIcon size={16} />
                         Bannir
                       </Button>
                     </div>
@@ -1160,7 +1159,7 @@ export default function AdminPage() {
                 <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                   <div className="px-5 py-4">
                     <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-                      <HugeiconsIcon icon={ShieldAlertIcon} size={20} className="text-orange-500" />
+                      <ShieldAlertIcon size={20} className="text-orange-500" />
                       IPs bannies ({bannedIPs.length})
                     </h3>
                   </div>
@@ -1195,7 +1194,7 @@ export default function AdminPage() {
                                   size="sm"
                                   onPress={() => handleUnbanIP(ban.ip)}
                                 >
-                                  <HugeiconsIcon icon={ShieldCheckIcon} size={16} />
+                                  <ShieldCheckIcon size={16} />
                                   Débannir
                                 </Button>
                               </td>
@@ -1218,7 +1217,7 @@ export default function AdminPage() {
                 <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                   <div className="px-5 py-4">
                     <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-                      <HugeiconsIcon icon={PlusIcon} size={20} className="text-[var(--accent)]" />
+                      <PlusIcon size={20} className="text-[var(--accent)]" />
                       Publier un changelog
                     </h3>
                   </div>
@@ -1292,7 +1291,7 @@ export default function AdminPage() {
                           setChangelogSubmitting(false);
                         }}
                       >
-                        <HugeiconsIcon icon={PlusIcon} size={16} className="mr-1" />
+                        <PlusIcon size={16} className="mr-1" />
                         Publier
                       </Button>
                     </div>
@@ -1303,7 +1302,7 @@ export default function AdminPage() {
                 {changelogs.length === 0 ? (
                   <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                     <div className="p-8 text-center">
-                      <HugeiconsIcon icon={FileTextIcon} size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+                      <FileTextIcon size={48} className="mx-auto mb-4 text-[var(--muted)]" />
                       <p className="text-lg font-medium text-[var(--foreground)]">Aucun changelog</p>
                       <p className="text-sm text-[var(--muted)]">Publiez votre premier changelog ci-dessus.</p>
                     </div>
@@ -1354,7 +1353,7 @@ export default function AdminPage() {
                                 setChangelogs((prev) => prev.filter((c) => c.id !== cl.id));
                               }}
                             >
-                              <HugeiconsIcon icon={Trash2Icon} size={16} className="text-red-500" />
+                              <Trash2Icon size={16} className="text-red-500" />
                             </Button>
                           </div>
                         </Card>
@@ -1567,7 +1566,7 @@ export default function AdminPage() {
                 <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                   <div className="px-5 py-4">
                     <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-                      <HugeiconsIcon icon={UsersIcon} size={20} />
+                      <UsersIcon size={20} />
                       Inscriptions
                     </h3>
                     <p className="mt-1 text-sm text-[var(--muted)]">
@@ -1602,7 +1601,7 @@ export default function AdminPage() {
                 <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                   <div className="px-5 py-4">
                     <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-                      <HugeiconsIcon icon={ShieldCheckIcon} size={20} />
+                      <ShieldCheckIcon size={20} />
                       Cloudflare Turnstile (Captcha)
                     </h3>
                     <p className="mt-1 text-sm text-[var(--muted)]">
@@ -1664,7 +1663,7 @@ export default function AdminPage() {
                 <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
                   <div className="px-5 py-4">
                     <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-                      <HugeiconsIcon icon={Link2Icon} size={20} />
+                      <Link2Icon size={20} />
                       Liens d&apos;invitation
                     </h3>
                     <p className="mt-1 text-sm text-[var(--muted)]">
@@ -1676,7 +1675,7 @@ export default function AdminPage() {
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                          <HugeiconsIcon icon={MailIcon} size={16} className="text-[var(--muted)]" />
+                          <MailIcon size={16} className="text-[var(--muted)]" />
                         </div>
                         <input
                           className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] pl-9 pr-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
@@ -1718,7 +1717,7 @@ export default function AdminPage() {
                           }
                         }}
                       >
-                        <HugeiconsIcon icon={PlusIcon} size={16} className="mr-1" />
+                        <PlusIcon size={16} className="mr-1" />
                         Générer
                       </Button>
                     </div>
@@ -1726,7 +1725,7 @@ export default function AdminPage() {
                     {/* Liste des liens */}
                     {inviteLinks.length === 0 ? (
                       <div className="rounded-lg border border-dashed border-[var(--border)] p-8 text-center">
-                        <HugeiconsIcon icon={Link2Icon} size={40} className="mx-auto mb-3 text-[var(--muted)]" />
+                        <Link2Icon size={40} className="mx-auto mb-3 text-[var(--muted)]" />
                         <p className="text-sm font-medium text-[var(--foreground)]">Aucun lien d&apos;invitation</p>
                         <p className="text-xs text-[var(--muted)]">
                           Créez un lien pour inviter quelqu&apos;un à s&apos;inscrire.
@@ -1792,9 +1791,9 @@ export default function AdminPage() {
                                           }}
                                         >
                                           {copiedLink === link.id ? (
-                                            <HugeiconsIcon icon={CheckCircle2Icon} size={16} className="text-green-500" />
+                                            <CheckCircle2Icon size={16} className="text-green-500" />
                                           ) : (
-                                            <HugeiconsIcon icon={CopyIcon} size={16} />
+                                            <CopyIcon size={16} />
                                           )}
                                         </Button>
                                       )}
@@ -1807,7 +1806,7 @@ export default function AdminPage() {
                                           setInviteLinks((prev) => prev.filter((l) => l.id !== link.id));
                                         }}
                                       >
-                                        <HugeiconsIcon icon={Trash2Icon} size={16} className="text-red-500" />
+                                        <Trash2Icon size={16} className="text-red-500" />
                                       </Button>
                                     </div>
                                   </td>
@@ -2055,7 +2054,7 @@ export default function AdminPage() {
         <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)] shadow-2xl">
           <Modal.Header>
             <Modal.Heading className="flex items-center gap-2">
-              <HugeiconsIcon icon={AwardIcon} size={20} />
+              <AwardIcon size={20} />
               Badges de {selectedUser?.displayName}
             </Modal.Heading>
             <p className="text-sm text-[var(--muted)]">
@@ -2103,7 +2102,7 @@ export default function AdminPage() {
                           onPress={() => handleRemoveBadge(b.id)}
                           className="text-red-500 hover:text-red-500"
                         >
-                          <HugeiconsIcon icon={XIcon} size={16} />
+                          <XIcon size={16} />
                         </Button>
                       </div>
                     ))}
@@ -2155,7 +2154,7 @@ export default function AdminPage() {
                           size="sm"
                           onPress={() => handleAssignBadge(badge.id)}
                         >
-                          <HugeiconsIcon icon={UserPlusIcon} size={12} className="mr-1" />
+                          <UserPlusIcon size={12} className="mr-1" />
                           Ajouter
                         </Button>
                       </div>

@@ -1,6 +1,5 @@
 'use client';
 
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MicIcon, MicOffIcon, HeadphonesIcon, HeadphoneOffIcon, PhoneOffIcon, Volume2Icon, Loader2Icon } from '@/components/icons';
 import { useVoice } from '@/hooks/use-voice';
 import { Button } from '@heroui/react';
@@ -27,10 +26,10 @@ export function VoiceControlBar() {
       {/* Connection status */}
       <div className="flex items-center gap-2">
         {isConnecting ? (
-          <HugeiconsIcon icon={Loader2Icon} size={14} className="animate-spin text-yellow-500" />
+          <Loader2Icon size={14} className="animate-spin text-yellow-500" />
         ) : (
           <div className="flex size-5 items-center justify-center rounded-md bg-green-500/15">
-            <HugeiconsIcon icon={Volume2Icon} size={12} className="text-green-500" />
+            <Volume2Icon size={12} className="text-green-500" />
           </div>
         )}
         <span className="text-xs font-medium text-green-500">
@@ -53,7 +52,7 @@ export function VoiceControlBar() {
             isMuted && 'bg-red-500/20 text-red-500 hover:bg-red-500/30'
           )}
         >
-          {isMuted ? <HugeiconsIcon icon={MicOffIcon} size={16} /> : <HugeiconsIcon icon={MicIcon} size={16} />}
+          {isMuted ? <MicOffIcon size={16} /> : <MicIcon size={16} />}
         </Button>
 
         <Button
@@ -66,7 +65,7 @@ export function VoiceControlBar() {
             isDeafened && 'bg-red-500/20 text-red-500 hover:bg-red-500/30'
           )}
         >
-          {isDeafened ? <HugeiconsIcon icon={HeadphoneOffIcon} size={16} /> : <HugeiconsIcon icon={HeadphonesIcon} size={16} />}
+          {isDeafened ? <HeadphoneOffIcon size={16} /> : <HeadphonesIcon size={16} />}
         </Button>
 
         <div className="flex-1" />
@@ -78,7 +77,7 @@ export function VoiceControlBar() {
           className="size-8 rounded-lg bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500/30"
           onPress={leaveChannel}
         >
-          <HugeiconsIcon icon={PhoneOffIcon} size={16} />
+          <PhoneOffIcon size={16} />
         </Button>
       </div>
     </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import { memo, type Dispatch, type SetStateAction } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon,
 } from '@/components/icons';
@@ -132,14 +131,14 @@ export const MessageItem = memo(function MessageItem({
               className="size-7 rounded-md text-[var(--muted)] hover:text-[var(--foreground)]"
               onPress={() => onReply(message.id, message.content, displayName || 'Utilisateur')}
             >
-              <HugeiconsIcon icon={ReplyIcon} size={15} />
+              <ReplyIcon size={15} />
             </Button>
             <Tooltip.Content>Répondre</Tooltip.Content>
         </Tooltip>
 
         <EmojiPicker onSelect={(emoji) => onReaction(message.id, emoji)}>
           <Button isIconOnly size="sm" variant="tertiary" className="size-7 rounded-md text-[var(--muted)] hover:text-[var(--foreground)]">
-            <HugeiconsIcon icon={SmileIcon} size={15} />
+            <SmileIcon size={15} />
           </Button>
         </EmojiPicker>
 
@@ -151,7 +150,7 @@ export const MessageItem = memo(function MessageItem({
               aria-label="Plus d'options"
               className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/60 hover:text-[var(--foreground)]"
             >
-              <HugeiconsIcon icon={MoreHorizontalIcon} size={15} />
+              <MoreHorizontalIcon size={15} />
             </div>
           </Dropdown.Trigger>
           <Dropdown.Popover className="min-w-44">
@@ -166,26 +165,26 @@ export const MessageItem = memo(function MessageItem({
               }}
             >
               <Dropdown.Item id="reply" textValue="Répondre">
-                <HugeiconsIcon icon={ReplyIcon} size={15} />
+                <ReplyIcon size={15} />
                 <span>Répondre</span>
               </Dropdown.Item>
               <Dropdown.Item id="copy" textValue="Copier le texte">
-                <HugeiconsIcon icon={CopyIcon} size={15} />
+                <CopyIcon size={15} />
                 <span>Copier le texte</span>
               </Dropdown.Item>
               <Dropdown.Item id="pin" textValue="Épingler">
-                <HugeiconsIcon icon={PinIcon} size={15} />
+                <PinIcon size={15} />
                 <span>Épingler</span>
               </Dropdown.Item>
               {isMe && (
                 <Dropdown.Item id="edit" textValue="Modifier">
-                  <HugeiconsIcon icon={PencilIcon} size={15} />
+                  <PencilIcon size={15} />
                   <span>Modifier</span>
                 </Dropdown.Item>
               )}
               {isMe && (
                 <Dropdown.Item id="delete" textValue="Supprimer" variant="danger">
-                  <HugeiconsIcon icon={Trash2Icon} size={15} />
+                  <Trash2Icon size={15} />
                   <span>Supprimer</span>
                 </Dropdown.Item>
               )}
@@ -220,7 +219,7 @@ export const MessageItem = memo(function MessageItem({
           return (
             <div className="mb-1 flex items-center gap-1.5 text-[11px] text-[var(--muted)]">
               <div className="h-3 w-0.5 rounded-full bg-[var(--accent)]/40" />
-              <HugeiconsIcon icon={ReplyIcon} size={11} className="shrink-0 rotate-180 text-[var(--accent)]/50" />
+              <ReplyIcon size={11} className="shrink-0 rotate-180 text-[var(--accent)]/50" />
               <span className="font-medium text-[var(--foreground)]/60">{repliedName}</span>
               <span className="max-w-60 truncate text-[var(--muted)]/60">{replyMessage.content}</span>
             </div>
@@ -248,7 +247,7 @@ export const MessageItem = memo(function MessageItem({
             {formatTime(message.createdAt)}
           </span>
           {message.pending && (
-            <HugeiconsIcon icon={ClockIcon} size={11} className="text-[var(--muted)]/30" />
+            <ClockIcon size={11} className="text-[var(--muted)]/30" />
           )}
           {!!message.isEdited && (
             <span className="text-[10px] text-[var(--muted)]/40">(modifié)</span>

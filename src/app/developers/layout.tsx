@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import {
   BotIcon,
   BookOpenIcon,
@@ -92,7 +91,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
                           : 'text-muted/80 hover:bg-surface hover:text-foreground',
                       )}
                     >
-                      <HugeiconsIcon icon={item.icon} size={14} className="shrink-0" />
+                      <item.icon size={14} className="shrink-0" />
                       <span className="truncate">{item.label}</span>
                     </Link>
                   );
@@ -110,7 +109,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
             className="w-full justify-start gap-2 text-xs text-muted"
             onPress={() => router.push('/channels/me')}
           >
-            <HugeiconsIcon icon={ArrowLeftIcon} size={13} />
+            <ArrowLeftIcon size={13} />
             Retour à l&apos;app
           </Button>
         </div>
@@ -134,13 +133,13 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
                     : 'text-muted hover:text-foreground',
                 )}
               >
-                <HugeiconsIcon icon={item.icon} size={12} />
+                <item.icon size={12} />
                 {item.label}
               </Link>
             ))}
           </div>
           <Button size="sm" variant="ghost" isIconOnly onPress={() => router.push('/channels/me')}>
-            <HugeiconsIcon icon={ArrowLeftIcon} size={14} />
+            <ArrowLeftIcon size={14} />
           </Button>
         </header>
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   SearchIcon,
   UsersIcon,
@@ -96,11 +95,11 @@ export default function DiscoverServerPage() {
           className="rounded-lg"
           onPress={() => router.push('/channels/me')}
         >
-          <HugeiconsIcon icon={ArrowLeftIcon} size={16} />
+          <ArrowLeftIcon size={16} />
         </Button>
         <div className="flex items-center gap-2">
           <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)]/10">
-            <HugeiconsIcon icon={CompassIcon} size={14} className="text-[var(--accent)]" />
+            <CompassIcon size={14} className="text-[var(--accent)]" />
           </div>
           <h1 className="text-sm font-bold">Découvrir des serveurs</h1>
         </div>
@@ -117,7 +116,7 @@ export default function DiscoverServerPage() {
 
         <div className="relative z-10 max-w-2xl">
           <div className="mb-1.5 flex items-center gap-2">
-            <HugeiconsIcon icon={CompassIcon} size={18} className="text-[var(--accent)]" />
+            <CompassIcon size={18} className="text-[var(--accent)]" />
             <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--accent)]">Exploration</span>
           </div>
           <h2 className="mb-2 text-2xl font-bold tracking-tight">Trouvez votre communauté</h2>
@@ -129,7 +128,7 @@ export default function DiscoverServerPage() {
           <div className="max-w-sm">
             <InputGroup className="rounded-xl" variant="secondary">
               <InputGroup.Prefix className="pl-3 pr-0">
-                <HugeiconsIcon icon={SearchIcon} size={15} className="text-muted/50" />
+                <SearchIcon size={15} className="text-muted/50" />
               </InputGroup.Prefix>
               <InputGroup.Input
                 placeholder="Rechercher un serveur…"
@@ -185,7 +184,7 @@ export default function DiscoverServerPage() {
                 <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/8 via-transparent to-transparent" />
                 <div className="relative flex flex-col items-center gap-3">
                   <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
-                    <HugeiconsIcon icon={CompassIcon} size={26} className="text-[var(--accent)]" />
+                    <CompassIcon size={26} className="text-[var(--accent)]" />
                   </div>
                   <div>
                     <p className="text-[14px] font-bold">Aucun serveur trouvé</p>
@@ -227,7 +226,7 @@ export default function DiscoverServerPage() {
                             size="sm"
                             className="gap-1 bg-blue-500/85 text-white backdrop-blur-sm"
                           >
-                            <HugeiconsIcon icon={CheckCircle2Icon} size={11} />
+                            <CheckCircle2Icon size={11} />
                             Certifié
                           </Chip>
                           <Tooltip.Content>Serveur certifié par AlfyChat</Tooltip.Content>
@@ -239,7 +238,7 @@ export default function DiscoverServerPage() {
                             size="sm"
                             className="gap-1 bg-violet-500/85 text-white backdrop-blur-sm"
                           >
-                            <HugeiconsIcon icon={HandshakeIcon} size={11} />
+                            <HandshakeIcon size={11} />
                             Partenaire
                           </Chip>
                           <Tooltip.Content>Serveur partenaire AlfyChat</Tooltip.Content>
@@ -266,7 +265,7 @@ export default function DiscoverServerPage() {
                     <div className="mb-1">
                       <h3 className="truncate text-[14px] font-bold">{server.name}</h3>
                       <div className="flex items-center gap-1 text-[11px] text-muted">
-                        <HugeiconsIcon icon={UsersIcon} size={11} />
+                        <UsersIcon size={11} />
                         {(server.member_count || 0).toLocaleString('fr-FR')} membres
                       </div>
                     </div>
@@ -287,12 +286,12 @@ export default function DiscoverServerPage() {
                       >
                         {joiningId === server.id ? (
                           <>
-                            <HugeiconsIcon icon={Loader2Icon} size={13} className="animate-spin" />
+                            <Loader2Icon size={13} className="animate-spin" />
                             Rejoindre…
                           </>
                         ) : (
                           <>
-                            <HugeiconsIcon icon={ArrowRightIcon} size={13} />
+                            <ArrowRightIcon size={13} />
                             Rejoindre
                           </>
                         )}

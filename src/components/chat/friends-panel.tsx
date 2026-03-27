@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   UsersIcon,
   UserPlusIcon,
@@ -354,11 +353,11 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/40 bg-[var(--background)]/60 px-2 backdrop-blur-sm md:px-4">
           {isMobile && (
             <Button isIconOnly size="sm" variant="ghost" onPress={openSidebar} className="shrink-0">
-              <HugeiconsIcon icon={MenuIcon} size={20} />
+              <MenuIcon size={20} />
             </Button>
           )}
           <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)]/10">
-            <HugeiconsIcon icon={UsersIcon} size={14} className="text-[var(--accent)]" />
+            <UsersIcon size={14} className="text-[var(--accent)]" />
           </div>
           <span className="text-sm font-bold">{t.friends.title}</span>
           {requests.received.length > 0 && (
@@ -375,7 +374,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <Tooltip delay={0}>
                 <Tabs.Tab id="friends">
                   <div className="flex items-center gap-1.5">
-                    <HugeiconsIcon icon={UsersIcon} size={14} />
+                    <UsersIcon size={14} />
                     {!compactTabs && <span>{t.friends.tabFriends}</span>}
                     {!compactTabs && (
                       <Chip size="sm" variant="soft">
@@ -390,7 +389,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <Tooltip delay={0}>
                 <Tabs.Tab id="requests">
                   <div className="flex items-center gap-1.5">
-                    <HugeiconsIcon icon={ClockIcon} size={14} />
+                    <ClockIcon size={14} />
                     {!compactTabs && <span>{t.friends.tabRequests}</span>}
                     {!compactTabs && requests.received.length > 0 && (
                       <Chip color="danger" size="sm">
@@ -405,7 +404,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <Tooltip delay={0}>
                 <Tabs.Tab id="blocked">
                   <div className="flex items-center gap-1.5">
-                    <HugeiconsIcon icon={ShieldOffIcon} size={14} />
+                    <ShieldOffIcon size={14} />
                     {!compactTabs && <span>{t.friends.tabBlocked}</span>}
                     {!compactTabs && blockedUsers.length > 0 && (
                       <Chip size="sm" variant="soft">
@@ -420,7 +419,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <Tooltip delay={0}>
                 <Tabs.Tab id="add">
                   <div className="flex items-center gap-1.5">
-                    <HugeiconsIcon icon={UserPlusIcon} size={14} />
+                    <UserPlusIcon size={14} />
                     {!compactTabs && <span>{t.friends.tabAdd}</span>}
                   </div>
                   <Tabs.Indicator />
@@ -435,7 +434,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
             {/* Search */}
             <InputGroup className="w-full rounded-xl" variant="secondary">
               <InputGroup.Prefix className="pl-3 pr-0">
-                <HugeiconsIcon icon={SearchIcon} size={15} className="text-[var(--muted)]/50" />
+                <SearchIcon size={15} className="text-[var(--muted)]/50" />
               </InputGroup.Prefix>
               <InputGroup.Input
                 placeholder={t.friends.searchPlaceholder}
@@ -449,7 +448,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                     onClick={() => setSearchQuery('')}
                     className="flex size-5 items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
                   >
-                    <HugeiconsIcon icon={XIcon} size={12} />
+                    <XIcon size={12} />
                   </button>
                 </InputGroup.Suffix>
               )}
@@ -461,7 +460,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-[var(--accent)]/10 via-transparent to-transparent" />
                   <div className="relative flex flex-col items-center gap-3">
                     <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
-                      <HugeiconsIcon icon={UsersIcon} size={26} className="text-[var(--accent)]" />
+                      <UsersIcon size={26} className="text-[var(--accent)]" />
                     </div>
                     <div>
                       <p className="text-[14px] font-bold">
@@ -533,7 +532,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-yellow-500/8 via-transparent to-transparent" />
                   <div className="relative flex flex-col items-center gap-3">
                     <div className="flex size-14 items-center justify-center rounded-2xl bg-yellow-500/10">
-                      <HugeiconsIcon icon={ClockIcon} size={26} className="text-yellow-400" />
+                      <ClockIcon size={26} className="text-yellow-400" />
                     </div>
                     <div>
                       <p className="text-[14px] font-bold">{t.friends.noRequests}</p>
@@ -559,7 +558,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                           <Avatar.Fallback className="text-xs">{req.username.charAt(0).toUpperCase()}</Avatar.Fallback>
                         </Avatar>
                         <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-yellow-500 ring-2 ring-[var(--background)]">
-                          <HugeiconsIcon icon={ClockIcon} size={9} className="text-white" />
+                          <ClockIcon size={9} className="text-white" />
                         </span>
                       </div>
 
@@ -581,7 +580,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                             onPress={() => handleAcceptRequest(req.id)}
                             className="rounded-lg bg-green-600 text-white hover:bg-green-700"
                           >
-                            <HugeiconsIcon icon={CheckIcon} size={15} />
+                            <CheckIcon size={15} />
                           </Button>
                           <Tooltip.Content>{t.friends.accept}</Tooltip.Content>
                         </Tooltip>
@@ -593,7 +592,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                             onPress={() => handleDeclineRequest(req.id)}
                             className="rounded-lg"
                           >
-                            <HugeiconsIcon icon={XIcon} size={15} />
+                            <XIcon size={15} />
                           </Button>
                           <Tooltip.Content>{t.friends.decline}</Tooltip.Content>
                         </Tooltip>
@@ -613,7 +612,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-red-500/8 via-transparent to-transparent" />
                   <div className="relative flex flex-col items-center gap-3">
                     <div className="flex size-14 items-center justify-center rounded-2xl bg-red-500/10">
-                      <HugeiconsIcon icon={ShieldOffIcon} size={26} className="text-red-400" />
+                      <ShieldOffIcon size={26} className="text-red-400" />
                     </div>
                     <div>
                       <p className="text-[14px] font-bold">{t.friends.noBlocked}</p>
@@ -639,7 +638,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                           <Avatar.Fallback className="text-xs">{user.username.charAt(0).toUpperCase()}</Avatar.Fallback>
                         </Avatar>
                         <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 ring-2 ring-[var(--background)]">
-                          <HugeiconsIcon icon={BanIcon} size={9} className="text-white" />
+                          <BanIcon size={9} className="text-white" />
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -652,7 +651,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                         className="shrink-0 gap-1.5 rounded-lg text-[11px]"
                         onPress={() => handleUnblockUser(user.id, user.displayName)}
                       >
-                        <HugeiconsIcon icon={ShieldOffIcon} size={13} />
+                        <ShieldOffIcon size={13} />
                         {t.friends.unblock}
                       </Button>
                     </div>
@@ -692,7 +691,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                       className="flex size-9 items-center justify-center rounded-full border-2 border-[var(--background)] bg-[var(--accent)] shadow-md"
                       style={{ zIndex: 1 }}
                     >
-                      <HugeiconsIcon icon={UserPlusIcon} size={15} className="text-white" />
+                      <UserPlusIcon size={15} className="text-white" />
                     </div>
                   </div>
 
@@ -711,7 +710,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
 
                   <InputGroup className="w-full rounded-xl" variant="secondary">
                     <InputGroup.Prefix className="pl-3 pr-0">
-                      <HugeiconsIcon icon={SearchIcon} size={15} className="text-[var(--muted)]/50" />
+                      <SearchIcon size={15} className="text-[var(--muted)]/50" />
                     </InputGroup.Prefix>
                     <InputGroup.Input
                       id="add-friend"
@@ -727,7 +726,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                           onClick={() => setAddFriendInput('')}
                           className="flex size-5 items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
                         >
-                          <HugeiconsIcon icon={XIcon} size={12} />
+                          <XIcon size={12} />
                         </button>
                       </InputGroup.Suffix>
                     )}
@@ -742,12 +741,12 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                 >
                   {addFriendLoading ? (
                     <>
-                      <HugeiconsIcon icon={ClockIcon} size={15} className="animate-spin" />
+                      <ClockIcon size={15} className="animate-spin" />
                       {t.friends.sendingRequest}
                     </>
                   ) : (
                     <>
-                      <HugeiconsIcon icon={UserPlusIcon} size={15} />
+                      <UserPlusIcon size={15} />
                       {t.friends.sendRequest}
                     </>
                   )}
@@ -809,7 +808,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           {onlineFriends.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 pt-10 text-center">
               <div className="flex size-10 items-center justify-center rounded-2xl bg-[var(--surface-secondary)]/40">
-                <HugeiconsIcon icon={UsersIcon} size={18} className="text-[var(--muted)]/30" />
+                <UsersIcon size={18} className="text-[var(--muted)]/30" />
               </div>
               <p className="text-[11px] text-[var(--muted)]/40">{t.friends.noOneOnline}</p>
             </div>
@@ -907,7 +906,7 @@ function FriendRow({
       <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         <Tooltip delay={0}>
           <Button isIconOnly size="sm" variant="ghost" onPress={onMessage} className="rounded-lg">
-            <HugeiconsIcon icon={MessageCircleIcon} size={15} />
+            <MessageCircleIcon size={15} />
           </Button>
           <Tooltip.Content placement="top">{t.friends.message}</Tooltip.Content>
         </Tooltip>
@@ -920,21 +919,21 @@ function FriendRow({
               aria-label={t.friends.moreActions}
               className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40"
             >
-              <HugeiconsIcon icon={MoreVerticalIcon} size={14} />
+              <MoreVerticalIcon size={14} />
             </div>
           </Dropdown.Trigger>
           <Dropdown.Popover placement="bottom end">
             <Dropdown.Menu aria-label={t.friends.moreActions}>
               <Dropdown.Item id="message" onPress={onMessage} className="gap-2">
-                <HugeiconsIcon icon={MessageCircleIcon} size={15} />
+                <MessageCircleIcon size={15} />
                 {t.friends.sendMessage}
               </Dropdown.Item>
               <Dropdown.Item id="remove" onPress={onRemove} className="gap-2 text-red-500">
-                <HugeiconsIcon icon={UserMinusIcon} size={15} />
+                <UserMinusIcon size={15} />
                 {t.friends.removeFriend}
               </Dropdown.Item>
               <Dropdown.Item id="block" onPress={onBlock} className="gap-2 text-red-500">
-                <HugeiconsIcon icon={BanIcon} size={15} />
+                <BanIcon size={15} />
                 {t.friends.block}
               </Dropdown.Item>
             </Dropdown.Menu>

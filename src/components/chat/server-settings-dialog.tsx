@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   SettingsIcon, Loader2Icon, SaveIcon, CopyIcon, CheckIcon,
   EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon, Link2Icon,
@@ -399,7 +398,7 @@ export function ServerSettingsDialog({
                       ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
                       : 'bg-[var(--surface-secondary)] text-[var(--muted)] group-hover:text-[var(--foreground)]',
                   )}>
-                    <HugeiconsIcon icon={NAV_ICON_MAP[id]} size={13} />
+                    <NAV_ICON_MAP[id] size={13} />
                   </div>
                   {label}
                 </button>
@@ -413,7 +412,7 @@ export function ServerSettingsDialog({
                 className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]"
               >
                 <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-[var(--surface-secondary)]">
-                  <HugeiconsIcon icon={XIcon} size={13} />
+                  <XIcon size={13} />
                 </div>
                 {ss.close}
               </button>
@@ -516,8 +515,8 @@ export function ServerSettingsDialog({
                       className="gap-2 rounded-lg px-5"
                     >
                       {isSaving
-                        ? <HugeiconsIcon icon={Loader2Icon} size={15} className="animate-spin" />
-                        : <HugeiconsIcon icon={SaveIcon} size={15} />}
+                        ? <Loader2Icon size={15} className="animate-spin" />
+                        : <SaveIcon size={15} />}
                       {ss.general.saveChanges}
                     </Button>
                   </div>
@@ -563,8 +562,8 @@ export function ServerSettingsDialog({
                         </div>
                         <Button size="sm" onPress={handleCreateInvite} isDisabled={isCreatingInvite} className="gap-2 rounded-lg">
                           {isCreatingInvite
-                            ? <HugeiconsIcon icon={Loader2Icon} size={13} className="animate-spin" />
-                            : <HugeiconsIcon icon={PlusIcon} size={13} />}
+                            ? <Loader2Icon size={13} className="animate-spin" />
+                            : <PlusIcon size={13} />}
                           {ss.invitations.create}
                         </Button>
                       </div>
@@ -583,7 +582,7 @@ export function ServerSettingsDialog({
                             style={{ animationDelay: `${i * 50}ms` }}
                           >
                             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)]/10">
-                              <HugeiconsIcon icon={Link2Icon} size={14} className="text-[var(--accent)]" />
+                              <Link2Icon size={14} className="text-[var(--accent)]" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-mono text-[13px] font-medium">
@@ -603,8 +602,8 @@ export function ServerSettingsDialog({
                               onPress={() => copyInviteLink(invite.customSlug || invite.code)}
                             >
                               {copiedCode === (invite.customSlug || invite.code)
-                                ? <HugeiconsIcon icon={CheckIcon} size={13} className="text-green-400" />
-                                : <HugeiconsIcon icon={CopyIcon} size={13} />}
+                                ? <CheckIcon size={13} className="text-green-400" />
+                                : <CopyIcon size={13} />}
                             </Button>
                             <Button
                               variant="ghost"
@@ -613,7 +612,7 @@ export function ServerSettingsDialog({
                               className="size-7 text-[var(--muted)]/50 hover:text-red-500"
                               onPress={() => handleDeleteInvite(invite.id)}
                             >
-                              <HugeiconsIcon icon={Trash2Icon} size={13} />
+                              <Trash2Icon size={13} />
                             </Button>
                           </div>
                         ))
@@ -650,8 +649,8 @@ export function ServerSettingsDialog({
                         className="gap-2 rounded-lg px-5"
                       >
                         {isSaving
-                          ? <HugeiconsIcon icon={Loader2Icon} size={15} className="animate-spin" />
-                          : <HugeiconsIcon icon={SaveIcon} size={15} />}
+                          ? <Loader2Icon size={15} className="animate-spin" />
+                          : <SaveIcon size={15} />}
                         {ss.permissions.save}
                       </Button>
                     )}
@@ -666,7 +665,7 @@ export function ServerSettingsDialog({
                     <div className="rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/30 p-4 space-y-3">
                       <div className="flex items-center gap-2">
                         <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                          <HugeiconsIcon icon={ShieldCheckIcon} size={13} className="text-amber-500" />
+                          <ShieldCheckIcon size={13} className="text-amber-500" />
                         </div>
                         <p className="text-[13px] font-semibold">{ss.permissions.claimAdmin}</p>
                       </div>
@@ -689,8 +688,8 @@ export function ServerSettingsDialog({
                           className="gap-1.5 rounded-lg"
                         >
                           {claimLoading
-                            ? <HugeiconsIcon icon={Loader2Icon} size={13} className="animate-spin" />
-                            : <HugeiconsIcon icon={KeyRoundIcon} size={13} />}
+                            ? <Loader2Icon size={13} className="animate-spin" />
+                            : <KeyRoundIcon size={13} />}
                           {ss.permissions.validate}
                         </Button>
                       </div>
@@ -701,7 +700,7 @@ export function ServerSettingsDialog({
                             ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                             : 'bg-red-500/10 text-red-500',
                         )}>
-                          <HugeiconsIcon icon={claimResult.ok ? CheckIcon : XIcon} size={13} />
+                          <claimResult.ok ? CheckIcon : XIcon size={13} />
                           {claimResult.msg}
                         </div>
                       )}
@@ -757,7 +756,7 @@ export function ServerSettingsDialog({
                             className="rounded-lg"
                           >
                             {isDomainLoading
-                              ? <HugeiconsIcon icon={Loader2Icon} size={14} className="animate-spin" />
+                              ? <Loader2Icon size={14} className="animate-spin" />
                               : ss.domain.verify}
                           </Button>
                         )}
@@ -765,7 +764,7 @@ export function ServerSettingsDialog({
 
                       {server?.domainVerified && (
                         <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-3 py-2.5 text-[13px] text-green-400">
-                          <HugeiconsIcon icon={CheckIcon} size={14} className="shrink-0" />
+                          <CheckIcon size={14} className="shrink-0" />
                           <span className="font-medium">{ss.domain.verified}</span>
                         </div>
                       )}
@@ -785,13 +784,13 @@ export function ServerSettingsDialog({
                             className="size-7"
                             onPress={() => navigator.clipboard.writeText(domainTxtRecord)}
                           >
-                            <HugeiconsIcon icon={CopyIcon} size={13} />
+                            <CopyIcon size={13} />
                           </Button>
                         </div>
                         <Button size="sm" onPress={handleCheckDomainVerify} isDisabled={isDomainLoading} className="gap-2 rounded-lg">
                           {isDomainLoading
-                            ? <HugeiconsIcon icon={Loader2Icon} size={13} className="animate-spin" />
-                            : <HugeiconsIcon icon={GlobeIcon} size={13} />}
+                            ? <Loader2Icon size={13} className="animate-spin" />
+                            : <GlobeIcon size={13} />}
                           {ss.domain.checkDns}
                         </Button>
                       </div>
@@ -811,7 +810,7 @@ export function ServerSettingsDialog({
                     <div className="rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/30 p-4 space-y-3">
                       <div className="flex items-center gap-2">
                         <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)]/10">
-                          <HugeiconsIcon icon={ServerIcon} size={13} className="text-[var(--accent)]" />
+                          <ServerIcon size={13} className="text-[var(--accent)]" />
                         </div>
                         <p className="text-[13px] font-semibold">{ss.serverNode.authToken}</p>
                       </div>
@@ -826,13 +825,13 @@ export function ServerSettingsDialog({
                         </InputGroup>
                         <Button variant="ghost" isIconOnly size="sm" className="size-7" onPress={() => setShowToken((v) => !v)}>
                           {showToken
-                            ? <HugeiconsIcon icon={EyeOffIcon} size={14} />
-                            : <HugeiconsIcon icon={EyeIcon} size={14} />}
+                            ? <EyeOffIcon size={14} />
+                            : <EyeIcon size={14} />}
                         </Button>
                         <Button variant="ghost" isIconOnly size="sm" className="size-7" onPress={copyToken}>
                           {copiedToken
-                            ? <HugeiconsIcon icon={CheckIcon} size={14} className="text-green-400" />
-                            : <HugeiconsIcon icon={CopyIcon} size={14} />}
+                            ? <CheckIcon size={14} className="text-green-400" />
+                            : <CopyIcon size={14} />}
                         </Button>
                       </div>
                     </div>
@@ -849,7 +848,7 @@ export function ServerSettingsDialog({
                     {/* Warning */}
                     <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3.5">
                       <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                        <HugeiconsIcon icon={AlertTriangleIcon} size={13} className="text-amber-500" />
+                        <AlertTriangleIcon size={13} className="text-amber-500" />
                       </div>
                       <p className="text-[12px] text-[var(--muted)]/70 pt-0.5">
                         {ss.serverNode.authTokenDesc}
@@ -860,7 +859,7 @@ export function ServerSettingsDialog({
                     <div className="rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/30 p-4 space-y-3">
                       <div className="flex items-center gap-2">
                         <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                          <HugeiconsIcon icon={ShieldCheckIcon} size={13} className="text-amber-500" />
+                          <ShieldCheckIcon size={13} className="text-amber-500" />
                         </div>
                         <p className="text-[13px] font-semibold">{ss.serverNode.claimAdmin}</p>
                       </div>
@@ -883,7 +882,7 @@ export function ServerSettingsDialog({
                           className="rounded-lg"
                         >
                           {claimLoading
-                            ? <HugeiconsIcon icon={Loader2Icon} size={13} className="animate-spin" />
+                            ? <Loader2Icon size={13} className="animate-spin" />
                             : ss.serverNode.validate}
                         </Button>
                       </div>
@@ -894,7 +893,7 @@ export function ServerSettingsDialog({
                             ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                             : 'bg-red-500/10 text-red-500',
                         )}>
-                          <HugeiconsIcon icon={claimResult.ok ? CheckIcon : XIcon} size={13} />
+                          <claimResult.ok ? CheckIcon : XIcon size={13} />
                           {claimResult.msg}
                         </div>
                       )}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ForumIcon,
   PlusIcon,
@@ -140,14 +139,14 @@ function NewPostModal({
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-[var(--border)]/30 px-5 py-4">
           <div className="flex size-8 items-center justify-center rounded-lg bg-violet-500/10">
-            <HugeiconsIcon icon={ForumIcon} size={15} className="text-violet-400" />
+            <ForumIcon size={15} className="text-violet-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-[var(--foreground)]">Nouveau post</p>
             <p className="text-[11px] text-[var(--muted)]">#{channelName || 'forum'}</p>
           </div>
           <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-lg text-[var(--muted)]" onPress={onClose}>
-            <HugeiconsIcon icon={XIcon} size={15} />
+            <XIcon size={15} />
           </Button>
         </div>
 
@@ -257,11 +256,11 @@ function PostCard({ post, onClick }: { post: ForumPost; onClick: () => void }) {
             </span>
             <span>·</span>
             <span className="flex items-center gap-1">
-              <HugeiconsIcon icon={ClockIcon} size={11} />
+              <ClockIcon size={11} />
               {timeAgo(post.createdAt)}
             </span>
             <span className="ml-auto flex items-center gap-1">
-              <HugeiconsIcon icon={BubbleChatIcon} size={11} />
+              <BubbleChatIcon size={11} />
               {post.replyCount} réponse{post.replyCount !== 1 ? 's' : ''}
             </span>
           </div>
@@ -386,10 +385,10 @@ function PostDiscussion({
           className="size-8 rounded-lg text-[var(--muted)]"
           onPress={onBack}
         >
-          <HugeiconsIcon icon={ArrowLeftIcon} size={16} />
+          <ArrowLeftIcon size={16} />
         </Button>
         <div className="flex size-7 items-center justify-center rounded-lg bg-violet-500/10">
-          <HugeiconsIcon icon={ForumIcon} size={14} className="text-violet-400" />
+          <ForumIcon size={14} className="text-violet-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-[var(--foreground)]">{post.title}</p>
@@ -438,7 +437,7 @@ function PostDiscussion({
         ) : dateGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-violet-500/10">
-              <HugeiconsIcon icon={BubbleChatIcon} size={22} className="text-violet-400" />
+              <BubbleChatIcon size={22} className="text-violet-400" />
             </div>
             <p className="text-sm font-medium text-[var(--foreground)]">Pas encore de réponses</p>
             <p className="text-[12px] text-[var(--muted)]">Soyez le premier à répondre !</p>
@@ -483,7 +482,7 @@ function PostDiscussion({
           <label className="cursor-pointer self-end pb-0.5">
             <input type="file" accept="image/*" className="hidden" />
             <span className="inline-flex size-8 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
-              <HugeiconsIcon icon={PaperclipIcon} size={16} />
+              <PaperclipIcon size={16} />
             </span>
           </label>
           <textarea
@@ -497,7 +496,7 @@ function PostDiscussion({
           <div className="self-end pb-0.5">
             <EmojiPicker onSelect={(emoji) => setInput((prev) => prev + emoji)}>
               <div className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
-                <HugeiconsIcon icon={SmileIcon} size={16} />
+                <SmileIcon size={16} />
               </div>
             </EmojiPicker>
           </div>
@@ -514,7 +513,7 @@ function PostDiscussion({
               onPress={handleSend}
               isDisabled={!input.trim()}
             >
-              <HugeiconsIcon icon={SendIcon} size={16} />
+              <SendIcon size={16} />
             </Button>
           </div>
         </div>
@@ -680,7 +679,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
       {/* Header */}
       <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
         <div className="flex size-7 items-center justify-center rounded-lg bg-violet-500/10">
-          <HugeiconsIcon icon={ForumIcon} size={14} className="text-violet-400" />
+          <ForumIcon size={14} className="text-violet-400" />
         </div>
         <h2 className="font-semibold text-[var(--foreground)]">{channelName || 'forum'}</h2>
         <p className="text-[12px] text-[var(--muted)]">
@@ -692,7 +691,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
             className="h-8 rounded-xl bg-violet-500 px-3 text-[12px] font-medium text-white hover:bg-violet-600"
             onPress={() => setShowNewPost(true)}
           >
-            <HugeiconsIcon icon={PlusIcon} size={13} className="mr-1" />
+            <PlusIcon size={13} className="mr-1" />
             Nouveau post
           </Button>
         </div>
@@ -706,7 +705,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="relative mb-4 flex size-16 items-center justify-center rounded-2xl bg-violet-500/10">
               <div className="absolute inset-0 rounded-2xl bg-violet-500/8 blur-xl" />
-              <HugeiconsIcon icon={ForumIcon} size={32} className="relative text-violet-400" />
+              <ForumIcon size={32} className="relative text-violet-400" />
             </div>
             <h3 className="mb-1 text-xl font-bold text-[var(--foreground)]">Aucun post pour l&apos;instant</h3>
             <p className="mb-4 text-sm text-[var(--muted)]">Lancez la discussion en créant le premier post.</p>
@@ -715,7 +714,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
               className="rounded-xl bg-violet-500 px-4 text-white hover:bg-violet-600"
               onPress={() => setShowNewPost(true)}
             >
-              <HugeiconsIcon icon={PlusIcon} size={13} className="mr-1" />
+              <PlusIcon size={13} className="mr-1" />
               Créer un post
             </Button>
           </div>

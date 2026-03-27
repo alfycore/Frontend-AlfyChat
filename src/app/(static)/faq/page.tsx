@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { Card } from '@heroui/react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   HelpCircleIcon,
   MessageCircleIcon,
@@ -144,7 +143,7 @@ export default function FAQPage() {
       <div className="mb-10">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex size-12 items-center justify-center rounded-xl bg-[var(--accent)]/10">
-            <HugeiconsIcon icon={HelpCircleIcon} size={24} className="text-[var(--accent)]" />
+            <HelpCircleIcon size={24} className="text-[var(--accent)]" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-[var(--foreground)]">Foire aux Questions</h1>
@@ -157,7 +156,7 @@ export default function FAQPage() {
         {faqSections.map((section) => (
           <div key={section.title}>
             <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-[var(--foreground)]">
-              <HugeiconsIcon icon={section.icon} size={20} className="text-[var(--accent)]" />
+              <section.icon size={20} className="text-[var(--accent)]" />
               {section.title}
             </h2>
             <div className="space-y-3">

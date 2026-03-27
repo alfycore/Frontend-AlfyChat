@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { LogInIcon } from '@/components/icons';
 import { Button, Link } from '@heroui/react';
 
@@ -21,7 +20,7 @@ export function NavAuthButtons() {
     return (
       <Link href="/channels/me">
         <Button size="sm">
-          <HugeiconsIcon icon={LogInIcon} size={14} />
+          <LogInIcon size={14} />
           Ouvrir AlfyChat
         </Button>
       </Link>

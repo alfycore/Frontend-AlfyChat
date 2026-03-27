@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MicIcon, MicOffIcon, Volume2Icon, VolumeXIcon, SettingsIcon, CheckIcon, PencilIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
@@ -134,7 +133,7 @@ export function UserPanel({ user }: UserPanelProps) {
                 </div>
               ) : (
                 <div className="flex w-full items-center gap-2">
-                  <HugeiconsIcon icon={PencilIcon} size={13} className="shrink-0 text-[var(--muted)]" />
+                  <PencilIcon size={13} className="shrink-0 text-[var(--muted)]" />
                   <span className="flex-1 truncate text-[13px] text-[var(--muted)]">
                     {user.customStatus || 'Définir un statut...'}
                   </span>
@@ -150,7 +149,7 @@ export function UserPanel({ user }: UserPanelProps) {
                 <Dropdown.Item key={s} id={s} textValue={t.status[s]}>
                   <div className={`size-2.5 rounded-full ${cfg.color}`} />
                   <span className="flex-1 text-[13px]">{t.status[s]}</span>
-                  {isActive && <HugeiconsIcon icon={CheckIcon} size={14} className="text-[var(--accent)]" />}
+                  {isActive && <CheckIcon size={14} className="text-[var(--accent)]" />}
                 </Dropdown.Item>
               );
             })}
@@ -170,7 +169,7 @@ export function UserPanel({ user }: UserPanelProps) {
               className="size-7 rounded-md text-[var(--muted)]/60 hover:text-[var(--foreground)]"
               onPress={() => setShowSettings(true)}
             >
-              <HugeiconsIcon icon={SettingsIcon} size={15} />
+              <SettingsIcon size={15} />
             </Button>
             <Tooltip.Content placement="top">{t.userPanel.settings}</Tooltip.Content>
         </Tooltip>

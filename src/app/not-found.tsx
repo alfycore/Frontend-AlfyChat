@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { HomeIcon, MessageCircleIcon } from '@/components/icons';
 import { Button, Link } from '@heroui/react';
 
@@ -34,13 +33,13 @@ export default function NotFound() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link href="/">
             <Button size="lg">
-              <HugeiconsIcon icon={HomeIcon} size={16} />
+              <HomeIcon size={16} />
               Accueil
             </Button>
           </Link>
           <Link href="/channels/me">
             <Button size="lg" variant="outline">
-              <HugeiconsIcon icon={MessageCircleIcon} size={16} />
+              <MessageCircleIcon size={16} />
               Ouvrir AlfyChat
             </Button>
           </Link>

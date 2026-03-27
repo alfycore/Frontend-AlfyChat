@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MessageCircleIcon, ArrowLeftIcon } from '@/components/icons';
 import { Button } from '@heroui/react';
 

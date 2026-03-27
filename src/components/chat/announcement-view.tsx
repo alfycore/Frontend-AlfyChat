@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MegaphoneIcon, PlusIcon, XIcon, SendIcon, SmileIcon, PencilIcon, Trash2Icon } from '@/components/icons';
 import { Button, ScrollShadow, Skeleton } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
@@ -99,7 +98,7 @@ function ReactionBar({
       {/* Bouton ajout emoji */}
       <EmojiPicker onSelect={onAdd}>
         <button className="inline-flex size-7 items-center justify-center rounded-full border border-dashed border-[var(--border)]/40 text-[var(--muted)] transition-colors hover:border-amber-400/40 hover:text-amber-400">
-          <HugeiconsIcon icon={SmileIcon} size={13} />
+          <SmileIcon size={13} />
         </button>
       </EmojiPicker>
     </div>
@@ -174,7 +173,7 @@ function AnnouncementCard({
             onClick={() => onDelete(post.id)}
             className="flex size-7 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-red-500/10 hover:text-red-400"
           >
-            <HugeiconsIcon icon={Trash2Icon} size={14} />
+            <Trash2Icon size={14} />
           </button>
         )}
       </div>
@@ -229,14 +228,14 @@ function NewAnnouncementModal({
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-[var(--border)]/30 px-5 py-4">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-            <HugeiconsIcon icon={MegaphoneIcon} size={15} className="text-amber-400" />
+            <MegaphoneIcon size={15} className="text-amber-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-[var(--foreground)]">Nouvelle annonce</p>
             <p className="text-[11px] text-[var(--muted)]">#{channelName || 'annonces'}</p>
           </div>
           <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-lg text-[var(--muted)]" onPress={onClose}>
-            <HugeiconsIcon icon={XIcon} size={15} />
+            <XIcon size={15} />
           </Button>
         </div>
 
@@ -265,7 +264,7 @@ function NewAnnouncementModal({
             onPress={handleSubmit}
             isDisabled={!content.trim()}
           >
-            <HugeiconsIcon icon={SendIcon} size={13} />
+            <SendIcon size={13} />
             Publier
           </Button>
         </div>
@@ -437,7 +436,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
       {/* ── Header ── */}
       <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
         <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500/10">
-          <HugeiconsIcon icon={MegaphoneIcon} size={14} className="text-amber-400" />
+          <MegaphoneIcon size={14} className="text-amber-400" />
         </div>
         <h2 className="font-semibold text-[var(--foreground)]">{channelName || 'annonces'}</h2>
         {posts.length > 0 && (
@@ -451,7 +450,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
             className="gap-1.5 rounded-xl bg-amber-500 text-white hover:bg-amber-600"
             onPress={() => setShowModal(true)}
           >
-            <HugeiconsIcon icon={PlusIcon} size={14} />
+            <PlusIcon size={14} />
             Publier
           </Button>
         </div>
@@ -479,7 +478,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="relative mb-5 flex size-20 items-center justify-center rounded-3xl bg-amber-500/10">
                 <div className="absolute inset-0 rounded-3xl bg-amber-500/8 blur-xl" />
-                <HugeiconsIcon icon={MegaphoneIcon} size={36} className="relative text-amber-400" />
+                <MegaphoneIcon size={36} className="relative text-amber-400" />
               </div>
               <h3 className="mb-1.5 text-xl font-bold text-[var(--foreground)]">Aucune annonce</h3>
               <p className="mb-5 text-sm text-[var(--muted)]">Publiez la première annonce dans #{channelName || 'annonces'}</p>
@@ -487,7 +486,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
                 className="gap-1.5 rounded-xl bg-amber-500 text-white hover:bg-amber-600"
                 onPress={() => setShowModal(true)}
               >
-                <HugeiconsIcon icon={PlusIcon} size={15} />
+                <PlusIcon size={15} />
                 Publier une annonce
               </Button>
             </div>

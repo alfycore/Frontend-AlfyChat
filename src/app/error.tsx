@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import Image from 'next/image';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { RefreshCwIcon, HomeIcon } from '@/components/icons';
 import { Button, Link } from '@heroui/react';
 
@@ -46,12 +45,12 @@ export default function Error({
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button size="lg" onPress={reset}>
-            <HugeiconsIcon icon={RefreshCwIcon} size={16} />
+            <RefreshCwIcon size={16} />
             Réessayer
           </Button>
           <Link href="/">
             <Button size="lg" variant="outline">
-              <HugeiconsIcon icon={HomeIcon} size={16} />
+              <HomeIcon size={16} />
               Accueil
             </Button>
           </Link>

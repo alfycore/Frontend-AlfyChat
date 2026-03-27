@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { Card } from '@heroui/react';
-import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import { ShieldIcon, DownloadIcon, Trash2Icon, EyeIcon, FileCheckIcon, UserCheckIcon, ScaleIcon, MailIcon } from '@/components/icons';
 
 export const metadata: Metadata = {
@@ -14,7 +13,7 @@ export default function RGPDPage() {
       <div className="mb-10">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex size-12 items-center justify-center rounded-xl bg-[var(--accent)]/10">
-            <HugeiconsIcon icon={ShieldIcon} size={24} className="text-[var(--accent)]" />
+            <ShieldIcon size={24} className="text-[var(--accent)]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -116,7 +115,7 @@ function Section({ icon, title, badge, children }: { icon: IconSvgElement; title
     <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
       <div className="px-5 pt-5 pb-3">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-          <HugeiconsIcon icon={icon} size={20} className="text-[var(--accent)]" />
+          <icon size={20} className="text-[var(--accent)]" />
           {title}
           {badge && (
             <span className="rounded-full bg-[var(--surface-secondary)] px-2.5 py-0.5 text-xs font-normal text-[var(--muted)]">

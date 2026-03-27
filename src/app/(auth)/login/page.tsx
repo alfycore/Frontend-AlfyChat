@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MessageCircleIcon, ShieldIcon, LockIcon, ZapIcon,
   EyeIcon, EyeOffIcon, MailIcon, KeyRoundIcon,
@@ -164,7 +163,7 @@ export default function LoginPage() {
                 <>
                   <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
                     <div className="flex size-11 items-center justify-center rounded-xl bg-amber-500/10">
-                      <HugeiconsIcon icon={MailIcon} size={22} className="text-amber-400" />
+                      <MailIcon size={22} className="text-amber-400" />
                     </div>
                     <div className="text-center md:text-left">
                       <h1 className="text-2xl font-bold text-[var(--foreground)]">Email non vérifié</h1>
@@ -212,7 +211,7 @@ export default function LoginPage() {
                 <>
                   <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
                     <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)]">
-                      <HugeiconsIcon icon={ShieldIcon} size={22} className="text-[var(--accent-foreground)]" />
+                      <ShieldIcon size={22} className="text-[var(--accent-foreground)]" />
                     </div>
                     <div className="text-center md:text-left">
                       <h1 className="text-2xl font-bold text-[var(--foreground)]">Vérification 2FA</h1>
@@ -271,7 +270,7 @@ export default function LoginPage() {
               {/* En-tete */}
               <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
                 <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)]">
-                  <HugeiconsIcon icon={MessageCircleIcon} size={22} className="text-[var(--accent-foreground)]" />
+                  <MessageCircleIcon size={22} className="text-[var(--accent-foreground)]" />
                 </div>
                 <div className="text-center md:text-left">
                   <h1 className="text-2xl font-bold text-[var(--foreground)]">Bon retour !</h1>
@@ -297,7 +296,7 @@ export default function LoginPage() {
                     <Label>Adresse email</Label>
                     <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
-                        <HugeiconsIcon icon={MailIcon} size={16} className="text-[var(--muted)]" />
+                        <MailIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
                       <InputGroup.Input type="email" placeholder="votre@email.com" />
                     </InputGroup>
@@ -313,7 +312,7 @@ export default function LoginPage() {
                     </div>
                     <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
-                        <HugeiconsIcon icon={KeyRoundIcon} size={16} className="text-[var(--muted)]" />
+                        <KeyRoundIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
                       <InputGroup.Input
                         type={showPassword ? 'text' : 'password'}
@@ -327,7 +326,7 @@ export default function LoginPage() {
                           onPress={() => setShowPassword(!showPassword)}
                           aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                         >
-                          <HugeiconsIcon icon={showPassword ? EyeOffIcon : EyeIcon} size={16} />
+                          <showPassword ? EyeOffIcon : EyeIcon size={16} />
                         </Button>
                       </InputGroup.Suffix>
                     </InputGroup>
@@ -386,7 +385,7 @@ export default function LoginPage() {
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,var(--accent)/8%,transparent_70%)]" />
               <div className="relative flex flex-col items-center gap-6">
                 <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/20">
-                  <HugeiconsIcon icon={MessageCircleIcon} size={28} className="text-[var(--accent-foreground)]" />
+                  <MessageCircleIcon size={28} className="text-[var(--accent-foreground)]" />
                 </div>
                 <div className="text-center">
                   <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">AlfyChat</h2>
@@ -404,7 +403,7 @@ export default function LoginPage() {
                       key={feat.label}
                       className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-tertiary)] px-4 py-3"
                     >
-                      <HugeiconsIcon icon={feat.icon} size={18} className={feat.color} />
+                      <feat.icon size={18} className={feat.color} />
                       <span className="text-sm font-medium text-[var(--foreground)]">{feat.label}</span>
                     </div>
                   ))}

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { ShieldIcon, MailIcon, CheckIcon, AlertTriangleIcon } from '@/components/icons';
 import { api } from '@/lib/api';
 import { Button, Card, Spinner } from '@heroui/react';
@@ -52,7 +51,7 @@ function VerifyEmailContent() {
           {status === 'success' && (
             <>
               <div className="flex size-16 items-center justify-center rounded-2xl bg-green-500/10">
-                <HugeiconsIcon icon={CheckIcon} size={32} className="text-green-400" />
+                <CheckIcon size={32} className="text-green-400" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[var(--foreground)]">Email vérifié !</h1>
@@ -67,7 +66,7 @@ function VerifyEmailContent() {
           {status === 'error' && (
             <>
               <div className="flex size-16 items-center justify-center rounded-2xl bg-red-500/10">
-                <HugeiconsIcon icon={AlertTriangleIcon} size={32} className="text-red-400" />
+                <AlertTriangleIcon size={32} className="text-red-400" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[var(--foreground)]">Vérification échouée</h1>

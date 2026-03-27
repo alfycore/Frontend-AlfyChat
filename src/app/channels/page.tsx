@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MessageCircleIcon,
   UsersIcon,
@@ -34,7 +33,7 @@ export default function ChannelsPage() {
     return (
       <div className="relative flex h-screen items-center justify-center overflow-hidden bg-[var(--background)]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
-        <HugeiconsIcon icon={Loader2Icon} size={24} className="relative z-10 animate-spin text-[var(--accent)]/50" />
+        <Loader2Icon size={24} className="relative z-10 animate-spin text-[var(--accent)]/50" />
       </div>
     );
   }
@@ -52,7 +51,7 @@ export default function ChannelsPage() {
       {/* Slim top bar */}
       <header className="relative z-10 flex items-center gap-3 border-b border-[var(--border)]/40 px-8 py-4">
         <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)]">
-          <HugeiconsIcon icon={MessageCircleIcon} size={14} className="text-[var(--accent-foreground)]" />
+          <MessageCircleIcon size={14} className="text-[var(--accent-foreground)]" />
         </div>
         <span className="text-sm font-bold tracking-tight">AlfyChat</span>
       </header>
@@ -88,13 +87,13 @@ export default function ChannelsPage() {
             style={{ animationDelay: '60ms' }}
           >
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/15 transition-all duration-200 group-hover:scale-105 group-hover:bg-[var(--accent)]/20">
-              <HugeiconsIcon icon={MessageCircleIcon} size={20} className="text-[var(--accent)]" />
+              <MessageCircleIcon size={20} className="text-[var(--accent)]" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">Messages privés</p>
               <p className="text-xs text-[var(--muted)]">Reprendre vos conversations</p>
             </div>
-            <HugeiconsIcon icon={ArrowUpRightIcon} size={16} className="text-[var(--muted)]/40 transition-all duration-200 group-hover:text-[var(--accent)] group-hover:-translate-y-px group-hover:translate-x-px" />
+            <ArrowUpRightIcon size={16} className="text-[var(--muted)]/40 transition-all duration-200 group-hover:text-[var(--accent)] group-hover:-translate-y-px group-hover:translate-x-px" />
           </button>
 
           {/* Amis */}
@@ -104,7 +103,7 @@ export default function ChannelsPage() {
             style={{ animationDelay: '120ms' }}
           >
             <div className="flex size-9 items-center justify-center rounded-xl bg-blue-500/10 transition-all duration-200 group-hover:scale-105">
-              <HugeiconsIcon icon={UsersIcon} size={16} className="text-blue-400" />
+              <UsersIcon size={16} className="text-blue-400" />
             </div>
             <div>
               <p className="text-sm font-semibold">Amis</p>
@@ -119,7 +118,7 @@ export default function ChannelsPage() {
             style={{ animationDelay: '160ms' }}
           >
             <div className="flex size-9 items-center justify-center rounded-xl bg-violet-500/10 transition-all duration-200 group-hover:scale-105">
-              <HugeiconsIcon icon={CompassIcon} size={16} className="text-violet-400" />
+              <CompassIcon size={16} className="text-violet-400" />
             </div>
             <div>
               <p className="text-sm font-semibold">Découvrir</p>
@@ -133,7 +132,7 @@ export default function ChannelsPage() {
             style={{ animationDelay: '200ms' }}
           >
             <div className="flex size-9 items-center justify-center rounded-xl bg-green-500/10 transition-all duration-200 group-hover:scale-105">
-              <HugeiconsIcon icon={PlusIcon} size={16} className="text-green-400" />
+              <PlusIcon size={16} className="text-green-400" />
             </div>
             <div>
               <p className="text-sm font-semibold">Rejoindre</p>
@@ -147,7 +146,7 @@ export default function ChannelsPage() {
             style={{ animationDelay: '240ms' }}
           >
             <div className="flex size-9 items-center justify-center rounded-xl bg-orange-500/10 transition-all duration-200 group-hover:scale-105">
-              <HugeiconsIcon icon={ServerIcon} size={16} className="text-orange-400" />
+              <ServerIcon size={16} className="text-orange-400" />
             </div>
             <div>
               <p className="text-sm font-semibold">Créer</p>

@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ShieldIcon, LockIcon, UsersIcon,
   ArrowRightIcon, HeartIcon, CheckIcon,
@@ -150,7 +149,7 @@ export default function Home() {
                 <Link href="/register" className="no-underline">
                   <Button size="lg" className="gap-2 px-7">
                     Commencer gratuitement
-                    <HugeiconsIcon icon={ArrowRightIcon} size={16} />
+                    <ArrowRightIcon size={16} />
                   </Button>
                 </Link>
                 <Link href="https://alfycore.pro" target="_blank" className="no-underline">
@@ -164,7 +163,7 @@ export default function Home() {
               <div className="mt-10 flex flex-wrap items-center justify-center gap-5 text-xs text-muted">
                 {(['ECDH P-256 + AES-256-GCM', <GeoHostingBadge key="host" />, 'RGPD natif', '100 % open source'] as const).map((b, i) => (
                   <span key={i} className="flex items-center gap-1.5">
-                    <HugeiconsIcon icon={CheckIcon} size={12} className="text-success" />
+                    <CheckIcon size={12} className="text-success" />
                     {b}
                   </span>
                 ))}
@@ -201,13 +200,13 @@ export default function Home() {
                       <p className="mb-1.5 mt-3 px-3 text-[8px] font-bold uppercase tracking-widest text-muted">Salons textuels</p>
                       {[{ n: 'général', active: true }, { n: 'projets', active: false }, { n: 'off-topic', active: false }].map((ch) => (
                         <div key={ch.n} className={`mx-1.5 mb-0.5 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] ${ch.active ? 'bg-accent/10 font-semibold text-accent' : 'text-muted'}`}>
-                          <HugeiconsIcon icon={HashIcon} size={10} />
+                          <HashIcon size={10} />
                           {ch.n}
                         </div>
                       ))}
                       <p className="mb-1.5 mt-3 px-3 text-[8px] font-bold uppercase tracking-widest text-muted">Vocal</p>
                       <div className="mx-1.5 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] text-muted">
-                        <HugeiconsIcon icon={Volume2Icon} size={10} />
+                        <Volume2Icon size={10} />
                         principal
                       </div>
                     </div>
@@ -215,12 +214,12 @@ export default function Home() {
                     {/* Messages */}
                     <div className="flex flex-1 flex-col">
                       <div className="border-b border-separator px-4 py-2 flex items-center gap-2">
-                        <HugeiconsIcon icon={HashIcon} size={12} className="text-muted" />
+                        <HashIcon size={12} className="text-muted" />
                         <span className="text-[11px] font-semibold">général</span>
                         <div className="ml-auto flex items-center gap-1.5">
-                          <HugeiconsIcon icon={PhoneIcon} size={11} className="text-muted" />
-                          <HugeiconsIcon icon={VideoIcon} size={11} className="text-muted" />
-                          <HugeiconsIcon icon={UsersIcon} size={11} className="text-muted" />
+                          <PhoneIcon size={11} className="text-muted" />
+                          <VideoIcon size={11} className="text-muted" />
+                          <UsersIcon size={11} className="text-muted" />
                         </div>
                       </div>
                       <div className="flex-1 space-y-3 overflow-hidden p-4">
@@ -242,7 +241,7 @@ export default function Home() {
                         <div className="flex items-center rounded-xl bg-default px-3.5 py-2.5">
                           <span className="flex-1 text-[11px] text-muted">Écrire un message chiffré…</span>
                           <div className="flex size-6 items-center justify-center rounded-lg bg-accent">
-                            <HugeiconsIcon icon={SendIcon} size={12} className="text-accent-foreground" />
+                            <SendIcon size={12} className="text-accent-foreground" />
                           </div>
                         </div>
                       </div>
@@ -269,7 +268,7 @@ export default function Home() {
             <Reveal key={s.label} direction="up">
               <div className="flex items-center gap-3 px-6 py-5">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/10">
-                  <HugeiconsIcon icon={s.icon} size={16} className="text-accent" />
+                  <s.icon size={16} className="text-accent" />
                 </div>
                 <div>
                   <p className="text-sm font-bold">{s.value}</p>
@@ -304,7 +303,7 @@ export default function Home() {
                 <Card variant="secondary" className="group h-full transition-colors hover:bg-surface-secondary">
                   <Card.Header>
                     <div className={`mb-1 inline-flex size-11 items-center justify-center rounded-xl ${f.bg}`}>
-                      <HugeiconsIcon icon={f.icon} size={22} className={f.color} />
+                      <f.icon size={22} className={f.color} />
                     </div>
                     <Card.Title className="text-[15px]">{f.title}</Card.Title>
                   </Card.Header>
@@ -341,7 +340,7 @@ export default function Home() {
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3">
                     <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent/10">
-                      <HugeiconsIcon icon={s.icon} size={18} className="text-accent" />
+                      <s.icon size={18} className="text-accent" />
                     </div>
                     <span className="font-(family-name:--font-krona) text-3xl font-bold text-accent/20">{s.n}</span>
                   </div>
@@ -399,7 +398,7 @@ export default function Home() {
                     <ul className="space-y-1.5">
                       {lvl.items.map((item) => (
                         <li key={item} className="flex items-center gap-2 text-xs text-muted">
-                          <HugeiconsIcon icon={CheckIcon} size={12} className="text-accent" />
+                          <CheckIcon size={12} className="text-accent" />
                           {item}
                         </li>
                       ))}
@@ -434,7 +433,7 @@ export default function Home() {
               <Reveal key={t.label} direction="up" delay={i * 60}>
                 <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-separator bg-surface px-3 py-5 text-center transition-colors hover:bg-surface-secondary">
                   <div className="flex size-10 items-center justify-center rounded-xl bg-background">
-                    <HugeiconsIcon icon={t.icon} size={20} className={t.color} />
+                    <t.icon size={20} className={t.color} />
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold">{t.label}</p>
@@ -467,7 +466,7 @@ export default function Home() {
                 <div className="flex flex-wrap gap-2">
                   <Link href="https://alfycore.pro" target="_blank" className="no-underline">
                     <Button variant="tertiary" size="sm" className="gap-2">
-                      <HugeiconsIcon icon={GlobeIcon} size={14} />
+                      <GlobeIcon size={14} />
                       alfycore.pro
                     </Button>
                   </Link>
@@ -485,7 +484,7 @@ export default function Home() {
                 {openSourceFacts.map((f) => (
                   <div key={f.label} className="rounded-2xl border border-separator bg-surface p-4">
                     <div className="mb-2 flex size-8 items-center justify-center rounded-lg bg-accent/10">
-                      <HugeiconsIcon icon={f.icon} size={16} className="text-accent" />
+                      <f.icon size={16} className="text-accent" />
                     </div>
                     <p className="mb-1 text-[12px] font-semibold">{f.label}</p>
                     <p className="text-[11px] leading-relaxed text-muted">{f.desc}</p>
@@ -506,7 +505,7 @@ export default function Home() {
                 <div className="overflow-hidden rounded-2xl border border-separator bg-background p-5 shadow-xl">
                   <div className="mb-4 flex items-center gap-2">
                     <div className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10">
-                      <HugeiconsIcon icon={PhoneIcon} size={16} className="text-emerald-400" />
+                      <PhoneIcon size={16} className="text-emerald-400" />
                     </div>
                     <span className="text-[12px] font-semibold">Appel de groupe — 4 participants</span>
                     <div className="ml-auto flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5">
@@ -532,13 +531,13 @@ export default function Home() {
                   </div>
                   <div className="mt-3 flex items-center justify-center gap-2">
                     <div className="flex size-8 items-center justify-center rounded-full bg-surface">
-                      <HugeiconsIcon icon={VideoIcon} size={14} className="text-muted" />
+                      <VideoIcon size={14} className="text-muted" />
                     </div>
                     <div className="flex size-8 items-center justify-center rounded-full bg-surface">
-                      <HugeiconsIcon icon={MonitorUpIcon} size={14} className="text-muted" />
+                      <MonitorUpIcon size={14} className="text-muted" />
                     </div>
                     <div className="flex size-9 items-center justify-center rounded-full bg-danger/10">
-                      <HugeiconsIcon icon={PhoneIcon} size={15} className="text-danger" />
+                      <PhoneIcon size={15} className="text-danger" />
                     </div>
                   </div>
                 </div>
@@ -565,7 +564,7 @@ export default function Home() {
                     'Basculement vidéo / voix sans interruption',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2 text-sm text-muted">
-                      <HugeiconsIcon icon={CheckIcon} size={14} className="mt-0.5 shrink-0 text-emerald-400" />
+                      <CheckIcon size={14} className="mt-0.5 shrink-0 text-emerald-400" />
                       {item}
                     </li>
                   ))}
@@ -584,7 +583,7 @@ export default function Home() {
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,oklch(0.6_0.2_280/7%),transparent_65%)]" />
               <Card.Header className="relative flex-col items-center pt-10 text-center">
                 <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-separator bg-background px-4 py-2 text-xs text-muted">
-                  <HugeiconsIcon icon={UsersIcon} size={12} className="text-accent/70" />
+                  <UsersIcon size={12} className="text-accent/70" />
                   AlfyCore · Association loi 1901 · alfycore.pro
                 </div>
                 <Card.Title className="font-(family-name:--font-krona) text-2xl md:text-3xl">
@@ -598,7 +597,7 @@ export default function Home() {
                 <div className="flex flex-wrap justify-center gap-2">
                   {['100% Open source', 'Hébergé en France', 'RGPD natif', 'Gratuit'].map((t) => (
                     <span key={t} className="flex items-center gap-1.5 rounded-full border border-separator bg-background px-3 py-1 text-[11px] text-muted">
-                      <HugeiconsIcon icon={CheckIcon} size={10} className="text-success" />
+                      <CheckIcon size={10} className="text-success" />
                       {t}
                     </span>
                   ))}
@@ -607,7 +606,7 @@ export default function Home() {
                   <Link href="/register" className="no-underline">
                     <Button size="lg" className="gap-2 px-8">
                       Créer mon compte
-                      <HugeiconsIcon icon={ArrowRightIcon} size={16} />
+                      <ArrowRightIcon size={16} />
                     </Button>
                   </Link>
                   <Link href="/login" className="no-underline">
@@ -684,7 +683,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-between gap-2 pt-6 text-[10px] text-muted md:flex-row">
             <p>© 2026 AlfyChat · AlfyCore · Association loi 1901</p>
             <p className="flex items-center gap-1">
-              Fait avec <HugeiconsIcon icon={HeartIcon} size={10} className="text-danger" /> en France 🇫🇷 · alfychat.app
+              Fait avec <HeartIcon size={10} className="text-danger" /> en France 🇫🇷 · alfychat.app
             </p>
           </div>
         </div>

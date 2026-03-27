@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   HashIcon, UsersIcon, ArrowRightIcon, SparklesIcon,
   Volume2Icon, MegaphoneIcon, GlobeIcon, LockIcon,
@@ -90,9 +89,9 @@ export default function ServerWelcomePage() {
   };
 
   const getChannelIcon = (type: string) => {
-    if (type === 'voice') return <HugeiconsIcon icon={Volume2Icon} size={16} className="text-muted" />;
-    if (type === 'announcement') return <HugeiconsIcon icon={MegaphoneIcon} size={16} className="text-muted" />;
-    return <HugeiconsIcon icon={HashIcon} size={16} className="text-muted" />;
+    if (type === 'voice') return <Volume2Icon size={16} className="text-muted" />;
+    if (type === 'announcement') return <MegaphoneIcon size={16} className="text-muted" />;
+    return <HashIcon size={16} className="text-muted" />;
   };
 
   if (loading) {
@@ -158,10 +157,7 @@ export default function ServerWelcomePage() {
                 size="sm"
               >
                 <Chip.Label className="flex items-center gap-1 text-[10px]">
-                  <HugeiconsIcon
-                    icon={serverInfo?.isPublic ? GlobeIcon : LockIcon}
-                    size={12}
-                  />
+                  <serverInfo?.isPublic ? GlobeIcon : LockIcon size={12} />
                   {serverInfo?.isPublic ? 'Public' : 'Privé'}
                 </Chip.Label>
               </Chip>
@@ -192,7 +188,7 @@ export default function ServerWelcomePage() {
         <div className="flex flex-wrap items-center gap-3">
           <Chip variant="soft" size="sm">
             <Chip.Label className="flex items-center gap-2 text-[12px]">
-              <HugeiconsIcon icon={UsersIcon} size={14} />
+              <UsersIcon size={14} />
               <strong className="text-foreground">{members.length}</strong> membres
             </Chip.Label>
           </Chip>
@@ -208,7 +204,7 @@ export default function ServerWelcomePage() {
 
           <Chip variant="soft" size="sm">
             <Chip.Label className="flex items-center gap-2 text-[12px]">
-              <HugeiconsIcon icon={HashIcon} size={14} />
+              <HashIcon size={14} />
               <strong className="text-foreground">{textChannels.length}</strong> salons textuels
             </Chip.Label>
           </Chip>
@@ -216,7 +212,7 @@ export default function ServerWelcomePage() {
           {voiceChannels.length > 0 && (
             <Chip variant="soft" size="sm">
               <Chip.Label className="flex items-center gap-2 text-[12px]">
-                <HugeiconsIcon icon={Volume2Icon} size={14} />
+                <Volume2Icon size={14} />
                 <strong className="text-foreground">{voiceChannels.length}</strong> salons vocaux
               </Chip.Label>
             </Chip>
@@ -229,7 +225,7 @@ export default function ServerWelcomePage() {
             <Card.Header>
               <div className="flex items-center gap-2.5">
                 <div className="flex size-8 items-center justify-center rounded-xl bg-yellow-500/10">
-                  <HugeiconsIcon icon={SparklesIcon} size={16} className="text-yellow-500" />
+                  <SparklesIcon size={16} className="text-yellow-500" />
                 </div>
                 <Card.Title className="text-[15px] font-semibold">
                   Commencer à discuter
@@ -244,9 +240,9 @@ export default function ServerWelcomePage() {
                 onPress={() => navigateToChannel(firstTextChannel.id)}
                 className="gap-2 rounded-xl"
               >
-                <HugeiconsIcon icon={HashIcon} size={16} />
+                <HashIcon size={16} />
                 Aller à #{firstTextChannel.name}
-                <HugeiconsIcon icon={ArrowRightIcon} size={16} />
+                <ArrowRightIcon size={16} />
               </Button>
             </Card.Content>
           </Card>
@@ -274,11 +270,8 @@ export default function ServerWelcomePage() {
                     {getChannelIcon(ch.type)}
                     <span className="flex-1 truncate text-left">{ch.name}</span>
                     {ch.type !== 'voice' && (
-                      <HugeiconsIcon
-                        icon={ArrowRightIcon}
-                        size={14}
-                        className="text-muted opacity-0 transition-opacity group-hover:opacity-100"
-                      />
+                      <ArrowRightIcon size={14}
+                        className="text-muted opacity-0 transition-opacity group-hover:opacity-100" />
                     )}
                   </button>
                 ))}

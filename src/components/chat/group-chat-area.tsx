@@ -8,7 +8,6 @@ import {
   useMemo,
   type SetStateAction,
 } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   UsersRoundIcon, SendIcon, SmileIcon, MoreHorizontalIcon, ReplyIcon, XIcon,
   LogOutIcon, SettingsIcon, CrownIcon, ImageIcon as ImageIcn, MenuIcon,
@@ -339,7 +338,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
         <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
           {isMobile && (
             <Button isIconOnly size="sm" variant="ghost" onPress={toggleSidebar}>
-              <HugeiconsIcon icon={MenuIcon} size={20} />
+              <MenuIcon size={20} />
             </Button>
           )}
 
@@ -350,7 +349,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 <Avatar.Fallback className="text-[10px] font-medium">{groupInfo.name?.[0]}</Avatar.Fallback>
               </Avatar>
             ) : (
-              <HugeiconsIcon icon={UsersRoundIcon} size={14} className="text-[var(--accent)]" />
+              <UsersRoundIcon size={14} className="text-[var(--accent)]" />
             )}
           </div>
 
@@ -369,7 +368,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                   onPress={handleOpenAddMembers}
                   className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
                 >
-                  <HugeiconsIcon icon={UserPlusIcon} size={16} />
+                  <UserPlusIcon size={16} />
                 </Button>
                 <Tooltip.Content>Ajouter un membre</Tooltip.Content>
               </Tooltip>
@@ -382,7 +381,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
                 isDisabled={callStatus !== 'idle'}
               >
-                <HugeiconsIcon icon={PhoneIcon} size={15} />
+                <PhoneIcon size={15} />
               </Button>
               <Tooltip.Content>Appel vocal</Tooltip.Content>
             </Tooltip>
@@ -394,7 +393,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
                 isDisabled={callStatus !== 'idle'}
               >
-                <HugeiconsIcon icon={VideoIcon} size={15} />
+                <VideoIcon size={15} />
               </Button>
               <Tooltip.Content>Appel vidéo</Tooltip.Content>
             </Tooltip>
@@ -405,7 +404,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 onPress={() => setShowMembers(!showMembers)}
                 className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
               >
-                <HugeiconsIcon icon={UsersRoundIcon} size={16} />
+                <UsersRoundIcon size={16} />
               </Button>
               <Tooltip.Content>Membres</Tooltip.Content>
             </Tooltip>
@@ -417,7 +416,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                   tabIndex={0}
                   className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40"
                 >
-                  <HugeiconsIcon icon={MoreHorizontalIcon} size={16} />
+                  <MoreHorizontalIcon size={16} />
                 </div>
               </Dropdown.Trigger>
               <Dropdown.Popover placement="bottom end">
@@ -429,11 +428,11 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                   }}
                 >
                   <Dropdown.Item id="settings">
-                    <HugeiconsIcon icon={SettingsIcon} size={16} />
+                    <SettingsIcon size={16} />
                     Paramètres du groupe
                   </Dropdown.Item>
                   <Dropdown.Item id="leave" className="text-red-500">
-                    <HugeiconsIcon icon={LogOutIcon} size={16} />
+                    <LogOutIcon size={16} />
                     Quitter le groupe
                   </Dropdown.Item>
                 </Dropdown.Menu>
@@ -451,7 +450,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
           ) : enrichedMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="flex size-16 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
-                <HugeiconsIcon icon={UsersRoundIcon} size={32} className="text-[var(--accent)]" />
+                <UsersRoundIcon size={32} className="text-[var(--accent)]" />
               </div>
               <h3 className="mt-4 text-lg font-semibold">{groupInfo?.name || 'Groupe'}</h3>
               <p className="mt-1 max-w-sm text-sm text-[var(--muted)]">
@@ -504,13 +503,13 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
         {/* ── Reply bar ── */}
         {replyingTo && (
           <div className="flex items-center gap-2 rounded-t-xl border border-b-0 border-[var(--border)]/40 bg-[var(--surface-secondary)]/30 px-4 py-2 backdrop-blur-sm">
-            <HugeiconsIcon icon={ReplyIcon} size={16} className="text-[var(--muted)]" />
+            <ReplyIcon size={16} className="text-[var(--muted)]" />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium">{replyingTo.authorName}</p>
               <p className="truncate text-xs text-[var(--muted)]">{replyingTo.content}</p>
             </div>
             <Button isIconOnly size="sm" variant="ghost" onPress={() => setReplyingTo(null)}>
-              <HugeiconsIcon icon={XIcon} size={14} />
+              <XIcon size={14} />
             </Button>
           </div>
         )}
@@ -521,7 +520,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             <div className={`relative flex min-w-0 flex-1 items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 backdrop-blur-sm transition-colors focus-within:border-[var(--accent)]/30 ${replyingTo ? 'rounded-t-none border-t-0' : ''}`}>
               <EmojiPicker onSelect={handleEmojiInsert}>
                 <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
-                  <HugeiconsIcon icon={SmileIcon} size={18} />
+                  <SmileIcon size={18} />
                 </div>
               </EmojiPicker>
               <textarea
@@ -535,7 +534,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               />
               <GifPicker onSelect={handleGifSelect}>
                 <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
-                  <HugeiconsIcon icon={ImageIcn} size={18} />
+                  <ImageIcn size={18} />
                 </div>
               </GifPicker>
             </div>
@@ -546,7 +545,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               isDisabled={!messageInput.trim()}
               className={`mb-0.5 size-8 shrink-0 rounded-xl transition-all ${messageInput.trim() ? 'bg-[var(--accent)] text-[var(--accent-foreground)]' : 'bg-[var(--surface-secondary)] text-[var(--muted)] opacity-50'}`}
             >
-              <HugeiconsIcon icon={SendIcon} size={16} />
+              <SendIcon size={16} />
             </Button>
           </form>
         </div>
@@ -560,7 +559,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               Membres — {groupInfo?.participants.length || 0}
             </p>
             <Button isIconOnly size="sm" variant="tertiary" className="size-6 rounded-md" onPress={() => setShowMembers(false)}>
-              <HugeiconsIcon icon={XIcon} size={12} />
+              <XIcon size={12} />
             </Button>
           </div>
           <ScrollShadow className="flex-1 overflow-y-auto">
@@ -593,7 +592,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                             {participant.displayName || participant.username || 'Utilisateur'}
                           </p>
                           {participant.role === 'owner' && (
-                            <HugeiconsIcon icon={CrownIcon} size={10} className="shrink-0 text-yellow-500" />
+                            <CrownIcon size={10} className="shrink-0 text-yellow-500" />
                           )}
                         </div>
                       </div>

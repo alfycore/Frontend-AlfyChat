@@ -8,7 +8,6 @@ import {
   useMemo,
   type SetStateAction,
 } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MessageCircleIcon,
   ShieldCheckIcon,
@@ -370,14 +369,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
         {isMobile && (
           <Button variant="outline" size="lg" className="mb-2 gap-2" onPress={openSidebar}>
-            <HugeiconsIcon icon={MenuIcon} size={20} />
+            <MenuIcon size={20} />
             Ouvrir les conversations
           </Button>
         )}
         <div className="relative">
           <div className="absolute inset-0 rounded-3xl bg-[var(--accent)]/10 blur-2xl" />
           <div className="relative flex size-20 items-center justify-center rounded-3xl bg-[var(--accent)]/10 md:size-24">
-            <HugeiconsIcon icon={MessageCircleIcon} size={36} className="text-[var(--accent)] md:size-11" />
+            <MessageCircleIcon size={36} className="text-[var(--accent)] md:size-11" />
           </div>
         </div>
         <div className="space-y-1.5">
@@ -395,20 +394,20 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         <div className="flex min-w-0 items-center gap-2.5">
           {isMobile && (
             <Button isIconOnly size="sm" variant="tertiary" onPress={openSidebar} className="shrink-0 md:hidden">
-              <HugeiconsIcon icon={ArrowLeftIcon} size={20} />
+              <ArrowLeftIcon size={20} />
             </Button>
           )}
           {recipientId ? (
             <>
               <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)]/8">
-                <HugeiconsIcon icon={MessageCircleIcon} size={14} className="text-[var(--accent)]" />
+                <MessageCircleIcon size={14} className="text-[var(--accent)]" />
               </div>
               <span className="truncate text-[13px] font-semibold text-[var(--foreground)] md:text-sm">{recipientName || 'Message privé'}</span>
             </>
           ) : (
             <>
               <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/60">
-                <HugeiconsIcon icon={HashIcon} size={14} className="text-[var(--muted)]" />
+                <HashIcon size={14} className="text-[var(--muted)]" />
               </div>
               <span className="truncate text-[13px] font-semibold text-[var(--foreground)] md:text-sm">général</span>
             </>
@@ -427,7 +426,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                   className="size-8 rounded-lg text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
                   isDisabled={callStatus !== 'idle'}
                 >
-                  <HugeiconsIcon icon={PhoneIcon} size={16} />
+                  <PhoneIcon size={16} />
                 </Button>
                 <Tooltip.Content>Appel vocal</Tooltip.Content>
             </Tooltip>
@@ -440,7 +439,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                   className="size-8 rounded-lg text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
                   isDisabled={callStatus !== 'idle'}
                 >
-                  <HugeiconsIcon icon={VideoIcon} size={16} />
+                  <VideoIcon size={16} />
                 </Button>
                 <Tooltip.Content>Appel vidéo</Tooltip.Content>
             </Tooltip>
@@ -491,7 +490,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3">
             <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--surface-secondary)]/40">
-              <HugeiconsIcon icon={MessageCircleIcon} size={24} className="text-[var(--muted)]/50" />
+              <MessageCircleIcon size={24} className="text-[var(--muted)]/50" />
             </div>
             <div className="text-center">
               <p className="text-[13px] font-medium text-[var(--foreground)]/70">Aucun message</p>
@@ -585,7 +584,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               className="size-6 rounded-md"
               onPress={() => setReplyingTo(null)}
             >
-              <HugeiconsIcon icon={XIcon} size={14} />
+              <XIcon size={14} />
             </Button>
           </div>
         )}
@@ -615,7 +614,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 variant="tertiary"
                 className="size-7 rounded-md text-[var(--muted)] hover:text-[var(--foreground)]"
               >
-                <HugeiconsIcon icon={SmileIcon} size={18} />
+                <SmileIcon size={18} />
               </Button>
             </EmojiPicker>
 
@@ -626,7 +625,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 variant="tertiary"
                 className="size-7 rounded-md text-[var(--muted)] hover:text-[var(--foreground)]"
               >
-                <HugeiconsIcon icon={ImageIcon} size={18} />
+                <ImageIcon size={18} />
               </Button>
             </GifPicker>
 
@@ -642,7 +641,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 }
               }}
             >
-              <HugeiconsIcon icon={SendIcon} size={18} />
+              <SendIcon size={18} />
             </Button>
           </div>
         </div>

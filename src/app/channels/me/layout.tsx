@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MessageCircleIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { CallProvider, useCallContext } from '@/hooks/use-call-context';
@@ -169,7 +168,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-[var(--accent)]">
-            <HugeiconsIcon icon={MessageCircleIcon} size={32} className="text-[var(--accent-foreground)]" />
+            <MessageCircleIcon size={32} className="text-[var(--accent-foreground)]" />
           </div>
           <p className="text-sm text-[var(--muted)]">Chargement...</p>
         </div>
@@ -185,7 +184,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-[var(--accent)]">
-            <HugeiconsIcon icon={MessageCircleIcon} size={32} className="text-[var(--accent-foreground)]" />
+            <MessageCircleIcon size={32} className="text-[var(--accent-foreground)]" />
           </div>
           <p className="text-sm text-[var(--muted)]">Redirection...</p>
         </div>

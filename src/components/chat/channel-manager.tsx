@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   HashIcon,
   Volume2Icon,
@@ -242,7 +241,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
 
   const ChannelIcon = ({ type }: { type: string }) => {
     const icon = CHANNEL_TYPE_ICON[type] ?? HashIcon;
-    return <HugeiconsIcon icon={icon} size={16} className="shrink-0 text-[var(--muted)]" />;
+    return <icon size={16} className="shrink-0 text-[var(--muted)]" />;
   };
 
   const DeleteConfirm = ({ target, indent = false }: { target: Channel; indent?: boolean }) => (
@@ -286,11 +285,11 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
               isDisabled={isEditorOpen}
               className={cn(permsChannel?.id === channel.id && 'text-[var(--accent)]')}
             >
-              <HugeiconsIcon icon={ShieldIcon} size={14} />
+              <ShieldIcon size={14} />
             </Button>
           )}
           <Button variant="ghost" isIconOnly size="sm" onPress={() => openEdit(channel)} isDisabled={isEditorOpen}>
-            <HugeiconsIcon icon={PencilIcon} size={14} />
+            <PencilIcon size={14} />
           </Button>
           <Button
             variant="ghost"
@@ -300,7 +299,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             onPress={() => setDeleteTarget(deleteTarget?.id === channel.id ? null : channel)}
             isDisabled={isEditorOpen}
           >
-            <HugeiconsIcon icon={Trash2Icon} size={14} />
+            <Trash2Icon size={14} />
           </Button>
         </div>
       </div>
@@ -326,7 +325,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           <div key={cat.id} className="space-y-1.5">
             <div className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--border)]/40 bg-[var(--surface-secondary)]/10 px-3 py-2.5 backdrop-blur-sm">
               <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/40">
-                <HugeiconsIcon icon={FolderOpenIcon} size={16} className="shrink-0 text-[var(--muted)]" />
+                <FolderOpenIcon size={16} className="shrink-0 text-[var(--muted)]" />
               </div>
               <span className="flex-1 truncate text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
                 {cat.name}
@@ -334,11 +333,11 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
               <div className="flex items-center gap-1">
                 {!isEditorOpen && (
                   <Button variant="ghost" isIconOnly size="sm" onPress={() => openCreate('text', cat.id)}>
-                    <HugeiconsIcon icon={PlusIcon} size={14} />
+                    <PlusIcon size={14} />
                   </Button>
                 )}
                 <Button variant="ghost" isIconOnly size="sm" onPress={() => openEdit(cat)} isDisabled={isEditorOpen}>
-                  <HugeiconsIcon icon={PencilIcon} size={14} />
+                  <PencilIcon size={14} />
                 </Button>
                 <Button
                   variant="ghost"
@@ -347,7 +346,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
                   className="text-red-500"
                   onPress={() => setDeleteTarget(deleteTarget?.id === cat.id ? null : cat)}
                   isDisabled={isEditorOpen}>
-                  <HugeiconsIcon icon={Trash2Icon} size={14} />
+                  <Trash2Icon size={14} />
                 </Button>
               </div>
             </div>
@@ -376,7 +375,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             className="flex-1 gap-2 rounded-xl border-[var(--border)]/60"
             onPress={() => openCreate('text')}
           >
-            <HugeiconsIcon icon={PlusIcon} size={14} />
+            <PlusIcon size={14} />
             Nouveau salon
           </Button>
           <Button
@@ -385,7 +384,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             className="gap-2 rounded-xl border-[var(--border)]/60"
             onPress={() => openCreate('category')}
           >
-            <HugeiconsIcon icon={FolderOpenIcon} size={14} />
+            <FolderOpenIcon size={14} />
             Catégorie
           </Button>
         </div>
@@ -419,7 +418,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
                         : 'border-[var(--border)]/40 text-[var(--muted)] hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]',
                     )}
                   >
-                    <HugeiconsIcon icon={icon} size={16} />
+                    <icon size={16} />
                     {label}
                   </button>
                 ))}
@@ -483,14 +482,14 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onPress={cancelEdit} isDisabled={isSaving} className="rounded-lg">
-              <HugeiconsIcon icon={XIcon} size={14} className="mr-1.5" />
+              <XIcon size={14} className="mr-1.5" />
               Annuler
             </Button>
             <Button size="sm" onPress={handleSave} isDisabled={!formName.trim() || isSaving} className="rounded-lg">
               {isSaving ? (
-                <HugeiconsIcon icon={Loader2Icon} size={14} className="mr-1.5 animate-spin" />
+                <Loader2Icon size={14} className="mr-1.5 animate-spin" />
               ) : (
-                <HugeiconsIcon icon={SaveIcon} size={14} className="mr-1.5" />
+                <SaveIcon size={14} className="mr-1.5" />
               )}
               {isCreating ? 'Créer' : 'Enregistrer'}
             </Button>
@@ -589,12 +588,12 @@ function ChannelPermissionsEditor({
       <div className="flex items-center justify-between">
         <h4 className="flex items-center gap-1.5 text-sm font-semibold">
           <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/40">
-            <HugeiconsIcon icon={ShieldIcon} size={16} />
+            <ShieldIcon size={16} />
           </div>
           Permissions — #{channel.name}
         </h4>
         <Button variant="ghost" isIconOnly size="sm" onPress={onClose}>
-          <HugeiconsIcon icon={XIcon} size={14} />
+          <XIcon size={14} />
         </Button>
       </div>
 
@@ -642,9 +641,9 @@ function ChannelPermissionsEditor({
                         state === 'inherit' && 'border-[var(--border)] text-[var(--muted)]',
                       )}
                     >
-                      {state === 'allow' && <HugeiconsIcon icon={CheckIcon} size={12} />}
-                      {state === 'deny' && <HugeiconsIcon icon={XIcon} size={12} />}
-                      {state === 'inherit' && <HugeiconsIcon icon={MinusIcon} size={12} />}
+                      {state === 'allow' && <CheckIcon size={12} />}
+                      {state === 'deny' && <XIcon size={12} />}
+                      {state === 'inherit' && <MinusIcon size={12} />}
                     </span>
                     <span className="flex-1 text-left">{label}</span>
                     <span className="text-[10px] uppercase text-[var(--muted)]">

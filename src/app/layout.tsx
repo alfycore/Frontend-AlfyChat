@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Krona_One } from "next/font/google";
 
 import "bootstrap-icons/font/bootstrap-icons.css";
+import "@flaticon/flaticon-uicons/css/all/all.css";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocaleProvider } from "@/components/locale-provider";

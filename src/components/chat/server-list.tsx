@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MessageCircleIcon,
   Link2Icon,
@@ -209,7 +208,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             onPress={() => onSelectServer(null)}
           >
             <Indicator active={selectedServer === null} />
-            <HugeiconsIcon icon={MessageCircleIcon} size={22} />
+            <MessageCircleIcon size={22} />
           </Button>
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />
@@ -289,15 +288,15 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                       }}
                     >
                       <Dropdown.Item id="settings" textValue="Paramètres">
-                        <HugeiconsIcon icon={SettingsIcon} size={14} className="mr-2 shrink-0 opacity-60" />
+                        <SettingsIcon size={14} className="mr-2 shrink-0 opacity-60" />
                         <Label>Paramètres</Label>
                       </Dropdown.Item>
                       <Dropdown.Item id="invite" textValue="Copier l'invitation">
-                        <HugeiconsIcon icon={CopyIcon} size={14} className="mr-2 shrink-0 opacity-60" />
+                        <CopyIcon size={14} className="mr-2 shrink-0 opacity-60" />
                         <Label>Copier l&apos;invitation</Label>
                       </Dropdown.Item>
                       <Dropdown.Item id="leave" className="text-danger" textValue="Quitter">
-                        <HugeiconsIcon icon={LogOutIcon} size={14} className="mr-2 shrink-0" />
+                        <LogOutIcon size={14} className="mr-2 shrink-0" />
                         <Label>{t.serverList?.leaveServer || 'Quitter'}</Label>
                       </Dropdown.Item>
                     </Dropdown.Menu>
@@ -316,7 +315,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             className="size-12 rounded-2xl bg-(--surface-secondary)/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success"
             onPress={() => setIsJoinModalOpen(true)}
           >
-            <HugeiconsIcon icon={PlusIcon} size={20} />
+            <PlusIcon size={20} />
           </Button>
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />
@@ -333,7 +332,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             className="size-12 rounded-2xl bg-(--surface-secondary)/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
             onPress={() => router.push('/channels/discover-server')}
           >
-            <HugeiconsIcon icon={CompassIcon} size={20} />
+            <CompassIcon size={20} />
           </Button>
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />
@@ -349,7 +348,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             className="size-12 rounded-2xl bg-(--surface-secondary)/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
             onPress={() => router.push('/channels/gotostart')}
           >
-            <HugeiconsIcon icon={HomeIcon} size={20} />
+            <HomeIcon size={20} />
           </Button>
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />
@@ -378,7 +377,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Modal.Dialog className="overflow-hidden rounded-2xl border border-(--border)/30 p-0 shadow-2xl">
             <div className="px-6 pt-6 pb-5">
               <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-danger/10 ring-1 ring-danger/20">
-                <HugeiconsIcon icon={LogOutIcon} size={20} className="text-danger" />
+                <LogOutIcon size={20} className="text-danger" />
               </div>
               <h3 className="text-[15px] font-bold">Quitter ce serveur&nbsp;?</h3>
               <p className="mt-1.5 text-[13px] leading-relaxed text-(--muted)/70">
@@ -393,7 +392,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                 variant="danger"
                 onPress={() => confirmLeaveServerId && handleLeaveServer(confirmLeaveServerId)}
               >
-                <HugeiconsIcon icon={LogOutIcon} size={14} />
+                <LogOutIcon size={14} />
                 {t.serverList?.leaveServer || 'Quitter'}
               </Button>
             </div>
@@ -414,7 +413,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             <div className="flex items-start justify-between border-b border-(--border)/20 px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
-                  <HugeiconsIcon icon={Link2Icon} size={18} className="text-accent" />
+                  <Link2Icon size={18} className="text-accent" />
                 </div>
                 <div>
                   <h2 className="text-[15px] font-bold">
@@ -475,7 +474,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                       variant="ghost"
                       className="h-8 gap-1.5 px-2 text-[11px] text-(--muted)/60 hover:text-muted"
                     >
-                      <HugeiconsIcon icon={HelpCircleIcon} size={12} />
+                      <HelpCircleIcon size={12} />
                       Où trouver un code&nbsp;?
                     </Button>
                     <Popover.Content className="max-w-56">
@@ -497,7 +496,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                   >
                     {isJoining
                       ? <Spinner size="sm" color="current" />
-                      : <HugeiconsIcon icon={ArrowRightIcon} size={14} />}
+                      : <ArrowRightIcon size={14} />}
                     Rejoindre
                   </Button>
                 </div>
@@ -513,7 +512,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                 className="h-7 gap-1.5 px-2 text-[11px] text-accent hover:bg-accent/10"
                 onPress={() => { setIsJoinModalOpen(false); router.push('/channels/discover-server'); }}
               >
-                <HugeiconsIcon icon={CompassIcon} size={12} />
+                <CompassIcon size={12} />
                 Découvrir
               </Button>
             </div>

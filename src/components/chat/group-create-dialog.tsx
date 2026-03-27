@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { UsersRoundIcon, SearchIcon, CheckIcon, XIcon, UserPlusIcon, PencilIcon, ArrowRightIcon } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -193,7 +192,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                         : 'bg-[var(--surface-secondary)]/60 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)] group-hover:text-[var(--foreground)]',
                     )}
                   >
-                    <HugeiconsIcon icon={Icon} size={14} />
+                    <Icon size={14} />
                   </div>
                   {label}
                 </button>
@@ -235,7 +234,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--muted)] transition-all duration-200 hover:bg-[var(--surface-secondary)]/80 hover:text-[var(--foreground)]"
               >
                 <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/60">
-                  <HugeiconsIcon icon={XIcon} size={14} />
+                  <XIcon size={14} />
                 </div>
                 Fermer
               </button>
@@ -276,7 +275,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                             </Avatar>
                             <Chip.Label>{f.displayName}</Chip.Label>
                             <button type="button" className="ml-1 text-[var(--muted)] hover:text-[var(--foreground)]" onClick={() => removeFriend(f.id)}>
-                              <HugeiconsIcon icon={XIcon} size={12} />
+                              <XIcon size={12} />
                             </button>
                           </Chip>
                         ))}
@@ -285,7 +284,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                   )}
 
                   <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60 backdrop-blur-sm">
-                    <InputGroup.Prefix><HugeiconsIcon icon={SearchIcon} size={16} className="text-[var(--muted)]/60" /></InputGroup.Prefix>
+                    <InputGroup.Prefix><SearchIcon size={16} className="text-[var(--muted)]/60" /></InputGroup.Prefix>
                     <InputGroup.Input
                       placeholder="Rechercher des amis..."
                       value={search}
@@ -334,7 +333,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                                       : 'border-[var(--muted)]/25',
                                   )}
                                 >
-                                  {isSelected && <HugeiconsIcon icon={CheckIcon} size={14} />}
+                                  {isSelected && <CheckIcon size={14} />}
                                 </div>
                               </button>
                             );
@@ -351,7 +350,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                       className="gap-2 rounded-xl"
                     >
                       Suivant
-                      <HugeiconsIcon icon={ArrowRightIcon} size={16} />
+                      <ArrowRightIcon size={16} />
                     </Button>
                   </div>
                 </div>
@@ -421,7 +420,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                       isDisabled={isCreating}
                       className="gap-2 rounded-xl"
                     >
-                      <HugeiconsIcon icon={UsersRoundIcon} size={16} />
+                      <UsersRoundIcon size={16} />
                       {isCreating ? 'Création...' : 'Créer le groupe'}
                     </Button>
                   </div>

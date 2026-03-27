@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MicIcon,
   MicOffIcon,
@@ -198,7 +197,7 @@ export function CallPanel({
         <div className="relative flex h-48 items-center justify-center bg-black/90 sm:h-64 md:h-72">
           <video ref={screenVideoRef} autoPlay muted playsInline className="size-full object-contain" />
           <div className="absolute left-3 top-3 flex items-center gap-2 rounded-xl border border-[var(--border)]/60 bg-[var(--background)]/60 px-3 py-1.5 text-xs font-medium backdrop-blur-xl">
-            <HugeiconsIcon icon={MonitorUpIcon} size={14} className="text-[var(--accent)]" />
+            <MonitorUpIcon size={14} className="text-[var(--accent)]" />
             <span>Partage d&apos;écran</span>
           </div>
         </div>
@@ -228,7 +227,7 @@ export function CallPanel({
             )}
           >
             {isConnected ? (
-              <HugeiconsIcon icon={PhoneIcon} size={12} />
+              <PhoneIcon size={12} />
             ) : (
               <span className="relative flex size-2">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--accent)]/60" />
@@ -260,7 +259,7 @@ export function CallPanel({
 
                   {isMuted && (
                     <span className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-lg border border-red-500/40 bg-red-500/80 shadow-md">
-                      <HugeiconsIcon icon={MicOffIcon} size={12} className="text-white" />
+                      <MicOffIcon size={12} className="text-white" />
                     </span>
                   )}
 
@@ -280,13 +279,13 @@ export function CallPanel({
 
                     {isMuted && (
                       <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-lg border-2 border-[var(--surface)] bg-red-500/90 shadow-md">
-                        <HugeiconsIcon icon={MicOffIcon} size={12} className="text-white" />
+                        <MicOffIcon size={12} className="text-white" />
                       </span>
                     )}
 
                     {!isMuted && isConnected && (
                       <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-lg border-2 border-[var(--surface)] bg-green-500 shadow-md shadow-green-500/30">
-                        <HugeiconsIcon icon={WifiIcon} size={12} className="text-white" />
+                        <WifiIcon size={12} className="text-white" />
                       </span>
                     )}
                   </div>
@@ -342,7 +341,7 @@ export function CallPanel({
 
                     {isConnected && (
                       <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-lg border-2 border-[var(--surface)] bg-green-500 shadow-md shadow-green-500/30">
-                        <HugeiconsIcon icon={WifiIcon} size={12} className="text-white" />
+                        <WifiIcon size={12} className="text-white" />
                       </span>
                     )}
                   </div>
@@ -356,7 +355,7 @@ export function CallPanel({
           {/* Media error */}
           {mediaError && (
             <div className="mx-auto flex max-w-xs items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 backdrop-blur-sm">
-              <HugeiconsIcon icon={AlertTriangleIcon} size={16} className="shrink-0 text-red-500" />
+              <AlertTriangleIcon size={16} className="shrink-0 text-red-500" />
               <p className="text-xs leading-relaxed text-red-500/90">{mediaError}</p>
             </div>
           )}
@@ -366,21 +365,21 @@ export function CallPanel({
       {/* Controls bar */}
       <div className="flex items-center justify-center gap-4 border-t border-[var(--border)]/40 bg-[var(--background)]/60 px-4 py-4 backdrop-blur-xl md:gap-5 md:py-3">
         <CtrlBtn active={isMuted} onClick={onToggleMute} label={isMuted ? 'Muet' : 'Micro'}>
-          {isMuted ? <HugeiconsIcon icon={MicOffIcon} size={20} /> : <HugeiconsIcon icon={MicIcon} size={20} />}
+          {isMuted ? <MicOffIcon size={20} /> : <MicIcon size={20} />}
         </CtrlBtn>
 
         <CtrlBtn active={!isVideoOff && hasLocalVideo} onClick={onToggleVideo} label="Caméra">
-          {isVideoOff || !hasLocalVideo ? <HugeiconsIcon icon={VideoOffIcon} size={20} /> : <HugeiconsIcon icon={VideoIcon} size={20} />}
+          {isVideoOff || !hasLocalVideo ? <VideoOffIcon size={20} /> : <VideoIcon size={20} />}
         </CtrlBtn>
 
         {isConnected && (
           <CtrlBtn active={isScreenSharing} onClick={isScreenSharing ? onStopScreenShare : onStartScreenShare} label={isScreenSharing ? 'Arrêter' : 'Écran'}>
-            {isScreenSharing ? <HugeiconsIcon icon={MonitorOffIcon} size={20} /> : <HugeiconsIcon icon={MonitorUpIcon} size={20} />}
+            {isScreenSharing ? <MonitorOffIcon size={20} /> : <MonitorUpIcon size={20} />}
           </CtrlBtn>
         )}
 
         <CtrlBtn danger onClick={onEndCall} label="Raccrocher">
-          <HugeiconsIcon icon={PhoneOffIcon} size={20} />
+          <PhoneOffIcon size={20} />
         </CtrlBtn>
       </div>
     </div>

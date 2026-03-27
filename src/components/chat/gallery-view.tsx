@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { GalleryIcon, PlusIcon, XIcon, DownloadIcon, Maximize2Icon } from '@/components/icons';
 import { Button, ScrollShadow, Skeleton } from '@heroui/react';
 import { socketService } from '@/lib/socket';
@@ -83,7 +82,7 @@ function Lightbox({
         className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
         onClick={onClose}
       >
-        <HugeiconsIcon icon={XIcon} size={18} />
+        <XIcon size={18} />
       </button>
 
       {/* Nav left */}
@@ -135,7 +134,7 @@ function Lightbox({
             className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
             onClick={(e) => e.stopPropagation()}
           >
-            <HugeiconsIcon icon={DownloadIcon} size={15} />
+            <DownloadIcon size={15} />
           </a>
         </div>
       </div>
@@ -193,7 +192,7 @@ function PinCard({
       {/* Expand icon */}
       {hovered && (
         <div className="absolute right-2.5 top-2.5 flex size-7 items-center justify-center rounded-full bg-white/90 text-black shadow">
-          <HugeiconsIcon icon={Maximize2Icon} size={13} />
+          <Maximize2Icon size={13} />
         </div>
       )}
 
@@ -299,13 +298,13 @@ function UploadModal({
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-[var(--border)]/30 px-5 py-4">
           <div className="flex size-8 items-center justify-center rounded-lg bg-pink-500/10">
-            <HugeiconsIcon icon={GalleryIcon} size={15} className="text-pink-400" />
+            <GalleryIcon size={15} className="text-pink-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-[var(--foreground)]">Partager une image</p>
           </div>
           <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-lg text-[var(--muted)]" onPress={onClose}>
-            <HugeiconsIcon icon={XIcon} size={15} />
+            <XIcon size={15} />
           </Button>
         </div>
 
@@ -340,13 +339,13 @@ function UploadModal({
                   className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-black/60 text-white"
                   onClick={(e) => { e.stopPropagation(); setFile(null); setPreview(null); }}
                 >
-                  <HugeiconsIcon icon={XIcon} size={12} />
+                  <XIcon size={12} />
                 </button>
               </>
             ) : (
               <>
                 <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-pink-500/10">
-                  <HugeiconsIcon icon={GalleryIcon} size={22} className="text-pink-400" />
+                  <GalleryIcon size={22} className="text-pink-400" />
                 </div>
                 <p className="text-sm font-medium text-[var(--foreground)]">Glissez une image ici</p>
                 <p className="mt-0.5 text-[11px] text-[var(--muted)]">ou cliquez pour parcourir · JPG, PNG, GIF, WebP</p>
@@ -480,7 +479,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
       {/* ── Header ── */}
       <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
         <div className="flex size-7 items-center justify-center rounded-lg bg-pink-500/10">
-          <HugeiconsIcon icon={GalleryIcon} size={14} className="text-pink-400" />
+          <GalleryIcon size={14} className="text-pink-400" />
         </div>
         <h2 className="font-semibold text-[var(--foreground)]">{channelName || 'galerie'}</h2>
         {images.length > 0 && (
@@ -494,7 +493,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
             className="gap-1.5 rounded-xl bg-pink-500 text-white hover:bg-pink-600"
             onPress={() => setShowUpload(true)}
           >
-            <HugeiconsIcon icon={PlusIcon} size={14} />
+            <PlusIcon size={14} />
             Partager
           </Button>
         </div>
@@ -524,7 +523,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="relative mb-5 flex size-20 items-center justify-center rounded-3xl bg-pink-500/10">
                 <div className="absolute inset-0 rounded-3xl bg-pink-500/8 blur-xl" />
-                <HugeiconsIcon icon={GalleryIcon} size={36} className="relative text-pink-400" />
+                <GalleryIcon size={36} className="relative text-pink-400" />
               </div>
               <h3 className="mb-1.5 text-xl font-bold text-[var(--foreground)]">Galerie vide</h3>
               <p className="mb-5 text-sm text-[var(--muted)]">Soyez le premier à partager une image dans #{channelName || 'galerie'}</p>
@@ -532,7 +531,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
                 className="gap-1.5 rounded-xl bg-pink-500 text-white hover:bg-pink-600"
                 onPress={() => setShowUpload(true)}
               >
-                <HugeiconsIcon icon={PlusIcon} size={15} />
+                <PlusIcon size={15} />
                 Partager une image
               </Button>
             </div>

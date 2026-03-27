@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MessageCircleIcon, Loader2Icon, UserXIcon, ArrowLeftIcon } from '@/components/icons';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -50,7 +49,7 @@ export default function DMPage() {
       <div className="flex h-full w-full items-center justify-center bg-[var(--background)]/50 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-5 animate-in fade-in-0 duration-500">
           <div className="flex size-16 items-center justify-center rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/80 shadow-2xl">
-              <HugeiconsIcon icon={Loader2Icon} size={28} className="animate-spin text-[var(--accent)]" />
+              <Loader2Icon size={28} className="animate-spin text-[var(--accent)]" />
             </div>
           <div className="flex flex-col items-center gap-1.5">
             <p className="text-sm font-medium text-[var(--foreground)]/80">Chargement de la conversation</p>
@@ -83,7 +82,7 @@ export default function DMPage() {
       <div className="flex h-full w-full items-center justify-center bg-[var(--background)]/50 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-5 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
           <div className="flex size-16 items-center justify-center rounded-2xl border border-destructive/30 bg-[var(--surface)]/80 shadow-2xl">
-              <HugeiconsIcon icon={UserXIcon} size={28} className="text-red-500/70" />
+              <UserXIcon size={28} className="text-red-500/70" />
             </div>
           <div className="flex flex-col items-center gap-1.5">
             <p className="text-sm font-semibold text-[var(--foreground)]/80">Utilisateur introuvable</p>
@@ -95,7 +94,7 @@ export default function DMPage() {
             href="/channels/me"
             className="mt-2 flex items-center gap-2 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/60 px-5 py-2.5 text-sm font-medium text-[var(--foreground)]/80 shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-[var(--surface)]/80 hover:shadow-xl"
           >
-            <HugeiconsIcon icon={ArrowLeftIcon} size={16} />
+            <ArrowLeftIcon size={16} />
             Retour aux messages
           </Link>
         </div>
@@ -108,7 +107,7 @@ export default function DMPage() {
     return (
       <div className="flex h-full w-full items-center justify-center bg-[var(--background)]/50 backdrop-blur-sm">
         <div className="flex size-16 items-center justify-center rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/80 shadow-2xl">
-          <HugeiconsIcon icon={MessageCircleIcon} size={28} className="text-[var(--muted)]" />
+          <MessageCircleIcon size={28} className="text-[var(--muted)]" />
         </div>
       </div>
     );

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   BookOpenIcon,
   KeyIcon,
@@ -42,7 +41,7 @@ function PageHeader({
   return (
     <div className="mb-8 flex items-start gap-4">
       <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 ring-1 ring-accent-soft-hover">
-        <HugeiconsIcon icon={icon} size={22} className="text-accent" />
+        <icon size={22} className="text-accent" />
       </div>
       <div>
         <div className="flex items-center gap-2.5">
@@ -110,11 +109,8 @@ function CodeBlock({ code, lang = 'js', title }: { code: string; lang?: string; 
               aria-label="Copier"
               className="flex size-6 items-center justify-center rounded hover:bg-surface"
             >
-              <HugeiconsIcon
-                icon={copied ? CheckIcon : CopyIcon}
-                size={12}
-                className={copied ? 'text-green-400' : 'text-muted'}
-              />
+              <copied ? CheckIcon : CopyIcon size={12}
+                className={copied ? 'text-green-400' : 'text-muted'} />
             </button>
           </div>
         </div>
@@ -885,7 +881,7 @@ function IntroductionSection() {
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="flex size-8 items-center justify-center rounded-lg bg-accent/10">
-                <HugeiconsIcon icon={GlobeIcon} size={16} className="text-accent" />
+                <GlobeIcon size={16} className="text-accent" />
               </div>
               <div>
                 <p className="text-[11px] font-semibold text-muted">Base URL</p>
@@ -1441,7 +1437,7 @@ export default function DocSlugPage() {
             href={`/developers/docs/${prevSlug}`}
             className="group flex items-center gap-2 rounded-xl border border-border/60 bg-surface/40 px-4 py-3 text-sm font-medium text-muted no-underline transition-all hover:border-accent/30 hover:bg-surface hover:text-foreground"
           >
-            <HugeiconsIcon icon={ArrowLeftIcon} size={14} className="transition-transform group-hover:-translate-x-0.5" />
+            <ArrowLeftIcon size={14} className="transition-transform group-hover:-translate-x-0.5" />
             <span className="text-xs text-muted/60">Précédent</span>
             <span className="ml-1">{SECTIONS[prevSlug].title}</span>
           </Link>
@@ -1454,7 +1450,7 @@ export default function DocSlugPage() {
           >
             <span>{SECTIONS[nextSlug].title}</span>
             <span className="ml-1 text-xs text-muted/60">Suivant</span>
-            <HugeiconsIcon icon={ArrowRightIcon} size={14} className="transition-transform group-hover:translate-x-0.5" />
+            <ArrowRightIcon size={14} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
         ) : <div />}
       </div>

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   UsersIcon,
   Volume2Icon,
@@ -162,14 +161,11 @@ function ChannelRow({
       {isActive && (
         <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)]" />
       )}
-      <HugeiconsIcon
-        icon={CHANNEL_ICON[channel.type] ?? HashIcon}
-        size={14}
+      <CHANNEL_ICON[channel.type] ?? HashIcon size={14}
         className={cn(
           'shrink-0 transition-colors',
           isActive ? 'text-[var(--accent)]' : 'text-[var(--muted)]/60 group-hover:text-[var(--muted)]',
-        )}
-      />
+        )} />
       <span className="truncate">{channel.name}</span>
     </button>
   );
@@ -208,14 +204,11 @@ function VoiceChannelRow({
         {isConnected && (
           <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-green-400" />
         )}
-        <HugeiconsIcon
-          icon={Volume2Icon}
-          size={14}
+        <Volume2Icon size={14}
           className={cn(
             'shrink-0 transition-colors',
             isConnected ? 'text-green-400' : 'text-[var(--muted)]/60 group-hover:text-[var(--muted)]',
-          )}
-        />
+          )} />
         <span className="truncate">{channel.name}</span>
         {participants.length > 0 && (
           <span className="ml-auto text-[10px] font-semibold text-[var(--muted)]">{participants.length}</span>
@@ -229,7 +222,7 @@ function VoiceChannelRow({
                 {p.username?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <span className="flex-1 truncate text-[11px] text-[var(--muted)]">{p.username}</span>
-              {p.muted && <HugeiconsIcon icon={MicOffIcon} size={10} className="shrink-0 text-red-400" />}
+              {p.muted && <MicOffIcon size={10} className="shrink-0 text-red-400" />}
             </div>
           ))}
         </div>
@@ -260,11 +253,8 @@ function SectionHeader({
         onClick={onToggle}
         className="flex flex-1 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50 transition-colors hover:text-[var(--muted)]"
       >
-        <HugeiconsIcon
-          icon={ChevronRightIcon}
-          size={11}
-          className={cn('shrink-0 transition-transform', !collapsed && 'rotate-90')}
-        />
+        <ChevronRightIcon size={11}
+          className={cn('shrink-0 transition-transform', !collapsed && 'rotate-90')} />
         {label}
       </button>
       {canAdd && (
@@ -279,7 +269,7 @@ function SectionHeader({
               onAdd();
             }}
           >
-            <HugeiconsIcon icon={PlusIcon} size={13} />
+            <PlusIcon size={13} />
           </Button>
           <Tooltip.Content placement="right">{t.channelList.createChannel}</Tooltip.Content>
         </Tooltip>
@@ -717,7 +707,7 @@ export function ChannelList({
               className="size-7 rounded-lg"
               onPress={() => setShowGroupCreate(true)}
             >
-              <HugeiconsIcon icon={PlusIcon} size={15} />
+              <PlusIcon size={15} />
             </Button>
             <Tooltip.Content>{t.channelList.createGroup}</Tooltip.Content>
           </Tooltip>
@@ -744,7 +734,7 @@ export function ChannelList({
                     : 'bg-[var(--surface-secondary)] text-[var(--muted)]',
                 )}
               >
-                <HugeiconsIcon icon={UsersIcon} size={15} />
+                <UsersIcon size={15} />
               </div>
               Amis
             </button>
@@ -765,7 +755,7 @@ export function ChannelList({
                   ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
                   : 'bg-[var(--surface-secondary)] text-[var(--muted)]',
               )}>
-                <HugeiconsIcon icon={FileTextIcon} size={15} />
+                <FileTextIcon size={15} />
               </div>
               Changelogs
             </button>
@@ -795,7 +785,7 @@ export function ChannelList({
                       )}
                     >
                       <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
-                        <HugeiconsIcon icon={UsersRoundIcon} size={14} />
+                        <UsersRoundIcon size={14} />
                       </div>
                       <div className="min-w-0 flex-1 text-left">
                         <p className="truncate text-[13px]">{conv.recipientName}</p>
@@ -903,13 +893,13 @@ export function ChannelList({
           <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[13px]">
             <span className="truncate">{serverName}</span>
             {serverBadges.isCertified && (
-              <HugeiconsIcon icon={CheckCircle2Icon} size={14} className="shrink-0 text-blue-400" />
+              <CheckCircle2Icon size={14} className="shrink-0 text-blue-400" />
             )}
             {serverBadges.isPartnered && (
-              <HugeiconsIcon icon={HandshakeIcon} size={14} className="shrink-0 text-violet-400" />
+              <HandshakeIcon size={14} className="shrink-0 text-violet-400" />
             )}
           </span>
-          <HugeiconsIcon icon={ChevronDownIcon} size={14} className="shrink-0 text-muted/50" />
+          <ChevronDownIcon size={14} className="shrink-0 text-muted/50" />
         </Dropdown.Trigger>
         <Dropdown.Popover placement="bottom start" className="w-56">
           <Dropdown.Menu
@@ -920,15 +910,15 @@ export function ChannelList({
             }}
           >
             <Dropdown.Item id="settings" className="gap-2">
-              <HugeiconsIcon icon={SettingsIcon} size={15} />
+              <SettingsIcon size={15} />
               {t.channelList.serverSettings}
             </Dropdown.Item>
             <Dropdown.Item id="invite" className="gap-2">
-              <HugeiconsIcon icon={UserPlusIcon} size={15} />
+              <UserPlusIcon size={15} />
               {t.channelList.inviteMembers}
             </Dropdown.Item>
             <Dropdown.Item id="leave" className="gap-2 text-red-500">
-              <HugeiconsIcon icon={LogOutIcon} size={15} />
+              <LogOutIcon size={15} />
               {t.serverList.leaveServer}
             </Dropdown.Item>
           </Dropdown.Menu>
@@ -938,7 +928,7 @@ export function ChannelList({
       {/* Node offline banner */}
       {nodeOnline === false && (
         <div className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 text-[11px] font-medium text-amber-400">
-          <HugeiconsIcon icon={WifiOffIcon} size={11} className="shrink-0" />
+          <WifiOffIcon size={11} className="shrink-0" />
           {t.channelList.nodeOffline}
         </div>
       )}
@@ -1029,7 +1019,7 @@ export function ChannelList({
                   className="mt-3 w-full gap-1 text-[10px] font-bold uppercase tracking-widest text-muted/30 hover:text-muted"
                   onPress={() => openCreate('category')}
                 >
-                  <HugeiconsIcon icon={PlusIcon} size={11} />
+                  <PlusIcon size={11} />
                   {t.channelList.newCategory}
                 </Button>
               )}
@@ -1088,7 +1078,7 @@ export function ChannelList({
                   className="mt-3 w-full gap-1 text-[10px] font-bold uppercase tracking-widest text-muted/30 hover:text-muted"
                   onPress={() => openCreate('category')}
                 >
-                  <HugeiconsIcon icon={PlusIcon} size={11} />
+                  <PlusIcon size={11} />
                   {t.channelList.newCategory}
                 </Button>
               )}
@@ -1118,11 +1108,8 @@ export function ChannelList({
             <div className="flex items-start justify-between border-b border-(--border)/20 px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
-                  <HugeiconsIcon
-                    icon={CHANNEL_ICON[createType] ?? HashIcon}
-                    size={18}
-                    className="text-accent"
-                  />
+                  <CHANNEL_ICON[createType] ?? HashIcon size={18}
+                    className="text-accent" />
                 </div>
                 <div>
                   <h2 className="text-[15px] font-bold">
@@ -1162,7 +1149,7 @@ export function ChannelList({
                               : 'border-(--border)/40 bg-(--surface-secondary)/30 text-muted hover:border-accent/30 hover:bg-accent/5 hover:text-foreground',
                           )}
                         >
-                          <HugeiconsIcon icon={ct.icon} size={15} />
+                          <ct.icon size={15} />
                           {ct.label}
                         </button>
                       );
@@ -1230,14 +1217,14 @@ export function ChannelList({
               setCtxMenu(null);
             }}
           >
-            <HugeiconsIcon icon={PencilIcon} size={13} className="shrink-0 text-[var(--muted)]" />
+            <PencilIcon size={13} className="shrink-0 text-[var(--muted)]" />
             Renommer
           </button>
           <button
             className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-red-400 hover:bg-red-500/10"
             onClick={() => { setConfirmDeleteChannel(ctxMenu.channel); setCtxMenu(null); }}
           >
-            <HugeiconsIcon icon={Trash2Icon} size={13} className="shrink-0" />
+            <Trash2Icon size={13} className="shrink-0" />
             Supprimer
           </button>
         </div>

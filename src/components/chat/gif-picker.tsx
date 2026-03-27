@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { SearchIcon, Loader2Icon } from '@/components/icons';
 import { InputGroup, Popover, ScrollShadow, Tabs } from '@heroui/react';
 
@@ -167,7 +166,7 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
         <div className="relative my-2">
           <InputGroup className="rounded-lg border-[var(--border)]/60 bg-[var(--background)]/60 backdrop-blur-sm">
             <InputGroup.Prefix>
-              <HugeiconsIcon icon={SearchIcon} size={16} className="text-[var(--muted)]/60" />
+              <SearchIcon size={16} className="text-[var(--muted)]/60" />
             </InputGroup.Prefix>
             <InputGroup.Input
               placeholder="Rechercher un GIF..."
@@ -228,7 +227,7 @@ function GifGrid({
   if (isLoading) {
     return (
       <div className="flex h-60 items-center justify-center">
-        <HugeiconsIcon icon={Loader2Icon} size={24} className="animate-spin text-[var(--muted)]" />
+        <Loader2Icon size={24} className="animate-spin text-[var(--muted)]" />
       </div>
     );
   }
@@ -263,7 +262,7 @@ function GifGrid({
       {/* Sentinel for infinite scroll */}
       <div ref={sentinelRef} className="flex h-8 items-center justify-center">
         {isLoadingMore && (
-          <HugeiconsIcon icon={Loader2Icon} size={18} className="animate-spin text-[var(--muted)]" />
+          <Loader2Icon size={18} className="animate-spin text-[var(--muted)]" />
         )}
       </div>
     </ScrollShadow>

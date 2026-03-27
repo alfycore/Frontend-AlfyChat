@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   PlusIcon,
   PencilIcon,
@@ -260,7 +259,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
               className="flex size-8 items-center justify-center rounded-xl text-white shadow-sm"
               style={{ backgroundColor: role.color || '#5865F2' }}
             >
-              {IconComp ? <HugeiconsIcon icon={IconComp} size={14} /> : null}
+              {IconComp ? <IconComp size={14} /> : null}
             </div>
 
             <span className="flex-1 truncate text-sm font-medium">{role.name}</span>
@@ -278,7 +277,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                     isDisabled={isEditorOpen || idx === 0}
                     className="text-[var(--muted)]"
                   >
-                    <HugeiconsIcon icon={ChevronUpIcon} size={14} />
+                    <ChevronUpIcon size={14} />
                   </Button>
                   <Button
                     variant="ghost"
@@ -288,12 +287,12 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                     isDisabled={isEditorOpen || idx === roles.length - 1}
                     className="text-[var(--muted)]"
                   >
-                    <HugeiconsIcon icon={ChevronDownIcon} size={14} />
+                    <ChevronDownIcon size={14} />
                   </Button>
                 </>
               )}
               <Button variant="ghost" isIconOnly size="sm" onPress={() => openEdit(role)} isDisabled={isEditorOpen}>
-                <HugeiconsIcon icon={PencilIcon} size={14} />
+                <PencilIcon size={14} />
               </Button>
               {!role.isDefault && (
                 <Button
@@ -304,7 +303,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                   onPress={() => setDeleteTarget(role)}
                   isDisabled={isEditorOpen}
                 >
-                  <HugeiconsIcon icon={Trash2Icon} size={14} />
+                  <Trash2Icon size={14} />
                 </Button>
               )}
             </div>
@@ -314,7 +313,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
 
       {!isEditorOpen && (
         <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl border-[var(--border)]/60" onPress={openCreate}>
-          <HugeiconsIcon icon={PlusIcon} size={16} />
+          <PlusIcon size={16} />
           Ajouter un rôle
         </Button>
       )}
@@ -374,7 +373,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                   >
                     {formIcon ? (() => {
                       const IC = getRoleIconComponent(formIcon);
-                      return IC ? <HugeiconsIcon icon={IC} size={16} /> : <span className="text-xs text-[var(--muted)]">—</span>;
+                      return IC ? <IC size={16} /> : <span className="text-xs text-[var(--muted)]">—</span>;
                     })() : (
                       <span className="text-xs text-[var(--muted)]">—</span>
                     )}
@@ -395,7 +394,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                         setIconPickerOpen(false);
                       }}
                     >
-                      <HugeiconsIcon icon={XIcon} size={16} className="text-[var(--muted)]" />
+                      <XIcon size={16} className="text-[var(--muted)]" />
                     </button>
                     {ROLE_ICONS.map(({ name, icon }) => (
                       <button
@@ -410,7 +409,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                         }}
                         title={name}
                       >
-                        <HugeiconsIcon icon={icon} size={16} />
+                        <icon size={16} />
                       </button>
                     ))}
                   </div>
@@ -438,14 +437,14 @@ export function RoleManager({ serverId }: RoleManagerProps) {
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onPress={cancelEdit} isDisabled={isSaving} className="rounded-lg">
-              <HugeiconsIcon icon={XIcon} size={14} className="mr-1.5" />
+              <XIcon size={14} className="mr-1.5" />
               Annuler
             </Button>
             <Button size="sm" onPress={handleSave} isDisabled={!formName.trim() || isSaving} className="rounded-lg">
               {isSaving ? (
-                <HugeiconsIcon icon={Loader2Icon} size={14} className="mr-1.5 animate-spin" />
+                <Loader2Icon size={14} className="mr-1.5 animate-spin" />
               ) : (
-                <HugeiconsIcon icon={SaveIcon} size={14} className="mr-1.5" />
+                <SaveIcon size={14} className="mr-1.5" />
               )}
               Enregistrer
             </Button>

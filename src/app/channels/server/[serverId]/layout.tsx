@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { Skeleton, Spinner } from '@heroui/react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MessageCircleIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { CallProvider, useCallContext } from '@/hooks/use-call-context';

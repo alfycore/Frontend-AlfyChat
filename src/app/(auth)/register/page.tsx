@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MessageCircleIcon, ShieldIcon, LockIcon, UsersIcon,
   EyeIcon, EyeOffIcon, MailIcon, KeyRoundIcon, UserIcon, AtSignIcon,
@@ -146,7 +145,7 @@ function RegisterContent() {
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_100%,var(--accent)/8%,transparent_70%)]" />
               <div className="relative flex flex-col items-center gap-6">
                 <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/20">
-                  <HugeiconsIcon icon={MessageCircleIcon} size={28} className="text-[var(--accent-foreground)]" />
+                  <MessageCircleIcon size={28} className="text-[var(--accent-foreground)]" />
                 </div>
                 <div className="text-center">
                   <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">Rejoignez AlfyChat</h2>
@@ -164,7 +163,7 @@ function RegisterContent() {
                       key={item.label}
                       className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-tertiary)] px-4 py-3"
                     >
-                      <HugeiconsIcon icon={item.icon} size={18} className={item.color} />
+                      <item.icon size={18} className={item.color} />
                       <div>
                         <p className="text-sm font-medium text-[var(--foreground)]">{item.label}</p>
                         <p className="text-xs text-[var(--muted)]">{item.desc}</p>
@@ -180,7 +179,7 @@ function RegisterContent() {
               {/* En-tete */}
               <div className="mb-6 flex flex-col items-center gap-3 md:items-start">
                 <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)] md:hidden">
-                  <HugeiconsIcon icon={MessageCircleIcon} size={22} className="text-[var(--accent-foreground)]" />
+                  <MessageCircleIcon size={22} className="text-[var(--accent-foreground)]" />
                 </div>
                 <div className="text-center md:text-left">
                   <h1 className="text-2xl font-bold text-[var(--foreground)]">Creer un compte</h1>
@@ -226,7 +225,7 @@ function RegisterContent() {
                     <Label>Adresse email</Label>
                     <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
-                        <HugeiconsIcon icon={MailIcon} size={16} className="text-[var(--muted)]" />
+                        <MailIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
                       <InputGroup.Input type="email" placeholder="votre@email.com" />
                     </InputGroup>
@@ -244,7 +243,7 @@ function RegisterContent() {
                       <Label>Identifiant</Label>
                       <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                         <InputGroup.Prefix>
-                          <HugeiconsIcon icon={AtSignIcon} size={16} className="text-[var(--muted)]" />
+                          <AtSignIcon size={16} className="text-[var(--muted)]" />
                         </InputGroup.Prefix>
                         <InputGroup.Input placeholder="username" />
                       </InputGroup>
@@ -254,7 +253,7 @@ function RegisterContent() {
                       <Label>Nom d&apos;affichage</Label>
                       <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                         <InputGroup.Prefix>
-                          <HugeiconsIcon icon={UserIcon} size={16} className="text-[var(--muted)]" />
+                          <UserIcon size={16} className="text-[var(--muted)]" />
                         </InputGroup.Prefix>
                         <InputGroup.Input placeholder="Votre nom" />
                       </InputGroup>
@@ -266,7 +265,7 @@ function RegisterContent() {
                     <Label>Mot de passe</Label>
                     <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
-                        <HugeiconsIcon icon={KeyRoundIcon} size={16} className="text-[var(--muted)]" />
+                        <KeyRoundIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
                       <InputGroup.Input
                         type={showPassword ? 'text' : 'password'}
@@ -280,7 +279,7 @@ function RegisterContent() {
                           onPress={() => setShowPassword(!showPassword)}
                           aria-label={showPassword ? 'Masquer' : 'Afficher'}
                         >
-                          <HugeiconsIcon icon={showPassword ? EyeOffIcon : EyeIcon} size={16} />
+                          <showPassword ? EyeOffIcon : EyeIcon size={16} />
                         </Button>
                       </InputGroup.Suffix>
                     </InputGroup>
@@ -292,7 +291,7 @@ function RegisterContent() {
                     <Label>Confirmer le mot de passe</Label>
                     <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
-                        <HugeiconsIcon icon={KeyRoundIcon} size={16} className="text-[var(--muted)]" />
+                        <KeyRoundIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
                       <InputGroup.Input
                         type={showPassword ? 'text' : 'password'}

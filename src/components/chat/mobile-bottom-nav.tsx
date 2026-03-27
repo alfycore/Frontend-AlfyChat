@@ -1,7 +1,6 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MessageCircleIcon, UsersIcon, SettingsIcon } from '@/components/icons';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { cn } from '@/lib/utils';
@@ -66,7 +65,7 @@ export function MobileBottomNav() {
               'flex size-10 items-center justify-center rounded-xl transition-all',
               active ? 'bg-[var(--accent)]/12 scale-110' : 'scale-100',
             )}>
-              <HugeiconsIcon icon={tab.icon} size={20} />
+              <tab.icon size={20} />
             </div>
             <span className={cn(
               'text-[10px] font-semibold transition-all',

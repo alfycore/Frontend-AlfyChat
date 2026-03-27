@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, Button, Card } from '@heroui/react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MessageCircleIcon,
   UsersIcon,
@@ -256,7 +255,7 @@ export default function GotoStartPage() {
               >
                 <div className="p-6">
                   <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-[var(--accent)]/10 text-[var(--accent)] transition-colors group-hover:bg-[var(--accent)]/20">
-                    <HugeiconsIcon icon={feat.icon} size={22} />
+                    <feat.icon size={22} />
                   </div>
                   <h3 className="mb-2 font-semibold text-[var(--foreground)]">{feat.title}</h3>
                   <p className="text-sm leading-relaxed text-[var(--muted)]">{feat.desc}</p>
@@ -283,7 +282,7 @@ export default function GotoStartPage() {
                 {['Messages en temps réel', 'Réponses et réactions', 'Partage de fichiers et médias', 'Historique complet'].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-[var(--foreground)]">
                     <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/15 text-[var(--accent)]">
-                      <HugeiconsIcon icon={CheckIcon} size={12} />
+                      <CheckIcon size={12} />
                     </span>
                     {item}
                   </li>
@@ -327,7 +326,7 @@ export default function GotoStartPage() {
               <div className="border-t border-[var(--border)] px-4 py-3">
                 <div className="flex items-center gap-2 rounded-xl bg-[var(--background)] px-3 py-2">
                   <span className="flex-1 text-sm text-[var(--muted)]">Message #général…</span>
-                  <HugeiconsIcon icon={SmileIcon} size={16} className="text-[var(--muted)]" />
+                  <SmileIcon size={16} className="text-[var(--muted)]" />
                 </div>
               </div>
             </Card>
@@ -343,7 +342,7 @@ export default function GotoStartPage() {
             <Card className="overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0 shadow-2xl order-last lg:order-first">
               <div className="border-b border-[var(--border)] px-4 py-3">
                 <div className="flex items-center gap-2 rounded-lg bg-[var(--background)] px-3 py-2">
-                  <HugeiconsIcon icon={SearchIcon} size={14} className="text-[var(--muted)]" />
+                  <SearchIcon size={14} className="text-[var(--muted)]" />
                   <span className="text-sm text-[var(--muted)]">Rechercher des serveurs…</span>
                 </div>
               </div>
@@ -380,7 +379,7 @@ export default function GotoStartPage() {
                 {['Canaux texte et vocaux', 'Rôles et permissions', 'Invitation par lien', 'Modération intégrée'].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-[var(--foreground)]">
                     <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/15 text-[var(--accent)]">
-                      <HugeiconsIcon icon={CheckIcon} size={12} />
+                      <CheckIcon size={12} />
                     </span>
                     {item}
                   </li>
@@ -407,7 +406,7 @@ export default function GotoStartPage() {
                 {['Statut personnalisé', 'Messages privés', 'Groupes jusqu\'à 10 personnes', 'Appels vocal & vidéo'].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-[var(--foreground)]">
                     <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/15 text-[var(--accent)]">
-                      <HugeiconsIcon icon={CheckIcon} size={12} />
+                      <CheckIcon size={12} />
                     </span>
                     {item}
                   </li>
@@ -439,7 +438,7 @@ export default function GotoStartPage() {
                       <p className="text-xs text-[var(--muted)]">{f.statusLabel}</p>
                     </div>
                     <button className="rounded-lg p-2 text-[var(--muted)] hover:bg-[var(--background)] hover:text-[var(--foreground)] transition-colors">
-                      <HugeiconsIcon icon={MessageCircleIcon} size={16} />
+                      <MessageCircleIcon size={16} />
                     </button>
                   </div>
                 ))}

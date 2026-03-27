@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { parseDate } from '@internationalized/date';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   UserIcon, PaletteIcon, BellIcon, ShieldIcon, LogOutIcon,
   CameraIcon, ImageIcon, SaveIcon, MicIcon, Volume2Icon,
@@ -636,7 +635,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]',
                       )}
                     >
-                      <HugeiconsIcon icon={tab.icon} size={16} />
+                      <tab.icon size={16} />
                       {tab.label}
                     </button>
                   ))}
@@ -646,7 +645,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <Separator />
               <div className="p-2">
                 <Button variant="ghost" onPress={handleLogout} className="w-full justify-start gap-2.5 rounded-xl px-3 py-2 text-sm text-red-500">
-                  <HugeiconsIcon icon={LogOutIcon} size={14} />
+                  <LogOutIcon size={14} />
                   {t.settings.logout}
                 </Button>
               </div>
@@ -680,10 +679,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 transition-colors active:bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)]"
                       >
                         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/10">
-                          <HugeiconsIcon icon={tab.icon} size={18} className="text-[var(--accent)]" />
+                          <tab.icon size={18} className="text-[var(--accent)]" />
                         </span>
                         <span className="flex-1 text-left text-sm font-medium text-[var(--foreground)]">{tab.label}</span>
-                        <HugeiconsIcon icon={ChevronRightIcon} size={16} className="text-[var(--muted)]/40" />
+                        <ChevronRightIcon size={16} className="text-[var(--muted)]/40" />
                       </button>
                     ))}
                   </nav>
@@ -696,7 +695,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-3 transition-colors active:bg-red-500/10 hover:bg-red-500/10"
                     >
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
-                        <HugeiconsIcon icon={LogOutIcon} size={18} className="text-red-500" />
+                        <LogOutIcon size={18} className="text-red-500" />
                       </span>
                       <span className="flex-1 text-left text-sm font-medium text-red-500">{t.settings.logout}</span>
                     </button>
@@ -708,7 +707,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               {!mobileShowMenu && (
                 <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)]/40 px-3 sm:hidden">
                   <Button isIconOnly variant="ghost" size="sm" onPress={() => setMobileShowMenu(true)}>
-                    <HugeiconsIcon icon={ArrowLeftIcon} size={18} />
+                    <ArrowLeftIcon size={18} />
                   </Button>
                   <h2 className="text-sm font-semibold text-[var(--foreground)]">
                     {NAV_TABS.find((tab) => tab.id === activeTab)?.label}
@@ -762,13 +761,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           <img src={bannerPreview} alt={t.settings.banner} className="size-full object-cover" />
                         ) : (
                           <div className="flex size-full items-center justify-center gap-2 text-sm text-white/60">
-                            <HugeiconsIcon icon={ImageIcon} size={20} />
+                            <ImageIcon size={20} />
                             <span className="hidden sm:inline">{t.settings.addBanner}</span>
                             <span className="sm:hidden">{t.settings.addBannerMobile}</span>
                           </div>
                         )}
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">
-                          <HugeiconsIcon icon={CameraIcon} size={32} className="text-white" />
+                          <CameraIcon size={32} className="text-white" />
                         </div>
                       </div>
                       <input ref={bannerInputRef} type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
@@ -786,7 +785,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 <Avatar.Fallback>{displayName?.[0]?.toUpperCase() || '?'}</Avatar.Fallback>
                               </Avatar>
                               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity hover:opacity-100">
-                                <HugeiconsIcon icon={CameraIcon} size={20} className="text-white" />
+                                <CameraIcon size={20} className="text-white" />
                               </div>
                             </div>
                             <Badge color="success" size="sm" placement="bottom-right" />
@@ -800,7 +799,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                             </Chip>
                             <Dropdown>
                               <Button isIconOnly variant="ghost" size="sm" aria-label="Actions profil">
-                                <HugeiconsIcon icon={MoreHorizontalIcon} size={16} />
+                                <MoreHorizontalIcon size={16} />
                               </Button>
                               <Dropdown.Popover>
                                 <Dropdown.Menu onAction={(key) => {
@@ -946,7 +945,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   {isSaving ? (
                                     <Spinner size="sm" color="current" />
                                   ) : (
-                                    <HugeiconsIcon icon={SaveIcon} size={16} />
+                                    <SaveIcon size={16} />
                                   )}
                                   {isSaving ? t.common.saving : t.common.save}
                                 </Button>
@@ -1176,11 +1175,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       <Tabs.ListContainer>
                         <Tabs.List aria-label={t.settings.voice}>
                           <Tabs.Tab id="mic">
-                            <HugeiconsIcon icon={MicIcon} size={14} className="mr-1.5" />
+                            <MicIcon size={14} className="mr-1.5" />
                             {t.settings.microphone}
                           </Tabs.Tab>
                           <Tabs.Tab id="speaker">
-                            <HugeiconsIcon icon={Volume2Icon} size={14} className="mr-1.5" />
+                            <Volume2Icon size={14} className="mr-1.5" />
                             {t.settings.audioOutput}
                           </Tabs.Tab>
                         </Tabs.List>
@@ -1330,7 +1329,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                             <Disclosure.Heading>
                               <Button slot="trigger" variant="ghost" className="w-full justify-between rounded-xl border border-[var(--border)]/40 px-4 py-3">
                                 <span className="flex items-center gap-2 text-sm font-medium">
-                                  <HugeiconsIcon icon={ZapIcon} size={14} />
+                                  <ZapIcon size={14} />
                                   {t.settings.audioProcessing}
                                 </span>
                                 <Disclosure.Indicator />
@@ -1468,7 +1467,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         <Accordion.Heading>
                           <Accordion.Trigger className="w-full">
                             <span className="flex items-center gap-2 text-sm font-medium">
-                              <HugeiconsIcon icon={BellIcon} size={14} />
+                              <BellIcon size={14} />
                               {t.settings.notifCategories}
                             </span>
                             <Accordion.Indicator />
@@ -1520,7 +1519,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         <Accordion.Heading>
                           <Accordion.Trigger className="w-full">
                             <span className="flex items-center gap-2 text-sm font-medium">
-                              <HugeiconsIcon icon={ClockIcon} size={14} />
+                              <ClockIcon size={14} />
                               {t.settings.quietHours}
                             </span>
                             <Accordion.Indicator />
@@ -1554,7 +1553,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         <Accordion.Heading>
                           <Accordion.Trigger className="w-full">
                             <span className="flex items-center gap-2 text-sm font-medium">
-                              <HugeiconsIcon icon={CalendarIcon} size={14} />
+                              <CalendarIcon size={14} />
                               {t.settings.vacationMode}
                             </span>
                             <Accordion.Indicator />
@@ -1676,12 +1675,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     <Card variant="secondary">
                       <Card.Header>
                         <Card.Title className="flex items-center gap-2">
-                          <HugeiconsIcon icon={ShieldIcon} size={16} />
+                          <ShieldIcon size={16} />
                           {t.settings.privacyTitle}
                           {/* Popover info */}
                           <Popover>
                             <Button isIconOnly variant="ghost" size="sm" aria-label={t.settings.privacyTitle}>
-                              <HugeiconsIcon icon={HelpCircleIcon} size={14} className="text-[var(--muted)]" />
+                              <HelpCircleIcon size={14} className="text-[var(--muted)]" />
                             </Button>
                             <Popover.Content className="max-w-56">
                               <Popover.Dialog>
@@ -1735,7 +1734,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     <Card variant="secondary">
                       <Card.Header>
                         <Card.Title className="flex items-center gap-2">
-                          <HugeiconsIcon icon={KeyRoundIcon} size={16} />
+                          <KeyRoundIcon size={16} />
                           Changer le mot de passe
                         </Card.Title>
                         <Card.Description>Modifiez votre mot de passe de connexion.</Card.Description>
@@ -1781,7 +1780,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           isDisabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
                           className="gap-2"
                         >
-                          {isChangingPassword ? <Spinner size="sm" color="current" /> : <HugeiconsIcon icon={KeyRoundIcon} size={14} />}
+                          {isChangingPassword ? <Spinner size="sm" color="current" /> : <KeyRoundIcon size={14} />}
                           Modifier le mot de passe
                         </Button>
                       </Card.Content>
@@ -1791,7 +1790,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     <Card variant="secondary">
                       <Card.Header>
                         <Card.Title className="flex items-center gap-2">
-                          <HugeiconsIcon icon={LockIcon} size={16} />
+                          <LockIcon size={16} />
                           {t.settings.twoFATitle}
                         </Card.Title>
                         <Card.Description>
@@ -1896,14 +1895,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         <div className="flex items-center justify-between">
                           <div>
                             <Card.Title className="flex items-center gap-2">
-                              <HugeiconsIcon icon={KeyRoundIcon} size={16} />
+                              <KeyRoundIcon size={16} />
                               Sessions actives
                             </Card.Title>
                             <Card.Description>Appareils connectés à votre compte</Card.Description>
                           </div>
                           <Tooltip delay={0}>
                             <Button size="sm" variant="secondary" onPress={handleRevokeAllSessions} isDisabled={isRevokingAll}>
-                              {isRevokingAll ? <Spinner size="sm" color="current" /> : <HugeiconsIcon icon={AlertTriangleIcon} size={14} />}
+                              {isRevokingAll ? <Spinner size="sm" color="current" /> : <AlertTriangleIcon size={14} />}
                               {t.settings.revokeAll}
                             </Button>
                             <Tooltip.Content showArrow placement="top">
@@ -1946,7 +1945,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                       <Table.Row key={session.id}>
                                         <Table.Cell>
                                           <div className="flex items-center gap-2">
-                                            <HugeiconsIcon icon={MonitorIcon} size={14} className="text-[var(--muted)]" />
+                                            <MonitorIcon size={14} className="text-[var(--muted)]" />
                                             <span className="text-sm">{browser} / {os}</span>
                                             {isCurrent && (
                                               <Chip color="success" variant="soft" size="sm">
@@ -1973,7 +1972,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                                 }
                                               }}
                                             >
-                                              <HugeiconsIcon icon={Trash2Icon} size={14} />
+                                              <Trash2Icon size={14} />
                                             </Button>
                                           )}
                                         </Table.Cell>
@@ -2032,7 +2031,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       <Card.Content>
                         <AlertDialog>
                           <Button variant="danger">
-                            <HugeiconsIcon icon={Trash2Icon} size={16} />
+                            <Trash2Icon size={16} />
                             {t.settings.deleteAccount}
                           </Button>
                           <AlertDialog.Backdrop variant="blur">
@@ -2097,21 +2096,21 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                             variant={theme === 'dark' ? 'primary' : 'secondary'}
                             onPress={() => setTheme('dark')}
                           >
-                            <HugeiconsIcon icon={MoonIcon} size={14} />
+                            <MoonIcon size={14} />
                             {t.settings.dark}
                           </Button>
                           <Button
                             variant={theme === 'light' ? 'primary' : 'secondary'}
                             onPress={() => setTheme('light')}
                           >
-                            <HugeiconsIcon icon={SunIcon} size={14} />
+                            <SunIcon size={14} />
                             {t.settings.light}
                           </Button>
                           <Button
                             variant={theme === 'system' ? 'primary' : 'secondary'}
                             onPress={() => setTheme('system')}
                           >
-                            <HugeiconsIcon icon={MonitorIcon} size={14} />
+                            <MonitorIcon size={14} />
                             {t.settings.system}
                           </Button>
                         </ButtonGroup>

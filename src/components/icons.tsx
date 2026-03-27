@@ -1,232 +1,248 @@
 /**
- * Centralized HugeIcons re-exports for the entire app.
- * Maps old lucide-react names → HugeIcons free equivalents.
+ * Centralized Flaticon UIcons components for the entire app.
+ * Style: regular-rounded (fi-rr-*)
  *
  * Usage:
- *   import { HugeiconsIcon } from '@hugeicons/react';
- *   import { MailIcon, ShieldIcon, ... } from '@/components/icons';
- *   <HugeiconsIcon icon={MailIcon} size={16} />
+ *   import { MailIcon } from '@/components/icons';
+ *   <MailIcon size={16} className="text-muted-foreground" />
  */
 
+import React from 'react';
+
+interface FiProps {
+  size?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+function fi(name: string) {
+  const Comp = ({ size = 20, className, style }: FiProps) => (
+    <i
+      className={`fi fi-rr-${name}${className ? ` ${className}` : ''}`}
+      style={{ fontSize: size, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
+    />
+  );
+  Comp.displayName = `FiIcon(${name})`;
+  return Comp;
+}
+
 // ── Chat / Messages ──
-export { BubbleChatIcon as MessageCircleIcon } from '@hugeicons/core-free-icons';
-export { BubbleChatIcon } from '@hugeicons/core-free-icons';
-export { SentIcon } from '@hugeicons/core-free-icons';
-export { MailSend01Icon as SendIcon } from '@hugeicons/core-free-icons';
-export { MailReplyIcon as ReplyIcon } from '@hugeicons/core-free-icons';
-export { SmileIcon } from '@hugeicons/core-free-icons';
+export const MessageCircleIcon = fi('comment');
+export const BubbleChatIcon = fi('comment');
+export const SentIcon = fi('paper-plane');
+export const SendIcon = fi('paper-plane');
+export const ReplyIcon = fi('reply');
+export const SmileIcon = fi('smile');
 
 // ── Mail ──
-export { Mail01Icon as MailIcon } from '@hugeicons/core-free-icons';
+export const MailIcon = fi('envelope');
 
 // ── Navigation / Arrows ──
-export { ArrowLeft01Icon as ArrowLeftIcon } from '@hugeicons/core-free-icons';
-export { ArrowRight01Icon as ArrowRightIcon } from '@hugeicons/core-free-icons';
-export { ArrowUpRight01Icon as ArrowUpRightIcon } from '@hugeicons/core-free-icons';
-export { ChevronDoubleCloseIcon } from '@hugeicons/core-free-icons';
+export const ArrowLeftIcon = fi('arrow-left');
+export const ArrowRightIcon = fi('arrow-right');
+export const ArrowUpRightIcon = fi('arrow-up-right');
+export const ChevronDoubleCloseIcon = fi('angle-double-right');
 
 // ── Security ──
-export { Shield01Icon as ShieldIcon } from '@hugeicons/core-free-icons';
-export { Shield02Icon as ShieldAlertIcon } from '@hugeicons/core-free-icons';
-export { SecurityCheckIcon as ShieldCheckIcon } from '@hugeicons/core-free-icons';
-export { LockIcon } from '@hugeicons/core-free-icons';
+export const ShieldIcon = fi('shield');
+export const ShieldAlertIcon = fi('shield-exclamation');
+export const ShieldCheckIcon = fi('shield-check');
+export const LockIcon = fi('lock');
 
 // ── Eye / View ──
-export { EyeIcon } from '@hugeicons/core-free-icons';
-export { ViewOffIcon as EyeOffIcon } from '@hugeicons/core-free-icons';
+export const EyeIcon = fi('eye');
+export const EyeOffIcon = fi('eye-crossed');
 
 // ── User ──
-export { UserIcon } from '@hugeicons/core-free-icons';
-export { UserAdd01Icon as UserPlusIcon } from '@hugeicons/core-free-icons';
-export { UserCheckIcon } from '@hugeicons/core-free-icons';
-export { UserRemove01Icon as UserMinusIcon } from '@hugeicons/core-free-icons';
-export { UserBlock01Icon as UserXIcon } from '@hugeicons/core-free-icons';
-export { UserGroupIcon as UsersIcon } from '@hugeicons/core-free-icons';
+export const UserIcon = fi('user');
+export const UserPlusIcon = fi('user-add');
+export const UserCheckIcon = fi('user-check');
+export const UserMinusIcon = fi('user-minus');
+export const UserXIcon = fi('user-slash');
+export const UsersIcon = fi('users');
 
 // ── Key ──
-export { Key01Icon as KeyRoundIcon } from '@hugeicons/core-free-icons';
-export { Key01Icon as KeyIcon } from '@hugeicons/core-free-icons';
+export const KeyRoundIcon = fi('key');
+export const KeyIcon = fi('key');
 
 // ── Loading ──
-export { Loading03Icon as Loader2Icon } from '@hugeicons/core-free-icons';
+export const Loader2Icon = fi('spinner');
 
 // ── Actions ──
-export { Tick01Icon as CheckIcon } from '@hugeicons/core-free-icons';
-export { CheckmarkCircle01Icon as CheckCircle2Icon } from '@hugeicons/core-free-icons';
-export { Cancel01Icon as XIcon } from '@hugeicons/core-free-icons';
-export { CancelCircleIcon as XCircleIcon } from '@hugeicons/core-free-icons';
-export { PlusSignIcon as PlusIcon } from '@hugeicons/core-free-icons';
-export { MinusSignIcon as MinusIcon } from '@hugeicons/core-free-icons';
-export { Copy01Icon as CopyIcon } from '@hugeicons/core-free-icons';
-export { Delete02Icon as Trash2Icon } from '@hugeicons/core-free-icons';
-// Save handled via Bookmark01Icon below
-
-export { PencilEdit01Icon as PencilIcon } from '@hugeicons/core-free-icons';
-export { PencilEdit02Icon as Edit2Icon } from '@hugeicons/core-free-icons';
+export const CheckIcon = fi('check');
+export const CheckCircle2Icon = fi('check-circle');
+export const XIcon = fi('cross');
+export const XCircleIcon = fi('cross-circle');
+export const PlusIcon = fi('plus');
+export const MinusIcon = fi('minus');
+export const CopyIcon = fi('copy');
+export const Trash2Icon = fi('trash');
+export const PencilIcon = fi('pencil');
+export const Edit2Icon = fi('pen');
 
 // ── Search ──
-export { Search01Icon as SearchIcon } from '@hugeicons/core-free-icons';
+export const SearchIcon = fi('search');
 
 // ── Menu / More ──
-export { Menu01Icon as MenuIcon } from '@hugeicons/core-free-icons';
-export { MoreHorizontalCircle01Icon as MoreHorizontalIcon } from '@hugeicons/core-free-icons';
-export { MoreVerticalCircle01Icon as MoreVerticalIcon } from '@hugeicons/core-free-icons';
+export const MenuIcon = fi('burger-menu');
+export const MoreHorizontalIcon = fi('menu-dots');
+export const MoreVerticalIcon = fi('menu-dots-vertical');
 
 // ── Media ──
-export { Camera01Icon as CameraIcon } from '@hugeicons/core-free-icons';
-export { Image01Icon as ImageIcon } from '@hugeicons/core-free-icons';
-export { Video01Icon as VideoIcon } from '@hugeicons/core-free-icons';
-export { VideoOffIcon } from '@hugeicons/core-free-icons';
-export { MusicNote01Icon as MusicIcon } from '@hugeicons/core-free-icons';
+export const CameraIcon = fi('camera');
+export const ImageIcon = fi('picture');
+export const VideoIcon = fi('video-camera');
+export const VideoOffIcon = fi('video-slash');
+export const MusicIcon = fi('music');
 
 // ── Audio ──
-export { Mic01Icon as MicIcon } from '@hugeicons/core-free-icons';
-export { MicOff01Icon as MicOffIcon } from '@hugeicons/core-free-icons';
-export { VolumeHighIcon as Volume2Icon } from '@hugeicons/core-free-icons';
-export { VolumeOffIcon as VolumeXIcon } from '@hugeicons/core-free-icons';
-export { HeadphonesIcon } from '@hugeicons/core-free-icons';
-export { HeadphoneMuteIcon as HeadphoneOffIcon } from '@hugeicons/core-free-icons';
+export const MicIcon = fi('microphone');
+export const MicOffIcon = fi('microphone-slash');
+export const Volume2Icon = fi('volume');
+export const VolumeXIcon = fi('volume-slash');
+export const HeadphonesIcon = fi('headphones');
+export const HeadphoneOffIcon = fi('headphone');
 
 // ── Phone / Calls ──
-export { PhoneArrowDownIcon as PhoneIcon } from '@hugeicons/core-free-icons';
-export { PhoneOff01Icon as PhoneOffIcon } from '@hugeicons/core-free-icons';
+export const PhoneIcon = fi('phone-call');
+export const PhoneOffIcon = fi('phone-slash');
 
 // ── Wifi ──
-export { Wifi01Icon as WifiIcon } from '@hugeicons/core-free-icons';
-export { WifiOff01Icon as WifiOffIcon } from '@hugeicons/core-free-icons';
+export const WifiIcon = fi('wifi');
+export const WifiOffIcon = fi('wifi-slash');
 
 // ── Monitor / Screen ──
-export { ComputerIcon as MonitorIcon } from '@hugeicons/core-free-icons';
-export { ComputerVideoIcon as MonitorUpIcon } from '@hugeicons/core-free-icons';
-export { ComputerIcon as MonitorOffIcon } from '@hugeicons/core-free-icons';
-export { Maximize01Icon as Maximize2Icon } from '@hugeicons/core-free-icons';
-export { Minimize01Icon as Minimize2Icon } from '@hugeicons/core-free-icons';
+export const MonitorIcon = fi('computer');
+export const MonitorUpIcon = fi('screen');
+export const MonitorOffIcon = fi('computer');
+export const Maximize2Icon = fi('expand');
+export const Minimize2Icon = fi('compress');
 
 // ── Settings / Config ──
-export { Settings01Icon as SettingsIcon } from '@hugeicons/core-free-icons';
+export const SettingsIcon = fi('settings');
 
 // ── File / Document ──
-export { File01Icon as FileTextIcon } from '@hugeicons/core-free-icons';
-export { FileValidationIcon as FileCheckIcon } from '@hugeicons/core-free-icons';
-export { Attachment01Icon as PaperclipIcon } from '@hugeicons/core-free-icons';
+export const FileTextIcon = fi('document');
+export const FileCheckIcon = fi('file-check');
+export const PaperclipIcon = fi('paperclip');
 
 // ── Navigation / Pages ──
-export { Home01Icon as HomeIcon } from '@hugeicons/core-free-icons';
-export { Compass01Icon as CompassIcon } from '@hugeicons/core-free-icons';
-export { GlobeIcon } from '@hugeicons/core-free-icons';
-export { Link01Icon as LinkIcon } from '@hugeicons/core-free-icons';
-export { Link02Icon as Link2Icon } from '@hugeicons/core-free-icons';
+export const HomeIcon = fi('home');
+export const CompassIcon = fi('compass');
+export const GlobeIcon = fi('world');
+export const LinkIcon = fi('link');
+export const Link2Icon = fi('link-alt');
 
 // ── Notification / Bell ──
-export { Notification03Icon as BellIcon } from '@hugeicons/core-free-icons';
+export const BellIcon = fi('bell');
 
 // ── Time ──
-export { Clock01Icon as ClockIcon } from '@hugeicons/core-free-icons';
-export { Calendar01Icon as CalendarIcon } from '@hugeicons/core-free-icons';
+export const ClockIcon = fi('clock');
+export const CalendarIcon = fi('calendar');
 
 // ── Server / Database ──
-export { ServerStack01Icon as ServerIcon } from '@hugeicons/core-free-icons';
-export { Database01Icon as DatabaseIcon } from '@hugeicons/core-free-icons';
+export const ServerIcon = fi('server');
+export const DatabaseIcon = fi('database');
 
 // ── Misc ──
-export { HashtagIcon as HashIcon } from '@hugeicons/core-free-icons';
-export { FolderOpenIcon } from '@hugeicons/core-free-icons';
-export { Megaphone01Icon as MegaphoneIcon } from '@hugeicons/core-free-icons';
-export { Download01Icon as DownloadIcon } from '@hugeicons/core-free-icons';
-export { Refresh01Icon as RefreshCwIcon } from '@hugeicons/core-free-icons';
-export { Pin02Icon as PinIcon } from '@hugeicons/core-free-icons';
-export { CrownIcon } from '@hugeicons/core-free-icons';
-export { Award01Icon as AwardIcon } from '@hugeicons/core-free-icons';
-export { BotIcon } from '@hugeicons/core-free-icons';
-export { Bug01Icon as BugIcon } from '@hugeicons/core-free-icons';
-export { HelpCircleIcon } from '@hugeicons/core-free-icons';
-export { SourceCodeIcon as CodeIcon } from '@hugeicons/core-free-icons';
-export { BookOpen01Icon as BookOpenIcon } from '@hugeicons/core-free-icons';
-export { ComputerTerminalIcon as TerminalIcon } from '@hugeicons/core-free-icons';
-export { Tag01Icon as TagIcon } from '@hugeicons/core-free-icons';
+export const HashIcon = fi('hashtag');
+export const FolderOpenIcon = fi('folder-open');
+export const MegaphoneIcon = fi('megaphone');
+export const DownloadIcon = fi('download');
+export const RefreshCwIcon = fi('refresh');
+export const PinIcon = fi('thumbtack');
+export const CrownIcon = fi('crown');
+export const AwardIcon = fi('badge');
+export const BotIcon = fi('robot');
+export const BugIcon = fi('bug');
+export const HelpCircleIcon = fi('question');
+export const CodeIcon = fi('code-simple');
+export const BookOpenIcon = fi('book-open-cover');
+export const TerminalIcon = fi('terminal');
+export const TagIcon = fi('tag');
 
 // ── Theme ──
-export { Moon01Icon as MoonIcon } from '@hugeicons/core-free-icons';
-export { Sun01Icon as SunIcon } from '@hugeicons/core-free-icons';
-export { PaintBucketIcon as PaletteIcon } from '@hugeicons/core-free-icons';
-export { ColorPickerIcon as PipetteIcon } from '@hugeicons/core-free-icons';
+export const MoonIcon = fi('moon');
+export const SunIcon = fi('sun');
+export const PaletteIcon = fi('palette');
+export const PipetteIcon = fi('paint-brush');
 
 // ── Auth ──
-export { Login01Icon as LogInIcon } from '@hugeicons/core-free-icons';
-export { Logout01Icon as LogOutIcon } from '@hugeicons/core-free-icons';
+export const LogInIcon = fi('sign-in');
+export const LogOutIcon = fi('sign-out-alt');
 
 // ── Energy / Flash ──
-export { FlashIcon as ZapIcon } from '@hugeicons/core-free-icons';
+export const ZapIcon = fi('bolt');
 
 // ── Alert ──
-export { Alert02Icon as AlertTriangleIcon } from '@hugeicons/core-free-icons';
-export { Alert01Icon as AlertIcon } from '@hugeicons/core-free-icons';
+export const AlertTriangleIcon = fi('triangle-warning');
+export const AlertIcon = fi('exclamation');
 
 // ── Social / Engagement ──
-export { StarIcon } from '@hugeicons/core-free-icons';
-export { FavouriteIcon as HeartIcon } from '@hugeicons/core-free-icons';
-export { SparklesIcon } from '@hugeicons/core-free-icons';
-export { FireIcon as FlameIcon } from '@hugeicons/core-free-icons';
+export const StarIcon = fi('star');
+export const HeartIcon = fi('heart');
+export const SparklesIcon = fi('magic-wand');
+export const FlameIcon = fi('fire');
 
 // ── Finance ──
-export { CreditCardAddIcon as CreditCardIcon } from '@hugeicons/core-free-icons';
+export const CreditCardIcon = fi('credit-card');
 
 // ── Games / Fun ──
-export { GameController01Icon as Gamepad2Icon } from '@hugeicons/core-free-icons';
-export { DiamondIcon as GemIcon } from '@hugeicons/core-free-icons';
-export { Sword01Icon as SwordIcon } from '@hugeicons/core-free-icons';
-export { SkullIcon } from '@hugeicons/core-free-icons';
-export { AxeIcon as HammerIcon } from '@hugeicons/core-free-icons';
-export { WrenchIcon } from '@hugeicons/core-free-icons';
+export const Gamepad2Icon = fi('gamepad');
+export const GemIcon = fi('diamond');
+export const SwordIcon = fi('sword');
+export const SkullIcon = fi('skull');
+export const HammerIcon = fi('axe');
+export const WrenchIcon = fi('wrench');
 
 // ── Legal ──
-export { JusticeScale01Icon as ScaleIcon } from '@hugeicons/core-free-icons';
+export const ScaleIcon = fi('scale');
 
 // ── Analytics ──
-export { ChartIncreaseIcon as TrendingUpIcon } from '@hugeicons/core-free-icons';
-export { AnalyticsUpIcon as BarChart3Icon } from '@hugeicons/core-free-icons';
+export const TrendingUpIcon = fi('chart-line-up');
+export const BarChart3Icon = fi('chart-histogram');
 
 // ── At Sign ──
-export { AtIcon as AtSignIcon } from '@hugeicons/core-free-icons';
+export const AtSignIcon = fi('at');
 
 // ── Rotate ──
-export { Rotate01Icon as RotateCwIcon } from '@hugeicons/core-free-icons';
-export { Rotate02Icon as RotateCcwIcon } from '@hugeicons/core-free-icons';
+export const RotateCwIcon = fi('rotate-right');
+export const RotateCcwIcon = fi('rotate-left');
 
 // ── Chevrons ──
-export { ArrowDown01Icon as ChevronDownIcon } from '@hugeicons/core-free-icons';
-export { ArrowUp01Icon as ChevronUpIcon } from '@hugeicons/core-free-icons';
-export { ArrowRight01Icon as ChevronRightIcon } from '@hugeicons/core-free-icons';
+export const ChevronDownIcon = fi('chevron-down');
+export const ChevronUpIcon = fi('chevron-up');
+export const ChevronRightIcon = fi('chevron-right');
 
 // ── Stop ──
-export { StopCircleIcon } from '@hugeicons/core-free-icons';
+export const StopCircleIcon = fi('stop-circle');
 
 // ── Users Round (group variant) ──
-export { UserGroupIcon as UsersRoundIcon } from '@hugeicons/core-free-icons';
+export const UsersRoundIcon = fi('users');
 
 // ── Ban / Block ──
-export { CancelCircleIcon as BanIcon } from '@hugeicons/core-free-icons';
+export const BanIcon = fi('ban');
 
 // ── Shield Off ──
-export { Shield01Icon as ShieldOffIcon } from '@hugeicons/core-free-icons'; // Closest match
+export const ShieldOffIcon = fi('shield-slash');
 
 // ── Handshake ──
-export { HandGripIcon as HandshakeIcon } from '@hugeicons/core-free-icons';
+export const HandshakeIcon = fi('handshake');
 
 // ── Save (disk) ──
-export { Bookmark01Icon as SaveIcon } from '@hugeicons/core-free-icons';
+export const SaveIcon = fi('bookmark');
 
 // ── Channel types (server-node) ──
-export { BubbleChatNotificationIcon as ForumIcon } from '@hugeicons/core-free-icons';
-export { PresentationBarChart02Icon as StageIcon } from '@hugeicons/core-free-icons';
-export { Image01Icon as GalleryIcon } from '@hugeicons/core-free-icons';
-export { Task01Icon as PollIcon } from '@hugeicons/core-free-icons';
-export { LightbulbOffIcon as SuggestionIcon } from '@hugeicons/core-free-icons';
-export { LegalDocument01Icon as DocIcon } from '@hugeicons/core-free-icons';
-export { Calculator01Icon as CountingIcon } from '@hugeicons/core-free-icons';
-export { HeadphonesIcon as VentIcon } from '@hugeicons/core-free-icons';
-export { ThreadIcon } from '@hugeicons/core-free-icons';
-export { UserGroupIcon as IntroductionIcon } from '@hugeicons/core-free-icons';
-export { FolderVideoIcon as MediaIcon } from '@hugeicons/core-free-icons';
-export { CompassIcon as DirectoryIcon } from '@hugeicons/core-free-icons';
-export { SparklesIcon as ContentIcon } from '@hugeicons/core-free-icons';
+export const ForumIcon = fi('comment-dots');
+export const StageIcon = fi('presentation');
+export const GalleryIcon = fi('picture');
+export const PollIcon = fi('list-check');
+export const SuggestionIcon = fi('bulb');
+export const DocIcon = fi('document');
+export const CountingIcon = fi('calculator');
+export const VentIcon = fi('megaphone');
+export const ThreadIcon = fi('comments');
+export const IntroductionIcon = fi('users');
+export const MediaIcon = fi('folder-video');
+export const DirectoryIcon = fi('compass');
+export const ContentIcon = fi('magic-wand');

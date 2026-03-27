@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   UsersRoundIcon,
   CrownIcon,
@@ -228,7 +227,7 @@ export function GroupSettingsDialog({
                         : 'bg-[var(--surface-secondary)]/60 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)] group-hover:text-[var(--foreground)]',
                     )}
                   >
-                    <HugeiconsIcon icon={Icon} size={14} />
+                    <Icon size={14} />
                   </div>
                   {label}
                 </button>
@@ -242,7 +241,7 @@ export function GroupSettingsDialog({
                 className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--muted)] transition-all duration-200 hover:bg-[var(--surface-secondary)]/80 hover:text-[var(--foreground)]"
               >
                 <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/60">
-                  <HugeiconsIcon icon={XIcon} size={14} />
+                  <XIcon size={14} />
                 </div>
                 Fermer
               </button>
@@ -278,7 +277,7 @@ export function GroupSettingsDialog({
                         size="sm"
                         className="gap-1.5 rounded-xl"
                       >
-                        <HugeiconsIcon icon={PencilIcon} size={14} />
+                        <PencilIcon size={14} />
                         Sauver
                       </Button>
                     </div>
@@ -295,7 +294,7 @@ export function GroupSettingsDialog({
                           onLeave?.();
                         }}
                       >
-                        <HugeiconsIcon icon={LogOutIcon} size={16} className="mr-2" />
+                        <LogOutIcon size={16} className="mr-2" />
                         Quitter le groupe
                       </Button>
                       {isOwner && (
@@ -304,7 +303,7 @@ export function GroupSettingsDialog({
                           className="w-full justify-start rounded-xl"
                           onPress={handleDeleteGroup}
                         >
-                          <HugeiconsIcon icon={Trash2Icon} size={16} className="mr-2" />
+                          <Trash2Icon size={16} className="mr-2" />
                           Supprimer le groupe
                         </Button>
                       )}
@@ -332,7 +331,7 @@ export function GroupSettingsDialog({
                         loadFriends();
                       }}
                     >
-                      <HugeiconsIcon icon={UserPlusIcon} size={16} />
+                      <UserPlusIcon size={16} />
                       Ajouter des membres
                     </Button>
                   )}
@@ -352,12 +351,12 @@ export function GroupSettingsDialog({
                             setSelectedFriendIds(new Set());
                           }}
                         >
-                          <HugeiconsIcon icon={XIcon} size={16} />
+                          <XIcon size={16} />
                         </Button>
                       </div>
 
                       <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
-                        <InputGroup.Prefix><HugeiconsIcon icon={SearchIcon} size={16} className="text-[var(--muted)]/60" /></InputGroup.Prefix>
+                        <InputGroup.Prefix><SearchIcon size={16} className="text-[var(--muted)]/60" /></InputGroup.Prefix>
                         <InputGroup.Input
                           placeholder="Rechercher..."
                           value={friendSearch}
@@ -404,7 +403,7 @@ export function GroupSettingsDialog({
                                         : 'border-[var(--muted)]/25',
                                     )}
                                   >
-                                    {isSelected && <HugeiconsIcon icon={CheckIcon} size={12} />}
+                                    {isSelected && <CheckIcon size={12} />}
                                   </div>
                                 </button>
                               );
@@ -415,7 +414,7 @@ export function GroupSettingsDialog({
 
                       {selectedFriendIds.size > 0 && (
                         <Button className="w-full rounded-xl" size="sm" onPress={handleAddMembers}>
-                          <HugeiconsIcon icon={UserPlusIcon} size={14} className="mr-1" />
+                          <UserPlusIcon size={14} className="mr-1" />
                           Ajouter ({selectedFriendIds.size})
                         </Button>
                       )}
@@ -448,7 +447,7 @@ export function GroupSettingsDialog({
                                     {participant.displayName || participant.username}
                                   </p>
                                   {participant.role === 'owner' && (
-                                    <HugeiconsIcon icon={CrownIcon} size={12} className="shrink-0 text-yellow-500" />
+                                    <CrownIcon size={12} className="shrink-0 text-yellow-500" />
                                   )}
                                   {participant.userId === user?.id && (
                                     <Chip variant="soft" size="sm" className="ml-1 h-4">
@@ -469,7 +468,7 @@ export function GroupSettingsDialog({
                                     className="shrink-0 text-red-500"
                                     onPress={() => handleRemoveMember(participant.userId)}
                                   >
-                                    <HugeiconsIcon icon={UserMinusIcon} size={16} />
+                                    <UserMinusIcon size={16} />
                                   </Button>
                                 )}
                             </div>

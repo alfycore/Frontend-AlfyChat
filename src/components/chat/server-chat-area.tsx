@@ -9,7 +9,6 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { HashIcon, SmileIcon, SendIcon, PaperclipIcon, XIcon, MenuIcon, UsersIcon, MegaphoneIcon, ForumIcon, GalleryIcon, PollIcon, SuggestionIcon, DocIcon, CountingIcon, VentIcon, ThreadIcon, MediaIcon, StageIcon } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -89,7 +88,7 @@ function AnnouncementBanner({ channelName }: { channelName?: string }) {
   return (
     <div className="mx-4 mb-2 mt-3 flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
       <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-        <HugeiconsIcon icon={MegaphoneIcon} size={15} className="text-amber-400" />
+        <MegaphoneIcon size={15} className="text-amber-400" />
       </div>
       <div className="min-w-0">
         <p className="text-[12px] font-semibold text-amber-400">Salon d&apos;annonces</p>
@@ -461,11 +460,11 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             className="size-8 shrink-0 rounded-lg text-[var(--muted)]"
             onPress={toggleSidebar}
           >
-            <HugeiconsIcon icon={MenuIcon} size={16} />
+            <MenuIcon size={16} />
           </Button>
         )}
         <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/60">
-          <HugeiconsIcon icon={meta.icon} size={14} className={meta.color} />
+          <meta.icon size={14} className={meta.color} />
         </div>
         <h2 className="font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
         <div className="ml-auto flex items-center gap-1.5">
@@ -477,7 +476,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
               className="size-8 rounded-lg text-[var(--muted)]"
               onPress={toggleMemberList}
             >
-              <HugeiconsIcon icon={UsersIcon} size={16} />
+              <UsersIcon size={16} />
             </Button>
           )}
         </div>
@@ -492,7 +491,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
               <div className="relative mb-4 flex size-16 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
                 <div className="absolute inset-0 rounded-2xl bg-[var(--accent)]/8 blur-xl" />
-                <HugeiconsIcon icon={meta.icon} size={32} className={cn('relative', meta.color)} />
+                <meta.icon size={32} className={cn('relative', meta.color)} />
               </div>
               <h3 className="mb-1 text-xl font-bold text-[var(--foreground)]">
                 Bienvenue dans #{channelName || 'salon'}
@@ -561,7 +560,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
               className="size-5 min-w-0 rounded p-0 text-[var(--muted)]"
               onPress={() => setReplyId(null)}
             >
-              <HugeiconsIcon icon={XIcon} size={12} />
+              <XIcon size={12} />
             </Button>
           </div>
         )}
@@ -586,7 +585,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
               }}
             />
             <span className="inline-flex size-8 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
-              <HugeiconsIcon icon={PaperclipIcon} size={16} />
+              <PaperclipIcon size={16} />
             </span>
           </label>
 
@@ -605,7 +604,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
           <div className="self-end pb-0.5">
             <EmojiPicker onSelect={(emoji) => setMessageInput((prev) => prev + emoji)}>
               <div className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
-                <HugeiconsIcon icon={SmileIcon} size={16} />
+                <SmileIcon size={16} />
               </div>
             </EmojiPicker>
           </div>
@@ -624,7 +623,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
               onPress={handleSend}
               isDisabled={!messageInput.trim()}
             >
-              <HugeiconsIcon icon={SendIcon} size={16} />
+              <SendIcon size={16} />
             </Button>
           </div>
         </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   PlusIcon,
   Trash2Icon,
@@ -245,7 +244,7 @@ export default function BotsPage() {
             <p className="text-sm text-[var(--muted)]">Gerez vos bots, tokens et commandes</p>
           </div>
           <Button onPress={openCreate} className="bg-[var(--accent)] text-white">
-            <HugeiconsIcon icon={PlusIcon} size={16} />
+            <PlusIcon size={16} />
             Creer un bot
           </Button>
         </div>
@@ -259,13 +258,13 @@ export default function BotsPage() {
           </div>
         ) : bots.length === 0 ? (
           <Card className="border border-dashed border-[var(--border)] bg-[var(--surface)]/50 p-12 text-center">
-            <HugeiconsIcon icon={BotIcon} size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+            <BotIcon size={48} className="mx-auto mb-4 text-[var(--muted)]" />
             <h3 className="mb-2 text-lg font-semibold">Aucun bot</h3>
             <p className="mb-6 text-sm text-[var(--muted)]">
               Creez votre premier bot pour commencer a developper sur AlfyChat
             </p>
             <Button className="mx-auto bg-[var(--accent)] text-white" onPress={openCreate}>
-              <HugeiconsIcon icon={PlusIcon} size={16} />
+              <PlusIcon size={16} />
               Creer mon premier bot
             </Button>
           </Card>
@@ -329,7 +328,7 @@ export default function BotsPage() {
 
                   {/* Certification status */}
                   <div className="mx-4 mt-3 flex items-center gap-2 rounded-lg bg-[var(--background)]/50 px-3 py-2">
-                    <HugeiconsIcon icon={cert.icon} size={14} className={cert.color} />
+                    <cert.icon size={14} className={cert.color} />
                     <span className={cn('text-xs font-medium', cert.color)}>{cert.label}</span>
                     {bot.certificationNote && (
                       <span className="ml-auto text-[10px] text-[var(--muted)] italic">{bot.certificationNote}</span>
@@ -340,13 +339,13 @@ export default function BotsPage() {
                   <div className="flex items-center gap-1.5 border-t border-[var(--border)]/60 p-3 mt-3">
                     <Tooltip delay={0}>
                       <Button size="sm" variant="ghost" isIconOnly onPress={() => openEdit(bot)}>
-                        <HugeiconsIcon icon={Edit2Icon} size={14} />
+                        <Edit2Icon size={14} />
                       </Button>
                       <Tooltip.Content>Modifier</Tooltip.Content>
                     </Tooltip>
                     <Tooltip delay={0}>
                       <Button size="sm" variant="ghost" isIconOnly onPress={() => openToken(bot)}>
-                        <HugeiconsIcon icon={KeyIcon} size={14} />
+                        <KeyIcon size={14} />
                       </Button>
                       <Tooltip.Content>Token</Tooltip.Content>
                     </Tooltip>
@@ -355,7 +354,7 @@ export default function BotsPage() {
                         size="sm" variant="ghost" isIconOnly
                         onPress={() => { setCmdBot(bot); setCmdForm({ name: '', description: '', usage: '', cooldown: 0 }); setShowCmdModal(true); }}
                       >
-                        <HugeiconsIcon icon={TerminalIcon} size={14} />
+                        <TerminalIcon size={14} />
                       </Button>
                       <Tooltip.Content>Commandes</Tooltip.Content>
                     </Tooltip>
@@ -365,7 +364,7 @@ export default function BotsPage() {
                           size="sm" variant="ghost" isIconOnly
                           onPress={() => { setCertifBot(bot); setCertifReason(''); setShowCertifModal(true); }}
                         >
-                          <HugeiconsIcon icon={ShieldCheckIcon} size={14} className="text-blue-400" />
+                          <ShieldCheckIcon size={14} className="text-blue-400" />
                         </Button>
                         <Tooltip.Content>Demander la certification</Tooltip.Content>
                       </Tooltip>
@@ -377,7 +376,7 @@ export default function BotsPage() {
                         className="text-red-400 hover:bg-red-500/10"
                         onPress={() => setConfirmDelete(bot.id)}
                       >
-                        <HugeiconsIcon icon={Trash2Icon} size={14} />
+                        <Trash2Icon size={14} />
                       </Button>
                       <Tooltip.Content>Supprimer</Tooltip.Content>
                     </Tooltip>
@@ -399,7 +398,7 @@ export default function BotsPage() {
                               className="text-red-400 size-6 min-w-0"
                               onPress={() => handleDeleteCommand(bot.id, cmd.id)}
                             >
-                              <HugeiconsIcon icon={XIcon} size={12} />
+                              <XIcon size={12} />
                             </Button>
                           </div>
                         ))}
@@ -542,10 +541,10 @@ export default function BotsPage() {
                     {showToken ? tokenBot.token : '\u2022'.repeat(48)}
                   </div>
                   <Button size="sm" variant="ghost" isIconOnly onPress={() => setShowToken(!showToken)}>
-                    <HugeiconsIcon icon={showToken ? EyeOffIcon : EyeIcon} size={14} />
+                    <showToken ? EyeOffIcon : EyeIcon size={14} />
                   </Button>
                   <Button size="sm" variant="ghost" isIconOnly onPress={copyToken}>
-                    <HugeiconsIcon icon={copiedToken ? CheckCircle2Icon : CopyIcon} size={14} className={copiedToken ? 'text-green-400' : ''} />
+                    <copiedToken ? CheckCircle2Icon : CopyIcon size={14} className={copiedToken ? 'text-green-400' : ''} />
                   </Button>
                 </div>
               </div>
@@ -554,7 +553,7 @@ export default function BotsPage() {
           <Modal.Footer className="gap-2">
             <Button variant="outline" onPress={() => setShowTokenModal(false)}>Fermer</Button>
             <Button variant="danger" onPress={handleRegenToken}>
-              <HugeiconsIcon icon={RefreshCwIcon} size={14} />
+              <RefreshCwIcon size={14} />
               Regenerer
             </Button>
           </Modal.Footer>
@@ -597,7 +596,7 @@ export default function BotsPage() {
               onPress={handleRequestCertification}
               isDisabled={certifReason.length < 10}
             >
-              <HugeiconsIcon icon={ShieldCheckIcon} size={14} />
+              <ShieldCheckIcon size={14} />
               Envoyer la demande
             </Button>
           </Modal.Footer>

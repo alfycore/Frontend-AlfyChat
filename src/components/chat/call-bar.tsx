@@ -1,6 +1,5 @@
 'use client';
 
-import { HugeiconsIcon } from '@hugeicons/react';
 import { PhoneIcon, PhoneOffIcon, MonitorUpIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useCallContext } from '@/hooks/use-call-context';
@@ -64,7 +63,7 @@ export function CallBar() {
             isConnected ? 'bg-green-500/15' : 'bg-[var(--accent)]/15',
           )}
         >
-          <HugeiconsIcon icon={PhoneIcon} size={14} className="shrink-0" />
+          <PhoneIcon size={14} className="shrink-0" />
         </div>
 
         <span className="truncate text-sm">
@@ -73,7 +72,7 @@ export function CallBar() {
 
         {isScreenSharing && (
           <div className="hidden items-center gap-1 rounded-lg bg-[var(--surface-secondary)]/40 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] sm:flex">
-            <HugeiconsIcon icon={MonitorUpIcon} size={12} />
+            <MonitorUpIcon size={12} />
             Partage
           </div>
         )}
@@ -88,7 +87,7 @@ export function CallBar() {
         className="rounded-lg"
         onPress={() => endCall()}
       >
-        <HugeiconsIcon icon={PhoneOffIcon} size={16} />
+        <PhoneOffIcon size={16} />
       </Button>
     </div>
   );

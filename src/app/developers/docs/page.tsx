@@ -2,7 +2,6 @@
 
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   BookOpenIcon,
   KeyIcon,
@@ -46,7 +45,7 @@ function PageHeader({
   return (
     <div className="mb-8 flex items-start gap-4">
       <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 ring-1 ring-accent-soft-hover">
-        <HugeiconsIcon icon={icon} size={22} className="text-accent" />
+        <icon size={22} className="text-accent" />
       </div>
       <div>
         <div className="flex items-center gap-2.5">
@@ -159,11 +158,8 @@ function CodeBlock({ title, lang = 'js', code }: { title?: string; lang?: string
             </span>
             <Tooltip delay={0}>
               <Button size="sm" variant="ghost" isIconOnly className="size-6 min-w-0" onPress={copy}>
-                <HugeiconsIcon
-                  icon={copied ? CheckIcon : CopyIcon}
-                  size={12}
-                  className={copied ? 'text-green-400' : ''}
-                />
+                <copied ? CheckIcon : CopyIcon size={12}
+                  className={copied ? 'text-green-400' : ''} />
               </Button>
               <Tooltip.Content>{copied ? 'Copié !' : 'Copier'}</Tooltip.Content>
             </Tooltip>
@@ -209,7 +205,7 @@ function IntroSection() {
         <Card.Content className="p-5">
           <div className="flex items-center gap-3">
             <div className="flex size-8 items-center justify-center rounded-lg bg-accent/10">
-              <HugeiconsIcon icon={GlobeIcon} size={16} className="text-accent" />
+              <GlobeIcon size={16} className="text-accent" />
             </div>
             <div>
               <p className="text-xs font-semibold text-muted">Base URL</p>

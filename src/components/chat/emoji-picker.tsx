@@ -3,7 +3,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Button, InputGroup, Popover, ScrollShadow } from '@heroui/react';
 import { Twemoji, emojiToTwemojiUrl } from '@/lib/twemoji';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { SmileIcon } from '@/components/icons';
 
 // ==========================================
@@ -1296,7 +1295,7 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
       <Popover.Trigger>
         {children || (
           <Button isIconOnly size="sm" variant="ghost">
-            <HugeiconsIcon icon={SmileIcon} size={16} />
+            <SmileIcon size={16} />
           </Button>
         )}
       </Popover.Trigger>

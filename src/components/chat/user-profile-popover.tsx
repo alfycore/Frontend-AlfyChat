@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MessageCircleIcon,
   UserPlusIcon,
@@ -443,7 +442,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                     className="flex size-5 items-center justify-center rounded-md"
                     style={{ backgroundColor: cardColor + '20' }}
                   >
-                    <HugeiconsIcon icon={CalendarIcon} size={12} style={{ color: cardColor }} />
+                    <CalendarIcon size={12} style={{ color: cardColor }} />
                   </div>
                   <span className="text-[var(--muted)]">Membre depuis</span>
                   <span className="ml-auto font-semibold text-[var(--foreground)]/90">{memberSince}</span>
@@ -466,14 +465,11 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                     <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/60">
                       Rôles
                     </p>
-                    <HugeiconsIcon
-                      icon={ShieldCheckIcon}
-                      size={13}
+                    <ShieldCheckIcon size={13}
                       className={cn(
                         'text-[var(--muted)] transition-transform',
                         showRoles && 'rotate-180',
-                      )}
-                    />
+                      )} />
                   </button>
                   {showRoles && (
                     <div className="mt-2 flex flex-col gap-1">
@@ -497,11 +493,8 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                             />
                             <span className="flex-1 truncate text-left">{role.name}</span>
                             {active && (
-                              <HugeiconsIcon
-                                icon={CheckIcon}
-                                size={11}
-                                className="text-green-400"
-                              />
+                              <CheckIcon size={11}
+                                className="text-green-400" />
                             )}
                           </button>
                         );
@@ -526,7 +519,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                       onPress={handleSendMessage}
                       style={{ backgroundColor: cardColor, color: '#fff' }}
                     >
-                      <HugeiconsIcon icon={MessageCircleIcon} size={14} />
+                      <MessageCircleIcon size={14} />
                       Message
                     </Button>
                     {friendStatus === 'friend' ? (
@@ -536,7 +529,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                         className="gap-1.5 rounded-xl text-[11px] text-green-500 border-green-500/30"
                         isDisabled
                       >
-                        <HugeiconsIcon icon={UserCheckIcon} size={13} />
+                        <UserCheckIcon size={13} />
                         Ami
                       </Button>
                     ) : friendStatus === 'pending_sent' ? (
@@ -546,7 +539,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                         className="gap-1.5 rounded-xl text-[11px] text-yellow-500 border-yellow-500/30"
                         isDisabled
                       >
-                        <HugeiconsIcon icon={CheckIcon} size={13} />
+                        <CheckIcon size={13} />
                         En attente
                       </Button>
                     ) : (
@@ -556,7 +549,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                         className="gap-1.5 rounded-xl text-[11px]"
                         onPress={handleAddFriend}
                       >
-                        <HugeiconsIcon icon={UserPlusIcon} size={13} />
+                        <UserPlusIcon size={13} />
                         Ajouter
                       </Button>
                     )}
@@ -573,7 +566,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                             className="flex-1 gap-1.5 rounded-xl text-[11px] text-orange-400 border-orange-400/25 hover:bg-orange-500/10"
                             onPress={() => setConfirmKick(true)}
                           >
-                            <HugeiconsIcon icon={UserXIcon} size={13} />
+                            <UserXIcon size={13} />
                             Expulser
                           </Button>
                           <Button
@@ -582,7 +575,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                             className="flex-1 gap-1.5 rounded-xl text-[11px] text-red-400 border-red-400/25 hover:bg-red-500/10"
                             onPress={() => setConfirmBan(true)}
                           >
-                            <HugeiconsIcon icon={BanIcon} size={13} />
+                            <BanIcon size={13} />
                             Bannir
                           </Button>
                         </div>
@@ -607,7 +600,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                               className="flex-1 gap-1 rounded-lg text-[11px] bg-orange-600 hover:bg-orange-700"
                               onPress={handleKick}
                             >
-                              <HugeiconsIcon icon={UserXIcon} size={11} />
+                              <UserXIcon size={11} />
                               Confirmer
                             </Button>
                           </div>
@@ -644,7 +637,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                               className="flex-1 gap-1 rounded-lg text-[11px] bg-red-600 hover:bg-red-700"
                               onPress={handleBan}
                             >
-                              <HugeiconsIcon icon={BanIcon} size={11} />
+                              <BanIcon size={11} />
                               Confirmer
                             </Button>
                           </div>

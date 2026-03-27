@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MicIcon,
   MicOffIcon,
@@ -135,7 +134,7 @@ export function CallOverlay({
               )}
               {status === 'connected' && (
                 <div className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-xl bg-green-500 shadow-lg shadow-green-500/30">
-                  <HugeiconsIcon icon={Volume2Icon} size={16} className="text-white" />
+                  <Volume2Icon size={16} className="text-white" />
                 </div>
               )}
             </div>
@@ -179,7 +178,7 @@ export function CallOverlay({
             className="size-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
             onPress={onToggleMute}
           >
-            {isMuted ? <HugeiconsIcon icon={MicOffIcon} size={24} /> : <HugeiconsIcon icon={MicIcon} size={24} />}
+            {isMuted ? <MicOffIcon size={24} /> : <MicIcon size={24} />}
           </Button>
           <Tooltip.Content>{isMuted ? 'Activer le micro' : 'Couper le micro'}</Tooltip.Content>
         </Tooltip>
@@ -193,7 +192,7 @@ export function CallOverlay({
               className="size-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
               onPress={onToggleVideo}
             >
-              {isVideoOff ? <HugeiconsIcon icon={VideoOffIcon} size={24} /> : <HugeiconsIcon icon={VideoIcon} size={24} />}
+              {isVideoOff ? <VideoOffIcon size={24} /> : <VideoIcon size={24} />}
             </Button>
             <Tooltip.Content>{isVideoOff ? 'Activer la caméra' : 'Couper la caméra'}</Tooltip.Content>
           </Tooltip>
@@ -207,7 +206,7 @@ export function CallOverlay({
             className="size-16 rounded-full shadow-xl shadow-red-600/30 transition-all duration-200 hover:scale-105"
             onPress={onEndCall}
           >
-            <HugeiconsIcon icon={PhoneOffIcon} size={28} />
+            <PhoneOffIcon size={28} />
           </Button>
           <Tooltip.Content>Raccrocher</Tooltip.Content>
         </Tooltip>
@@ -220,7 +219,7 @@ export function CallOverlay({
             className="size-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
             onPress={toggleFullscreen}
           >
-            {isFullscreen ? <HugeiconsIcon icon={Minimize2Icon} size={24} /> : <HugeiconsIcon icon={Maximize2Icon} size={24} />}
+            {isFullscreen ? <Minimize2Icon size={24} /> : <Maximize2Icon size={24} />}
           </Button>
           <Tooltip.Content>{isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}</Tooltip.Content>
         </Tooltip>

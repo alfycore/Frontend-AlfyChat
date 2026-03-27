@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { PhoneIcon, PhoneOffIcon, VideoIcon } from '@/components/icons';
 import { Avatar, Modal } from '@heroui/react';
 import { resolveMediaUrl } from '@/lib/api';
@@ -109,7 +108,7 @@ export function IncomingCallDialog({
                   onClick={onDecline}
                   className="flex size-14 items-center justify-center rounded-2xl bg-red-500/90 text-white shadow-lg shadow-red-500/25 transition-all duration-200 hover:scale-105 hover:bg-red-500 active:scale-95 sm:size-16"
                 >
-                  <HugeiconsIcon icon={PhoneOffIcon} size={24} className="sm:size-7" />
+                  <PhoneOffIcon size={24} className="sm:size-7" />
                 </button>
                 <span className="text-[11px] font-medium tracking-wide text-[var(--muted)]/70">Refuser</span>
               </div>
@@ -122,9 +121,9 @@ export function IncomingCallDialog({
                   className="flex size-14 items-center justify-center rounded-2xl bg-green-500/90 text-white shadow-lg shadow-green-500/25 transition-all duration-200 hover:scale-105 hover:bg-green-500 active:scale-95 sm:size-16"
                 >
                   {callType === 'video' ? (
-                    <HugeiconsIcon icon={VideoIcon} size={24} className="sm:size-7" />
+                    <VideoIcon size={24} className="sm:size-7" />
                   ) : (
-                    <HugeiconsIcon icon={PhoneIcon} size={24} className="sm:size-7" />
+                    <PhoneIcon size={24} className="sm:size-7" />
                   )}
                 </button>
                 <span className="text-[11px] font-medium tracking-wide text-[var(--muted)]/70">Accepter</span>

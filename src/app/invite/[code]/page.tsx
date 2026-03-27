@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { UsersIcon, HashIcon, Loader2Icon, ShieldCheckIcon, ArrowRightIcon, LogInIcon } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -87,7 +86,7 @@ export default function InvitePage() {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
-        <HugeiconsIcon icon={Loader2Icon} size={22} className="relative z-10 animate-spin text-primary/40" />
+        <Loader2Icon size={22} className="relative z-10 animate-spin text-primary/40" />
       </div>
     );
   }
@@ -100,7 +99,7 @@ export default function InvitePage() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="flex size-14 items-center justify-center rounded-xl bg-danger/10">
-            <HugeiconsIcon icon={ShieldCheckIcon} size={26} className="text-danger" />
+            <ShieldCheckIcon size={26} className="text-danger" />
           </div>
           <div>
             <h1 className="mb-1.5 text-[22px] font-bold tracking-tight">Invitation invalide</h1>
@@ -163,13 +162,13 @@ export default function InvitePage() {
           <div className="mt-3 flex items-center gap-4">
             {server?.memberCount !== undefined && (
               <span className="flex items-center gap-1.5 text-[12px] text-muted/60">
-                <HugeiconsIcon icon={UsersIcon} size={13} />
+                <UsersIcon size={13} />
                 {server.memberCount} membre{server.memberCount !== 1 ? 's' : ''}
               </span>
             )}
             {invite?.uses !== undefined && invite?.maxUses && (
               <span className="flex items-center gap-1.5 text-[12px] text-muted/60">
-                <HugeiconsIcon icon={HashIcon} size={13} />
+                <HashIcon size={13} />
                 {invite.uses}/{invite.maxUses} utilisations
               </span>
             )}
@@ -202,11 +201,11 @@ export default function InvitePage() {
               isDisabled={isJoining}
             >
               {isJoining ? (
-                <HugeiconsIcon icon={Loader2Icon} size={17} className="animate-spin" />
+                <Loader2Icon size={17} className="animate-spin" />
               ) : isLoggedIn ? (
-                <HugeiconsIcon icon={ArrowRightIcon} size={17} />
+                <ArrowRightIcon size={17} />
               ) : (
-                <HugeiconsIcon icon={LogInIcon} size={17} />
+                <LogInIcon size={17} />
               )}
               {isLoggedIn ? 'Rejoindre le serveur' : 'Se connecter pour rejoindre'}
             </Button>
