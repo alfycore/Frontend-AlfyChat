@@ -878,6 +878,7 @@ class ApiService {
     title: string;
     content: string;
     type: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking';
+    bannerUrl?: string;
   }) {
     return this.request('/api/admin/changelogs', {
       method: 'POST',

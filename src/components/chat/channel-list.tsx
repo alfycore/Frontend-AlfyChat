@@ -739,13 +739,20 @@ export function ChannelList({
 
             {/* Changelogs button */}
             <button
-              onClick={() => router.push('/changelogs')}
+              onClick={() => router.push('/channels/me/changelogs')}
               className={cn(
                 'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors',
-                'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
+                selectedChannel === 'changelogs'
+                  ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                  : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
               )}
             >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-secondary)] text-[var(--muted)]">
+              <div className={cn(
+                'flex size-8 shrink-0 items-center justify-center rounded-lg',
+                selectedChannel === 'changelogs'
+                  ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                  : 'bg-[var(--surface-secondary)] text-[var(--muted)]',
+              )}>
                 <HugeiconsIcon icon={FileTextIcon} size={15} />
               </div>
               Changelogs

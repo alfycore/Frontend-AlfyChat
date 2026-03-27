@@ -107,6 +107,10 @@ function LayoutInner({ children }: { children: ReactNode }) {
       setSelectedChannel('friends');
       setActiveDM(null);
       setActiveGroup(null);
+    } else if (pathname === '/channels/me/changelogs') {
+      setSelectedChannel('changelogs');
+      setActiveDM(null);
+      setActiveGroup(null);
     }
   }, [groupId, recipientId, pathname]);
 

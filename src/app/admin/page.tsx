@@ -136,6 +136,7 @@ export default function AdminPage() {
     title: '',
     content: '',
     type: 'feature' as 'feature' | 'fix' | 'improvement' | 'security' | 'breaking',
+    bannerUrl: '',
   });
   const [changelogSubmitting, setChangelogSubmitting] = useState(false);
 
@@ -1228,6 +1229,15 @@ export default function AdminPage() {
                         onChange={(e) => setChangelogForm({ ...changelogForm, content: e.target.value })}
                       />
                     </div>
+                    <div className="grid gap-1.5">
+                      <label className="text-xs font-medium text-[var(--muted)]">URL de la bannière (optionnel)</label>
+                      <input
+                        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                        placeholder="https://example.com/banner.png"
+                        value={changelogForm.bannerUrl}
+                        onChange={(e) => setChangelogForm({ ...changelogForm, bannerUrl: e.target.value })}
+                      />
+                    </div>
                     <div className="flex justify-end">
                       <Button
                         isDisabled={!changelogForm.version || !changelogForm.title || !changelogForm.content || changelogSubmitting}
@@ -1236,7 +1246,7 @@ export default function AdminPage() {
                           try {
                             const res = await api.createChangelog(changelogForm);
                             if (res.success) {
-                              setChangelogForm({ version: '', title: '', content: '', type: 'feature' });
+                              setChangelogForm({ version: '', title: '', content: '', type: 'feature', bannerUrl: '' });
                               const updated = await api.getChangelogs();
                               if (updated.success && updated.data) setChangelogs(updated.data as any[]);
                             }
