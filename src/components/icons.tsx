@@ -84,7 +84,7 @@ export const Edit2Icon = fi('pen');
 export const SearchIcon = fi('search');
 
 // ── Menu / More ──
-export const MenuIcon = fi('burger-menu');
+export const MenuIcon = fi('menu-burger');
 export const MoreHorizontalIcon = fi('menu-dots');
 export const MoreVerticalIcon = fi('menu-dots-vertical');
 
@@ -123,7 +123,7 @@ export const SettingsIcon = fi('settings');
 
 // ── File / Document ──
 export const FileTextIcon = fi('document');
-export const FileCheckIcon = fi('file-check');
+export const FileCheckIcon = fi('file-spreadsheet');
 export const PaperclipIcon = fi('paperclip');
 
 // ── Navigation / Pages ──
@@ -243,6 +243,6 @@ export const CountingIcon = fi('calculator');
 export const VentIcon = fi('megaphone');
 export const ThreadIcon = fi('comments');
 export const IntroductionIcon = fi('users');
-export const MediaIcon = fi('folder-video');
+export const MediaIcon = fi('photo-video');
 export const DirectoryIcon = fi('compass');
 export const ContentIcon = fi('magic-wand');
