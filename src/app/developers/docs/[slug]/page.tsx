@@ -18,6 +18,12 @@ import {
   CheckIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
+  BotIcon,
+  PlusIcon,
+  MessageCircleIcon,
+  LockIcon,
+  WifiIcon,
+  AlertTriangleIcon,
 } from '@/components/icons';
 import { Accordion, Card, Chip, ScrollShadow, Separator } from '@heroui/react';
 import { cn } from '@/lib/utils';
@@ -847,6 +853,346 @@ public class ApiClient {
     }
 }`,
   },
+
+  /*── BOT CREATION ─────────────────────────────────────────*/
+  botCreate: {
+    js: `const res = await fetch('https://gateway.alfychat.app/api/bots', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer ' + process.env.USER_JWT,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    name: 'MonBot',
+    prefix: '!',
+    description: 'Un bot utile pour ma communauté',
+    isPublic: false,
+  }),
+});
+
+const { bot } = await res.json();
+console.log('Bot créé ! ID    :', bot.id);
+console.log('Token (1 seule fois) :', bot.token);`,
+    ts: `interface CreateBotPayload {
+  name: string;         // 2–32 caractères
+  prefix: string;       // 1–5 caractères
+  description?: string; // max 200 caractères
+  avatarUrl?: string;
+  isPublic?: boolean;
+}
+
+const res = await fetch('https://gateway.alfychat.app/api/bots', {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${process.env.USER_JWT}\`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    name: 'MonBot',
+    prefix: '!',
+    description: 'Un bot utile',
+    isPublic: false,
+  } satisfies CreateBotPayload),
+});
+
+const { bot } = await res.json();
+console.log('Token :', bot.token);`,
+    python: `import os, requests
+
+res = requests.post(
+    'https://gateway.alfychat.app/api/bots',
+    headers={'Authorization': f"Bearer {os.environ['USER_JWT']}"},
+    json={
+        'name': 'MonBot',
+        'prefix': '!',
+        'description': 'Un bot utile',
+        'isPublic': False,
+    },
+)
+
+bot = res.json()['bot']
+print(f"Bot créé ! ID={bot['id']} Token={bot['token']}")`,
+    java: `String json = "{\\"name\\":\\"MonBot\\",\\"prefix\\":\\"!\\",\\"isPublic\\":false}";
+HttpRequest req = HttpRequest.newBuilder()
+    .uri(URI.create("https://gateway.alfychat.app/api/bots"))
+    .header("Authorization", "Bearer " + System.getenv("USER_JWT"))
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(json))
+    .build();
+System.out.println(HttpClient.newHttpClient()
+    .send(req, HttpResponse.BodyHandlers.ofString()).body());`,
+  },
+
+  /*── BOT PERMISSIONS ──────────────────────────────────────*/
+  botPermissionsCheck: {
+    js: `const PERMISSIONS = {
+  SEND_MESSAGES:   1 << 0,  // 1
+  READ_MESSAGES:   1 << 1,  // 2
+  MANAGE_MESSAGES: 1 << 2,  // 4
+  KICK_MEMBERS:    1 << 3,  // 8
+  BAN_MEMBERS:     1 << 4,  // 16
+  MANAGE_CHANNELS: 1 << 5,  // 32
+  ADMINISTRATOR:   1 << 6,  // 64
+};
+
+function hasPermission(botPerms, permission) {
+  return (botPerms & PERMISSIONS.ADMINISTRATOR) !== 0 ||
+         (botPerms & permission) !== 0;
+}
+
+// Combiner des permissions
+const readWrite = PERMISSIONS.SEND_MESSAGES | PERMISSIONS.READ_MESSAGES; // 3
+
+if (hasPermission(readWrite, PERMISSIONS.SEND_MESSAGES)) {
+  console.log('Le bot peut envoyer des messages');
+}`,
+    ts: `const PERMISSIONS = {
+  SEND_MESSAGES:   1 << 0,
+  READ_MESSAGES:   1 << 1,
+  MANAGE_MESSAGES: 1 << 2,
+  KICK_MEMBERS:    1 << 3,
+  BAN_MEMBERS:     1 << 4,
+  MANAGE_CHANNELS: 1 << 5,
+  ADMINISTRATOR:   1 << 6,
+} as const;
+
+type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
+
+function hasPermission(botPerms: number, permission: Permission): boolean {
+  return (botPerms & PERMISSIONS.ADMINISTRATOR) !== 0 ||
+         (botPerms & permission) !== 0;
+}
+
+// Récupérer les perms du bot sur un serveur
+const res = await fetch(
+  'https://gateway.alfychat.app/api/bots/me/servers/SERVER_ID',
+  { headers: { 'Authorization': \`Bot \${process.env.BOT_TOKEN}\` } },
+);
+const { permissions } = await res.json();
+console.log('Peut envoyer :', hasPermission(permissions, PERMISSIONS.SEND_MESSAGES));`,
+    python: `PERMISSIONS = {
+    'SEND_MESSAGES':   1 << 0,
+    'READ_MESSAGES':   1 << 1,
+    'MANAGE_MESSAGES': 1 << 2,
+    'KICK_MEMBERS':    1 << 3,
+    'BAN_MEMBERS':     1 << 4,
+    'MANAGE_CHANNELS': 1 << 5,
+    'ADMINISTRATOR':   1 << 6,
+}
+
+def has_permission(bot_perms: int, permission: int) -> bool:
+    return bool(bot_perms & PERMISSIONS['ADMINISTRATOR']) or \\
+           bool(bot_perms & permission)
+
+import os, requests
+res = requests.get(
+    'https://gateway.alfychat.app/api/bots/me/servers/SERVER_ID',
+    headers={'Authorization': f"Bot {os.environ['BOT_TOKEN']}"},
+)
+perms = res.json()['permissions']
+print('Peut envoyer :', has_permission(perms, PERMISSIONS['SEND_MESSAGES']))`,
+    java: `public class Permissions {
+    public static final int SEND_MESSAGES   = 1 << 0; // 1
+    public static final int READ_MESSAGES   = 1 << 1; // 2
+    public static final int MANAGE_MESSAGES = 1 << 2; // 4
+    public static final int KICK_MEMBERS    = 1 << 3; // 8
+    public static final int BAN_MEMBERS     = 1 << 4; // 16
+    public static final int MANAGE_CHANNELS = 1 << 5; // 32
+    public static final int ADMINISTRATOR   = 1 << 6; // 64
+
+    public static boolean has(int perms, int perm) {
+        return (perms & ADMINISTRATOR) != 0 || (perms & perm) != 0;
+    }
+}
+
+// Vérification :
+if (Permissions.has(botPerms, Permissions.SEND_MESSAGES)) {
+    sendMessage(channelId, "Je peux envoyer !");
+}`,
+  },
+
+  /*── GATEWAY LOGIN (JWT) ───────────────────────────────────*/
+  gatewayLogin: {
+    js: `const res = await fetch('https://gateway.alfychat.app/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'user@example.com', password: 'motdepasse' }),
+});
+
+const { token, refreshToken, user } = await res.json();
+sessionStorage.setItem('token', token);
+console.log('Connecté en tant que :', user.username);`,
+    ts: `interface LoginResponse {
+  token: string;        // JWT — valide 7 jours
+  refreshToken: string; // valide 30 jours
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    avatar?: string;
+    isVerified: boolean;
+  };
+}
+
+const res = await fetch('https://gateway.alfychat.app/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'user@example.com', password: 'motdepasse' }),
+});
+
+const data: LoginResponse = await res.json();
+sessionStorage.setItem('token', data.token);
+console.log('Connecté :', data.user.username);`,
+    python: `import requests
+
+res = requests.post(
+    'https://gateway.alfychat.app/api/auth/login',
+    json={'email': 'user@example.com', 'password': 'motdepasse'},
+)
+
+data = res.json()
+token = data['token']
+print(f"Connecté : {data['user']['username']}")`,
+    java: `String json = "{\\"email\\":\\"user@example.com\\",\\"password\\":\\"motdepasse\\"}";
+HttpRequest req = HttpRequest.newBuilder()
+    .uri(URI.create("https://gateway.alfychat.app/api/auth/login"))
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(json))
+    .build();
+String body = HttpClient.newHttpClient()
+    .send(req, HttpResponse.BodyHandlers.ofString()).body();
+System.out.println(body);`,
+  },
+
+  /*── GATEWAY EVENTS ───────────────────────────────────────*/
+  gatewayEventsListen: {
+    js: `import { io } from 'socket.io-client';
+
+const socket = io('https://gateway.alfychat.app', {
+  auth: { token: sessionStorage.getItem('token') },
+});
+
+socket.on('READY', ({ userId, guilds }) => {
+  console.log('Connecté', userId, '—', guilds.length, 'serveur(s)');
+});
+
+socket.on('MESSAGE_CREATE', (msg) => {
+  console.log(\`[\${msg.channelId}] \${msg.author.username}: \${msg.content}\`);
+});
+
+socket.on('MESSAGE_UPDATE', (msg) => {
+  console.log('Édité :', msg.id, '→', msg.content);
+});
+
+socket.on('MESSAGE_DELETE', ({ id, channelId }) => {
+  console.log('Supprimé :', id, 'dans', channelId);
+});
+
+socket.on('PRESENCE_UPDATE', ({ userId, status }) => {
+  console.log(\`\${userId} est maintenant \${status}\`);
+});
+
+socket.on('FRIEND_REQUEST', ({ from }) => {
+  console.log('Demande d\\'ami de', from.username);
+});
+
+// Maintenir la connexion active
+setInterval(() => socket.emit('HEARTBEAT'), 30_000);`,
+    ts: `import { io, Socket } from 'socket.io-client';
+
+interface Message {
+  id: string; content: string;
+  channelId: string;
+  author: { id: string; username: string; avatar?: string };
+  createdAt: string;
+}
+
+const socket: Socket = io('https://gateway.alfychat.app', {
+  auth: { token: sessionStorage.getItem('token')! },
+});
+
+socket.on('READY', ({ userId }: { userId: string }) =>
+  console.log('READY', userId));
+
+socket.on('MESSAGE_CREATE', (m: Message) =>
+  console.log(\`[\${m.channelId}] \${m.author.username}: \${m.content}\`));
+
+socket.on('MESSAGE_UPDATE', (m: Message) =>
+  console.log('EDIT', m.id));
+
+socket.on('MESSAGE_DELETE', ({ id }: { id: string }) =>
+  console.log('DEL', id));
+
+socket.on('PRESENCE_UPDATE',
+  ({ userId, status }: { userId: string; status: string }) =>
+    console.log(userId, '→', status));
+
+// Heartbeat
+setInterval(() => socket.emit('HEARTBEAT'), 30_000);`,
+    python: `import os, asyncio, socketio
+
+sio = socketio.AsyncClient()
+
+@sio.event
+async def connect():
+    print('Connecté au gateway')
+
+@sio.on('READY')
+async def on_ready(data):
+    print(f"userId={data['userId']}, serveurs={len(data['guilds'])}")
+
+@sio.on('MESSAGE_CREATE')
+async def on_message(data):
+    author = data['author']['username']
+    print(f"[{data['channelId']}] {author}: {data['content']}")
+
+@sio.on('PRESENCE_UPDATE')
+async def on_presence(data):
+    print(f"{data['userId']} → {data['status']}")
+
+@sio.on('FRIEND_REQUEST')
+async def on_friend_req(data):
+    print(f"Demande de {data['from']['username']}")
+
+async def heartbeat():
+    while True:
+        await asyncio.sleep(30)
+        await sio.emit('HEARTBEAT')
+
+async def main():
+    await sio.connect('https://gateway.alfychat.app',
+                      auth={'token': os.environ['USER_JWT']})
+    asyncio.create_task(heartbeat())
+    await sio.wait()
+
+asyncio.run(main())`,
+    java: `Socket socket = IO.socket(
+    URI.create("https://gateway.alfychat.app"),
+    IO.Options.builder().setAuth(Map.of("token", jwtToken)).build()
+);
+
+socket.on("READY", args -> {
+    JSONObject d = (JSONObject) args[0];
+    System.out.println("READY userId=" + d.optString("userId"));
+});
+
+socket.on("MESSAGE_CREATE", args -> {
+    JSONObject m = (JSONObject) args[0];
+    System.out.println("MSG: " + m.optString("content"));
+});
+
+socket.on("PRESENCE_UPDATE", args -> {
+    JSONObject d = (JSONObject) args[0];
+    System.out.println(d.optString("userId") + " → " + d.optString("status"));
+});
+
+// Heartbeat toutes les 30s
+new Timer().scheduleAtFixedRate(new TimerTask() {
+    public void run() { socket.emit("HEARTBEAT"); }
+}, 0, 30_000);
+
+socket.connect();`,
+  },
 };
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -1392,19 +1738,427 @@ function ErrorsSection() {
   );
 }
 
+/* ─── Bot Creation ─────────────────────────────────────────── */
+function BotCreationSection() {
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={PlusIcon}
+        title="Créer un Bot"
+        description="Enregistrez un bot via l'API REST, récupérez son token et gérez ses métadonnées."
+      />
+
+      <InfoCard color="blue" title="Prérequis">
+        Un compte AlfyChat actif est requis. Vous pouvez créer jusqu'à <strong>5 bots</strong> par
+        compte. Le bot est lié à votre compte utilisateur et nécessite votre JWT pour être créé.
+      </InfoCard>
+
+      <div className="space-y-2">
+        <SectionTitle>Créer un bot</SectionTitle>
+        <EndpointRow method="POST" path="/api/bots" desc="Crée un nouveau bot et retourne son token (affiché une seule fois)" />
+        <MultiCodeBlock title="POST /api/bots — Créer un bot" examples={EX.botCreate} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Réponse 201 Created</SectionTitle>
+        <CodeBlock lang="json" title="Corps de la réponse" code={`{
+  "success": true,
+  "bot": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "MonBot",
+    "prefix": "!",
+    "description": "Un bot utile pour ma communauté",
+    "token": "abc123...64hexchars",  // ← Stocker immédiatement !
+    "isVerified": false,
+    "isPublic": false,
+    "avatarUrl": null,
+    "serverCount": 0,
+    "createdAt": "2025-01-15T10:00:00.000Z"
+  }
+}`} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Autres opérations</SectionTitle>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/bots"                      desc="Liste tous vos bots (token masqué)" />
+          <EndpointRow method="GET"    path="/api/bots/:id"                  desc="Détails d'un bot spécifique" />
+          <EndpointRow method="PATCH"  path="/api/bots/:id"                  desc="Modifier nom, préfixe, description, avatar, visibilité" />
+          <EndpointRow method="DELETE" path="/api/bots/:id"                  desc="Supprimer définitivement le bot et ses données" />
+          <EndpointRow method="POST"   path="/api/bots/:id/regenerate-token" desc="Générer un nouveau token — invalide l'ancien immédiatement" />
+        </div>
+      </div>
+
+      <InfoCard color="amber" title="Token — Une seule exposition">
+        Le token est retourné <strong>uniquement à la création</strong>. Les autres lectures renvoient
+        le token masqué. Si vous le perdez, régénérez-le via <code>/regenerate-token</code> — l'ancien
+        token sera définitivement invalidé.
+      </InfoCard>
+    </div>
+  );
+}
+
+/* ─── Bot Messages ─────────────────────────────────────────── */
+function BotMessagesSection() {
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={MessageCircleIcon}
+        title="Envoyer des messages"
+        description="Envoyez des messages dans des salons, en DM ou en réponse à un message existant via l'API REST."
+      />
+
+      <div className="space-y-2">
+        <SectionTitle>Envoyer dans un salon</SectionTitle>
+        <EndpointRow method="POST" path="/api/messages" desc="Envoie un message (salon texte, DM ou fil)" />
+        <MultiCodeBlock title="POST /api/messages" examples={EX.sendMessage} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Payload complet</SectionTitle>
+        <CodeBlock lang="json" title="Corps de la requête" code={`{
+  "channelId":   "string",           // Obligatoire — ID du salon ou DM
+  "content":     "string",           // Texte (1–2000 caractères)
+  "replyToId":   "string | null",    // Optionnel — citer un message
+  "attachments": ["url1", "url2"]    // Optionnel — liens médias hébergés
+}`} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Réponse 201 Created</SectionTitle>
+        <CodeBlock lang="json" title="Message créé" code={`{
+  "success": true,
+  "message": {
+    "id":        "m1a2b3c4-...",
+    "content":   "Bonjour !",
+    "channelId": "c1a2b3c4-...",
+    "authorId":  "bot-id",
+    "author":    { "id": "bot-id", "username": "MonBot", "isBot": true },
+    "replyTo":   null,
+    "createdAt": "2025-01-15T10:00:00.000Z"
+  }
+}`} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Autres opérations sur les messages</SectionTitle>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/messages/:channelId" desc="Lire l'historique paginé d'un salon (param: limit, before)" />
+          <EndpointRow method="PATCH"  path="/api/messages/:id"        desc="Modifier le contenu d'un message (auteur uniquement)" />
+          <EndpointRow method="DELETE" path="/api/messages/:id"        desc="Supprimer un message (auteur ou MANAGE_MESSAGES)" />
+        </div>
+      </div>
+
+      <InfoCard color="violet" title="Temps réel automatique">
+        Chaque message posté via REST déclenche automatiquement l'événement <code>MESSAGE_CREATE</code>
+        sur le WebSocket du salon concerné. Tous les clients connectés reçoivent la notification sans
+        action supplémentaire de votre part.
+      </InfoCard>
+    </div>
+  );
+}
+
+/* ─── Bot Permissions ──────────────────────────────────────── */
+function BotPermissionsSection() {
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={ShieldCheckIcon}
+        title="Permissions"
+        description="Les permissions sont stockées en bitmask entier — chaque bit représente une capacité distincte."
+      />
+
+      <div className="space-y-2">
+        <SectionTitle>Table des permissions</SectionTitle>
+        <div className="overflow-hidden rounded-xl border border-border/60">
+          {([
+            { value: 1,   name: 'SEND_MESSAGES',   desc: 'Envoyer des messages dans les salons' },
+            { value: 2,   name: 'READ_MESSAGES',   desc: 'Lire l\'historique des salons' },
+            { value: 4,   name: 'MANAGE_MESSAGES', desc: 'Supprimer ou modifier des messages d\'autres membres' },
+            { value: 8,   name: 'KICK_MEMBERS',    desc: 'Exclure des membres du serveur' },
+            { value: 16,  name: 'BAN_MEMBERS',     desc: 'Bannir définitivement des membres' },
+            { value: 32,  name: 'MANAGE_CHANNELS', desc: 'Créer, modifier et supprimer des salons' },
+            { value: 64,  name: 'ADMINISTRATOR',   desc: 'Toutes les permissions — bypass complet du bitmask' },
+          ] as const).map((p, i) => (
+            <div key={p.name} className={cn('flex items-center gap-4 px-4 py-3 text-sm', i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20')}>
+              <code className="w-10 shrink-0 font-mono font-bold text-accent">{p.value}</code>
+              <code className="w-36 shrink-0 font-mono text-[11px] text-violet-400">{p.name}</code>
+              <span className="text-[11px] text-muted">{p.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Vérifier les permissions</SectionTitle>
+        <MultiCodeBlock title="Vérifier si le bot possède une permission" examples={EX.botPermissionsCheck} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Endpoints</SectionTitle>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"   path="/api/bots/me/servers"            desc="Liste les serveurs où le bot est présent avec les permissions associées" />
+          <EndpointRow method="GET"   path="/api/bots/me/servers/:serverId"  desc="Permissions du bot sur un serveur spécifique" />
+          <EndpointRow method="PATCH" path="/api/bots/me/servers/:serverId"  desc="Modifier les permissions (nécessite les droits admin du serveur)" />
+        </div>
+      </div>
+
+      <InfoCard color="amber" title="ADMINISTRATOR (64)">
+        Si ce bit est activé, le bot contourne <strong>toutes</strong> les vérifications de permissions.
+        Équivalent d'un accès complet. À accorder uniquement en pleine confiance.
+      </InfoCard>
+    </div>
+  );
+}
+
+/* ─── Gateway Overview ─────────────────────────────────────── */
+function GatewayOverviewSection() {
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={GlobeIcon}
+        title="Vue d'ensemble"
+        description="Le Gateway est le point d'entrée unique vers toute l'API AlfyChat — HTTP REST et WebSocket Socket.IO."
+      />
+
+      <Card className="border border-border/60 bg-surface/40">
+        <Card.Content className="p-5">
+          <div className="flex flex-wrap items-center gap-6">
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Base URL</p>
+              <code className="font-mono text-sm font-bold text-accent">https://gateway.alfychat.app</code>
+            </div>
+            <Separator orientation="vertical" className="hidden sm:block h-8" />
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Préfixe REST</p>
+              <code className="font-mono text-sm font-bold">/api</code>
+            </div>
+            <Separator orientation="vertical" className="hidden sm:block h-8" />
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">WebSocket</p>
+              <code className="font-mono text-sm font-bold">Socket.IO v4</code>
+            </div>
+            <Separator orientation="vertical" className="hidden sm:block h-8" />
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Content-Type</p>
+              <code className="font-mono text-sm font-bold">application/json</code>
+            </div>
+          </div>
+        </Card.Content>
+      </Card>
+
+      <div className="space-y-2">
+        <SectionTitle>Architecture microservices</SectionTitle>
+        <div className="overflow-hidden rounded-xl border border-border/60">
+          {([
+            { name: 'gateway',  port: '3000', desc: 'Point d\'entrée — routing, auth, rate limiting' },
+            { name: 'users',    port: '3001', desc: 'Comptes, profils, présence, paramètres' },
+            { name: 'messages', port: '3002', desc: 'Historique et CRUD des messages' },
+            { name: 'friends',  port: '3003', desc: 'Demandes d\'amis, liste de contacts, blocages' },
+            { name: 'calls',    port: '3004', desc: 'Appels audio/vidéo WebRTC' },
+            { name: 'servers',  port: '3005', desc: 'Serveurs, salons, membres, rôles' },
+            { name: 'bots',     port: '3006', desc: 'Gestion et authentification des bots' },
+            { name: 'media',    port: '3007', desc: 'Upload, stockage et CDN des médias' },
+          ] as const).map((svc, i) => (
+            <div key={svc.name} className={cn('flex items-center gap-4 px-4 py-3', i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20')}>
+              <code className="w-20 shrink-0 font-mono text-xs font-bold text-accent">{svc.name}</code>
+              <code className="w-14 shrink-0 font-mono text-[10px] text-muted">:{svc.port}</code>
+              <span className="text-[11px] text-muted">{svc.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Headers communs</SectionTitle>
+        <CodeBlock lang="http" title="Requêtes authentifiées" code={`# Utilisateur (JWT Bearer)
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+
+# Bot
+Authorization: Bot abc123...64hexchars
+Content-Type: application/json`} />
+      </div>
+
+      <InfoCard color="blue" title="CORS">
+        Le gateway accepte les requêtes cross-origin depuis <code>https://alfychat.app</code> et
+        <code> http://localhost:*</code>. Pour les intégrations depuis un domaine tiers, utilisez
+        un proxy serveur ou contactez l'équipe pour ajouter votre domaine à la liste blanche.
+      </InfoCard>
+    </div>
+  );
+}
+
+/* ─── Gateway Auth ──────────────────────────────────────────── */
+function GatewayAuthSection() {
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={LockIcon}
+        title="Authentification Gateway"
+        description="Les utilisateurs s'authentifient via JWT Bearer. Les bots ont leur propre token dédié."
+      />
+
+      <div className="space-y-2">
+        <SectionTitle>Connexion utilisateur</SectionTitle>
+        <EndpointRow method="POST" path="/api/auth/login" desc="Retourne un JWT (7j) et un refresh token (30j)" />
+        <MultiCodeBlock title="POST /api/auth/login" examples={EX.gatewayLogin} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Réponse</SectionTitle>
+        <CodeBlock lang="json" title="200 OK" code={`{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",  // JWT, 7 jours
+  "refreshToken": "a1b2c3d4e5f6...",                     // 30 jours
+  "user": {
+    "id":         "u1a2b3c4-...",
+    "username":   "Alice",
+    "email":      "alice@example.com",
+    "avatar":     "https://media.alfychat.app/avatars/...",
+    "isVerified": true
+  }
+}`} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Utiliser le JWT</SectionTitle>
+        <CodeBlock lang="http" title="Requête protégée" code={`GET /api/users/me HTTP/1.1
+Host: gateway.alfychat.app
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Refresh du token</SectionTitle>
+        <EndpointRow method="POST" path="/api/auth/refresh" desc="Obtenir un nouveau JWT via le refresh token" />
+        <CodeBlock lang="json" title="POST /api/auth/refresh" code={`// Corps de la requête
+{ "refreshToken": "a1b2c3d4e5f6..." }
+
+// Réponse 200
+{
+  "token":        "nouveau.jwt.ici",
+  "refreshToken": "nouveau.refresh.token"
+}`} />
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Autres endpoints auth</SectionTitle>
+        <div className="space-y-1.5">
+          <EndpointRow method="POST"  path="/api/auth/register"       desc="Créer un nouveau compte utilisateur" />
+          <EndpointRow method="POST"  path="/api/auth/logout"         desc="Invalider la session (refresh token révoqué)" />
+          <EndpointRow method="GET"   path="/api/users/me"            desc="Profil de l'utilisateur connecté" />
+          <EndpointRow method="PATCH" path="/api/users/me"            desc="Modifier le profil (username, avatar, bio, statut)" />
+          <EndpointRow method="POST"  path="/api/bots/authenticate"   desc="Vérifier et authentifier un token bot" />
+        </div>
+      </div>
+
+      <InfoCard color="red" title="Sécurité des tokens">
+        <ul className="list-disc space-y-0.5 pl-4">
+          <li>Stockez le JWT en mémoire ou dans un cookie <code>HttpOnly</code> (pas localStorage)</li>
+          <li>Un JWT expiré retourne <code>401 Unauthorized</code> — rafraîchissez-le avant expiration</li>
+          <li>En cas de compromission du refresh token, appelez <code>/logout</code> pour le révoquer</li>
+        </ul>
+      </InfoCard>
+    </div>
+  );
+}
+
+/* ─── Gateway Events ────────────────────────────────────────── */
+function GatewayEventsSection() {
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={ZapIcon}
+        title="Événements WebSocket"
+        description="Référence exhaustive de tous les événements Socket.IO — direction, payload et exemples."
+        badge="30+"
+      />
+
+      <MultiCodeBlock title="Écouter les événements — exemple complet" examples={EX.gatewayEventsListen} />
+
+      <div className="space-y-2">
+        <SectionTitle>Événements reçus (serveur → client)</SectionTitle>
+        <div className="overflow-hidden rounded-xl border border-border/60">
+          {([
+            { event: 'READY',            payload: '{ userId, guilds[], dmChannels[] }',             desc: 'Connexion établie — état initial de la session' },
+            { event: 'MESSAGE_CREATE',   payload: '{ id, content, channelId, author, createdAt }',  desc: 'Nouveau message dans un salon ou DM' },
+            { event: 'MESSAGE_UPDATE',   payload: '{ id, content, channelId, editedAt }',           desc: 'Message modifié par son auteur' },
+            { event: 'MESSAGE_DELETE',   payload: '{ id, channelId }',                              desc: 'Message supprimé' },
+            { event: 'TYPING_START',     payload: '{ userId, channelId }',                          desc: 'Indicateur "en train d\'écrire"' },
+            { event: 'TYPING_STOP',      payload: '{ userId, channelId }',                          desc: 'Fin de l\'indicateur de frappe' },
+            { event: 'PRESENCE_UPDATE',  payload: '{ userId, status, activity? }',                  desc: 'Changement de statut d\'un ami (online/away/dnd/offline)' },
+            { event: 'FRIEND_REQUEST',   payload: '{ from: { id, username, avatar } }',              desc: 'Demande d\'ami reçue' },
+            { event: 'FRIEND_ACCEPT',    payload: '{ userId, username }',                           desc: 'Votre demande d\'ami a été acceptée' },
+            { event: 'FRIEND_REMOVE',    payload: '{ userId }',                                     desc: 'Ami supprimé ou demande refusée' },
+            { event: 'MEMBER_JOIN',      payload: '{ serverId, member: { userId, roles[] } }',      desc: 'Nouveau membre dans un serveur' },
+            { event: 'MEMBER_LEAVE',     payload: '{ serverId, userId }',                           desc: 'Membre a quitté un serveur' },
+            { event: 'CHANNEL_CREATE',   payload: '{ serverId, channel: { id, name, type } }',      desc: 'Nouveau salon créé' },
+            { event: 'CHANNEL_DELETE',   payload: '{ serverId, channelId }',                        desc: 'Salon supprimé' },
+            { event: 'ROLE_UPDATE',      payload: '{ serverId, role: { id, name, color, perms } }', desc: 'Rôle modifié sur un serveur' },
+            { event: 'CALL_INITIATE',    payload: '{ callId, channelId, initiator }',               desc: 'Appel entrant' },
+            { event: 'CALL_END',         payload: '{ callId }',                                     desc: 'Appel terminé' },
+            { event: 'HEARTBEAT_ACK',    payload: '{}',                                             desc: 'Accusé de réception du heartbeat' },
+          ] as const).map((ev, i) => (
+            <div key={ev.event} className={cn('grid grid-cols-[auto_1fr] items-start gap-3 px-4 py-3', i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20')}>
+              <code className="mt-0.5 font-mono text-xs font-bold text-accent whitespace-nowrap">{ev.event}</code>
+              <div>
+                <code className="block font-mono text-[10px] text-violet-400/80 mb-0.5">{ev.payload}</code>
+                <span className="text-[11px] text-muted">{ev.desc}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle>Événements émis (client → serveur)</SectionTitle>
+        <div className="overflow-hidden rounded-xl border border-border/60">
+          {([
+            { event: 'join_channel',  payload: '{ channelId }', desc: 'S\'abonner aux events d\'un salon' },
+            { event: 'leave_channel', payload: '{ channelId }', desc: 'Se désabonner d\'un salon' },
+            { event: 'HEARTBEAT',     payload: '{}',            desc: 'Maintenir la connexion active (toutes les 30s)' },
+            { event: 'typing_start',  payload: '{ channelId }', desc: 'Afficher l\'indicateur de frappe' },
+            { event: 'typing_stop',   payload: '{ channelId }', desc: 'Masquer l\'indicateur de frappe' },
+          ] as const).map((ev, i) => (
+            <div key={ev.event} className={cn('grid grid-cols-[auto_1fr] items-start gap-3 px-4 py-3', i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20')}>
+              <code className="mt-0.5 font-mono text-xs font-bold text-blue-400 whitespace-nowrap">{ev.event}</code>
+              <div>
+                <code className="block font-mono text-[10px] text-violet-400/80 mb-0.5">{ev.payload}</code>
+                <span className="text-[11px] text-muted">{ev.desc}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <InfoCard color="blue" title="Heartbeat">
+        Envoyez <code>HEARTBEAT</code> toutes les <strong>30 secondes</strong>. Sans heartbeat, le
+        serveur déconnecte le client après <strong>60 secondes</strong> d'inactivité. Le serveur
+        répond avec <code>HEARTBEAT_ACK</code> pour confirmer la connexion active.
+      </InfoCard>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════ */
 /*  Map des sections                                          */
 /* ═══════════════════════════════════════════════════════════ */
 
 const SECTIONS = {
-  introduction:  { title: 'Introduction',      icon: BookOpenIcon,    Component: IntroductionSection },
-  auth:          { title: 'Authentification',   icon: KeyIcon,         Component: AuthSection },
-  quickstart:    { title: 'Démarrage rapide',   icon: ZapIcon,         Component: QuickstartSection },
-  endpoints:     { title: 'Référence API',      icon: CodeIcon,        Component: EndpointsSection },
-  websocket:     { title: 'WebSocket',          icon: ServerIcon,      Component: WebSocketSection },
-  commands:      { title: 'Commandes',          icon: TerminalIcon,    Component: CommandsSection },
-  certification: { title: 'Certification',      icon: ShieldCheckIcon, Component: CertificationSection },
-  errors:        { title: 'Erreurs & Limits',   icon: TagIcon,         Component: ErrorsSection },
+  /* ── Bots AlfyChat ─────────────────────────────────────── */
+  'bots-introduction':  { title: 'Introduction',        icon: BotIcon,          Component: IntroductionSection   },
+  'bots-creation':      { title: 'Créer un Bot',         icon: PlusIcon,         Component: BotCreationSection    },
+  'bots-auth':          { title: 'Authentification',     icon: KeyIcon,          Component: AuthSection           },
+  'bots-messages':      { title: 'Envoyer des messages', icon: MessageCircleIcon,Component: BotMessagesSection    },
+  'bots-commands':      { title: 'Commandes',            icon: TerminalIcon,     Component: CommandsSection       },
+  'bots-permissions':   { title: 'Permissions',          icon: ShieldCheckIcon,  Component: BotPermissionsSection },
+  'bots-certification': { title: 'Certification',        icon: TagIcon,          Component: CertificationSection  },
+  /* ── Gateway API ───────────────────────────────────────── */
+  'gateway-overview':   { title: "Vue d'ensemble",       icon: GlobeIcon,        Component: GatewayOverviewSection},
+  'gateway-auth':       { title: 'Authentification',     icon: LockIcon,         Component: GatewayAuthSection    },
+  'gateway-rest':       { title: 'Référence REST',        icon: CodeIcon,         Component: EndpointsSection      },
+  'gateway-websocket':  { title: 'WebSocket',            icon: WifiIcon,         Component: WebSocketSection      },
+  'gateway-events':     { title: 'Événements',           icon: ZapIcon,          Component: GatewayEventsSection  },
+  'gateway-limits':     { title: 'Limites & Erreurs',    icon: AlertTriangleIcon,Component: ErrorsSection         },
 } as const;
 
 type SectionSlug = keyof typeof SECTIONS;
