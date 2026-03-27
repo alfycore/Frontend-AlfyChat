@@ -8,6 +8,7 @@ import {
   ArrowRightIcon,
   CompassIcon,
   HelpCircleIcon,
+  HomeIcon,
   SettingsIcon,
   LogOutIcon,
   CopyIcon,
@@ -337,6 +338,22 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.discoverServers || 'Découvrir'}</p>
+          </Tooltip.Content>
+        </Tooltip>
+
+        {/* Welcome page */}
+        <Tooltip delay={0}>
+          <Button
+            isIconOnly
+            variant="ghost"
+            className="size-12 rounded-2xl bg-(--surface-secondary)/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
+            onPress={() => router.push('/channels/gotostart')}
+          >
+            <HugeiconsIcon icon={HomeIcon} size={20} />
+          </Button>
+          <Tooltip.Content showArrow placement="right">
+            <Tooltip.Arrow />
+            <p className="text-[11px] font-medium">Bienvenue</p>
           </Tooltip.Content>
         </Tooltip>
       </div>

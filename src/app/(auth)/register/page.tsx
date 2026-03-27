@@ -120,7 +120,7 @@ function RegisterContent() {
         ...(turnstileToken && { turnstileToken }),
       });
       if (result.success) {
-        router.push('/channels/me');
+        router.push('/channels/gotostart');
       } else if ((result as any).emailNotVerified) {
         // Compte créé mais email à vérifier → rediriger vers login avec message
         router.push('/login?emailVerification=1&email=' + encodeURIComponent(email));

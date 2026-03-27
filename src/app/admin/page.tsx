@@ -226,7 +226,7 @@ export default function AdminPage() {
     setLoading(false);
   };
 
-  const loadChartData = async (period: 'hour' | 'day' | 'month') => {
+  const loadChartData = async (period: '30min' | '10min' | 'hour' | 'day' | 'month') => {
     setChartLoading(true);
     try {
       const res = await api.getMonitoringUsersChart(period);
@@ -519,24 +519,27 @@ export default function AdminPage() {
     <div className="flex min-h-screen flex-col bg-[var(--background)]">
       {/* Header */}
       <header className="border-b border-[var(--border)]/40 bg-[var(--surface)]/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <HugeiconsIcon icon={ShieldIcon} size={32} className="text-[var(--accent)]" />
-              <div>
-                <h1 className="text-2xl font-bold text-[var(--foreground)]">
-                  Panneau d&apos;administration
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <HugeiconsIcon icon={ShieldIcon} size={28} className="shrink-0 text-[var(--accent)] sm:size-8" />
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold text-[var(--foreground)] sm:text-2xl">
+                  Administration
                 </h1>
-                <p className="text-sm text-[var(--muted)]">
+                <p className="hidden text-sm text-[var(--muted)] sm:block">
                   Gestion AlfyChat
                 </p>
               </div>
             </div>
             <Button
               variant="outline"
+              size="sm"
               onPress={() => router.push('/channels/me')}
+              className="shrink-0 text-xs sm:text-sm"
             >
-              Retour à l&apos;app
+              <span className="sm:hidden">← App</span>
+              <span className="hidden sm:inline">Retour à l&apos;app</span>
             </Button>
           </div>
         </div>
@@ -544,32 +547,33 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="border-b border-[var(--border)]/40 bg-[var(--surface)]/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <nav className="flex gap-6">
+        <div className="mx-auto max-w-7xl">
+          <nav className="flex gap-1 overflow-x-auto px-4 scrollbar-none sm:gap-4 sm:px-6 [&::-webkit-scrollbar]:hidden">
             {(
               [
-                { id: 'overview', label: "Vue d'ensemble", icon: BarChart3Icon },
-                { id: 'badges', label: 'Badges', icon: AwardIcon },
-                { id: 'users', label: 'Utilisateurs', icon: UsersIcon },
-                { id: 'discovery', label: 'Découverte', icon: CompassIcon },
-                { id: 'server-badges', label: 'Badges serveurs', icon: ServerIcon },
-                { id: 'monitoring', label: 'Monitoring', icon: BarChart3Icon },
-                { id: 'security', label: 'Sécurité', icon: ShieldAlertIcon },
-                { id: 'changelogs', label: 'Changelogs', icon: FileTextIcon },
-                { id: 'settings', label: 'Paramètres', icon: SettingsIcon },
+                { id: 'overview', label: "Vue d'ensemble", shortLabel: 'Vue', icon: BarChart3Icon },
+                { id: 'badges', label: 'Badges', shortLabel: 'Badges', icon: AwardIcon },
+                { id: 'users', label: 'Utilisateurs', shortLabel: 'Users', icon: UsersIcon },
+                { id: 'discovery', label: 'Découverte', shortLabel: 'Découv.', icon: CompassIcon },
+                { id: 'server-badges', label: 'Badges serveurs', shortLabel: 'Serveurs', icon: ServerIcon },
+                { id: 'monitoring', label: 'Monitoring', shortLabel: 'Monitor', icon: BarChart3Icon },
+                { id: 'security', label: 'Sécurité', shortLabel: 'Sécu.', icon: ShieldAlertIcon },
+                { id: 'changelogs', label: 'Changelogs', shortLabel: 'Logs', icon: FileTextIcon },
+                { id: 'settings', label: 'Paramètres', shortLabel: 'Config', icon: SettingsIcon },
               ] as const
             ).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium transition-colors ${
+                className={`flex shrink-0 items-center gap-1.5 border-b-2 px-2 py-3 text-xs font-medium whitespace-nowrap transition-colors sm:gap-2 sm:px-1 sm:text-sm ${
                   activeTab === tab.id
                     ? 'border-[var(--accent)] text-[var(--accent)]'
                     : 'border-transparent text-[var(--muted)] hover:text-[var(--foreground)]'
                 }`}
               >
-                <HugeiconsIcon icon={tab.icon} size={16} />
-                {tab.label}
+                <HugeiconsIcon icon={tab.icon} size={14} className="sm:size-4" />
+                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
           </nav>
@@ -577,7 +581,7 @@ export default function AdminPage() {
       </div>
 
       {/* Content */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-6">
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="size-8 animate-spin rounded-full border-4 border-[var(--accent)] border-t-transparent" />
