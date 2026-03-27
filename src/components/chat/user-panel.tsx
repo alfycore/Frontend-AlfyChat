@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { MicIcon, MicOffIcon, Volume2Icon, VolumeXIcon, SettingsIcon, CheckIcon } from '@/components/icons';
+import { MicIcon, MicOffIcon, Volume2Icon, VolumeXIcon, SettingsIcon, CheckIcon, PencilIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import {
-  Avatar, Button, Dropdown, Separator, Tooltip,
+  Avatar, Button, Dropdown, Tooltip,
 } from '@heroui/react';
 import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
@@ -18,13 +18,14 @@ interface User {
   displayName: string;
   avatarUrl?: string;
   status: 'online' | 'offline' | 'idle' | 'dnd' | 'invisible';
+  customStatus?: string | null;
 }
 
 interface UserPanelProps {
   user: User;
 }
 
-const statusConfig: Record<string, { color: string; label?: string }> = {
+const statusConfig: Record<string, { color: string }> = {
   online: { color: 'bg-green-500' },
   idle: { color: 'bg-yellow-500' },
   dnd: { color: 'bg-red-500' },
@@ -38,12 +39,33 @@ export function UserPanel({ user }: UserPanelProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [editingCustomStatus, setEditingCustomStatus] = useState(false);
+  const [customStatusDraft, setCustomStatusDraft] = useState(user.customStatus ?? '');
+  const customStatusInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setCustomStatusDraft(user.customStatus ?? '');
+  }, [user.customStatus]);
+
+  useEffect(() => {
+    if (editingCustomStatus) customStatusInputRef.current?.focus();
+  }, [editingCustomStatus]);
 
   const status = statusConfig[user.status] ?? statusConfig.offline;
 
   const handleStatusChange = (s: 'online' | 'idle' | 'dnd' | 'invisible') => {
-    socketService.updatePresence(s);
+    socketService.updatePresence(s, user.customStatus ?? null);
     updateUser({ status: s });
+  };
+
+  const saveCustomStatus = () => {
+    const trimmed = customStatusDraft.trim().slice(0, 100);
+    socketService.updatePresence(
+      user.status === 'offline' ? 'online' : (user.status as 'online' | 'idle' | 'dnd' | 'invisible'),
+      trimmed || null,
+    );
+    updateUser({ customStatus: trimmed || null });
+    setEditingCustomStatus(false);
   };
 
   return (
@@ -64,35 +86,74 @@ export function UserPanel({ user }: UserPanelProps) {
             </div>
             <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-[12px] font-semibold leading-tight text-[var(--foreground)]">{user.displayName}</p>
-              <p className="truncate text-[10px] text-[var(--muted)]/60">{t.status[user.status] ?? t.status.offline}</p>
+              <p className="truncate text-[10px] text-[var(--muted)]/60">
+                {user.customStatus ? user.customStatus : (t.status[user.status] ?? t.status.offline)}
+              </p>
             </div>
           </div>
         </Dropdown.Trigger>
-        <Dropdown.Popover className="min-w-48">
+        <Dropdown.Popover className="min-w-52">
           <Dropdown.Menu
             onAction={(key) => {
               if (['online', 'idle', 'dnd', 'invisible'].includes(key as string)) {
                 handleStatusChange(key as 'online' | 'idle' | 'dnd' | 'invisible');
+              } else if (key === 'edit-custom-status') {
+                setEditingCustomStatus(true);
               }
             }}
           >
-              <Dropdown.Item id="user-info" textValue="Info" className="pointer-events-none">
-                <div>
-                  <p className="text-[13px] font-semibold">{user.displayName}</p>
-                  <p className="text-[11px] text-[var(--muted)]">@{user.username}</p>
+            <Dropdown.Item id="user-info" textValue="Info" className="pointer-events-none">
+              <div>
+                <p className="text-[13px] font-semibold">{user.displayName}</p>
+                <p className="text-[11px] text-[var(--muted)]">@{user.username}</p>
+              </div>
+            </Dropdown.Item>
+
+            {/* Statut personnalisé */}
+            <Dropdown.Item id="edit-custom-status" textValue="Statut personnalisé">
+              {editingCustomStatus ? (
+                <div className="flex w-full items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    ref={customStatusInputRef}
+                    value={customStatusDraft}
+                    onChange={(e) => setCustomStatusDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveCustomStatus();
+                      if (e.key === 'Escape') setEditingCustomStatus(false);
+                    }}
+                    maxLength={100}
+                    placeholder="Définir un statut..."
+                    className="min-w-0 flex-1 rounded bg-[var(--field-background)] px-2 py-1 text-[12px] text-[var(--foreground)] outline-none ring-1 ring-[var(--border)] focus:ring-[var(--accent)]"
+                  />
+                  <button
+                    onClick={saveCustomStatus}
+                    className="shrink-0 rounded bg-[var(--accent)] px-2 py-0.5 text-[11px] font-semibold text-white"
+                  >
+                    OK
+                  </button>
                 </div>
-              </Dropdown.Item>
-              {(['online', 'idle', 'dnd', 'invisible'] as const).map((s) => {
-                const cfg = statusConfig[s];
-                const isActive = user.status === s;
-                return (
-                    <Dropdown.Item key={s} id={s} textValue={t.status[s]}>
-                    <div className={`size-2.5 rounded-full ${cfg.color}`} />
-                    <span className="flex-1 text-[13px]">{t.status[s]}</span>
-                    {isActive && <HugeiconsIcon icon={CheckIcon} size={14} className="text-[var(--accent)]" />}
-                  </Dropdown.Item>
-                );
-              })}
+              ) : (
+                <div className="flex w-full items-center gap-2">
+                  <HugeiconsIcon icon={PencilIcon} size={13} className="shrink-0 text-[var(--muted)]" />
+                  <span className="flex-1 truncate text-[13px] text-[var(--muted)]">
+                    {user.customStatus || 'Définir un statut...'}
+                  </span>
+                </div>
+              )}
+            </Dropdown.Item>
+
+            {/* Statuts disponibles */}
+            {(['online', 'idle', 'dnd', 'invisible'] as const).map((s) => {
+              const cfg = statusConfig[s];
+              const isActive = user.status === s;
+              return (
+                <Dropdown.Item key={s} id={s} textValue={t.status[s]}>
+                  <div className={`size-2.5 rounded-full ${cfg.color}`} />
+                  <span className="flex-1 text-[13px]">{t.status[s]}</span>
+                  {isActive && <HugeiconsIcon icon={CheckIcon} size={14} className="text-[var(--accent)]" />}
+                </Dropdown.Item>
+              );
+            })}
           </Dropdown.Menu>
         </Dropdown.Popover>
       </Dropdown>
@@ -100,8 +161,6 @@ export function UserPanel({ user }: UserPanelProps) {
 
       {/* Audio controls */}
       <div className="flex shrink-0 items-center">
-
-
         <Tooltip delay={0}>
             <Button
               data-tour="user-settings"

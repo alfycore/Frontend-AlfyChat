@@ -43,6 +43,7 @@ interface Friend {
   displayName: string;
   avatarUrl?: string;
   status: 'online' | 'idle' | 'dnd' | 'invisible' | 'offline';
+  customStatus?: string | null;
   isOnline: boolean;
 }
 
@@ -114,12 +115,12 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     };
     const handlePresenceUpdate = (data: unknown) => {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
-      const p = payload as { userId?: string; status?: string };
+      const p = payload as { userId?: string; status?: string; customStatus?: string | null };
       if (p?.userId && p?.status) {
         setFriends((prev) =>
           prev.map((f) =>
             f.id === p.userId
-              ? { ...f, status: p.status as Friend['status'], isOnline: p.status === 'online' }
+              ? { ...f, status: p.status as Friend['status'], customStatus: p.customStatus ?? f.customStatus, isOnline: p.status === 'online' }
               : f
           )
         );
@@ -845,7 +846,9 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                         <p className="truncate text-[11px] font-medium leading-tight">
                           {friend.displayName}
                         </p>
-                        <p className="truncate text-[9px] text-[var(--muted)]/50">{statusLabel}</p>
+                        <p className="truncate text-[9px] text-[var(--muted)]/50">
+                          {friend.customStatus || statusLabel}
+                        </p>
                       </div>
                     </button>
                   </UserProfilePopover>
@@ -896,7 +899,9 @@ function FriendRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] font-semibold leading-tight">{friend.displayName}</p>
-        <p className="truncate text-[10px] text-[var(--muted)]/60">{statusLabel}</p>
+        <p className="truncate text-[10px] text-[var(--muted)]/60">
+          {friend.customStatus || statusLabel}
+        </p>
       </div>
 
       <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">

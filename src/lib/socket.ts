@@ -216,8 +216,8 @@ class SocketService {
   }
 
   // Présence
-  updatePresence(status: 'online' | 'idle' | 'dnd' | 'invisible'): void {
-    this.socket?.emit('PRESENCE_UPDATE', { status });
+  updatePresence(status: 'online' | 'idle' | 'dnd' | 'invisible', customStatus?: string | null): void {
+    this.socket?.emit('PRESENCE_UPDATE', { status, customStatus: customStatus ?? null });
   }
 
   // Appels
@@ -623,6 +623,9 @@ class SocketService {
   }
   onPresenceUpdate(callback: (data: unknown) => void): void {
     this.on('PRESENCE_UPDATE', callback);
+  }
+  onPendingPings(callback: (data: unknown) => void): void {
+    this.on('PENDING_PINGS', callback);
   }
   onCall(callback: (data: unknown) => void): void {
     this.on('CALL_INCOMING', callback);

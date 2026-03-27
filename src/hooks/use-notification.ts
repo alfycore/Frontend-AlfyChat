@@ -167,11 +167,40 @@ export function useNotification() {
       });
     };
 
+    // ── Pings en attente au retour en ligne ─────────────────────────────────
+    const handlePendingPings = (data: any) => {
+      const payload = data?.payload || data;
+      if (!payload || typeof payload !== 'object') return;
+      const entries = Object.entries(payload) as [string, { count: number; senderName: string }][];
+      if (entries.length === 0) return;
+
+      // Incrémenter les badges non-lus et afficher un toast groupé
+      let totalCount = 0;
+      const senders = new Set<string>();
+      for (const [convId, { count, senderName }] of entries) {
+        // convId est "dm_{id1}_{id2}" — extraire le recipientId
+        const parts = convId.split('_');
+        const myId = (window as any).__alfychat_user_id;
+        const recipientId = parts.find((p) => p !== 'dm' && p !== myId);
+        if (recipientId) incrementUnread(recipientId);
+        totalCount += count;
+        if (senderName) senders.add(senderName);
+      }
+
+      const sendersText = Array.from(senders).slice(0, 3).join(', ');
+      toast.info(`${totalCount} message${totalCount > 1 ? 's' : ''} manqué${totalCount > 1 ? 's' : ''}`, {
+        description: sendersText ? `De : ${sendersText}` : undefined,
+        duration: 6000,
+      });
+      playNotificationSound();
+    };
+
     socketService.on('message:new', handleNewMessage);
     socketService.on('FRIEND_REQUEST', handleFriendRequest);
     socketService.on('FRIEND_ACCEPT', handleFriendAccepted);
     socketService.on('disconnect', handleDisconnect);
     socketService.on('connect', handleReconnect);
+    socketService.on('PENDING_PINGS', handlePendingPings);
 
     return () => {
       socketService.off('message:new', handleNewMessage);
@@ -179,6 +208,7 @@ export function useNotification() {
       socketService.off('FRIEND_ACCEPT', handleFriendAccepted);
       socketService.off('disconnect', handleDisconnect);
       socketService.off('connect', handleReconnect);
+      socketService.off('PENDING_PINGS', handlePendingPings);
     };
   }, [playNotificationSound]);
 

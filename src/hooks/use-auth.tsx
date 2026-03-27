@@ -23,6 +23,7 @@ interface User {
   bio?: string;
   role?: 'user' | 'moderator' | 'admin';
   status: 'online' | 'offline' | 'idle' | 'dnd' | 'invisible';
+  customStatus?: string | null;
   createdAt: string;
 }
 
