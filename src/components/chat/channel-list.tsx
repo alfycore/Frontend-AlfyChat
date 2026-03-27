@@ -1104,8 +1104,7 @@ export function ChannelList({
             <div className="flex items-start justify-between border-b border-(--border)/20 px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
-                  <CHANNEL_ICON[createType] ?? HashIcon size={18}
-                    className="text-accent" />
+                  {(() => { const Icon = CHANNEL_ICON[createType] ?? HashIcon; return <Icon size={18} className="text-accent" />; })()}
                 </div>
                 <div>
                   <h2 className="text-[15px] font-bold">

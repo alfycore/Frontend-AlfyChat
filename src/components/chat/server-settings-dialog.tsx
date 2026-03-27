@@ -700,7 +700,7 @@ export function ServerSettingsDialog({
                             ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                             : 'bg-red-500/10 text-red-500',
                         )}>
-                          <claimResult.ok ? CheckIcon : XIcon size={13} />
+                          {claimResult.ok ? <CheckIcon size={13} /> : <XIcon size={13} />}
                           {claimResult.msg}
                         </div>
                       )}
@@ -893,7 +893,7 @@ export function ServerSettingsDialog({
                             ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                             : 'bg-red-500/10 text-red-500',
                         )}>
-                          <claimResult.ok ? CheckIcon : XIcon size={13} />
+                          {claimResult.ok ? <CheckIcon size={13} /> : <XIcon size={13} />}
                           {claimResult.msg}
                         </div>
                       )}
