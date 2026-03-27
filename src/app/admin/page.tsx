@@ -136,7 +136,7 @@ export default function AdminPage() {
 
   // Monitoring
   const [monitoringData, setMonitoringData] = useState<any>(null);
-  const [chartPeriod, setChartPeriod] = useState<'hour' | 'day' | 'month'>('hour');
+  const [chartPeriod, setChartPeriod] = useState<'30min' | '10min' | 'hour' | 'day' | 'month'>('hour');
   const [chartData, setChartData] = useState<any[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
 
@@ -1402,7 +1402,7 @@ export default function AdminPage() {
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-lg font-semibold text-[var(--foreground)]">Historique connexions</h3>
                           <div className="flex gap-1 rounded-lg border border-[var(--border)] p-1">
-                            {(['hour', 'day', 'month'] as const).map((p) => (
+                            {(['30min', '10min', 'hour', 'day', 'month'] as const).map((p) => (
                               <button
                                 key={p}
                                 onClick={() => {
@@ -1415,7 +1415,7 @@ export default function AdminPage() {
                                     : 'text-[var(--muted)] hover:text-[var(--foreground)]'
                                 }`}
                               >
-                                {p === 'hour' ? 'Par heure' : p === 'day' ? 'Par jour' : 'Par mois'}
+                                {p === '30min' ? '30 dernières min' : p === '10min' ? 'Par 10 min' : p === 'hour' ? 'Par heure' : p === 'day' ? 'Par jour' : 'Par mois'}
                               </button>
                             ))}
                           </div>
@@ -1445,9 +1445,9 @@ export default function AdminPage() {
                                 tickLine={false}
                                 axisLine={false}
                                 tickFormatter={(v: string) => {
-                                  if (chartPeriod === 'hour') return v.slice(11, 16); // HH:MM
-                                  if (chartPeriod === 'day') return v.slice(5);       // MM-DD
-                                  return v;                                            // YYYY-MM
+                                  if (chartPeriod === '30min' || chartPeriod === '10min' || chartPeriod === 'hour') return v.slice(11, 16); // HH:MM
+                                  if (chartPeriod === 'day') return v.slice(5);                                                           // MM-DD
+                                  return v;                                                                                                // YYYY-MM
                                 }}
                               />
                               <YAxis

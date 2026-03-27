@@ -877,7 +877,7 @@ class ApiService {
     return this.request<any>(`/api/admin/monitoring/service/${service}?hours=${hours}`);
   }
 
-  async getMonitoringUsersChart(period: 'hour' | 'day' | 'month') {
+  async getMonitoringUsersChart(period: '30min' | '10min' | 'hour' | 'day' | 'month') {
     return this.request<any>(`/api/admin/monitoring/users/chart?period=${period}`);
   }
 
