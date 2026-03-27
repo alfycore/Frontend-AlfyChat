@@ -135,26 +135,80 @@ interface SessionInfo {
   expiresAt: string;
 }
 
-function parseUserAgent(ua: string | null): { browser: string; os: string } {
-  if (!ua) return { browser: 'Navigateur inconnu', os: 'OS inconnu' };
+function parseUserAgent(ua: string | null): { browser: string; os: string; icon: string } {
+  if (!ua) return { browser: 'Navigateur inconnu', os: 'OS inconnu', icon: '🖥️' };
+
+  // ── Navigateur ──
   let browser = 'Navigateur';
-  if (ua.includes('Edg/') || ua.includes('EdgA/')) browser = 'Edge';
-  else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera';
-  else if (ua.includes('Chrome/') && !ua.includes('Chromium')) browser = 'Chrome';
-  else if (ua.includes('Firefox/')) browser = 'Firefox';
-  else if (ua.includes('Safari/') && !ua.includes('Chrome')) browser = 'Safari';
-  else if (ua.includes('MSIE') || ua.includes('Trident/')) browser = 'Internet Explorer';
-  let os = 'OS inconnu';
-  if (ua.includes('Windows NT 10.0')) os = 'Windows 10/11';
-  else if (ua.includes('Windows NT 6.3')) os = 'Windows 8.1';
-  else if (ua.includes('Windows NT 6.1')) os = 'Windows 7';
-  else if (ua.includes('Windows')) os = 'Windows';
-  else if (ua.includes('iPhone')) os = 'iOS';
-  else if (ua.includes('iPad')) os = 'iPadOS';
-  else if (ua.includes('Android')) os = 'Android';
-  else if (ua.includes('Mac OS X')) os = 'macOS';
-  else if (ua.includes('Linux')) os = 'Linux';
-  return { browser, os };
+  if      (ua.includes('Edg/')   || ua.includes('EdgA/'))               browser = 'Edge';
+  else if (ua.includes('OPR/')   || ua.includes('Opera'))               browser = 'Opera';
+  else if (ua.includes('YaBrowser/'))                                    browser = 'Yandex';
+  else if (ua.includes('Brave/') || ua.includes('Brave'))               browser = 'Brave';
+  else if (ua.includes('Vivaldi/'))                                      browser = 'Vivaldi';
+  else if (ua.includes('SamsungBrowser/'))                               browser = 'Samsung Internet';
+  else if (ua.includes('Chrome/') && !ua.includes('Chromium'))          browser = 'Chrome';
+  else if (ua.includes('Chromium/'))                                     browser = 'Chromium';
+  else if (ua.includes('Firefox/') || ua.includes('FxiOS/'))            browser = 'Firefox';
+  else if (ua.includes('Safari/')  && !ua.includes('Chrome'))           browser = 'Safari';
+  else if (ua.includes('MSIE')     || ua.includes('Trident/'))          browser = 'Internet Explorer';
+
+  // ── Système d'exploitation ──
+  let os   = 'OS inconnu';
+  let icon = '🖥️';
+
+  if (ua.includes('iPhone')) {
+    // Extraire la version iOS : "iPhone OS 17_0" ou "CPU iPhone OS 17_0"
+    const match = ua.match(/CPU(?: iPhone)? OS (\d+)[_.](\d+)/);
+    os   = match ? `iOS ${match[1]}.${match[2]}` : 'iOS';
+    icon = '📱';
+  } else if (ua.includes('iPad')) {
+    const match = ua.match(/CPU OS (\d+)[_.](\d+)/);
+    os   = match ? `iPadOS ${match[1]}.${match[2]}` : 'iPadOS';
+    icon = '📱';
+  } else if (ua.includes('Android')) {
+    const match = ua.match(/Android (\d+(?:\.\d+)?)/);
+    os   = match ? `Android ${match[1]}` : 'Android';
+    icon = '📱';
+  } else if (ua.includes('Windows NT 10.0')) {
+    // Windows 11 : "Windows NT 10.0" + présence de "Windows 11" dans certains Hint headers
+    // ou via SEC-CH-UA-Platform-Version ≥ "13.0" — on reste conservateur
+    os   = 'Windows 10/11';
+    icon = '🖥️';
+  } else if (ua.includes('Windows NT 6.3')) {
+    os = 'Windows 8.1'; icon = '🖥️';
+  } else if (ua.includes('Windows NT 6.2')) {
+    os = 'Windows 8';   icon = '🖥️';
+  } else if (ua.includes('Windows NT 6.1')) {
+    os = 'Windows 7';   icon = '🖥️';
+  } else if (ua.includes('Windows')) {
+    os = 'Windows';     icon = '🖥️';
+  } else if (ua.includes('CrOS')) {
+    os = 'ChromeOS';    icon = '💻';
+  } else if (ua.includes('Mac OS X')) {
+    // Extraire la version macOS : "Mac OS X 10_15_7" ou "Mac OS X 14_0"
+    const match = ua.match(/Mac OS X (\d+)[_.](\d+)/);
+    if (match) {
+      const major = parseInt(match[1]);
+      const minor = parseInt(match[2]);
+      // macOS 11+ utilise la numérotation 11.x, 12.x, etc.
+      if (major >= 11 || (major === 10 && minor >= 16)) {
+        os = `macOS ${major}`;
+      } else {
+        const names: Record<number, string> = { 15: 'Sequoia', 14: 'Sonoma', 13: 'Ventura', 12: 'Monterey', 11: 'Big Sur', 10: 'Catalina', 9: 'Mojave', 8: 'High Sierra' };
+        os = `macOS${names[minor] ? ` ${names[minor]}` : ` 10.${minor}`}`;
+      }
+    } else {
+      os = 'macOS';
+    }
+    icon = '🍎';
+  } else if (ua.includes('Linux')) {
+    if      (ua.includes('Ubuntu'))  { os = 'Ubuntu';  icon = '🐧'; }
+    else if (ua.includes('Fedora'))  { os = 'Fedora';  icon = '🐧'; }
+    else if (ua.includes('Debian'))  { os = 'Debian';  icon = '🐧'; }
+    else                             { os = 'Linux';   icon = '🐧'; }
+  }
+
+  return { browser, os, icon };
 }
 type SettingsTab = 'profile' | 'voice' | 'notifications' | 'privacy' | 'appearance' | 'language';
 
@@ -1937,16 +1991,25 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   </Table.Row>
                                 ) : (
                                   sessions.map((session) => {
-                                    const { browser, os } = parseUserAgent(session.userAgent);
+                                    const { browser, os, icon } = parseUserAgent(session.userAgent);
                                     const currentSessionId = typeof window !== 'undefined' ? localStorage.getItem('alfychat_session_id') : null;
                                     const isCurrent = session.id === currentSessionId;
                                     const date = new Date(session.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+                                    // Normaliser l'IP côté affichage aussi (double sécurité)
+                                    const displayIP = session.ipAddress
+                                      ? session.ipAddress.startsWith('::ffff:')
+                                        ? session.ipAddress.slice(7)
+                                        : session.ipAddress === '::1' ? '127.0.0.1' : session.ipAddress
+                                      : '—';
                                     return (
                                       <Table.Row key={session.id}>
                                         <Table.Cell>
                                           <div className="flex items-center gap-2">
-                                            <MonitorIcon size={14} className="text-[var(--muted)]" />
-                                            <span className="text-sm">{browser} / {os}</span>
+                                            <span className="text-base leading-none">{icon}</span>
+                                            <div className="flex flex-col">
+                                              <span className="text-sm font-medium">{os}</span>
+                                              <span className="text-xs text-[var(--muted)]">{browser}</span>
+                                            </div>
                                             {isCurrent && (
                                               <Chip color="success" variant="soft" size="sm">
                                                 <Chip.Label>{t.settings.sessionCurrent}</Chip.Label>
@@ -1954,7 +2017,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                             )}
                                           </div>
                                         </Table.Cell>
-                                        <Table.Cell className="text-sm text-[var(--muted)]">{session.ipAddress ?? ''}</Table.Cell>
+                                        <Table.Cell className="font-mono text-sm text-[var(--muted)]">{displayIP}</Table.Cell>
                                         <Table.Cell className="text-sm text-[var(--muted)]">{date}</Table.Cell>
                                         <Table.Cell>
                                           {!isCurrent && (
