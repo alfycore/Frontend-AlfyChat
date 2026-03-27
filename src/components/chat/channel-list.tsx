@@ -304,6 +304,7 @@ export function ChannelList({
   const [channels, setChannels] = useState<Channel[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [presenceMap, setPresenceMap] = useState<Map<string, string>>(new Map());
+  const [customStatusMap, setCustomStatusMap] = useState<Map<string, string | null>>(new Map());
   const [showGroupCreate, setShowGroupCreate] = useState(false);
   const [serverName, setServerName] = useState('Serveur');
   const [serverBannerUrl, setServerBannerUrl] = useState<string | null>(null);
@@ -336,17 +337,23 @@ export function ChannelList({
       const response = await api.getConversations();
       if (!response.success || !response.data) return;
       const raw = response.data as any[];
+      const initialPresence = new Map<string, string>();
+      const initialCustomStatus = new Map<string, string | null>();
+
       const withNames = await Promise.all(
         raw.map(async (conv) => {
           if (conv.type === 'dm' && conv.recipientId) {
             const userRes = await api.getUser(conv.recipientId).catch(() => null);
             if (userRes?.success && userRes.data) {
+              const userData = userRes.data as any;
+              if (userData.status) initialPresence.set(conv.recipientId, userData.status);
+              if (userData.customStatus !== undefined) initialCustomStatus.set(conv.recipientId, userData.customStatus ?? null);
               return {
                 id: conv.id,
                 type: 'dm' as const,
                 recipientId: conv.recipientId,
-                recipientName: (userRes.data as any).displayName || (userRes.data as any).username,
-                recipientAvatar: (userRes.data as any).avatarUrl,
+                recipientName: userData.displayName || userData.username,
+                recipientAvatar: userData.avatarUrl,
                 lastMessage: conv.lastMessage,
                 lastMessageAt: conv.lastMessageAt || conv.updatedAt,
               };
@@ -380,6 +387,8 @@ export function ChannelList({
         return bTime - aTime;
       });
       setConversations(sorted);
+      if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
+      if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
     } catch (e) {
       console.error('Erreur chargement conversations:', e);
     }
@@ -516,10 +525,13 @@ export function ChannelList({
     };
     const handleRefresh = () => loadConversationsRef.current();
     const handlePresence = (data: any) => {
-      const userId = data?.userId;
-      const status = data?.status;
+      const payload = data?.payload || data;
+      const userId = payload?.userId;
+      const status = payload?.status;
+      const customStatus = payload?.customStatus;
       if (!userId) return;
       setPresenceMap((prev) => { const next = new Map(prev); next.set(userId, status); return next; });
+      if (customStatus !== undefined) setCustomStatusMap((prev) => { const next = new Map(prev); next.set(userId, customStatus); return next; });
     };
     socketService.on('message:new', handleMessageNew);
     socketService.onGroupCreate(handleRefresh);
@@ -841,7 +853,12 @@ export function ChannelList({
                         className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)] ${presenceDot(presenceMap.get(conv.recipientId))}`}
                       />
                     </div>
-                    <p className="min-w-0 flex-1 truncate text-left">{conv.recipientName || t.channelList.user}</p>
+                    <div className="min-w-0 flex-1 text-left">
+                      <p className="truncate">{conv.recipientName || t.channelList.user}</p>
+                      {customStatusMap.get(conv.recipientId) && (
+                        <p className="truncate text-[10px] text-[var(--muted)]/50 leading-tight">{customStatusMap.get(conv.recipientId)}</p>
+                      )}
+                    </div>
                     {dmUnread > 0 && (
                       <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 text-[10px]">
                         {dmUnread}

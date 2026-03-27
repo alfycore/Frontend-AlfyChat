@@ -292,8 +292,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       f.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const onlineFriends = filteredFriends.filter((f) => f.status === 'online');
-  const offlineFriends = filteredFriends.filter((f) => f.status !== 'online');
+  const onlineFriends = filteredFriends.filter((f) => f.status === 'online' || f.status === 'idle' || f.status === 'dnd');
+  const offlineFriends = filteredFriends.filter((f) => f.status !== 'online' && f.status !== 'idle' && f.status !== 'dnd');
 
   // ── Loading ──────────────────────────────────────────────
   if (isLoading) {
