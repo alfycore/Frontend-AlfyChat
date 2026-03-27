@@ -28,12 +28,12 @@ import { useLang, LANGS, type Lang } from '../lang-context';
 /* ═══════════════════════════════════════════════════════════ */
 
 function PageHeader({
-  icon,
+  icon: Icon,
   title,
   description,
   badge,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   title: string;
   description: string;
   badge?: string;
@@ -41,7 +41,7 @@ function PageHeader({
   return (
     <div className="mb-8 flex items-start gap-4">
       <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 ring-1 ring-accent-soft-hover">
-        <icon size={22} className="text-accent" />
+        <Icon size={22} className="text-accent" />
       </div>
       <div>
         <div className="flex items-center gap-2.5">

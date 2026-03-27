@@ -396,7 +396,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                     >
                       <XIcon size={16} className="text-[var(--muted)]" />
                     </button>
-                    {ROLE_ICONS.map(({ name, icon }) => (
+                    {ROLE_ICONS.map(({ name, icon: Icon }) => (
                       <button
                         key={name}
                         className={cn(
@@ -409,7 +409,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                         }}
                         title={name}
                       >
-                        <icon size={16} />
+                        <Icon size={16} />
                       </button>
                     ))}
                   </div>

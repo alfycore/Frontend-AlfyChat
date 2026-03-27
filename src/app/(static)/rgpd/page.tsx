@@ -110,12 +110,12 @@ export default function RGPDPage() {
   );
 }
 
-function Section({ icon, title, badge, children }: { icon: IconSvgElement; title: string; badge?: string; children: React.ReactNode }) {
+function Section({ icon: Icon, title, badge, children }: { icon: React.ComponentType<{ size?: number; className?: string }>; title: string; badge?: string; children: React.ReactNode }) {
   return (
     <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
       <div className="px-5 pt-5 pb-3">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-          <icon size={20} className="text-[var(--accent)]" />
+          <Icon size={20} className="text-[var(--accent)]" />
           {title}
           {badge && (
             <span className="rounded-full bg-[var(--surface-secondary)] px-2.5 py-0.5 text-xs font-normal text-[var(--muted)]">

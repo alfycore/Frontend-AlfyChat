@@ -19,7 +19,7 @@ import { Button, Separator } from '@heroui/react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-type NavItem = { href: string; icon: IconSvgElement; label: string };
+type NavItem = { href: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string };
 type NavSection = { label: string; items: NavItem[] };
 
 const NAV_SECTIONS: NavSection[] = [

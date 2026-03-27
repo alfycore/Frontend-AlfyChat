@@ -240,8 +240,8 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
   };
 
   const ChannelIcon = ({ type }: { type: string }) => {
-    const icon = CHANNEL_TYPE_ICON[type] ?? HashIcon;
-    return <icon size={16} className="shrink-0 text-[var(--muted)]" />;
+    const Icon = CHANNEL_TYPE_ICON[type] ?? HashIcon;
+    return <Icon size={16} className="shrink-0 text-[var(--muted)]" />;
   };
 
   const DeleteConfirm = ({ target, indent = false }: { target: Channel; indent?: boolean }) => (
@@ -406,7 +406,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             <div className="space-y-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">Type de salon</span>
               <div className="grid grid-cols-4 gap-1.5">
-                {CHANNEL_TYPES.map(({ id, icon, label }) => (
+                {CHANNEL_TYPES.map(({ id, icon: Icon, label }) => (
                   <button
                     key={id}
                     type="button"
@@ -418,7 +418,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
                         : 'border-[var(--border)]/40 text-[var(--muted)] hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]',
                     )}
                   >
-                    <icon size={16} />
+                    <Icon size={16} />
                     {label}
                   </button>
                 ))}
