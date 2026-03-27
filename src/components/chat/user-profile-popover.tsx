@@ -26,6 +26,7 @@ import {
   Tooltip,
 } from '@heroui/react';
 import { cn } from '@/lib/utils';
+import { sanitizeSvg } from '@/lib/sanitize';
 
 /* ------------------------------------------------------------------ */
 
@@ -67,7 +68,7 @@ const statusConfig: Record<string, { color: string; label: string; dot: string }
 function renderBadgeIcon(badge: UserBadge) {
   const iconKey = badge.iconValue || badge.icon;
   if (badge.iconType === 'svg') {
-    return <span dangerouslySetInnerHTML={{ __html: iconKey }} />;
+    return <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(iconKey) }} />;
   }
   return <i className={`bi ${iconKey}`} style={{ color: badge.color, fontSize: '14px' }} />;
 }

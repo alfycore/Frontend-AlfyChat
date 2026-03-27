@@ -95,6 +95,7 @@ import {
   type AudioPreferences,
 } from '@/hooks/use-call';
 import { cn } from '@/lib/utils';
+import { sanitizeSvg } from '@/lib/sanitize';
 
 /* -- Constants -------------------------------------------------------------- */
 
@@ -1106,7 +1107,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   {userBadges.slice(0, 4).map((badge: any) => (
                                     <div key={badge.id} className="flex size-7 items-center justify-center rounded-lg" style={{ backgroundColor: badge.color + '18', border: `1.5px solid ${badge.color}35` }} title={badge.name}>
                                       {badge.iconType === 'svg' ? (
-                                        <span dangerouslySetInnerHTML={{ __html: badge.iconValue || badge.icon }} />
+                                        <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
                                       ) : (
                                         <i className={`bi ${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '13px' }} />
                                       )}
@@ -1139,7 +1140,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               <div key={badge.id} className="flex items-center gap-2.5 rounded-xl border p-3" style={{ backgroundColor: badge.color + '08', borderColor: badge.color + '30' }}>
                                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg text-xl" style={{ backgroundColor: badge.color + '20', border: `2px solid ${badge.color}40` }}>
                                   {badge.iconType === 'svg' ? (
-                                    <span dangerouslySetInnerHTML={{ __html: badge.iconValue || badge.icon }} />
+                                    <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
                                   ) : (
                                     <i className={`bi ${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
                                   )}

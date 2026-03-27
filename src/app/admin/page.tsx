@@ -31,6 +31,7 @@ import {
 } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
+import { sanitizeSvg } from '@/lib/sanitize';
 import { Button, Card, Modal, Switch } from '@heroui/react';
 
 // Liste d'icônes Bootstrap Icons (vraies classes bi-*)
@@ -447,7 +448,7 @@ export default function AdminPage() {
     if (iconType === 'svg' && iconValue) {
       return (
         <span
-          dangerouslySetInnerHTML={{ __html: iconValue }}
+          dangerouslySetInnerHTML={{ __html: sanitizeSvg(iconValue) }}
           className="inline-block h-5 w-5"
         />
       );
@@ -1720,7 +1721,7 @@ export default function AdminPage() {
                   {badgeForm.iconValue && (
                     <div className="rounded-lg border border-[var(--border)] p-4 text-center">
                       <div
-                        dangerouslySetInnerHTML={{ __html: badgeForm.iconValue }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeSvg(badgeForm.iconValue) }}
                         className="inline-block h-12 w-12"
                       />
                     </div>
