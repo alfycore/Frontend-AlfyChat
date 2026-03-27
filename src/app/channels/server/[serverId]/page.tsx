@@ -157,7 +157,7 @@ export default function ServerWelcomePage() {
                 size="sm"
               >
                 <Chip.Label className="flex items-center gap-1 text-[10px]">
-                  <serverInfo?.isPublic ? GlobeIcon : LockIcon size={12} />
+                  {serverInfo?.isPublic ? <GlobeIcon size={12} /> : <LockIcon size={12} />}
                   {serverInfo?.isPublic ? 'Public' : 'Privé'}
                 </Chip.Label>
               </Chip>

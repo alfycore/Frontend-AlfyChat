@@ -161,11 +161,7 @@ function ChannelRow({
       {isActive && (
         <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)]" />
       )}
-      <CHANNEL_ICON[channel.type] ?? HashIcon size={14}
-        className={cn(
-          'shrink-0 transition-colors',
-          isActive ? 'text-[var(--accent)]' : 'text-[var(--muted)]/60 group-hover:text-[var(--muted)]',
-        )} />
+      {(() => { const Icon = CHANNEL_ICON[channel.type] ?? HashIcon; return <Icon size={14} className={cn('shrink-0 transition-colors', isActive ? 'text-[var(--accent)]' : 'text-[var(--muted)]/60 group-hover:text-[var(--muted)]')} />; })()}
       <span className="truncate">{channel.name}</span>
     </button>
   );

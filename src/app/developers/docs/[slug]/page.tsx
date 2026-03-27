@@ -109,8 +109,7 @@ function CodeBlock({ code, lang = 'js', title }: { code: string; lang?: string; 
               aria-label="Copier"
               className="flex size-6 items-center justify-center rounded hover:bg-surface"
             >
-              <copied ? CheckIcon : CopyIcon size={12}
-                className={copied ? 'text-green-400' : 'text-muted'} />
+              {copied ? <CheckIcon size={12} className="text-green-400" /> : <CopyIcon size={12} className="text-muted" />}
             </button>
           </div>
         </div>

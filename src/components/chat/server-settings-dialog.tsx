@@ -398,7 +398,7 @@ export function ServerSettingsDialog({
                       ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
                       : 'bg-[var(--surface-secondary)] text-[var(--muted)] group-hover:text-[var(--foreground)]',
                   )}>
-                    <NAV_ICON_MAP[id] size={13} />
+                    {(() => { const NavIcon = NAV_ICON_MAP[id]; return <NavIcon size={13} />; })()}
                   </div>
                   {label}
                 </button>

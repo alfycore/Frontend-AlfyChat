@@ -326,7 +326,7 @@ export default function LoginPage() {
                           onPress={() => setShowPassword(!showPassword)}
                           aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                         >
-                          <showPassword ? EyeOffIcon : EyeIcon size={16} />
+                          {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
                         </Button>
                       </InputGroup.Suffix>
                     </InputGroup>

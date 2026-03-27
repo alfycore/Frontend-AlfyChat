@@ -158,8 +158,7 @@ function CodeBlock({ title, lang = 'js', code }: { title?: string; lang?: string
             </span>
             <Tooltip delay={0}>
               <Button size="sm" variant="ghost" isIconOnly className="size-6 min-w-0" onPress={copy}>
-                <copied ? CheckIcon : CopyIcon size={12}
-                  className={copied ? 'text-green-400' : ''} />
+                {copied ? <CheckIcon size={12} className="text-green-400" /> : <CopyIcon size={12} />}
               </Button>
               <Tooltip.Content>{copied ? 'Copié !' : 'Copier'}</Tooltip.Content>
             </Tooltip>

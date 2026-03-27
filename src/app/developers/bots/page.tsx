@@ -541,10 +541,10 @@ export default function BotsPage() {
                     {showToken ? tokenBot.token : '\u2022'.repeat(48)}
                   </div>
                   <Button size="sm" variant="ghost" isIconOnly onPress={() => setShowToken(!showToken)}>
-                    <showToken ? EyeOffIcon : EyeIcon size={14} />
+                    {showToken ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
                   </Button>
                   <Button size="sm" variant="ghost" isIconOnly onPress={copyToken}>
-                    <copiedToken ? CheckCircle2Icon : CopyIcon size={14} className={copiedToken ? 'text-green-400' : ''} />
+                    {copiedToken ? <CheckCircle2Icon size={14} className="text-green-400" /> : <CopyIcon size={14} />}
                   </Button>
                 </div>
               </div>
