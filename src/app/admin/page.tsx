@@ -1,7 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+} from 'recharts';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ShieldIcon,
@@ -125,6 +136,9 @@ export default function AdminPage() {
 
   // Monitoring
   const [monitoringData, setMonitoringData] = useState<any>(null);
+  const [chartPeriod, setChartPeriod] = useState<'hour' | 'day' | 'month'>('hour');
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartLoading, setChartLoading] = useState(false);
 
   // Security (Gateway)
   const [bannedIPs, setBannedIPs] = useState<Array<{ ip: string; reason: string; bannedBy: string; bannedAt: string }>>([]);
@@ -203,11 +217,23 @@ export default function AdminPage() {
       } else if (activeTab === 'monitoring') {
         const res = await api.getMonitoringStats();
         if (res.success && res.data) setMonitoringData(res.data);
+        // Load chart with current period
+        loadChartData(chartPeriod);
       }
     } catch (error) {
       console.error('Erreur chargement:', error);
     }
     setLoading(false);
+  };
+
+  const loadChartData = async (period: 'hour' | 'day' | 'month') => {
+    setChartLoading(true);
+    try {
+      const res = await api.getMonitoringUsersChart(period);
+      if (res.success && res.data?.data) setChartData(res.data.data);
+    } catch { /* ignore */ } finally {
+      setChartLoading(false);
+    }
   };
 
   // ============ Badge CRUD ============
@@ -1370,34 +1396,116 @@ export default function AdminPage() {
                       </Card>
                     </div>
 
-                    {/* User stats history mini-chart (text table) */}
-                    {monitoringData.connectedUsers.history.length > 0 && (
-                      <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
-                        <div className="px-5 py-4">
-                          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-3">Historique connexions (24h)</h3>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-[var(--border)]">
-                                  <th className="pb-2 text-left text-[var(--muted)] font-medium">Heure</th>
-                                  <th className="pb-2 text-right text-[var(--muted)] font-medium">Connectés</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {monitoringData.connectedUsers.history.slice(-20).map((row: any) => (
-                                  <tr key={row.id} className="border-b border-[var(--border)]/40">
-                                    <td className="py-1.5 text-[var(--muted)]">
-                                      {new Date(row.recorded_at).toLocaleString('fr-FR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                    </td>
-                                    <td className="py-1.5 text-right text-[var(--foreground)] font-medium">{row.connected_users}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                    {/* User connection chart */}
+                    <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                      <div className="px-5 py-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-[var(--foreground)]">Historique connexions</h3>
+                          <div className="flex gap-1 rounded-lg border border-[var(--border)] p-1">
+                            {(['hour', 'day', 'month'] as const).map((p) => (
+                              <button
+                                key={p}
+                                onClick={() => {
+                                  setChartPeriod(p);
+                                  loadChartData(p);
+                                }}
+                                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                                  chartPeriod === p
+                                    ? 'bg-[var(--accent)] text-white'
+                                    : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+                                }`}
+                              >
+                                {p === 'hour' ? 'Par heure' : p === 'day' ? 'Par jour' : 'Par mois'}
+                              </button>
+                            ))}
                           </div>
                         </div>
-                      </Card>
-                    )}
+
+                        {chartLoading ? (
+                          <div className="flex h-52 items-center justify-center">
+                            <div className="size-6 animate-spin rounded-full border-4 border-[var(--accent)] border-t-transparent" />
+                          </div>
+                        ) : chartData.length === 0 ? (
+                          <div className="flex h-52 items-center justify-center text-sm text-[var(--muted)]">
+                            Pas encore de données pour cette période.
+                          </div>
+                        ) : (
+                          <ResponsiveContainer width="100%" height={220}>
+                            <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                              <defs>
+                                <linearGradient id="connGrad" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
+                                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                              <XAxis
+                                dataKey="label"
+                                tick={{ fontSize: 11, fill: 'var(--muted)' }}
+                                tickLine={false}
+                                axisLine={false}
+                                tickFormatter={(v: string) => {
+                                  if (chartPeriod === 'hour') return v.slice(11, 16); // HH:MM
+                                  if (chartPeriod === 'day') return v.slice(5);       // MM-DD
+                                  return v;                                            // YYYY-MM
+                                }}
+                              />
+                              <YAxis
+                                allowDecimals={false}
+                                tick={{ fontSize: 11, fill: 'var(--muted)' }}
+                                tickLine={false}
+                                axisLine={false}
+                              />
+                              <Tooltip
+                                contentStyle={{
+                                  background: 'var(--surface)',
+                                  border: '1px solid var(--border)',
+                                  borderRadius: '8px',
+                                  fontSize: 12,
+                                  color: 'var(--foreground)',
+                                }}
+                                labelStyle={{ color: 'var(--muted)', marginBottom: 4 }}
+                                formatter={(value: any, name: string) => {
+                                  const labels: Record<string, string> = { avg: 'Moy.', max: 'Max', min: 'Min' };
+                                  return [value, labels[name] ?? name];
+                                }}
+                              />
+                              <Area
+                                type="monotone"
+                                dataKey="avg"
+                                stroke="var(--accent)"
+                                strokeWidth={2}
+                                fill="url(#connGrad)"
+                                dot={false}
+                                activeDot={{ r: 4 }}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="max"
+                                stroke="#22c55e"
+                                strokeWidth={1.5}
+                                strokeDasharray="4 2"
+                                dot={false}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="min"
+                                stroke="#f97316"
+                                strokeWidth={1.5}
+                                strokeDasharray="4 2"
+                                dot={false}
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        )}
+
+                        <div className="mt-3 flex gap-4 text-xs text-[var(--muted)]">
+                          <span className="flex items-center gap-1.5"><span className="inline-block h-0.5 w-4 bg-[var(--accent)]" /> Moyenne</span>
+                          <span className="flex items-center gap-1.5"><span className="inline-block h-0.5 w-4 bg-green-500" style={{ borderTop: '1.5px dashed #22c55e' }} /> Maximum</span>
+                          <span className="flex items-center gap-1.5"><span className="inline-block h-0.5 w-4 bg-orange-500" style={{ borderTop: '1.5px dashed #f97316' }} /> Minimum</span>
+                        </div>
+                      </div>
+                    </Card>
 
                     {/* Services */}
                     <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
