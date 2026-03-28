@@ -255,7 +255,7 @@ function NewAnnouncementModal({
           <TextArea
             autoFocus
             value={content}
-            onChange={setContent}
+            onChange={(val) => setContent(val)}
             placeholder={"Rédigez votre annonce…\n\nVous pouvez utiliser **gras**, *italique*, # titres, etc."}
             rows={7}
             fullWidth
