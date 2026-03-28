@@ -310,6 +310,11 @@ export function ChannelList({
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  // ── Drag & drop DM list ───────────────────────────────────────────────────
+  const dragDmIdRef = useRef<string | null>(null);
+  const [draggingDmId, setDraggingDmId] = useState<string | null>(null);
+  const [dragOverDmId, setDragOverDmId] = useState<string | null>(null);
+
   // ── Context menu (clic droit salon) ──────────────────────────────────────
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; channel: Channel } | null>(null);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
@@ -367,11 +372,21 @@ export function ChannelList({
           };
         }),
       );
-      const sorted = (withNames.filter(Boolean) as Conversation[]).sort((a, b) => {
+      let sorted = (withNames.filter(Boolean) as Conversation[]).sort((a, b) => {
         const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
         const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
         return bTime - aTime;
       });
+      try {
+        const savedOrder = JSON.parse(localStorage.getItem('alfychat_dm_order') || '[]') as string[];
+        if (savedOrder.length > 0) {
+          const orderMap = new Map(savedOrder.map((id, i) => [id, i]));
+          sorted = [...sorted].sort((a, b) =>
+            (orderMap.has(a.recipientId) ? orderMap.get(a.recipientId)! : sorted.length) -
+            (orderMap.has(b.recipientId) ? orderMap.get(b.recipientId)! : sorted.length),
+          );
+        }
+      } catch {}
       setConversations(sorted);
       if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
       if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
@@ -828,14 +843,55 @@ export function ChannelList({
                     const dmUnread = notifStore.unread.get(conv.recipientId) ?? 0;
                     const presence = presenceMap.get(conv.recipientId);
                     return (
-                      <button
+                      <div
                         key={conv.id}
+                        draggable
+                        onDragStart={(e) => {
+                          dragDmIdRef.current = conv.recipientId;
+                          setDraggingDmId(conv.recipientId);
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                          if (dragDmIdRef.current !== conv.recipientId) setDragOverDmId(conv.recipientId);
+                        }}
+                        onDragLeave={(e) => {
+                          if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverDmId(null);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const from = dragDmIdRef.current;
+                          if (!from || from === conv.recipientId) { setDragOverDmId(null); return; }
+                          setConversations((prev) => {
+                            const arr = [...prev];
+                            const fromIdx = arr.findIndex((c) => c.recipientId === from);
+                            const toIdx = arr.findIndex((c) => c.recipientId === conv.recipientId);
+                            if (fromIdx === -1 || toIdx === -1) return prev;
+                            const [item] = arr.splice(fromIdx, 1);
+                            arr.splice(toIdx, 0, item);
+                            try { localStorage.setItem('alfychat_dm_order', JSON.stringify(arr.map((c) => c.recipientId))); } catch {}
+                            return arr;
+                          });
+                          dragDmIdRef.current = null;
+                          setDraggingDmId(null);
+                          setDragOverDmId(null);
+                        }}
+                        onDragEnd={() => { dragDmIdRef.current = null; setDraggingDmId(null); setDragOverDmId(null); }}
+                        className={cn(
+                          'transition-all duration-150',
+                          draggingDmId === conv.recipientId && 'opacity-40 scale-95',
+                          dragOverDmId === conv.recipientId && draggingDmId !== conv.recipientId && 'translate-y-0.5',
+                        )}
+                      >
+                      <button
                         onClick={() => router.push(`/channels/me/${conv.recipientId}`)}
                         className={cn(
                           'group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-all duration-150',
                           isActive
                             ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
                             : 'text-[var(--foreground)] hover:bg-[var(--surface-secondary)]/60',
+                          dragOverDmId === conv.recipientId && 'ring-1 ring-[var(--accent)]/30',
                         )}
                       >
                         <div className="relative shrink-0">
@@ -870,6 +926,7 @@ export function ChannelList({
                           </Chip>
                         )}
                       </button>
+                      </div>
                     );
                   })}
                 </div>

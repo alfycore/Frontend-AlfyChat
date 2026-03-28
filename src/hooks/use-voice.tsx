@@ -195,13 +195,16 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     return pc;
   }, [cleanupPeerConnection]);
 
+  // Stable ref to leaveChannelInternal so joinChannel doesn't depend on its declaration order
+  const leaveChannelInternalRef = useRef<() => void>(() => {});
+
   // ── Join a voice channel ──
   const joinChannel = useCallback(async (serverId: string, channelId: string) => {
     if (currentChannelRef.current === channelId) return;
 
     // Leave current channel first
     if (currentChannelRef.current) {
-      leaveChannelInternal();
+      leaveChannelInternalRef.current();
     }
 
     setIsConnecting(true);
@@ -249,7 +252,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsConnecting(false);
     }
-  }, [isMuted, leaveChannelInternal]);
+  }, [isMuted]);
 
   // ── Leave voice channel (internal) ──
   const leaveChannelInternal = useCallback(() => {
@@ -286,6 +289,9 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       socketService.leaveVoiceChannel(sId, chId);
     }
   }, []);
+
+  // Keep the ref up to date
+  leaveChannelInternalRef.current = leaveChannelInternal;
 
   const leaveChannel = useCallback(() => {
     leaveChannelInternal();

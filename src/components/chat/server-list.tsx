@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   MessageCircleIcon,
   Link2Icon,
@@ -84,6 +84,11 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
   const [joinError, setJoinError] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
 
+  // Drag & drop
+  const dragIdRef = useRef<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
   useEffect(() => { loadServers(); }, []);
 
   useEffect(() => {
@@ -144,11 +149,22 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
     setIsLoading(true);
     const res = await api.getServers();
     if (res.success && res.data) {
-      setServers((res.data as any[]).map((s: any) => ({
+      let list: Server[] = (res.data as any[]).map((s: any) => ({
         id: s.id,
         name: s.name,
         iconUrl: s.iconUrl || s.icon_url,
-      })));
+      }));
+      try {
+        const saved = JSON.parse(localStorage.getItem('alfychat_server_order') || '[]') as string[];
+        if (saved.length > 0) {
+          const orderMap = new Map(saved.map((id, i) => [id, i]));
+          list = [...list].sort((a, b) =>
+            (orderMap.has(a.id) ? orderMap.get(a.id)! : list.length) -
+            (orderMap.has(b.id) ? orderMap.get(b.id)! : list.length),
+          );
+        }
+      } catch {}
+      setServers(list);
     }
     setIsLoading(false);
   };
@@ -229,8 +245,48 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                 <Skeleton key={i} className="size-12 rounded-2xl" animationType="shimmer" />
               ))
             : servers.map((server) => (
-                <Dropdown
+                <div
                   key={server.id}
+                  draggable
+                  onDragStart={(e) => {
+                    dragIdRef.current = server.id;
+                    setDraggingId(server.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (dragIdRef.current !== server.id) setDragOverId(server.id);
+                  }}
+                  onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverId(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const from = dragIdRef.current;
+                    if (!from || from === server.id) { setDragOverId(null); return; }
+                    setServers((prev) => {
+                      const arr = [...prev];
+                      const fromIdx = arr.findIndex((s) => s.id === from);
+                      const toIdx = arr.findIndex((s) => s.id === server.id);
+                      if (fromIdx === -1 || toIdx === -1) return prev;
+                      const [item] = arr.splice(fromIdx, 1);
+                      arr.splice(toIdx, 0, item);
+                      try { localStorage.setItem('alfychat_server_order', JSON.stringify(arr.map((s) => s.id))); } catch {}
+                      return arr;
+                    });
+                    dragIdRef.current = null;
+                    setDraggingId(null);
+                    setDragOverId(null);
+                  }}
+                  onDragEnd={() => { dragIdRef.current = null; setDraggingId(null); setDragOverId(null); }}
+                  className={cn(
+                    'transition-all duration-150',
+                    draggingId === server.id && 'opacity-40 scale-95',
+                    dragOverId === server.id && draggingId !== server.id && 'translate-y-0.5 opacity-70',
+                  )}
+                >
+                <Dropdown
                   isOpen={dropdownOpenId === server.id}
                   onOpenChange={(open) => setDropdownOpenId(open ? server.id : null)}
                 >
@@ -242,6 +298,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                         selectedServer === server.id
                           ? 'rounded-xl ring-2 ring-accent/25 ring-offset-1 ring-offset-background'
                           : 'hover:rounded-xl',
+                        dragOverId === server.id && 'ring-2 ring-[var(--accent)]/40 ring-offset-1 ring-offset-[var(--background)]',
                       )}
                       onClick={() => onSelectServer(server.id)}
                       onContextMenu={(e) => { e.preventDefault(); setDropdownOpenId(server.id); }}
@@ -302,6 +359,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                     </Dropdown.Menu>
                   </Dropdown.Popover>
                 </Dropdown>
+                </div>
               ))}
         </ScrollShadow>
 
