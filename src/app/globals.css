@@ -178,6 +178,47 @@ body[data-wallpaper] header {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
 }
 
+/* ── Glassmorphism : grandes zones de l'interface ──────────────────────────── */
+
+/* Zone chat principal */
+body[data-wallpaper] [data-tour="chat-area"] {
+  background: oklch(10% 0.01 282 / 0.35);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  border-radius: 0.75rem;
+  border: 1px solid oklch(100% 0 0 / 0.08);
+}
+
+/* Zone amis */
+body[data-wallpaper] [data-tour="friends-panel"] {
+  background: oklch(10% 0.01 282 / 0.35);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  border-radius: 0.75rem;
+  border: 1px solid oklch(100% 0 0 / 0.08);
+}
+
+/* Header interne des zones glass */
+body[data-wallpaper] [data-tour="chat-area"] > div:first-child,
+body[data-wallpaper] [data-tour="friends-panel"] > div > div:first-child {
+  background: oklch(100% 0 0 / 0.04);
+  border-bottom-color: oklch(100% 0 0 / 0.08);
+}
+
+/* Section DM list dans la sidebar */
+body[data-wallpaper] [data-section="dm-list"] {
+  background: oklch(100% 0 0 / 0.05);
+  border-color: oklch(100% 0 0 / 0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Input message glass */
+body[data-wallpaper] [data-tour="chat-area"] form > div:last-child > div {
+  background: oklch(100% 0 0 / 0.07) !important;
+  border-color: oklch(100% 0 0 / 0.12) !important;
+}
+
 /* Texte adaptatif selon la luminance du wallpaper */
 body[data-wallpaper] [data-tour="chat-area"],
 body[data-wallpaper] [data-tour="friends-panel"] {
@@ -202,4 +243,16 @@ body[data-wallpaper] [data-tour="friends-panel"] [class*="text-muted"] {
 
 body[data-wallpaper] [data-tour="conversations"] {
   color: var(--adaptive-fg-muted, inherit);
+}
+
+/* Light mode wallpaper : fond plus clair */
+body[data-wallpaper-light] [data-tour="chat-area"],
+body[data-wallpaper-light] [data-tour="friends-panel"] {
+  background: oklch(98% 0.005 282 / 0.55);
+  border-color: oklch(0% 0 0 / 0.08);
+}
+
+body[data-wallpaper-light] [data-section="dm-list"] {
+  background: oklch(0% 0 0 / 0.04);
+  border-color: oklch(0% 0 0 / 0.08);
 }

@@ -77,14 +77,6 @@ const HOSTINGER_SERVICES: ServiceDef[] = [
     checkUrl: `${GATEWAY}/calls/health`,
     Icon: PhoneIcon,
   },
-  {
-    key: 'cdn',
-    name: 'CDN Médias',
-    description: 'media.alfychat.app — fichiers, avatars & uploads',
-    provider: 'hostinger',
-    checkUrl: `${CDN}/health`,
-    Icon: ImageIcon,
-  },
 ];
 
 const ALFYCORE_SERVICES: ServiceDef[] = [
@@ -111,6 +103,14 @@ const ALFYCORE_SERVICES: ServiceDef[] = [
     provider: 'alfycore',
     checkUrl: `${GATEWAY}/bots/health`,
     Icon: BotIcon,
+  },
+  {
+    key: 'media',
+    name: 'Service Médias',
+    description: 'media.alfychat.app — fichiers, avatars & uploads',
+    provider: 'alfycore',
+    checkUrl: `${CDN}/health`,
+    Icon: ImageIcon,
   },
 ];
 
@@ -347,7 +347,7 @@ export default function StatusPage() {
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Hostinger
             </h2>
-            <span className="text-[10px] text-muted-foreground/50">— Site web · Gateway · Users · Messages · Calls · CDN</span>
+            <span className="text-[10px] text-muted-foreground/50">— Site web · Gateway · Users · Messages · Calls</span>
           </div>
           <div className="divide-y divide-border/40 rounded-xl border border-violet-500/20 bg-card/30 overflow-hidden">
             {HOSTINGER_SERVICES.map((svc, idx) => (
@@ -362,7 +362,7 @@ export default function StatusPage() {
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               AlfyCore
             </h2>
-            <span className="text-[10px] text-muted-foreground/50">— Friends · Servers · Bots</span>
+            <span className="text-[10px] text-muted-foreground/50">— Friends · Servers · Bots · Médias</span>
           </div>
           <div className="divide-y divide-border/40 rounded-xl border border-sky-500/20 bg-card/30 overflow-hidden">
             {ALFYCORE_SERVICES.map((svc, idx) => (
@@ -376,7 +376,7 @@ export default function StatusPage() {
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Infrastructure
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               {
                 name: 'Base de données MySQL',
@@ -389,6 +389,12 @@ export default function StatusPage() {
                 desc: 'AlfyCore · 51.254.243.250:5435',
                 Icon: ZapIcon,
                 provider: 'alfycore' as Provider,
+              },
+              {
+                name: 'CDN Hostinger',
+                desc: 'Hostinger · Distribution statique & médias',
+                Icon: GlobeIcon,
+                provider: 'hostinger' as Provider,
               },
             ].map(({ name, desc, Icon, provider }) => (
               <div

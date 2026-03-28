@@ -115,19 +115,34 @@ export default function PrivacyPage() {
           <Separator />
 
           <section>
-            <h2 className="mb-3 text-lg font-bold text-[var(--foreground)]">5. Hébergement et sécurité</h2>
-            <div className="rounded-xl border border-accent/20 bg-accent/[0.03] p-5">
-              <p className="mb-2">
-                <span className="font-bold text-[var(--foreground)]">🇫🇷 Hébergement en France.</span>{' '}
-                Toutes vos données sont stockées sur des serveurs situés en France.
-              </p>
-              <p className="mb-2">
-                Le chiffrement en transit (TLS 1.3) est systématique. Le chiffrement au repos
-                (AES-256) protège les données stockées. Le chiffrement de bout en bout (E2EE)
-                est disponible pour les conversations les plus sensibles.
-              </p>
-              <p>
-                Les mots de passe sont hachés avec bcrypt et ne sont jamais stockés en clair.
+            <h2 className="mb-3 text-lg font-bold text-[var(--foreground)]">5. Hébergement et transferts de données</h2>
+            <p className="mb-4">
+              L&apos;infrastructure AlfyChat est répartie entre deux prestataires d&apos;hébergement selon la nature du service :
+            </p>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.03] p-4">
+                <h3 className="mb-2 text-[13px] font-bold text-[var(--foreground)] flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-violet-400" />
+                  Hostinger — Site web, Gateway, Utilisateurs, Messages, Appels
+                </h3>
+                <p className="text-[13px]">
+                  Le site <strong className="text-[var(--foreground)]">alfychat.app</strong>, l&apos;API gateway (<strong className="text-[var(--foreground)]">gateway.alfychat.app</strong>), les services d&apos;authentification, de messagerie et d&apos;appels sont hébergés chez <strong className="text-[var(--foreground)]">Hostinger</strong>, avec CDN intégré pour la distribution des contenus statiques et médias (<strong className="text-[var(--foreground)]">media.alfychat.app</strong>).
+                  Hostinger est un prestataire lituanien opérant des datacenters en Europe.
+                </p>
+              </div>
+              <div className="rounded-xl border border-sky-500/20 bg-sky-500/[0.03] p-4">
+                <h3 className="mb-2 text-[13px] font-bold text-[var(--foreground)] flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-sky-400" />
+                  AlfyCore — Amis, Serveurs, Bots, Médias, Base de données, Cache
+                </h3>
+                <p className="text-[13px]">
+                  Les services secondaires (amis, serveurs communautaires, bots, médias backend) ainsi que la base de données MySQL (<strong className="text-[var(--foreground)]">51.254.243.250</strong>) et le cache Redis sont hébergés sur les serveurs propres de l&apos;association <strong className="text-[var(--foreground)]">AlfyCore</strong>, situés en Europe.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+              <p className="text-[13px]">
+                Le chiffrement en transit (TLS 1.3) est systématique sur tous les services. Le chiffrement au repos (AES-256) protège les données stockées. Le chiffrement de bout en bout (E2EE) est disponible pour les conversations privées. Les mots de passe sont hachés avec bcrypt et ne sont jamais stockés en clair.
               </p>
             </div>
           </section>

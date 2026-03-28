@@ -492,21 +492,47 @@ export default function TermsPage() {
 
             {/* ── SECTION 14 ── */}
             <section id="section-14">
-              <h2 className="mb-4 text-lg font-bold text-[var(--foreground)]">14. Disponibilité du service</h2>
+              <h2 className="mb-4 text-lg font-bold text-[var(--foreground)]">14. Disponibilité du service et hébergement</h2>
 
               <p className="mb-4">
                 AlfyCore s&apos;efforce de maintenir AlfyChat disponible 24h/24 et 7j/7, mais ne peut garantir une
                 disponibilité ininterrompue. Des interruptions peuvent survenir pour raisons de maintenance,
                 de mises à jour, de pannes techniques ou de force majeure.
               </p>
+
+              <h3 className="mb-2 text-[13px] font-semibold text-[var(--foreground)]">14.1 Infrastructure d&apos;hébergement</h3>
+              <p className="mb-3">L&apos;infrastructure AlfyChat est répartie entre deux prestataires :</p>
+              <div className="space-y-3 mb-4">
+                <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.03] p-4">
+                  <p className="mb-1 text-[13px] font-bold text-[var(--foreground)]">
+                    <span className="inline-block h-2 w-2 rounded-full bg-violet-400 mr-2 align-middle" />
+                    Hostinger
+                  </p>
+                  <p className="text-[12px] text-[var(--muted)]">
+                    Site web (<strong className="text-[var(--foreground)]">alfychat.app</strong>), API Gateway (<strong className="text-[var(--foreground)]">gateway.alfychat.app</strong>), services Utilisateurs, Messages et Appels, CDN de distribution (<strong className="text-[var(--foreground)]">media.alfychat.app</strong>). Hébergeur lituanien, datacenters européens.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-sky-500/20 bg-sky-500/[0.03] p-4">
+                  <p className="mb-1 text-[13px] font-bold text-[var(--foreground)]">
+                    <span className="inline-block h-2 w-2 rounded-full bg-sky-400 mr-2 align-middle" />
+                    AlfyCore (serveurs propres)
+                  </p>
+                  <p className="text-[12px] text-[var(--muted)]">
+                    Services Amis, Serveurs communautaires, Bots, Médias (backend), base de données MySQL et cache Redis. Serveurs opérés directement par l&apos;association AlfyCore.
+                  </p>
+                </div>
+              </div>
+
+              <h3 className="mb-2 text-[13px] font-semibold text-[var(--foreground)]">14.2 Responsabilité en cas d&apos;indisponibilité</h3>
               <p className="mb-4">
                 AlfyCore ne saurait être tenu responsable des préjudices résultant d&apos;une indisponibilité du
                 service, d&apos;une perte de données ou de toute autre défaillance technique, dans les limites
-                permises par le droit applicable.
+                permises par le droit applicable, y compris les interruptions liées aux prestataires tiers (Hostinger).
               </p>
               <p>
                 AlfyCore se réserve le droit de modifier, d&apos;interrompre temporairement ou définitivement tout ou
                 partie du service, notamment pour des raisons techniques, légales ou liées à la politique associative.
+                L&apos;état en temps réel des services est consultable sur <strong className="text-[var(--foreground)]">alfychat.app/status</strong>.
               </p>
             </section>
 

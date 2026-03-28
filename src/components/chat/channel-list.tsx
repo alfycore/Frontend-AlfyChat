@@ -801,7 +801,7 @@ export function ChannelList({
             )}
 
             {/* DMs */}
-            <div className="mx-1 mt-1 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-1.5">
+            <div data-section="dm-list" className="mx-1 mt-1 rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/40 p-1.5 transition-all">
             <p
               data-tour="conversations"
               className="mb-1 px-2 pt-1 text-[10px] font-bold uppercase tracking-widest text-muted/50"
