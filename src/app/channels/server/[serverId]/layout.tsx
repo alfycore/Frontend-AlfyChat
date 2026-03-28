@@ -187,8 +187,23 @@ function LayoutInner({ children }: { children: ReactNode }) {
     );
   }
 
+  const { serverListPosition, memberListSide } = layoutPrefs;
+  const isTopBottom = serverListPosition === 'top' || serverListPosition === 'bottom';
+
+  const sidebarContent = (
+    <>
+      <ChannelList
+        serverId={serverId}
+        selectedChannel={channelId ?? null}
+        onSelectChannel={handleSelectChannel}
+        onOpenSettings={() => setServerSettingsOpen(true)}
+      />
+      <VoiceControlBar />
+    </>
+  );
+
   return (
-    <div data-layout="root" className="flex h-dvh overflow-hidden bg-[var(--background)] transition-all">
+    <div data-layout="root" className={`flex h-dvh overflow-hidden bg-[var(--background)] ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
       <IncomingCallDialog
         open={!!incomingCall}
         callerName={incomingCall?.callerName || ''}
@@ -198,61 +213,103 @@ function LayoutInner({ children }: { children: ReactNode }) {
         onDecline={declineCall}
       />
 
-      {/* Mobile overlay backdrop */}
+      {/* Mobile overlay */}
       {isMobile && (showSidebar || showMemberList) && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-          onClick={closeAll}
-        />
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={closeAll} />
       )}
 
-      {/* ── SIDEBAR desktop : ServerList fixe + ChannelList redimensionnable ── */}
+      {/* ── DESKTOP: Server list TOP ── */}
+      {!isMobile && serverListPosition === 'top' && (
+        <ServerList horizontal selectedServer={serverId} onSelectServer={handleSelectServer} />
+      )}
+
+      {/* ── DESKTOP: Inner row ── */}
       {!isMobile && (
-        <div
-          className="flex h-full shrink-0"
-          style={{ order: layoutPrefs.sidebarSide === 'right' ? 3 : 1 }}
-        >
-          {layoutPrefs.sidebarSide === 'right' && <ResizeHandle onMouseDown={onChannelResize} />}
-          <div data-layout="server-list" className="h-full shrink-0 transition-all">
-            <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
+        <div className={`flex min-w-0 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
+
+          {/* Member list LEFT */}
+          {memberListDesktopVisible && memberListSide === 'left' && (
+            <>
+              <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0">
+                <MemberList serverId={serverId} />
+              </div>
+              <ResizeHandle onMouseDown={onMemberResize} />
+            </>
+          )}
+
+          {/* Server list LEFT */}
+          {serverListPosition === 'left' && (
+            <div data-layout="server-list" className="h-full shrink-0">
+              <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
+            </div>
+          )}
+
+          {/* Sidebar left (all except right) */}
+          {serverListPosition !== 'right' && (
+            <>
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col">
+                {sidebarContent}
+              </div>
+              <ResizeHandle onMouseDown={onChannelResize} />
+            </>
+          )}
+
+          {/* Content */}
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            {children}
           </div>
-          <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col transition-all">
-            <ChannelList
-              serverId={serverId}
-              selectedChannel={channelId ?? null}
-              onSelectChannel={handleSelectChannel}
-              onOpenSettings={() => setServerSettingsOpen(true)}
-            />
-            <VoiceControlBar />
-          </div>
-          {layoutPrefs.sidebarSide === 'left' && <ResizeHandle onMouseDown={onChannelResize} />}
+
+          {/* Sidebar right */}
+          {serverListPosition === 'right' && (
+            <>
+              <ResizeHandle onMouseDown={onChannelResize} />
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col">
+                {sidebarContent}
+              </div>
+            </>
+          )}
+
+          {/* Server list RIGHT */}
+          {serverListPosition === 'right' && (
+            <div data-layout="server-list" className="h-full shrink-0">
+              <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
+            </div>
+          )}
+
+          {/* Member list RIGHT (default) */}
+          {memberListDesktopVisible && memberListSide !== 'left' && (
+            <>
+              <ResizeHandle onMouseDown={onMemberResize} />
+              <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0">
+                <MemberList serverId={serverId} />
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* ── SIDEBAR mobile : overlay ── */}
+      {/* ── DESKTOP: Server list BOTTOM ── */}
+      {!isMobile && serverListPosition === 'bottom' && (
+        <ServerList horizontal selectedServer={serverId} onSelectServer={handleSelectServer} />
+      )}
+
+      {/* ── MOBILE: content ── */}
+      {isMobile && <div className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</div>}
+
+      {/* ── MOBILE: Sidebar overlay ── */}
       {isMobile && (
-        <div
-          className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${
-            showSidebar ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
+        <div className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
           <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
-          <div className="flex h-full w-60 shrink-0 flex-col">
-            <ChannelList
-              serverId={serverId}
-              selectedChannel={channelId ?? null}
-              onSelectChannel={handleSelectChannel}
-              onOpenSettings={() => setServerSettingsOpen(true)}
-            />
-            <VoiceControlBar />
-          </div>
+          <div className="flex h-full w-60 shrink-0 flex-col">{sidebarContent}</div>
         </div>
       )}
 
-      {/* Main content */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden" style={{ order: 2 }}>
-        {children}
-      </div>
+      {/* ── MOBILE: Member list overlay ── */}
+      {isMobile && (
+        <div className={`fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-in-out ${showMemberList ? 'translate-x-0' : 'translate-x-full'}`}>
+          <MemberList serverId={serverId} />
+        </div>
+      )}
 
       {/* Server settings dialog */}
       {serverSettingsOpen && (
@@ -262,31 +319,6 @@ function LayoutInner({ children }: { children: ReactNode }) {
           onOpenChange={setServerSettingsOpen}
           onServerUpdated={() => setServerSettingsOpen(false)}
         />
-      )}
-
-      {/* ── MEMBER LIST desktop : redimensionnable + togglable ── */}
-      {!isMobile && memberListDesktopVisible && (
-        <div
-          className="flex h-full shrink-0"
-          style={{ order: layoutPrefs.memberListSide === 'left' ? 0 : 4 }}
-        >
-          {layoutPrefs.memberListSide === 'right' && <ResizeHandle onMouseDown={onMemberResize} />}
-          <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0 transition-all">
-            <MemberList serverId={serverId} />
-          </div>
-          {layoutPrefs.memberListSide === 'left' && <ResizeHandle onMouseDown={onMemberResize} />}
-        </div>
-      )}
-
-      {/* ── MEMBER LIST mobile : overlay ── */}
-      {isMobile && (
-        <div
-          className={`fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-in-out ${
-            showMemberList ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        >
-          <MemberList serverId={serverId} />
-        </div>
       )}
     </div>
   );

@@ -2384,53 +2384,75 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       <Breadcrumbs.Item>Mise en page</Breadcrumbs.Item>
                     </Breadcrumbs>
 
-                    {/* Sidebar position */}
+                    {/* Server list position */}
                     <Card variant="secondary">
                       <Card.Header>
-                        <Card.Title>Position de la barre latérale</Card.Title>
-                        <Card.Description>Choisissez le côté de la liste des serveurs et des canaux</Card.Description>
+                        <Card.Title>Position de la liste des serveurs</Card.Title>
+                        <Card.Description>Choisissez où apparaît la liste des icônes de serveurs</Card.Description>
                       </Card.Header>
                       <Card.Content>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => updateLayoutPrefs({ sidebarSide: 'left' })}
-                            className={cn(
-                              'flex flex-col items-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition-all duration-150',
-                              layoutPrefs.sidebarSide === 'left'
-                                ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
-                                : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 text-[var(--muted)] hover:border-[var(--border)]/60',
-                            )}
-                          >
-                            <div className="flex h-14 w-full gap-1 overflow-hidden rounded-lg border border-[var(--border)]/20 bg-[var(--background)]/50 p-1">
-                              <div className="flex gap-0.5">
-                                <div className="w-2.5 rounded-sm bg-[var(--accent)]/40" />
-                                <div className="w-5 rounded-sm bg-[var(--surface-secondary)]/60" />
-                              </div>
-                              <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
-                            </div>
-                            <span>Gauche</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => updateLayoutPrefs({ sidebarSide: 'right' })}
-                            className={cn(
-                              'flex flex-col items-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition-all duration-150',
-                              layoutPrefs.sidebarSide === 'right'
-                                ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
-                                : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 text-[var(--muted)] hover:border-[var(--border)]/60',
-                            )}
-                          >
-                            <div className="flex h-14 w-full gap-1 overflow-hidden rounded-lg border border-[var(--border)]/20 bg-[var(--background)]/50 p-1">
-                              <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
-                              <div className="flex gap-0.5">
-                                <div className="w-5 rounded-sm bg-[var(--surface-secondary)]/60" />
-                                <div className="w-2.5 rounded-sm bg-[var(--accent)]/40" />
-                              </div>
-                            </div>
-                            <span>Droite</span>
-                          </button>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          {([
+                            {
+                              id: 'left', label: 'Gauche',
+                              preview: (
+                                <div className="flex h-12 w-full gap-0.5 overflow-hidden rounded-md border border-[var(--border)]/20 bg-[var(--background)]/50 p-0.5">
+                                  <div className="w-2 rounded-sm bg-[var(--accent)]/50" />
+                                  <div className="w-3.5 rounded-sm bg-[var(--surface-secondary)]/50" />
+                                  <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
+                                </div>
+                              ),
+                            },
+                            {
+                              id: 'right', label: 'Droite',
+                              preview: (
+                                <div className="flex h-12 w-full gap-0.5 overflow-hidden rounded-md border border-[var(--border)]/20 bg-[var(--background)]/50 p-0.5">
+                                  <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
+                                  <div className="w-3.5 rounded-sm bg-[var(--surface-secondary)]/50" />
+                                  <div className="w-2 rounded-sm bg-[var(--accent)]/50" />
+                                </div>
+                              ),
+                            },
+                            {
+                              id: 'top', label: 'Haut',
+                              preview: (
+                                <div className="flex h-12 w-full flex-col gap-0.5 overflow-hidden rounded-md border border-[var(--border)]/20 bg-[var(--background)]/50 p-0.5">
+                                  <div className="h-2 w-full rounded-sm bg-[var(--accent)]/50" />
+                                  <div className="flex flex-1 gap-0.5">
+                                    <div className="w-3.5 rounded-sm bg-[var(--surface-secondary)]/50" />
+                                    <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
+                                  </div>
+                                </div>
+                              ),
+                            },
+                            {
+                              id: 'bottom', label: 'Bas',
+                              preview: (
+                                <div className="flex h-12 w-full flex-col gap-0.5 overflow-hidden rounded-md border border-[var(--border)]/20 bg-[var(--background)]/50 p-0.5">
+                                  <div className="flex flex-1 gap-0.5">
+                                    <div className="w-3.5 rounded-sm bg-[var(--surface-secondary)]/50" />
+                                    <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
+                                  </div>
+                                  <div className="h-2 w-full rounded-sm bg-[var(--accent)]/50" />
+                                </div>
+                              ),
+                            },
+                          ] as const).map(({ id, label, preview }) => (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => updateLayoutPrefs({ serverListPosition: id })}
+                              className={cn(
+                                'flex flex-col items-center gap-2 rounded-xl border-2 p-2.5 text-xs font-medium transition-all duration-150',
+                                layoutPrefs.serverListPosition === id
+                                  ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
+                                  : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 text-[var(--muted)] hover:border-[var(--border)]/60',
+                              )}
+                            >
+                              {preview}
+                              <span>{label}</span>
+                            </button>
+                          ))}
                         </div>
                       </Card.Content>
                     </Card>

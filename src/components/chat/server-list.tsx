@@ -52,6 +52,7 @@ interface Server {
 interface ServerListProps {
   selectedServer: string | null;
   onSelectServer: (serverId: string | null) => void;
+  horizontal?: boolean;
 }
 
 /** Pill indicator — visible when active, mini on group-hover */
@@ -68,11 +69,14 @@ function Indicator({ active }: { active: boolean }) {
   );
 }
 
-export function ServerList({ selectedServer, onSelectServer }: ServerListProps) {
+export function ServerList({ selectedServer, onSelectServer, horizontal = false }: ServerListProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const { prefs: layoutPrefs } = useLayoutPrefs();
   const compact = layoutPrefs.compactServerList;
+  const btnSize = compact ? 'size-9' : horizontal ? 'size-10' : 'size-12';
+  const iconSize = compact ? 16 : horizontal ? 18 : 22;
+  const tooltipPlacement = horizontal ? 'bottom' : 'right';
 
   const [servers, setServers] = useState<Server[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -212,8 +216,10 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
     <>
       {/* ── Sidebar ── */}
       <div className={cn(
-        'flex h-full flex-col items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60 py-3 backdrop-blur-xl transition-all duration-200',
-        compact ? 'w-13' : 'w-17',
+        'flex items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60 backdrop-blur-xl transition-all duration-200',
+        horizontal
+          ? 'h-14 w-full flex-row border-b border-[var(--border)]/20 px-2'
+          : cn('h-full flex-col py-3', compact ? 'w-13' : 'w-17'),
       )}>
 
         {/* DMs */}
@@ -222,8 +228,8 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             isIconOnly
             variant="ghost"
             className={cn(
-              'group relative rounded-2xl transition-all duration-200',
-              compact ? 'size-9' : 'size-12',
+              'group relative rounded-2xl transition-all duration-200 shrink-0',
+              btnSize,
               selectedServer === null
                 ? 'rounded-xl bg-accent text-accent-foreground shadow-lg shadow-accent/20'
                 : 'bg-[var(--surface-secondary)]/50 text-muted hover:rounded-xl hover:bg-accent/10 hover:text-accent',
@@ -231,25 +237,31 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             onPress={() => onSelectServer(null)}
           >
             <Indicator active={selectedServer === null} />
-            <MessageCircleIcon size={compact ? 16 : 22} />
+            <MessageCircleIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement="right">
+          <Tooltip.Content showArrow placement={tooltipPlacement}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.dms || 'Messages directs'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> D</Kbd>
           </Tooltip.Content>
         </Tooltip>
 
-        <Separator className="w-8 opacity-30" />
+        <Separator className={horizontal ? 'h-8 opacity-30' : 'w-8 opacity-30'} orientation={horizontal ? 'vertical' : 'horizontal'} />
 
         {/* Server list */}
         <ScrollShadow
-          className="flex w-full flex-1 flex-col items-center gap-1.5 overflow-y-auto px-2 pb-1"
+          className={cn(
+            'flex items-center gap-1.5',
+            horizontal
+              ? 'h-full flex-1 flex-row overflow-x-auto px-1'
+              : 'w-full flex-1 flex-col overflow-y-auto px-2 pb-1',
+          )}
           hideScrollBar
+          orientation={horizontal ? 'horizontal' : 'vertical'}
         >
           {isLoading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className={cn('rounded-2xl', compact ? 'size-9' : 'size-12')} animationType="shimmer" />
+                <Skeleton key={i} className={cn('shrink-0 rounded-2xl', compact ? 'size-9' : horizontal ? 'size-10' : 'size-12')} animationType="shimmer" />
               ))
             : servers.map((server) => (
                 <div
@@ -301,8 +313,8 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                     <div
                       slot="trigger"
                       className={cn(
-                        'group relative flex cursor-pointer items-center justify-center rounded-2xl transition-all duration-200',
-                        compact ? 'size-9' : 'size-12',
+                        'group relative flex shrink-0 cursor-pointer items-center justify-center rounded-2xl transition-all duration-200',
+                        btnSize,
                         selectedServer === server.id
                           ? 'rounded-xl ring-2 ring-accent/25 ring-offset-1 ring-offset-background'
                           : 'hover:rounded-xl',
@@ -313,7 +325,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                     >
                       <Indicator active={selectedServer === server.id} />
                       <Badge.Anchor>
-                        <Avatar className={cn('rounded-2xl transition-all duration-200 group-hover:rounded-xl', compact ? 'size-9' : 'size-12')}>
+                        <Avatar className={cn('rounded-2xl transition-all duration-200 group-hover:rounded-xl', btnSize)}>
                           <Avatar.Image
                             src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
                             alt={server.name}
@@ -328,7 +340,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                       </Badge.Anchor>
                     </div>
 
-                    <Tooltip.Content showArrow placement="right">
+                    <Tooltip.Content showArrow placement={tooltipPlacement}>
                       <Tooltip.Arrow />
                       <p className="text-[11px] font-semibold">{server.name}</p>
                       {nodeOnlineServers.has(server.id) && (
@@ -371,19 +383,19 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
               ))}
         </ScrollShadow>
 
-        <Separator className="w-8 opacity-30" />
+        <Separator className={horizontal ? 'h-8 opacity-30' : 'w-8 opacity-30'} orientation={horizontal ? 'vertical' : 'horizontal'} />
 
         {/* Join server */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
-            className={cn('rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success', compact ? 'size-9' : 'size-12')}
+            className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success', btnSize)}
             onPress={() => setIsJoinModalOpen(true)}
           >
-            <PlusIcon size={compact ? 16 : 20} />
+            <PlusIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement="right">
+          <Tooltip.Content showArrow placement={tooltipPlacement}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.modal?.joinNav || 'Rejoindre un serveur'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> N</Kbd>
@@ -395,12 +407,12 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Button
             isIconOnly
             variant="ghost"
-            className={cn('rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', compact ? 'size-9' : 'size-12')}
+            className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', btnSize)}
             onPress={() => router.push('/channels/discover-server')}
           >
-            <CompassIcon size={compact ? 16 : 20} />
+            <CompassIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement="right">
+          <Tooltip.Content showArrow placement={tooltipPlacement}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.discoverServers || 'Découvrir'}</p>
           </Tooltip.Content>
@@ -411,12 +423,12 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Button
             isIconOnly
             variant="ghost"
-            className={cn('rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', compact ? 'size-9' : 'size-12')}
+            className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', btnSize)}
             onPress={() => router.push('/channels/gotostart')}
           >
-            <HomeIcon size={compact ? 16 : 20} />
+            <HomeIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement="right">
+          <Tooltip.Content showArrow placement={tooltipPlacement}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">Bienvenue</p>
           </Tooltip.Content>

@@ -217,12 +217,29 @@ function LayoutInner({ children }: { children: ReactNode }) {
     );
   }
 
-  return (
-    <div data-layout="root" className="flex h-dvh overflow-hidden bg-[var(--background)] transition-all">
-      {/* Audio persistant — sr-only (pas display:none) pour compatibilité autoplay navigateurs */}
-      <audio ref={persistentAudioRef} autoPlay playsInline className="sr-only" />
+  const { serverListPosition } = layoutPrefs;
+  const isTopBottom = serverListPosition === 'top' || serverListPosition === 'bottom';
 
-      {/* Incoming call dialog global */}
+  // ── Content area (shared between top/bottom and left/right layouts) ──
+  const mainContent = (
+    <div className={`flex min-w-0 flex-1 flex-col ${recipientId ? '' : 'pb-16'} md:pb-0`}>
+      {callStatus !== 'idle' && callStatus !== 'ended' && callStatus !== 'ringing' && (() => {
+        const isInCallConversation = recipientId && (
+          recipientId === callRecipientId ||
+          callConversationId === (recipientId ? `dm_${[recipientId, user?.id || ''].sort().join('_')}` : null)
+        );
+        return !isInCallConversation ? <CallBar /> : null;
+      })()}
+      {selectedChannel?.startsWith('group:') ? (
+        <GroupChatArea groupId={selectedChannel.replace('group:', '')} onLeave={() => router.push('/channels/me')} />
+      ) : children}
+    </div>
+  );
+
+  return (
+    <div data-layout="root" className={`flex h-dvh overflow-hidden bg-[var(--background)] ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
+      {/* Audio persistant */}
+      <audio ref={persistentAudioRef} autoPlay playsInline className="sr-only" />
       <IncomingCallDialog
         open={!!incomingCall}
         callerName={incomingCall?.callerName || ''}
@@ -232,96 +249,88 @@ function LayoutInner({ children }: { children: ReactNode }) {
         onDecline={declineCall}
       />
 
-      {/* ── MOBILE: Overlay backdrop ── */}
+      {/* ── MOBILE overlay backdrop ── */}
       {isMobile && (showSidebar || showMemberList) && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity"
-          onClick={closeAll}
-        />
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={closeAll} />
       )}
 
-      {/* ── SIDEBAR desktop : ServerList fixe + ChannelList redimensionnable ── */}
+      {/* ── DESKTOP: Server list TOP ── */}
+      {!isMobile && serverListPosition === 'top' && (
+        <ServerList horizontal selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+      )}
+
+      {/* ── DESKTOP: Inner row (sidebar + content) ── */}
       {!isMobile && (
-        <div
-          className="flex h-full shrink-0"
-          style={{ order: layoutPrefs.sidebarSide === 'right' ? 3 : 1 }}
-        >
-          {layoutPrefs.sidebarSide === 'right' && <ResizeHandle onMouseDown={onChannelResize} />}
-          <div data-layout="server-list" className="h-full shrink-0 transition-all">
-            <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
-          </div>
-          <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0 transition-all">
-            <ChannelList
-              serverId={selectedServer}
-              selectedChannel={selectedChannel}
-              onSelectChannel={handleSelectChannel}
-            />
-          </div>
-          {layoutPrefs.sidebarSide === 'left' && <ResizeHandle onMouseDown={onChannelResize} />}
+        <div className={`flex min-w-0 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
+          {/* Server list LEFT */}
+          {serverListPosition === 'left' && (
+            <div data-layout="server-list" className="h-full shrink-0">
+              <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+            </div>
+          )}
+
+          {/* Sidebar (left side — all positions except right) */}
+          {serverListPosition !== 'right' && (
+            <>
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0">
+                <ChannelList
+                  serverId={selectedServer}
+                  selectedChannel={selectedChannel}
+                  onSelectChannel={handleSelectChannel}
+                />
+              </div>
+              <ResizeHandle onMouseDown={onChannelResize} />
+            </>
+          )}
+
+          {/* Content */}
+          {mainContent}
+
+          {/* Sidebar (right side — only for right position) */}
+          {serverListPosition === 'right' && (
+            <>
+              <ResizeHandle onMouseDown={onChannelResize} />
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0">
+                <ChannelList
+                  serverId={selectedServer}
+                  selectedChannel={selectedChannel}
+                  onSelectChannel={handleSelectChannel}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Server list RIGHT */}
+          {serverListPosition === 'right' && (
+            <div data-layout="server-list" className="h-full shrink-0">
+              <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── SIDEBAR mobile : overlay slide-in (largeur fixe) ── */}
+      {/* ── DESKTOP: Server list BOTTOM ── */}
+      {!isMobile && serverListPosition === 'bottom' && (
+        <ServerList horizontal selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+      )}
+
+      {/* ── MOBILE: render content directly ── */}
+      {isMobile && mainContent}
+
+      {/* ── MOBILE: Sidebar overlay ── */}
       {isMobile && (
-        <div
-          className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${
-            showSidebar ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
+        <div className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
           <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
           <div className="h-full w-60 shrink-0">
-            <ChannelList
-              serverId={selectedServer}
-              selectedChannel={selectedChannel}
-              onSelectChannel={handleSelectChannel}
-            />
+            <ChannelList serverId={selectedServer} selectedChannel={selectedChannel} onSelectChannel={handleSelectChannel} />
           </div>
         </div>
       )}
 
-      {/* ── CONTENU PRINCIPAL ── */}
-      <div className={`flex min-w-0 flex-1 flex-col ${recipientId ? '' : 'pb-16'} md:pb-0`} style={{ order: 2 }}>
-        {/* Mini barre verte d'appel */}
-        {callStatus !== 'idle' && callStatus !== 'ended' && callStatus !== 'ringing' && (() => {
-          const isInCallConversation = recipientId && (
-            recipientId === callRecipientId ||
-            callConversationId === (recipientId ? `dm_${[recipientId, user?.id || ''].sort().join('_')}` : null)
-          );
-          return !isInCallConversation ? <CallBar /> : null;
-        })()}
-
-        {/* Afficher le chat de groupe si un groupe est sélectionné, sinon les children (DM/friends) */}
-        {selectedChannel?.startsWith('group:') ? (
-          <GroupChatArea
-            groupId={selectedChannel.replace('group:', '')}
-            onLeave={() => router.push('/channels/me')}
-          />
-        ) : (
-          children
-        )}
-      </div>
-
-      {/* ── MEMBER LIST ── */}
-      {/* Desktop: toujours visible | Mobile: overlay slide-in depuis la droite */}
-      {selectedServer && (
-        <div
-          className={`
-            ${isMobile
-              ? `fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-in-out ${
-                  showMemberList ? 'translate-x-0' : 'translate-x-full'
-                }`
-              : ''
-            }
-          `}
-        >
-          <MemberList serverId={selectedServer} />
-        </div>
-      )}
-
-      {/* ── MOBILE BOTTOM NAV ── masqué dans les MP ── */}
+      {/* ── MOBILE BOTTOM NAV ── */}
       {!recipientId && <MobileBottomNav />}
 
-      {/* ── SETTINGS DIALOG (mobile: ouvre depuis la bottom nav) ── */}
+      {/* ── SETTINGS DIALOG ── */}
       <SettingsDialog open={showSettings} onOpenChange={(open) => { if (!open) closeSettings(); }} />
     </div>
   );
