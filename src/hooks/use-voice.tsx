@@ -53,7 +53,24 @@ const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
   ],
+  iceCandidatePoolSize: 10,
 };
 
 // ── Provider ──
@@ -76,18 +93,42 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const currentChannelRef = useRef<string | null>(null);
   const currentServerRef = useRef<string | null>(null);
+  // ICE candidate queue: holds candidates that arrive before remote desc is set
+  const iceQueuesRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
+  const remoteDescSetRef = useRef<Map<string, boolean>>(new Map());
 
   // Keep refs in sync
   useEffect(() => { currentChannelRef.current = currentChannelId; }, [currentChannelId]);
   useEffect(() => { currentServerRef.current = currentServerId; }, [currentServerId]);
 
+  // ── Flush queued ICE candidates once remote desc is set ──
+  const flushIceCandidates = useCallback(async (peerId: string) => {
+    const pc = peerConnectionsRef.current.get(peerId);
+    if (!pc || !remoteDescSetRef.current.get(peerId)) return;
+    const queue = iceQueuesRef.current.get(peerId) ?? [];
+    iceQueuesRef.current.set(peerId, []);
+    for (const candidate of queue) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
   // ── Cleanup peer connection ──
   const cleanupPeerConnection = useCallback((peerId: string) => {
     const pc = peerConnectionsRef.current.get(peerId);
     if (pc) {
+      pc.onicecandidate = null;
+      pc.ontrack = null;
+      pc.onconnectionstatechange = null;
+      pc.onnegotiationneeded = null;
       pc.close();
       peerConnectionsRef.current.delete(peerId);
     }
+    iceQueuesRef.current.delete(peerId);
+    remoteDescSetRef.current.delete(peerId);
     setRemoteStreams(prev => {
       const next = new Map(prev);
       next.delete(peerId);
@@ -102,8 +143,10 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
 
     const pc = new RTCPeerConnection(ICE_SERVERS);
     peerConnectionsRef.current.set(targetUserId, pc);
+    remoteDescSetRef.current.set(targetUserId, false);
+    iceQueuesRef.current.set(targetUserId, []);
 
-    // Add local tracks
+    // Add local tracks if stream is already available
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
         pc.addTrack(track, localStreamRef.current!);
@@ -126,13 +169,27 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
           next.set(targetUserId, stream);
           return next;
         });
+        stream.onaddtrack = () => {
+          setRemoteStreams(prev => {
+            const next = new Map(prev);
+            next.set(targetUserId, stream);
+            return next;
+          });
+        };
       }
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+      console.log(`[Voice] PC[${targetUserId}] state:`, pc.connectionState);
+      if (pc.connectionState === 'failed') {
+        pc.restartIce();
+      } else if (pc.connectionState === 'disconnected') {
         cleanupPeerConnection(targetUserId);
       }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'failed') pc.restartIce();
     };
 
     return pc;
@@ -141,7 +198,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   // ── Join a voice channel ──
   const joinChannel = useCallback(async (serverId: string, channelId: string) => {
     if (currentChannelRef.current === channelId) return;
-    
+
     // Leave current channel first
     if (currentChannelRef.current) {
       leaveChannelInternal();
@@ -164,6 +221,18 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       // Apply mute state
       stream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
 
+      // If offers already arrived before stream was ready, add tracks to existing PCs
+      peerConnectionsRef.current.forEach((pc) => {
+        stream.getTracks().forEach(track => {
+          const alreadyAdded = pc.getSenders().some(s => s.track?.id === track.id);
+          if (!alreadyAdded) pc.addTrack(track, stream);
+        });
+      });
+
+      // Update refs IMMEDIATELY (before joinVoiceChannel) so incoming offers
+      // are not rejected while React state update is still pending
+      currentChannelRef.current = channelId;
+      currentServerRef.current = serverId;
       setCurrentChannelId(channelId);
       setCurrentServerId(serverId);
 
@@ -172,24 +241,36 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('[Voice] Failed to get microphone:', err);
       // Still join even without mic (listen-only)
+      currentChannelRef.current = channelId;
+      currentServerRef.current = serverId;
       setCurrentChannelId(channelId);
       setCurrentServerId(serverId);
       socketService.joinVoiceChannel(serverId, channelId);
     } finally {
       setIsConnecting(false);
     }
-  }, [isMuted]);
+  }, [isMuted, leaveChannelInternal]);
 
   // ── Leave voice channel (internal) ──
   const leaveChannelInternal = useCallback(() => {
     const chId = currentChannelRef.current;
     const sId = currentServerRef.current;
 
+    // Update refs IMMEDIATELY so late-arriving events are ignored
+    currentChannelRef.current = null;
+    currentServerRef.current = null;
+
     // Close all peer connections
-    peerConnectionsRef.current.forEach((pc, peerId) => {
+    peerConnectionsRef.current.forEach((pc) => {
+      pc.onicecandidate = null;
+      pc.ontrack = null;
+      pc.onconnectionstatechange = null;
+      pc.onnegotiationneeded = null;
       pc.close();
     });
     peerConnectionsRef.current.clear();
+    iceQueuesRef.current.clear();
+    remoteDescSetRef.current.clear();
 
     // Stop local stream
     localStreamRef.current?.getTracks().forEach(t => t.stop());
@@ -279,10 +360,10 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     const handleVoiceUserJoined = async (data: any) => {
       const payload = data?.payload ?? data;
       const { channelId, userId: joinedUserId } = payload;
-      
+
       if (channelId !== currentChannelRef.current || joinedUserId === userId) return;
 
-      // Create an offer to the new user
+      console.log('[Voice] User joined, creating offer for:', joinedUserId);
       try {
         const pc = createPeerConnection(joinedUserId, channelId);
         const offer = await pc.createOffer();
@@ -296,7 +377,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     const handleVoiceUserLeft = (data: any) => {
       const payload = data?.payload ?? data;
       const { channelId, userId: leftUserId } = payload;
-      
+
       if (channelId !== currentChannelRef.current) return;
       cleanupPeerConnection(leftUserId);
     };
@@ -304,12 +385,15 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     const handleVoiceOffer = async (data: any) => {
       const payload = data?.payload ?? data;
       const { channelId, fromUserId, offer } = payload;
-      
+
       if (channelId !== currentChannelRef.current) return;
+      console.log('[Voice] Received offer from:', fromUserId);
 
       try {
         const pc = createPeerConnection(fromUserId, channelId);
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        remoteDescSetRef.current.set(fromUserId, true);
+        await flushIceCandidates(fromUserId);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socketService.sendVoiceAnswer(channelId, fromUserId, answer);
@@ -321,32 +405,42 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     const handleVoiceAnswer = async (data: any) => {
       const payload = data?.payload ?? data;
       const { channelId, fromUserId, answer } = payload;
-      
+
       if (channelId !== currentChannelRef.current) return;
-      
+      console.log('[Voice] Received answer from:', fromUserId);
+
       const pc = peerConnectionsRef.current.get(fromUserId);
-      if (pc && pc.signalingState === 'have-local-offer') {
-        try {
-          await pc.setRemoteDescription(new RTCSessionDescription(answer));
-        } catch (err) {
-          console.error('[Voice] Failed to handle answer from', fromUserId, err);
+      if (!pc) return;
+      try {
+        if (pc.signalingState !== 'have-local-offer') {
+          console.warn('[Voice] Unexpected signalingState for answer:', pc.signalingState);
+          return;
         }
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        remoteDescSetRef.current.set(fromUserId, true);
+        await flushIceCandidates(fromUserId);
+      } catch (err) {
+        console.error('[Voice] Failed to handle answer from', fromUserId, err);
       }
     };
 
     const handleVoiceICE = async (data: any) => {
       const payload = data?.payload ?? data;
       const { channelId, fromUserId, candidate } = payload;
-      
-      if (channelId !== currentChannelRef.current) return;
-      
+
+      if (channelId !== currentChannelRef.current || !candidate) return;
+
       const pc = peerConnectionsRef.current.get(fromUserId);
-      if (pc && candidate) {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (err) {
-          // Ignore ICE candidate errors (common during teardown)
-        }
+      // Queue if remote desc not yet set
+      if (!pc || !remoteDescSetRef.current.get(fromUserId)) {
+        if (!iceQueuesRef.current.has(fromUserId)) iceQueuesRef.current.set(fromUserId, []);
+        iceQueuesRef.current.get(fromUserId)!.push(candidate);
+        return;
+      }
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch {
+        // ignore errors during teardown
       }
     };
 
@@ -365,7 +459,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       socketService.off('VOICE_ANSWER', handleVoiceAnswer);
       socketService.off('VOICE_ICE_CANDIDATE', handleVoiceICE);
     };
-  }, [userId, createPeerConnection, cleanupPeerConnection]);
+  }, [userId, createPeerConnection, cleanupPeerConnection, flushIceCandidates]);
 
   // Cleanup on unmount
   useEffect(() => {
