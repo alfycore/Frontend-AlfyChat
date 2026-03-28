@@ -89,9 +89,9 @@ export default function ServerWelcomePage() {
   };
 
   const getChannelIcon = (type: string) => {
-    if (type === 'voice') return <Volume2Icon size={16} className="text-muted" />;
-    if (type === 'announcement') return <MegaphoneIcon size={16} className="text-muted" />;
-    return <HashIcon size={16} className="text-muted" />;
+    if (type === 'voice') return <Volume2Icon size={16} className="text-[var(--muted)]" />;
+    if (type === 'announcement') return <MegaphoneIcon size={16} className="text-[var(--muted)]" />;
+    return <HashIcon size={16} className="text-[var(--muted)]" />;
   };
 
   if (loading) {
@@ -170,14 +170,14 @@ export default function ServerWelcomePage() {
       <div className="flex-1 space-y-6 px-8 py-6">
         {/* Description */}
         {serverInfo?.description && (
-          <Card className="max-w-xl border border-(--border)/60">
+          <Card className="max-w-xl rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 backdrop-blur-sm shadow-none">
             <Card.Header>
-              <Card.Title className="text-[11px] font-semibold uppercase tracking-wider text-muted/70">
+              <Card.Title className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
                 À propos
               </Card.Title>
             </Card.Header>
             <Card.Content>
-              <p className="text-sm leading-relaxed text-muted">
+              <p className="text-sm leading-relaxed text-[var(--muted)]">
                 {serverInfo.description}
               </p>
             </Card.Content>
@@ -221,7 +221,7 @@ export default function ServerWelcomePage() {
 
         {/* Quick start */}
         {firstTextChannel && (
-          <Card className="max-w-lg border border-(--border)/60">
+          <Card className="max-w-lg rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 backdrop-blur-sm shadow-none">
             <Card.Header>
               <div className="flex items-center gap-2.5">
                 <div className="flex size-8 items-center justify-center rounded-xl bg-yellow-500/10">
@@ -233,7 +233,7 @@ export default function ServerWelcomePage() {
               </div>
             </Card.Header>
             <Card.Content className="space-y-3">
-              <p className="text-sm text-muted">
+              <p className="text-sm text-[var(--muted)]">
                 Rejoignez la conversation dans le salon principal du serveur.
               </p>
               <Button
@@ -254,29 +254,31 @@ export default function ServerWelcomePage() {
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted/70">
               Salons
             </h3>
-            <Card className="border border-(--border)/60 p-2">
+            <Card className="rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 p-2 backdrop-blur-sm shadow-none">
               <Card.Content className="space-y-0.5 p-0">
                 {channels.slice(0, 10).map((ch) => (
-                  <button
+                  <Button
                     key={ch.id}
-                    onClick={() => ch.type !== 'voice' && navigateToChannel(ch.id)}
+                    variant="ghost"
+                    isDisabled={ch.type === 'voice'}
+                    onPress={() => ch.type !== 'voice' && navigateToChannel(ch.id)}
                     className={cn(
-                      'group flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
+                      'group flex w-full items-center justify-start gap-2 rounded-xl px-3 py-2.5 text-sm transition-all duration-150',
                       ch.type === 'voice'
-                        ? 'cursor-default text-muted'
-                        : 'cursor-pointer text-foreground hover:bg-(--surface-secondary)/60',
+                        ? 'cursor-default text-[var(--muted)]'
+                        : 'cursor-pointer text-[var(--foreground)] hover:bg-[var(--surface-secondary)]/50',
                     )}
                   >
                     {getChannelIcon(ch.type)}
                     <span className="flex-1 truncate text-left">{ch.name}</span>
                     {ch.type !== 'voice' && (
                       <ArrowRightIcon size={14}
-                        className="text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+                        className="text-[var(--muted)] opacity-0 transition-opacity group-hover:opacity-100" />
                     )}
-                  </button>
+                  </Button>
                 ))}
                 {channels.length > 10 && (
-                  <p className="px-3 py-1 text-xs text-muted">
+                  <p className="px-3 py-1 text-xs text-[var(--muted)]">
                     +{channels.length - 10} autres salons
                   </p>
                 )}

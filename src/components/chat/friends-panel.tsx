@@ -878,7 +878,7 @@ function FriendRow({
   const statusLabel = (t.status as Record<string, string>)[friend.status] ?? t.status.offline;
 
   return (
-    <div className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30">
+    <div className="group flex items-center gap-2.5 rounded-2xl border border-[var(--border)]/20 bg-[var(--surface)]/50 px-3 py-2 backdrop-blur-sm transition-all duration-150 hover:border-[var(--border)]/35 hover:bg-[var(--surface)]/70">
       <UserProfilePopover userId={friend.id} onOpenDM={() => onMessage()}>
         <button type="button" className="relative shrink-0">
           <Avatar className="size-9">
@@ -905,7 +905,7 @@ function FriendRow({
 
       <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         <Tooltip delay={0}>
-          <Button isIconOnly size="sm" variant="ghost" onPress={onMessage} className="rounded-lg">
+          <Button isIconOnly size="sm" variant="ghost" onPress={onMessage} className="rounded-xl">
             <MessageCircleIcon size={15} />
           </Button>
           <Tooltip.Content placement="top">{t.friends.message}</Tooltip.Content>
@@ -913,14 +913,9 @@ function FriendRow({
 
         <Dropdown>
           <Dropdown.Trigger>
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label={t.friends.moreActions}
-              className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40"
-            >
+            <Button isIconOnly size="sm" variant="ghost" aria-label={t.friends.moreActions} className="rounded-xl">
               <MoreVerticalIcon size={14} />
-            </div>
+            </Button>
           </Dropdown.Trigger>
           <Dropdown.Popover placement="bottom end">
             <Dropdown.Menu aria-label={t.friends.moreActions}>
