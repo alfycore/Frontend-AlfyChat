@@ -177,3 +177,29 @@ body[data-wallpaper] header {
   backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
 }
+
+/* Texte adaptatif selon la luminance du wallpaper */
+body[data-wallpaper] [data-tour="chat-area"],
+body[data-wallpaper] [data-tour="friends-panel"] {
+  color: var(--adaptive-fg, inherit);
+}
+
+body[data-wallpaper] [data-tour="chat-area"] p,
+body[data-wallpaper] [data-tour="chat-area"] span,
+body[data-wallpaper] [data-tour="chat-area"] button,
+body[data-wallpaper] [data-tour="friends-panel"] p,
+body[data-wallpaper] [data-tour="friends-panel"] span,
+body[data-wallpaper] [data-tour="friends-panel"] button {
+  color: var(--adaptive-fg, inherit);
+}
+
+body[data-wallpaper] [data-tour="chat-area"] .text-muted,
+body[data-wallpaper] [data-tour="chat-area"] [class*="text-muted"],
+body[data-wallpaper] [data-tour="friends-panel"] .text-muted,
+body[data-wallpaper] [data-tour="friends-panel"] [class*="text-muted"] {
+  color: var(--adaptive-fg-muted, inherit) !important;
+}
+
+body[data-wallpaper] [data-tour="conversations"] {
+  color: var(--adaptive-fg-muted, inherit);
+}

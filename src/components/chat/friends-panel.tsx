@@ -297,10 +297,10 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   // ── Loading ──────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex h-full flex-1 flex-row">
+      <div className="flex h-full flex-1 flex-row rounded-xl border border-white/10 bg-black/30 backdrop-blur-md">
         {/* Center skeleton */}
         <div className="flex flex-1 flex-col">
-          <div className="flex h-12 items-center gap-2.5 border-b border-[var(--border)]/40 px-4">
+          <div className="flex h-12 items-center gap-2.5 border-b border-white/10 px-4">
             <Skeleton className="h-4 w-4 rounded" />
             <Skeleton className="h-4 w-16" />
           </div>
@@ -344,13 +344,13 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
 
   // ── Main ──────────────────────────────────────────────────
   return (
-    <div className="flex h-full flex-1 flex-row">
+    <div data-tour="friends-panel" className="flex h-full flex-1 flex-row rounded-xl border border-white/10 bg-black/30 backdrop-blur-md">
       {/* ══════════════════════════════════════════════════════
           CENTER — Header + Tabs
          ══════════════════════════════════════════════════════ */}
       <div ref={tabsListRef} className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/40 bg-[var(--background)]/60 px-2 backdrop-blur-sm md:px-4">
+        <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-white/10 bg-white/5 px-2 backdrop-blur-md md:px-4">
           {isMobile && (
             <Button isIconOnly size="sm" variant="ghost" onPress={openSidebar} className="shrink-0">
               <MenuIcon size={20} />

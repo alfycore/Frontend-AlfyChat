@@ -388,9 +388,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   }
 
   return (
-    <div data-tour="chat-area" className="flex h-full flex-1 flex-col overflow-hidden">
+    <div data-tour="chat-area" className="flex h-full flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-black/30 backdrop-blur-md">
       {/* Header */}
-      <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)]/30 bg-[var(--background)]/80 px-3 backdrop-blur-xl md:px-4">
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-white/10 bg-white/5 px-3 backdrop-blur-md md:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           {isMobile && (
             <Button isIconOnly size="sm" variant="tertiary" onPress={openSidebar} className="shrink-0 md:hidden">
@@ -589,7 +589,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         )}
 
-        <div className={`flex items-end gap-1 rounded-xl border border-[var(--border)]/40 bg-[var(--surface)]/60 px-1.5 py-1 backdrop-blur-xl transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${replyingTo ? 'rounded-t-none' : ''}`}>
+        <div className={`flex items-end gap-1 rounded-xl border border-white/15 bg-white/8 px-1.5 py-1 backdrop-blur-md transition-colors focus-within:border-[var(--accent)]/40 md:gap-1.5 ${replyingTo ? 'rounded-t-none' : ''}`}>
           {/* E2EE indicator */}
           
 
