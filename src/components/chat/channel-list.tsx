@@ -152,7 +152,7 @@ function ChannelRow({
       onClick={onClick}
       onContextMenu={canManage ? (e) => { e.preventDefault(); onContextMenu?.(e, channel); } : undefined}
       className={cn(
-        'group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors',
+        'group relative flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-[13px] font-medium transition-colors',
         isActive
           ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
           : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
@@ -191,7 +191,7 @@ function VoiceChannelRow({
       <button
         onClick={() => (isConnected ? onLeave() : onJoin(serverId, channel.id))}
         className={cn(
-          'group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors',
+          'group relative flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-[13px] font-medium transition-colors',
           isConnected
             ? 'bg-green-500/10 text-green-400'
             : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
@@ -832,7 +832,7 @@ export function ChannelList({
                         key={conv.id}
                         onClick={() => router.push(`/channels/me/${conv.recipientId}`)}
                         className={cn(
-                          'group flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 transition-all duration-150',
+                          'group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-all duration-150',
                           isActive
                             ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
                             : 'text-[var(--foreground)] hover:bg-[var(--surface-secondary)]/60',

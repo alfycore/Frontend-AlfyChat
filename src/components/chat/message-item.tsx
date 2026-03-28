@@ -108,7 +108,7 @@ export const MessageItem = memo(function MessageItem({
         <Tooltip delay={0}>
           <Button
             isIconOnly size="sm" variant="ghost"
-            className="size-7 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
+            className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
             onPress={() => onReply(message.id, message.content, displayName || 'Utilisateur')}
           >
             <ReplyIcon size={14} />
@@ -117,14 +117,14 @@ export const MessageItem = memo(function MessageItem({
         </Tooltip>
 
         <EmojiPicker onSelect={(emoji) => onReaction(message.id, emoji)}>
-          <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]">
+          <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]">
             <SmileIcon size={14} />
           </Button>
         </EmojiPicker>
 
         <Dropdown>
           <Dropdown.Trigger>
-            <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]">
+            <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]">
               <MoreHorizontalIcon size={14} />
             </Button>
           </Dropdown.Trigger>

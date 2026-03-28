@@ -356,7 +356,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <MenuIcon size={20} />
             </Button>
           )}
-          <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)]/10">
+          <div className="flex size-7 items-center justify-center rounded-xl bg-[var(--accent)]/10">
             <UsersIcon size={14} className="text-[var(--accent)]" />
           </div>
           <span className="text-sm font-bold">{t.friends.title}</span>
@@ -578,7 +578,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                             isIconOnly
                             size="sm"
                             onPress={() => handleAcceptRequest(req.id)}
-                            className="rounded-lg bg-green-600 text-white hover:bg-green-700"
+                            className="rounded-xl bg-green-600 text-white hover:bg-green-700"
                           >
                             <CheckIcon size={15} />
                           </Button>
@@ -590,7 +590,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                             size="sm"
                             variant="danger"
                             onPress={() => handleDeclineRequest(req.id)}
-                            className="rounded-lg"
+                            className="rounded-xl"
                           >
                             <XIcon size={15} />
                           </Button>
@@ -648,7 +648,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="shrink-0 gap-1.5 rounded-lg text-[11px]"
+                        className="shrink-0 gap-1.5 rounded-xl text-[11px]"
                         onPress={() => handleUnblockUser(user.id, user.displayName)}
                       >
                         <ShieldOffIcon size={13} />
@@ -825,7 +825,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   >
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30"
+                      className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30"
                     >
                       <div className="relative shrink-0">
                         <Avatar className="size-7">
@@ -878,7 +878,7 @@ function FriendRow({
   const statusLabel = (t.status as Record<string, string>)[friend.status] ?? t.status.offline;
 
   return (
-    <div className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30">
+    <div className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30">
       <UserProfilePopover userId={friend.id} onOpenDM={() => onMessage()}>
         <button type="button" className="relative shrink-0">
           <Avatar className="size-9">

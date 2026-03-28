@@ -391,7 +391,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                     <Tooltip key={badge.id} delay={0}>
                       <button
                         type="button"
-                        className="flex size-7 items-center justify-center rounded-lg transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex size-7 items-center justify-center rounded-xl transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         style={{
                           backgroundColor: badge.color + '15',
                           border: `1px solid ${badge.color}30`,
@@ -480,7 +480,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                             key={role.id}
                             type="button"
                             className={cn(
-                              'flex items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] transition-colors',
+                              'flex items-center gap-2 rounded-xl px-2 py-1.5 text-[11px] transition-colors',
                               active
                                 ? 'bg-[var(--surface-secondary)]/10 text-[var(--foreground)]'
                                 : 'text-[var(--muted)] hover:bg-surface-tertiary',
@@ -590,14 +590,14 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="flex-1 rounded-lg text-[11px]"
+                              className="flex-1 rounded-xl text-[11px]"
                               onPress={() => setConfirmKick(false)}
                             >
                               Annuler
                             </Button>
                             <Button
                               size="sm"
-                              className="flex-1 gap-1 rounded-lg text-[11px] bg-orange-600 hover:bg-orange-700"
+                              className="flex-1 gap-1 rounded-xl text-[11px] bg-orange-600 hover:bg-orange-700"
                               onPress={handleKick}
                             >
                               <UserXIcon size={11} />
@@ -612,7 +612,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                           <p className="text-[11px] text-red-300">
                             Bannir {profile?.displayName || profile?.username} ?
                           </p>
-                          <InputGroup className="h-7 rounded-lg border-[var(--border)]/60" variant="secondary">
+                          <InputGroup className="h-7 rounded-xl border-[var(--border)]/60" variant="secondary">
                             <InputGroup.Input
                               placeholder="Raison (optionnel)"
                               value={banReason}
@@ -624,7 +624,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="flex-1 rounded-lg text-[11px]"
+                              className="flex-1 rounded-xl text-[11px]"
                               onPress={() => {
                                 setConfirmBan(false);
                                 setBanReason('');
@@ -634,7 +634,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                             </Button>
                             <Button
                               size="sm"
-                              className="flex-1 gap-1 rounded-lg text-[11px] bg-red-600 hover:bg-red-700"
+                              className="flex-1 gap-1 rounded-xl text-[11px] bg-red-600 hover:bg-red-700"
                               onPress={handleBan}
                             >
                               <BanIcon size={11} />

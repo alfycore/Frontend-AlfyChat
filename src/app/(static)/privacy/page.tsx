@@ -29,7 +29,7 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 border-b border-white/[0.06] bg-[var(--background)]/70 backdrop-blur-2xl">
+      <nav className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.06] dark:bg-black/30">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
           <Link href="/" className="flex items-center gap-2.5 no-underline">
             <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={24} height={24} />
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
 
       {/* Content */}
       <main className="mx-auto max-w-3xl px-6 py-16 md:py-24">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5 text-[11px] font-medium text-muted">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-black/[0.03] px-4 py-1.5 text-[11px] font-medium text-muted dark:border-white/[0.08] dark:bg-white/[0.04]">
           Dernière mise à jour : 14 mars 2026
         </div>
 
@@ -74,15 +74,15 @@ export default function PrivacyPage() {
             <h2 className="mb-3 text-lg font-bold text-[var(--foreground)]">2. Données collectées</h2>
             <p className="mb-3">Nous collectons uniquement les données nécessaires au fonctionnement du service :</p>
             <div className="space-y-3">
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
+              <div className="rounded-xl border border-black/[0.06] bg-black/[0.02] p-4 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
                 <h3 className="mb-1 text-[13px] font-bold text-[var(--foreground)]">Données de compte</h3>
                 <p className="text-[13px]">Nom d&apos;utilisateur, adresse e-mail, mot de passe (haché avec bcrypt), avatar optionnel.</p>
               </div>
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
+              <div className="rounded-xl border border-black/[0.06] bg-black/[0.02] p-4 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
                 <h3 className="mb-1 text-[13px] font-bold text-[var(--foreground)]">Données de communication</h3>
                 <p className="text-[13px]">Messages, fichiers partagés, métadonnées de conversation. Les messages E2EE sont chiffrés et illisibles par AlfyCore.</p>
               </div>
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
+              <div className="rounded-xl border border-black/[0.06] bg-black/[0.02] p-4 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
                 <h3 className="mb-1 text-[13px] font-bold text-[var(--foreground)]">Données techniques</h3>
                 <p className="text-[13px]">Adresse IP (non conservée au-delà de la session), type de navigateur, horodatages de connexion.</p>
               </div>
@@ -190,7 +190,7 @@ export default function PrivacyPage() {
                 { right: 'Opposition', desc: 'Refuser un traitement' },
                 { right: 'Limitation', desc: 'Restreindre le traitement' },
               ].map((r) => (
-                <div key={r.right} className="rounded-lg border border-white/[0.06] bg-white/[0.015] px-4 py-2.5">
+                <div key={r.right} className="rounded-xl border border-black/[0.06] bg-black/[0.02] px-4 py-2.5 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
                   <span className="font-bold text-[var(--foreground)]">{r.right}</span>
                   <span className="text-muted/50"> — {r.desc}</span>
                 </div>
@@ -244,7 +244,7 @@ export default function PrivacyPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06]">
+      <footer className="border-t border-black/[0.06] dark:border-white/[0.06]">
         <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-2 px-6 py-6 text-[10px] text-muted/30 md:flex-row">
           <p>© 2026 AlfyChat · AlfyCore</p>
           <div className="flex gap-4">

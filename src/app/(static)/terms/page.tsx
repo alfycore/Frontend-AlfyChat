@@ -32,7 +32,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 border-b border-[var(--separator)] bg-[var(--background)]/80 backdrop-blur-2xl">
+      <nav className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.06] dark:bg-black/30">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
           <Link href="/" className="flex items-center gap-2.5 no-underline">
             <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={24} height={24} />
@@ -55,7 +55,7 @@ export default function TermsPage() {
                 <a
                   key={item.n}
                   href={`#section-${item.n}`}
-                  className="flex items-start gap-2 rounded-lg px-2 py-1.5 text-[11px] leading-snug text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+                  className="flex items-start gap-2 rounded-xl px-2 py-1.5 text-[11px] leading-snug text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
                 >
                   <span className="mt-px shrink-0 font-mono text-[10px] text-[var(--muted)]/50">{item.n}.</span>
                   {item.title}
@@ -67,7 +67,7 @@ export default function TermsPage() {
 
         {/* ── Contenu principal ── */}
         <main className="min-w-0 flex-1">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--surface)] px-4 py-1.5 text-[11px] font-medium text-[var(--muted)]">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-black/[0.03] px-4 py-1.5 text-[11px] font-medium text-[var(--muted)] dark:border-white/[0.08] dark:bg-white/[0.04]">
             Dernière mise à jour : 26 mars 2026
           </div>
 

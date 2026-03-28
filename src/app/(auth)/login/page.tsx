@@ -151,10 +151,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[var(--background)] p-4">
+    <div className="relative flex min-h-dvh items-center justify-center p-4">
+      {/* Background image */}
+      <div className="fixed inset-0 -z-10">
+        <img src="/bgdefaut.jpg" alt="" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-black/30 backdrop-brightness-90" />
+      </div>
+
       <div className="w-full max-w-[900px]">
-        <Card className="overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0 shadow-xl">
-          <div className="grid md:grid-cols-[1fr_340px]">
+        <Card className="overflow-hidden rounded-3xl border border-white/20 bg-white/80 p-0 shadow-2xl backdrop-blur-2xl dark:bg-black/60 dark:border-white/10">
+          <div className="grid md:grid-cols-[1fr_320px]">
             {/* ── Formulaire ── */}
             <div className="p-8 md:p-10">
 
@@ -162,7 +168,7 @@ export default function LoginPage() {
               {emailNotVerifiedStep ? (
                 <>
                   <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
-                    <div className="flex size-11 items-center justify-center rounded-xl bg-amber-500/10">
+                    <div className="flex size-11 items-center justify-center rounded-2xl bg-amber-500/15 ring-1 ring-amber-500/30">
                       <MailIcon size={22} className="text-amber-400" />
                     </div>
                     <div className="text-center md:text-left">
@@ -210,7 +216,7 @@ export default function LoginPage() {
               ) : twoFactorStep ? (
                 <>
                   <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
-                    <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)]">
+                    <div className="flex size-11 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">
                       <ShieldIcon size={22} className="text-[var(--accent-foreground)]" />
                     </div>
                     <div className="text-center md:text-left">
@@ -269,7 +275,7 @@ export default function LoginPage() {
                 <>
               {/* En-tete */}
               <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)]">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">
                   <MessageCircleIcon size={22} className="text-[var(--accent-foreground)]" />
                 </div>
                 <div className="text-center md:text-left">
@@ -294,7 +300,7 @@ export default function LoginPage() {
                   {/* Email */}
                   <TextField fullWidth name="email" isRequired value={email} onChange={setEmail}>
                     <Label>Adresse email</Label>
-                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
+                    <InputGroup fullWidth className="bg-white/60 border-black/10 dark:bg-white/8 dark:border-white/15">
                       <InputGroup.Prefix>
                         <MailIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -310,7 +316,7 @@ export default function LoginPage() {
                         Oublie ?
                       </Link>
                     </div>
-                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
+                    <InputGroup fullWidth className="bg-white/60 border-black/10 dark:bg-white/8 dark:border-white/15">
                       <InputGroup.Prefix>
                         <KeyRoundIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -381,15 +387,15 @@ export default function LoginPage() {
             </div>
 
             {/* ── Panneau visuel ── */}
-            <div className="relative hidden overflow-hidden border-l border-[var(--border)] bg-[var(--surface-secondary)] md:flex md:flex-col md:items-center md:justify-center md:p-8">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,var(--accent)/8%,transparent_70%)]" />
+            <div className="relative hidden overflow-hidden border-l border-white/20 dark:border-white/10 md:flex md:flex-col md:items-center md:justify-center md:p-8">
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/20 via-transparent to-violet-600/15 backdrop-blur-sm" />
               <div className="relative flex flex-col items-center gap-6">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/20">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-xl shadow-[var(--accent)]/30">
                   <MessageCircleIcon size={28} className="text-[var(--accent-foreground)]" />
                 </div>
                 <div className="text-center">
                   <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">AlfyChat</h2>
-                  <p className="mt-1.5 max-w-56 text-sm leading-relaxed text-[var(--muted)]">
+                  <p className="mt-1.5 max-w-52 text-sm leading-relaxed text-[var(--muted)]">
                     Messagerie securisee et privee
                   </p>
                 </div>
@@ -401,7 +407,7 @@ export default function LoginPage() {
                   ].map((feat) => (
                     <div
                       key={feat.label}
-                      className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-tertiary)] px-4 py-3"
+                      className="flex items-center gap-3 rounded-xl border border-white/25 bg-white/30 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/8"
                     >
                       <feat.icon size={18} className={feat.color} />
                       <span className="text-sm font-medium text-[var(--foreground)]">{feat.label}</span>

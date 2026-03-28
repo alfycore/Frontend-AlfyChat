@@ -87,7 +87,7 @@ const getChannelMeta = (type?: string) => CHANNEL_META[type || 'text'] ?? CHANNE
 function AnnouncementBanner({ channelName }: { channelName?: string }) {
   return (
     <div className="mx-4 mb-2 mt-3 flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
         <MegaphoneIcon size={15} className="text-amber-400" />
       </div>
       <div className="min-w-0">
@@ -454,7 +454,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-3 backdrop-blur-xl">
         {isMobile && (
           <Button isIconOnly size="sm" variant="ghost"
-            className="size-8 shrink-0 rounded-lg text-[var(--muted)]"
+            className="size-8 shrink-0 rounded-xl text-[var(--muted)]"
             onPress={toggleSidebar}
           >
             <MenuIcon size={16} />
@@ -465,12 +465,12 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         </div>
         <h2 className="truncate text-[14px] font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
         <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Chip variant="soft" size="sm" className="hidden rounded-lg text-[10px] font-medium text-[var(--muted)] md:flex">
+          <Chip variant="soft" size="sm" className="hidden rounded-xl text-[10px] font-medium text-[var(--muted)] md:flex">
             <Chip.Label>{meta.label}</Chip.Label>
           </Chip>
           <Button
             isIconOnly size="sm" variant="ghost"
-            className={`size-8 rounded-lg transition-colors ${
+            className={`size-8 rounded-xl transition-colors ${
               !isMobile && memberListDesktopVisible
                 ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
                 : 'text-[var(--muted)] hover:text-[var(--foreground)]'
@@ -584,7 +584,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
                 e.target.value = '';
               }}
             />
-            <span className="inline-flex size-8 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+            <span className="inline-flex size-8 items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
               <PaperclipIcon size={16} />
             </span>
           </label>
@@ -603,7 +603,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
           {/* Emoji */}
           <div className="self-end pb-0.5">
             <EmojiPicker onSelect={(emoji) => setMessageInput((prev) => prev + emoji)}>
-              <div className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+              <div className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
                 <SmileIcon size={16} />
               </div>
             </EmojiPicker>

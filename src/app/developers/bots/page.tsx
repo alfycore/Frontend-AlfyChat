@@ -257,7 +257,7 @@ export default function BotsPage() {
             ))}
           </div>
         ) : bots.length === 0 ? (
-          <Card className="border border-dashed border-[var(--border)] bg-[var(--surface)]/50 p-12 text-center">
+          <Card className="rounded-2xl border border-dashed border-[var(--border)]/60 bg-white/40 p-12 text-center backdrop-blur-sm dark:bg-white/[0.03]">
             <BotIcon size={48} className="mx-auto mb-4 text-[var(--muted)]" />
             <h3 className="mb-2 text-lg font-semibold">Aucun bot</h3>
             <p className="mb-6 text-sm text-[var(--muted)]">
@@ -274,7 +274,7 @@ export default function BotsPage() {
               const st = statusConfig[bot.status];
               const cert = certifConfig[bot.certificationStatus] || certifConfig.none;
               return (
-                <Card key={bot.id} className="overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0">
+                <Card key={bot.id} className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white/60 p-0 shadow-sm backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
                   {/* Bot header */}
                   <div className="flex items-start gap-3 p-4 pb-0">
                     <div
@@ -327,7 +327,7 @@ export default function BotsPage() {
                   )}
 
                   {/* Certification status */}
-                  <div className="mx-4 mt-3 flex items-center gap-2 rounded-lg bg-[var(--background)]/50 px-3 py-2">
+                  <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl bg-[var(--background)]/50 px-3 py-2">
                     <cert.icon size={14} className={cert.color} />
                     <span className={cn('text-xs font-medium', cert.color)}>{cert.label}</span>
                     {bot.certificationNote && (
@@ -388,7 +388,7 @@ export default function BotsPage() {
                       <p className="mb-2 text-xs font-semibold text-[var(--muted)]">Commandes ({bot.commands.length})</p>
                       <div className="space-y-1">
                         {bot.commands.slice(0, 5).map(cmd => (
-                          <div key={cmd.id} className="flex items-center justify-between rounded-lg bg-[var(--background)]/50 px-2.5 py-1.5">
+                          <div key={cmd.id} className="flex items-center justify-between rounded-xl bg-[var(--background)]/50 px-2.5 py-1.5">
                             <div>
                               <span className="text-xs font-mono font-semibold text-[var(--accent)]">{bot.prefix}{cmd.name}</span>
                               <span className="ml-2 text-[10px] text-[var(--muted)]">{cmd.description}</span>
@@ -420,7 +420,7 @@ export default function BotsPage() {
       {/* ── Create/Edit Bot Modal ── */}
       <Modal.Backdrop isOpen={showBotModal} onOpenChange={setShowBotModal}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)] shadow-2xl">
+        <Modal.Dialog className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>{editingBot ? 'Modifier le bot' : 'Creer un nouveau bot'}</Modal.Heading>
           </Modal.Header>
@@ -428,7 +428,7 @@ export default function BotsPage() {
             <div>
               <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Nom du bot *</label>
               <input
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                 value={botForm.name} onChange={e => setBotForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="MonSuperBot" maxLength={32}
               />
@@ -436,7 +436,7 @@ export default function BotsPage() {
             <div>
               <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Description</label>
               <textarea
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] resize-none focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] resize-none focus:border-[var(--accent)] focus:outline-none"
                 value={botForm.description} onChange={e => setBotForm(f => ({ ...f, description: e.target.value }))}
                 placeholder="Un bot qui fait des trucs geniaux..." maxLength={500} rows={3}
               />
@@ -445,7 +445,7 @@ export default function BotsPage() {
               <div>
                 <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Prefixe</label>
                 <input
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                   value={botForm.prefix} onChange={e => setBotForm(f => ({ ...f, prefix: e.target.value }))}
                   placeholder="!" maxLength={5}
                 />
@@ -486,7 +486,7 @@ export default function BotsPage() {
               <div>
                 <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Site web</label>
                 <input
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                   value={botForm.websiteUrl} onChange={e => setBotForm(f => ({ ...f, websiteUrl: e.target.value }))}
                   placeholder="https://monbot.fr"
                 />
@@ -494,7 +494,7 @@ export default function BotsPage() {
               <div>
                 <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Serveur support</label>
                 <input
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                   value={botForm.supportServerUrl} onChange={e => setBotForm(f => ({ ...f, supportServerUrl: e.target.value }))}
                   placeholder="https://alfychat.app/invite/abc123"
                 />
@@ -502,7 +502,7 @@ export default function BotsPage() {
               <div>
                 <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Politique de confidentialite</label>
                 <input
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                   value={botForm.privacyPolicyUrl} onChange={e => setBotForm(f => ({ ...f, privacyPolicyUrl: e.target.value }))}
                   placeholder="https://monbot.fr/privacy"
                 />
@@ -522,7 +522,7 @@ export default function BotsPage() {
       {/* ── Token Modal ── */}
       <Modal.Backdrop isOpen={showTokenModal} onOpenChange={setShowTokenModal}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)] shadow-2xl">
+        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>Token du bot</Modal.Heading>
           </Modal.Header>
@@ -537,7 +537,7 @@ export default function BotsPage() {
               <div className="space-y-3">
                 <label className="block text-xs font-semibold text-[var(--muted)]">Token</label>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 rounded-lg bg-[var(--background)] border border-[var(--border)] px-3 py-2 font-mono text-xs break-all text-[var(--foreground)]">
+                  <div className="flex-1 rounded-xl bg-[var(--background)] border border-[var(--border)] px-3 py-2 font-mono text-xs break-all text-[var(--foreground)]">
                     {showToken ? tokenBot.token : '\u2022'.repeat(48)}
                   </div>
                   <Button size="sm" variant="ghost" isIconOnly onPress={() => setShowToken(!showToken)}>
@@ -564,7 +564,7 @@ export default function BotsPage() {
       {/* ── Certification Modal ── */}
       <Modal.Backdrop isOpen={showCertifModal} onOpenChange={setShowCertifModal}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)] shadow-2xl">
+        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>Demande de certification</Modal.Heading>
           </Modal.Header>
@@ -581,7 +581,7 @@ export default function BotsPage() {
                 Pourquoi votre bot devrait etre certifie ? *
               </label>
               <textarea
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] resize-none focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] resize-none focus:border-[var(--accent)] focus:outline-none"
                 value={certifReason} onChange={e => setCertifReason(e.target.value)}
                 placeholder="Expliquez le but de votre bot, le nombre de serveurs, les fonctionnalites uniques..."
                 rows={5} maxLength={1000}
@@ -607,7 +607,7 @@ export default function BotsPage() {
       {/* ── Command Modal ── */}
       <Modal.Backdrop isOpen={showCmdModal} onOpenChange={setShowCmdModal}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)] shadow-2xl">
+        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>Ajouter une commande &mdash; {cmdBot?.name}</Modal.Heading>
           </Modal.Header>
@@ -615,7 +615,7 @@ export default function BotsPage() {
             <div>
               <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Nom de la commande *</label>
               <input
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                 value={cmdForm.name} onChange={e => setCmdForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="help" maxLength={32}
               />
@@ -623,7 +623,7 @@ export default function BotsPage() {
             <div>
               <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Description *</label>
               <input
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                 value={cmdForm.description} onChange={e => setCmdForm(f => ({ ...f, description: e.target.value }))}
                 placeholder="Affiche la liste des commandes" maxLength={200}
               />
@@ -632,7 +632,7 @@ export default function BotsPage() {
               <div>
                 <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Usage</label>
                 <input
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                   value={cmdForm.usage} onChange={e => setCmdForm(f => ({ ...f, usage: e.target.value }))}
                   placeholder="!help [commande]" maxLength={200}
                 />
@@ -641,7 +641,7 @@ export default function BotsPage() {
                 <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Cooldown (sec)</label>
                 <input
                   type="number" min={0}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
                   value={cmdForm.cooldown} onChange={e => setCmdForm(f => ({ ...f, cooldown: parseInt(e.target.value) || 0 }))}
                 />
               </div>
@@ -664,7 +664,7 @@ export default function BotsPage() {
       {/* ── Delete Confirmation ── */}
       <Modal.Backdrop isOpen={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-sm rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)] shadow-2xl">
+        <Modal.Dialog className="max-w-sm rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>Confirmer la suppression</Modal.Heading>
           </Modal.Header>

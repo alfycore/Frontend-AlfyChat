@@ -89,7 +89,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        'flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all no-underline',
+                        'flex items-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all no-underline',
                         active
                           ? 'bg-accent/12 text-accent'
                           : 'text-muted/80 hover:bg-surface hover:text-foreground',
@@ -131,7 +131,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium no-underline',
+                  'flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-medium no-underline',
                   pathname === item.href || pathname.startsWith(item.href)
                     ? 'bg-accent/12 text-accent'
                     : 'text-muted hover:text-foreground',

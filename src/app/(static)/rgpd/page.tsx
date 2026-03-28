@@ -12,7 +12,7 @@ export default function RGPDPage() {
     <div className="mx-auto max-w-3xl px-6 py-12">
       <div className="mb-10">
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-[var(--accent)]/10">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--accent)]/10 ring-1 ring-[var(--accent)]/20">
             <ShieldIcon size={24} className="text-[var(--accent)]" />
           </div>
           <div>
@@ -43,7 +43,7 @@ export default function RGPDPage() {
             Vous pouvez exporter toutes vos données en format JSON depuis les paramètres de votre compte.
             L&apos;export comprend : profil, messages, amis, préférences et consentements.
           </p>
-          <div className="mt-3 rounded-xl bg-[var(--accent)]/5 p-3 text-[var(--foreground)]">
+          <div className="mt-3 rounded-xl border border-[var(--accent)]/15 bg-[var(--accent)]/5 p-3 text-[var(--foreground)]">
             <p className="font-medium">Comment faire ?</p>
             <p className="text-[var(--muted)]">Paramètres → Confidentialité → Exporter mes données</p>
           </div>
@@ -66,7 +66,7 @@ export default function RGPDPage() {
             <li>Toutes les données sont effacées : profil, messages, fichiers, sessions.</li>
             <li>Cette action est <strong className="text-[var(--foreground)]">irréversible</strong>.</li>
           </ul>
-          <div className="mt-3 rounded-xl bg-red-500/5 p-3 text-[var(--foreground)]">
+          <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-[var(--foreground)]">
             <p className="font-medium">Comment faire ?</p>
             <p className="text-[var(--muted)]">Paramètres → Confidentialité → Supprimer mon compte</p>
           </div>
@@ -112,7 +112,7 @@ export default function RGPDPage() {
 
 function Section({ icon: Icon, title, badge, children }: { icon: React.ComponentType<{ size?: number; className?: string }>; title: string; badge?: string; children: React.ReactNode }) {
   return (
-    <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+    <Card className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white/60 p-0 shadow-sm backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
       <div className="px-5 pt-5 pb-3">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
           <Icon size={20} className="text-[var(--accent)]" />
