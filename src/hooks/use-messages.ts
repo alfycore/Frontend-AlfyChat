@@ -219,6 +219,31 @@ export function useMessages(channelId?: string, recipientId?: string) {
     const handleNewMessage = async (message: any) => {
       console.log('📨 Nouveau message reçu:', message);
 
+      // ── Filtre de conversation ──────────────────────────────────────────────
+      // Ne traiter que les messages de la conversation actuellement ouverte.
+      if (channelId) {
+        // Canal serveur : ignorer si ce n'est pas le bon canal
+        if (message.channelId !== channelId) return;
+      } else if (recipientId) {
+        // DM : comparer par conversationId (dm_xxx_yyy) ou par participants
+        const currentConvId = (() => {
+          const uid = userIdRef.current;
+          if (!uid) return null;
+          const sorted = [uid, recipientId].sort();
+          return `dm_${sorted[0]}_${sorted[1]}`;
+        })();
+        const msgConvId: string | undefined = message.conversationId;
+        if (msgConvId && currentConvId && msgConvId !== currentConvId) return;
+        if (!msgConvId) {
+          // Fallback : vérifier que l'expéditeur est bien le recipientId courant
+          const senderId = message.senderId || message.authorId;
+          const isFromRecipient = senderId === recipientId;
+          const isToRecipient = message.recipientId === recipientId;
+          if (!isFromRecipient && !isToRecipient) return;
+        }
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       const rawReactions: Array<{ emoji: string; userId: string }> = message.reactions || [];
       const groupedReactions = groupReactions(rawReactions);
       // Utiliser la ref pour éviter la closure périmée
