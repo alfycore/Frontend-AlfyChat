@@ -724,12 +724,12 @@ export function ChannelList({
               )}
             >
               <div className={cn(
-                'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
+                'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
                 selectedChannel === 'friends'
-                  ? 'bg-[var(--accent)]/20 text-[var(--accent)] shadow-sm shadow-[var(--accent)]/20'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
                   : 'bg-[var(--surface-secondary)]/80 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)]',
               )}>
-                <UsersIcon size={16} />
+                <UsersIcon size={14} />
               </div>
               <span>Amis</span>
             </button>
@@ -744,12 +744,12 @@ export function ChannelList({
               )}
             >
               <div className={cn(
-                'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
+                'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
                 selectedChannel === 'changelogs'
-                  ? 'bg-[var(--accent)]/20 text-[var(--accent)] shadow-sm shadow-[var(--accent)]/20'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
                   : 'bg-[var(--surface-secondary)]/80 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)]',
               )}>
-                <FileTextIcon size={16} />
+                <FileTextIcon size={14} />
               </div>
               <span>Changelogs</span>
             </button>

@@ -13,6 +13,7 @@
 [data-theme="light"],
 [data-theme="default"] {
   /* Theme Colors (Light Mode) */
+  --bg-solid: oklch(97.02% 0.0096 282.03);
   --accent: oklch(57.74% 0.2091 282.03);
   --accent-foreground: oklch(99.11% 0 0);
   --background: oklch(97.02% 0.0096 282.03);
@@ -57,6 +58,7 @@
 [data-theme="dark"] {
   color-scheme: dark;
   /* Theme Colors (Dark Mode) */
+  --bg-solid: oklch(12.00% 0.0096 282.03);
   --accent: oklch(57.74% 0.2091 282.03);
   --accent-foreground: oklch(99.11% 0 0);
   --background: oklch(12.00% 0.0096 282.03);

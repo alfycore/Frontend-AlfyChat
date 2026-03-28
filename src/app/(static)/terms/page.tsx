@@ -29,7 +29,7 @@ const TOC = [
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <div className="min-h-screen text-[var(--foreground)]">
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.06] dark:bg-black/30">

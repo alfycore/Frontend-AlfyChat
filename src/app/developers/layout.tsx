@@ -61,7 +61,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
   if (authLoading || !user) return null;
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen bg-[var(--bg-solid)] text-foreground">
       {/* ── Sidebar ── */}
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border/60 bg-surface/30 backdrop-blur-xl md:flex overflow-y-auto">
         {/* Logo */}

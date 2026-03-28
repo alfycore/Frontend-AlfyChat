@@ -8,7 +8,7 @@ export default function StaticLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <div className="min-h-screen bg-[var(--bg-solid)] text-[var(--foreground)]">
 
         {children}
 
