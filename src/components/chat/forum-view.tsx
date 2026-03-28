@@ -169,7 +169,7 @@ function NewPostModal({
             <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">CONTENU</label>
             <TextArea
               value={content}
-              onChange={(val) => setContent(val)}
+              onChange={(e) => setContent(e.target.value)}
               placeholder="Décrivez votre sujet en détail…"
               rows={5}
               fullWidth
