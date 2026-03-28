@@ -160,7 +160,7 @@ function LoadingSkeleton() {
 export function ServerChatArea({ serverId, channelId, channelName, channelType }: ServerChatAreaProps) {
   const meta = getChannelMeta(channelType);
   const { user } = useAuth();
-  const { isMobile, toggleSidebar, toggleMemberList } = useMobileNav();
+  const { isMobile, toggleSidebar, toggleMemberList, toggleMemberListDesktop, memberListDesktopVisible } = useMobileNav();
 
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -451,34 +451,34 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
   return (
     <div className="flex h-full min-h-0 flex-col bg-[var(--background)]">
       {/* ── Header ── */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-3 backdrop-blur-xl">
         {isMobile && (
-          <Button
-            isIconOnly
-            size="sm"
-            variant="ghost"
+          <Button isIconOnly size="sm" variant="ghost"
             className="size-8 shrink-0 rounded-lg text-[var(--muted)]"
             onPress={toggleSidebar}
           >
             <MenuIcon size={16} />
           </Button>
         )}
-        <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/60">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-secondary)]/70 shadow-sm">
           <meta.icon size={14} className={meta.color} />
         </div>
-        <h2 className="font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
-        <div className="ml-auto flex items-center gap-1.5">
-          {isMobile && (
-            <Button
-              isIconOnly
-              size="sm"
-              variant="ghost"
-              className="size-8 rounded-lg text-[var(--muted)]"
-              onPress={toggleMemberList}
-            >
-              <UsersIcon size={16} />
-            </Button>
-          )}
+        <h2 className="truncate text-[14px] font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          <Chip variant="soft" size="sm" className="hidden rounded-lg text-[10px] font-medium text-[var(--muted)] md:flex">
+            <Chip.Label>{meta.label}</Chip.Label>
+          </Chip>
+          <Button
+            isIconOnly size="sm" variant="ghost"
+            className={`size-8 rounded-lg transition-colors ${
+              !isMobile && memberListDesktopVisible
+                ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
+                : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+            }`}
+            onPress={isMobile ? toggleMemberList : toggleMemberListDesktop}
+          >
+            <UsersIcon size={16} />
+          </Button>
         </div>
       </div>
 

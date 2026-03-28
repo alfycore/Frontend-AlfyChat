@@ -133,6 +133,10 @@
   border-right: 1px solid var(--border);
 }
 
+[data-layout="member-list"] {
+  border-left: 1px solid var(--border);
+}
+
 /* ============================================================
    GLASSMORPHISM — activé quand body[data-wallpaper] est présent
    ============================================================ */
@@ -197,7 +201,8 @@ body[data-wallpaper] [data-layout="root"] {
 
 /* Panneaux latéraux flottants */
 body[data-wallpaper] [data-layout="sidebar"],
-body[data-wallpaper] [data-layout="server-list"] {
+body[data-wallpaper] [data-layout="server-list"],
+body[data-wallpaper] [data-layout="member-list"] {
   border-radius: 0.875rem;
   overflow: hidden;
   border: 1px solid oklch(100% 0 0 / 0.10);
@@ -273,7 +278,8 @@ body[data-wallpaper] [data-tour="conversations"] {
 
 /* Light mode wallpaper */
 body[data-wallpaper-light] [data-layout="sidebar"],
-body[data-wallpaper-light] [data-layout="server-list"] {
+body[data-wallpaper-light] [data-layout="server-list"],
+body[data-wallpaper-light] [data-layout="member-list"] {
   background: oklch(96% 0.005 282 / 0.60);
   border-color: oklch(0% 0 0 / 0.08);
 }

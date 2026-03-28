@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MicIcon, MicOffIcon, Volume2Icon, VolumeXIcon, SettingsIcon, CheckIcon, PencilIcon } from '@/components/icons';
+import { MicIcon, MicOffIcon, HeadphonesIcon, SettingsIcon, CheckIcon, PencilIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import {
@@ -158,20 +158,38 @@ export function UserPanel({ user }: UserPanelProps) {
       </Dropdown>
       </div>
 
-      {/* Audio controls */}
-      <div className="flex shrink-0 items-center">
+      {/* Audio controls + settings */}
+      <div className="flex shrink-0 items-center gap-0.5">
         <Tooltip delay={0}>
-            <Button
-              data-tour="user-settings"
-              isIconOnly
-              size="sm"
-              variant="tertiary"
-              className="size-7 rounded-md text-[var(--muted)]/60 hover:text-[var(--foreground)]"
-              onPress={() => setShowSettings(true)}
-            >
-              <SettingsIcon size={15} />
-            </Button>
-            <Tooltip.Content placement="top">{t.userPanel.settings}</Tooltip.Content>
+          <Button
+            isIconOnly size="sm" variant="tertiary"
+            className={`size-7 rounded-md transition-colors ${isMuted ? 'text-red-400 hover:text-red-300' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
+            onPress={() => setIsMuted(v => !v)}
+          >
+            {isMuted ? <MicOffIcon size={14} /> : <MicIcon size={14} />}
+          </Button>
+          <Tooltip.Content placement="top">{isMuted ? 'Réactiver le micro' : 'Couper le micro'}</Tooltip.Content>
+        </Tooltip>
+        <Tooltip delay={0}>
+          <Button
+            isIconOnly size="sm" variant="tertiary"
+            className={`size-7 rounded-md transition-colors ${isDeafened ? 'text-red-400 hover:text-red-300' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
+            onPress={() => setIsDeafened(v => !v)}
+          >
+            <HeadphonesIcon size={14} />
+          </Button>
+          <Tooltip.Content placement="top">{isDeafened ? 'Réactiver le son' : 'Se mettre en sourdine'}</Tooltip.Content>
+        </Tooltip>
+        <Tooltip delay={0}>
+          <Button
+            data-tour="user-settings"
+            isIconOnly size="sm" variant="tertiary"
+            className="size-7 rounded-md text-[var(--muted)]/60 hover:text-[var(--foreground)]"
+            onPress={() => setShowSettings(true)}
+          >
+            <SettingsIcon size={15} />
+          </Button>
+          <Tooltip.Content placement="top">{t.userPanel.settings}</Tooltip.Content>
         </Tooltip>
       </div>
 

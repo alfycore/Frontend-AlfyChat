@@ -35,7 +35,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { isMobile, showSidebar, showMemberList, closeAll } = useMobileNav();
+  const { isMobile, showSidebar, showMemberList, closeAll, memberListDesktopVisible } = useMobileNav();
 
   const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
     storageKey: 'alfychat_server_sidebar_width',
@@ -257,11 +257,11 @@ function LayoutInner({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* ── MEMBER LIST desktop : redimensionnable ── */}
-      {!isMobile && (
+      {/* ── MEMBER LIST desktop : redimensionnable + togglable ── */}
+      {!isMobile && memberListDesktopVisible && (
         <>
           <ResizeHandle onMouseDown={onMemberResize} />
-          <div style={{ width: memberListWidth }} className="h-full shrink-0">
+          <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0 transition-all">
             <MemberList serverId={serverId} />
           </div>
         </>

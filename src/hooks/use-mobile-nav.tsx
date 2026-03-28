@@ -8,12 +8,14 @@ interface MobileNavContextValue {
   showSidebar: boolean;
   showMemberList: boolean;
   showSettings: boolean;
+  memberListDesktopVisible: boolean;
   openSidebar: () => void;
   closeSidebar: () => void;
   toggleSidebar: () => void;
   openMemberList: () => void;
   closeMemberList: () => void;
   toggleMemberList: () => void;
+  toggleMemberListDesktop: () => void;
   openSettings: () => void;
   closeSettings: () => void;
   closeAll: () => void;
@@ -26,6 +28,19 @@ export function MobileNavProvider({ children }: { children: ReactNode }) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showMemberList, setShowMemberList] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [memberListDesktopVisible, setMemberListDesktopVisible] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = localStorage.getItem('alfychat_memberlist_desktop');
+    return stored === null ? true : stored === 'true';
+  });
+
+  const toggleMemberListDesktop = useCallback(() => {
+    setMemberListDesktopVisible(prev => {
+      const next = !prev;
+      localStorage.setItem('alfychat_memberlist_desktop', String(next));
+      return next;
+    });
+  }, []);
 
   // Sur mobile, fermer les panneaux quand on change de page
   useEffect(() => {
@@ -78,12 +93,14 @@ export function MobileNavProvider({ children }: { children: ReactNode }) {
         showSidebar,
         showMemberList,
         showSettings,
+        memberListDesktopVisible,
         openSidebar,
         closeSidebar,
         toggleSidebar,
         openMemberList,
         closeMemberList,
         toggleMemberList,
+        toggleMemberListDesktop,
         openSettings,
         closeSettings,
         closeAll,
@@ -103,12 +120,14 @@ export function useMobileNav(): MobileNavContextValue {
       showSidebar: false,
       showMemberList: false,
       showSettings: false,
+      memberListDesktopVisible: true,
       openSidebar: () => {},
       closeSidebar: () => {},
       toggleSidebar: () => {},
       openMemberList: () => {},
       closeMemberList: () => {},
       toggleMemberList: () => {},
+      toggleMemberListDesktop: () => {},
       openSettings: () => {},
       closeSettings: () => {},
       closeAll: () => {},

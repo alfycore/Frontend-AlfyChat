@@ -48,13 +48,13 @@ function MemberRow({ member, serverId, roles }: { member: Member; serverId: stri
   return (
     <UserProfilePopover userId={member.id} serverId={serverId}>
       <button className={cn(
-        'flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30',
-        !isOnline && 'opacity-40',
+        'flex w-full items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-150 hover:bg-[var(--surface-secondary)]/40',
+        !isOnline && 'opacity-35',
       )}>
         <Badge.Anchor>
-          <Avatar size="sm" className="size-7">
+          <Avatar size="sm" className="size-7 shadow-sm">
             <Avatar.Image src={resolveMediaUrl(member.avatarUrl)} />
-            <Avatar.Fallback className="text-[10px] font-medium">
+            <Avatar.Fallback className="bg-gradient-to-br from-violet-500/80 to-indigo-600/80 text-[10px] font-semibold text-white">
               {name[0]?.toUpperCase() || '?'}
             </Avatar.Fallback>
           </Avatar>
@@ -65,7 +65,7 @@ function MemberRow({ member, serverId, roles }: { member: Member; serverId: stri
           />
         </Badge.Anchor>
         <span
-          className="truncate text-[12px] font-medium"
+          className="truncate text-[12px] font-medium leading-tight"
           style={topRoleColor && topRoleColor !== '#99AAB5' ? { color: topRoleColor } : undefined}
         >
           {name}
@@ -75,7 +75,7 @@ function MemberRow({ member, serverId, roles }: { member: Member; serverId: stri
             {memberRoles.slice(0, 3).map((r) => (
               <span
                 key={r.id}
-                className="size-2 rounded-full"
+                className="size-2 rounded-full opacity-80"
                 style={{ backgroundColor: r.color }}
                 title={r.name}
               />
@@ -208,12 +208,12 @@ export function MemberList({ serverId }: MemberListProps) {
 
   if (isLoading) {
     return (
-      <div className="w-full border-l border-[var(--border)]/30 bg-[var(--background)]/80 backdrop-blur-xl">
+      <div className="w-full bg-[var(--background)]/80 backdrop-blur-xl">
         <div className="space-y-1.5 p-3 pt-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2 px-2">
-              <Skeleton className="size-7 shrink-0 rounded-full" />
-              <Skeleton className="h-3 flex-1 rounded" style={{ width: `${40 + i * 10}%` }} />
+              <Skeleton className="size-7 shrink-0 rounded-full" animationType="shimmer" />
+              <Skeleton className="h-3 rounded" animationType="shimmer" style={{ width: `${40 + (i % 4) * 12}%` }} />
             </div>
           ))}
         </div>
@@ -241,18 +241,27 @@ export function MemberList({ serverId }: MemberListProps) {
   const remainingOnline = onlineMembers.filter((m) => !assignedIds.has(m.id));
 
   return (
-    <div className="flex h-full w-full flex-col border-l border-[var(--border)]/30 bg-[var(--background)]/80 backdrop-blur-xl">
+    <div className="flex h-full w-full flex-col bg-[var(--background)]/80 backdrop-blur-xl">
       <ScrollShadow className="flex-1">
         <div className="p-2 pt-3">
           {/* Role-based sections */}
           {roleSections.map(({ role, members: roleMembers }) => (
-            <div key={role.id} className="mb-3">
-              <p
-                className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest"
-                style={{ color: role.color }}
-              >
-                {role.name} — {roleMembers.length}
-              </p>
+            <div key={role.id} className="mb-4">
+              <div className="mb-1.5 flex items-center gap-1.5 px-2">
+                <span
+                  className="size-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: role.color }}
+                />
+                <p
+                  className="text-[10px] font-bold uppercase tracking-widest"
+                  style={{ color: role.color }}
+                >
+                  {role.name}
+                </p>
+                <span className="ml-auto text-[10px] font-medium tabular-nums text-[var(--muted)]/40">
+                  {roleMembers.length}
+                </span>
+              </div>
               <div className="space-y-0.5">
                 {roleMembers.map((m) => (
                   <MemberRow key={m.id} member={m} serverId={serverId} roles={roles} />
@@ -263,10 +272,16 @@ export function MemberList({ serverId }: MemberListProps) {
 
           {/* Remaining online */}
           {remainingOnline.length > 0 && (
-            <div className="mb-3">
-              <p className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
-                En ligne — {remainingOnline.length}
-              </p>
+            <div className="mb-4">
+              <div className="mb-1.5 flex items-center gap-1.5 px-2">
+                <span className="size-1.5 shrink-0 rounded-full bg-green-500" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/60">
+                  En ligne
+                </p>
+                <span className="ml-auto text-[10px] font-medium tabular-nums text-[var(--muted)]/40">
+                  {remainingOnline.length}
+                </span>
+              </div>
               <div className="space-y-0.5">
                 {remainingOnline.map((m) => (
                   <MemberRow key={m.id} member={m} serverId={serverId} roles={roles} />
@@ -277,10 +292,16 @@ export function MemberList({ serverId }: MemberListProps) {
 
           {/* Offline */}
           {offlineMembers.length > 0 && (
-            <div className="mb-3">
-              <p className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/30">
-                Hors ligne — {offlineMembers.length}
-              </p>
+            <div className="mb-4">
+              <div className="mb-1.5 flex items-center gap-1.5 px-2">
+                <span className="size-1.5 shrink-0 rounded-full bg-[var(--muted)]/30" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/30">
+                  Hors ligne
+                </p>
+                <span className="ml-auto text-[10px] font-medium tabular-nums text-[var(--muted)]/25">
+                  {offlineMembers.length}
+                </span>
+              </div>
               <div className="space-y-0.5">
                 {offlineMembers.map((m) => (
                   <MemberRow key={m.id} member={m} serverId={serverId} roles={roles} />
