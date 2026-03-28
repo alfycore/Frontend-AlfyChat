@@ -5,7 +5,7 @@ import {
   ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon,
 } from '@/components/icons';
 import {
-  Avatar, Button, Card, Chip, Dropdown, InputGroup, Tooltip,
+  Avatar, Button, Chip, Dropdown, InputGroup, Tooltip,
 } from '@heroui/react';
 import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
@@ -150,14 +150,8 @@ export const MessageItem = memo(function MessageItem({
         </Dropdown>
       </div>
 
-      {/* ── Card ── */}
-      <Card className={cn(
-        'relative overflow-visible rounded-2xl border px-3 py-2.5 shadow-none transition-all duration-150',
-        isMe
-          ? 'border-[var(--accent)]/15 bg-[var(--accent)]/6 hover:border-[var(--accent)]/25 hover:bg-[var(--accent)]/10'
-          : 'border-[var(--border)]/25 bg-[var(--surface)]/50 hover:border-[var(--border)]/40 hover:bg-[var(--surface)]/70',
-        'backdrop-blur-sm',
-      )}>
+      {/* ── Contenu ── */}
+      <div className="rounded-xl px-3 py-1.5 transition-colors duration-100 hover:bg-[var(--surface-secondary)]/20">
         <div className="flex items-start gap-2.5 md:gap-3">
 
           {/* ── Avatar ── */}
@@ -271,7 +265,7 @@ export const MessageItem = memo(function MessageItem({
             )}
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 });
