@@ -61,9 +61,9 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
   if (authLoading || !user) return null;
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-solid)] text-foreground">
+    <div data-no-wallpaper className="flex min-h-screen text-foreground">
       {/* ── Sidebar ── */}
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border/60 bg-surface/30 backdrop-blur-xl md:flex overflow-y-auto">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border/40 bg-[var(--bg-solid)] md:flex overflow-y-auto">
         {/* Logo */}
         <div className="flex items-center gap-2 border-b border-border/60 px-4 py-4 shrink-0">
           <Link href="/" className="flex items-center gap-2 no-underline">
@@ -121,7 +121,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
 
       {/* ── Mobile header ── */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl md:hidden">
+        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border/40 bg-[var(--bg-solid)] px-4 py-3 md:hidden">
           <Link href="/" className="flex items-center gap-1.5 no-underline">
             <img src="/logo/Alfychat.svg" alt="AlfyChat" width={18} height={18} />
           </Link>

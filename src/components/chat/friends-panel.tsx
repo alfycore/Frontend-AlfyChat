@@ -608,7 +608,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           <Tabs.Panel id="blocked" className="flex flex-1 flex-col overflow-hidden p-3 md:p-4">
             {blockedUsers.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center">
-                <div className="w-full max-w-xs overflow-hidden rounded-2xl border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-8 py-8 text-center">
+                <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-8 py-8 text-center">
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-red-500/8 via-transparent to-transparent" />
                   <div className="relative flex flex-col items-center gap-3">
                     <div className="flex size-14 items-center justify-center rounded-2xl bg-red-500/10">

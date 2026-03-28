@@ -296,3 +296,38 @@ body[data-wallpaper-light] [data-section="dm-list"] {
   background: oklch(0% 0 0 / 0.04);
   border-color: oklch(0% 0 0 / 0.08);
 }
+
+/* ── Pages that must always be opaque (developers, static/legal pages) ── */
+/* Re-declare all CSS vars overridden by wallpaper back to their opaque defaults */
+[data-no-wallpaper] {
+  --background: oklch(97.02% 0.0096 282.03);
+  --surface: oklch(100.00% 0.0048 282.03);
+  --surface-secondary: oklch(95.24% 0.0077 282.03);
+  --surface-tertiary: oklch(93.73% 0.0077 282.03);
+  --overlay: oklch(100.00% 0.0029 282.03);
+  --default: oklch(94.00% 0.0096 282.03);
+  --border: oklch(90.00% 0.0096 282.03);
+  --field-background: oklch(100.00% 0.0048 282.03);
+  --segment: oklch(100.00% 0.0096 282.03);
+  background-color: oklch(97.02% 0.0096 282.03) !important;
+  background-image: none !important;
+  isolation: isolate;
+}
+.dark [data-no-wallpaper] {
+  --background: oklch(12.00% 0.0096 282.03);
+  --surface: oklch(21.03% 0.0192 282.03);
+  --surface-secondary: oklch(25.70% 0.0144 282.03);
+  --surface-tertiary: oklch(27.21% 0.0144 282.03);
+  --overlay: oklch(21.03% 0.0192 282.03);
+  --default: oklch(27.40% 0.0096 282.03);
+  --border: oklch(28.00% 0.0096 282.03);
+  --field-background: oklch(21.03% 0.0192 282.03);
+  --segment: oklch(39.64% 0.0096 282.03);
+  background-color: oklch(12.00% 0.0096 282.03) !important;
+}
+/* Remove backdrop-filter from all children so nothing blurs through to body wallpaper */
+body[data-wallpaper] [data-no-wallpaper] *,
+body[data-wallpaper-light] [data-no-wallpaper] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
