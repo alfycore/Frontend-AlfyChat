@@ -188,7 +188,7 @@ export const MessageItem = memo(function MessageItem({
           {message.sender?.isBot && (
             <Chip
               size="sm"
-              variant={message.sender.isVerifiedBot ? 'flat' : 'outlined'}
+              variant={message.sender.isVerifiedBot ? 'soft' : 'secondary'}
               color={message.sender.isVerifiedBot ? 'primary' : 'default'}
               className="h-4 px-1.5 text-[8px] font-bold uppercase"
             >
