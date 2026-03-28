@@ -691,16 +691,16 @@ export function ChannelList({
     const groupConversations = conversations.filter((c) => c.type === 'group');
 
     return (
-      <div className="flex h-full w-full flex-col overflow-hidden border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl">
-        {/* Header */}
-        <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)]/40 px-3">
-          <span className="text-[13px] font-bold">{t.channelList.messagesTitle}</span>
+      <div className="flex h-full w-full flex-col overflow-hidden bg-[var(--background)]/80 backdrop-blur-xl">
+        {/* ── Header ── */}
+        <div className="flex h-13 shrink-0 items-center justify-between border-b border-[var(--border)]/30 px-3">
+          <span className="text-[13px] font-bold tracking-tight text-[var(--foreground)]">{t.channelList.messagesTitle}</span>
           <Tooltip delay={0}>
             <Button
               variant="ghost"
               isIconOnly
               size="sm"
-              className="size-7 rounded-lg"
+              className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
               onPress={() => setShowGroupCreate(true)}
             >
               <PlusIcon size={15} />
@@ -711,150 +711,169 @@ export function ChannelList({
 
         <ScrollShadow className="flex-1 overflow-y-auto">
           <div className="space-y-0.5 p-2">
-            {/* Friends button */}
+
+            {/* ── Nav buttons ── */}
             <button
               data-tour="friends"
               onClick={() => onSelectChannel('friends')}
               className={cn(
-                'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors',
+                'group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-all duration-150',
                 selectedChannel === 'friends'
-                  ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                  : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
-              )}
-            >
-              <div
-                className={cn(
-                  'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                  selectedChannel === 'friends'
-                    ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                    : 'bg-[var(--surface-secondary)] text-[var(--muted)]',
-                )}
-              >
-                <UsersIcon size={15} />
-              </div>
-              Amis
-            </button>
-
-            {/* Changelogs button */}
-            <button
-              onClick={() => router.push('/channels/me/changelogs')}
-              className={cn(
-                'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors',
-                selectedChannel === 'changelogs'
-                  ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                  : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
+                  ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
+                  : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/60 hover:text-[var(--foreground)]',
               )}
             >
               <div className={cn(
-                'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                selectedChannel === 'changelogs'
-                  ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                  : 'bg-[var(--surface-secondary)] text-[var(--muted)]',
+                'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
+                selectedChannel === 'friends'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent)] shadow-sm shadow-[var(--accent)]/20'
+                  : 'bg-[var(--surface-secondary)]/80 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)]',
               )}>
-                <FileTextIcon size={15} />
+                <UsersIcon size={16} />
               </div>
-              Changelogs
+              <span>Amis</span>
             </button>
 
-            <div className="px-1 py-1">
+            <button
+              onClick={() => router.push('/channels/me/changelogs')}
+              className={cn(
+                'group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-all duration-150',
+                selectedChannel === 'changelogs'
+                  ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
+                  : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/60 hover:text-[var(--foreground)]',
+              )}
+            >
+              <div className={cn(
+                'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
+                selectedChannel === 'changelogs'
+                  ? 'bg-[var(--accent)]/20 text-[var(--accent)] shadow-sm shadow-[var(--accent)]/20'
+                  : 'bg-[var(--surface-secondary)]/80 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)]',
+              )}>
+                <FileTextIcon size={16} />
+              </div>
+              <span>Changelogs</span>
+            </button>
+
+            <div className="px-1 py-1.5">
               <Separator />
             </div>
 
-            {/* Groups */}
+            {/* ── Groupes ── */}
             {groupConversations.length > 0 && (
-              <div data-tour="groups">
-                <p className="mb-1 px-2 pt-1 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
-                  {t.channelList.groups}
-                </p>
-                {groupConversations.map((conv) => {
-                  const isActive = selectedChannel === `group:${conv.id}`;
-                  const groupUnread = notifStore.unread.get(`group:${conv.id}`) ?? 0;
-                  return (
-                    <button
-                      key={conv.id}
-                      onClick={() => onSelectChannel(isActive ? null : `group:${conv.id}`)}
-                      className={cn(
-                        'flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors',
-                        isActive
-                          ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                          : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
-                      )}
-                    >
-                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
-                        <UsersRoundIcon size={14} />
-                      </div>
-                      <div className="min-w-0 flex-1 text-left">
-                        <p className="truncate text-[13px]">{conv.recipientName}</p>
-                      </div>
-                      {groupUnread > 0 && (
-                        <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 text-[10px]">
-                          {groupUnread}
-                        </Chip>
-                      )}
-                    </button>
-                  );
-                })}
-                <div className="px-1 py-1">
+              <div data-tour="groups" className="mb-1">
+                <div className="mb-1.5 flex items-center gap-1.5 px-2 pt-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+                    {t.channelList.groups}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  {groupConversations.map((conv) => {
+                    const isActive = selectedChannel === `group:${conv.id}`;
+                    const groupUnread = notifStore.unread.get(`group:${conv.id}`) ?? 0;
+                    return (
+                      <button
+                        key={conv.id}
+                        onClick={() => onSelectChannel(isActive ? null : `group:${conv.id}`)}
+                        className={cn(
+                          'group flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-150',
+                          isActive
+                            ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
+                            : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/60 hover:text-[var(--foreground)]',
+                        )}
+                      >
+                        <div className={cn(
+                          'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
+                          isActive
+                            ? 'bg-indigo-500/20 text-indigo-400 shadow-sm shadow-indigo-500/20'
+                            : 'bg-indigo-500/10 text-indigo-400/70 group-hover:bg-indigo-500/15 group-hover:text-indigo-400',
+                        )}>
+                          <UsersRoundIcon size={15} />
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <p className="truncate text-[13px] font-medium leading-tight">{conv.recipientName}</p>
+                          <p className="text-[10px] text-[var(--muted)]/50 leading-tight">
+                            {conv.participants?.length ?? 0} membres
+                          </p>
+                        </div>
+                        {groupUnread > 0 && (
+                          <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 h-5 text-[10px]">
+                            {groupUnread}
+                          </Chip>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="px-1 py-1.5">
                   <Separator />
                 </div>
               </div>
             )}
 
-            {/* DMs */}
-            <div data-section="dm-list" className="mx-1 mt-1 rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/40 p-1.5 transition-all">
-            <p
-              data-tour="conversations"
-              className="mb-1 px-2 pt-1 text-[10px] font-bold uppercase tracking-widest text-muted/50"
-            >
-              {t.channelList.directMessages}
-            </p>
-            {dmConversations.length === 0 ? (
-              <p className="px-3 py-2 text-[11px] text-muted/50">{t.channelList.noConversations}</p>
-            ) : (
-              dmConversations.map((conv) => {
-                const isActive =
-                  selectedChannel === conv.recipientId ||
-                  selectedChannel === `dm:${conv.recipientId}`;
-                const dmUnread = notifStore.unread.get(conv.recipientId) ?? 0;
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => router.push(`/channels/me/${conv.recipientId}`)}
-                    className={cn(
-                      'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors',
-                      isActive
-                        ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                        : 'text-muted hover:bg-surface-secondary/70 hover:text-[var(--foreground)]',
-                    )}
-                  >
-                    <div className="relative shrink-0">
-                      <Avatar className="size-8">
-                        <Avatar.Image
-                          src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined}
-                        />
-                        <Avatar.Fallback className="text-xs">
-                          {conv.recipientName?.[0] || '?'}
-                        </Avatar.Fallback>
-                      </Avatar>
-                      <span
-                        className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)] ${presenceDot(presenceMap.get(conv.recipientId))}`}
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1 text-left">
-                      <p className="truncate">{conv.recipientName || t.channelList.user}</p>
-                      {customStatusMap.get(conv.recipientId) && (
-                        <p className="truncate text-[10px] text-[var(--muted)]/50 leading-tight">{customStatusMap.get(conv.recipientId)}</p>
-                      )}
-                    </div>
-                    {dmUnread > 0 && (
-                      <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 text-[10px]">
-                        {dmUnread}
-                      </Chip>
-                    )}
-                  </button>
-                );
-              })
-            )}
+            {/* ── Messages privés ── */}
+            <div data-section="dm-list" className="mx-0.5 mt-0.5 rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/40 p-1.5 transition-all">
+              <div className="mb-1 flex items-center justify-between px-2 pt-1">
+                <p data-tour="conversations" className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+                  {t.channelList.directMessages}
+                </p>
+              </div>
+              {dmConversations.length === 0 ? (
+                <p className="px-3 py-3 text-center text-[11px] text-[var(--muted)]/40">{t.channelList.noConversations}</p>
+              ) : (
+                <div className="space-y-0.5">
+                  {dmConversations.map((conv) => {
+                    const isActive =
+                      selectedChannel === conv.recipientId ||
+                      selectedChannel === `dm:${conv.recipientId}`;
+                    const dmUnread = notifStore.unread.get(conv.recipientId) ?? 0;
+                    const presence = presenceMap.get(conv.recipientId);
+                    return (
+                      <button
+                        key={conv.id}
+                        onClick={() => router.push(`/channels/me/${conv.recipientId}`)}
+                        className={cn(
+                          'group flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 transition-all duration-150',
+                          isActive
+                            ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
+                            : 'text-[var(--foreground)] hover:bg-[var(--surface-secondary)]/60',
+                        )}
+                      >
+                        <div className="relative shrink-0">
+                          <Avatar className={cn('size-8 ring-2 transition-all', isActive ? 'ring-[var(--accent)]/30' : 'ring-transparent group-hover:ring-[var(--border)]/30')}>
+                            <Avatar.Image src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
+                            <Avatar.Fallback className={cn('text-[11px] font-semibold', isActive ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'bg-[var(--surface-secondary)]')}>
+                              {conv.recipientName?.[0]?.toUpperCase() || '?'}
+                            </Avatar.Fallback>
+                          </Avatar>
+                          <span className={cn(
+                            'absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)]',
+                            presenceDot(presence),
+                          )} />
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <p className={cn('truncate text-[13px] font-medium leading-tight', isActive ? 'text-[var(--accent)]' : 'text-[var(--foreground)]')}>
+                            {conv.recipientName || t.channelList.user}
+                          </p>
+                          {customStatusMap.get(conv.recipientId) ? (
+                            <p className="truncate text-[10px] text-[var(--muted)]/50 leading-tight">
+                              {customStatusMap.get(conv.recipientId)}
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-[var(--muted)]/40 leading-tight capitalize">
+                              {presence ?? 'hors ligne'}
+                            </p>
+                          )}
+                        </div>
+                        {dmUnread > 0 && (
+                          <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 h-5 text-[10px]">
+                            {dmUnread}
+                          </Chip>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </ScrollShadow>
@@ -876,7 +895,7 @@ export function ChannelList({
   // ── Server mode ───────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-[var(--background)]/80 backdrop-blur-xl">
       {/* Server banner */}
       {serverBannerUrl ? (
         <div className="relative h-20 w-full shrink-0 overflow-hidden">

@@ -215,7 +215,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-[var(--background)]">
+    <div data-layout="root" className="flex h-dvh overflow-hidden bg-[var(--background)] transition-all">
       {/* Audio persistant — sr-only (pas display:none) pour compatibilité autoplay navigateurs */}
       <audio ref={persistentAudioRef} autoPlay playsInline className="sr-only" />
 
@@ -240,8 +240,10 @@ function LayoutInner({ children }: { children: ReactNode }) {
       {/* ── SIDEBAR desktop : ServerList fixe + ChannelList redimensionnable ── */}
       {!isMobile && (
         <>
-          <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
-          <div style={{ width: channelListWidth }} className="h-full shrink-0">
+          <div data-layout="server-list" className="h-full shrink-0 transition-all">
+            <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+          </div>
+          <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0 transition-all">
             <ChannelList
               serverId={selectedServer}
               selectedChannel={selectedChannel}

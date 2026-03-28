@@ -185,7 +185,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-[var(--background)]">
+    <div data-layout="root" className="flex h-dvh overflow-hidden bg-[var(--background)] transition-all">
       <IncomingCallDialog
         open={!!incomingCall}
         callerName={incomingCall?.callerName || ''}
@@ -206,8 +206,10 @@ function LayoutInner({ children }: { children: ReactNode }) {
       {/* ── SIDEBAR desktop : ServerList fixe + ChannelList redimensionnable ── */}
       {!isMobile && (
         <>
-          <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
-          <div style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col">
+          <div data-layout="server-list" className="h-full shrink-0 transition-all">
+            <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
+          </div>
+          <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col transition-all">
             <ChannelList
               serverId={serverId}
               selectedChannel={channelId ?? null}

@@ -192,7 +192,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
   return (
     <>
       {/* ── Sidebar ── */}
-      <div className="flex h-full w-17 flex-col items-center gap-1.5 overflow-hidden border-r border-(--border)/20 bg-background py-3">
+      <div className="flex h-full w-17 flex-col items-center gap-1.5 overflow-hidden bg-[var(--background)]/80 py-3 backdrop-blur-xl">
 
         {/* DMs */}
         <Tooltip delay={0}>
