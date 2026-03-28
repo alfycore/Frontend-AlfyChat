@@ -487,12 +487,10 @@ function PostDiscussion({
       {/* Reply input */}
       <div className="shrink-0 px-4 pb-4 pt-1">
         <div className="flex items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 backdrop-blur-sm transition-colors focus-within:border-violet-500/30">
-          <Button isIconOnly size="sm" variant="ghost" className="size-8 shrink-0 self-end rounded-xl text-[var(--muted)]" asChild>
-            <label className="cursor-pointer">
-              <input type="file" accept="image/*" className="hidden" />
-              <PaperclipIcon size={16} />
-            </label>
-          </Button>
+          <label className="flex size-8 shrink-0 cursor-pointer items-center justify-center self-end rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+            <input type="file" accept="image/*" className="hidden" />
+            <PaperclipIcon size={16} />
+          </label>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
