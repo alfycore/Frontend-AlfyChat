@@ -9,12 +9,14 @@ import {
   RotateCwIcon, GlobeIcon, SearchIcon, HelpCircleIcon, LockIcon,
   Trash2Icon, KeyRoundIcon, ZapIcon, CalendarIcon, ClockIcon,
   MoreHorizontalIcon, AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon, ArrowLeftIcon,
+  XIcon, UploadIcon,
 } from '@/components/icons';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/components/locale-provider';
 import { useTheme } from 'next-themes';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { useBackground } from '@/hooks/use-background';
 import { socketService } from '@/lib/socket';
 import { api, resolveMediaUrl } from '@/lib/api';
 import {
@@ -333,6 +335,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   /* -- Appearance -- */
   const [fontFamily, setFontFamily] = useState('geist');
+  const { wallpaper, blur, opacity, setWallpaper, setBlur, setOpacity } = useBackground();
+  const wallpaperInputRef = useRef<HTMLInputElement>(null);
 
   /* -- Language -- */
   const [langSearch, setLangSearch] = useState('');
@@ -2204,6 +2208,119 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                             </ListBox>
                           </ComboBox.Popover>
                         </ComboBox>
+                      </Card.Content>
+                    </Card>
+
+                    {/* Wallpaper + Glassmorphism */}
+                    <Card variant="secondary">
+                      <Card.Header>
+                        <Card.Title>Image de fond & Glassmorphisme</Card.Title>
+                        <Card.Description>Choisissez une image de fond. L'interface devient automatiquement en verre dépoli.</Card.Description>
+                      </Card.Header>
+                      <Card.Content className="space-y-5">
+                        {/* Hidden file input */}
+                        <input
+                          ref={wallpaperInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              const result = ev.target?.result as string;
+                              if (result) setWallpaper(result);
+                            };
+                            reader.readAsDataURL(file);
+                            e.target.value = '';
+                          }}
+                        />
+
+                        {/* Preset wallpapers */}
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-[var(--foreground)]">Fonds prédéfinis</p>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { label: 'Aurore', value: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80' },
+                              { label: 'Forêt', value: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=80' },
+                              { label: 'Nuit', value: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=1920&q=80' },
+                              { label: 'Montagne', value: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80' },
+                              { label: 'Océan', value: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80' },
+                              { label: 'Abstrait', value: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80' },
+                            ].map((preset) => (
+                              <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => setWallpaper(preset.value)}
+                                className={`relative h-14 w-20 overflow-hidden rounded-lg border-2 transition-all hover:scale-105 ${wallpaper === preset.value ? 'border-[var(--accent)]' : 'border-[var(--border)]'}`}
+                                title={preset.label}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={preset.value} alt={preset.label} className="h-full w-full object-cover" />
+                                <span className="absolute inset-x-0 bottom-0 bg-black/50 py-0.5 text-center text-[10px] text-white">{preset.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Upload + clear */}
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onPress={() => wallpaperInputRef.current?.click()}
+                          >
+                            <UploadIcon size={14} />
+                            Importer une image
+                          </Button>
+                          {wallpaper && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onPress={() => setWallpaper(null)}
+                            >
+                              <XIcon size={14} />
+                              Supprimer le fond
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Current preview */}
+                        {wallpaper && (
+                          <div className="overflow-hidden rounded-xl border border-[var(--border)]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={wallpaper}
+                              alt="Aperçu du fond"
+                              className="h-28 w-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {/* Blur & opacity sliders — only visible when wallpaper is set */}
+                        {wallpaper && (
+                          <div className="space-y-4">
+                            <Slider
+                              label="Flou du verre"
+                              minValue={0}
+                              maxValue={40}
+                              step={1}
+                              value={blur}
+                              onChange={(v) => setBlur(Array.isArray(v) ? v[0] : v)}
+                              className="w-full"
+                            />
+                            <Slider
+                              label={`Opacité des panneaux — ${opacity}%`}
+                              minValue={20}
+                              maxValue={95}
+                              step={5}
+                              value={opacity}
+                              onChange={(v) => setOpacity(Array.isArray(v) ? v[0] : v)}
+                              className="w-full"
+                            />
+                          </div>
+                        )}
                       </Card.Content>
                     </Card>
                   </div>

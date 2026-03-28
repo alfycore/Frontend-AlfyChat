@@ -149,6 +149,7 @@ export const HashIcon = fi('hastag');
 export const FolderOpenIcon = fi('folder-open');
 export const MegaphoneIcon = fi('megaphone');
 export const DownloadIcon = fi('download');
+export const UploadIcon = fi('upload');
 export const RefreshCwIcon = fi('refresh');
 export const PinIcon = fi('thumbtack');
 export const CrownIcon = fi('crown');

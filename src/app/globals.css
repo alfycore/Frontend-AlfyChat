@@ -123,3 +123,57 @@
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar) transparent;
 }
+
+/* ============================================================
+   GLASSMORPHISM — activé quand body[data-wallpaper] est présent
+   ============================================================ */
+
+:root {
+  --glass-blur: 20px;
+  --glass-opacity: 0.7;
+}
+
+/* Light mode + wallpaper */
+body[data-wallpaper] {
+  --background: oklch(97.02% 0.0096 282.03 / 0.25);
+  --surface: oklch(100.00% 0.0048 282.03 / var(--glass-opacity));
+  --surface-secondary: oklch(95.24% 0.0077 282.03 / var(--glass-opacity));
+  --surface-tertiary: oklch(93.73% 0.0077 282.03 / var(--glass-opacity));
+  --overlay: oklch(100.00% 0.0029 282.03 / calc(var(--glass-opacity) + 0.1));
+  --default: oklch(94.00% 0.0096 282.03 / var(--glass-opacity));
+  --border: oklch(90.00% 0.0096 282.03 / 0.5);
+  --field-background: oklch(100.00% 0.0048 282.03 / calc(var(--glass-opacity) + 0.1));
+  --segment: oklch(100.00% 0.0096 282.03 / var(--glass-opacity));
+}
+
+/* Dark mode + wallpaper */
+.dark body[data-wallpaper] {
+  --background: oklch(12.00% 0.0096 282.03 / 0.2);
+  --surface: oklch(21.03% 0.0192 282.03 / var(--glass-opacity));
+  --surface-secondary: oklch(25.70% 0.0144 282.03 / var(--glass-opacity));
+  --surface-tertiary: oklch(27.21% 0.0144 282.03 / var(--glass-opacity));
+  --overlay: oklch(21.03% 0.0192 282.03 / calc(var(--glass-opacity) + 0.1));
+  --default: oklch(27.40% 0.0096 282.03 / var(--glass-opacity));
+  --border: oklch(28.00% 0.0096 282.03 / 0.4);
+  --field-background: oklch(21.03% 0.0192 282.03 / calc(var(--glass-opacity) + 0.1));
+  --segment: oklch(39.64% 0.0096 282.03 / var(--glass-opacity));
+}
+
+/* Apply backdrop-filter to all surface/panel elements */
+body[data-wallpaper] [data-slot="base"],
+body[data-wallpaper] [data-slot="card-base"],
+body[data-wallpaper] [data-slot="wrapper"],
+body[data-wallpaper] [data-slot="dialog"],
+body[data-wallpaper] [data-slot="popover"],
+body[data-wallpaper] [data-slot="content"],
+body[data-wallpaper] [data-slot="overlay"],
+body[data-wallpaper] [data-slot="section"],
+body[data-wallpaper] [data-slot="menu"],
+body[data-wallpaper] [data-slot="list"],
+body[data-wallpaper] [data-slot="tooltip"],
+body[data-wallpaper] aside,
+body[data-wallpaper] nav,
+body[data-wallpaper] header {
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+}
