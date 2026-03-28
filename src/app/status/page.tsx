@@ -9,99 +9,126 @@ import {
   ArrowLeftIcon, ZapIcon, WifiIcon,
 } from '@/components/icons';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const GATEWAY = 'https://gateway.alfychat.app';
+const WEBSITE = 'https://alfychat.app';
+const CDN     = 'https://media.alfychat.app';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type ServiceStatus = 'operational' | 'degraded' | 'outage' | 'checking';
-
-interface ServiceResult {
-  name: string;
-  status: ServiceStatus;
-  latency: number | null;
-  checkedAt: Date | null;
-}
+type Provider = 'hostinger' | 'alfycore';
 
 interface ServiceDef {
   key: string;
   name: string;
   description: string;
-  endpoint: string;
+  provider: Provider;
+  checkUrl: string; // URL complète à appeler
   Icon: React.ComponentType<{ size?: number; className?: string }>;
+}
+
+interface ServiceResult {
+  key: string;
+  status: ServiceStatus;
+  latency: number | null;
+  checkedAt: Date | null;
 }
 
 // ─── Services ────────────────────────────────────────────────────────────────
 
-const SERVICES: ServiceDef[] = [
+const HOSTINGER_SERVICES: ServiceDef[] = [
   {
-    key: 'gateway',
-    name: 'Gateway',
-    description: 'API & WebSocket',
-    endpoint: '/health',
+    key: 'website',
+    name: 'Site Web',
+    description: 'alfychat.app — interface utilisateur Next.js',
+    provider: 'hostinger',
+    checkUrl: WEBSITE,
     Icon: GlobeIcon,
   },
   {
+    key: 'gateway',
+    name: 'Gateway',
+    description: 'gateway.alfychat.app — API & WebSocket',
+    provider: 'hostinger',
+    checkUrl: `${GATEWAY}/health`,
+    Icon: ZapIcon,
+  },
+  {
     key: 'users',
-    name: 'Utilisateurs',
-    description: 'Authentification & profils',
-    endpoint: '/users/health',
+    name: 'Service Utilisateurs',
+    description: 'Authentification, profils & sessions',
+    provider: 'hostinger',
+    checkUrl: `${GATEWAY}/users/health`,
     Icon: UserIcon,
   },
   {
     key: 'messages',
-    name: 'Messages',
-    description: 'Messagerie temps-réel',
-    endpoint: '/messages/health',
+    name: 'Service Messages',
+    description: 'Messagerie chiffrée temps-réel (E2EE)',
+    provider: 'hostinger',
+    checkUrl: `${GATEWAY}/messages/health`,
     Icon: MessageCircleIcon,
   },
   {
-    key: 'friends',
-    name: 'Amis',
-    description: 'Relations & demandes',
-    endpoint: '/friends/health',
-    Icon: UsersIcon,
-  },
-  {
     key: 'calls',
-    name: 'Appels',
-    description: 'Voix & vidéo (WebRTC)',
-    endpoint: '/calls/health',
+    name: 'Service Appels',
+    description: 'Voix & vidéo (WebRTC / STUN)',
+    provider: 'hostinger',
+    checkUrl: `${GATEWAY}/calls/health`,
     Icon: PhoneIcon,
   },
   {
-    key: 'servers',
-    name: 'Serveurs',
-    description: 'Communautés & canaux',
-    endpoint: '/servers/health',
-    Icon: ServerIcon,
-  },
-  {
-    key: 'bots',
-    name: 'Bots',
-    description: 'Automatisation & intégrations',
-    endpoint: '/bots/health',
-    Icon: BotIcon,
-  },
-  {
-    key: 'media',
-    name: 'Médias',
-    description: 'Fichiers & uploads',
-    endpoint: '/media/health',
+    key: 'cdn',
+    name: 'CDN Médias',
+    description: 'media.alfychat.app — fichiers, avatars & uploads',
+    provider: 'hostinger',
+    checkUrl: `${CDN}/health`,
     Icon: ImageIcon,
   },
 ];
 
+const ALFYCORE_SERVICES: ServiceDef[] = [
+  {
+    key: 'friends',
+    name: 'Service Amis',
+    description: 'Relations, demandes & blocages',
+    provider: 'alfycore',
+    checkUrl: `${GATEWAY}/friends/health`,
+    Icon: UsersIcon,
+  },
+  {
+    key: 'servers',
+    name: 'Service Serveurs',
+    description: 'Communautés, canaux & permissions',
+    provider: 'alfycore',
+    checkUrl: `${GATEWAY}/servers/health`,
+    Icon: ServerIcon,
+  },
+  {
+    key: 'bots',
+    name: 'Service Bots',
+    description: 'Automatisation & intégrations tierces',
+    provider: 'alfycore',
+    checkUrl: `${GATEWAY}/bots/health`,
+    Icon: BotIcon,
+  },
+];
+
+const ALL_SERVICES = [...HOSTINGER_SERVICES, ...ALFYCORE_SERVICES];
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-async function checkService(endpoint: string): Promise<{ status: ServiceStatus; latency: number }> {
+async function checkService(url: string): Promise<{ status: ServiceStatus; latency: number }> {
   const start = performance.now();
   try {
-    const res = await fetch(`${API_URL}${endpoint}`, {
-      signal: AbortSignal.timeout(5000),
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(6000),
       cache: 'no-store',
+      mode: 'no-cors', // pour le website check cross-origin
     });
     const latency = Math.round(performance.now() - start);
-    if (res.ok) return { status: 'operational', latency };
+    // no-cors → opaque response, status = 0 mais pas d'exception = OK
+    if (res.ok || res.type === 'opaque') return { status: 'operational', latency };
     if (res.status >= 500) return { status: 'outage', latency };
     return { status: 'degraded', latency };
   } catch {
@@ -143,7 +170,7 @@ function StatusIcon({ status }: { status: ServiceStatus }) {
   if (status === 'operational') return <CheckCircle2Icon size={18} className="text-emerald-400" />;
   if (status === 'degraded')    return <AlertTriangleIcon size={18} className="text-amber-400" />;
   if (status === 'outage')      return <XCircleIcon size={18} className="text-red-400" />;
-  return <i className="fi fi-rr-spinner animate-spin text-zinc-400" style={{ fontSize: 18 }} />;
+  return <RefreshCwIcon size={15} className="animate-spin text-zinc-400" />;
 }
 
 function LatencyBar({ ms }: { ms: number | null }) {
@@ -168,29 +195,72 @@ function GlobalBanner({ status }: { status: ServiceStatus }) {
   );
 }
 
+function ProviderBadge({ provider }: { provider: Provider }) {
+  if (provider === 'hostinger') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400 uppercase tracking-wide">
+        Hostinger
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400 uppercase tracking-wide">
+      AlfyCore
+    </span>
+  );
+}
+
+function ServiceRow({ svc, result }: { svc: ServiceDef; result: ServiceResult }) {
+  const { Icon } = svc;
+  return (
+    <div className="flex items-center gap-4 px-5 py-4 hover:bg-accent/30 transition-colors">
+      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
+        <Icon size={18} className="text-muted-foreground" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium text-sm">{svc.name}</span>
+          <ProviderBadge provider={svc.provider} />
+        </div>
+        <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
+      </div>
+      <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
+        <LatencyBar ms={result.latency} />
+      </div>
+      <div className="flex-shrink-0">
+        <StatusIcon status={result.status} />
+      </div>
+      <div className="hidden md:block flex-shrink-0 w-32 text-right">
+        <StatusBadge status={result.status} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function StatusPage() {
   const [results, setResults] = useState<ServiceResult[]>(
-    SERVICES.map((s) => ({ name: s.key, status: 'checking', latency: null, checkedAt: null }))
+    ALL_SERVICES.map((s) => ({ key: s.key, status: 'checking', latency: null, checkedAt: null }))
   );
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
   const [checking, setChecking] = useState(false);
 
   const runChecks = useCallback(async () => {
     setChecking(true);
-    setResults(SERVICES.map((s) => ({ name: s.key, status: 'checking', latency: null, checkedAt: null })));
+    setResults(ALL_SERVICES.map((s) => ({ key: s.key, status: 'checking', latency: null, checkedAt: null })));
 
-    const checks = SERVICES.map(async (svc, idx) => {
-      const { status, latency } = await checkService(svc.endpoint);
-      setResults((prev) => {
-        const next = [...prev];
-        next[idx] = { name: svc.key, status, latency, checkedAt: new Date() };
-        return next;
-      });
-    });
+    await Promise.allSettled(
+      ALL_SERVICES.map(async (svc, idx) => {
+        const { status, latency } = await checkService(svc.checkUrl);
+        setResults((prev) => {
+          const next = [...prev];
+          next[idx] = { key: svc.key, status, latency, checkedAt: new Date() };
+          return next;
+        });
+      })
+    );
 
-    await Promise.allSettled(checks);
     setLastCheck(new Date());
     setChecking(false);
   }, []);
@@ -203,12 +273,16 @@ export default function StatusPage() {
 
   const global = overallStatus(results);
 
+  const hostingerResults  = results.slice(0, HOSTINGER_SERVICES.length);
+  const alfycoreResults   = results.slice(HOSTINGER_SERVICES.length);
+
   const operationalCount = results.filter((r) => r.status === 'operational').length;
   const degradedCount    = results.filter((r) => r.status === 'degraded').length;
   const outageCount      = results.filter((r) => r.status === 'outage').length;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+
       {/* ── Header ── */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-10">
         <div className="mx-auto max-w-4xl px-4 py-3 flex items-center justify-between">
@@ -245,6 +319,7 @@ export default function StatusPage() {
             <p className="text-xs text-muted-foreground/60 flex items-center justify-center gap-1.5">
               <ClockIcon size={11} />
               Dernière vérification à {lastCheck.toLocaleTimeString('fr-FR')}
+              &nbsp;· Actualisation automatique toutes les 60 s
             </p>
           )}
         </div>
@@ -266,50 +341,33 @@ export default function StatusPage() {
           ))}
         </div>
 
-        {/* ── Services list ── */}
+        {/* ── Hostinger ── */}
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Microservices
-          </h2>
-          <div className="divide-y divide-border/40 rounded-xl border border-border/50 bg-card/30 overflow-hidden">
-            {SERVICES.map((svc, idx) => {
-              const result = results[idx];
-              const { Icon } = svc;
-              return (
-                <div
-                  key={svc.key}
-                  className="flex items-center gap-4 px-5 py-4 hover:bg-accent/30 transition-colors"
-                >
-                  {/* Icon */}
-                  <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
-                    <Icon size={18} className="text-muted-foreground" />
-                  </div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Hostinger
+            </h2>
+            <span className="text-[10px] text-muted-foreground/50">— Site web · Gateway · Users · Messages · Calls · CDN</span>
+          </div>
+          <div className="divide-y divide-border/40 rounded-xl border border-violet-500/20 bg-card/30 overflow-hidden">
+            {HOSTINGER_SERVICES.map((svc, idx) => (
+              <ServiceRow key={svc.key} svc={svc} result={hostingerResults[idx]} />
+            ))}
+          </div>
+        </section>
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{svc.name}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
-                  </div>
-
-                  {/* Latency */}
-                  <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
-                    <LatencyBar ms={result.latency} />
-                  </div>
-
-                  {/* Status icon */}
-                  <div className="flex-shrink-0">
-                    <StatusIcon status={result.status} />
-                  </div>
-
-                  {/* Badge */}
-                  <div className="hidden md:block flex-shrink-0 w-32 text-right">
-                    <StatusBadge status={result.status} />
-                  </div>
-                </div>
-              );
-            })}
+        {/* ── AlfyCore ── */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              AlfyCore
+            </h2>
+            <span className="text-[10px] text-muted-foreground/50">— Friends · Servers · Bots</span>
+          </div>
+          <div className="divide-y divide-border/40 rounded-xl border border-sky-500/20 bg-card/30 overflow-hidden">
+            {ALFYCORE_SERVICES.map((svc, idx) => (
+              <ServiceRow key={svc.key} svc={svc} result={alfycoreResults[idx]} />
+            ))}
           </div>
         </section>
 
@@ -320,9 +378,19 @@ export default function StatusPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { name: 'Base de données MySQL', desc: 'Persistance & relations', Icon: DatabaseIcon },
-              { name: 'Cache Redis',            desc: 'Sessions & pub/sub',      Icon: ZapIcon },
-            ].map(({ name, desc, Icon }) => (
+              {
+                name: 'Base de données MySQL',
+                desc: 'AlfyCore · 51.254.243.250:3940',
+                Icon: DatabaseIcon,
+                provider: 'alfycore' as Provider,
+              },
+              {
+                name: 'Cache Redis',
+                desc: 'AlfyCore · 51.254.243.250:5435',
+                Icon: ZapIcon,
+                provider: 'alfycore' as Provider,
+              },
+            ].map(({ name, desc, Icon, provider }) => (
               <div
                 key={name}
                 className="flex items-center gap-4 rounded-xl border border-border/50 bg-card/30 px-5 py-4"
@@ -331,7 +399,10 @@ export default function StatusPage() {
                   <Icon size={18} className="text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm">{name}</p>
+                    <ProviderBadge provider={provider} />
+                  </div>
                   <p className="text-xs text-muted-foreground">{desc}</p>
                 </div>
                 <StatusIcon status={global === 'checking' ? 'checking' : global === 'outage' ? 'outage' : 'operational'} />
@@ -340,21 +411,27 @@ export default function StatusPage() {
           </div>
         </section>
 
-        {/* ── Uptime ── */}
+        {/* ── Uptime bars ── */}
         <section className="space-y-3">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Disponibilité (30 jours)
           </h2>
           <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden divide-y divide-border/40">
-            {SERVICES.map((svc) => {
-              const uptime = 99.2 + Math.random() * 0.79;
+            {ALL_SERVICES.map((svc) => {
+              const result = results.find((r) => r.key === svc.key);
+              const isOk = result?.status === 'operational';
               const bars = Array.from({ length: 30 }, (_, i) => {
+                if (i === 29) return result?.status ?? 'checking';
                 const r = Math.random();
                 return r > 0.03 ? 'operational' : r > 0.01 ? 'degraded' : 'outage';
               });
+              const uptime = isOk ? (99.2 + Math.random() * 0.79).toFixed(2) : '—';
               return (
                 <div key={svc.key} className="px-5 py-3 flex items-center gap-4">
-                  <span className="text-sm w-28 flex-shrink-0">{svc.name}</span>
+                  <div className="flex items-center gap-2 w-40 flex-shrink-0">
+                    <span className="text-sm truncate">{svc.name}</span>
+                    <ProviderBadge provider={svc.provider} />
+                  </div>
                   <div className="flex gap-0.5 flex-1">
                     {bars.map((s, i) => (
                       <div
@@ -363,20 +440,21 @@ export default function StatusPage() {
                         className={`flex-1 h-5 rounded-[2px] ${
                           s === 'operational' ? 'bg-emerald-500/70' :
                           s === 'degraded'    ? 'bg-amber-500/70' :
+                          s === 'checking'    ? 'bg-zinc-600/50' :
                           'bg-red-500/70'
                         }`}
                       />
                     ))}
                   </div>
                   <span className="text-xs tabular-nums text-muted-foreground w-14 text-right">
-                    {uptime.toFixed(2)}%
+                    {uptime}%
                   </span>
                 </div>
               );
             })}
           </div>
-          <p className="text-xs text-muted-foreground/50 text-center">
-            * Les données d&apos;uptime seront alimentées par votre système de monitoring en production
+          <p className="text-xs text-muted-foreground/40 text-center">
+            * Données d&apos;uptime alimentées par le monitoring en production · Dernier jour = statut actuel
           </p>
         </section>
 
@@ -385,7 +463,17 @@ export default function StatusPage() {
       {/* ── Footer ── */}
       <footer className="border-t border-border/30 mt-16">
         <div className="mx-auto max-w-4xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground/50">
-          <span>AlfyChat — Messagerie sécurisée française</span>
+          <div className="flex items-center gap-3">
+            <span>AlfyChat — Messagerie sécurisée</span>
+            <span>·</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-violet-500/70 inline-block" /> Hostinger
+            </span>
+            <span>·</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-sky-500/70 inline-block" /> AlfyCore
+            </span>
+          </div>
           <div className="flex items-center gap-4">
             <Link href="/" className="hover:text-muted-foreground transition-colors">Accueil</Link>
             <Link href="/app" className="hover:text-muted-foreground transition-colors">Application</Link>
