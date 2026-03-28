@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useResizablePanel } from '@/hooks/use-resizable-panel';
+import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { MessageCircleIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
@@ -41,6 +42,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const params = useParams();
   const { isMobile, showSidebar, showMemberList, showSettings, closeSettings, closeAll } = useMobileNav();
+
+  const { prefs: layoutPrefs } = useLayoutPrefs();
 
   const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
     storageKey: 'alfychat_me_sidebar_width',
@@ -239,7 +242,11 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── SIDEBAR desktop : ServerList fixe + ChannelList redimensionnable ── */}
       {!isMobile && (
-        <>
+        <div
+          className="flex h-full shrink-0"
+          style={{ order: layoutPrefs.sidebarSide === 'right' ? 3 : 1 }}
+        >
+          {layoutPrefs.sidebarSide === 'right' && <ResizeHandle onMouseDown={onChannelResize} />}
           <div data-layout="server-list" className="h-full shrink-0 transition-all">
             <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
           </div>
@@ -250,8 +257,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
               onSelectChannel={handleSelectChannel}
             />
           </div>
-          <ResizeHandle onMouseDown={onChannelResize} />
-        </>
+          {layoutPrefs.sidebarSide === 'left' && <ResizeHandle onMouseDown={onChannelResize} />}
+        </div>
       )}
 
       {/* ── SIDEBAR mobile : overlay slide-in (largeur fixe) ── */}
@@ -273,7 +280,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       )}
 
       {/* ── CONTENU PRINCIPAL ── */}
-      <div className={`flex min-w-0 flex-1 flex-col ${recipientId ? '' : 'pb-16'} md:pb-0`}>
+      <div className={`flex min-w-0 flex-1 flex-col ${recipientId ? '' : 'pb-16'} md:pb-0`} style={{ order: 2 }}>
         {/* Mini barre verte d'appel */}
         {callStatus !== 'idle' && callStatus !== 'ended' && callStatus !== 'ringing' && (() => {
           const isInCallConversation = recipientId && (

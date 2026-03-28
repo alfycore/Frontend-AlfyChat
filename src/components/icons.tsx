@@ -247,3 +247,4 @@ export const IntroductionIcon = fi('users');
 export const MediaIcon = fi('photo-video');
 export const DirectoryIcon = fi('compass-alt');
 export const ContentIcon = fi('magic-wand');
+export const LayoutIcon = fi('columns');

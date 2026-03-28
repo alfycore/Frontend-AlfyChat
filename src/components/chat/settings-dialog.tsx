@@ -9,7 +9,7 @@ import {
   RotateCwIcon, GlobeIcon, SearchIcon, HelpCircleIcon, LockIcon,
   Trash2Icon, KeyRoundIcon, ZapIcon, CalendarIcon, ClockIcon,
   MoreHorizontalIcon, AlertTriangleIcon, ChevronDownIcon, ChevronRightIcon, ArrowLeftIcon,
-  XIcon, UploadIcon,
+  XIcon, UploadIcon, LayoutIcon,
 } from '@/components/icons';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/components/locale-provider';
@@ -95,6 +95,7 @@ import {
   setAudioPreferences,
   type AudioPreferences,
 } from '@/hooks/use-call';
+import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
 import { cn } from '@/lib/utils';
 import { sanitizeSvg } from '@/lib/sanitize';
 
@@ -212,7 +213,7 @@ function parseUserAgent(ua: string | null): { browser: string; os: string; icon:
 
   return { browser, os, icon };
 }
-type SettingsTab = 'profile' | 'voice' | 'notifications' | 'privacy' | 'appearance' | 'language';
+type SettingsTab = 'profile' | 'voice' | 'notifications' | 'privacy' | 'appearance' | 'language' | 'layout';
 
 /* -- Helpers ---------------------------------------------------------------- */
 
@@ -261,6 +262,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     { id: 'privacy', label: t.settings.privacy, shortLabel: t.settings.privacyShort, icon: ShieldIcon },
     { id: 'appearance', label: t.settings.appearance, shortLabel: t.settings.appearanceShort, icon: PaletteIcon },
     { id: 'language', label: t.settings.language, shortLabel: t.settings.languageShort, icon: GlobeIcon },
+    { id: 'layout', label: 'Mise en page', shortLabel: 'Layout', icon: LayoutIcon },
   ];
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -337,6 +339,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [fontFamily, setFontFamily] = useState('geist');
   const { wallpaper, blur, opacity, setWallpaper, setBlur, setOpacity } = useBackground();
   const wallpaperInputRef = useRef<HTMLInputElement>(null);
+
+  /* -- Layout -- */
+  const { prefs: layoutPrefs, updatePrefs: updateLayoutPrefs } = useLayoutPrefs();
 
   /* -- Language -- */
   const [langSearch, setLangSearch] = useState('');
@@ -2369,6 +2374,133 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         <LanguageSwitcher variant="full" filter={langSearch} />
                       </Card.Content>
                     </Card>
+                  </div>
+                )}
+
+                {activeTab === 'layout' && (
+                  <div className="mx-auto max-w-2xl space-y-5">
+                    <Breadcrumbs>
+                      <Breadcrumbs.Item href="#">{t.common.settings}</Breadcrumbs.Item>
+                      <Breadcrumbs.Item>Mise en page</Breadcrumbs.Item>
+                    </Breadcrumbs>
+
+                    {/* Sidebar position */}
+                    <Card variant="secondary">
+                      <Card.Header>
+                        <Card.Title>Position de la barre latérale</Card.Title>
+                        <Card.Description>Choisissez le côté de la liste des serveurs et des canaux</Card.Description>
+                      </Card.Header>
+                      <Card.Content>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => updateLayoutPrefs({ sidebarSide: 'left' })}
+                            className={cn(
+                              'flex flex-col items-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition-all duration-150',
+                              layoutPrefs.sidebarSide === 'left'
+                                ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
+                                : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 text-[var(--muted)] hover:border-[var(--border)]/60',
+                            )}
+                          >
+                            <div className="flex h-14 w-full gap-1 overflow-hidden rounded-lg border border-[var(--border)]/20 bg-[var(--background)]/50 p-1">
+                              <div className="flex gap-0.5">
+                                <div className="w-2.5 rounded-sm bg-[var(--accent)]/40" />
+                                <div className="w-5 rounded-sm bg-[var(--surface-secondary)]/60" />
+                              </div>
+                              <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
+                            </div>
+                            <span>Gauche</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => updateLayoutPrefs({ sidebarSide: 'right' })}
+                            className={cn(
+                              'flex flex-col items-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition-all duration-150',
+                              layoutPrefs.sidebarSide === 'right'
+                                ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
+                                : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 text-[var(--muted)] hover:border-[var(--border)]/60',
+                            )}
+                          >
+                            <div className="flex h-14 w-full gap-1 overflow-hidden rounded-lg border border-[var(--border)]/20 bg-[var(--background)]/50 p-1">
+                              <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
+                              <div className="flex gap-0.5">
+                                <div className="w-5 rounded-sm bg-[var(--surface-secondary)]/60" />
+                                <div className="w-2.5 rounded-sm bg-[var(--accent)]/40" />
+                              </div>
+                            </div>
+                            <span>Droite</span>
+                          </button>
+                        </div>
+                      </Card.Content>
+                    </Card>
+
+                    {/* Member list position */}
+                    <Card variant="secondary">
+                      <Card.Header>
+                        <Card.Title>Position de la liste des membres</Card.Title>
+                        <Card.Description>Visible uniquement dans les serveurs (côté de la liste des membres)</Card.Description>
+                      </Card.Header>
+                      <Card.Content>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => updateLayoutPrefs({ memberListSide: 'left' })}
+                            className={cn(
+                              'flex flex-col items-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition-all duration-150',
+                              layoutPrefs.memberListSide === 'left'
+                                ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
+                                : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 text-[var(--muted)] hover:border-[var(--border)]/60',
+                            )}
+                          >
+                            <div className="flex h-14 w-full gap-1 overflow-hidden rounded-lg border border-[var(--border)]/20 bg-[var(--background)]/50 p-1">
+                              <div className="w-7 rounded-sm bg-emerald-500/30" />
+                              <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
+                            </div>
+                            <span>Gauche</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => updateLayoutPrefs({ memberListSide: 'right' })}
+                            className={cn(
+                              'flex flex-col items-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition-all duration-150',
+                              layoutPrefs.memberListSide === 'right'
+                                ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
+                                : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 text-[var(--muted)] hover:border-[var(--border)]/60',
+                            )}
+                          >
+                            <div className="flex h-14 w-full gap-1 overflow-hidden rounded-lg border border-[var(--border)]/20 bg-[var(--background)]/50 p-1">
+                              <div className="flex-1 rounded-sm bg-[var(--surface-secondary)]/20" />
+                              <div className="w-7 rounded-sm bg-emerald-500/30" />
+                            </div>
+                            <span>Droite</span>
+                          </button>
+                        </div>
+                      </Card.Content>
+                    </Card>
+
+                    {/* Compact server list */}
+                    <Card variant="secondary">
+                      <Card.Content className="pt-4">
+                        <SettingsSwitch
+                          label="Liste des serveurs compacte"
+                          description="Affiche des icônes plus petites pour gagner de l'espace"
+                          isSelected={layoutPrefs.compactServerList}
+                          onChange={(v) => updateLayoutPrefs({ compactServerList: v })}
+                        />
+                      </Card.Content>
+                    </Card>
+
+                    <Alert>
+                      <Alert.Indicator />
+                      <Alert.Content>
+                        <Alert.Title>Rechargez la page</Alert.Title>
+                        <Alert.Description>
+                          Certains changements de mise en page prennent effet après un rechargement de la page.
+                        </Alert.Description>
+                      </Alert.Content>
+                    </Alert>
                   </div>
                 )}
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
 import {
   MessageCircleIcon,
   Link2Icon,
@@ -70,6 +71,8 @@ function Indicator({ active }: { active: boolean }) {
 export function ServerList({ selectedServer, onSelectServer }: ServerListProps) {
   const router = useRouter();
   const { t } = useTranslation();
+  const { prefs: layoutPrefs } = useLayoutPrefs();
+  const compact = layoutPrefs.compactServerList;
 
   const [servers, setServers] = useState<Server[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -208,7 +211,10 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
   return (
     <>
       {/* ── Sidebar ── */}
-      <div className="flex h-full w-17 flex-col items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60 py-3 backdrop-blur-xl">
+      <div className={cn(
+        'flex h-full flex-col items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60 py-3 backdrop-blur-xl transition-all duration-200',
+        compact ? 'w-13' : 'w-17',
+      )}>
 
         {/* DMs */}
         <Tooltip delay={0}>
@@ -216,7 +222,8 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             isIconOnly
             variant="ghost"
             className={cn(
-              'group relative size-12 rounded-2xl transition-all duration-200',
+              'group relative rounded-2xl transition-all duration-200',
+              compact ? 'size-9' : 'size-12',
               selectedServer === null
                 ? 'rounded-xl bg-accent text-accent-foreground shadow-lg shadow-accent/20'
                 : 'bg-[var(--surface-secondary)]/50 text-muted hover:rounded-xl hover:bg-accent/10 hover:text-accent',
@@ -224,7 +231,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             onPress={() => onSelectServer(null)}
           >
             <Indicator active={selectedServer === null} />
-            <MessageCircleIcon size={22} />
+            <MessageCircleIcon size={compact ? 16 : 22} />
           </Button>
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />
@@ -242,7 +249,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
         >
           {isLoading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="size-12 rounded-2xl" animationType="shimmer" />
+                <Skeleton key={i} className={cn('rounded-2xl', compact ? 'size-9' : 'size-12')} animationType="shimmer" />
               ))
             : servers.map((server) => (
                 <div
@@ -294,7 +301,8 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                     <div
                       slot="trigger"
                       className={cn(
-                        'group relative flex size-12 cursor-pointer items-center justify-center rounded-2xl transition-all duration-200',
+                        'group relative flex cursor-pointer items-center justify-center rounded-2xl transition-all duration-200',
+                        compact ? 'size-9' : 'size-12',
                         selectedServer === server.id
                           ? 'rounded-xl ring-2 ring-accent/25 ring-offset-1 ring-offset-background'
                           : 'hover:rounded-xl',
@@ -305,7 +313,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                     >
                       <Indicator active={selectedServer === server.id} />
                       <Badge.Anchor>
-                        <Avatar className="size-12 rounded-2xl transition-all duration-200 group-hover:rounded-xl">
+                        <Avatar className={cn('rounded-2xl transition-all duration-200 group-hover:rounded-xl', compact ? 'size-9' : 'size-12')}>
                           <Avatar.Image
                             src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
                             alt={server.name}
@@ -370,10 +378,10 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Button
             isIconOnly
             variant="ghost"
-            className="size-12 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success"
+            className={cn('rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success', compact ? 'size-9' : 'size-12')}
             onPress={() => setIsJoinModalOpen(true)}
           >
-            <PlusIcon size={20} />
+            <PlusIcon size={compact ? 16 : 20} />
           </Button>
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />
@@ -387,10 +395,10 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Button
             isIconOnly
             variant="ghost"
-            className="size-12 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
+            className={cn('rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', compact ? 'size-9' : 'size-12')}
             onPress={() => router.push('/channels/discover-server')}
           >
-            <CompassIcon size={20} />
+            <CompassIcon size={compact ? 16 : 20} />
           </Button>
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />
@@ -403,10 +411,10 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Button
             isIconOnly
             variant="ghost"
-            className="size-12 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
+            className={cn('rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', compact ? 'size-9' : 'size-12')}
             onPress={() => router.push('/channels/gotostart')}
           >
-            <HomeIcon size={20} />
+            <HomeIcon size={compact ? 16 : 20} />
           </Button>
           <Tooltip.Content showArrow placement="right">
             <Tooltip.Arrow />

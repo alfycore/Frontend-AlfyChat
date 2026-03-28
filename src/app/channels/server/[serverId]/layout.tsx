@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, ReactNode } from 'react';
 import { useResizablePanel } from '@/hooks/use-resizable-panel';
+import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
 
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
   return (
@@ -36,6 +37,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const params = useParams();
   const { isMobile, showSidebar, showMemberList, closeAll, memberListDesktopVisible } = useMobileNav();
+
+  const { prefs: layoutPrefs } = useLayoutPrefs();
 
   const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
     storageKey: 'alfychat_server_sidebar_width',
@@ -205,7 +208,11 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── SIDEBAR desktop : ServerList fixe + ChannelList redimensionnable ── */}
       {!isMobile && (
-        <>
+        <div
+          className="flex h-full shrink-0"
+          style={{ order: layoutPrefs.sidebarSide === 'right' ? 3 : 1 }}
+        >
+          {layoutPrefs.sidebarSide === 'right' && <ResizeHandle onMouseDown={onChannelResize} />}
           <div data-layout="server-list" className="h-full shrink-0 transition-all">
             <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
           </div>
@@ -218,8 +225,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
             />
             <VoiceControlBar />
           </div>
-          <ResizeHandle onMouseDown={onChannelResize} />
-        </>
+          {layoutPrefs.sidebarSide === 'left' && <ResizeHandle onMouseDown={onChannelResize} />}
+        </div>
       )}
 
       {/* ── SIDEBAR mobile : overlay ── */}
@@ -243,7 +250,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       )}
 
       {/* Main content */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden" style={{ order: 2 }}>
         {children}
       </div>
 
@@ -259,12 +266,16 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── MEMBER LIST desktop : redimensionnable + togglable ── */}
       {!isMobile && memberListDesktopVisible && (
-        <>
-          <ResizeHandle onMouseDown={onMemberResize} />
+        <div
+          className="flex h-full shrink-0"
+          style={{ order: layoutPrefs.memberListSide === 'left' ? 0 : 4 }}
+        >
+          {layoutPrefs.memberListSide === 'right' && <ResizeHandle onMouseDown={onMemberResize} />}
           <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0 transition-all">
             <MemberList serverId={serverId} />
           </div>
-        </>
+          {layoutPrefs.memberListSide === 'left' && <ResizeHandle onMouseDown={onMemberResize} />}
+        </div>
       )}
 
       {/* ── MEMBER LIST mobile : overlay ── */}
