@@ -23,8 +23,10 @@ import { socketService } from '@/lib/socket';
 import {
   Avatar,
   Button,
+  Card,
   Dropdown,
   ScrollShadow,
+  Spinner,
   Tooltip,
 } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
@@ -333,9 +335,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   return (
     <div className="flex h-full flex-1">
       {/* ── Zone de chat principale ── */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div data-tour="chat-area" className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* ── Header ── */}
-        <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
+        <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--background)]/80 px-4 backdrop-blur-xl">
           {isMobile && (
             <Button isIconOnly size="sm" variant="ghost" onPress={toggleSidebar}>
               <MenuIcon size={20} />
@@ -444,18 +446,25 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
         {/* ── Messages ── */}
         <ScrollShadow ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-2 md:p-4">
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="size-4 animate-spin rounded-full border-2 border-[var(--muted)]/30 border-t-[var(--muted)]" />
+            <div className="flex h-full items-center justify-center">
+              <div className="flex flex-col items-center gap-3 text-[var(--muted)]">
+                <Spinner size="md" />
+                <span className="text-[13px]">Chargement des messages...</span>
+              </div>
             </div>
           ) : enrichedMessages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="flex size-16 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
-                <UsersRoundIcon size={32} className="text-[var(--accent)]" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">{groupInfo?.name || 'Groupe'}</h3>
-              <p className="mt-1 max-w-sm text-sm text-[var(--muted)]">
-                C&apos;est le début de votre conversation de groupe. Envoyez un message pour commencer !
-              </p>
+            <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
+              <Card className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-8 py-7 shadow-none backdrop-blur-sm">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
+                  <UsersRoundIcon size={28} className="text-[var(--accent)]" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-[15px] font-semibold text-[var(--foreground)]">{groupInfo?.name || 'Groupe'}</h3>
+                  <p className="mt-1 max-w-xs text-[13px] text-[var(--muted)]">
+                    C&apos;est le début de votre conversation de groupe. Envoyez un message pour commencer !
+                  </p>
+                </div>
+              </Card>
             </div>
           ) : (
             <div className="space-y-1" ref={messagesContainerRef}>

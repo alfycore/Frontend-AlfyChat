@@ -68,7 +68,7 @@ export function UserPanel({ user }: UserPanelProps) {
   };
 
   return (
-    <div className="flex h-[52px] shrink-0 items-center gap-1 overflow-hidden border-t border-[var(--border)]/30 bg-[var(--background)]/80 px-1.5 backdrop-blur-xl md:gap-1 md:px-2">
+    <div data-tour="user-panel" className="flex h-[52px] shrink-0 items-center gap-1 overflow-hidden border-t border-[var(--border)]/30 bg-[var(--background)]/80 px-1.5 backdrop-blur-xl md:gap-1 md:px-2">
       {/* Avatar + user info */}
       <div className="min-w-0 flex-1">
       <Dropdown>

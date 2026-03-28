@@ -28,7 +28,7 @@ import { useCallContext } from '@/hooks/use-call-context';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { notify } from '@/hooks/use-notification';
 import {
-  Button, ScrollShadow, TextArea, Tooltip,
+  Button, Card, ScrollShadow, Spinner, TextArea, Tooltip,
 } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { GifPicker } from '@/components/chat/gif-picker';
@@ -368,21 +368,23 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
         {isMobile && (
-          <Button variant="outline" size="lg" className="mb-2 gap-2" onPress={openSidebar}>
+          <Button variant="outline" size="lg" className="mb-2 gap-2 rounded-xl" onPress={openSidebar}>
             <MenuIcon size={20} />
             Ouvrir les conversations
           </Button>
         )}
-        <div className="relative">
-          <div className="absolute inset-0 rounded-3xl bg-[var(--accent)]/10 blur-2xl" />
-          <div className="relative flex size-20 items-center justify-center rounded-3xl bg-[var(--accent)]/10 md:size-24">
-            <MessageCircleIcon size={36} className="text-[var(--accent)] md:size-11" />
+        <Card className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-8 py-7 shadow-none backdrop-blur-sm">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-3xl bg-[var(--accent)]/15 blur-2xl" />
+            <div className="relative flex size-20 items-center justify-center rounded-3xl bg-[var(--accent)]/10 md:size-24">
+              <MessageCircleIcon size={36} className="text-[var(--accent)] md:size-11" />
+            </div>
           </div>
-        </div>
-        <div className="space-y-1.5">
-          <h2 className="text-lg font-bold text-[var(--foreground)] md:text-xl">Bienvenue sur AlfyChat</h2>
-          <p className="text-[13px] text-[var(--muted)]">Sélectionnez une conversation ou un salon pour commencer</p>
-        </div>
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-bold text-[var(--foreground)] md:text-xl">Bienvenue sur AlfyChat</h2>
+            <p className="text-[13px] text-[var(--muted)]">Sélectionnez une conversation ou un salon pour commencer</p>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -482,30 +484,30 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       >
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
-            <div className="flex items-center gap-2 text-[var(--muted)]">
-              <div className="size-4 animate-spin rounded-full border-2 border-[var(--muted)]/30 border-t-[var(--muted)]" />
+            <div className="flex flex-col items-center gap-3 text-[var(--muted)]">
+              <Spinner size="md" />
               <span className="text-[13px]">Chargement des messages...</span>
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--surface-secondary)]/40">
-              <MessageCircleIcon size={24} className="text-[var(--muted)]/50" />
-            </div>
-            <div className="text-center">
-              <p className="text-[13px] font-medium text-[var(--foreground)]/70">Aucun message</p>
-              <p className="mt-0.5 text-[11px] text-[var(--muted)]/50">Soyez le premier à écrire !</p>
-            </div>
+          <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
+            <Card className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-5 shadow-none backdrop-blur-sm">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--surface-secondary)]/60">
+                <MessageCircleIcon size={22} className="text-[var(--muted)]/50" />
+              </div>
+              <div className="text-center">
+                <p className="text-[13px] font-medium text-[var(--foreground)]/70">Aucun message</p>
+                <p className="mt-0.5 text-[11px] text-[var(--muted)]/50">Soyez le premier à écrire !</p>
+              </div>
+            </Card>
           </div>
         ) : (
           <div className="space-y-0.5" ref={messagesContainerRef}>
             {/* Indicateur de chargement des anciens messages */}
             {isLoadingMoreMessages && (
-              <div className="flex items-center justify-center py-3">
-                <div className="flex items-center gap-2 text-[var(--muted)]">
-                  <div className="size-3.5 animate-spin rounded-full border-2 border-[var(--muted)]/30 border-t-[var(--muted)]" />
-                  <span className="text-[12px]">Chargement des anciens messages…</span>
-                </div>
+              <div className="flex items-center justify-center gap-2 py-3 text-[var(--muted)]">
+                <Spinner size="sm" />
+                <span className="text-[12px]">Chargement des anciens messages…</span>
               </div>
             )}
             {dedupedMessages.map((message) => {
@@ -550,7 +552,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
       {/* Cooldown */}
       {cooldownActive && (
-        <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-[12px] font-medium text-orange-400 md:mx-4">
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/8 px-3 py-2 text-[12px] font-medium text-orange-400 backdrop-blur-sm md:mx-4">
           Calme-toi ! Tu envoies trop de messages.
         </div>
       )}
