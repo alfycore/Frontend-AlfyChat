@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { MegaphoneIcon, PlusIcon, XIcon, SendIcon, SmileIcon, PencilIcon, Trash2Icon } from '@/components/icons';
-import { Button, ScrollShadow, Skeleton } from '@heroui/react';
+import { Button, ScrollShadow, Skeleton, TextArea } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 import { Twemoji } from '@/lib/twemoji';
@@ -80,11 +80,13 @@ function ReactionBar({
       {reactions.map((r) => {
         const hasReacted = !!currentUserId && r.userIds.includes(currentUserId);
         return (
-          <button
+          <Button
             key={r.emoji}
-            onClick={() => onToggle(r.emoji)}
+            size="sm"
+            variant="ghost"
+            onPress={() => onToggle(r.emoji)}
             className={cn(
-              'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-all',
+              'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-all h-auto',
               hasReacted
                 ? 'border-amber-400/40 bg-amber-500/15 text-amber-400 hover:bg-amber-500/20'
                 : 'border-[var(--border)]/40 bg-[var(--surface)]/60 text-[var(--foreground)]/70 hover:border-[var(--border)] hover:bg-[var(--surface)]',
@@ -92,14 +94,19 @@ function ReactionBar({
           >
             <Twemoji emoji={r.emoji} size={14} />
             <span className="tabular-nums">{r.count}</span>
-          </button>
+          </Button>
         );
       })}
       {/* Bouton ajout emoji */}
       <EmojiPicker onSelect={onAdd}>
-        <button className="inline-flex size-7 items-center justify-center rounded-full border border-dashed border-[var(--border)]/40 text-[var(--muted)] transition-colors hover:border-amber-400/40 hover:text-amber-400">
+        <Button
+          isIconOnly
+          size="sm"
+          variant="ghost"
+          className="size-7 rounded-full border border-dashed border-[var(--border)]/40 text-[var(--muted)] hover:border-amber-400/40 hover:text-amber-400"
+        >
           <SmileIcon size={13} />
-        </button>
+        </Button>
       </EmojiPicker>
     </div>
   );
@@ -169,12 +176,15 @@ function AnnouncementCard({
 
         {/* Actions (delete) */}
         {isAuthor && showActions && (
-          <button
-            onClick={() => onDelete(post.id)}
-            className="flex size-7 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-red-500/10 hover:text-red-400"
+          <Button
+            isIconOnly
+            size="sm"
+            variant="ghost"
+            onPress={() => onDelete(post.id)}
+            className="size-7 rounded-xl text-[var(--muted)] hover:bg-red-500/10 hover:text-red-400"
           >
             <Trash2Icon size={14} />
-          </button>
+          </Button>
         )}
       </div>
 
@@ -222,19 +232,19 @@ function NewAnnouncementModal({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-lg rounded-2xl border border-[var(--border)]/40 bg-[var(--surface)] shadow-2xl"
+        className="w-full max-w-lg rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-[var(--border)]/30 px-5 py-4">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
             <MegaphoneIcon size={15} className="text-amber-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-[var(--foreground)]">Nouvelle annonce</p>
             <p className="text-[11px] text-[var(--muted)]">#{channelName || 'annonces'}</p>
           </div>
-          <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-lg text-[var(--muted)]" onPress={onClose}>
+          <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-xl text-[var(--muted)]" onPress={onClose}>
             <XIcon size={15} />
           </Button>
         </div>
@@ -242,25 +252,26 @@ function NewAnnouncementModal({
         {/* Body */}
         <div className="p-5">
           <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">CONTENU <span className="opacity-50">(Markdown supporté)</span></label>
-          <textarea
+          <TextArea
             autoFocus
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Rédigez votre annonce…&#10;&#10;Vous pouvez utiliser **gras**, *italique*, # titres, etc."
+            onChange={setContent}
+            placeholder={"Rédigez votre annonce…\n\nVous pouvez utiliser **gras**, *italique*, # titres, etc."}
             rows={7}
-            className="w-full resize-none rounded-xl border border-[var(--border)]/50 bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-amber-500/40 focus:outline-none"
+            fullWidth
+            className="resize-none"
           />
           <p className="mt-1 text-right text-[10px] text-[var(--muted)]">{content.length} caractères</p>
         </div>
 
         {/* Footer */}
         <div className="flex justify-end gap-2 border-t border-[var(--border)]/30 px-5 py-3">
-          <Button size="sm" variant="ghost" className="rounded-lg text-[var(--muted)]" onPress={onClose}>
+          <Button size="sm" variant="ghost" className="rounded-xl text-[var(--muted)]" onPress={onClose}>
             Annuler
           </Button>
           <Button
             size="sm"
-            className="rounded-lg bg-amber-500 text-white hover:bg-amber-600"
+            className="rounded-xl bg-amber-500 text-white hover:bg-amber-600"
             onPress={handleSubmit}
             isDisabled={!content.trim()}
           >

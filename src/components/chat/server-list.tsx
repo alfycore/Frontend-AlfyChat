@@ -192,7 +192,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
   return (
     <>
       {/* ── Sidebar ── */}
-      <div className="flex h-full w-17 flex-col items-center gap-1.5 overflow-hidden bg-[var(--background)]/80 py-3 backdrop-blur-xl">
+      <div className="flex h-full w-17 flex-col items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60 py-3 backdrop-blur-xl">
 
         {/* DMs */}
         <Tooltip delay={0}>
@@ -203,7 +203,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
               'group relative size-12 rounded-2xl transition-all duration-200',
               selectedServer === null
                 ? 'rounded-xl bg-accent text-accent-foreground shadow-lg shadow-accent/20'
-                : 'bg-(--surface-secondary)/50 text-muted hover:rounded-xl hover:bg-accent/10 hover:text-accent',
+                : 'bg-[var(--surface-secondary)]/50 text-muted hover:rounded-xl hover:bg-accent/10 hover:text-accent',
             )}
             onPress={() => onSelectServer(null)}
           >
@@ -312,7 +312,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Button
             isIconOnly
             variant="ghost"
-            className="size-12 rounded-2xl bg-(--surface-secondary)/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success"
+            className="size-12 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success"
             onPress={() => setIsJoinModalOpen(true)}
           >
             <PlusIcon size={20} />
@@ -329,7 +329,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Button
             isIconOnly
             variant="ghost"
-            className="size-12 rounded-2xl bg-(--surface-secondary)/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
+            className="size-12 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
             onPress={() => router.push('/channels/discover-server')}
           >
             <CompassIcon size={20} />
@@ -345,7 +345,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
           <Button
             isIconOnly
             variant="ghost"
-            className="size-12 rounded-2xl bg-(--surface-secondary)/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
+            className="size-12 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent"
             onPress={() => router.push('/channels/gotostart')}
           >
             <HomeIcon size={20} />
@@ -374,17 +374,17 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
         variant="blur"
       >
         <Modal.Container size="sm">
-          <Modal.Dialog className="overflow-hidden rounded-2xl border border-(--border)/30 p-0 shadow-2xl">
+          <Modal.Dialog className="overflow-hidden rounded-2xl border border-[var(--border)]/30 p-0 shadow-2xl">
             <div className="px-6 pt-6 pb-5">
               <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-danger/10 ring-1 ring-danger/20">
                 <LogOutIcon size={20} className="text-danger" />
               </div>
               <h3 className="text-[15px] font-bold">Quitter ce serveur&nbsp;?</h3>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-(--muted)/70">
+              <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--muted)]/70">
                 Vous devrez être réinvité pour le rejoindre à nouveau.
               </p>
             </div>
-            <div className="flex items-center justify-end gap-2 border-t border-(--border)/20 bg-(--surface-secondary)/30 px-6 py-4">
+            <div className="flex items-center justify-end gap-2 border-t border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-4">
               <Button variant="secondary" onPress={() => setConfirmLeaveServerId(null)}>
                 Annuler
               </Button>
@@ -407,10 +407,10 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
         variant="blur"
       >
         <Modal.Container size="md">
-          <Modal.Dialog className="max-w-105 overflow-hidden rounded-2xl border border-(--border)/30 p-0 shadow-2xl">
+          <Modal.Dialog className="max-w-105 overflow-hidden rounded-2xl border border-[var(--border)]/30 p-0 shadow-2xl">
 
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-(--border)/20 px-6 py-5">
+            <div className="flex items-start justify-between border-b border-[var(--border)]/20 px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
                   <Link2Icon size={18} className="text-accent" />
@@ -419,7 +419,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                   <h2 className="text-[15px] font-bold">
                     {t.serverList?.modal?.joinNav || 'Rejoindre un serveur'}
                   </h2>
-                  <p className="text-[11px] text-(--muted)/60">
+                  <p className="text-[11px] text-[var(--muted)]/60">
                     Entrez un code ou un lien d&apos;invitation
                   </p>
                 </div>
@@ -462,7 +462,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                       autoFocus
                     />
                   </InputGroup>
-                  <Description className="text-[11px] text-(--muted)/50">
+                  <Description className="text-[11px] text-[var(--muted)]/50">
                     Collez un lien ou saisissez le code court.
                   </Description>
                 </div>
@@ -472,7 +472,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 gap-1.5 px-2 text-[11px] text-(--muted)/60 hover:text-muted"
+                      className="h-8 gap-1.5 px-2 text-[11px] text-[var(--muted)]/60 hover:text-muted"
                     >
                       <HelpCircleIcon size={12} />
                       Où trouver un code&nbsp;?
@@ -481,7 +481,7 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
                       <Popover.Dialog>
                         <Popover.Arrow />
                         <Popover.Heading className="text-[13px] font-semibold">Trouver un code</Popover.Heading>
-                        <p className="mt-1 text-[11px] text-(--muted)/70">
+                        <p className="mt-1 text-[11px] text-[var(--muted)]/70">
                           Demandez à un administrateur ou explorez les serveurs publics.
                         </p>
                       </Popover.Dialog>
@@ -504,8 +504,8 @@ export function ServerList({ selectedServer, onSelectServer }: ServerListProps) 
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between border-t border-(--border)/20 bg-(--surface-secondary)/30 px-6 py-3">
-              <p className="text-[11px] text-(--muted)/50">Explorer les serveurs publics</p>
+            <div className="flex items-center justify-between border-t border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-3">
+              <p className="text-[11px] text-[var(--muted)]/50">Explorer les serveurs publics</p>
               <Button
                 size="sm"
                 variant="ghost"

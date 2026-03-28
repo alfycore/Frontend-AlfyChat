@@ -12,7 +12,7 @@ import {
   SmileIcon,
   PaperclipIcon,
 } from '@/components/icons';
-import { Button, Chip, ScrollShadow, Separator, Skeleton } from '@heroui/react';
+import { Button, Chip, InputGroup, ScrollShadow, Separator, Skeleton, TextArea, TextField } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { MessageItem, type MessageSender, type MessageData } from '@/components/chat/message-item';
 import { socketService } from '@/lib/socket';
@@ -135,17 +135,17 @@ function NewPostModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-[var(--border)]/40 bg-[var(--surface)] shadow-2xl">
+      <div className="w-full max-w-lg rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl backdrop-blur-xl">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-[var(--border)]/30 px-5 py-4">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-violet-500/10">
+          <div className="flex size-8 items-center justify-center rounded-xl bg-violet-500/10">
             <ForumIcon size={15} className="text-violet-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-[var(--foreground)]">Nouveau post</p>
             <p className="text-[11px] text-[var(--muted)]">#{channelName || 'forum'}</p>
           </div>
-          <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-lg text-[var(--muted)]" onPress={onClose}>
+          <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-xl text-[var(--muted)]" onPress={onClose}>
             <XIcon size={15} />
           </Button>
         </div>
@@ -154,24 +154,26 @@ function NewPostModal({
         <div className="space-y-3 p-5">
           <div>
             <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">TITRE</label>
-            <input
-              autoFocus
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Titre de votre post…"
-              maxLength={120}
-              className="w-full rounded-xl border border-[var(--border)]/50 bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-violet-500/40 focus:outline-none"
-            />
+            <InputGroup fullWidth>
+              <InputGroup.Input
+                autoFocus
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Titre de votre post…"
+                maxLength={120}
+              />
+            </InputGroup>
             <p className="mt-1 text-right text-[10px] text-[var(--muted)]">{title.length}/120</p>
           </div>
           <div>
             <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">CONTENU</label>
-            <textarea
+            <TextArea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={setContent}
               placeholder="Décrivez votre sujet en détail…"
               rows={5}
-              className="w-full resize-none rounded-xl border border-[var(--border)]/50 bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-violet-500/40 focus:outline-none"
+              fullWidth
+              className="resize-none"
             />
           </div>
           <div>
@@ -180,19 +182,25 @@ function NewPostModal({
               {tags.map((tag) => (
                 <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-medium text-violet-400">
                   #{tag}
-                  <button onClick={() => removeTag(tag)} className="ml-0.5 text-violet-400/60 hover:text-violet-400">&times;</button>
+                  <Button
+                    isIconOnly size="sm" variant="ghost"
+                    onPress={() => removeTag(tag)}
+                    className="ml-0.5 size-4 rounded-full text-violet-400/60 hover:text-violet-400 min-w-0"
+                  >×</Button>
                 </span>
               ))}
             </div>
             <div className="flex gap-2">
-              <input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); } }}
-                placeholder="bug, feature, aide…"
-                disabled={tags.length >= 5}
-                className="flex-1 rounded-xl border border-[var(--border)]/50 bg-[var(--background)] px-3 py-2 text-[12px] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-violet-500/40 focus:outline-none disabled:opacity-40"
-              />
+              <InputGroup className="flex-1">
+                <InputGroup.Input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); } }}
+                  placeholder="bug, feature, aide…"
+                  disabled={tags.length >= 5}
+                  className="text-[12px]"
+                />
+              </InputGroup>
               <Button size="sm" variant="ghost" className="rounded-xl text-violet-400" onPress={addTag} isDisabled={!tagInput.trim() || tags.length >= 5}>
                 Ajouter
               </Button>
@@ -202,12 +210,12 @@ function NewPostModal({
 
         {/* Footer */}
         <div className="flex justify-end gap-2 border-t border-[var(--border)]/30 px-5 py-3">
-          <Button size="sm" variant="ghost" className="rounded-lg text-[var(--muted)]" onPress={onClose}>
+          <Button size="sm" variant="ghost" className="rounded-xl text-[var(--muted)]" onPress={onClose}>
             Annuler
           </Button>
           <Button
             size="sm"
-            className="rounded-lg bg-violet-500 text-white hover:bg-violet-600"
+            className="rounded-xl bg-violet-500 text-white hover:bg-violet-600"
             onPress={handleSubmit}
             isDisabled={!title.trim() || !content.trim()}
           >
@@ -232,7 +240,7 @@ function PostCard({ post, onClick }: { post: ForumPost; onClick: () => void }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             {post.isPinned && (
-              <span className="rounded-md bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400">
+              <span className="rounded-xl bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400">
                 Épinglé
               </span>
             )}
@@ -377,17 +385,17 @@ function PostDiscussion({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Back header */}
-      <div className="flex shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 py-3 backdrop-blur-xl">
+      <div className="flex shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4 py-3 backdrop-blur-xl">
         <Button
           isIconOnly
           size="sm"
           variant="ghost"
-          className="size-8 rounded-lg text-[var(--muted)]"
+          className="size-8 rounded-xl text-[var(--muted)]"
           onPress={onBack}
         >
           <ArrowLeftIcon size={16} />
         </Button>
-        <div className="flex size-7 items-center justify-center rounded-lg bg-violet-500/10">
+        <div className="flex size-7 items-center justify-center rounded-xl bg-violet-500/10">
           <ForumIcon size={14} className="text-violet-400" />
         </div>
         <div className="min-w-0 flex-1">
@@ -479,12 +487,12 @@ function PostDiscussion({
       {/* Reply input */}
       <div className="shrink-0 px-4 pb-4 pt-1">
         <div className="flex items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 backdrop-blur-sm transition-colors focus-within:border-violet-500/30">
-          <label className="cursor-pointer self-end pb-0.5">
-            <input type="file" accept="image/*" className="hidden" />
-            <span className="inline-flex size-8 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+          <Button isIconOnly size="sm" variant="ghost" className="size-8 shrink-0 self-end rounded-xl text-[var(--muted)]" asChild>
+            <label className="cursor-pointer">
+              <input type="file" accept="image/*" className="hidden" />
               <PaperclipIcon size={16} />
-            </span>
-          </label>
+            </label>
+          </Button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -495,9 +503,9 @@ function PostDiscussion({
           />
           <div className="self-end pb-0.5">
             <EmojiPicker onSelect={(emoji) => setInput((prev) => prev + emoji)}>
-              <div className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+              <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-xl text-[var(--muted)]">
                 <SmileIcon size={16} />
-              </div>
+              </Button>
             </EmojiPicker>
           </div>
           <div className="self-end pb-0.5">
@@ -677,8 +685,8 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-violet-500/10">
+      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4 backdrop-blur-xl">
+        <div className="flex size-7 items-center justify-center rounded-xl bg-violet-500/10">
           <ForumIcon size={14} className="text-violet-400" />
         </div>
         <h2 className="font-semibold text-[var(--foreground)]">{channelName || 'forum'}</h2>

@@ -138,7 +138,7 @@ function RegisterContent() {
     <div className="relative flex min-h-dvh items-center justify-center p-4">
       {/* Background image */}
       <div className="fixed inset-0 -z-10">
-        <img src="/bgdefaut.jpg" alt="" className="h-full w-full object-cover" />
+        <img src="/backgound/defaut.jpg" alt="" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-black/30 backdrop-brightness-90" />
       </div>
 

@@ -449,9 +449,9 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[var(--background)]">
+    <div className="flex h-full min-h-0 flex-col">
       {/* ── Header ── */}
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-3 backdrop-blur-xl">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-3 backdrop-blur-xl">
         {isMobile && (
           <Button isIconOnly size="sm" variant="ghost"
             className="size-8 shrink-0 rounded-xl text-[var(--muted)]"
@@ -603,9 +603,9 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
           {/* Emoji */}
           <div className="self-end pb-0.5">
             <EmojiPicker onSelect={(emoji) => setMessageInput((prev) => prev + emoji)}>
-              <div className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+              <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-xl text-[var(--muted)]">
                 <SmileIcon size={16} />
-              </div>
+              </Button>
             </EmojiPicker>
           </div>
 

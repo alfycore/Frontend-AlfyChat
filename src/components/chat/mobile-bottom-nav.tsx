@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { MessageCircleIcon, UsersIcon, SettingsIcon } from '@/components/icons';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { Button } from '@heroui/react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -49,15 +50,16 @@ export function MobileBottomNav() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch border-t border-[var(--border)]/60 bg-[var(--surface)]/95 backdrop-blur-xl md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch border-t border-[var(--border)]/30 bg-[var(--surface)]/80 backdrop-blur-xl md:hidden">
       {TABS.map((tab) => {
         const active = isActive(tab.id);
         return (
-          <button
+          <Button
             key={tab.id}
-            onClick={() => handlePress(tab.id)}
+            variant="ghost"
+            onPress={() => handlePress(tab.id)}
             className={cn(
-              'flex flex-1 flex-col items-center justify-center gap-1 transition-all',
+              'flex flex-1 flex-col items-center justify-center gap-1 rounded-none h-full transition-all',
               active ? 'text-[var(--accent)]' : 'text-[var(--muted)]',
             )}
           >
@@ -73,7 +75,7 @@ export function MobileBottomNav() {
             )}>
               {tab.label}
             </span>
-          </button>
+          </Button>
         );
       })}
     </div>

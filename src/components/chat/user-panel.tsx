@@ -5,7 +5,7 @@ import { MicIcon, MicOffIcon, HeadphonesIcon, SettingsIcon, CheckIcon, PencilIco
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import {
-  Avatar, Button, Dropdown, Tooltip,
+  Avatar, Button, Dropdown, InputGroup, Tooltip,
 } from '@heroui/react';
 import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
@@ -73,7 +73,7 @@ export function UserPanel({ user }: UserPanelProps) {
       <div className="min-w-0 flex-1">
       <Dropdown>
         <Dropdown.Trigger>
-          <div className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30">
+          <div className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl px-1.5 py-1 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30">
             <div className="relative shrink-0">
               <Avatar size="sm" className="size-8">
                 <Avatar.Image src={resolveMediaUrl(user.avatarUrl)} alt={user.displayName} />
@@ -112,24 +112,27 @@ export function UserPanel({ user }: UserPanelProps) {
             <Dropdown.Item id="edit-custom-status" textValue="Statut personnalisé">
               {editingCustomStatus ? (
                 <div className="flex w-full items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    ref={customStatusInputRef}
-                    value={customStatusDraft}
-                    onChange={(e) => setCustomStatusDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveCustomStatus();
-                      if (e.key === 'Escape') setEditingCustomStatus(false);
-                    }}
-                    maxLength={100}
-                    placeholder="Définir un statut..."
-                    className="min-w-0 flex-1 rounded bg-[var(--field-background)] px-2 py-1 text-[12px] text-[var(--foreground)] outline-none ring-1 ring-[var(--border)] focus:ring-[var(--accent)]"
-                  />
-                  <button
-                    onClick={saveCustomStatus}
-                    className="shrink-0 rounded bg-[var(--accent)] px-2 py-0.5 text-[11px] font-semibold text-white"
+                  <InputGroup size="sm" className="flex-1">
+                    <InputGroup.Input
+                      ref={customStatusInputRef}
+                      value={customStatusDraft}
+                      onChange={(e) => setCustomStatusDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveCustomStatus();
+                        if (e.key === 'Escape') setEditingCustomStatus(false);
+                      }}
+                      maxLength={100}
+                      placeholder="Définir un statut..."
+                      className="text-[12px]"
+                    />
+                  </InputGroup>
+                  <Button
+                    size="sm"
+                    onPress={saveCustomStatus}
+                    className="shrink-0"
                   >
                     OK
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="flex w-full items-center gap-2">
@@ -163,7 +166,7 @@ export function UserPanel({ user }: UserPanelProps) {
         <Tooltip delay={0}>
           <Button
             isIconOnly size="sm" variant="tertiary"
-            className={`size-7 rounded-md transition-colors ${isMuted ? 'text-red-400 hover:text-red-300' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
+            className={`size-7 rounded-xl transition-colors ${isMuted ? 'text-red-400 hover:text-red-300' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
             onPress={() => setIsMuted(v => !v)}
           >
             {isMuted ? <MicOffIcon size={14} /> : <MicIcon size={14} />}
@@ -173,7 +176,7 @@ export function UserPanel({ user }: UserPanelProps) {
         <Tooltip delay={0}>
           <Button
             isIconOnly size="sm" variant="tertiary"
-            className={`size-7 rounded-md transition-colors ${isDeafened ? 'text-red-400 hover:text-red-300' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
+            className={`size-7 rounded-xl transition-colors ${isDeafened ? 'text-red-400 hover:text-red-300' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
             onPress={() => setIsDeafened(v => !v)}
           >
             <HeadphonesIcon size={14} />
@@ -184,7 +187,7 @@ export function UserPanel({ user }: UserPanelProps) {
           <Button
             data-tour="user-settings"
             isIconOnly size="sm" variant="tertiary"
-            className="size-7 rounded-md text-[var(--muted)]/60 hover:text-[var(--foreground)]"
+            className="size-7 rounded-xl text-[var(--muted)]/60 hover:text-[var(--foreground)]"
             onPress={() => setShowSettings(true)}
           >
             <SettingsIcon size={15} />

@@ -392,7 +392,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   return (
     <div data-tour="chat-area" className="flex h-full flex-1 flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)]/30 bg-[var(--background)]/80 px-3 backdrop-blur-xl md:px-4">
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-3 backdrop-blur-xl md:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           {isMobile && (
             <Button isIconOnly size="sm" variant="tertiary" onPress={openSidebar} className="shrink-0 md:hidden">
@@ -401,14 +401,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           )}
           {recipientId ? (
             <>
-              <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)]/8">
+              <div className="flex size-7 items-center justify-center rounded-xl bg-[var(--accent)]/8">
                 <MessageCircleIcon size={14} className="text-[var(--accent)]" />
               </div>
               <span className="truncate text-[13px] font-semibold text-[var(--foreground)] md:text-sm">{recipientName || 'Message privé'}</span>
             </>
           ) : (
             <>
-              <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/60">
+              <div className="flex size-7 items-center justify-center rounded-xl bg-[var(--surface-secondary)]/60">
                 <HashIcon size={14} className="text-[var(--muted)]" />
               </div>
               <span className="truncate text-[13px] font-semibold text-[var(--foreground)] md:text-sm">général</span>
@@ -425,7 +425,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                   size="sm"
                   variant="tertiary"
                   onPress={handleStartVoiceCall}
-                  className="size-8 rounded-lg text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+                  className="size-8 rounded-xl text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
                   isDisabled={callStatus !== 'idle'}
                 >
                   <PhoneIcon size={16} />
@@ -438,7 +438,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                   size="sm"
                   variant="tertiary"
                   onPress={handleStartVideoCall}
-                  className="size-8 rounded-lg text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+                  className="size-8 rounded-xl text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
                   isDisabled={callStatus !== 'idle'}
                 >
                   <VideoIcon size={16} />
@@ -583,7 +583,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               isIconOnly
               size="sm"
               variant="tertiary"
-              className="size-6 rounded-md"
+              className="size-6 rounded-xl"
               onPress={() => setReplyingTo(null)}
             >
               <XIcon size={14} />
@@ -614,7 +614,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 isIconOnly
                 size="sm"
                 variant="tertiary"
-                className="size-7 rounded-md text-[var(--muted)] hover:text-[var(--foreground)]"
+                className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 <SmileIcon size={18} />
               </Button>
@@ -625,7 +625,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 isIconOnly
                 size="sm"
                 variant="tertiary"
-                className="size-7 rounded-md text-[var(--muted)] hover:text-[var(--foreground)]"
+                className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 <ImageIcon size={18} />
               </Button>
@@ -635,7 +635,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               isIconOnly
               size="sm"
               variant="tertiary"
-              className={`size-7 rounded-md transition-colors ${messageInput.trim() ? 'text-[var(--accent)]' : 'text-[var(--muted)]/40'}`}
+              className={`size-7 rounded-xl transition-colors ${messageInput.trim() ? 'text-[var(--accent)]' : 'text-[var(--muted)]/40'}`}
               isDisabled={!messageInput.trim()}
               onPress={() => {
                 if (messageInput.trim()) {

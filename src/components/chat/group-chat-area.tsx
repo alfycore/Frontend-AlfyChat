@@ -337,14 +337,14 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
       {/* ── Zone de chat principale ── */}
       <div data-tour="chat-area" className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* ── Header ── */}
-        <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--background)]/80 px-4 backdrop-blur-xl">
+        <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4 backdrop-blur-xl">
           {isMobile && (
             <Button isIconOnly size="sm" variant="ghost" onPress={toggleSidebar}>
               <MenuIcon size={20} />
             </Button>
           )}
 
-          <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)]/8">
+          <div className="flex size-7 items-center justify-center rounded-xl bg-[var(--accent)]/8">
             {groupInfo?.avatarUrl ? (
               <Avatar size="sm" className="size-7">
                 <Avatar.Image src={resolveMediaUrl(groupInfo.avatarUrl)} />
@@ -368,7 +368,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 <Button
                   isIconOnly size="sm" variant="ghost"
                   onPress={handleOpenAddMembers}
-                  className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
+                  className="size-8 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
                 >
                   <UserPlusIcon size={16} />
                 </Button>
@@ -380,7 +380,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               <Button
                 isIconOnly size="sm" variant="ghost"
                 onPress={() => handleInitiateCall('voice')}
-                className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
+                className="size-8 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
                 isDisabled={callStatus !== 'idle'}
               >
                 <PhoneIcon size={15} />
@@ -392,7 +392,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               <Button
                 isIconOnly size="sm" variant="ghost"
                 onPress={() => handleInitiateCall('video')}
-                className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
+                className="size-8 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
                 isDisabled={callStatus !== 'idle'}
               >
                 <VideoIcon size={15} />
@@ -404,7 +404,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               <Button
                 isIconOnly size="sm" variant="ghost"
                 onPress={() => setShowMembers(!showMembers)}
-                className="size-8 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"
+                className="size-8 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 <UsersRoundIcon size={16} />
               </Button>
@@ -416,7 +416,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 <div
                   role="button"
                   tabIndex={0}
-                  className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40"
+                  className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40"
                 >
                   <MoreHorizontalIcon size={16} />
                 </div>
@@ -528,7 +528,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             <div className={`relative flex min-w-0 flex-1 items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 backdrop-blur-sm transition-colors focus-within:border-[var(--accent)]/30 ${replyingTo ? 'rounded-t-none border-t-0' : ''}`}>
               <EmojiPicker onSelect={handleEmojiInsert}>
-                <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+                <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
                   <SmileIcon size={18} />
                 </div>
               </EmojiPicker>
@@ -542,7 +542,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 rows={1}
               />
               <GifPicker onSelect={handleGifSelect}>
-                <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+                <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
                   <ImageIcn size={18} />
                 </div>
               </GifPicker>
@@ -562,12 +562,12 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
       {/* ── Panel membres (sidebar droite) ── */}
       {showMembers && (
-        <div className="flex w-52 flex-col border-l border-[var(--border)]/30 bg-[var(--background)]/80 backdrop-blur-xl">
+        <div className="flex w-52 flex-col border-l border-[var(--border)]/30 bg-[var(--surface)]/60 backdrop-blur-xl">
           <div className="flex items-center justify-between px-3 py-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
               Membres — {groupInfo?.participants.length || 0}
             </p>
-            <Button isIconOnly size="sm" variant="tertiary" className="size-6 rounded-md" onPress={() => setShowMembers(false)}>
+            <Button isIconOnly size="sm" variant="tertiary" className="size-6 rounded-xl" onPress={() => setShowMembers(false)}>
               <XIcon size={12} />
             </Button>
           </div>
@@ -582,7 +582,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                   <UserProfilePopover key={participant.userId} userId={participant.userId}>
                     <button
                       type="button"
-                      className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30 ${!participant.isOnline ? 'opacity-40' : ''}`}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30 ${!participant.isOnline ? 'opacity-40' : ''}`}
                     >
                       <div className="relative shrink-0">
                         <Avatar size="sm" className="size-7">
