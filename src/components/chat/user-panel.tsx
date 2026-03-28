@@ -112,7 +112,7 @@ export function UserPanel({ user }: UserPanelProps) {
             <Dropdown.Item id="edit-custom-status" textValue="Statut personnalisé">
               {editingCustomStatus ? (
                 <div className="flex w-full items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  <InputGroup size="sm" className="flex-1">
+                  <InputGroup className="flex-1">
                     <InputGroup.Input
                       ref={customStatusInputRef}
                       value={customStatusDraft}
