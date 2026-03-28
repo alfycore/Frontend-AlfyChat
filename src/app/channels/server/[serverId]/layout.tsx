@@ -203,7 +203,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div data-layout="root" className={`flex h-dvh overflow-hidden bg-[var(--background)] ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
+    <div data-layout="root" className={`flex h-dvh overflow-hidden bg-[var(--background)] p-1.5 gap-1.5 ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
       <IncomingCallDialog
         open={!!incomingCall}
         callerName={incomingCall?.callerName || ''}
@@ -220,17 +220,19 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Server list TOP ── */}
       {!isMobile && serverListPosition === 'top' && (
-        <ServerList horizontal selectedServer={serverId} onSelectServer={handleSelectServer} />
+        <div className="shrink-0 overflow-hidden rounded-2xl">
+          <ServerList horizontal selectedServer={serverId} onSelectServer={handleSelectServer} />
+        </div>
       )}
 
       {/* ── DESKTOP: Inner row ── */}
       {!isMobile && (
-        <div className={`flex min-w-0 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
+        <div className={`flex min-w-0 gap-1.5 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
 
           {/* Member list LEFT */}
           {memberListDesktopVisible && memberListSide === 'left' && (
             <>
-              <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0">
+              <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0 overflow-hidden rounded-2xl">
                 <MemberList serverId={serverId} />
               </div>
               <ResizeHandle onMouseDown={onMemberResize} />
@@ -239,7 +241,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
           {/* Server list LEFT */}
           {serverListPosition === 'left' && (
-            <div data-layout="server-list" className="h-full shrink-0">
+            <div data-layout="server-list" className="h-full shrink-0 overflow-hidden rounded-2xl">
               <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
             </div>
           )}
@@ -247,7 +249,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {/* Sidebar left (all except right) */}
           {serverListPosition !== 'right' && (
             <>
-              <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col">
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col overflow-hidden rounded-2xl">
                 {sidebarContent}
               </div>
               <ResizeHandle onMouseDown={onChannelResize} />
@@ -255,7 +257,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           )}
 
           {/* Content */}
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl">
             {children}
           </div>
 
@@ -263,7 +265,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {serverListPosition === 'right' && (
             <>
               <ResizeHandle onMouseDown={onChannelResize} />
-              <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col">
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col overflow-hidden rounded-2xl">
                 {sidebarContent}
               </div>
             </>
@@ -271,7 +273,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
           {/* Server list RIGHT */}
           {serverListPosition === 'right' && (
-            <div data-layout="server-list" className="h-full shrink-0">
+            <div data-layout="server-list" className="h-full shrink-0 overflow-hidden rounded-2xl">
               <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
             </div>
           )}
@@ -280,7 +282,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {memberListDesktopVisible && memberListSide !== 'left' && (
             <>
               <ResizeHandle onMouseDown={onMemberResize} />
-              <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0">
+              <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0 overflow-hidden rounded-2xl">
                 <MemberList serverId={serverId} />
               </div>
             </>
@@ -290,15 +292,17 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Server list BOTTOM ── */}
       {!isMobile && serverListPosition === 'bottom' && (
-        <ServerList horizontal selectedServer={serverId} onSelectServer={handleSelectServer} />
+        <div className="shrink-0 overflow-hidden rounded-2xl">
+          <ServerList horizontal selectedServer={serverId} onSelectServer={handleSelectServer} />
+        </div>
       )}
 
       {/* ── MOBILE: content ── */}
-      {isMobile && <div className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</div>}
+      {isMobile && <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl">{children}</div>}
 
       {/* ── MOBILE: Sidebar overlay ── */}
       {isMobile && (
-        <div className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`fixed inset-y-2 left-2 z-50 flex overflow-hidden rounded-2xl shadow-2xl transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-[110%]'}`}>
           <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
           <div className="flex h-full w-60 shrink-0 flex-col">{sidebarContent}</div>
         </div>
@@ -306,7 +310,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── MOBILE: Member list overlay ── */}
       {isMobile && (
-        <div className={`fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-in-out ${showMemberList ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`fixed inset-y-2 right-2 z-50 overflow-hidden rounded-2xl shadow-2xl transition-transform duration-300 ease-in-out ${showMemberList ? 'translate-x-0' : 'translate-x-[110%]'}`}>
           <MemberList serverId={serverId} />
         </div>
       )}

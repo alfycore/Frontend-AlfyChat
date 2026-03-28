@@ -222,7 +222,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
   // ── Content area (shared between top/bottom and left/right layouts) ──
   const mainContent = (
-    <div className={`flex min-w-0 flex-1 flex-col ${recipientId ? '' : 'pb-16'} md:pb-0`}>
+    <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl ${recipientId ? '' : 'pb-16'} md:pb-0`}>
       {callStatus !== 'idle' && callStatus !== 'ended' && callStatus !== 'ringing' && (() => {
         const isInCallConversation = recipientId && (
           recipientId === callRecipientId ||
@@ -237,7 +237,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div data-layout="root" className={`flex h-dvh overflow-hidden bg-[var(--background)] ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
+    <div data-layout="root" className={`flex h-dvh overflow-hidden bg-[var(--background)] p-1.5 gap-1.5 ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
       {/* Audio persistant */}
       <audio ref={persistentAudioRef} autoPlay playsInline className="sr-only" />
       <IncomingCallDialog
@@ -256,15 +256,17 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Server list TOP ── */}
       {!isMobile && serverListPosition === 'top' && (
-        <ServerList horizontal selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+        <div className="shrink-0 overflow-hidden rounded-2xl">
+          <ServerList horizontal selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+        </div>
       )}
 
       {/* ── DESKTOP: Inner row (sidebar + content) ── */}
       {!isMobile && (
-        <div className={`flex min-w-0 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
+        <div className={`flex min-w-0 gap-1.5 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
           {/* Server list LEFT */}
           {serverListPosition === 'left' && (
-            <div data-layout="server-list" className="h-full shrink-0">
+            <div data-layout="server-list" className="h-full shrink-0 overflow-hidden rounded-2xl">
               <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
             </div>
           )}
@@ -272,7 +274,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {/* Sidebar (left side — all positions except right) */}
           {serverListPosition !== 'right' && (
             <>
-              <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0">
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0 overflow-hidden rounded-2xl">
                 <ChannelList
                   serverId={selectedServer}
                   selectedChannel={selectedChannel}
@@ -290,7 +292,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {serverListPosition === 'right' && (
             <>
               <ResizeHandle onMouseDown={onChannelResize} />
-              <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0">
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0 overflow-hidden rounded-2xl">
                 <ChannelList
                   serverId={selectedServer}
                   selectedChannel={selectedChannel}
@@ -302,7 +304,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
           {/* Server list RIGHT */}
           {serverListPosition === 'right' && (
-            <div data-layout="server-list" className="h-full shrink-0">
+            <div data-layout="server-list" className="h-full shrink-0 overflow-hidden rounded-2xl">
               <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
             </div>
           )}
@@ -311,15 +313,17 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Server list BOTTOM ── */}
       {!isMobile && serverListPosition === 'bottom' && (
-        <ServerList horizontal selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+        <div className="shrink-0 overflow-hidden rounded-2xl">
+          <ServerList horizontal selectedServer={selectedServer} onSelectServer={handleSelectServer} />
+        </div>
       )}
 
-      {/* ── MOBILE: render content directly ── */}
+      {/* ── MOBILE: render content directly (full width, no rounded) ── */}
       {isMobile && mainContent}
 
       {/* ── MOBILE: Sidebar overlay ── */}
       {isMobile && (
-        <div className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`fixed inset-y-2 left-2 z-50 flex overflow-hidden rounded-2xl shadow-2xl transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-[110%]'}`}>
           <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
           <div className="h-full w-60 shrink-0">
             <ChannelList serverId={selectedServer} selectedChannel={selectedChannel} onSelectChannel={handleSelectChannel} />
