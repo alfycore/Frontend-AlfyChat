@@ -2302,23 +2302,41 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         {wallpaper && (
                           <div className="space-y-4">
                             <Slider
-                              label="Flou du verre"
+                              aria-label="Flou du verre"
                               minValue={0}
                               maxValue={40}
                               step={1}
                               value={blur}
                               onChange={(v) => setBlur(Array.isArray(v) ? v[0] : v)}
                               className="w-full"
-                            />
+                            >
+                              <div className="flex items-center justify-between">
+                                <Label>Flou du verre</Label>
+                                <Slider.Output />
+                              </div>
+                              <Slider.Track>
+                                <Slider.Fill />
+                                <Slider.Thumb />
+                              </Slider.Track>
+                            </Slider>
                             <Slider
-                              label={`Opacité des panneaux — ${opacity}%`}
+                              aria-label="Opacité des panneaux"
                               minValue={20}
                               maxValue={95}
                               step={5}
                               value={opacity}
                               onChange={(v) => setOpacity(Array.isArray(v) ? v[0] : v)}
                               className="w-full"
-                            />
+                            >
+                              <div className="flex items-center justify-between">
+                                <Label>Opacité des panneaux</Label>
+                                <Slider.Output />
+                              </div>
+                              <Slider.Track>
+                                <Slider.Fill />
+                                <Slider.Thumb />
+                              </Slider.Track>
+                            </Slider>
                           </div>
                         )}
                       </Card.Content>
