@@ -86,8 +86,8 @@ const getChannelMeta = (type?: string) => CHANNEL_META[type || 'text'] ?? CHANNE
 
 function AnnouncementBanner({ channelName }: { channelName?: string }) {
   return (
-    <div className="mx-4 mb-2 mt-3 flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
+    <div className="mx-4 mb-2 mt-3 flex items-center gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 backdrop-blur-sm dark:border-amber-500/20 dark:bg-amber-500/8">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 shadow-sm shadow-amber-500/10">
         <MegaphoneIcon size={15} className="text-amber-400" />
       </div>
       <div className="min-w-0">
@@ -102,11 +102,11 @@ function AnnouncementBanner({ channelName }: { channelName?: string }) {
 function DateSeparator({ date }: { date: string }) {
   return (
     <div className="relative mx-4 my-5 flex select-none items-center">
-      <Separator className="flex-1" />
-      <Chip variant="soft" size="sm" className="mx-3 shrink-0 rounded-full border border-(--border) bg-background text-[11px] font-medium text-muted">
+      <Separator className="flex-1 opacity-30" />
+      <Chip variant="soft" size="sm" className="mx-3 shrink-0 rounded-2xl border border-white/15 bg-white/30 text-[11px] font-medium text-muted backdrop-blur-sm dark:border-white/10 dark:bg-white/8">
         <Chip.Label>{date}</Chip.Label>
       </Chip>
-      <Separator className="flex-1" />
+      <Separator className="flex-1 opacity-30" />
     </div>
   );
 }
@@ -143,11 +143,11 @@ function LoadingSkeleton() {
       {widths.map((w, i) => (
         <div key={i} className={cn('flex gap-3', i % 3 !== 0 && 'pl-11')}>
           {i % 3 === 0 && (
-            <Skeleton className="size-10 shrink-0 rounded-full" animationType="shimmer" />
+            <Skeleton className="size-10 shrink-0 rounded-full border border-white/10 bg-white/5" animationType="shimmer" />
           )}
           <div className="flex-1 space-y-2">
-            {i % 3 === 0 && <Skeleton className="h-3 w-24 rounded" animationType="shimmer" />}
-            <Skeleton className="h-4 rounded" animationType="shimmer" style={{ width: `${w}%` }} />
+            {i % 3 === 0 && <Skeleton className="h-3 w-24 rounded-xl border border-white/10 bg-white/5" animationType="shimmer" />}
+            <Skeleton className="h-4 rounded-xl border border-white/10 bg-white/5" animationType="shimmer" style={{ width: `${w}%` }} />
           </div>
         </div>
       ))}
@@ -451,7 +451,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* ── Header ── */}
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-3 backdrop-blur-xl">
+      <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-white/10 bg-white/5 px-3 backdrop-blur-sm dark:border-white/8">
         {isMobile && (
           <Button isIconOnly size="sm" variant="ghost"
             className="size-8 shrink-0 rounded-xl text-[var(--muted)]"
@@ -460,19 +460,19 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <MenuIcon size={16} />
           </Button>
         )}
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-secondary)]/70 shadow-sm">
-          <meta.icon size={14} className={meta.color} />
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">
+          <meta.icon size={14} className="text-[var(--accent-foreground)]" />
         </div>
         <h2 className="truncate text-[14px] font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
         <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Chip variant="soft" size="sm" className="hidden rounded-xl text-[10px] font-medium text-[var(--muted)] md:flex">
+          <Chip variant="soft" size="sm" className="hidden rounded-xl border border-white/15 bg-white/20 text-[10px] font-medium text-[var(--muted)] backdrop-blur-sm dark:border-white/10 dark:bg-white/8 md:flex">
             <Chip.Label>{meta.label}</Chip.Label>
           </Chip>
           <Button
             isIconOnly size="sm" variant="ghost"
             className={`size-8 rounded-xl transition-colors ${
               !isMobile && memberListDesktopVisible
-                ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
+                ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
                 : 'text-[var(--muted)] hover:text-[var(--foreground)]'
             }`}
             onPress={isMobile ? toggleMemberList : toggleMemberListDesktop}
@@ -489,11 +489,18 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <LoadingSkeleton />
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-              <div className="relative mb-4 flex size-16 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
-                <div className="absolute inset-0 rounded-2xl bg-[var(--accent)]/8 blur-xl" />
-                <meta.icon size={32} className={cn('relative', meta.color)} />
+              <div className="relative mb-6">
+                {/* Glow blob */}
+                <div className="absolute inset-0 -m-4 rounded-full bg-[var(--accent)]/20 blur-2xl" />
+                <div className="relative flex size-20 items-center justify-center rounded-3xl border border-white/20 bg-white/30 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent dark:from-white/10" />
+                  <div className="relative flex size-10 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">
+                    <meta.icon size={20} className="text-[var(--accent-foreground)]" />
+                  </div>
+                </div>
               </div>
-              <h3 className="mb-1 text-xl font-bold text-[var(--foreground)]">
+              <h3 className="mb-1.5 text-xl font-bold text-[var(--foreground)]">
                 Bienvenue dans #{channelName || 'salon'}
               </h3>
               <p className="text-sm text-[var(--muted)]">{meta.description}.</p>
@@ -544,7 +551,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
       <div className="shrink-0 px-4 pb-4">
         {/* Reply bar */}
         {replyId && (
-          <div className="flex items-center gap-2 rounded-t-xl border border-b-0 border-[var(--border)]/60 bg-[var(--surface-secondary)]/40 px-3 py-1.5 text-xs backdrop-blur-sm">
+          <div className="flex items-center gap-2 rounded-t-2xl border border-b-0 border-white/15 bg-white/30 px-3 py-1.5 text-xs backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
             <span className="flex-1 truncate text-[var(--muted)]">
               Répondre à{' '}
               <span className="font-medium text-[var(--foreground)]/80">{replyAuthor}</span>
@@ -568,7 +575,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         {/* Input bar */}
         <div
           className={cn(
-            'flex items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 backdrop-blur-sm',
+            'flex items-end gap-1 rounded-2xl border border-white/15 bg-white/60 px-2 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 backdrop-blur-sm dark:border-white/10 dark:bg-white/8',
             replyId && 'rounded-tl-none rounded-tr-none border-t-0',
           )}
         >
