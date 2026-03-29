@@ -38,6 +38,8 @@ import {
   ShieldAlertIcon,
   BanIcon,
   FileTextIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
 } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
@@ -181,6 +183,7 @@ export default function AdminPage() {
   });
   const [editingIncident, setEditingIncident] = useState<any>(undefined);
   const [statusSubmitting, setStatusSubmitting] = useState(false);
+  const [statusExpandedServices, setStatusExpandedServices] = useState<Set<string>>(new Set());
 
   // Changelogs
   const [changelogs, setChangelogs] = useState<any[]>([]);
@@ -262,13 +265,21 @@ export default function AdminPage() {
         const res = await api.getChangelogs();
         if (res.success && res.data) setChangelogs(res.data as any[]);
       } else if (activeTab === 'monitoring') {
-        const res = await api.getMonitoringStats();
-        if (res.success && res.data) setMonitoringData(res.data);
+        const [monRes, svcRes] = await Promise.all([
+          api.getMonitoringStats(),
+          api.getAdminServices(),
+        ]);
+        if (monRes.success && monRes.data) setMonitoringData(monRes.data);
+        if (svcRes.success && svcRes.data) setServiceInstances((svcRes.data as any).instances ?? []);
         // Load chart with current period
         loadChartData(chartPeriod);
       } else if (activeTab === 'status') {
-        const res = await api.getAdminIncidents(statusIncludeResolved);
-        if (res.success && res.data) setStatusIncidents((res.data as any).incidents ?? []);
+        const [incRes, svcRes] = await Promise.all([
+          api.getAdminIncidents(statusIncludeResolved),
+          api.getAdminServices(),
+        ]);
+        if (incRes.success && incRes.data) setStatusIncidents((incRes.data as any).incidents ?? []);
+        if (svcRes.success && svcRes.data) setServiceInstances((svcRes.data as any).instances ?? []);
       } else if (activeTab === 'services') {
         const res = await api.getAdminServices();
         if (res.success && res.data) setServiceInstances((res.data as any).instances ?? []);
@@ -1625,43 +1636,139 @@ export default function AdminPage() {
                       </div>
                     </Card>
 
-                    {/* Services */}
-                    <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
-                      <div className="px-5 py-4">
-                        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-3">État des services</h3>
-                        <div className="space-y-2">
-                          {monitoringData.services.map((svc: any) => (
-                            <div key={svc.service} className="flex items-center justify-between rounded-lg border border-[var(--border)] px-4 py-3">
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className={`size-2.5 rounded-full ${
-                                    svc.status === 'up' ? 'bg-green-500' :
-                                    svc.status === 'degraded' ? 'bg-yellow-500' :
-                                    'bg-red-500'
-                                  }`}
-                                />
-                                <span className="font-medium text-[var(--foreground)] capitalize">{svc.service}</span>
-                              </div>
-                              <div className="flex items-center gap-6 text-sm text-[var(--muted)]">
-                                {svc.response_time_ms != null && (
-                                  <span>{svc.response_time_ms} ms</span>
-                                )}
-                                <span
-                                  className={`font-medium ${
-                                    svc.status === 'up' ? 'text-green-500' :
-                                    svc.status === 'degraded' ? 'text-yellow-500' :
-                                    'text-red-500'
-                                  }`}
-                                >
-                                  {svc.status === 'up' ? 'En ligne' : svc.status === 'degraded' ? 'Dégradé' : 'Hors ligne'}
-                                </span>
-                                <span>{new Date(svc.checked_at).toLocaleTimeString('fr-FR')}</span>
-                              </div>
+                    {/* Services — instances détaillées */}
+                    {(() => {
+                      const SERVICE_TYPES_MON: ServiceType[] = ['users', 'messages', 'friends', 'calls', 'servers', 'bots', 'media'];
+                      const grouped = SERVICE_TYPES_MON.map(type => ({
+                        type,
+                        instances: serviceInstances.filter(i => i.serviceType === type),
+                      })).filter(g => g.instances.length > 0);
+
+                      const pct = (used: number, max: number) =>
+                        max > 0 ? Math.round((used / max) * 100) : 0;
+
+                      const barColor = (p: number) =>
+                        p >= 85 ? '#ef4444' : p >= 60 ? '#f59e0b' : '#22c55e';
+
+                      const MiniBar = ({ value, max, unit }: { value: number; max: number; unit: string }) => {
+                        const p = pct(value, max);
+                        return (
+                          <div className="flex items-center gap-2 min-w-[110px]">
+                            <div className="relative h-1.5 w-16 rounded-full bg-[var(--surface-secondary)] overflow-hidden">
+                              <div
+                                style={{ width: `${p}%`, background: barColor(p) }}
+                                className="absolute inset-y-0 left-0 rounded-full"
+                              />
                             </div>
+                            <span className="text-xs tabular-nums" style={{ color: barColor(p) }}>
+                              {p}%
+                            </span>
+                            <span className="text-xs text-[var(--muted)] tabular-nums">
+                              {unit === 'MB' ? `${Math.round(value)}/${Math.round(max)} MB` : unit}
+                            </span>
+                          </div>
+                        );
+                      };
+
+                      if (grouped.length === 0) {
+                        return (
+                          <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                            <div className="px-5 py-4">
+                              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">Instances de services</h3>
+                              <p className="text-sm text-[var(--muted)]">Aucune instance enregistrée.</p>
+                            </div>
+                          </Card>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-4">
+                          {grouped.map(({ type, instances }) => (
+                            <Card key={type} className="border border-[var(--border)] bg-[var(--surface)] p-0">
+                              <div className="px-5 py-4">
+                                <h3 className="text-base font-semibold text-[var(--foreground)] mb-3 capitalize">{type}</h3>
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="border-b border-[var(--border)] bg-[var(--surface-secondary)]">
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">#ID</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">Domaine</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">Lieu</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">Statut</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">CPU</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">RAM</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">Bande passante</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">Req / 20 min</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">Score</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-[var(--muted)]">Heartbeat</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[var(--border)]">
+                                      {instances.map(inst => {
+                                        const stale = Date.now() - new Date(inst.lastHeartbeat).getTime() > 90_000;
+                                        const statusColor = !inst.healthy ? '#ef4444' : stale ? '#f59e0b' : '#22c55e';
+                                        const statusLabel = !inst.healthy ? 'Hors ligne' : stale ? 'Inactif' : 'En ligne';
+                                        return (
+                                          <tr key={inst.id} className="bg-[var(--surface)] hover:bg-[var(--surface-secondary)] transition-colors">
+                                            <td className="px-3 py-2 font-mono text-xs text-[var(--muted)]" title={inst.id}>
+                                              {inst.id.slice(0, 8)}
+                                            </td>
+                                            <td className="px-3 py-2 text-[var(--foreground)]">{inst.domain}</td>
+                                            <td className="px-3 py-2">
+                                              <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--surface-secondary)', color: 'var(--muted)' }}>
+                                                {inst.location}
+                                              </span>
+                                            </td>
+                                            <td className="px-3 py-2">
+                                              <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: statusColor }}>
+                                                <span className="size-1.5 rounded-full" style={{ background: statusColor }} />
+                                                {statusLabel}
+                                              </span>
+                                            </td>
+                                            <td className="px-3 py-2">
+                                              {inst.metrics ? (
+                                                <MiniBar value={inst.metrics.cpuUsage} max={inst.metrics.cpuMax} unit="" />
+                                              ) : <span className="text-xs text-[var(--muted)]">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                              {inst.metrics ? (
+                                                <MiniBar value={inst.metrics.ramUsage} max={inst.metrics.ramMax} unit="MB" />
+                                              ) : <span className="text-xs text-[var(--muted)]">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                              {inst.metrics ? (
+                                                <span className="text-xs tabular-nums text-[var(--foreground)]">
+                                                  {inst.metrics.bandwidthUsage >= 1024
+                                                    ? `${(inst.metrics.bandwidthUsage / 1024).toFixed(1)} GB`
+                                                    : `${Math.round(inst.metrics.bandwidthUsage)} MB`}
+                                                </span>
+                                              ) : <span className="text-xs text-[var(--muted)]">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2 text-xs tabular-nums text-[var(--foreground)]">
+                                              {inst.metrics ? inst.metrics.requestCount20min.toLocaleString('fr-FR') : '—'}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                              <span className={`text-xs font-semibold ${
+                                                inst.score >= 80 ? 'text-green-500' :
+                                                inst.score >= 50 ? 'text-yellow-500' :
+                                                'text-red-500'
+                                              }`}>{inst.score}</span>
+                                            </td>
+                                            <td className="px-3 py-2 text-xs text-[var(--muted)] tabular-nums">
+                                              {new Date(inst.lastHeartbeat).toLocaleTimeString('fr-FR')}
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </Card>
                           ))}
                         </div>
-                      </div>
-                    </Card>
+                      );
+                    })()}
                   </>
                 )}
 
@@ -1677,6 +1784,106 @@ export default function AdminPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <h2 className="text-2xl font-bold text-[var(--foreground)]">Status public & Incidents</h2>
+
+                {/* ── Services en temps réel ── */}
+                {(() => {
+                  const SERVICE_TYPES: ServiceType[] = ['users', 'messages', 'friends', 'calls', 'servers', 'bots', 'media'];
+                  const SERVICE_LABELS: Record<ServiceType, string> = {
+                    users: 'Users', messages: 'Messages', friends: 'Friends',
+                    calls: 'Calls', servers: 'Servers', bots: 'Bots', media: 'Media',
+                  };
+                  const grouped = SERVICE_TYPES.map(type => ({
+                    type,
+                    label: `Service ${SERVICE_LABELS[type]}`,
+                    instances: serviceInstances.filter(i => i.serviceType === type),
+                  })).filter(g => g.instances.length > 0);
+
+                  if (grouped.length === 0 && !loading) return null;
+
+                  return (
+                    <Card className="border border-[var(--border)] bg-[var(--surface)] p-0 overflow-hidden mb-2">
+                      <div className="px-5 py-3 border-b border-[var(--border)] flex items-center gap-2">
+                        <ServerIcon size={15} className="text-[var(--muted)]" />
+                        <span className="font-semibold text-sm text-[var(--foreground)]">Infrastructure en temps réel</span>
+                        <span className="ml-auto text-xs text-[var(--muted)]">{serviceInstances.length} instance{serviceInstances.length > 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="divide-y divide-[var(--border)]">
+                        {grouped.map(({ type, label, instances }) => {
+                          const healthyCount = instances.filter(i => i.healthy).length;
+                          const allOk = healthyCount === instances.length;
+                          const noneOk = healthyCount === 0;
+                          const isExpanded = statusExpandedServices.has(type);
+                          const staleThreshold = 90_000;
+
+                          return (
+                            <div key={type}>
+                              {/* Header (cliquable) */}
+                              <button
+                                onClick={() => setStatusExpandedServices(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(type)) next.delete(type); else next.add(type);
+                                  return next;
+                                })}
+                                className="w-full flex items-center gap-3 px-5 py-3 hover:bg-[var(--surface-secondary)] transition-colors text-left"
+                              >
+                                {isExpanded
+                                  ? <ChevronDownIcon size={13} className="text-[var(--muted)] flex-shrink-0" />
+                                  : <ChevronRightIcon size={13} className="text-[var(--muted)] flex-shrink-0" />}
+                                <span
+                                  className={`size-2 rounded-full flex-shrink-0 ${
+                                    allOk ? 'bg-green-500 shadow-[0_0_6px_#22c55e80]' :
+                                    noneOk ? 'bg-red-500' : 'bg-yellow-400'
+                                  }`}
+                                />
+                                <span className="text-sm font-medium text-[var(--foreground)] flex-1">{label}</span>
+                                <span className={`text-xs font-medium ${
+                                  allOk ? 'text-green-400' : noneOk ? 'text-red-400' : 'text-yellow-400'
+                                }`}>
+                                  {allOk ? 'Opérationnel' : noneOk ? 'Hors ligne' : `${healthyCount}/${instances.length} en ligne`}
+                                </span>
+                                <span className="text-xs text-[var(--muted)] ml-2">{instances.length} nœud{instances.length > 1 ? 's' : ''}</span>
+                              </button>
+
+                              {/* Détail des instances */}
+                              {isExpanded && (
+                                <div className="bg-[var(--surface-secondary)]/40">
+                                  {instances.map(inst => {
+                                    const stale = Date.now() - new Date(inst.lastHeartbeat).getTime() > staleThreshold;
+                                    const online = inst.healthy && !stale;
+                                    return (
+                                      <div key={inst.id} className="flex items-center gap-3 px-8 py-2.5 border-t border-[var(--border)]/50 text-sm">
+                                        <span className={`size-1.5 rounded-full flex-shrink-0 ${
+                                          online ? 'bg-green-500' : stale ? 'bg-yellow-400' : 'bg-red-500'
+                                        }`} />
+                                        <span className="font-mono text-xs text-[var(--foreground)] flex-1 truncate" title={inst.id}>{inst.id}</span>
+                                        <span className="text-xs text-[var(--muted)] hidden sm:block truncate max-w-[180px]" title={inst.domain}>{inst.domain}</span>
+                                        <span className="text-[10px] text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] rounded px-1.5 py-0.5">{inst.location}</span>
+                                        <span className={`text-xs font-medium ${
+                                          online ? 'text-green-400' : stale ? 'text-yellow-400' : 'text-red-400'
+                                        }`}>
+                                          {online ? 'En ligne' : stale ? 'Inactif' : 'Hors ligne'}
+                                        </span>
+                                        {inst.metrics && (
+                                          <span className="text-[10px] text-[var(--muted)] hidden md:block">
+                                            CPU {Math.round(inst.metrics.cpuUsage * 100 / (inst.metrics.cpuMax || 1))}%
+                                            · RAM {Math.round(inst.metrics.ramUsage * 100 / (inst.metrics.ramMax || 1))}%
+                                          </span>
+                                        )}
+                                        <span className="text-[10px] text-[var(--muted)]/50 hidden lg:block">
+                                          {new Date(inst.lastHeartbeat).toLocaleTimeString('fr-FR')}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  );
+                })()}
                   <div className="flex items-center gap-2 flex-wrap">
                     <label className="flex items-center gap-2 text-sm text-[var(--muted)] cursor-pointer select-none">
                       <input
