@@ -2009,14 +2009,14 @@ export default function AdminPage() {
                                       </td>
                                       <td className="py-2 pr-4">
                                         <span className={`font-semibold ${instance.score >= 70 ? 'text-green-500' : instance.score >= 40 ? 'text-yellow-500' : 'text-red-500'}`}>
-                                          {instance.score}
+                                          {Math.round(instance.score)}
                                         </span>
                                       </td>
                                       <td className="py-2 pr-4 text-[var(--foreground)]">
                                         {instance.metrics ? `${instance.metrics.cpuUsage}%` : '—'}
                                       </td>
                                       <td className="py-2 pr-4 text-[var(--foreground)]">
-                                        {instance.metrics
+                                        {instance.metrics && instance.metrics.ramMax > 0
                                           ? `${Math.round((instance.metrics.ramUsage / instance.metrics.ramMax) * 100)}%`
                                           : '—'}
                                       </td>
