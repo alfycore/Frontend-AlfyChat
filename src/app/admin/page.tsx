@@ -1652,6 +1652,7 @@ export default function AdminPage() {
 
                       const MiniBar = ({ value, max, unit }: { value: number; max: number; unit: string }) => {
                         const p = pct(value, max);
+                        const toMB = (b: number) => b / 1_048_576;
                         return (
                           <div className="flex items-center gap-2 min-w-[110px]">
                             <div className="relative h-1.5 w-16 rounded-full bg-[var(--surface-secondary)] overflow-hidden">
@@ -1663,9 +1664,13 @@ export default function AdminPage() {
                             <span className="text-xs tabular-nums" style={{ color: barColor(p) }}>
                               {p}%
                             </span>
-                            <span className="text-xs text-[var(--muted)] tabular-nums">
-                              {unit === 'MB' ? `${Math.round(value)}/${Math.round(max)} MB` : unit}
-                            </span>
+                            {unit === 'MB' && (
+                              <span className="text-xs text-[var(--muted)] tabular-nums">
+                                {toMB(value) >= 1024
+                                  ? `${(toMB(value) / 1024).toFixed(1)}/${(toMB(max) / 1024).toFixed(1)} GB`
+                                  : `${Math.round(toMB(value))}/${Math.round(toMB(max))} MB`}
+                              </span>
+                            )}
                           </div>
                         );
                       };
@@ -1705,9 +1710,14 @@ export default function AdminPage() {
                                     </thead>
                                     <tbody className="divide-y divide-[var(--border)]">
                                       {instances.map(inst => {
-                                        const stale = Date.now() - new Date(inst.lastHeartbeat).getTime() > 90_000;
-                                        const statusColor = !inst.healthy ? '#ef4444' : stale ? '#f59e0b' : '#22c55e';
-                                        const statusLabel = !inst.healthy ? 'Hors ligne' : stale ? 'Inactif' : 'En ligne';
+                                        const elapsed = Date.now() - new Date(inst.lastHeartbeat).getTime();
+                                        const statusColor = elapsed > 600_000 ? '#ef4444' : elapsed > 90_000 ? '#f59e0b' : '#22c55e';
+                                        const statusLabel = elapsed > 600_000 ? 'Hors ligne' : elapsed > 90_000 ? 'Inactif' : 'En ligne';
+                                        const bwBytes = inst.metrics?.bandwidthUsage ?? 0;
+                                        const bwMB = bwBytes / 1_048_576;
+                                        const bwFormatted = bwMB >= 1024
+                                          ? `${(bwMB / 1024).toFixed(1)} GB`
+                                          : `${bwMB.toFixed(1)} MB`;
                                         return (
                                           <tr key={inst.id} className="bg-[var(--surface)] hover:bg-[var(--surface-secondary)] transition-colors">
                                             <td className="px-3 py-2 font-mono text-xs text-[var(--muted)]" title={inst.id}>
@@ -1738,9 +1748,7 @@ export default function AdminPage() {
                                             <td className="px-3 py-2">
                                               {inst.metrics ? (
                                                 <span className="text-xs tabular-nums text-[var(--foreground)]">
-                                                  {inst.metrics.bandwidthUsage >= 1024
-                                                    ? `${(inst.metrics.bandwidthUsage / 1024).toFixed(1)} GB`
-                                                    : `${Math.round(inst.metrics.bandwidthUsage)} MB`}
+                                                  {bwFormatted}
                                                 </span>
                                               ) : <span className="text-xs text-[var(--muted)]">—</span>}
                                             </td>
@@ -1754,8 +1762,13 @@ export default function AdminPage() {
                                                 'text-red-500'
                                               }`}>{inst.score}</span>
                                             </td>
-                                            <td className="px-3 py-2 text-xs text-[var(--muted)] tabular-nums">
+                                            <td className="px-3 py-2 text-xs text-[var(--muted)] tabular-nums" title={`il y a ${Math.round(elapsed / 1000)}s`}>
                                               {new Date(inst.lastHeartbeat).toLocaleTimeString('fr-FR')}
+                                              {elapsed > 60_000 && (
+                                                <span className="ml-1 text-[10px]" style={{ color: elapsed > 600_000 ? '#ef4444' : '#f59e0b' }}>
+                                                  ({Math.round(elapsed / 60_000)} min)
+                                                </span>
+                                              )}
                                             </td>
                                           </tr>
                                         );
