@@ -14,7 +14,6 @@ const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'https://gateway.alfy
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ServiceStatus = 'operational' | 'degraded' | 'outage' | 'checking';
-type Provider = 'hostinger' | 'alfycore';
 type IncidentSeverity = 'info' | 'warning' | 'critical';
 type IncidentStatus = 'investigating' | 'identified' | 'monitoring' | 'resolved';
 
@@ -54,22 +53,21 @@ interface ServiceDef {
   key: string;
   name: string;
   description: string;
-  provider: Provider;
   Icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
 // ─── Service definitions ──────────────────────────────────────────────────────
 
 const SERVICE_DEFS: ServiceDef[] = [
-  { key: 'website',  name: 'Site Web',              description: 'alfychat.app — interface utilisateur Next.js',       provider: 'hostinger', Icon: GlobeIcon },
-  { key: 'gateway',  name: 'Gateway',                description: 'gateway.alfychat.app — API & WebSocket',            provider: 'hostinger', Icon: ZapIcon },
-  { key: 'users',    name: 'Service Utilisateurs',   description: 'Authentification, profils & sessions',              provider: 'hostinger', Icon: UserIcon },
-  { key: 'messages', name: 'Service Messages',       description: 'Messagerie chiffrée temps-réel (E2EE)',             provider: 'hostinger', Icon: MessageCircleIcon },
-  { key: 'calls',    name: 'Service Appels',         description: 'Voix & vidéo (WebRTC / STUN)',                      provider: 'hostinger', Icon: PhoneIcon },
-  { key: 'friends',  name: 'Service Amis',           description: 'Relations, demandes & blocages',                   provider: 'alfycore',  Icon: UsersIcon },
-  { key: 'servers',  name: 'Service Serveurs',       description: 'Communautés, canaux & permissions',                provider: 'alfycore',  Icon: ServerIcon },
-  { key: 'bots',     name: 'Service Bots',           description: 'Automatisation & intégrations tierces',            provider: 'alfycore',  Icon: BotIcon },
-  { key: 'media',    name: 'Service Médias',         description: 'media.alfychat.app — fichiers, avatars & uploads',  provider: 'alfycore',  Icon: ImageIcon },
+  { key: 'website',  name: 'Site Web',              description: 'alfychat.app — interface utilisateur Next.js',       Icon: GlobeIcon },
+  { key: 'gateway',  name: 'Gateway',                description: 'gateway.alfychat.app — API & WebSocket',            Icon: ZapIcon },
+  { key: 'users',    name: 'Service Utilisateurs',   description: 'Authentification, profils & sessions',              Icon: UserIcon },
+  { key: 'messages', name: 'Service Messages',       description: 'Messagerie chiffrée temps-réel (E2EE)',             Icon: MessageCircleIcon },
+  { key: 'calls',    name: 'Service Appels',         description: 'Voix & vidéo (WebRTC / STUN)',                      Icon: PhoneIcon },
+  { key: 'friends',  name: 'Service Amis',           description: 'Relations, demandes & blocages',                   Icon: UsersIcon },
+  { key: 'servers',  name: 'Service Serveurs',       description: 'Communautés, canaux & permissions',                Icon: ServerIcon },
+  { key: 'bots',     name: 'Service Bots',           description: 'Automatisation & intégrations tierces',            Icon: BotIcon },
+  { key: 'media',    name: 'Service Médias',         description: 'media.alfychat.app — fichiers, avatars & uploads',  Icon: ImageIcon },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -139,21 +137,6 @@ function GlobalBanner({ status }: { status: ServiceStatus }) {
       <Icon size={22} />
       <span className="font-semibold text-sm">{msg}</span>
     </div>
-  );
-}
-
-function ProviderBadge({ provider }: { provider: Provider }) {
-  if (provider === 'hostinger') {
-    return (
-      <span className="inline-flex items-center rounded-md bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400 uppercase tracking-wide">
-        Hostinger
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center rounded-md bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400 uppercase tracking-wide">
-      AlfyCore
-    </span>
   );
 }
 
@@ -285,9 +268,6 @@ export default function StatusPage() {
   const degradedCount    = allStatuses.filter((s) => s === 'degraded').length;
   const outageCount      = allStatuses.filter((s) => s === 'outage').length;
 
-  const hostingerDefs = SERVICE_DEFS.filter((d) => d.provider === 'hostinger');
-  const alfycoreDefs  = SERVICE_DEFS.filter((d) => d.provider === 'alfycore');
-
   return (
     <div className="min-h-screen bg-background text-foreground">
 
@@ -390,14 +370,11 @@ export default function StatusPage() {
           </section>
         )}
 
-        {/* ── Hostinger ── */}
+        {/* ── Services ── */}
         <section className="space-y-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Hostinger</h2>
-            <span className="text-[10px] text-muted-foreground/50">— Site web · Gateway · Users · Messages · Calls</span>
-          </div>
-          <div className="divide-y divide-border/40 rounded-xl border border-violet-500/20 bg-card/30 overflow-hidden">
-            {hostingerDefs.map((svc) => {
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Services</h2>
+          <div className="divide-y divide-border/40 rounded-xl border border-border/50 bg-card/30 overflow-hidden">
+            {SERVICE_DEFS.map((svc) => {
               const st = allStatuses[SERVICE_DEFS.indexOf(svc)];
               const { Icon } = svc;
               const svcInstances = instances.filter(i => i.serviceType === svc.key);
@@ -416,7 +393,6 @@ export default function StatusPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm">{svc.name}</span>
-                        <ProviderBadge provider={svc.provider} />
                         {svcInstances.length > 0 && (
                           <span className="text-[10px] text-muted-foreground/50">{svcInstances.length} instance{svcInstances.length > 1 ? 's' : ''}</span>
                         )}
@@ -439,86 +415,11 @@ export default function StatusPage() {
                   {isExpanded && svcInstances.length > 0 && (
                     <div className="border-t border-border/40 bg-accent/10 divide-y divide-border/30">
                       {svcInstances.map((inst, idx) => {
-                        const stale = Date.now() - new Date(inst.lastHeartbeat).getTime() > 90_000;
-                        const dotColor = !inst.healthy ? 'bg-red-400' : stale ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse';
-                        const label = !inst.healthy ? 'Hors ligne' : stale ? 'Inactif' : 'En ligne';
-                        const labelColor = !inst.healthy ? 'text-red-400' : stale ? 'text-amber-400' : 'text-emerald-400';
-                        return (
-                          <div key={idx} className="flex items-center gap-3 px-6 py-2.5">
-                            <span className={`size-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
-                            <span className="text-sm font-medium text-foreground flex-1 truncate">{inst.domain}</span>
-                            <span className="text-[10px] font-semibold rounded-md bg-accent/60 border border-border/40 px-1.5 py-0.5 text-muted-foreground uppercase tracking-wide">{inst.location}</span>
-                            <span className={`text-xs font-medium ${labelColor}`}>{label}</span>
-                            <span className="hidden sm:block text-[10px] text-muted-foreground/40 tabular-nums">
-                              {new Date(inst.lastHeartbeat).toLocaleTimeString('fr-FR')}
-                            </span>
-                            <span className={`hidden sm:block text-xs tabular-nums font-semibold ${
-                              inst.score >= 80 ? 'text-emerald-400' : inst.score >= 50 ? 'text-amber-400' : 'text-red-400'
-                            }`}>score {inst.score}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ── AlfyCore ── */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">AlfyCore</h2>
-            <span className="text-[10px] text-muted-foreground/50">— Friends · Servers · Bots · Médias</span>
-          </div>
-          <div className="divide-y divide-border/40 rounded-xl border border-sky-500/20 bg-card/30 overflow-hidden">
-            {alfycoreDefs.map((svc) => {
-              const st = allStatuses[SERVICE_DEFS.indexOf(svc)];
-              const { Icon } = svc;
-              const svcInstances = instances.filter(i => i.serviceType === svc.key);
-              const isExpanded = expandedServices.has(svc.key);
-              return (
-                <div key={svc.key}>
-                  <button
-                    onClick={() => svcInstances.length > 0 && toggleService(svc.key)}
-                    className={`w-full flex items-center gap-4 px-5 py-4 transition-colors text-left ${
-                      svcInstances.length > 0 ? 'hover:bg-accent/30 cursor-pointer' : 'cursor-default'
-                    }`}
-                  >
-                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
-                      <Icon size={18} className="text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm">{svc.name}</span>
-                        <ProviderBadge provider={svc.provider} />
-                        {svcInstances.length > 0 && (
-                          <span className="text-[10px] text-muted-foreground/50">{svcInstances.length} instance{svcInstances.length > 1 ? 's' : ''}</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
-                    </div>
-                    <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
-                      <LatencyBar ms={latencyMap[svc.key] ?? null} />
-                    </div>
-                    <div className="flex-shrink-0"><StatusIcon status={st} /></div>
-                    <div className="hidden md:block flex-shrink-0 w-32 text-right">
-                      <StatusBadge status={st} />
-                    </div>
-                    {svcInstances.length > 0 && (
-                      <div className="flex-shrink-0 text-muted-foreground/50">
-                        {isExpanded ? <ChevronDownIcon size={14} /> : <ChevronRightIcon size={14} />}
-                      </div>
-                    )}
-                  </button>
-                  {isExpanded && svcInstances.length > 0 && (
-                    <div className="border-t border-border/40 bg-accent/10 divide-y divide-border/30">
-                      {svcInstances.map((inst, idx) => {
-                        const stale = Date.now() - new Date(inst.lastHeartbeat).getTime() > 90_000;
-                        const dotColor = !inst.healthy ? 'bg-red-400' : stale ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse';
-                        const label = !inst.healthy ? 'Hors ligne' : stale ? 'Inactif' : 'En ligne';
-                        const labelColor = !inst.healthy ? 'text-red-400' : stale ? 'text-amber-400' : 'text-emerald-400';
+                        const elapsed = Date.now() - new Date(inst.lastHeartbeat).getTime();
+                        const isStale = elapsed > 90_000;
+                        const dotColor = !inst.healthy ? 'bg-red-400' : isStale ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse';
+                        const label = !inst.healthy ? 'Hors ligne' : isStale ? 'Inactif' : 'En ligne';
+                        const labelColor = !inst.healthy ? 'text-red-400' : isStale ? 'text-amber-400' : 'text-emerald-400';
                         return (
                           <div key={idx} className="flex items-center gap-3 px-6 py-2.5">
                             <span className={`size-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
@@ -549,19 +450,16 @@ export default function StatusPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { name: 'Base de données MySQL', desc: 'AlfyCore · 51.254.243.250:3940', Icon: DatabaseIcon, provider: 'alfycore' as Provider },
-              { name: 'Cache Redis',            desc: 'AlfyCore · 51.254.243.250:5435', Icon: ZapIcon,      provider: 'alfycore' as Provider },
-              { name: 'CDN Hostinger',          desc: 'Hostinger · Distribution statique & médias', Icon: GlobeIcon, provider: 'hostinger' as Provider },
-            ].map(({ name, desc, Icon, provider }) => (
+              { name: 'Base de données MySQL', desc: '51.254.243.250:3940', Icon: DatabaseIcon },
+              { name: 'Cache Redis',            desc: '51.254.243.250:5435', Icon: ZapIcon },
+              { name: 'CDN / Distribution',     desc: 'Distribution statique & médias', Icon: GlobeIcon },
+            ].map(({ name, desc, Icon }) => (
               <div key={name} className="flex items-center gap-4 rounded-xl border border-border/50 bg-card/30 px-5 py-4">
                 <div className="w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center flex-shrink-0">
                   <Icon size={18} className="text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm">{name}</p>
-                    <ProviderBadge provider={provider} />
-                  </div>
+                  <p className="font-medium text-sm">{name}</p>
                   <p className="text-xs text-muted-foreground">{desc}</p>
                 </div>
                 <StatusIcon status={global === 'checking' ? 'checking' : global === 'outage' ? 'outage' : 'operational'} />
@@ -580,7 +478,6 @@ export default function StatusPage() {
               <div key={svc.key} className="px-5 py-3 flex items-center gap-4">
                 <div className="flex items-center gap-2 w-40 flex-shrink-0">
                   <span className="text-sm truncate">{svc.name}</span>
-                  <ProviderBadge provider={svc.provider} />
                 </div>
                 <UptimeBars days={uptime[svc.key] ?? []} />
               </div>
