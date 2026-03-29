@@ -6,7 +6,7 @@ import {
   ServerIcon, DatabaseIcon, MessageCircleIcon, UserIcon, PhoneIcon,
   UsersIcon, BotIcon, ImageIcon, GlobeIcon, RefreshCwIcon,
   CheckCircle2Icon, AlertTriangleIcon, XCircleIcon, ClockIcon,
-  ArrowLeftIcon, ZapIcon, WifiIcon,
+  ArrowLeftIcon, ZapIcon, WifiIcon, ChevronDownIcon, ChevronRightIcon,
 } from '@/components/icons';
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'https://gateway.alfychat.app';
@@ -34,6 +34,15 @@ interface ServiceHistory {
   service: string;
   status: string;
   response_time_ms: number | null;
+}
+
+interface PublicInstance {
+  serviceType: string;
+  domain: string;
+  location: string;
+  healthy: boolean;
+  lastHeartbeat: string;
+  score: number;
 }
 
 interface UptimeDay {
@@ -219,6 +228,8 @@ export default function StatusPage() {
   const [services, setServices] = useState<ServiceHistory[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [uptime, setUptime] = useState<Record<string, UptimeDay[]>>({});
+  const [instances, setInstances] = useState<PublicInstance[]>([]);
+  const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
   const [error, setError] = useState(false);
@@ -233,6 +244,7 @@ export default function StatusPage() {
       setServices(data.services ?? []);
       setIncidents(data.incidents ?? []);
       setUptime(data.uptime ?? {});
+      setInstances(data.instances ?? []);
       setLastFetch(new Date());
     } catch {
       setError(true);
@@ -240,6 +252,14 @@ export default function StatusPage() {
       setLoading(false);
     }
   }, []);
+
+  const toggleService = (key: string) => {
+    setExpandedServices(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   useEffect(() => {
     fetchStatus();
@@ -380,25 +400,66 @@ export default function StatusPage() {
             {hostingerDefs.map((svc) => {
               const st = allStatuses[SERVICE_DEFS.indexOf(svc)];
               const { Icon } = svc;
+              const svcInstances = instances.filter(i => i.serviceType === svc.key);
+              const isExpanded = expandedServices.has(svc.key);
               return (
-                <div key={svc.key} className="flex items-center gap-4 px-5 py-4 hover:bg-accent/30 transition-colors">
-                  <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
-                    <Icon size={18} className="text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{svc.name}</span>
-                      <ProviderBadge provider={svc.provider} />
+                <div key={svc.key}>
+                  <button
+                    onClick={() => svcInstances.length > 0 && toggleService(svc.key)}
+                    className={`w-full flex items-center gap-4 px-5 py-4 transition-colors text-left ${
+                      svcInstances.length > 0 ? 'hover:bg-accent/30 cursor-pointer' : 'cursor-default'
+                    }`}
+                  >
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
+                      <Icon size={18} className="text-muted-foreground" />
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
-                    <LatencyBar ms={latencyMap[svc.key] ?? null} />
-                  </div>
-                  <div className="flex-shrink-0"><StatusIcon status={st} /></div>
-                  <div className="hidden md:block flex-shrink-0 w-32 text-right">
-                    <StatusBadge status={st} />
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{svc.name}</span>
+                        <ProviderBadge provider={svc.provider} />
+                        {svcInstances.length > 0 && (
+                          <span className="text-[10px] text-muted-foreground/50">{svcInstances.length} instance{svcInstances.length > 1 ? 's' : ''}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
+                      <LatencyBar ms={latencyMap[svc.key] ?? null} />
+                    </div>
+                    <div className="flex-shrink-0"><StatusIcon status={st} /></div>
+                    <div className="hidden md:block flex-shrink-0 w-32 text-right">
+                      <StatusBadge status={st} />
+                    </div>
+                    {svcInstances.length > 0 && (
+                      <div className="flex-shrink-0 text-muted-foreground/50">
+                        {isExpanded ? <ChevronDownIcon size={14} /> : <ChevronRightIcon size={14} />}
+                      </div>
+                    )}
+                  </button>
+                  {isExpanded && svcInstances.length > 0 && (
+                    <div className="border-t border-border/40 bg-accent/10 divide-y divide-border/30">
+                      {svcInstances.map((inst, idx) => {
+                        const stale = Date.now() - new Date(inst.lastHeartbeat).getTime() > 90_000;
+                        const dotColor = !inst.healthy ? 'bg-red-400' : stale ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse';
+                        const label = !inst.healthy ? 'Hors ligne' : stale ? 'Inactif' : 'En ligne';
+                        const labelColor = !inst.healthy ? 'text-red-400' : stale ? 'text-amber-400' : 'text-emerald-400';
+                        return (
+                          <div key={idx} className="flex items-center gap-3 px-6 py-2.5">
+                            <span className={`size-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
+                            <span className="text-sm font-medium text-foreground flex-1 truncate">{inst.domain}</span>
+                            <span className="text-[10px] font-semibold rounded-md bg-accent/60 border border-border/40 px-1.5 py-0.5 text-muted-foreground uppercase tracking-wide">{inst.location}</span>
+                            <span className={`text-xs font-medium ${labelColor}`}>{label}</span>
+                            <span className="hidden sm:block text-[10px] text-muted-foreground/40 tabular-nums">
+                              {new Date(inst.lastHeartbeat).toLocaleTimeString('fr-FR')}
+                            </span>
+                            <span className={`hidden sm:block text-xs tabular-nums font-semibold ${
+                              inst.score >= 80 ? 'text-emerald-400' : inst.score >= 50 ? 'text-amber-400' : 'text-red-400'
+                            }`}>score {inst.score}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -415,25 +476,66 @@ export default function StatusPage() {
             {alfycoreDefs.map((svc) => {
               const st = allStatuses[SERVICE_DEFS.indexOf(svc)];
               const { Icon } = svc;
+              const svcInstances = instances.filter(i => i.serviceType === svc.key);
+              const isExpanded = expandedServices.has(svc.key);
               return (
-                <div key={svc.key} className="flex items-center gap-4 px-5 py-4 hover:bg-accent/30 transition-colors">
-                  <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
-                    <Icon size={18} className="text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{svc.name}</span>
-                      <ProviderBadge provider={svc.provider} />
+                <div key={svc.key}>
+                  <button
+                    onClick={() => svcInstances.length > 0 && toggleService(svc.key)}
+                    className={`w-full flex items-center gap-4 px-5 py-4 transition-colors text-left ${
+                      svcInstances.length > 0 ? 'hover:bg-accent/30 cursor-pointer' : 'cursor-default'
+                    }`}
+                  >
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
+                      <Icon size={18} className="text-muted-foreground" />
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
-                    <LatencyBar ms={latencyMap[svc.key] ?? null} />
-                  </div>
-                  <div className="flex-shrink-0"><StatusIcon status={st} /></div>
-                  <div className="hidden md:block flex-shrink-0 w-32 text-right">
-                    <StatusBadge status={st} />
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{svc.name}</span>
+                        <ProviderBadge provider={svc.provider} />
+                        {svcInstances.length > 0 && (
+                          <span className="text-[10px] text-muted-foreground/50">{svcInstances.length} instance{svcInstances.length > 1 ? 's' : ''}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
+                      <LatencyBar ms={latencyMap[svc.key] ?? null} />
+                    </div>
+                    <div className="flex-shrink-0"><StatusIcon status={st} /></div>
+                    <div className="hidden md:block flex-shrink-0 w-32 text-right">
+                      <StatusBadge status={st} />
+                    </div>
+                    {svcInstances.length > 0 && (
+                      <div className="flex-shrink-0 text-muted-foreground/50">
+                        {isExpanded ? <ChevronDownIcon size={14} /> : <ChevronRightIcon size={14} />}
+                      </div>
+                    )}
+                  </button>
+                  {isExpanded && svcInstances.length > 0 && (
+                    <div className="border-t border-border/40 bg-accent/10 divide-y divide-border/30">
+                      {svcInstances.map((inst, idx) => {
+                        const stale = Date.now() - new Date(inst.lastHeartbeat).getTime() > 90_000;
+                        const dotColor = !inst.healthy ? 'bg-red-400' : stale ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse';
+                        const label = !inst.healthy ? 'Hors ligne' : stale ? 'Inactif' : 'En ligne';
+                        const labelColor = !inst.healthy ? 'text-red-400' : stale ? 'text-amber-400' : 'text-emerald-400';
+                        return (
+                          <div key={idx} className="flex items-center gap-3 px-6 py-2.5">
+                            <span className={`size-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
+                            <span className="text-sm font-medium text-foreground flex-1 truncate">{inst.domain}</span>
+                            <span className="text-[10px] font-semibold rounded-md bg-accent/60 border border-border/40 px-1.5 py-0.5 text-muted-foreground uppercase tracking-wide">{inst.location}</span>
+                            <span className={`text-xs font-medium ${labelColor}`}>{label}</span>
+                            <span className="hidden sm:block text-[10px] text-muted-foreground/40 tabular-nums">
+                              {new Date(inst.lastHeartbeat).toLocaleTimeString('fr-FR')}
+                            </span>
+                            <span className={`hidden sm:block text-xs tabular-nums font-semibold ${
+                              inst.score >= 80 ? 'text-emerald-400' : inst.score >= 50 ? 'text-amber-400' : 'text-red-400'
+                            }`}>score {inst.score}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
