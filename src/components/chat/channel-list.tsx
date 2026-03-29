@@ -828,7 +828,7 @@ export function ChannelList({
             )}
 
             {/* ── Messages privés ── */}
-            <div data-section="dm-list" className="mx-0.5 mt-0.5 rounded-xl border p-1.5 transition-all">
+            <div data-section="dm-list" className="mx-0.5 mt-0.5 rounded-xl  p-1.5 transition-all">
               <div className="mb-1 flex items-center justify-between px-2 pt-1">
                 <p data-tour="conversations" className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
                   {t.channelList.directMessages}
