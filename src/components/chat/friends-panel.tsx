@@ -181,18 +181,34 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
 
   const handleAddFriend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addFriendInput.trim() || addFriendLoading) return;
-    if (currentUser?.username && addFriendInput.trim().toLowerCase() === currentUser.username.toLowerCase()) {
+    const username = addFriendInput.trim();
+    if (!username || addFriendLoading) return;
+    if (currentUser?.username && username.toLowerCase() === currentUser.username.toLowerCase()) {
       notify.error(t.common.error, t.friends.selfRequestError);
       return;
     }
     setAddFriendLoading(true);
     try {
-      const response = await api.sendFriendRequest(addFriendInput.trim());
+      // Step 1: look up the user by exact username
+      const searchRes = await api.searchUsers(username);
+      const list: any[] = Array.isArray((searchRes.data as any)?.users)
+        ? (searchRes.data as any).users
+        : Array.isArray(searchRes.data)
+          ? (searchRes.data as any[])
+          : [];
+      const found = list.find(
+        (u: any) => (u.username ?? '').toLowerCase() === username.toLowerCase()
+      );
+      if (!found) {
+        notify.error(t.common.error, `Aucun utilisateur trouvé avec le pseudo « ${username} »`);
+        return;
+      }
+      // Step 2: send request with actual user ID
+      const response = await api.sendFriendRequest(found.id);
       if (response.success) {
         setAddFriendInput('');
         loadRequests();
-        notify.success(t.friends.requestSent, tx(t.friends.requestSentTo, { username: addFriendInput.trim() }));
+        notify.success(t.friends.requestSent, tx(t.friends.requestSentTo, { username }));
       } else {
         notify.error(t.common.error, (response as any).error || t.friends.requestError);
       }

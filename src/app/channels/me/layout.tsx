@@ -265,7 +265,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Inner row (sidebar + content) ── */}
       {!isMobile && (
-        <div className={`flex min-w-0 gap-1.5 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
+        <div className={`flex min-w-0 ${ui.isGlass ? 'gap-1.5' : 'gap-0'} ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
           {/* Server list LEFT */}
           {serverListPosition === 'left' && (
             <div data-layout="server-list" className={`h-full shrink-0 ${ui.panelWrapper}`}>

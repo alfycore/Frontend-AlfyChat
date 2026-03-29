@@ -229,7 +229,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Inner row ── */}
       {!isMobile && (
-        <div className={`flex min-w-0 gap-1.5 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
+        <div className={`flex min-w-0 ${ui.isGlass ? 'gap-1.5' : 'gap-0'} ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
 
           {/* Member list LEFT */}
           {memberListDesktopVisible && memberListSide === 'left' && (
