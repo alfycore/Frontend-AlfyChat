@@ -84,7 +84,7 @@ const BOOTSTRAP_ICONS = [
   { value: 'bi-moon-fill', label: 'Lune' },
 ];
 
-type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'security' | 'changelogs' | 'settings' | 'monitoring';
+type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'security' | 'changelogs' | 'settings' | 'monitoring' | 'status';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -145,6 +145,19 @@ export default function AdminPage() {
   const [rateLimitConfig, setRateLimitConfig] = useState<{ window: number; max: number } | null>(null);
   const [banIPValue, setBanIPValue] = useState('');
   const [banReasonValue, setBanReasonValue] = useState('');
+
+  // Status / Incidents
+  const [statusIncidents, setStatusIncidents] = useState<any[]>([]);
+  const [statusIncludeResolved, setStatusIncludeResolved] = useState(false);
+  const [statusForm, setStatusForm] = useState({
+    title: '',
+    message: '',
+    severity: 'warning' as 'info' | 'warning' | 'critical',
+    status: 'investigating' as 'investigating' | 'identified' | 'monitoring' | 'resolved',
+    services: '',
+  });
+  const [editingIncident, setEditingIncident] = useState<any>(undefined);
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
 
   // Changelogs
   const [changelogs, setChangelogs] = useState<any[]>([]);
@@ -218,6 +231,9 @@ export default function AdminPage() {
         if (res.success && res.data) setMonitoringData(res.data);
         // Load chart with current period
         loadChartData(chartPeriod);
+      } else if (activeTab === 'status') {
+        const res = await api.getAdminIncidents(statusIncludeResolved);
+        if (res.success && res.data) setStatusIncidents((res.data as any).incidents ?? []);
       }
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -556,6 +572,7 @@ export default function AdminPage() {
                 { id: 'discovery', label: 'Découverte', shortLabel: 'Découv.', icon: CompassIcon },
                 { id: 'server-badges', label: 'Badges serveurs', shortLabel: 'Serveurs', icon: ServerIcon },
                 { id: 'monitoring', label: 'Monitoring', shortLabel: 'Monitor', icon: BarChart3Icon },
+                { id: 'status', label: 'Status public', shortLabel: 'Status', icon: CheckCircle2Icon },
                 { id: 'security', label: 'Sécurité', shortLabel: 'Sécu.', icon: ShieldAlertIcon },
                 { id: 'changelogs', label: 'Changelogs', shortLabel: 'Logs', icon: FileTextIcon },
                 { id: 'settings', label: 'Paramètres', shortLabel: 'Config', icon: SettingsIcon },
@@ -1555,6 +1572,236 @@ export default function AdminPage() {
                     Aucune donnée de monitoring disponible.
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'status' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <h2 className="text-2xl font-bold text-[var(--foreground)]">Status public & Incidents</h2>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <label className="flex items-center gap-2 text-sm text-[var(--muted)] cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={statusIncludeResolved}
+                        onChange={async (e) => {
+                          setStatusIncludeResolved(e.target.checked);
+                          const res = await api.getAdminIncidents(e.target.checked);
+                          if (res.success && res.data) setStatusIncidents((res.data as any).incidents ?? []);
+                        }}
+                        className="rounded"
+                      />
+                      Afficher les incidents résolus
+                    </label>
+                    <Button
+                      size="sm"
+                      onPress={() => {
+                        setEditingIncident(null);
+                        setStatusForm({ title: '', message: '', severity: 'warning', status: 'investigating', services: '' });
+                      }}
+                      className="bg-[var(--accent)] text-[var(--accent-foreground)]"
+                    >
+                      <PlusIcon size={14} /> Nouvel incident
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Create / Edit form */}
+                {editingIncident !== undefined && (
+                  <Card className="border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
+                    <h3 className="font-semibold text-[var(--foreground)]">
+                      {editingIncident ? 'Modifier l\'incident' : 'Créer un incident'}
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs text-[var(--muted)] mb-1">Titre *</label>
+                        <input
+                          value={statusForm.title}
+                          onChange={(e) => setStatusForm((p) => ({ ...p, title: e.target.value }))}
+                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+                          placeholder="Ex: Dégradation du service messages"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs text-[var(--muted)] mb-1">Message (optionnel)</label>
+                        <textarea
+                          rows={3}
+                          value={statusForm.message}
+                          onChange={(e) => setStatusForm((p) => ({ ...p, message: e.target.value }))}
+                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)] resize-none"
+                          placeholder="Détails de l'incident, actions en cours…"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[var(--muted)] mb-1">Sévérité</label>
+                        <select
+                          value={statusForm.severity}
+                          onChange={(e) => setStatusForm((p) => ({ ...p, severity: e.target.value as any }))}
+                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--foreground)] outline-none"
+                        >
+                          <option value="info">Info</option>
+                          <option value="warning">Avertissement</option>
+                          <option value="critical">Critique</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[var(--muted)] mb-1">Statut</label>
+                        <select
+                          value={statusForm.status}
+                          onChange={(e) => setStatusForm((p) => ({ ...p, status: e.target.value as any }))}
+                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--foreground)] outline-none"
+                        >
+                          <option value="investigating">Investigation</option>
+                          <option value="identified">Identifié</option>
+                          <option value="monitoring">Surveillance</option>
+                          <option value="resolved">Résolu</option>
+                        </select>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs text-[var(--muted)] mb-1">Services concernés (séparés par virgule)</label>
+                        <input
+                          value={statusForm.services}
+                          onChange={(e) => setStatusForm((p) => ({ ...p, services: e.target.value }))}
+                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+                          placeholder="gateway, messages, users"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 justify-end">
+                      <Button size="sm" variant="light" onPress={() => setEditingIncident(undefined)} disabled={statusSubmitting}>
+                        Annuler
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-[var(--accent)] text-[var(--accent-foreground)]"
+                        disabled={statusSubmitting || !statusForm.title.trim()}
+                        onPress={async () => {
+                          setStatusSubmitting(true);
+                          const services = statusForm.services.split(',').map((s) => s.trim()).filter(Boolean);
+                          try {
+                            if (editingIncident) {
+                              await api.updateIncident(editingIncident.id, {
+                                title: statusForm.title,
+                                message: statusForm.message || undefined,
+                                severity: statusForm.severity,
+                                status: statusForm.status,
+                                services: services.length ? services : undefined,
+                              });
+                            } else {
+                              await api.createIncident({
+                                title: statusForm.title,
+                                message: statusForm.message || undefined,
+                                severity: statusForm.severity,
+                                status: statusForm.status,
+                                services: services.length ? services : undefined,
+                              });
+                            }
+                            setEditingIncident(undefined);
+                            const res = await api.getAdminIncidents(statusIncludeResolved);
+                            if (res.success && res.data) setStatusIncidents((res.data as any).incidents ?? []);
+                          } finally {
+                            setStatusSubmitting(false);
+                          }
+                        }}
+                      >
+                        {statusSubmitting ? 'Enregistrement…' : editingIncident ? 'Mettre à jour' : 'Créer'}
+                      </Button>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Incidents list */}
+                {statusIncidents.length === 0 && !loading && (
+                  <div className="flex h-32 items-center justify-center text-[var(--muted)] text-sm">
+                    Aucun incident{statusIncludeResolved ? '' : ' actif'}.
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {statusIncidents.map((inc: any) => (
+                    <Card key={inc.id} className={`border bg-[var(--surface)] p-0 overflow-hidden ${
+                      inc.severity === 'critical' ? 'border-red-500/30' :
+                      inc.severity === 'warning'  ? 'border-amber-500/30' :
+                      'border-sky-500/30'
+                    }`}>
+                      <div className="px-5 py-4 space-y-2">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div>
+                            <p className="font-semibold text-[var(--foreground)]">{inc.title}</p>
+                            {inc.message && <p className="text-sm text-[var(--muted)] mt-0.5 whitespace-pre-wrap">{inc.message}</p>}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${
+                              inc.severity === 'critical' ? 'border-red-500/30 bg-red-500/10 text-red-400' :
+                              inc.severity === 'warning'  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400' :
+                              'border-sky-500/30 bg-sky-500/10 text-sky-400'
+                            }`}>
+                              {inc.severity === 'critical' ? 'Critique' : inc.severity === 'warning' ? 'Avertissement' : 'Info'}
+                            </span>
+                            <span className="inline-flex items-center rounded-md border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-0.5 text-xs text-[var(--muted)]">
+                              {inc.status === 'investigating' ? 'Investigation' : inc.status === 'identified' ? 'Identifié' : inc.status === 'monitoring' ? 'Surveillance' : 'Résolu'}
+                            </span>
+                          </div>
+                        </div>
+                        {inc.services && (
+                          <div className="flex flex-wrap gap-1">
+                            {JSON.parse(inc.services).map((s: string) => (
+                              <span key={s} className="rounded-full border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-0.5 text-[10px] text-[var(--muted)]">{s}</span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-[11px] text-[var(--muted)]/60">
+                          Créé le {new Date(inc.created_at).toLocaleString('fr-FR')}
+                          {inc.resolved_at && ` · Résolu le ${new Date(inc.resolved_at).toLocaleString('fr-FR')}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 border-t border-[var(--border)]/40 px-5 py-2">
+                        <Button
+                          size="sm"
+                          variant="light"
+                          onPress={() => {
+                            setEditingIncident(inc);
+                            setStatusForm({
+                              title: inc.title,
+                              message: inc.message ?? '',
+                              severity: inc.severity,
+                              status: inc.status,
+                              services: inc.services ? JSON.parse(inc.services).join(', ') : '',
+                            });
+                          }}
+                          className="text-[var(--foreground)]"
+                        >
+                          <Edit2Icon size={13} /> Modifier
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="light"
+                          className="text-red-400 hover:text-red-300"
+                          onPress={async () => {
+                            if (!confirm('Supprimer cet incident ?')) return;
+                            await api.deleteIncident(inc.id);
+                            setStatusIncidents((prev) => prev.filter((i: any) => i.id !== inc.id));
+                          }}
+                        >
+                          <Trash2Icon size={13} /> Supprimer
+                        </Button>
+                        {inc.status !== 'resolved' && (
+                          <Button
+                            size="sm"
+                            variant="light"
+                            className="text-emerald-400 ml-auto"
+                            onPress={async () => {
+                              await api.updateIncident(inc.id, { status: 'resolved' });
+                              const res = await api.getAdminIncidents(statusIncludeResolved);
+                              if (res.success && res.data) setStatusIncidents((res.data as any).incidents ?? []);
+                            }}
+                          >
+                            <CheckCircle2Icon size={13} /> Marquer résolu
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
 

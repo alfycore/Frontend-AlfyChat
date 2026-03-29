@@ -881,6 +881,48 @@ class ApiService {
     return this.request<any>(`/api/admin/monitoring/users/chart?period=${period}`);
   }
 
+  // ============ STATUS / INCIDENTS ============
+
+  async getPublicStatus() {
+    return this.request<any>('/api/status');
+  }
+
+  async getAdminIncidents(includeResolved = false) {
+    return this.request<any>(`/api/admin/status/incidents?includeResolved=${includeResolved}`);
+  }
+
+  async createIncident(data: {
+    title: string;
+    message?: string;
+    severity: 'info' | 'warning' | 'critical';
+    services?: string[];
+    status?: 'investigating' | 'identified' | 'monitoring' | 'resolved';
+  }) {
+    return this.request<{ id: number }>('/api/admin/status/incidents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateIncident(id: number, data: {
+    title?: string;
+    message?: string;
+    severity?: 'info' | 'warning' | 'critical';
+    services?: string[];
+    status?: 'investigating' | 'identified' | 'monitoring' | 'resolved';
+  }) {
+    return this.request<{ success: boolean }>(`/api/admin/status/incidents/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteIncident(id: number) {
+    return this.request<{ success: boolean }>(`/api/admin/status/incidents/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getChangelogs(limit = 50, offset = 0) {
     return this.request<any[]>(`/api/users/changelogs?limit=${limit}&offset=${offset}`);
   }

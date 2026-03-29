@@ -9,139 +9,77 @@ import {
   ArrowLeftIcon, ZapIcon, WifiIcon,
 } from '@/components/icons';
 
-const GATEWAY = 'https://gateway.alfychat.app';
-const WEBSITE = 'https://alfychat.app';
-const CDN     = 'https://media.alfychat.app';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'https://gateway.alfychat.app';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type ServiceStatus = 'operational' | 'degraded' | 'outage' | 'checking';
 type Provider = 'hostinger' | 'alfycore';
+type IncidentSeverity = 'info' | 'warning' | 'critical';
+type IncidentStatus = 'investigating' | 'identified' | 'monitoring' | 'resolved';
+
+interface Incident {
+  id: number;
+  title: string;
+  message: string | null;
+  severity: IncidentSeverity;
+  services: string | null;
+  status: IncidentStatus;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+}
+
+interface ServiceHistory {
+  service: string;
+  status: string;
+  response_time_ms: number | null;
+}
+
+interface UptimeDay {
+  date: string;
+  uptime_pct: number;
+}
 
 interface ServiceDef {
   key: string;
   name: string;
   description: string;
   provider: Provider;
-  checkUrl: string; // URL complète à appeler
   Icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
-interface ServiceResult {
-  key: string;
-  status: ServiceStatus;
-  latency: number | null;
-  checkedAt: Date | null;
-}
+// ─── Service definitions ──────────────────────────────────────────────────────
 
-// ─── Services ────────────────────────────────────────────────────────────────
-
-const HOSTINGER_SERVICES: ServiceDef[] = [
-  {
-    key: 'website',
-    name: 'Site Web',
-    description: 'alfychat.app — interface utilisateur Next.js',
-    provider: 'hostinger',
-    checkUrl: WEBSITE,
-    Icon: GlobeIcon,
-  },
-  {
-    key: 'gateway',
-    name: 'Gateway',
-    description: 'gateway.alfychat.app — API & WebSocket',
-    provider: 'hostinger',
-    checkUrl: `${GATEWAY}/health`,
-    Icon: ZapIcon,
-  },
-  {
-    key: 'users',
-    name: 'Service Utilisateurs',
-    description: 'Authentification, profils & sessions',
-    provider: 'hostinger',
-    checkUrl: `${GATEWAY}/users/health`,
-    Icon: UserIcon,
-  },
-  {
-    key: 'messages',
-    name: 'Service Messages',
-    description: 'Messagerie chiffrée temps-réel (E2EE)',
-    provider: 'hostinger',
-    checkUrl: `${GATEWAY}/messages/health`,
-    Icon: MessageCircleIcon,
-  },
-  {
-    key: 'calls',
-    name: 'Service Appels',
-    description: 'Voix & vidéo (WebRTC / STUN)',
-    provider: 'hostinger',
-    checkUrl: `${GATEWAY}/calls/health`,
-    Icon: PhoneIcon,
-  },
+const SERVICE_DEFS: ServiceDef[] = [
+  { key: 'website',  name: 'Site Web',              description: 'alfychat.app — interface utilisateur Next.js',       provider: 'hostinger', Icon: GlobeIcon },
+  { key: 'gateway',  name: 'Gateway',                description: 'gateway.alfychat.app — API & WebSocket',            provider: 'hostinger', Icon: ZapIcon },
+  { key: 'users',    name: 'Service Utilisateurs',   description: 'Authentification, profils & sessions',              provider: 'hostinger', Icon: UserIcon },
+  { key: 'messages', name: 'Service Messages',       description: 'Messagerie chiffrée temps-réel (E2EE)',             provider: 'hostinger', Icon: MessageCircleIcon },
+  { key: 'calls',    name: 'Service Appels',         description: 'Voix & vidéo (WebRTC / STUN)',                      provider: 'hostinger', Icon: PhoneIcon },
+  { key: 'friends',  name: 'Service Amis',           description: 'Relations, demandes & blocages',                   provider: 'alfycore',  Icon: UsersIcon },
+  { key: 'servers',  name: 'Service Serveurs',       description: 'Communautés, canaux & permissions',                provider: 'alfycore',  Icon: ServerIcon },
+  { key: 'bots',     name: 'Service Bots',           description: 'Automatisation & intégrations tierces',            provider: 'alfycore',  Icon: BotIcon },
+  { key: 'media',    name: 'Service Médias',         description: 'media.alfychat.app — fichiers, avatars & uploads',  provider: 'alfycore',  Icon: ImageIcon },
 ];
 
-const ALFYCORE_SERVICES: ServiceDef[] = [
-  {
-    key: 'friends',
-    name: 'Service Amis',
-    description: 'Relations, demandes & blocages',
-    provider: 'alfycore',
-    checkUrl: `${GATEWAY}/friends/health`,
-    Icon: UsersIcon,
-  },
-  {
-    key: 'servers',
-    name: 'Service Serveurs',
-    description: 'Communautés, canaux & permissions',
-    provider: 'alfycore',
-    checkUrl: `${GATEWAY}/servers/health`,
-    Icon: ServerIcon,
-  },
-  {
-    key: 'bots',
-    name: 'Service Bots',
-    description: 'Automatisation & intégrations tierces',
-    provider: 'alfycore',
-    checkUrl: `${GATEWAY}/bots/health`,
-    Icon: BotIcon,
-  },
-  {
-    key: 'media',
-    name: 'Service Médias',
-    description: 'media.alfychat.app — fichiers, avatars & uploads',
-    provider: 'alfycore',
-    checkUrl: `${CDN}/health`,
-    Icon: ImageIcon,
-  },
-];
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const ALL_SERVICES = [...HOSTINGER_SERVICES, ...ALFYCORE_SERVICES];
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-async function checkService(url: string): Promise<{ status: ServiceStatus; latency: number }> {
-  const start = performance.now();
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(6000),
-      cache: 'no-store',
-      mode: 'no-cors', // pour le website check cross-origin
-    });
-    const latency = Math.round(performance.now() - start);
-    // no-cors → opaque response, status = 0 mais pas d'exception = OK
-    if (res.ok || res.type === 'opaque') return { status: 'operational', latency };
-    if (res.status >= 500) return { status: 'outage', latency };
-    return { status: 'degraded', latency };
-  } catch {
-    const latency = Math.round(performance.now() - start);
-    return { status: 'outage', latency };
-  }
+function dbStatusToUi(status: string): ServiceStatus {
+  if (status === 'up') return 'operational';
+  if (status === 'degraded') return 'degraded';
+  return 'outage';
 }
 
-function overallStatus(results: ServiceResult[]): ServiceStatus {
-  if (results.some((r) => r.status === 'checking')) return 'checking';
-  if (results.every((r) => r.status === 'operational')) return 'operational';
-  if (results.some((r) => r.status === 'outage')) return 'outage';
+function overallFromStatuses(statuses: ServiceStatus[]): ServiceStatus {
+  if (statuses.some((s) => s === 'checking')) return 'checking';
+  if (statuses.every((s) => s === 'operational')) return 'operational';
+  if (statuses.some((s) => s === 'outage')) return 'outage';
   return 'degraded';
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -184,7 +122,7 @@ function GlobalBanner({ status }: { status: ServiceStatus }) {
     operational: { msg: 'Tous les systèmes sont opérationnels', bg: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300', Icon: CheckCircle2Icon },
     degraded:    { msg: 'Certains services sont dégradés',     bg: 'bg-amber-500/10 border-amber-500/30 text-amber-300',     Icon: AlertTriangleIcon },
     outage:      { msg: 'Une panne est en cours',               bg: 'bg-red-500/10 border-red-500/30 text-red-300',           Icon: XCircleIcon },
-    checking:    { msg: 'Vérification des services en cours…', bg: 'bg-zinc-800 border-zinc-700 text-zinc-400',              Icon: WifiIcon },
+    checking:    { msg: 'Chargement des données de monitoring…', bg: 'bg-zinc-800 border-zinc-700 text-zinc-400',             Icon: WifiIcon },
   };
   const { msg, bg, Icon } = map[status];
   return (
@@ -198,41 +136,73 @@ function GlobalBanner({ status }: { status: ServiceStatus }) {
 function ProviderBadge({ provider }: { provider: Provider }) {
   if (provider === 'hostinger') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400 uppercase tracking-wide">
+      <span className="inline-flex items-center rounded-md bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400 uppercase tracking-wide">
         Hostinger
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400 uppercase tracking-wide">
+    <span className="inline-flex items-center rounded-md bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400 uppercase tracking-wide">
       AlfyCore
     </span>
   );
 }
 
-function ServiceRow({ svc, result }: { svc: ServiceDef; result: ServiceResult }) {
-  const { Icon } = svc;
+function IncidentBadge({ severity, status }: { severity: IncidentSeverity; status: IncidentStatus }) {
+  const sevCls: Record<IncidentSeverity, string> = {
+    info:     'bg-sky-500/10 text-sky-400 border-sky-500/25',
+    warning:  'bg-amber-500/10 text-amber-400 border-amber-500/25',
+    critical: 'bg-red-500/10 text-red-400 border-red-500/25',
+  };
+  const statusLabel: Record<IncidentStatus, string> = {
+    investigating: 'Investigation',
+    identified:    'Identifié',
+    monitoring:    'Surveillance',
+    resolved:      'Résolu',
+  };
   return (
-    <div className="flex items-center gap-4 px-5 py-4 hover:bg-accent/30 transition-colors">
-      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
-        <Icon size={18} className="text-muted-foreground" />
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${sevCls[severity]}`}>
+        {severity === 'critical' ? 'Critique' : severity === 'warning' ? 'Avertissement' : 'Info'}
+      </span>
+      <span className="inline-flex items-center rounded-md border border-zinc-700/50 bg-zinc-800/50 px-2 py-0.5 text-xs text-zinc-400">
+        {statusLabel[status]}
+      </span>
+    </div>
+  );
+}
+
+function UptimeBars({ days }: { days: UptimeDay[] }) {
+  // Fill to 90 days with placeholders if not enough data
+  const padded: (UptimeDay | null)[] = Array.from({ length: 90 }, (_, i) => {
+    // last = most recent
+    const dIdx = days.length - 90 + i;
+    return dIdx >= 0 ? days[dIdx] : null;
+  });
+
+  const avgUptime = days.length > 0
+    ? (days.reduce((s, d) => s + d.uptime_pct, 0) / days.length).toFixed(2)
+    : null;
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex gap-0.5 flex-1">
+        {padded.map((d, i) => (
+          <div
+            key={i}
+            title={d ? `${d.date}: ${d.uptime_pct}%` : 'Aucune donnée'}
+            className={`flex-1 h-5 rounded-[2px] ${
+              !d                ? 'bg-zinc-700/30' :
+              d.uptime_pct >= 99 ? 'bg-emerald-500/70' :
+              d.uptime_pct >= 90 ? 'bg-amber-500/70' :
+              'bg-red-500/70'
+            }`}
+          />
+        ))}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-sm">{svc.name}</span>
-          <ProviderBadge provider={svc.provider} />
-        </div>
-        <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
-      </div>
-      <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
-        <LatencyBar ms={result.latency} />
-      </div>
-      <div className="flex-shrink-0">
-        <StatusIcon status={result.status} />
-      </div>
-      <div className="hidden md:block flex-shrink-0 w-32 text-right">
-        <StatusBadge status={result.status} />
-      </div>
+      <span className="text-xs tabular-nums text-muted-foreground w-14 text-right">
+        {avgUptime != null ? `${avgUptime}%` : '—'}
+      </span>
     </div>
   );
 }
@@ -240,45 +210,57 @@ function ServiceRow({ svc, result }: { svc: ServiceDef; result: ServiceResult })
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function StatusPage() {
-  const [results, setResults] = useState<ServiceResult[]>(
-    ALL_SERVICES.map((s) => ({ key: s.key, status: 'checking', latency: null, checkedAt: null }))
-  );
-  const [lastCheck, setLastCheck] = useState<Date | null>(null);
-  const [checking, setChecking] = useState(false);
+  const [services, setServices] = useState<ServiceHistory[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [uptime, setUptime] = useState<Record<string, UptimeDay[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [lastFetch, setLastFetch] = useState<Date | null>(null);
+  const [error, setError] = useState(false);
 
-  const runChecks = useCallback(async () => {
-    setChecking(true);
-    setResults(ALL_SERVICES.map((s) => ({ key: s.key, status: 'checking', latency: null, checkedAt: null })));
-
-    await Promise.allSettled(
-      ALL_SERVICES.map(async (svc, idx) => {
-        const { status, latency } = await checkService(svc.checkUrl);
-        setResults((prev) => {
-          const next = [...prev];
-          next[idx] = { key: svc.key, status, latency, checkedAt: new Date() };
-          return next;
-        });
-      })
-    );
-
-    setLastCheck(new Date());
-    setChecking(false);
+  const fetchStatus = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await fetch(`${GATEWAY_URL}/api/status`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('fetch failed');
+      const data = await res.json();
+      setServices(data.services ?? []);
+      setIncidents(data.incidents ?? []);
+      setUptime(data.uptime ?? {});
+      setLastFetch(new Date());
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    runChecks();
-    const interval = setInterval(runChecks, 60_000);
-    return () => clearInterval(interval);
-  }, [runChecks]);
+    fetchStatus();
+    const id = setInterval(fetchStatus, 60_000);
+    return () => clearInterval(id);
+  }, [fetchStatus]);
 
-  const global = overallStatus(results);
+  // Build per-service status map from DB data
+  const statusMap: Record<string, ServiceStatus> = {};
+  const latencyMap: Record<string, number | null> = {};
+  for (const s of services) {
+    statusMap[s.service] = dbStatusToUi(s.status);
+    latencyMap[s.service] = s.response_time_ms;
+  }
 
-  const hostingerResults  = results.slice(0, HOSTINGER_SERVICES.length);
-  const alfycoreResults   = results.slice(HOSTINGER_SERVICES.length);
+  const allStatuses: ServiceStatus[] = loading
+    ? SERVICE_DEFS.map(() => 'checking')
+    : SERVICE_DEFS.map((d) => statusMap[d.key] ?? 'checking');
 
-  const operationalCount = results.filter((r) => r.status === 'operational').length;
-  const degradedCount    = results.filter((r) => r.status === 'degraded').length;
-  const outageCount      = results.filter((r) => r.status === 'outage').length;
+  const global = overallFromStatuses(allStatuses);
+
+  const operationalCount = allStatuses.filter((s) => s === 'operational').length;
+  const degradedCount    = allStatuses.filter((s) => s === 'degraded').length;
+  const outageCount      = allStatuses.filter((s) => s === 'outage').length;
+
+  const hostingerDefs = SERVICE_DEFS.filter((d) => d.provider === 'hostinger');
+  const alfycoreDefs  = SERVICE_DEFS.filter((d) => d.provider === 'alfycore');
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -297,11 +279,11 @@ export default function StatusPage() {
             </div>
           </div>
           <button
-            onClick={runChecks}
-            disabled={checking}
+            onClick={fetchStatus}
+            disabled={loading}
             className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
           >
-            <RefreshCwIcon size={13} className={checking ? 'animate-spin' : ''} />
+            <RefreshCwIcon size={13} className={loading ? 'animate-spin' : ''} />
             Actualiser
           </button>
         </div>
@@ -315,14 +297,21 @@ export default function StatusPage() {
           <p className="text-muted-foreground text-sm">
             Surveillance en temps réel de l&apos;infrastructure AlfyChat
           </p>
-          {lastCheck && (
+          {lastFetch && (
             <p className="text-xs text-muted-foreground/60 flex items-center justify-center gap-1.5">
               <ClockIcon size={11} />
-              Dernière vérification à {lastCheck.toLocaleTimeString('fr-FR')}
+              Dernière mise à jour à {lastFetch.toLocaleTimeString('fr-FR')}
               &nbsp;· Actualisation automatique toutes les 60 s
             </p>
           )}
         </div>
+
+        {error && (
+          <div className="flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-red-400">
+            <XCircleIcon size={18} />
+            <span className="text-sm">Impossible de charger les données de monitoring.</span>
+          </div>
+        )}
 
         {/* ── Global banner ── */}
         <GlobalBanner status={global} />
@@ -341,33 +330,107 @@ export default function StatusPage() {
           ))}
         </div>
 
+        {/* ── Active incidents ── */}
+        {incidents.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Incidents en cours
+            </h2>
+            <div className="space-y-3">
+              {incidents.map((inc) => (
+                <div
+                  key={inc.id}
+                  className={`rounded-xl border px-5 py-4 space-y-2 ${
+                    inc.severity === 'critical' ? 'border-red-500/30 bg-red-500/5' :
+                    inc.severity === 'warning'  ? 'border-amber-500/30 bg-amber-500/5' :
+                    'border-sky-500/30 bg-sky-500/5'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <p className="font-semibold text-sm">{inc.title}</p>
+                    <IncidentBadge severity={inc.severity} status={inc.status} />
+                  </div>
+                  {inc.message && (
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap">{inc.message}</p>
+                  )}
+                  <p className="text-[11px] text-muted-foreground/50 flex items-center gap-1">
+                    <ClockIcon size={10} />
+                    Signalé le {fmtDate(inc.created_at)}
+                    {inc.updated_at !== inc.created_at && ` · Mis à jour le ${fmtDate(inc.updated_at)}`}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── Hostinger ── */}
         <section className="space-y-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Hostinger
-            </h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Hostinger</h2>
             <span className="text-[10px] text-muted-foreground/50">— Site web · Gateway · Users · Messages · Calls</span>
           </div>
           <div className="divide-y divide-border/40 rounded-xl border border-violet-500/20 bg-card/30 overflow-hidden">
-            {HOSTINGER_SERVICES.map((svc, idx) => (
-              <ServiceRow key={svc.key} svc={svc} result={hostingerResults[idx]} />
-            ))}
+            {hostingerDefs.map((svc) => {
+              const st = allStatuses[SERVICE_DEFS.indexOf(svc)];
+              const { Icon } = svc;
+              return (
+                <div key={svc.key} className="flex items-center gap-4 px-5 py-4 hover:bg-accent/30 transition-colors">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
+                    <Icon size={18} className="text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{svc.name}</span>
+                      <ProviderBadge provider={svc.provider} />
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
+                    <LatencyBar ms={latencyMap[svc.key] ?? null} />
+                  </div>
+                  <div className="flex-shrink-0"><StatusIcon status={st} /></div>
+                  <div className="hidden md:block flex-shrink-0 w-32 text-right">
+                    <StatusBadge status={st} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         {/* ── AlfyCore ── */}
         <section className="space-y-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              AlfyCore
-            </h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">AlfyCore</h2>
             <span className="text-[10px] text-muted-foreground/50">— Friends · Servers · Bots · Médias</span>
           </div>
           <div className="divide-y divide-border/40 rounded-xl border border-sky-500/20 bg-card/30 overflow-hidden">
-            {ALFYCORE_SERVICES.map((svc, idx) => (
-              <ServiceRow key={svc.key} svc={svc} result={alfycoreResults[idx]} />
-            ))}
+            {alfycoreDefs.map((svc) => {
+              const st = allStatuses[SERVICE_DEFS.indexOf(svc)];
+              const { Icon } = svc;
+              return (
+                <div key={svc.key} className="flex items-center gap-4 px-5 py-4 hover:bg-accent/30 transition-colors">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
+                    <Icon size={18} className="text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{svc.name}</span>
+                      <ProviderBadge provider={svc.provider} />
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{svc.description}</p>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5 min-w-[64px] justify-end">
+                    <LatencyBar ms={latencyMap[svc.key] ?? null} />
+                  </div>
+                  <div className="flex-shrink-0"><StatusIcon status={st} /></div>
+                  <div className="hidden md:block flex-shrink-0 w-32 text-right">
+                    <StatusBadge status={st} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -378,29 +441,11 @@ export default function StatusPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              {
-                name: 'Base de données MySQL',
-                desc: 'AlfyCore · 51.254.243.250:3940',
-                Icon: DatabaseIcon,
-                provider: 'alfycore' as Provider,
-              },
-              {
-                name: 'Cache Redis',
-                desc: 'AlfyCore · 51.254.243.250:5435',
-                Icon: ZapIcon,
-                provider: 'alfycore' as Provider,
-              },
-              {
-                name: 'CDN Hostinger',
-                desc: 'Hostinger · Distribution statique & médias',
-                Icon: GlobeIcon,
-                provider: 'hostinger' as Provider,
-              },
+              { name: 'Base de données MySQL', desc: 'AlfyCore · 51.254.243.250:3940', Icon: DatabaseIcon, provider: 'alfycore' as Provider },
+              { name: 'Cache Redis',            desc: 'AlfyCore · 51.254.243.250:5435', Icon: ZapIcon,      provider: 'alfycore' as Provider },
+              { name: 'CDN Hostinger',          desc: 'Hostinger · Distribution statique & médias', Icon: GlobeIcon, provider: 'hostinger' as Provider },
             ].map(({ name, desc, Icon, provider }) => (
-              <div
-                key={name}
-                className="flex items-center gap-4 rounded-xl border border-border/50 bg-card/30 px-5 py-4"
-              >
+              <div key={name} className="flex items-center gap-4 rounded-xl border border-border/50 bg-card/30 px-5 py-4">
                 <div className="w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center flex-shrink-0">
                   <Icon size={18} className="text-muted-foreground" />
                 </div>
@@ -417,50 +462,24 @@ export default function StatusPage() {
           </div>
         </section>
 
-        {/* ── Uptime bars ── */}
+        {/* ── Uptime bars (90 days from DB) ── */}
         <section className="space-y-3">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Disponibilité (30 jours)
+            Disponibilité (90 jours)
           </h2>
           <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden divide-y divide-border/40">
-            {ALL_SERVICES.map((svc) => {
-              const result = results.find((r) => r.key === svc.key);
-              const isOk = result?.status === 'operational';
-              const bars = Array.from({ length: 30 }, (_, i) => {
-                if (i === 29) return result?.status ?? 'checking';
-                const r = Math.random();
-                return r > 0.03 ? 'operational' : r > 0.01 ? 'degraded' : 'outage';
-              });
-              const uptime = isOk ? (99.2 + Math.random() * 0.79).toFixed(2) : '—';
-              return (
-                <div key={svc.key} className="px-5 py-3 flex items-center gap-4">
-                  <div className="flex items-center gap-2 w-40 flex-shrink-0">
-                    <span className="text-sm truncate">{svc.name}</span>
-                    <ProviderBadge provider={svc.provider} />
-                  </div>
-                  <div className="flex gap-0.5 flex-1">
-                    {bars.map((s, i) => (
-                      <div
-                        key={i}
-                        title={s}
-                        className={`flex-1 h-5 rounded-[2px] ${
-                          s === 'operational' ? 'bg-emerald-500/70' :
-                          s === 'degraded'    ? 'bg-amber-500/70' :
-                          s === 'checking'    ? 'bg-zinc-600/50' :
-                          'bg-red-500/70'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs tabular-nums text-muted-foreground w-14 text-right">
-                    {uptime}%
-                  </span>
+            {SERVICE_DEFS.map((svc) => (
+              <div key={svc.key} className="px-5 py-3 flex items-center gap-4">
+                <div className="flex items-center gap-2 w-40 flex-shrink-0">
+                  <span className="text-sm truncate">{svc.name}</span>
+                  <ProviderBadge provider={svc.provider} />
                 </div>
-              );
-            })}
+                <UptimeBars days={uptime[svc.key] ?? []} />
+              </div>
+            ))}
           </div>
           <p className="text-xs text-muted-foreground/40 text-center">
-            * Données d&apos;uptime alimentées par le monitoring en production · Dernier jour = statut actuel
+            Données issues du monitoring automatique · 1 barre = 1 jour · 90 derniers jours
           </p>
         </section>
 
