@@ -1668,7 +1668,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 justify-end">
-                      <Button size="sm" variant="light" onPress={() => setEditingIncident(undefined)} disabled={statusSubmitting}>
+                      <Button size="sm" variant="ghost" onPress={() => setEditingIncident(undefined)} disabled={statusSubmitting}>
                         Annuler
                       </Button>
                       <Button
@@ -1757,7 +1757,7 @@ export default function AdminPage() {
                       <div className="flex items-center gap-2 border-t border-[var(--border)]/40 px-5 py-2">
                         <Button
                           size="sm"
-                          variant="light"
+                          variant="ghost"
                           onPress={() => {
                             setEditingIncident(inc);
                             setStatusForm({
@@ -1774,7 +1774,7 @@ export default function AdminPage() {
                         </Button>
                         <Button
                           size="sm"
-                          variant="light"
+                          variant="ghost"
                           className="text-red-400 hover:text-red-300"
                           onPress={async () => {
                             if (!confirm('Supprimer cet incident ?')) return;
@@ -1787,7 +1787,7 @@ export default function AdminPage() {
                         {inc.status !== 'resolved' && (
                           <Button
                             size="sm"
-                            variant="light"
+                            variant="ghost"
                             className="text-emerald-400 ml-auto"
                             onPress={async () => {
                               await api.updateIncident(inc.id, { status: 'resolved' });
