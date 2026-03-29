@@ -43,6 +43,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
 import { sanitizeSvg } from '@/lib/sanitize';
 import { Button, Card, Modal, Switch } from '@heroui/react';
+import { ServicesPanel } from './services-panel';
 
 // Liste d'icônes Bootstrap Icons (vraies classes bi-*)
 const BOOTSTRAP_ICONS = [
@@ -1875,173 +1876,23 @@ export default function AdminPage() {
             )}
 
             {activeTab === 'services' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-[var(--foreground)]">Instances de services</h2>
-
-                {/* Formulaire d'ajout */}
-                <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
-                  <div className="px-5 py-4">
-                    <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-[var(--foreground)]">
-                      <PlusIcon size={16} />
-                      Ajouter une instance
-                    </h3>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      <div className="flex flex-col gap-1">
-                        <label className="text-xs text-[var(--muted)]">ID unique</label>
-                        <input
-                          className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                          placeholder="messages-eu-2"
-                          value={serviceForm.id}
-                          onChange={(e) => setServiceForm((f) => ({ ...f, id: e.target.value }))}
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-xs text-[var(--muted)]">Type</label>
-                        <select
-                          className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                          value={serviceForm.serviceType}
-                          onChange={(e) => setServiceForm((f) => ({ ...f, serviceType: e.target.value as ServiceType }))}
-                        >
-                          {(['users','messages','friends','calls','servers','bots','media'] as ServiceType[]).map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-xs text-[var(--muted)]">Location</label>
-                        <input
-                          className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                          placeholder="EU"
-                          value={serviceForm.location}
-                          onChange={(e) => setServiceForm((f) => ({ ...f, location: e.target.value.toUpperCase() }))}
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1 sm:col-span-1">
-                        <label className="text-xs text-[var(--muted)]">Endpoint interne</label>
-                        <input
-                          className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                          placeholder="http://1.messages.alfychat.eu:3002"
-                          value={serviceForm.endpoint}
-                          onChange={(e) => setServiceForm((f) => ({ ...f, endpoint: e.target.value }))}
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1 sm:col-span-1">
-                        <label className="text-xs text-[var(--muted)]">Domaine public</label>
-                        <input
-                          className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                          placeholder="1.messages.alfychat.eu"
-                          value={serviceForm.domain}
-                          onChange={(e) => setServiceForm((f) => ({ ...f, domain: e.target.value }))}
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <Button
-                          onPress={handleAddService}
-                          isDisabled={serviceSubmitting}
-                          size="sm"
-                          className="w-full"
-                        >
-                          <PlusIcon size={14} />
-                          {serviceSubmitting ? 'Ajout…' : 'Ajouter'}
-                        </Button>
-                      </div>
-                    </div>
-                    {serviceFormError && (
-                      <p className="mt-2 text-sm text-red-500">{serviceFormError}</p>
-                    )}
-                  </div>
-                </Card>
-
-                {/* Liste des instances */}
-                {serviceInstances.length === 0 ? (
-                  <Card className="border border-[var(--border)] bg-[var(--surface)] p-0">
-                    <div className="px-5 py-8 text-center text-sm text-[var(--muted)]">
-                      Aucune instance enregistrée. Les services s&apos;enregistrent automatiquement au démarrage.
-                    </div>
-                  </Card>
-                ) : (
-                  (['users','messages','friends','calls','servers','bots','media'] as ServiceType[])
-                    .filter((type) => serviceInstances.some((s) => s.serviceType === type))
-                    .map((type) => (
-                      <Card key={type} className="border border-[var(--border)] bg-[var(--surface)] p-0">
-                        <div className="px-5 py-4">
-                          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold capitalize text-[var(--foreground)]">
-                            <ServerIcon size={14} />
-                            {type}
-                            <span className="ml-1 rounded-full bg-[var(--accent)]/10 px-2 py-0.5 text-xs text-[var(--accent)]">
-                              {serviceInstances.filter((s) => s.serviceType === type).length} instance(s)
-                            </span>
-                          </h3>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr className="border-b border-[var(--border)] text-left text-[var(--muted)]">
-                                  <th className="pb-2 pr-4 font-medium">ID</th>
-                                  <th className="pb-2 pr-4 font-medium">Location</th>
-                                  <th className="pb-2 pr-4 font-medium">Endpoint</th>
-                                  <th className="pb-2 pr-4 font-medium">Santé</th>
-                                  <th className="pb-2 pr-4 font-medium">Score</th>
-                                  <th className="pb-2 pr-4 font-medium">CPU</th>
-                                  <th className="pb-2 pr-4 font-medium">RAM</th>
-                                  <th className="pb-2 pr-4 font-medium">Req/20min</th>
-                                  <th className="pb-2 font-medium"></th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {serviceInstances
-                                  .filter((s) => s.serviceType === type)
-                                  .sort((a, b) => b.score - a.score)
-                                  .map((instance) => (
-                                    <tr key={instance.id} className="border-b border-[var(--border)]/40 last:border-0">
-                                      <td className="py-2 pr-4 font-mono text-[var(--foreground)]">{instance.id}</td>
-                                      <td className="py-2 pr-4 text-[var(--muted)]">{instance.location}</td>
-                                      <td className="py-2 pr-4 max-w-[160px] truncate text-[var(--muted)]" title={instance.endpoint}>{instance.endpoint}</td>
-                                      <td className="py-2 pr-4">
-                                        {instance.healthy ? (
-                                          <span className="flex items-center gap-1 text-green-500">
-                                            <CheckCircle2Icon size={12} /> OK
-                                          </span>
-                                        ) : (
-                                          <span className="flex items-center gap-1 text-red-500">
-                                            <XCircleIcon size={12} /> Hors ligne
-                                          </span>
-                                        )}
-                                      </td>
-                                      <td className="py-2 pr-4">
-                                        <span className={`font-semibold ${instance.score >= 70 ? 'text-green-500' : instance.score >= 40 ? 'text-yellow-500' : 'text-red-500'}`}>
-                                          {Math.round(instance.score)}
-                                        </span>
-                                      </td>
-                                      <td className="py-2 pr-4 text-[var(--foreground)]">
-                                        {instance.metrics ? `${instance.metrics.cpuUsage}%` : '—'}
-                                      </td>
-                                      <td className="py-2 pr-4 text-[var(--foreground)]">
-                                        {instance.metrics && instance.metrics.ramMax > 0
-                                          ? `${Math.round((instance.metrics.ramUsage / instance.metrics.ramMax) * 100)}%`
-                                          : '—'}
-                                      </td>
-                                      <td className="py-2 pr-4 text-[var(--foreground)]">
-                                        {instance.metrics ? instance.metrics.requestCount20min : '—'}
-                                      </td>
-                                      <td className="py-2">
-                                        <button
-                                          onClick={() => handleDeleteService(instance.id)}
-                                          className="rounded p-1 text-[var(--muted)] transition-colors hover:text-red-500"
-                                          title="Supprimer"
-                                        >
-                                          <Trash2Icon size={14} />
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      </Card>
-                    ))
-                )}
-              </div>
+              <ServicesPanel
+                instances={serviceInstances}
+                loading={loading}
+                onRefresh={loadData}
+                onAdd={async (data) => {
+                  try {
+                    const res = await api.addAdminService(data);
+                    return res.success ? { success: true } : { success: false, error: (res as any).error };
+                  } catch {
+                    return { success: false, error: 'Erreur réseau' };
+                  }
+                }}
+                onDelete={async (id) => {
+                  try { await api.deleteAdminService(id); } catch {}
+                  setServiceInstances((prev) => prev.filter((s) => s.id !== id));
+                }}
+              />
             )}
 
             {activeTab === 'settings' && (
