@@ -185,24 +185,30 @@ function UptimeBars({ days }: { days: UptimeDay[] }) {
     : null;
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex gap-0.5 flex-1">
-        {padded.map((d, i) => (
-          <div
-            key={i}
-            title={d ? `${d.date}: ${d.uptime_pct}%` : 'Aucune donnée'}
-            className={`flex-1 h-5 rounded-[2px] ${
-              !d                ? 'bg-zinc-700/30' :
-              d.uptime_pct >= 99 ? 'bg-emerald-500/70' :
-              d.uptime_pct >= 90 ? 'bg-amber-500/70' :
-              'bg-red-500/70'
-            }`}
-          />
-        ))}
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-3">
+        <div className="flex gap-0.5 flex-1">
+          {padded.map((d, i) => (
+            <div
+              key={i}
+              title={d ? `${d.date}: ${d.uptime_pct}%` : 'Aucune donnée'}
+              className={`flex-1 h-5 rounded-[2px] ${
+                !d                 ? 'bg-zinc-700/30' :
+                d.uptime_pct >= 99 ? 'bg-emerald-500/70' :
+                d.uptime_pct >= 90 ? 'bg-amber-500/70' :
+                'bg-red-500/70'
+              }`}
+            />
+          ))}
+        </div>
+        <span className="text-xs tabular-nums text-muted-foreground w-14 text-right flex-shrink-0">
+          {avgUptime != null ? `${avgUptime}%` : '—'}
+        </span>
       </div>
-      <span className="text-xs tabular-nums text-muted-foreground w-14 text-right">
-        {avgUptime != null ? `${avgUptime}%` : '—'}
-      </span>
+      <div className="flex justify-between mt-0.5 pr-[3.75rem]">
+        <span className="text-[10px] text-muted-foreground/40">Il y a 90 jours</span>
+        <span className="text-[10px] text-muted-foreground/40">Aujourd&apos;hui</span>
+      </div>
     </div>
   );
 }

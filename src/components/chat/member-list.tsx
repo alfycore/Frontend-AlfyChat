@@ -28,10 +28,10 @@ interface MemberListProps {
 }
 
 const STATUS_DOT: Record<string, string> = {
-  online: 'bg-green-500',
-  idle: 'bg-yellow-400',
-  dnd: 'bg-red-500',
-  offline: 'bg-[var(--muted)]/30',
+  online:    'bg-green-500',
+  idle:      'bg-orange-500 !rounded-sm',
+  dnd:       'bg-red-500 !rounded-sm',
+  offline:   'bg-[var(--muted)]/30',
   invisible: 'bg-[var(--muted)]/30',
 };
 

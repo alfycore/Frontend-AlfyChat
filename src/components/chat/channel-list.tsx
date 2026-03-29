@@ -118,12 +118,15 @@ interface Conversation {
 }
 
 const PRESENCE_DOT: Record<string, string> = {
-  online: 'bg-green-500',
-  idle: 'bg-yellow-500',
-  dnd: 'bg-red-500',
-  offline: 'bg-[var(--muted)]/40',
+  online:    'bg-green-500',
+  idle:      'bg-orange-500',
+  dnd:       'bg-red-500',
+  offline:   'bg-[var(--muted)]/40',
   invisible: 'bg-[var(--muted)]/40',
 };
+// idle and dnd show as squares, others as circles
+const presenceDotShape = (status?: string) =>
+  status === 'dnd' || status === 'idle' ? 'rounded-sm' : 'rounded-full';
 const presenceDot = (status?: string) => PRESENCE_DOT[status ?? 'offline'] ?? PRESENCE_DOT.offline;
 
 interface ChannelListProps {
@@ -904,7 +907,8 @@ export function ChannelList({
                             </Avatar.Fallback>
                           </Avatar>
                           <span className={cn(
-                            'absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)]',
+                            'absolute -bottom-0.5 -right-0.5 size-2.5 ring-[1.5px] ring-[var(--background)]',
+                            presenceDotShape(presence),
                             presenceDot(presence),
                           )} />
                         </div>
