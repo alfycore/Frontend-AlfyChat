@@ -506,6 +506,21 @@ export function ServicesPanel() {
     try { localStorage.setItem('ac-svc-conns', JSON.stringify(c)); } catch {}
   }, []);
 
+  // ── Persist positions ─────────────────────────────────────────────────────
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem('ac-svc-positions');
+      if (s) {
+        const saved: Record<string, Pos> = JSON.parse(s);
+        setPositions(prev => ({ ...saved, ...prev }));
+      }
+    } catch {}
+  }, []);
+
+  const savePositions = useCallback((pos: Record<string, Pos>) => {
+    try { localStorage.setItem('ac-svc-positions', JSON.stringify(pos)); } catch {}
+  }, []);
+
   // ── Canvas ↔ world helpers ─────────────────────────────────────────────────
   const toWorld = useCallback((cx: number, cy: number): Pos => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -530,9 +545,12 @@ export function ServicesPanel() {
   const onMouseMove = useCallback((e: MouseEvent) => {
     const s = sr.current;
     if (s.dragging) {
-      const dx = (e.clientX - s.dragging.mx) / s.zoom;
-      const dy = (e.clientY - s.dragging.my) / s.zoom;
-      setPositions(prev => ({ ...prev, [s.dragging!.id]: { x: s.dragging!.sx + dx, y: s.dragging!.sy + dy } }));
+      // Capture dragging object immediately — it can be nulled by onMouseUp
+      // before the setPositions callback runs (race condition).
+      const drag = s.dragging;
+      const dx = (e.clientX - drag.mx) / s.zoom;
+      const dy = (e.clientY - drag.my) / s.zoom;
+      setPositions(prev => ({ ...prev, [drag.id]: { x: drag.sx + dx, y: drag.sy + dy } }));
     } else if (s.panning) {
       const np = { x: s.panOrig.x + (e.clientX - s.panStart.x), y: s.panOrig.y + (e.clientY - s.panStart.y) };
       s.pan = np;
@@ -543,9 +561,17 @@ export function ServicesPanel() {
 
   const onMouseUp = useCallback(() => {
     const s = sr.current;
+    const wasDragging = s.dragging !== null;
     s.dragging = null;
     s.panning = false;
-  }, []);
+    // Persist positions once drag is complete
+    if (wasDragging) {
+      setPositions(prev => {
+        savePositions(prev);
+        return prev;
+      });
+    }
+  }, [savePositions]);
 
   const onWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
