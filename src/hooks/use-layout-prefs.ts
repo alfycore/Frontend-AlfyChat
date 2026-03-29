@@ -4,10 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 
 export type ServerListPosition = 'left' | 'right' | 'top' | 'bottom';
 
+export type UIStyle = 'glass' | 'flat';
+
 export type LayoutPrefs = {
   serverListPosition: ServerListPosition;
   memberListSide: 'left' | 'right';
   compactServerList: boolean;
+  uiStyle: UIStyle;
 };
 
 const STORAGE_KEY = 'alfychat_layout_prefs';
@@ -16,6 +19,7 @@ const DEFAULT_PREFS: LayoutPrefs = {
   serverListPosition: 'left',
   memberListSide: 'right',
   compactServerList: false,
+  uiStyle: 'glass',
 };
 
 function loadFromStorage(): LayoutPrefs {

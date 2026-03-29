@@ -32,6 +32,7 @@ import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useAuth } from '@/hooks/use-auth';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { notify } from '@/hooks/use-notification';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { useTranslation } from '@/components/locale-provider';
@@ -76,6 +77,7 @@ const statusConfig: Record<string, { color: string }> = {
 export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const { isMobile, openSidebar } = useMobileNav();
   const { user: currentUser } = useAuth();
+  const ui = useUIStyle();
   const { t, tx } = useTranslation();
   const tabsListRef = useRef<HTMLDivElement>(null);
   const [compactTabs, setCompactTabs] = useState(false);
@@ -308,7 +310,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       <div ref={tabsListRef} className="flex flex-1 flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-white/5 px-4 backdrop-blur-sm md:px-6">
+        <div className={`flex h-14 shrink-0 items-center gap-3 px-4 md:px-6 ${ui.header}`}>
           {isMobile && (
             <Button isIconOnly size="sm" variant="ghost" onPress={openSidebar} className="shrink-0 rounded-xl">
               <MenuIcon size={18} />
@@ -385,7 +387,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           <Tabs.Panel id="friends" className="flex flex-1 flex-col gap-3 overflow-hidden p-4 md:p-6">
             {/* Search */}
             <InputGroup
-              className="w-full rounded-xl border-white/15 bg-white/60 dark:bg-white/8"
+              className={`w-full rounded-xl ${ui.isGlass ? 'border-white/15 bg-white/60 dark:bg-white/8' : 'border-[var(--border)] bg-[var(--surface)]'}`}
               variant="secondary"
             >
               <InputGroup.Prefix className="pl-3 pr-0">
@@ -411,7 +413,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
 
             {filteredFriends.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center">
-                <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/30 px-8 py-10 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent)]/15 via-transparent to-violet-500/10" />
                   <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/20 blur-3xl" />
                   <div className="relative flex flex-col items-center gap-4">
@@ -482,7 +484,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           <Tabs.Panel id="requests" className="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
             {requests.received.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center">
-                <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/30 px-8 py-10 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-yellow-500/15 via-transparent to-amber-500/10" />
                   <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400/20 blur-3xl" />
                   <div className="relative flex flex-col items-center gap-4">
@@ -505,7 +507,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   {requests.received.map((req) => (
                     <div
                       key={req.id}
-                      className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/30 px-4 py-3 backdrop-blur-sm transition-all hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/8"
+                      className={`flex items-center gap-3 px-4 py-3 transition-all ${ui.row}`}
                     >
                       <div className="relative shrink-0">
                         <Avatar className="size-10">
@@ -558,7 +560,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           <Tabs.Panel id="blocked" className="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
             {blockedUsers.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center">
-                <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/30 px-8 py-10 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-500/15 via-transparent to-rose-500/10" />
                   <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400/20 blur-3xl" />
                   <div className="relative flex flex-col items-center gap-4">
@@ -644,7 +646,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               {/* Form */}
               <form onSubmit={handleAddFriend} className="space-y-2.5">
                 <InputGroup
-                  className="w-full rounded-xl border-white/15 bg-white/60 dark:bg-white/8"
+                  className={`w-full rounded-xl ${ui.isGlass ? 'border-white/15 bg-white/60 dark:bg-white/8' : 'border-[var(--border)] bg-[var(--surface)]'}`}
                   variant="secondary"
                 >
                   <InputGroup.Prefix className="pl-3 pr-0">
@@ -693,7 +695,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                     {requests.sent.map((req) => (
                       <div
                         key={req.id}
-                        className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/20 px-3 py-2.5 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
+                        className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${ui.isGlass ? 'border border-white/15 bg-white/20 backdrop-blur-sm dark:border-white/8 dark:bg-white/5' : 'border border-[var(--border)] bg-[var(--surface-secondary)]'}`}
                       >
                         <Avatar className="size-8">
                           <Avatar.Image src={resolveMediaUrl(req.avatarUrl)} />
@@ -717,9 +719,9 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       </div>
 
       {/* ══ RIGHT SIDEBAR ══ */}
-      <div className="hidden w-56 flex-col border-l border-white/10 bg-white/10 backdrop-blur-sm dark:bg-white/3 md:flex">
+      <div className={`hidden w-56 flex-col border-l md:flex ${ui.isGlass ? 'border-white/10 bg-white/10 backdrop-blur-sm dark:bg-white/3' : 'border-[var(--border)] bg-[var(--surface-secondary)]'}`}>
         {/* Header */}
-        <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-white/10 px-4">
+        <div className={`flex h-14 shrink-0 items-center gap-2.5 px-4 ${ui.isGlass ? 'border-b border-white/10' : 'border-b border-[var(--border)]'}`}>
           <span className="size-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/60">
             {t.friends.onlineSidebar}
@@ -731,7 +733,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         <ScrollShadow className="flex-1 p-2">
           {onlineFriends.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 pt-10 text-center">
-              <div className="flex size-10 items-center justify-center rounded-2xl border border-white/15 bg-white/20 backdrop-blur-sm dark:border-white/8 dark:bg-white/5">
+              <div className={`flex size-10 items-center justify-center rounded-2xl ${ui.isGlass ? 'border border-white/15 bg-white/20 backdrop-blur-sm dark:border-white/8 dark:bg-white/5' : 'border border-[var(--border)] bg-[var(--surface)]'}`}>
                 <UsersIcon size={18} className="text-[var(--muted)]/30" />
               </div>
               <p className="text-[11px] text-[var(--muted)]/40">{t.friends.noOneOnline}</p>
@@ -745,7 +747,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   <UserProfilePopover key={friend.id} userId={friend.id} onOpenDM={() => onOpenDM?.(friend.id, friend.displayName)}>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-white/15 dark:hover:bg-white/5"
+                      className={`flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 ${ui.isGlass ? 'hover:bg-white/15 dark:hover:bg-white/5' : 'hover:bg-[var(--surface-secondary)]/70'}`}
                     >
                       <div className="relative shrink-0">
                         <Avatar className="size-7">
@@ -783,11 +785,12 @@ function FriendRow({
   onBlock: () => void;
 }) {
   const { t } = useTranslation();
+  const ui = useUIStyle();
   const status = statusConfig[friend.status] ?? statusConfig.offline;
   const statusLabel = (t.status as Record<string, string>)[friend.status] ?? t.status.offline;
 
   return (
-    <div className="group flex items-center gap-3 rounded-2xl border border-white/15 bg-white/30 px-4 py-3 backdrop-blur-sm transition-all duration-150 hover:border-white/25 hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/8">
+    <div className={`group flex items-center gap-3 px-4 py-3 transition-all duration-150 ${ui.row}`}>
       <UserProfilePopover userId={friend.id} onOpenDM={onMessage}>
         <button type="button" className="relative shrink-0">
           <Avatar className="size-9 ring-2 ring-white/20 transition-all group-hover:ring-[var(--accent)]/30">

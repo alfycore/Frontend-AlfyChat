@@ -2514,15 +2514,58 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       </Card.Content>
                     </Card>
 
-                    <Alert>
-                      <Alert.Indicator />
-                      <Alert.Content>
-                        <Alert.Title>Rechargez la page</Alert.Title>
-                        <Alert.Description>
-                          Certains changements de mise en page prennent effet après un rechargement de la page.
-                        </Alert.Description>
-                      </Alert.Content>
-                    </Alert>
+                    {/* UI Style */}
+                    <Card variant="secondary">
+                      <Card.Header>
+                        <Card.Title>Style de l&apos;interface</Card.Title>
+                        <Card.Description>Choisissez entre un style vitré arrondi ou un style plat comme Discord</Card.Description>
+                      </Card.Header>
+                      <Card.Content>
+                        <div className="grid grid-cols-2 gap-3">
+                          {([
+                            {
+                              id: 'glass' as const,
+                              label: 'Vitré arrondi',
+                              preview: (
+                                <div className="flex h-14 w-full gap-1 overflow-hidden rounded-xl border border-[var(--border)]/20 bg-[var(--background)]/50 p-1.5">
+                                  <div className="w-4 rounded-xl bg-[var(--accent)]/40 backdrop-blur-sm" />
+                                  <div className="w-6 rounded-xl bg-[var(--surface-secondary)]/50 backdrop-blur-sm" />
+                                  <div className="flex-1 rounded-xl bg-[var(--surface-secondary)]/20 backdrop-blur-sm" />
+                                  <div className="w-5 rounded-xl bg-[var(--surface-secondary)]/30 backdrop-blur-sm" />
+                                </div>
+                              ),
+                            },
+                            {
+                              id: 'flat' as const,
+                              label: 'Plat (Discord)',
+                              preview: (
+                                <div className="flex h-14 w-full gap-0 overflow-hidden rounded-md border border-[var(--border)]/20 bg-[var(--background)]/50">
+                                  <div className="w-4 bg-[var(--accent)]/40" />
+                                  <div className="w-6 bg-[var(--surface-secondary)]/50" />
+                                  <div className="flex-1 bg-[var(--surface-secondary)]/20" />
+                                  <div className="w-5 bg-[var(--surface-secondary)]/30" />
+                                </div>
+                              ),
+                            },
+                          ]).map(({ id, label, preview }) => (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => updateLayoutPrefs({ uiStyle: id })}
+                              className={cn(
+                                'flex flex-col items-center gap-2 rounded-xl border-2 p-2.5 text-xs font-medium transition-all duration-150',
+                                layoutPrefs.uiStyle === id
+                                  ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
+                                  : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 text-[var(--muted)] hover:border-[var(--border)]/60',
+                              )}
+                            >
+                              {preview}
+                              <span>{label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </Card.Content>
+                    </Card>
                   </div>
                 )}
 

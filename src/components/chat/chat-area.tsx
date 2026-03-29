@@ -26,6 +26,7 @@ import { useMessages } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { notify } from '@/hooks/use-notification';
 import {
   Button, Card, ScrollShadow, Spinner, TextArea, Tooltip,
@@ -108,6 +109,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     isLoadingMoreMessages,
     loadMoreMessages,
   } = useMessages(channelId || undefined, recipientId);
+
+  const ui = useUIStyle();
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -392,7 +395,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   return (
     <div data-tour="chat-area" className="flex h-full flex-1 flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-3 backdrop-blur-xl md:px-4">
+      <div className={`flex h-14 shrink-0 items-center justify-between px-3 md:px-4 ${ui.header}`}>
         <div className="flex min-w-0 items-center gap-2.5">
           {isMobile && (
             <Button isIconOnly size="sm" variant="tertiary" onPress={openSidebar} className="shrink-0 md:hidden">
@@ -401,8 +404,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           )}
           {recipientId ? (
             <>
-              <div className="flex size-7 items-center justify-center rounded-xl bg-[var(--accent)]/8">
-                <MessageCircleIcon size={14} className="text-[var(--accent)]" />
+              <div className={`flex size-8 items-center justify-center ${ui.iconBadge}`}>
+                <MessageCircleIcon size={14} className="text-[var(--accent-foreground)]" />
               </div>
               <span className="truncate text-[13px] font-semibold text-[var(--foreground)] md:text-sm">{recipientName || 'Message privé'}</span>
             </>
@@ -571,7 +574,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
         {/* Reply preview */}
         {replyingTo && (
-          <div className="mb-2 flex items-center gap-2 rounded-t-xl border border-b-0 border-[var(--border)]/40 bg-[var(--surface-secondary)]/20 px-3 py-2">
+          <div className={`mb-2 flex items-center gap-2 px-3 py-2 ${ui.replyBar}`}>
             <div className="h-4 w-0.5 rounded-full bg-[var(--accent)]" />
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold text-[var(--accent)]">
@@ -591,7 +594,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         )}
 
-        <div className={`flex items-end gap-1 rounded-xl border border-[var(--border)]/40 bg-[var(--surface)]/60 px-1.5 py-1 backdrop-blur-xl transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${replyingTo ? 'rounded-t-none' : ''}`}>
+        <div className={`flex items-end gap-1 px-1.5 py-1 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''}`}>
           {/* E2EE indicator */}
           
 

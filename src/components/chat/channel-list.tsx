@@ -61,6 +61,7 @@ import { UserPanel } from '@/components/chat/user-panel';
 import { useTranslation } from '@/components/locale-provider';
 import { GroupCreateDialog } from '@/components/chat/group-create-dialog';
 import { useVoice, type VoiceParticipant } from '@/hooks/use-voice';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { cn } from '@/lib/utils';
 
 type ChannelType = 'text' | 'voice' | 'announcement' | 'category' | 'forum' | 'stage' | 'gallery' | 'poll' | 'suggestion' | 'doc' | 'counting' | 'vent' | 'thread' | 'media';
@@ -286,6 +287,7 @@ export function ChannelList({
   const { user } = useAuth();
   const voice = useVoice();
   const { t } = useTranslation();
+  const ui = useUIStyle();
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -706,9 +708,9 @@ export function ChannelList({
     const groupConversations = conversations.filter((c) => c.type === 'group');
 
     return (
-      <div className="flex h-full w-full flex-col overflow-hidden bg-[var(--background)]/80 backdrop-blur-xl">
+      <div className={`flex h-full w-full flex-col overflow-hidden ${ui.sidebarBg}`}>
         {/* ── Header ── */}
-        <div className="flex h-13 shrink-0 items-center justify-between border-b border-[var(--border)]/30 px-3">
+        <div className={`flex h-13 shrink-0 items-center justify-between px-3 ${ui.header}`}>
           <span className="text-[13px] font-bold tracking-tight text-[var(--foreground)]">{t.channelList.messagesTitle}</span>
           <Tooltip delay={0}>
             <Button
@@ -952,7 +954,7 @@ export function ChannelList({
   // ── Server mode ───────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-[var(--background)]/80 backdrop-blur-xl">
+    <div className={`flex h-full w-full flex-col overflow-hidden ${ui.sidebarBg}`}>
       {/* Server banner */}
       {serverBannerUrl ? (
         <div className="relative h-20 w-full shrink-0 overflow-hidden">
@@ -963,7 +965,7 @@ export function ChannelList({
 
       {/* Server name header with dropdown */}
       <Dropdown>
-        <Dropdown.Trigger className="flex h-11 w-full items-center justify-between border-b border-[var(--border)]/40 bg-[var(--background)]/60 px-3 font-semibold transition-colors hover:bg-surface-secondary/60">
+        <Dropdown.Trigger className={`flex h-11 w-full items-center justify-between px-3 font-semibold transition-colors hover:bg-surface-secondary/60 ${ui.isGlass ? 'border-b border-[var(--border)]/40 bg-[var(--background)]/60' : 'border-b border-[var(--border)] bg-[var(--surface-secondary)]'}`}>
           <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[13px]">
             <span className="truncate">{serverName}</span>
             {serverBadges.isCertified && (

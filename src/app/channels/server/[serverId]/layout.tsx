@@ -22,6 +22,7 @@ import { CallProvider, useCallContext } from '@/hooks/use-call-context';
 import { MobileNavProvider, useMobileNav } from '@/hooks/use-mobile-nav';
 import { useNotification } from '@/hooks/use-notification';
 import { VoiceProvider } from '@/hooks/use-voice';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { MemberList } from '@/components/chat/member-list';
@@ -39,6 +40,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const { isMobile, showSidebar, showMemberList, closeAll, memberListDesktopVisible } = useMobileNav();
 
   const { prefs: layoutPrefs } = useLayoutPrefs();
+  const ui = useUIStyle();
 
   const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
     storageKey: 'alfychat_server_sidebar_width',
@@ -203,7 +205,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div data-layout="root" className={`flex h-dvh overflow-hidden bg-[var(--background)] p-1.5 gap-1.5 ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
+    <div data-layout="root" data-ui-style={layoutPrefs.uiStyle} className={`flex h-dvh overflow-hidden bg-[var(--background)] ${ui.rootPadding} ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
       <IncomingCallDialog
         open={!!incomingCall}
         callerName={incomingCall?.callerName || ''}
@@ -220,7 +222,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Server list TOP ── */}
       {!isMobile && serverListPosition === 'top' && (
-        <div className="shrink-0 overflow-hidden rounded-2xl">
+        <div data-layout="server-list" className={`shrink-0 ${ui.panelWrapper}`}>
           <ServerList horizontal selectedServer={serverId} onSelectServer={handleSelectServer} />
         </div>
       )}
@@ -232,7 +234,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {/* Member list LEFT */}
           {memberListDesktopVisible && memberListSide === 'left' && (
             <>
-              <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0 overflow-hidden rounded-2xl">
+              <div data-layout="member-list" style={{ width: memberListWidth }} className={`h-full shrink-0 ${ui.panelWrapper}`}>
                 <MemberList serverId={serverId} />
               </div>
               <ResizeHandle onMouseDown={onMemberResize} />
@@ -241,7 +243,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
           {/* Server list LEFT */}
           {serverListPosition === 'left' && (
-            <div data-layout="server-list" className="h-full shrink-0 overflow-hidden rounded-2xl">
+            <div data-layout="server-list" className={`h-full shrink-0 ${ui.panelWrapper}`}>
               <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
             </div>
           )}
@@ -249,7 +251,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {/* Sidebar left (all except right) */}
           {serverListPosition !== 'right' && (
             <>
-              <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col overflow-hidden rounded-2xl">
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className={`flex h-full shrink-0 flex-col ${ui.panelWrapper}`}>
                 {sidebarContent}
               </div>
               <ResizeHandle onMouseDown={onChannelResize} />
@@ -257,7 +259,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           )}
 
           {/* Content */}
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl">
+          <div data-layout="content" className={`flex min-w-0 flex-1 flex-col ${ui.panelWrapper}`}>
             {children}
           </div>
 
@@ -265,7 +267,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {serverListPosition === 'right' && (
             <>
               <ResizeHandle onMouseDown={onChannelResize} />
-              <div data-layout="sidebar" style={{ width: channelListWidth }} className="flex h-full shrink-0 flex-col overflow-hidden rounded-2xl">
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className={`flex h-full shrink-0 flex-col ${ui.panelWrapper}`}>
                 {sidebarContent}
               </div>
             </>
@@ -273,7 +275,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
           {/* Server list RIGHT */}
           {serverListPosition === 'right' && (
-            <div data-layout="server-list" className="h-full shrink-0 overflow-hidden rounded-2xl">
+            <div data-layout="server-list" className={`h-full shrink-0 ${ui.panelWrapper}`}>
               <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
             </div>
           )}
@@ -282,7 +284,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {memberListDesktopVisible && memberListSide !== 'left' && (
             <>
               <ResizeHandle onMouseDown={onMemberResize} />
-              <div data-layout="member-list" style={{ width: memberListWidth }} className="h-full shrink-0 overflow-hidden rounded-2xl">
+              <div data-layout="member-list" style={{ width: memberListWidth }} className={`h-full shrink-0 ${ui.panelWrapper}`}>
                 <MemberList serverId={serverId} />
               </div>
             </>
@@ -292,13 +294,13 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Server list BOTTOM ── */}
       {!isMobile && serverListPosition === 'bottom' && (
-        <div className="shrink-0 overflow-hidden rounded-2xl">
+        <div data-layout="server-list" className={`shrink-0 ${ui.panelWrapper}`}>
           <ServerList horizontal selectedServer={serverId} onSelectServer={handleSelectServer} />
         </div>
       )}
 
       {/* ── MOBILE: content ── */}
-      {isMobile && <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl">{children}</div>}
+      {isMobile && <div data-layout="content" className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</div>}
 
       {/* ── MOBILE: Sidebar overlay ── */}
       {isMobile && (

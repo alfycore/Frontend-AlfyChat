@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { CallProvider, useCallContext } from '@/hooks/use-call-context';
 import { MobileNavProvider, useMobileNav } from '@/hooks/use-mobile-nav';
 import { useNotification } from '@/hooks/use-notification';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { setActiveDM, setActiveGroup } from '@/lib/notification-store';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
@@ -44,6 +45,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const { isMobile, showSidebar, showMemberList, showSettings, closeSettings, closeAll } = useMobileNav();
 
   const { prefs: layoutPrefs } = useLayoutPrefs();
+  const ui = useUIStyle();
 
   const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
     storageKey: 'alfychat_me_sidebar_width',
@@ -222,7 +224,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
   // ── Content area (shared between top/bottom and left/right layouts) ──
   const mainContent = (
-    <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl ${recipientId ? '' : 'pb-16'} md:pb-0`}>
+    <div data-layout="content" className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.isGlass ? 'rounded-2xl' : ''} ${recipientId ? '' : 'pb-16'} md:pb-0`}>
       {callStatus !== 'idle' && callStatus !== 'ended' && callStatus !== 'ringing' && (() => {
         const isInCallConversation = recipientId && (
           recipientId === callRecipientId ||
@@ -237,7 +239,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div data-layout="root" className={`flex h-dvh overflow-hidden bg-[var(--background)] p-1.5 gap-1.5 ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
+    <div data-layout="root" data-ui-style={layoutPrefs.uiStyle} className={`flex h-dvh overflow-hidden bg-[var(--background)] ${ui.rootPadding} ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
       {/* Audio persistant */}
       <audio ref={persistentAudioRef} autoPlay playsInline className="sr-only" />
       <IncomingCallDialog
@@ -256,7 +258,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Server list TOP ── */}
       {!isMobile && serverListPosition === 'top' && (
-        <div className="shrink-0 overflow-hidden rounded-2xl">
+        <div data-layout="server-list" className={`shrink-0 ${ui.panelWrapper}`}>
           <ServerList horizontal selectedServer={selectedServer} onSelectServer={handleSelectServer} />
         </div>
       )}
@@ -266,7 +268,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         <div className={`flex min-w-0 gap-1.5 ${isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row'}`}>
           {/* Server list LEFT */}
           {serverListPosition === 'left' && (
-            <div data-layout="server-list" className="h-full shrink-0 overflow-hidden rounded-2xl">
+            <div data-layout="server-list" className={`h-full shrink-0 ${ui.panelWrapper}`}>
               <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
             </div>
           )}
@@ -274,7 +276,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {/* Sidebar (left side — all positions except right) */}
           {serverListPosition !== 'right' && (
             <>
-              <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0 overflow-hidden rounded-2xl">
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className={`h-full shrink-0 ${ui.panelWrapper}`}>
                 <ChannelList
                   serverId={selectedServer}
                   selectedChannel={selectedChannel}
@@ -292,7 +294,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           {serverListPosition === 'right' && (
             <>
               <ResizeHandle onMouseDown={onChannelResize} />
-              <div data-layout="sidebar" style={{ width: channelListWidth }} className="h-full shrink-0 overflow-hidden rounded-2xl">
+              <div data-layout="sidebar" style={{ width: channelListWidth }} className={`h-full shrink-0 ${ui.panelWrapper}`}>
                 <ChannelList
                   serverId={selectedServer}
                   selectedChannel={selectedChannel}
@@ -304,7 +306,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
           {/* Server list RIGHT */}
           {serverListPosition === 'right' && (
-            <div data-layout="server-list" className="h-full shrink-0 overflow-hidden rounded-2xl">
+            <div data-layout="server-list" className={`h-full shrink-0 ${ui.panelWrapper}`}>
               <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
             </div>
           )}
@@ -313,7 +315,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── DESKTOP: Server list BOTTOM ── */}
       {!isMobile && serverListPosition === 'bottom' && (
-        <div className="shrink-0 overflow-hidden rounded-2xl">
+        <div data-layout="server-list" className={`shrink-0 ${ui.panelWrapper}`}>
           <ServerList horizontal selectedServer={selectedServer} onSelectServer={handleSelectServer} />
         </div>
       )}

@@ -14,6 +14,7 @@ import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { Button, Chip, ScrollShadow, Separator, Skeleton } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import {
@@ -85,8 +86,9 @@ const getChannelMeta = (type?: string) => CHANNEL_META[type || 'text'] ?? CHANNE
 /* ── Announcement banner ────────────────────────────────────────────────────── */
 
 function AnnouncementBanner({ channelName }: { channelName?: string }) {
+  const ui = useUIStyle();
   return (
-    <div className="mx-4 mb-2 mt-3 flex items-center gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 backdrop-blur-sm dark:border-amber-500/20 dark:bg-amber-500/8">
+    <div className={`mx-4 mb-2 mt-3 flex items-center gap-3 px-4 py-3 ${ui.announcementBanner}`}>
       <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 shadow-sm shadow-amber-500/10">
         <MegaphoneIcon size={15} className="text-amber-400" />
       </div>
@@ -100,10 +102,11 @@ function AnnouncementBanner({ channelName }: { channelName?: string }) {
 
 
 function DateSeparator({ date }: { date: string }) {
+  const ui = useUIStyle();
   return (
     <div className="relative mx-4 my-5 flex select-none items-center">
       <Separator className="flex-1 opacity-30" />
-      <Chip variant="soft" size="sm" className="mx-3 shrink-0 rounded-2xl border border-white/15 bg-white/30 text-[11px] font-medium text-muted backdrop-blur-sm dark:border-white/10 dark:bg-white/8">
+      <Chip variant="soft" size="sm" className={`mx-3 shrink-0 text-[11px] font-medium text-muted ${ui.chip}`}>
         <Chip.Label>{date}</Chip.Label>
       </Chip>
       <Separator className="flex-1 opacity-30" />
@@ -161,6 +164,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
   const meta = getChannelMeta(channelType);
   const { user } = useAuth();
   const { isMobile, toggleSidebar, toggleMemberList, toggleMemberListDesktop, memberListDesktopVisible } = useMobileNav();
+  const ui = useUIStyle();
 
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -451,7 +455,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* ── Header ── */}
-      <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-white/10 bg-white/5 px-3 backdrop-blur-sm dark:border-white/8">
+      <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
         {isMobile && (
           <Button isIconOnly size="sm" variant="ghost"
             className="size-8 shrink-0 rounded-xl text-[var(--muted)]"
@@ -551,7 +555,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
       <div className="shrink-0 px-4 pb-4">
         {/* Reply bar */}
         {replyId && (
-          <div className="flex items-center gap-2 rounded-t-2xl border border-b-0 border-white/15 bg-white/30 px-3 py-1.5 text-xs backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+          <div className={`flex items-center gap-2 px-3 py-1.5 text-xs ${ui.replyBar}`}>
             <span className="flex-1 truncate text-[var(--muted)]">
               Répondre à{' '}
               <span className="font-medium text-[var(--foreground)]/80">{replyAuthor}</span>
@@ -575,7 +579,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         {/* Input bar */}
         <div
           className={cn(
-            'flex items-end gap-1 rounded-2xl border border-white/15 bg-white/60 px-2 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 backdrop-blur-sm dark:border-white/10 dark:bg-white/8',
+            `flex items-end gap-1 px-2 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 ${ui.inputBar}`,
             replyId && 'rounded-tl-none rounded-tr-none border-t-0',
           )}
         >

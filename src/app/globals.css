@@ -140,6 +140,33 @@
 }
 
 /* ============================================================
+   FLAT UI style — activé quand data-ui-style="flat"
+   Supprime l'espacement flottant et les coins arrondis des panneaux
+   ============================================================ */
+
+[data-ui-style="flat"][data-layout="root"] {
+  padding: 0;
+  gap: 0;
+}
+
+[data-ui-style="flat"] [data-layout="sidebar"],
+[data-ui-style="flat"] [data-layout="server-list"],
+[data-ui-style="flat"] [data-layout="member-list"],
+[data-ui-style="flat"] [data-layout="content"] {
+  border-radius: 0;
+}
+
+/* En mode flat, les panneaux affichent des bordures pleines */
+[data-ui-style="flat"] [data-layout="sidebar"],
+[data-ui-style="flat"] [data-layout="server-list"] {
+  border-right: 1px solid var(--border);
+}
+
+[data-ui-style="flat"] [data-layout="member-list"] {
+  border-left: 1px solid var(--border);
+}
+
+/* ============================================================
    GLASSMORPHISM — activé quand body[data-wallpaper] est présent
    ============================================================ */
 
