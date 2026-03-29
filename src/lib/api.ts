@@ -867,6 +867,35 @@ class ApiService {
     });
   }
 
+  // ============ SERVICE REGISTRY ============
+
+  async getAdminServices() {
+    return this.request<{ instances: any[] }>('/api/admin/services');
+  }
+
+  async getAdminServicesByType(type: string) {
+    return this.request<{ instances: any[] }>(`/api/admin/services/${encodeURIComponent(type)}`);
+  }
+
+  async addAdminService(data: {
+    id: string;
+    serviceType: string;
+    endpoint: string;
+    domain: string;
+    location: string;
+  }) {
+    return this.request('/api/admin/services', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAdminService(id: string) {
+    return this.request(`/api/admin/services/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  }
+
   // ============ CHANGELOGS ============
 
   async getMonitoringStats() {
