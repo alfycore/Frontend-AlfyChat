@@ -610,6 +610,7 @@ export default function AdminPage() {
     { id: 'status' as Tab, label: 'Status public', icon: CheckCircle2Icon },
     { id: 'security' as Tab, label: 'Sécurité', icon: ShieldAlertIcon },
     { id: 'changelogs' as Tab, label: 'Changelogs', icon: FileTextIcon },
+    { id: 'services' as Tab, label: 'Services', icon: ServerIcon },
     { id: 'settings' as Tab, label: 'Paramètres', icon: SettingsIcon },
   ];
 
@@ -1723,7 +1724,14 @@ export default function AdminPage() {
                                             <td className="px-3 py-2 font-mono text-xs text-[var(--muted)]" title={inst.id}>
                                               {inst.id.slice(0, 8)}
                                             </td>
-                                            <td className="px-3 py-2 text-[var(--foreground)]">{inst.domain}</td>
+                                            <td className="px-3 py-2 text-[var(--foreground)]">
+                                              <span className="flex items-center gap-1.5">
+                                                {inst.domain}
+                                                {/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(inst.domain) && (
+                                                  <span className="inline-flex items-center rounded px-1 py-0.5 text-[10px] font-semibold bg-orange-500/15 text-orange-400 border border-orange-500/20" title="Endpoint local — configurer SERVICE_ENDPOINT sur ce VPS">LOCAL</span>
+                                                )}
+                                              </span>
+                                            </td>
                                             <td className="px-3 py-2">
                                               <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--surface-secondary)', color: 'var(--muted)' }}>
                                                 {inst.location}
