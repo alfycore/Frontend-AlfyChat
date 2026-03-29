@@ -146,6 +146,7 @@ export default function AdminPage() {
 
   // Server badges
   const [discoverServers, setDiscoverServers] = useState<any[]>([]);
+  const [serverBadgesPage, setServerBadgesPage] = useState(0);
 
   // Settings
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
@@ -575,99 +576,109 @@ export default function AdminPage() {
   // ============ Guard ============
   if (!user || user.role !== 'admin') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Card className="w-96 border border-[var(--border)] bg-[var(--surface)] p-0">
-          <div className="px-5 py-4">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
-              <ShieldIcon size={20} className="text-red-500" />
-              Accès refusé
-            </h3>
-            <p className="mt-1 text-sm text-[var(--muted)]">
-              Cette page est réservée aux administrateurs.
-            </p>
-          </div>
-          <div className="px-5 pb-4">
-            <Button
-              onPress={() => router.push('/channels/me')}
-              className="w-full"
-            >
-              Retour à l&apos;accueil
-            </Button>
-          </div>
-        </Card>
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#0b0b0d' }}>
+        <div style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 32, maxWidth: 360, textAlign: 'center' }}>
+          <ShieldIcon size={32} style={{ color: '#ef4444', margin: '0 auto 12px' }} />
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 8 }}>Accès refusé</div>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>Cette page est réservée aux administrateurs.</div>
+          <button onClick={() => router.push('/channels/me')} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '8px 20px', color: 'white', cursor: 'pointer', fontSize: 13 }}>
+            Retour à l&apos;app
+          </button>
+        </div>
       </div>
     );
   }
 
+  const NAV_ITEMS = [
+    { id: 'overview' as Tab, label: "Vue d'ensemble", icon: BarChart3Icon },
+    { id: 'users' as Tab, label: 'Utilisateurs', icon: UsersIcon },
+    { id: 'badges' as Tab, label: 'Badges', icon: AwardIcon },
+    { id: 'server-badges' as Tab, label: 'Badges serveurs', icon: ServerIcon },
+    { id: 'discovery' as Tab, label: 'Découverte', icon: CompassIcon },
+    { id: 'monitoring' as Tab, label: 'Monitoring', icon: BarChart3Icon },
+    { id: 'status' as Tab, label: 'Status public', icon: CheckCircle2Icon },
+    { id: 'security' as Tab, label: 'Sécurité', icon: ShieldAlertIcon },
+    { id: 'changelogs' as Tab, label: 'Changelogs', icon: FileTextIcon },
+    { id: 'settings' as Tab, label: 'Paramètres', icon: SettingsIcon },
+  ];
+
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background)]">
-      {/* Header */}
-      <header className="border-b border-[var(--border)]/40 bg-[var(--surface)]/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <ShieldIcon size={28} className="shrink-0 text-[var(--accent)] sm:size-8" />
-              <div className="min-w-0">
-                <h1 className="truncate text-lg font-bold text-[var(--foreground)] sm:text-2xl">
-                  Administration
-                </h1>
-                <p className="hidden text-sm text-[var(--muted)] sm:block">
-                  Gestion AlfyChat
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => router.push('/channels/me')}
-              className="shrink-0 text-xs sm:text-sm"
-            >
-              <span className="sm:hidden">← App</span>
-              <span className="hidden sm:inline">Retour à l&apos;app</span>
-            </Button>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#0b0b0d' }}>
+
+      {/* ── Sidebar ── */}
+      <aside style={{ width: 220, flexShrink: 0, background: '#111113', borderRight: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' }}>
+        {/* Logo */}
+        <div style={{ padding: '18px 16px 14px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ShieldIcon size={16} style={{ color: '#818cf8' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.9)', lineHeight: 1.2 }}>Admin</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>AlfyChat</div>
           </div>
         </div>
-      </header>
 
-      {/* Tabs */}
-      <div className="border-b border-[var(--border)]/40 bg-[var(--surface)]/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl">
-          <nav className="flex gap-1 overflow-x-auto px-4 scrollbar-none sm:gap-4 sm:px-6 [&::-webkit-scrollbar]:hidden">
-            {(
-              [
-                { id: 'overview', label: "Vue d'ensemble", shortLabel: 'Vue', icon: BarChart3Icon },
-                { id: 'badges', label: 'Badges', shortLabel: 'Badges', icon: AwardIcon },
-                { id: 'users', label: 'Utilisateurs', shortLabel: 'Users', icon: UsersIcon },
-                { id: 'discovery', label: 'Découverte', shortLabel: 'Découv.', icon: CompassIcon },
-                { id: 'server-badges', label: 'Badges serveurs', shortLabel: 'Serveurs', icon: ServerIcon },
-                { id: 'monitoring', label: 'Monitoring', shortLabel: 'Monitor', icon: BarChart3Icon },
-                { id: 'status', label: 'Status public', shortLabel: 'Status', icon: CheckCircle2Icon },
-                { id: 'security', label: 'Sécurité', shortLabel: 'Sécu.', icon: ShieldAlertIcon },
-                { id: 'services', label: 'Services', shortLabel: 'Services', icon: ServerIcon },
-                { id: 'changelogs', label: 'Changelogs', shortLabel: 'Logs', icon: FileTextIcon },
-                { id: 'settings', label: 'Paramètres', shortLabel: 'Config', icon: SettingsIcon },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex shrink-0 items-center gap-1.5 border-b-2 px-2 py-3 text-xs font-medium whitespace-nowrap transition-colors sm:gap-2 sm:px-1 sm:text-sm ${
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)]'
-                    : 'border-transparent text-[var(--muted)] hover:text-[var(--foreground)]'
-                }`}
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '8px' }}>
+          {NAV_ITEMS.map(item => {
+            const isActive = activeTab === item.id;
+            return (
+              <button key={item.id} onClick={() => setActiveTab(item.id)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '8px 10px', borderRadius: 8, marginBottom: 1,
+                  background: isActive ? 'rgba(255,255,255,0.08)' : 'none',
+                  border: `1px solid ${isActive ? 'rgba(255,255,255,0.1)' : 'transparent'}`,
+                  cursor: 'pointer', textAlign: 'left',
+                  color: isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.42)',
+                  fontSize: 13, fontWeight: isActive ? 600 : 400, transition: 'all 0.1s',
+                }}
+                onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; }}}
+                onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.42)'; }}}
               >
-                <tab.icon size={14} className="sm:size-4" />
-                <span className="sm:hidden">{tab.shortLabel}</span>
-                <span className="hidden sm:inline">{tab.label}</span>
+                <item.icon size={15} style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {item.id === 'server-badges' && discoverServers.length > 0 && (
+                  <span style={{ fontSize: 10, background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '1px 6px', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    {discoverServers.length}
+                  </span>
+                )}
               </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+            );
+          })}
+        </nav>
 
-      {/* Content */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-6">
+        {/* User */}
+        <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 9 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#a5b4fc', flexShrink: 0 }}>
+            {user?.displayName?.[0]?.toUpperCase() ?? '?'}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.75)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.displayName}</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>Administrateur</div>
+          </div>
+          <button onClick={() => router.push('/channels/me')} title="Retour à l'app"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.22)', padding: '4px', borderRadius: 5, lineHeight: 0 }}>
+            <XIcon size={14} />
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main ── */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
+        {/* Top bar */}
+        <div style={{ padding: '14px 28px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(11,11,13,0.85)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 20, flexShrink: 0 }}>
+          <h1 style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
+            {NAV_ITEMS.find(n => n.id === activeTab)?.label ?? 'Admin'}
+          </h1>
+          <button onClick={loadData}
+            style={{ padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer' }}>
+            ↻ Actualiser
+          </button>
+        </div>
+
+        {/* Content */}
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-6">
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="size-8 animate-spin rounded-full border-4 border-[var(--accent)] border-t-transparent" />
@@ -970,7 +981,7 @@ export default function AdminPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border)]">
-                          {discoverServers.map((server) => {
+                          {discoverServers.slice(serverBadgesPage * 10, (serverBadgesPage + 1) * 10).map((server) => {
                             const isFeatured = server.discovery_status === 'approved';
                             return (
                             <tr key={server.id} className="bg-[var(--surface)]">
@@ -1049,6 +1060,23 @@ export default function AdminPage() {
                       </table>
                     </div>
                   </Card>
+                )}
+
+                {/* Pagination */}
+                {discoverServers.length > 10 && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-[var(--muted)]">
+                      {serverBadgesPage * 10 + 1}–{Math.min((serverBadgesPage + 1) * 10, discoverServers.length)} sur {discoverServers.length} serveurs
+                    </p>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" isDisabled={serverBadgesPage === 0} onPress={() => setServerBadgesPage(p => p - 1)}>
+                        ← Précédent
+                      </Button>
+                      <Button variant="outline" size="sm" isDisabled={(serverBadgesPage + 1) * 10 >= discoverServers.length} onPress={() => setServerBadgesPage(p => p + 1)}>
+                        Suivant →
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -2145,6 +2173,7 @@ export default function AdminPage() {
           </>
         )}
       </main>
+      </div>
 
       {/* ============ Modal création/édition badge ============ */}
       <Modal.Backdrop isOpen={showBadgeDialog} onOpenChange={setShowBadgeDialog}>
