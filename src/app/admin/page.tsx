@@ -1668,13 +1668,13 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 justify-end">
-                      <Button size="sm" variant="ghost" onPress={() => setEditingIncident(undefined)} disabled={statusSubmitting}>
+                      <Button size="sm" variant="ghost" onPress={() => setEditingIncident(undefined)} isDisabled={statusSubmitting}>
                         Annuler
                       </Button>
                       <Button
                         size="sm"
                         className="bg-[var(--accent)] text-[var(--accent-foreground)]"
-                        disabled={statusSubmitting || !statusForm.title.trim()}
+                        isDisabled={statusSubmitting || !statusForm.title.trim()}
                         onPress={async () => {
                           setStatusSubmitting(true);
                           const services = statusForm.services.split(',').map((s) => s.trim()).filter(Boolean);
