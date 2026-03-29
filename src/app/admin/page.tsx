@@ -1876,23 +1876,7 @@ export default function AdminPage() {
             )}
 
             {activeTab === 'services' && (
-              <ServicesPanel
-                instances={serviceInstances}
-                loading={loading}
-                onRefresh={loadData}
-                onAdd={async (data) => {
-                  try {
-                    const res = await api.addAdminService(data);
-                    return res.success ? { success: true } : { success: false, error: (res as any).error };
-                  } catch {
-                    return { success: false, error: 'Erreur réseau' };
-                  }
-                }}
-                onDelete={async (id) => {
-                  try { await api.deleteAdminService(id); } catch {}
-                  setServiceInstances((prev) => prev.filter((s) => s.id !== id));
-                }}
-              />
+              <ServicesPanel />
             )}
 
             {activeTab === 'settings' && (
