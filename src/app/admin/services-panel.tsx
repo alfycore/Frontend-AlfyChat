@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   RefreshCwIcon, PlusIcon, XIcon, ZoomInIcon, ZoomOutIcon,
-  MaximizeIcon, LayoutGridIcon, Link2Icon, Link2OffIcon,
+  MaximizeIcon, LayoutGridIcon, Link2Icon,
   Trash2Icon, MoreHorizontalIcon, CloudIcon, GitBranchIcon,
-  Layers3Icon, RotateCcwIcon,
+  Layers3Icon, RotateCcwIcon, RadioIcon, MonitorIcon, ServerIcon,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -48,11 +48,43 @@ const CH = 106; // card height
 const GP = 26;  // group padding
 const GH = 36;  // group header height
 
+// ── Static infrastructure nodes ───────────────────────────────────────────────
+
+const STATIC_NODES = {
+  __frontend__: {
+    label: 'frontend',
+    sublabel: 'alfychat.eu',
+    tag: 'Next.js 14',
+    accent: '#4ade80',
+    bg: 'rgba(74,222,128,0.07)',
+    border: 'rgba(74,222,128,0.18)',
+    text: '#86efac',
+  },
+  __gateway__: {
+    label: 'gateway',
+    sublabel: 'gateway.alfychat.eu',
+    tag: 'Socket.IO + Proxy',
+    accent: '#f59e0b',
+    bg: 'rgba(245,158,11,0.07)',
+    border: 'rgba(245,158,11,0.18)',
+    text: '#fcd34d',
+  },
+} as const;
+
+type StaticNodeId = keyof typeof STATIC_NODES;
+const STATIC_IDS: StaticNodeId[] = ['__frontend__', '__gateway__'];
+
+// Default positions for static nodes
+const STATIC_DEFAULT_POS: Record<StaticNodeId, Pos> = {
+  __frontend__: { x: 40, y: 60 },
+  __gateway__:  { x: 40, y: 220 },
+};
+
 // ── Layout helpers ─────────────────────────────────────────────────────────────
 
 function computeLayout(instances: ServiceInstance[]): Record<string, Pos> {
-  const pos: Record<string, Pos> = {};
-  let gx = 40;
+  const pos: Record<string, Pos> = { ...STATIC_DEFAULT_POS };
+  let gx = 400; // offset right to leave room for gateway/frontend
   for (const type of ALL_TYPES) {
     const insts = instances.filter(i => i.serviceType === type);
     if (!insts.length) continue;
@@ -262,6 +294,73 @@ function GroupBox({ type, bounds, count }: { type: ServiceType; bounds: { x: num
   );
 }
 
+// ── Static node card (Gateway / Frontend) ────────────────────────────────────
+
+function StaticNodeCard({ id, pos, onDragStart, onPortClick, isSource, canLink, selected, onSelect }: {
+  id: StaticNodeId; pos: Pos;
+  onDragStart: (e: React.MouseEvent) => void;
+  onPortClick: (e: React.MouseEvent) => void;
+  isSource: boolean; canLink: boolean; selected: boolean; onSelect: () => void;
+}) {
+  const n = STATIC_NODES[id];
+  const Icon = id === '__gateway__' ? RadioIcon : MonitorIcon;
+
+  return (
+    <div
+      style={{ position: 'absolute', left: pos.x, top: pos.y, width: CW, height: CH, userSelect: 'none', zIndex: selected ? 10 : 5 }}
+      onMouseDown={e => { e.stopPropagation(); onDragStart(e); onSelect(); }}
+    >
+      <div style={{
+        width: '100%', height: '100%', background: '#141417',
+        border: `1px solid ${selected ? n.accent : canLink ? 'rgba(255,255,255,0.22)' : n.border}`,
+        borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        boxShadow: selected
+          ? `0 0 0 2px ${n.accent}22, 0 6px 24px rgba(0,0,0,0.5)`
+          : `0 2px 12px rgba(0,0,0,0.35), inset 0 0 0 1px ${n.bg}`,
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+        cursor: 'grab',
+      }}>
+        {/* header */}
+        <div style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 7, borderBottom: `1px solid ${n.border}`, background: n.bg }}>
+          <div style={{ width: 20, height: 20, borderRadius: 5, background: `${n.accent}18`, border: `1px solid ${n.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Icon size={11} style={{ color: n.accent }} />
+          </div>
+          <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: n.text, letterSpacing: '0.01em' }}>
+            {n.label}
+          </span>
+          <span style={{ fontSize: 9, fontWeight: 600, color: n.accent, background: `${n.accent}18`, border: `1px solid ${n.border}`, borderRadius: 4, padding: '1px 5px', letterSpacing: '0.02em' }}>
+            INFRA
+          </span>
+        </div>
+
+        {/* body */}
+        <div style={{ padding: '8px 10px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <ServerIcon size={10} style={{ color: 'rgba(255,255,255,0.2)', flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {n.sublabel}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: n.accent, boxShadow: `0 0 5px ${n.accent}80`, flexShrink: 0, display: 'inline-block' }} />
+              <span style={{ fontSize: 11, color: n.text }}>En ligne</span>
+            </div>
+            <span style={{ fontSize: 10, color: n.accent, background: `${n.accent}10`, padding: '1px 6px', borderRadius: 4, border: `1px solid ${n.border}` }}>
+              {n.tag}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Port right */}
+      <Port style={{ right: -7, top: CH / 2 - 7 }} active={isSource} accent={n.accent} onMouseDown={e => { e.stopPropagation(); onPortClick(e); }} />
+      {/* Port left */}
+      <Port style={{ left: -7, top: CH / 2 - 7 }} active={false} accent={n.accent} onMouseDown={e => { e.stopPropagation(); onPortClick(e); }} />
+    </div>
+  );
+}
+
 // ── Add Modal ─────────────────────────────────────────────────────────────────
 
 function AddModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
@@ -351,7 +450,7 @@ function AddModal({ onClose, onDone }: { onClose: () => void; onDone: () => void
 export function ServicesPanel() {
   const [instances, setInstances] = useState<ServiceInstance[]>([]);
   const [loading, setLoading] = useState(true);
-  const [positions, setPositions] = useState<Record<string, Pos>>({});
+  const [positions, setPositions] = useState<Record<string, Pos>>(STATIC_DEFAULT_POS);
   const [connections, setConnections] = useState<Conn[]>([]);
   const [linking, setLinking] = useState<string | null>(null);
   const [mousePosWorld, setMousePosWorld] = useState<Pos>({ x: 0, y: 0 });
@@ -503,11 +602,11 @@ export function ServicesPanel() {
 
   // ── Fit / layout ──────────────────────────────────────────────────────────
   const fitScreen = useCallback(() => {
-    const insts = instances;
-    if (!insts.length) return;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const i of insts) {
-      const p = positions[i.id]; if (!p) continue;
+    // include all nodes: service instances + static
+    const allIds = [...instances.map(i => i.id), ...STATIC_IDS];
+    for (const id of allIds) {
+      const p = positions[id]; if (!p) continue;
       minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
       maxX = Math.max(maxX, p.x + CW); maxY = Math.max(maxY, p.y + CH);
     }
@@ -602,6 +701,22 @@ export function ServicesPanel() {
             const count = instances.filter(i => i.serviceType === type).length;
             if (!b || !count) return null;
             return <GroupBox key={type} type={type} bounds={b} count={count} />;
+          })}
+
+          {/* Static infrastructure nodes */}
+          {STATIC_IDS.map(id => {
+            const pos = positions[id];
+            if (!pos) return null;
+            return (
+              <StaticNodeCard key={id} id={id} pos={pos}
+                onDragStart={e => onDragStart(e, id)}
+                onPortClick={e => onPortClick(e, id)}
+                isSource={linking === id}
+                canLink={linking !== null && linking !== id}
+                selected={selected === id}
+                onSelect={() => setSelected(id)}
+              />
+            );
           })}
 
           {/* Service cards */}
