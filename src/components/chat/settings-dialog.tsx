@@ -279,6 +279,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [deleteAvatarFlag, setDeleteAvatarFlag] = useState(false);
+  const [deleteBannerFlag, setDeleteBannerFlag] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -513,6 +515,18 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   };
 
+  const handleDeleteAvatar = () => {
+    setAvatarPreview(null);
+    setAvatarFile(null);
+    setDeleteAvatarFlag(true);
+  };
+
+  const handleDeleteBanner = () => {
+    setBannerPreview(null);
+    setBannerFile(null);
+    setDeleteBannerFlag(true);
+  };
+
   const handleSaveProfile = async () => {
     if (!displayName.trim()) {
       setSaveError(t.settings.displayNameRequired);
@@ -528,11 +542,17 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         cardColor,
         showBadges,
       };
-      if (avatarFile) {
+      if (deleteAvatarFlag) {
+        if (user?.avatarUrl) await api.deleteImage(user.avatarUrl).catch(() => {});
+        data.avatarUrl = null;
+      } else if (avatarFile) {
         const result = await api.uploadImage(avatarFile, 'avatar');
         if (result.success && result.data) data.avatarUrl = result.data.url;
       }
-      if (bannerFile) {
+      if (deleteBannerFlag) {
+        if ((user as any)?.bannerUrl) await api.deleteImage((user as any).bannerUrl).catch(() => {});
+        data.bannerUrl = null;
+      } else if (bannerFile) {
         const result = await api.uploadImage(bannerFile, 'banner');
         if (result.success && result.data) data.bannerUrl = result.data.url;
       }
@@ -548,6 +568,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       }
       setAvatarFile(null);
       setBannerFile(null);
+      setDeleteAvatarFlag(false);
+      setDeleteBannerFlag(false);
       setSaveSuccess(true);
       toast.success(t.settings.profileSavedToast);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -868,13 +890,25 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 <Dropdown.Menu onAction={(key) => {
                                   if (key === 'avatar') avatarInputRef.current?.click();
                                   if (key === 'banner') bannerInputRef.current?.click();
+                                  if (key === 'delete-avatar') handleDeleteAvatar();
+                                  if (key === 'delete-banner') handleDeleteBanner();
                                 }}>
                                   <Dropdown.Item id="avatar" textValue={t.settings.changeAvatar}>
                                     <Label>{t.settings.changeAvatar}</Label>
                                   </Dropdown.Item>
+                                  {(avatarPreview) && (
+                                    <Dropdown.Item id="delete-avatar" textValue="Supprimer l'avatar">
+                                      <Label>Supprimer l'avatar</Label>
+                                    </Dropdown.Item>
+                                  )}
                                   <Dropdown.Item id="banner" textValue={t.settings.changeBanner}>
                                     <Label>{t.settings.changeBanner}</Label>
                                   </Dropdown.Item>
+                                  {(bannerPreview) && (
+                                    <Dropdown.Item id="delete-banner" textValue="Supprimer la bannière">
+                                      <Label>Supprimer la bannière</Label>
+                                    </Dropdown.Item>
+                                  )}
                                 </Dropdown.Menu>
                               </Dropdown.Popover>
                             </Dropdown>

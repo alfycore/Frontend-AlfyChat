@@ -229,6 +229,20 @@ class ApiService {
     }
   }
 
+  async deleteImage(url: string): Promise<ApiResponse<void>> {
+    return this.request('/api/media/delete', {
+      method: 'DELETE',
+      body: JSON.stringify({ url }),
+    });
+  }
+
+  async markNotificationsRead(conversationId: string): Promise<void> {
+    await this.request('/api/notifications/read', {
+      method: 'PATCH',
+      body: JSON.stringify({ conversationId }),
+    }).catch(() => {});
+  }
+
   // Upload de fichier sur un server-node (attachments de serveur)
   async uploadServerFile(serverId: string, file: File, channelId?: string): Promise<ApiResponse<{ id: string; url: string; originalName: string; mimeType: string; size: number }>> {
     const token = this.getToken();

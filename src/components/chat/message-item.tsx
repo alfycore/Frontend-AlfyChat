@@ -10,6 +10,7 @@ import {
 import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
+import { InviteEmbed, extractInviteCodes } from '@/components/chat/invite-embed';
 import { Twemoji } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -235,6 +236,9 @@ export const MessageItem = memo(function MessageItem({
             ) : (
               <div className="mt-0.5 text-[13px] leading-relaxed text-[var(--foreground)]/90 md:text-sm">
                 <MarkdownRenderer content={message.content} />
+                {!message.isSystem && extractInviteCodes(message.content).map((code) => (
+                  <InviteEmbed key={code} code={code} />
+                ))}
               </div>
             )}
 
