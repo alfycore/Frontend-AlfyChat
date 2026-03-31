@@ -19,7 +19,7 @@ const DEFAULT_PREFS: LayoutPrefs = {
   serverListPosition: 'left',
   memberListSide: 'right',
   compactServerList: false,
-  uiStyle: 'glass',
+  uiStyle: 'flat',
 };
 
 function loadFromStorage(): LayoutPrefs {

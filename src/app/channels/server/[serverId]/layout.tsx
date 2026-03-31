@@ -73,7 +73,14 @@ function LayoutInner({ children }: { children: ReactNode }) {
     const { socketService } = require('@/lib/socket');
     socketService.requestServerInfo(serverId, (data: any) => {
       if (data?.error === 'NOT_MEMBER') {
-        router.replace('/channels/me');
+        // Retry once after 1.5s to handle race condition (e.g. just joined via discover)
+        setTimeout(() => {
+          socketService.requestServerInfo(serverId, (retryData: any) => {
+            if (retryData?.error === 'NOT_MEMBER') {
+              router.replace('/channels/me');
+            }
+          });
+        }, 1500);
       }
     });
   }, [serverId, user, router]);

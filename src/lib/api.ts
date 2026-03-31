@@ -9,6 +9,7 @@ export function resolveMediaUrl(url: string | null | undefined): string | undefi
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
   if (url.startsWith('/uploads/')) return `${API_URL}${url}`;
   if (url.startsWith('/api/servers/')) return `${API_URL}${url}`;
+  if (url.startsWith('/api/media/')) return `${API_URL}${url}`;
   return url;
 }
 
