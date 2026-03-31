@@ -165,7 +165,30 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const loadFriends = async () => {
     try {
       const response = await api.getFriends();
-      if (response.success && response.data) setFriends(response.data as Friend[]);
+      if (response.success && response.data) {
+        const data = response.data as Friend[];
+        setFriends(data);
+
+        // Refresh presence from Redis for accurate real-time status
+        const friendIds = data.map((f) => f.id).filter(Boolean);
+        if (friendIds.length > 0) {
+          socketService.requestBulkPresence(friendIds, (presence) => {
+            if (presence.length === 0) return;
+            setFriends((prev) =>
+              prev.map((f) => {
+                const p = presence.find((x) => x.userId === f.id);
+                if (!p) return f;
+                return {
+                  ...f,
+                  status: p.status as Friend['status'],
+                  customStatus: p.customStatus ?? f.customStatus,
+                  isOnline: p.status !== 'offline' && p.status !== 'invisible',
+                };
+              })
+            );
+          });
+        }
+      }
     } catch {}
   };
 

@@ -395,6 +395,29 @@ export function ChannelList({
       setConversations(sorted);
       if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
       if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
+
+      // Refresh the presence data from Redis via socket for accurate real-time status
+      const dmRecipientIds = sorted
+        .filter((c) => c.type === 'dm')
+        .map((c) => c.recipientId)
+        .filter(Boolean);
+      if (dmRecipientIds.length > 0) {
+        socketService.requestBulkPresence(dmRecipientIds, (presence) => {
+          if (presence.length === 0) return;
+          setPresenceMap((prev) => {
+            const next = new Map(prev);
+            presence.forEach(({ userId, status }) => next.set(userId, status));
+            return next;
+          });
+          setCustomStatusMap((prev) => {
+            const next = new Map(prev);
+            presence.forEach(({ userId, customStatus }) => {
+              if (customStatus !== undefined) next.set(userId, customStatus);
+            });
+            return next;
+          });
+        });
+      }
     } catch (e) {
       console.error('Erreur chargement conversations:', e);
     }

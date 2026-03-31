@@ -361,6 +361,15 @@ class SocketService {
     }).catch(() => callback({ members: [] }));
   }
 
+  /** Récupère la présence en masse pour une liste d'utilisateurs (DM list, amis). */
+  requestBulkPresence(userIds: string[], callback: (data: Array<{ userId: string; status: string; customStatus: string | null }>) => void): void {
+    this.waitForConnection().then(() => {
+      this.socket!.emit('GET_BULK_PRESENCE', { userIds }, (res: any) => {
+        callback(res?.presence || []);
+      });
+    }).catch(() => callback([]));
+  }
+
   /** Expulse un membre via socket. */
   kickMember(serverId: string, targetUserId: string): void {
     this.socket?.emit('MEMBER_KICK', { serverId, targetUserId });
