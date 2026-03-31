@@ -201,7 +201,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       if (selectedServer === serverId) onSelectServer(null);
       toast.success('Serveur quitté.');
     } else {
-      toast.danger('Impossible de quitter le serveur.');
+      toast.error(res.error || res.message || 'Impossible de quitter le serveur.');
     }
     setConfirmLeaveServerId(null);
   };
