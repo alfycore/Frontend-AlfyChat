@@ -486,7 +486,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                     <Chip
                       key={interest}
                       size="sm"
-                      variant="flat"
+                      variant="soft"
                       className="h-5 rounded-full text-[11px] font-medium"
                       style={{ backgroundColor: cardColor + '18', color: cardColor, border: `1px solid ${cardColor}30` }}
                     >
