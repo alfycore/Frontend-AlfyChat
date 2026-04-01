@@ -917,8 +917,9 @@ function FriendRow({
 
   return (
     <div className={`flex items-center gap-3 px-4 py-3 transition-all duration-150 ${ui.row}`}>
+      <div className="min-w-0 flex-1">
       <UserProfilePopover userId={friend.id} onOpenDM={onMessage} open={profileOpen} onOpenChange={setProfileOpen}>
-        <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <button type="button" className="flex w-full items-center gap-3 text-left">
           <span className="relative shrink-0">
             <Avatar className="size-9 ring-2 ring-white/20 transition-all hover:ring-[var(--accent)]/30">
               <Avatar.Image src={resolveMediaUrl(friend.avatarUrl)} />
@@ -936,8 +937,9 @@ function FriendRow({
           </span>
         </button>
       </UserProfilePopover>
+      </div>
 
-      <div className="flex shrink-0 items-center gap-0.5">
+      <div className="ml-auto flex shrink-0 items-center gap-0.5">
         <Tooltip delay={0}>
           <Button isIconOnly size="sm" variant="ghost" onPress={onMessage} className="rounded-xl">
             <MessageCircleIcon size={15} />
