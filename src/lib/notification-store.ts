@@ -10,6 +10,31 @@
 
 type Listener = () => void;
 
+const STORAGE_KEY = 'alfychat_unread';
+
+function loadFromStorage(): Map<string, number> {
+  if (typeof window === 'undefined') return new Map();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return new Map();
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return new Map(Object.entries(parsed).map(([k, v]) => [k, Number(v)]));
+  } catch {
+    return new Map();
+  }
+}
+
+function saveToStorage(unread: Map<string, number>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const obj: Record<string, number> = {};
+    unread.forEach((v, k) => { obj[k] = v; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  } catch {
+    // ignore
+  }
+}
+
 interface NotificationState {
   /** recipientId du DM actuellement ouvert, ou null */
   activeRecipientId: string | null;
@@ -22,7 +47,7 @@ interface NotificationState {
 const state: NotificationState = {
   activeRecipientId: null,
   activeGroupId: null,
-  unread: new Map(),
+  unread: loadFromStorage(),
 };
 
 const listeners = new Set<Listener>();
@@ -31,6 +56,8 @@ const listeners = new Set<Listener>();
 let cachedSnapshot: NotificationState = { ...state, unread: new Map(state.unread) };
 
 function notify() {
+  // Persister dans localStorage avant de notifier les listeners
+  saveToStorage(state.unread);
   // Créer un nouveau snapshot stable AVANT d'appeler les listeners
   cachedSnapshot = { ...state, unread: new Map(state.unread) };
   listeners.forEach((l) => l());

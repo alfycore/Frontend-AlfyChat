@@ -39,9 +39,6 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   useNotificationStore,
   clearUnread,
-  incrementUnread,
-  isDMActive,
-  isGroupActive,
 } from '@/lib/notification-store';
 import {
   Avatar,
@@ -540,19 +537,6 @@ export function ChannelList({
       const msgRecipientId = message.recipientId;
       const createdAt = message.createdAt || new Date().toISOString();
       const isFromMe = msgAuthorId === user?.id;
-      // Incrémenter le badge non-lu si le message est reçu (pas envoyé par moi)
-      if (!isFromMe) {
-        const conv = conversationsRef.current.find(
-          (c) => c.id === convId || c.recipientId === msgAuthorId || c.recipientId === msgRecipientId,
-        );
-        if (conv) {
-          if (conv.type === 'group') {
-            if (!isGroupActive(conv.id)) incrementUnread(`group:${conv.id}`);
-          } else {
-            if (!isDMActive(msgAuthorId)) incrementUnread(msgAuthorId);
-          }
-        }
-      }
       setConversations((prev) => {
         const idx = prev.findIndex(
           (c) =>
