@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { socketService } from '@/lib/socket';
 import {
   Avatar,
+  Badge,
   Button,
   Chip,
   InputGroup,
@@ -249,6 +250,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
 
   const status = statusConfig[profile?.status || 'offline'] ?? statusConfig.offline;
   const cardColor = profile?.cardColor || '#5865F2';
+  const badgeColor = ({ online: 'success', idle: 'warning', dnd: 'danger' } as Record<string, 'success' | 'warning' | 'danger'>)[profile?.status || ''];
 
   const createdDate = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -281,25 +283,26 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
       <Popover.Trigger>{children}</Popover.Trigger>
       <Popover.Content placement="right" shouldFlip offset={8} className="w-80 overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
         {loading || !profile ? (
-          /* ──── Skeleton ──── */
-          <div className="space-y-3 p-4">
-            <Skeleton className="h-20 w-full rounded-xl" />
-            <div className="flex items-end gap-3 -mt-6 px-1">
-              <Skeleton className="size-14 shrink-0 rounded-full ring-4 ring-[var(--background)]" />
-              <div className="flex-1 space-y-1.5 pt-4">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-3 w-16" />
-              </div>
+          /* ── Skeleton ── */
+          <div className="flex flex-col">
+            <Skeleton className="h-24 w-full rounded-none" />
+            <div className="flex items-end justify-between px-4 -mt-[2.8rem] mb-3">
+              <Skeleton className="size-[72px] shrink-0 rounded-full ring-[3px] ring-[var(--background)]" />
             </div>
-            <div className="space-y-1.5 pt-1">
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-2/3" />
+            <div className="space-y-1.5 px-4 pb-4">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-16" />
+              <div className="space-y-1.5 pt-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
             </div>
           </div>
         ) : (
           <div className="flex flex-col">
-            {/* ──── Banner ──── */}
-            <div className="relative h-20 overflow-hidden">
+            {/* ── Banner ── */}
+            <div className="relative h-24 overflow-hidden">
               {profile.bannerUrl ? (
                 <img
                   src={resolveMediaUrl(profile.bannerUrl)}
@@ -310,57 +313,96 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                 <div
                   className="size-full"
                   style={{
-                    background: `linear-gradient(145deg, ${cardColor}, ${cardColor}80, ${cardColor}40)`,
+                    background: `linear-gradient(135deg, ${cardColor}ee 0%, ${cardColor}88 60%, ${cardColor}22 100%)`,
                   }}
                 />
               )}
-              {/* Gradient overlay for readability */}
-              <div className="absolute inset-0 bg-linear-to-b from-black/10 via-transparent to-background/80" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[var(--surface)]/60" />
+            </div>
 
-              {/* Status pill on banner */}
-              <div className="absolute right-2.5 top-2.5">
-                <div
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-md',
-                    'bg-black/30 text-white/90',
-                  )}
+            {/* ── Avatar + quick actions ── */}
+            <div className="flex items-end justify-between px-4 -mt-[2.8rem] mb-3">
+              <Badge.Anchor>
+                <Avatar
+                  className="size-[72px] shadow-xl ring-[3px] ring-[var(--background)]"
+                  style={{ backgroundColor: cardColor + '20', color: cardColor }}
                 >
-                  <span className={cn('size-1.5 rounded-full', status.dot)} />
-                  {status.label}
+                  <Avatar.Image src={resolveMediaUrl(profile.avatarUrl)} />
+                  <Avatar.Fallback className="text-2xl font-bold">
+                    {profile.displayName?.[0]?.toUpperCase() || '?'}
+                  </Avatar.Fallback>
+                </Avatar>
+                {badgeColor && (
+                  <Badge color={badgeColor} placement="bottom-right" size="sm" />
+                )}
+              </Badge.Anchor>
+
+              {!isMe && (
+                <div className="flex items-center gap-1.5 pb-1">
+                  <Tooltip delay={0}>
+                    <Button
+                      isIconOnly size="sm" variant="outline"
+                      className="size-8 rounded-xl"
+                      onPress={handleSendMessage}
+                      style={{ borderColor: cardColor + '60', color: cardColor }}
+                    >
+                      <MessageCircleIcon size={15} />
+                    </Button>
+                    <Tooltip.Content showArrow>
+                      <Tooltip.Arrow />
+                      <p className="text-xs">Message</p>
+                    </Tooltip.Content>
+                  </Tooltip>
+                  {friendStatus === 'none' && (
+                    <Tooltip delay={0}>
+                      <Button isIconOnly size="sm" variant="outline" className="size-8 rounded-xl" onPress={handleAddFriend}>
+                        <UserPlusIcon size={14} />
+                      </Button>
+                      <Tooltip.Content showArrow>
+                        <Tooltip.Arrow />
+                        <p className="text-xs">Ajouter en ami</p>
+                      </Tooltip.Content>
+                    </Tooltip>
+                  )}
+                  {friendStatus === 'friend' && (
+                    <Tooltip delay={0}>
+                      <Button isIconOnly size="sm" variant="outline" className="size-8 rounded-xl text-green-500 border-green-500/30" isDisabled>
+                        <UserCheckIcon size={14} />
+                      </Button>
+                      <Tooltip.Content showArrow>
+                        <Tooltip.Arrow />
+                        <p className="text-xs">Déjà ami</p>
+                      </Tooltip.Content>
+                    </Tooltip>
+                  )}
+                  {friendStatus === 'pending_sent' && (
+                    <Tooltip delay={0}>
+                      <Button isIconOnly size="sm" variant="outline" className="size-8 rounded-xl text-yellow-500 border-yellow-500/30" isDisabled>
+                        <CheckIcon size={14} />
+                      </Button>
+                      <Tooltip.Content showArrow>
+                        <Tooltip.Arrow />
+                        <p className="text-xs">Demande envoyée</p>
+                      </Tooltip.Content>
+                    </Tooltip>
+                  )}
+                  {friendStatus === 'pending_received' && (
+                    <Tooltip delay={0}>
+                      <Button isIconOnly size="sm" variant="outline" className="size-8 rounded-xl text-blue-500 border-blue-500/30" onPress={handleAddFriend}>
+                        <UserPlusIcon size={14} />
+                      </Button>
+                      <Tooltip.Content showArrow>
+                        <Tooltip.Arrow />
+                        <p className="text-xs">Accepter la demande</p>
+                      </Tooltip.Content>
+                    </Tooltip>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* ──── Avatar row ──── */}
-            <div className="relative px-4">
-              <div
-                className="-mt-9 inline-block rounded-full p-0.75"
-                style={{
-                  background: `linear-gradient(135deg, ${cardColor}, ${cardColor}60)`,
-                }}
-              >
-                <div className="relative rounded-full bg-[var(--background)] p-0.5">
-                  <Avatar
-                    className="size-16"
-                    style={{ backgroundColor: cardColor + '20', color: cardColor }}
-                  >
-                    <Avatar.Image src={resolveMediaUrl(profile.avatarUrl)} />
-                    <Avatar.Fallback className="text-xl font-bold">
-                      {profile.displayName?.[0]?.toUpperCase() || '?'}
-                    </Avatar.Fallback>
-                  </Avatar>
-                  <span
-                    className={cn(
-                      'absolute bottom-0 right-0 size-4 rounded-full border-[2.5px] border-[var(--background)] shadow-sm',
-                      status.dot,
-                    )}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* ──── Identity ──── */}
-            <div className="space-y-3 px-4   pb-1">
+            {/* ── Identity ── */}
+            <div className="space-y-3 px-4 pb-1">
               <div>
                 <div className="flex items-center gap-1.5">
                   <h3 className="truncate text-[15px] font-bold leading-tight">
@@ -383,6 +425,10 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                   )}
                 </div>
                 <p className="text-xs text-[var(--muted)]">@{profile.username}</p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className={cn('size-2 rounded-full shadow-sm', status.dot)} />
+                  <span className="text-xs text-[var(--muted)]">{status.label}</span>
+                </div>
               </div>
 
               {/* ──── Badges ──── */}
@@ -392,7 +438,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                     <Tooltip key={badge.id} delay={0}>
                       <button
                         type="button"
-                        className="flex size-7 items-center justify-center rounded-xl transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex size-8 items-center justify-center rounded-xl transition-transform hover:scale-110 focus-visible:outline-none"
                         style={{
                           backgroundColor: badge.color + '15',
                           border: `1px solid ${badge.color}30`,
@@ -400,10 +446,11 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                       >
                         {renderBadgeIcon(badge)}
                       </button>
-                      <Tooltip.Content>
+                      <Tooltip.Content showArrow>
+                        <Tooltip.Arrow />
                         <div className="text-center">
                           <p className="text-xs font-semibold">{badge.name}</p>
-                          <p className="text-[10px] text-[var(--muted)]">
+                          <p className="text-[10px] opacity-70">
                             Obtenu le{' '}
                             {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}
                           </p>
@@ -525,145 +572,68 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
               )}
             </div>
 
-            {/* ──── Actions ──── */}
-            {!isMe && (
+            {/* ── Kick / Ban ── */}
+            {!isMe && serverId && canKickBan && (
               <>
                 <div className="mx-4">
                   <Separator />
                 </div>
-                <div className="flex flex-col gap-2 px-4 py-3">
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 gap-1.5 rounded-xl text-xs font-semibold"
-                      onPress={handleSendMessage}
-                      style={{ backgroundColor: cardColor, color: '#fff' }}
-                    >
-                      <MessageCircleIcon size={14} />
-                      Message
-                    </Button>
-                    {friendStatus === 'friend' ? (
+                <div className="flex flex-col gap-2 px-4 pb-3">
+                  {!confirmKick && !confirmBan && (
+                    <div className="flex gap-2">
                       <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5 rounded-xl text-[11px] text-green-500 border-green-500/30"
-                        isDisabled
+                        size="sm" variant="outline"
+                        className="flex-1 gap-1.5 rounded-xl text-[11px] text-orange-400 border-orange-400/25 hover:bg-orange-500/10"
+                        onPress={() => setConfirmKick(true)}
                       >
-                        <UserCheckIcon size={13} />
-                        Ami
+                        <UserXIcon size={13} />
+                        Expulser
                       </Button>
-                    ) : friendStatus === 'pending_sent' ? (
                       <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5 rounded-xl text-[11px] text-yellow-500 border-yellow-500/30"
-                        isDisabled
+                        size="sm" variant="outline"
+                        className="flex-1 gap-1.5 rounded-xl text-[11px] text-red-400 border-red-400/25 hover:bg-red-500/10"
+                        onPress={() => setConfirmBan(true)}
                       >
-                        <CheckIcon size={13} />
-                        En attente
+                        <BanIcon size={13} />
+                        Bannir
                       </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5 rounded-xl text-[11px]"
-                        onPress={handleAddFriend}
-                      >
-                        <UserPlusIcon size={13} />
-                        Ajouter
-                      </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  {/* Kick / Ban */}
-                  {serverId && canKickBan && (
-                    <>
-                      {!confirmKick && !confirmBan && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 gap-1.5 rounded-xl text-[11px] text-orange-400 border-orange-400/25 hover:bg-orange-500/10"
-                            onPress={() => setConfirmKick(true)}
-                          >
-                            <UserXIcon size={13} />
-                            Expulser
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 gap-1.5 rounded-xl text-[11px] text-red-400 border-red-400/25 hover:bg-red-500/10"
-                            onPress={() => setConfirmBan(true)}
-                          >
-                            <BanIcon size={13} />
-                            Bannir
-                          </Button>
-                        </div>
-                      )}
+                  {confirmKick && (
+                    <div className="space-y-2 rounded-xl border border-orange-500/25 bg-orange-500/5 p-2.5">
+                      <p className="text-[11px] text-orange-300">
+                        Expulser {profile?.displayName || profile?.username} ?
+                      </p>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" className="flex-1 rounded-xl text-[11px]" onPress={() => setConfirmKick(false)}>Annuler</Button>
+                        <Button size="sm" className="flex-1 gap-1 rounded-xl text-[11px] bg-orange-600 hover:bg-orange-700" onPress={handleKick}>
+                          <UserXIcon size={11} />Confirmer
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
-                      {confirmKick && (
-                        <div className="space-y-2 rounded-xl border border-orange-500/25 bg-orange-500/5 p-2.5">
-                          <p className="text-[11px] text-orange-300">
-                            Expulser {profile?.displayName || profile?.username} ?
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="flex-1 rounded-xl text-[11px]"
-                              onPress={() => setConfirmKick(false)}
-                            >
-                              Annuler
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="flex-1 gap-1 rounded-xl text-[11px] bg-orange-600 hover:bg-orange-700"
-                              onPress={handleKick}
-                            >
-                              <UserXIcon size={11} />
-                              Confirmer
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {confirmBan && (
-                        <div className="space-y-2 rounded-xl border border-red-500/25 bg-red-500/5 p-2.5">
-                          <p className="text-[11px] text-red-300">
-                            Bannir {profile?.displayName || profile?.username} ?
-                          </p>
-                          <InputGroup className="h-7 rounded-xl border-[var(--border)]/60" variant="secondary">
-                            <InputGroup.Input
-                              placeholder="Raison (optionnel)"
-                              value={banReason}
-                              onChange={(e) => setBanReason(e.target.value)}
-                              className="text-[11px]"
-                            />
-                          </InputGroup>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="flex-1 rounded-xl text-[11px]"
-                              onPress={() => {
-                                setConfirmBan(false);
-                                setBanReason('');
-                              }}
-                            >
-                              Annuler
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="flex-1 gap-1 rounded-xl text-[11px] bg-red-600 hover:bg-red-700"
-                              onPress={handleBan}
-                            >
-                              <BanIcon size={11} />
-                              Confirmer
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </>
+                  {confirmBan && (
+                    <div className="space-y-2 rounded-xl border border-red-500/25 bg-red-500/5 p-2.5">
+                      <p className="text-[11px] text-red-300">
+                        Bannir {profile?.displayName || profile?.username} ?
+                      </p>
+                      <InputGroup className="h-7 rounded-xl border-[var(--border)]/60" variant="secondary">
+                        <InputGroup.Input
+                          placeholder="Raison (optionnel)"
+                          value={banReason}
+                          onChange={(e) => setBanReason(e.target.value)}
+                          className="text-[11px]"
+                        />
+                      </InputGroup>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" className="flex-1 rounded-xl text-[11px]" onPress={() => { setConfirmBan(false); setBanReason(''); }}>Annuler</Button>
+                        <Button size="sm" className="flex-1 gap-1 rounded-xl text-[11px] bg-red-600 hover:bg-red-700" onPress={handleBan}>
+                          <BanIcon size={11} />Confirmer
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
               </>
