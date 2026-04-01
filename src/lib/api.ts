@@ -77,6 +77,10 @@ class ApiService {
         if (newAccessToken) {
           localStorage.setItem('alfychat_token', newAccessToken);
           console.log('✅ Token rafraîchi avec succès');
+          // Notifier le service socket pour qu'il se reconnecte avec le nouveau token
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('alfychat:token:refreshed', { detail: { token: newAccessToken } }));
+          }
         }
         if (newRefreshToken) {
           localStorage.setItem('alfychat_refresh_token', newRefreshToken);

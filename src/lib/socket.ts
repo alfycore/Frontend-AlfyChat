@@ -121,6 +121,11 @@ class SocketService {
     this.socket.on('connect_error', (error) => {
       console.error('❌ Erreur de connexion WebSocket:', error.message);
       this.reconnectAttempts++;
+      // Si le token est invalide, stopper les tentatives automatiques et
+      // attendre que le token soit rafraîchi par l'API avant de réessayer
+      if (error.message === 'Token invalide' || error.message === 'jwt expired') {
+        this.socket?.io.opts.reconnection = false;
+      }
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -138,10 +143,37 @@ class SocketService {
     });
 
     console.log('✅ Socket initialisé');
+
+    // Écouter les rafraîchissements de token depuis l'API
+    if (typeof window !== 'undefined') {
+      window.addEventListener('alfychat:token:refreshed', this._onTokenRefreshed);
+    }
+
     return this.socket;
   }
 
+  /**
+   * Reconnecte le socket avec le token fraîchement stocké dans localStorage.
+   * Appelé automatiquement après un rafraîchissement de token réussi.
+   */
+  private readonly _onTokenRefreshed = (): void => {
+    if (this.socket?.connected) return; // déjà connecté, rien à faire
+    const freshToken = typeof localStorage !== 'undefined'
+      ? localStorage.getItem('alfychat_token')
+      : null;
+    if (!freshToken) return;
+    console.log('🔄 Token rafraîchi → reconnexion WebSocket');
+    // Réactiver la reconnexion automatique et forcer un nouveau connect
+    if (this.socket) {
+      this.socket.io.opts.reconnection = true;
+      this.socket.connect();
+    }
+  };
+
   disconnect(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('alfychat:token:refreshed', this._onTokenRefreshed);
+    }
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
