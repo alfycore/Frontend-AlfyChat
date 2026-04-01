@@ -81,7 +81,13 @@ export function UserPanel({ user }: UserPanelProps) {
                   {user.displayName?.[0]?.toUpperCase()}
                 </Avatar.Fallback>
               </Avatar>
-              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)] ${status.color}`} />
+              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)] ${status.color}`}>
+                {user.status === 'dnd' && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="block h-[2px] w-[5px] rounded-full bg-white" />
+                  </span>
+                )}
+              </span>
             </div>
             <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-[12px] font-semibold leading-tight text-[var(--foreground)]">{user.displayName}</p>

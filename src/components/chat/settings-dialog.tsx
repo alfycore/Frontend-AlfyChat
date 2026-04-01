@@ -1120,6 +1120,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           <Card.Description>{t.settings.profileColorDesc}</Card.Description>
                         </Card.Header>
                         <Card.Content className="space-y-4">
+                          {bannerPreview && (
+                            <p className="rounded-lg border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40 px-3 py-2 text-[11px] text-[var(--muted)]">
+                              💡 La couleur s&apos;applique quand aucune bannière n&apos;est définie. Vous pouvez la supprimer via le menu Actions.
+                            </p>
+                          )}
                           <ColorSwatchPicker
                             value={cardColor}
                             onChange={(c) => setCardColor(c.toString('hex'))}

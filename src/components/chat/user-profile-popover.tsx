@@ -54,6 +54,7 @@ interface UserProfileData {
   isBot?: boolean;
   isVerifiedBot?: boolean;
   createdAt?: string;
+  interests?: string[];
 }
 
 const statusConfig: Record<string, { color: string; label: string; dot: string }> = {
@@ -429,6 +430,25 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
                   <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--foreground)]/85">
                     {profile.bio}
                   </p>
+                </div>
+              )}
+
+              {/* Interests */}
+              {profile.interests && profile.interests.length > 0 && (
+                <div className="rounded-xl bg-[var(--surface-secondary)]/60 px-3 py-2.5">
+                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/60">
+                    Centres d&apos;intérêt
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {profile.interests.map((interest) => (
+                      <span
+                        key={interest}
+                        className="rounded-full border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40 px-2 py-0.5 text-[11px] text-[var(--foreground)]/75"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 

@@ -259,7 +259,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
 
     const handleEdited = (data: any) => {
       const { messageId, content } = data?.payload ?? data;
-      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, content } : m)));
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, content, isEdited: true } : m)));
     };
 
     const handleDeleted = (data: any) => {

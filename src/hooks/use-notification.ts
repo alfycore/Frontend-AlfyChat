@@ -8,6 +8,8 @@ import {
   isDMActive,
   isGroupActive,
   incrementUnread,
+  subscribe as subscribeNotifications,
+  getSnapshot,
 } from '@/lib/notification-store';
 
 /**
@@ -216,6 +218,37 @@ export function useNotification() {
   useEffect(() => {
     return () => {
       audioCtxRef.current?.close().catch(() => {});
+    };
+  }, []);
+
+  // ── Onglet navigateur : afficher le total de messages non-lus ─────────────
+  useEffect(() => {
+    const BASE_TITLE = 'AlfyChat';
+    const originalTitle = document.title || BASE_TITLE;
+
+    const updateTitle = () => {
+      const snap = getSnapshot();
+      let total = 0;
+      snap.unread.forEach((v) => { total += v; });
+      document.title = total > 0 ? `(${total > 99 ? '99+' : total}) ${BASE_TITLE}` : BASE_TITLE;
+    };
+
+    // Synchroniser le titre quand les badges changent
+    const unsub = subscribeNotifications(updateTitle);
+
+    // Remettre le titre de base quand l'onglet reprend le focus
+    const handleFocus = () => {
+      // Seulement remettre à jour (les badges peuvent encore exister)
+      updateTitle();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    updateTitle();
+
+    return () => {
+      unsub();
+      window.removeEventListener('focus', handleFocus);
+      document.title = originalTitle;
     };
   }, []);
 }

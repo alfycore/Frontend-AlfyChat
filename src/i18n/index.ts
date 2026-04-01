@@ -11,7 +11,7 @@ import { da } from './da';
 import { no } from './no';
 import { ja } from './ja';
 export type { Locale } from './types';
-export { LOCALES, DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from './types';
+export { LOCALES, DEFAULT_LOCALE, LOCALE_STORAGE_KEY, resolveSystemLocale } from './types';
 
 export const translations = { en, fr, de, es, it, pt, nl, pl, sv, da, no, ja } as const;
 export type Translations = typeof en;

@@ -7,12 +7,15 @@ import {
   translations,
   DEFAULT_LOCALE,
   LOCALE_STORAGE_KEY,
+  resolveSystemLocale,
 } from '@/i18n';
 
 // ─── Context ──────────────────────────────────────────────────
 interface LocaleContextValue {
   locale: Locale;
-  setLocale: (l: Locale) => void;
+  /** 'system' | Locale — the raw stored preference */
+  localePreference: Locale | 'system';
+  setLocale: (l: Locale | 'system') => void;
   t: Translations;
 }
 
@@ -20,26 +23,35 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 // ─── Provider ─────────────────────────────────────────────────
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
+  const [localePreference, setLocalePreference] = useState<Locale | 'system'>('system');
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
   // Hydrate from localStorage once on mount
   useEffect(() => {
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null;
-    if (stored && stored in translations) {
-      setLocaleState(stored);
+    const stored = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | 'system' | null;
+    if (stored === 'system') {
+      setLocalePreference('system');
+      setLocaleState(resolveSystemLocale());
+    } else if (stored && stored in translations) {
+      setLocalePreference(stored as Locale);
+      setLocaleState(stored as Locale);
+    } else {
+      // Default: use system language
+      setLocalePreference('system');
+      setLocaleState(resolveSystemLocale());
     }
   }, []);
 
-  const setLocale = (l: Locale) => {
-    setLocaleState(l);
+  const setLocale = (l: Locale | 'system') => {
+    setLocalePreference(l);
     localStorage.setItem(LOCALE_STORAGE_KEY, l);
-
-    // Update <html lang> attribute
-    document.documentElement.lang = l;
+    const resolved = l === 'system' ? resolveSystemLocale() : l;
+    setLocaleState(resolved);
+    document.documentElement.lang = resolved;
   };
 
   return (
-    <LocaleContext.Provider value={{ locale, setLocale, t: translations[locale] as Translations }}>
+    <LocaleContext.Provider value={{ locale, localePreference, setLocale, t: translations[locale] as Translations }}>
       {children}
     </LocaleContext.Provider>
   );
