@@ -151,10 +151,10 @@ export function UserPanel({ user }: UserPanelProps) {
       </div>
 
       {/* Modal statut personnalisé — ouvert séparément pour ne pas fermer le dropdown avant validation */}
-      <Modal isOpen={editingCustomStatus} onOpenChange={(open) => { if (!open) setEditingCustomStatus(false); }} size="sm">
-        <Modal.Content>
-          {() => (
-            <>
+      <Modal isOpen={editingCustomStatus} onOpenChange={(open) => { if (!open) setEditingCustomStatus(false); }}>
+        <Modal.Backdrop isDismissable>
+          <Modal.Container size="sm">
+            <Modal.Dialog>
               <Modal.Header>Définir un statut personnalisé</Modal.Header>
               <Modal.Body>
                 <InputGroup>
@@ -176,9 +176,9 @@ export function UserPanel({ user }: UserPanelProps) {
                 <Button variant="ghost" onPress={() => setEditingCustomStatus(false)}>Annuler</Button>
                 <Button onPress={saveCustomStatus}>Enregistrer</Button>
               </Modal.Footer>
-            </>
-          )}
-        </Modal.Content>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
 
       {/* Audio controls + settings */}
