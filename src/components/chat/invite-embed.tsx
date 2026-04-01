@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -79,7 +79,7 @@ export function InviteEmbed({ code }: InviteEmbedProps) {
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="mt-2 w-full max-w-xs overflow-hidden rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40 backdrop-blur-sm">
+      <div className="mt-2 w-full max-w-xs overflow-hidden rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40">
         <div className="h-14 w-full animate-pulse bg-[var(--surface-secondary)]/60" />
         <div className="flex items-center gap-2.5 px-3 py-2.5">
           <div className="size-8 shrink-0 animate-pulse rounded-lg bg-[var(--surface-secondary)]/60" />
@@ -106,7 +106,7 @@ export function InviteEmbed({ code }: InviteEmbedProps) {
   const server = info?.server;
 
   return (
-    <div className="mt-2 w-full max-w-xs overflow-hidden rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40 shadow-sm backdrop-blur-sm">
+    <div className="mt-2 w-full max-w-xs overflow-hidden rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40 shadow-sm">
       {/* Banner */}
       {server?.bannerUrl ? (
         <div

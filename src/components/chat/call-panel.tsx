@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
 import {
@@ -177,7 +177,7 @@ export function CallPanel({
               ? 'bg-red-500/90 text-white shadow-red-500/25 hover:bg-red-500'
               : active
                 ? 'bg-[var(--accent)]/90 text-[var(--accent-foreground)] shadow-[var(--accent)]/20 hover:bg-[var(--accent)]'
-                : 'border border-[var(--border)]/60 bg-[var(--surface)]/80 text-[var(--muted)] shadow-sm backdrop-blur-xl hover:bg-[var(--surface)] hover:text-[var(--foreground)]',
+                : 'border border-[var(--border)]/60 bg-[var(--surface)]/80 text-[var(--muted)] shadow-sm hover:bg-[var(--surface)] hover:text-[var(--foreground)]',
           )}
         >
           {children}
@@ -196,7 +196,7 @@ export function CallPanel({
       {showScreenShare && (
         <div className="relative flex h-48 items-center justify-center bg-black/90 sm:h-64 md:h-72">
           <video ref={screenVideoRef} autoPlay muted playsInline className="size-full object-contain" />
-          <div className="absolute left-3 top-3 flex items-center gap-2 rounded-xl border border-[var(--border)]/60 bg-[var(--background)]/60 px-3 py-1.5 text-xs font-medium backdrop-blur-xl">
+          <div className="absolute left-3 top-3 flex items-center gap-2 rounded-xl border border-[var(--border)]/60 bg-[var(--background)]/60 px-3 py-1.5 text-xs font-medium">
             <MonitorUpIcon size={14} className="text-[var(--accent)]" />
             <span>Partage d&apos;écran</span>
           </div>
@@ -204,15 +204,15 @@ export function CallPanel({
       )}
 
       {/* Two participant boxes */}
-      <div className="relative overflow-hidden bg-[var(--background)]/60 backdrop-blur-xl">
+      <div className="relative overflow-hidden bg-[var(--background)]/60">
         {isWaiting && (
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-1/2 top-1/2 size-40 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-[var(--accent)]/10 blur-3xl" />
+            <div className="absolute left-1/2 top-1/2 size-40 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-[var(--accent)]/10 " />
           </div>
         )}
         {isConnected && (
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-1/2 top-1/2 size-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500/8 blur-3xl" />
+            <div className="absolute left-1/2 top-1/2 size-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500/8 " />
           </div>
         )}
 
@@ -242,7 +242,7 @@ export function CallPanel({
             {/* Current user (you) */}
             <div
               className={cn(
-                'relative flex min-h-44 w-full max-w-64 flex-col items-center justify-center overflow-hidden rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/60 shadow-xl backdrop-blur-xl transition-all duration-300 sm:min-h-52 sm:max-w-72',
+                'relative flex min-h-44 w-full max-w-64 flex-col items-center justify-center overflow-hidden rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/60 shadow-xl transition-all duration-300 sm:min-h-52 sm:max-w-72',
                 isMuted && 'border-red-500/30',
               )}
             >
@@ -299,7 +299,7 @@ export function CallPanel({
             {/* Remote user */}
             <div
               className={cn(
-                'relative flex min-h-44 w-full max-w-64 flex-col items-center justify-center overflow-hidden rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/60 shadow-xl backdrop-blur-xl transition-all duration-300 sm:min-h-52 sm:max-w-72',
+                'relative flex min-h-44 w-full max-w-64 flex-col items-center justify-center overflow-hidden rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/60 shadow-xl transition-all duration-300 sm:min-h-52 sm:max-w-72',
                 isConnected && !!remoteStream && 'border-green-500/40 shadow-green-500/10',
               )}
             >
@@ -354,7 +354,7 @@ export function CallPanel({
 
           {/* Media error */}
           {mediaError && (
-            <div className="mx-auto flex max-w-xs items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 backdrop-blur-sm">
+            <div className="mx-auto flex max-w-xs items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5">
               <AlertTriangleIcon size={16} className="shrink-0 text-red-500" />
               <p className="text-xs leading-relaxed text-red-500/90">{mediaError}</p>
             </div>
@@ -363,7 +363,7 @@ export function CallPanel({
       </div>
 
       {/* Controls bar */}
-      <div className="flex items-center justify-center gap-4 border-t border-[var(--border)]/40 bg-[var(--background)]/60 px-4 py-4 backdrop-blur-xl md:gap-5 md:py-3">
+      <div className="flex items-center justify-center gap-4 border-t border-[var(--border)]/40 bg-[var(--background)]/60 px-4 py-4 md:gap-5 md:py-3">
         <CtrlBtn active={isMuted} onClick={onToggleMute} label={isMuted ? 'Muet' : 'Micro'}>
           {isMuted ? <MicOffIcon size={20} /> : <MicIcon size={20} />}
         </CtrlBtn>

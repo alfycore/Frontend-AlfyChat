@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { PhoneIcon, PhoneOffIcon, MonitorUpIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
@@ -50,7 +50,7 @@ export function CallBar() {
     <div
       onClick={handleClick}
       className={cn(
-        'flex cursor-pointer items-center justify-between border-b border-[var(--border)]/40 px-3 py-2 text-sm font-medium backdrop-blur-xl transition-all duration-200 md:px-4 md:py-1.5',
+        'flex cursor-pointer items-center justify-between border-b border-[var(--border)]/40 px-3 py-2 text-sm font-medium transition-all duration-200 md:px-4 md:py-1.5',
         isConnected
           ? 'bg-green-500/10 text-green-600 hover:bg-green-500/15 dark:text-green-400'
           : 'bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/15',

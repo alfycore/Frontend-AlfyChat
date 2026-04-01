@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef } from 'react';
 import { PhoneIcon, PhoneOffIcon, VideoIcon } from '@/components/icons';
@@ -61,18 +61,18 @@ export function IncomingCallDialog({
     <Modal isOpen={open}>
       <Modal.Backdrop isDismissable={false}>
         <Modal.Container size="sm">
-          <Modal.Dialog className="max-w-sm rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl backdrop-blur-xl">
+          <Modal.Dialog className="max-w-sm rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl">
           {/* ── Header ── */}
           <div className="relative overflow-hidden">
             {/* Background glow */}
             <div className="pointer-events-none absolute inset-0">
-              <div className="absolute left-1/2 top-1/4 size-48 -translate-x-1/2 animate-pulse rounded-full bg-[var(--accent)]/15 blur-3xl" />
+              <div className="absolute left-1/2 top-1/4 size-48 -translate-x-1/2 animate-pulse rounded-full bg-[var(--accent)]/15 " />
             </div>
 
             <div className="relative flex flex-col items-center gap-4 px-6 pb-5 pt-8 sm:px-8">
               {/* Avatar with ping animation */}
               <div className="relative">
-                <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/80 p-1 shadow-2xl backdrop-blur-xl">
+                <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/80 p-1 shadow-2xl">
                   <Avatar className="size-20 rounded-xl sm:size-24">
                     <Avatar.Image src={resolveMediaUrl(callerAvatar)} />
                     <Avatar.Fallback className="bg-[var(--accent)]/80 text-[var(--accent-foreground)] text-3xl font-bold">
@@ -99,7 +99,7 @@ export function IncomingCallDialog({
           </div>
 
           {/* ── Action buttons ── */}
-          <div className="rounded-b-2xl border-t border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 px-6 py-5 backdrop-blur-xl sm:px-8">
+          <div className="rounded-b-2xl border-t border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 px-6 py-5 sm:px-8">
             <div className="flex items-center justify-center gap-10 sm:gap-14">
               {/* Decline */}
               <div className="flex flex-col items-center gap-2">

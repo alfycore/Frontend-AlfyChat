@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { GalleryIcon, PlusIcon, XIcon, DownloadIcon, Maximize2Icon } from '@/components/icons';
@@ -74,7 +74,7 @@ function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
       onClick={onClose}
     >
       {/* Close */}
@@ -290,7 +290,7 @@ function UploadModal({
   }, [preview]);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60" onClick={onClose}>
       <div
         className="w-full max-w-md rounded-2xl border border-[var(--border)]/40 bg-[var(--surface)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -477,7 +477,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
   return (
     <div className="flex h-full min-h-0 flex-col bg-[var(--background)]">
       {/* ── Header ── */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
+      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4">
         <div className="flex size-7 items-center justify-center rounded-lg bg-pink-500/10">
           <GalleryIcon size={14} className="text-pink-400" />
         </div>
@@ -522,7 +522,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
             /* Empty state */
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="relative mb-5 flex size-20 items-center justify-center rounded-3xl bg-pink-500/10">
-                <div className="absolute inset-0 rounded-3xl bg-pink-500/8 blur-xl" />
+                <div className="absolute inset-0 rounded-3xl bg-pink-500/8 " />
                 <GalleryIcon size={36} className="relative text-pink-400" />
               </div>
               <h3 className="mb-1.5 text-xl font-bold text-[var(--foreground)]">Galerie vide</h3>

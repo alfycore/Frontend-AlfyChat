@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   useState,
@@ -338,7 +338,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
       {/* ── Zone de chat principale ── */}
       <div data-tour="chat-area" className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* ── Header ── */}
-        <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4 backdrop-blur-xl">
+        <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4">
           {isMobile && (
             <Button isIconOnly size="sm" variant="ghost" onPress={toggleSidebar}>
               <MenuIcon size={20} />
@@ -455,7 +455,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             </div>
           ) : enrichedMessages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
-              <Card className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-8 py-7 shadow-none backdrop-blur-sm">
+              <Card className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-8 py-7 shadow-none">
                 <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
                   <UsersRoundIcon size={28} className="text-[var(--accent)]" />
                 </div>
@@ -514,7 +514,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
         {/* ── Reply bar ── */}
         {replyingTo && (
-          <div className="flex items-center gap-2 rounded-t-xl border border-b-0 border-[var(--border)]/40 bg-[var(--surface-secondary)]/30 px-4 py-2 backdrop-blur-sm">
+          <div className="flex items-center gap-2 rounded-t-xl border border-b-0 border-[var(--border)]/40 bg-[var(--surface-secondary)]/30 px-4 py-2">
             <ReplyIcon size={16} className="text-[var(--muted)]" />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium">{replyingTo.authorName}</p>
@@ -529,7 +529,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
         {/* ── Input area ── */}
         <div className="shrink-0 px-4 pb-4">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-            <div className={`relative flex min-w-0 flex-1 items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 backdrop-blur-sm transition-colors focus-within:border-[var(--accent)]/30 ${replyingTo ? 'rounded-t-none border-t-0' : ''}`}>
+            <div className={`relative flex min-w-0 flex-1 items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 ${replyingTo ? 'rounded-t-none border-t-0' : ''}`}>
               <EmojiPicker onSelect={handleEmojiInsert}>
                 <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
                   <SmileIcon size={18} />
@@ -565,7 +565,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
       {/* ── Panel membres (sidebar droite) ── */}
       {showMembers && (
-        <div className="flex w-52 flex-col border-l border-[var(--border)]/30 bg-[var(--surface)]/60 backdrop-blur-xl">
+        <div className="flex w-52 flex-col border-l border-[var(--border)]/30 bg-[var(--surface)]/60">
           <div className="flex items-center justify-between px-3 py-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
               Membres — {groupInfo?.participants.length || 0}

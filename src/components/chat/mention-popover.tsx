@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Avatar } from '@heroui/react';
@@ -84,7 +84,7 @@ export function MentionPopover({
   return (
     <div
       ref={listRef}
-      className="absolute z-50 max-h-56 w-64 overflow-y-auto rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/95 p-1.5 shadow-2xl backdrop-blur-xl"
+      className="absolute z-50 max-h-56 w-64 overflow-y-auto rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/95 p-1.5 shadow-2xl"
       style={{ bottom: position.top, left: position.left }}
     >
       <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">

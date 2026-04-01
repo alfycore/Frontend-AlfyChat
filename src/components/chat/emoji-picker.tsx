@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Button, InputGroup, Popover, ScrollShadow } from '@heroui/react';
@@ -1299,7 +1299,7 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
           </Button>
         )}
       </Popover.Trigger>
-      <Popover.Content placement="top end" className="w-[340px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/98 p-0 shadow-2xl backdrop-blur-2xl sm:w-[380px]">
+      <Popover.Content placement="top end" className="w-[340px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/98 p-0 shadow-2xl sm:w-[380px]">
         {/* Search bar */}
         <div className="border-b border-[var(--border)]/20 px-3 pt-3 pb-2">
           <InputGroup className="h-9 rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
@@ -1347,7 +1347,7 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
             ) : (
               filteredCategories.map((category, catIndex) => (
                 <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2">
-                  <div className="sticky top-0 z-10 mb-1 bg-[var(--surface)]/95 py-1 backdrop-blur-md">
+                  <div className="sticky top-0 z-10 mb-1 bg-[var(--surface)]/95 py-1">
                     <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-semibold text-[var(--muted)]/70">
                       {category.name}
                     </p>

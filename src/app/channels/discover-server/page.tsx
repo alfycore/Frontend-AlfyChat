@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -87,7 +87,7 @@ export default function DiscoverServerPage() {
   return (
     <div className="flex h-dvh flex-col bg-[var(--background)]">
       {/* ── Header ─────────────────────────────────────────── */}
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/40 bg-[var(--background)]/60 px-4 backdrop-blur-sm">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/40 bg-[var(--background)]/60 px-4">
         <Button
           isIconOnly
           size="sm"
@@ -111,8 +111,8 @@ export default function DiscoverServerPage() {
         <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/15 via-violet-500/8 to-blue-500/8" />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[48px_48px]" />
         {/* Glow blobs */}
-        <div className="pointer-events-none absolute -left-12 -top-12 size-48 rounded-full bg-[var(--accent)]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -right-8 bottom-0 size-40 rounded-full bg-violet-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -left-12 -top-12 size-48 rounded-full bg-[var(--accent)]/10 " />
+        <div className="pointer-events-none absolute -right-8 bottom-0 size-40 rounded-full bg-violet-500/10 " />
 
         <div className="relative z-10 max-w-2xl">
           <div className="mb-1.5 flex items-center gap-2">
@@ -224,7 +224,7 @@ export default function DiscoverServerPage() {
                         <Tooltip delay={0}>
                           <Chip
                             size="sm"
-                            className="gap-1 bg-blue-500/85 text-white backdrop-blur-sm"
+                            className="gap-1 bg-blue-500/85 text-white"
                           >
                             <CheckCircle2Icon size={11} />
                             Certifié
@@ -236,7 +236,7 @@ export default function DiscoverServerPage() {
                         <Tooltip delay={0}>
                           <Chip
                             size="sm"
-                            className="gap-1 bg-violet-500/85 text-white backdrop-blur-sm"
+                            className="gap-1 bg-violet-500/85 text-white"
                           >
                             <HandshakeIcon size={11} />
                             Partenaire

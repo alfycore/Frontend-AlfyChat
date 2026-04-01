@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -135,7 +135,7 @@ export default function GotoStartPage() {
               greetVisible ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
             }`}
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)]/60 bg-[var(--surface)]/60 px-4 py-1.5 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)]/60 bg-[var(--surface)]/60 px-4 py-1.5">
               <span className="text-sm font-medium text-[var(--muted)]">Bonjour,</span>
               <span className="text-sm font-bold text-[var(--foreground)]">{name}</span>
               <span className="text-base">👋</span>

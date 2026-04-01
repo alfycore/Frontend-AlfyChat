@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { resolveMediaUrl } from '@/lib/api';
@@ -208,7 +208,7 @@ export function MemberList({ serverId }: MemberListProps) {
 
   if (isLoading) {
     return (
-      <div className="w-full bg-[var(--surface)]/60 backdrop-blur-xl">
+      <div className="w-full bg-[var(--surface)]/60">
         <div className="space-y-1.5 p-3 pt-4">
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2 px-2">
@@ -241,7 +241,7 @@ export function MemberList({ serverId }: MemberListProps) {
   const remainingOnline = onlineMembers.filter((m) => !assignedIds.has(m.id));
 
   return (
-    <div className="flex h-full w-full flex-col bg-[var(--surface)]/60 backdrop-blur-xl">
+    <div className="flex h-full w-full flex-col bg-[var(--surface)]/60">
       <ScrollShadow className="flex-1">
         <div className="p-2 pt-3">
           {/* Role-based sections */}

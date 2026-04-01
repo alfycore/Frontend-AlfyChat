@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useId, useState } from 'react';
 import { twemojify } from '@/lib/twemoji';
@@ -28,7 +28,7 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content }
 
   const lightbox = lightboxSrc ? (
     <div
-      className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80"
       onClick={() => setLightboxSrc(null)}
       onKeyDown={(e) => e.key === 'Escape' && setLightboxSrc(null)}
       role="dialog"
@@ -92,7 +92,7 @@ function parseMarkdown(text: string, uid: string): React.ReactNode[] {
     parts.push(
       <pre
         key={`${uid}-cb-${match.index}`}
-        className="my-1.5 overflow-x-auto rounded-xl border border-[var(--border)]/40 bg-[var(--surface-secondary)]/20 p-3 text-sm backdrop-blur-sm"
+        className="my-1.5 overflow-x-auto rounded-xl border border-[var(--border)]/40 bg-[var(--surface-secondary)]/20 p-3 text-sm"
       >
         {lang && (
           <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">{lang}</span>

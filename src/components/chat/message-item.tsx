@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { memo, useState, type Dispatch, type SetStateAction } from 'react';
 import {
@@ -114,7 +114,7 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
       {/* Image lightbox */}
       {lightbox && (
         <div
-          className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80"
           onClick={() => setLightbox(null)}
           onKeyDown={(e) => e.key === 'Escape' && setLightbox(null)}
           role="dialog"
@@ -127,7 +127,7 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
       {/* File preview modal */}
       {filePreview && (
         <div
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/80"
           onClick={() => setFilePreview(null)}
           onKeyDown={(e) => e.key === 'Escape' && setFilePreview(null)}
           role="dialog"
@@ -253,7 +253,7 @@ export const MessageItem = memo(function MessageItem({
     return (
       <div className="flex items-center justify-center gap-3 px-4 py-2">
         <div className="h-px flex-1 bg-[var(--border)]/15" />
-        <span className="flex items-center gap-1.5 rounded-full border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-3 py-1 text-[10px] italic text-[var(--muted)]/60 backdrop-blur-sm">
+        <span className="flex items-center gap-1.5 rounded-full border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-3 py-1 text-[10px] italic text-[var(--muted)]/60">
           <MarkdownRenderer content={message.content} />
           <span className="text-[9px] tabular-nums text-[var(--muted)]/40">{formatTime(message.createdAt)}</span>
         </span>
@@ -274,7 +274,7 @@ export const MessageItem = memo(function MessageItem({
         message.pending && 'opacity-60',
       )}>
       {/* ── Toolbar flottant ── */}
-      <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/80 px-1 py-0.5 opacity-0 shadow-lg shadow-black/10 backdrop-blur-xl transition-all duration-150 group-hover:opacity-100">
+      <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/80 px-1 py-0.5 opacity-0 shadow-lg shadow-black/10 transition-all duration-150 group-hover:opacity-100">
         <Tooltip delay={0}>
           <Button
             isIconOnly size="sm" variant="ghost"
@@ -414,7 +414,7 @@ export const MessageItem = memo(function MessageItem({
                   rows={1}
                   aria-label="Modifier le message"
                   autoFocus
-                  className="w-full resize-none overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 px-3 py-2 text-sm text-[var(--foreground)] shadow-sm outline-none backdrop-blur-sm placeholder:text-[var(--muted)]/50 focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20"
+                  className="w-full resize-none overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 px-3 py-2 text-sm text-[var(--foreground)] shadow-sm outline-none placeholder:text-[var(--muted)]/50 focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20"
                 />
                 <p className="text-[10px] text-[var(--muted)]/40">Entrée pour sauvegarder · Échap pour annuler</p>
               </div>

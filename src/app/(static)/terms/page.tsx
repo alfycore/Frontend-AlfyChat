@@ -1,4 +1,4 @@
-import Image from 'next/image';
+﻿import Image from 'next/image';
 import { Separator, Link } from '@heroui/react';
 
 export const metadata = {
@@ -32,7 +32,7 @@ export default function TermsPage() {
     <div className="min-h-screen text-[var(--foreground)]">
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.06] dark:bg-black/30">
+      <nav className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/70 dark:border-white/[0.06] dark:bg-black/30">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
           <Link href="/" className="flex items-center gap-2.5 no-underline">
             <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={24} height={24} />

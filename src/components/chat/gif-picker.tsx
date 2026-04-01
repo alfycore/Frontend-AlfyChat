@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchIcon, Loader2Icon } from '@/components/icons';
@@ -152,7 +152,7 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
       <Popover.Trigger>{children}</Popover.Trigger>
-      <Popover.Content placement="top end" className="w-96 overflow-hidden rounded-xl border-[var(--border)]/60 bg-[var(--surface)]/95 p-3 shadow-2xl backdrop-blur-xl">
+      <Popover.Content placement="top end" className="w-96 overflow-hidden rounded-xl border-[var(--border)]/60 bg-[var(--surface)]/95 p-3 shadow-2xl">
         <Tabs
           selectedKey={provider}
           onSelectionChange={(key) => setProvider(key as 'tenor' | 'giphy')}
@@ -164,7 +164,7 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
         </Tabs>
 
         <div className="relative my-2">
-          <InputGroup className="rounded-lg border-[var(--border)]/60 bg-[var(--background)]/60 backdrop-blur-sm">
+          <InputGroup className="rounded-lg border-[var(--border)]/60 bg-[var(--background)]/60">
             <InputGroup.Prefix>
               <SearchIcon size={16} className="text-[var(--muted)]/60" />
             </InputGroup.Prefix>

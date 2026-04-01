@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { MicIcon, MicOffIcon, HeadphonesIcon, HeadphoneOffIcon, PhoneOffIcon, Volume2Icon, Loader2Icon } from '@/components/icons';
 import { useVoice } from '@/hooks/use-voice';
@@ -22,7 +22,7 @@ export function VoiceControlBar() {
   } = voice;
 
   return (
-    <div className="border-t border-[var(--border)]/30 bg-[var(--surface)]/60 px-3 py-2.5 backdrop-blur-xl">
+    <div className="border-t border-[var(--border)]/30 bg-[var(--surface)]/60 px-3 py-2.5">
       {/* Connection status */}
       <div className="mb-2 flex items-center gap-2">
         <div className={cn(

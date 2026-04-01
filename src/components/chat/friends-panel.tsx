@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -491,7 +491,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <div className="flex flex-1 flex-col items-center justify-center">
                 <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent)]/15 via-transparent to-violet-500/10" />
-                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/20 blur-3xl" />
+                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/20 " />
                   <div className="relative flex flex-col items-center gap-4">
                     <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-xl shadow-[var(--accent)]/30">
                       <UsersIcon size={26} className="text-[var(--accent-foreground)]" />
@@ -564,7 +564,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <div className="flex flex-1 flex-col items-center justify-center">
                 <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-yellow-500/15 via-transparent to-amber-500/10" />
-                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400/20 blur-3xl" />
+                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400/20 " />
                   <div className="relative flex flex-col items-center gap-4">
                     <div className="flex size-14 items-center justify-center rounded-2xl bg-yellow-500 shadow-xl shadow-yellow-500/30">
                       <ClockIcon size={26} className="text-white" />
@@ -640,7 +640,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <div className="flex flex-1 flex-col items-center justify-center">
                 <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-500/15 via-transparent to-rose-500/10" />
-                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400/20 blur-3xl" />
+                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400/20 " />
                   <div className="relative flex flex-col items-center gap-4">
                     <div className="flex size-14 items-center justify-center rounded-2xl bg-red-500 shadow-xl shadow-red-500/30">
                       <ShieldOffIcon size={26} className="text-white" />
@@ -661,7 +661,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   {blockedUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/30 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+                      className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/30 px-4 py-3 dark:border-white/10 dark:bg-white/5"
                     >
                       <div className="relative shrink-0">
                         <Avatar className="size-10 opacity-50 grayscale">
@@ -696,9 +696,9 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
             <div className="mx-auto w-full max-w-md space-y-4">
 
               {/* Hero banner — same style as login visual panel */}
-              <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/30 px-6 py-8 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+              <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/30 px-6 py-8 text-center dark:border-white/10 dark:bg-white/5">
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent)]/20 via-transparent to-violet-600/15" />
-                <div className="pointer-events-none absolute left-1/2 top-0 h-28 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/25 blur-3xl" />
+                <div className="pointer-events-none absolute left-1/2 top-0 h-28 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/25 " />
                 <div className="relative flex flex-col items-center gap-4">
                   <div className="flex items-center -space-x-2.5">
                     {[{ l: 'A', bg: '#6366f1' }, { l: 'B', bg: '#8b5cf6' }, { l: 'C', bg: '#a78bfa' }].map(({ l, bg }, i) => (
@@ -773,7 +773,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                     {requests.sent.map((req) => (
                       <div
                         key={req.id}
-                        className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${ui.isGlass ? 'border border-white/15 bg-white/20 backdrop-blur-sm dark:border-white/8 dark:bg-white/5' : 'border border-[var(--border)] bg-[var(--surface-secondary)]'}`}
+                        className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${ui.isGlass ? 'border border-white/15 bg-white/20 dark:border-white/8 dark:bg-white/5' : 'border border-[var(--border)] bg-[var(--surface-secondary)]'}`}
                       >
                         <Avatar className="size-8">
                           <Avatar.Image src={resolveMediaUrl(req.avatarUrl)} />
@@ -797,7 +797,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       </div>
 
       {/* ══ RIGHT SIDEBAR ══ */}
-      <div className={`hidden w-56 flex-col border-l md:flex ${ui.isGlass ? 'border-white/10 bg-white/10 backdrop-blur-sm dark:bg-white/3' : 'border-[var(--border)] bg-[var(--surface-secondary)]'}`}>
+      <div className={`hidden w-56 flex-col border-l md:flex ${ui.isGlass ? 'border-white/10 bg-white/10 dark:bg-white/3' : 'border-[var(--border)] bg-[var(--surface-secondary)]'}`}>
         {/* Header */}
         <div className={`flex h-14 shrink-0 items-center gap-2.5 px-4 ${ui.isGlass ? 'border-b border-white/10' : 'border-b border-[var(--border)]'}`}>
           <span className="size-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50" />
@@ -847,7 +847,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         <ScrollShadow className="flex-1 p-2">
           {onlineFriends.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 pt-10 text-center">
-              <div className={`flex size-10 items-center justify-center rounded-2xl ${ui.isGlass ? 'border border-white/15 bg-white/20 backdrop-blur-sm dark:border-white/8 dark:bg-white/5' : 'border border-[var(--border)] bg-[var(--surface)]'}`}>
+              <div className={`flex size-10 items-center justify-center rounded-2xl ${ui.isGlass ? 'border border-white/15 bg-white/20 dark:border-white/8 dark:bg-white/5' : 'border border-[var(--border)] bg-[var(--surface)]'}`}>
                 <UsersIcon size={18} className="text-[var(--muted)]/30" />
               </div>
               <p className="text-[11px] text-[var(--muted)]/40">{t.friends.noOneOnline}</p>

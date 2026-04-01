@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import {
@@ -257,7 +257,7 @@ export default function BotsPage() {
             ))}
           </div>
         ) : bots.length === 0 ? (
-          <Card className="rounded-2xl border border-dashed border-[var(--border)]/60 bg-white/40 p-12 text-center backdrop-blur-sm dark:bg-white/[0.03]">
+          <Card className="rounded-2xl border border-dashed border-[var(--border)]/60 bg-white/40 p-12 text-center dark:bg-white/[0.03]">
             <BotIcon size={48} className="mx-auto mb-4 text-[var(--muted)]" />
             <h3 className="mb-2 text-lg font-semibold">Aucun bot</h3>
             <p className="mb-6 text-sm text-[var(--muted)]">
@@ -274,7 +274,7 @@ export default function BotsPage() {
               const st = statusConfig[bot.status];
               const cert = certifConfig[bot.certificationStatus] || certifConfig.none;
               return (
-                <Card key={bot.id} className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white/60 p-0 shadow-sm backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
+                <Card key={bot.id} className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white/60 p-0 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
                   {/* Bot header */}
                   <div className="flex items-start gap-3 p-4 pb-0">
                     <div
@@ -420,7 +420,7 @@ export default function BotsPage() {
       {/* ── Create/Edit Bot Modal ── */}
       <Modal.Backdrop isOpen={showBotModal} onOpenChange={setShowBotModal}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
+        <Modal.Dialog className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>{editingBot ? 'Modifier le bot' : 'Creer un nouveau bot'}</Modal.Heading>
           </Modal.Header>
@@ -522,7 +522,7 @@ export default function BotsPage() {
       {/* ── Token Modal ── */}
       <Modal.Backdrop isOpen={showTokenModal} onOpenChange={setShowTokenModal}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
+        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>Token du bot</Modal.Heading>
           </Modal.Header>
@@ -564,7 +564,7 @@ export default function BotsPage() {
       {/* ── Certification Modal ── */}
       <Modal.Backdrop isOpen={showCertifModal} onOpenChange={setShowCertifModal}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
+        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>Demande de certification</Modal.Heading>
           </Modal.Header>
@@ -607,7 +607,7 @@ export default function BotsPage() {
       {/* ── Command Modal ── */}
       <Modal.Backdrop isOpen={showCmdModal} onOpenChange={setShowCmdModal}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
+        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>Ajouter une commande &mdash; {cmdBot?.name}</Modal.Heading>
           </Modal.Header>
@@ -664,7 +664,7 @@ export default function BotsPage() {
       {/* ── Delete Confirmation ── */}
       <Modal.Backdrop isOpen={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
         <Modal.Container>
-        <Modal.Dialog className="max-w-sm rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
+        <Modal.Dialog className="max-w-sm rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
           <Modal.Header>
             <Modal.Heading>Confirmer la suppression</Modal.Heading>
           </Modal.Header>

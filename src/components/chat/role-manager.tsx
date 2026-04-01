@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import {
@@ -319,7 +319,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
       )}
 
       {isEditorOpen && (
-        <div className="space-y-4 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/20 p-5 backdrop-blur-sm">
+        <div className="space-y-4 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/20 p-5">
           <h4 className="text-sm font-semibold">
             {isCreating ? 'Nouveau rôle' : `Modifier "${editingRole?.name}"`}
           </h4>
@@ -328,7 +328,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
               Nom du rôle
             </span>
-            <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60 backdrop-blur-sm">
+            <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
               <InputGroup.Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
@@ -350,7 +350,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                   onChange={(e) => setFormColor(e.target.value)}
                   className="size-9 cursor-pointer rounded-lg border border-[var(--border)]/60 bg-transparent"
                 />
-                <InputGroup className="w-28 rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60 backdrop-blur-sm">
+                <InputGroup className="w-28 rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
                   <InputGroup.Input
                     value={formColor}
                     onChange={(e) => setFormColor(e.target.value)}
@@ -380,7 +380,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                   </div>
                 </Popover.Trigger>
                 <Popover.Content
-                  className="w-64 rounded-xl border-[var(--border)]/60 bg-popover/95 p-2 shadow-2xl backdrop-blur-xl"
+                  className="w-64 rounded-xl border-[var(--border)]/60 bg-popover/95 p-2 shadow-2xl"
                   placement="bottom start"
                 >
                   <div className="grid grid-cols-6 gap-1">

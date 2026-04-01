@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useResizablePanel } from '@/hooks/use-resizable-panel';
@@ -253,7 +253,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── MOBILE overlay backdrop ── */}
       {isMobile && (showSidebar || showMemberList) && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={closeAll} />
+        <div className="fixed inset-0 z-40 bg-black/60" onClick={closeAll} />
       )}
 
       {/* ── DESKTOP: Server list TOP ── */}

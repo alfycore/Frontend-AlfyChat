@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { MegaphoneIcon, PlusIcon, XIcon, SendIcon, SmileIcon, PencilIcon, Trash2Icon } from '@/components/icons';
@@ -230,9 +230,9 @@ function NewAnnouncementModal({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60" onClick={onClose}>
       <div
-        className="w-full max-w-lg rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl backdrop-blur-xl"
+        className="w-full max-w-lg rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -445,7 +445,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
   return (
     <div className="flex h-full min-h-0 flex-col bg-[var(--background)]">
       {/* ── Header ── */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4 backdrop-blur-xl">
+      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4">
         <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500/10">
           <MegaphoneIcon size={14} className="text-amber-400" />
         </div>
@@ -488,7 +488,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
           ) : posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="relative mb-5 flex size-20 items-center justify-center rounded-3xl bg-amber-500/10">
-                <div className="absolute inset-0 rounded-3xl bg-amber-500/8 blur-xl" />
+                <div className="absolute inset-0 rounded-3xl bg-amber-500/8 " />
                 <MegaphoneIcon size={36} className="relative text-amber-400" />
               </div>
               <h3 className="mb-1.5 text-xl font-bold text-[var(--foreground)]">Aucune annonce</h3>

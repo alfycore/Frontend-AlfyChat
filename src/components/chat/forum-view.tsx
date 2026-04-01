@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
@@ -132,10 +132,10 @@ function NewPostModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl backdrop-blur-xl">
+      <div className="w-full max-w-lg rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-[var(--border)]/30 px-5 py-4">
           <div className="flex size-8 items-center justify-center rounded-xl bg-violet-500/10">
@@ -385,7 +385,7 @@ function PostDiscussion({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Back header */}
-      <div className="flex shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4 py-3 backdrop-blur-xl">
+      <div className="flex shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4 py-3">
         <Button
           isIconOnly
           size="sm"
@@ -486,7 +486,7 @@ function PostDiscussion({
 
       {/* Reply input */}
       <div className="shrink-0 px-4 pb-4 pt-1">
-        <div className="flex items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 backdrop-blur-sm transition-colors focus-within:border-violet-500/30">
+        <div className="flex items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 transition-colors focus-within:border-violet-500/30">
           <label className="flex size-8 shrink-0 cursor-pointer items-center justify-center self-end rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
             <input type="file" accept="image/*" className="hidden" />
             <PaperclipIcon size={16} />
@@ -683,7 +683,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4 backdrop-blur-xl">
+      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4">
         <div className="flex size-7 items-center justify-center rounded-xl bg-violet-500/10">
           <ForumIcon size={14} className="text-violet-400" />
         </div>
@@ -710,7 +710,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="relative mb-4 flex size-16 items-center justify-center rounded-2xl bg-violet-500/10">
-              <div className="absolute inset-0 rounded-2xl bg-violet-500/8 blur-xl" />
+              <div className="absolute inset-0 rounded-2xl bg-violet-500/8 " />
               <ForumIcon size={32} className="relative text-violet-400" />
             </div>
             <h3 className="mb-1 text-xl font-bold text-[var(--foreground)]">Aucun post pour l&apos;instant</h3>

@@ -363,7 +363,7 @@ export function ServerSettingsDialog({
           <div className="flex h-full">
 
           {/*  Left navigation  */}
-          <aside className="flex w-52 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl py-5">
+          <aside className="flex w-52 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 py-5">
             <div className="mb-3 px-4">
               <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
                 {ss.sectionHeader}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import {
@@ -323,7 +323,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
         const catChannels = channelsByCategory(cat.id);
         return (
           <div key={cat.id} className="space-y-1.5">
-            <div className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--border)]/40 bg-[var(--surface-secondary)]/10 px-3 py-2.5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--border)]/40 bg-[var(--surface-secondary)]/10 px-3 py-2.5">
               <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/40">
                 <FolderOpenIcon size={16} className="shrink-0 text-[var(--muted)]" />
               </div>
@@ -392,7 +392,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
 
       {/* Inline editor */}
       {isEditorOpen && (
-        <div className="space-y-4 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/20 p-5 backdrop-blur-sm">
+        <div className="space-y-4 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/20 p-5">
           <h4 className="text-sm font-semibold">
             {isCreating
               ? formType === 'category'
@@ -431,7 +431,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
               {formType === 'category' ? 'Nom de la catégorie' : 'Nom du salon'}
             </span>
-            <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60 backdrop-blur-sm">
+            <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
               <InputGroup.Input
                 value={formName}
                 onChange={(e) =>
@@ -584,7 +584,7 @@ function ChannelPermissionsEditor({
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/20 p-5 backdrop-blur-sm">
+    <div className="space-y-3 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/20 p-5">
       <div className="flex items-center justify-between">
         <h4 className="flex items-center gap-1.5 text-sm font-semibold">
           <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/40">

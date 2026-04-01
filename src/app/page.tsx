@@ -1,4 +1,4 @@
-import Image from 'next/image';
+﻿import Image from 'next/image';
 import {
   ShieldIcon, LockIcon, UsersIcon,
   ArrowRightIcon, HeartIcon, CheckIcon,
@@ -86,9 +86,9 @@ const openSourceFacts = [
 ];
 
 /* ── Glass helpers ────────────────────────────────────────── */
-const glass = "relative overflow-hidden rounded-2xl border border-white/10 dark:border-white/8 bg-white/60 dark:bg-white/5 backdrop-blur-xl shadow-xl";
-const glassDark = "relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl";
-const glassLight = "rounded-2xl border border-black/8 dark:border-white/8 bg-white/80 dark:bg-white/5 backdrop-blur-xl shadow-lg";
+const glass = "relative overflow-hidden rounded-2xl border border-white/10 dark:border-white/8 bg-white/60 dark:bg-white/5 shadow-xl";
+const glassDark = "relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-xl";
+const glassLight = "rounded-2xl border border-black/8 dark:border-white/8 bg-white/80 dark:bg-white/5 shadow-lg";
 
 /* ── Page ─────────────────────────────────────────────────── */
 
@@ -107,7 +107,7 @@ export default function Home() {
       </div>
 
       {/* ━━ Navbar ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <nav className="sticky top-0 z-50 border-b border-black/8 dark:border-white/8 bg-white/70 dark:bg-black/30 backdrop-blur-2xl">
+      <nav className="sticky top-0 z-50 border-b border-black/8 dark:border-white/8 bg-white/70 dark:bg-black/30">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <Link href="/" className="flex items-center gap-2.5 no-underline">
             <div className="flex size-8 items-center justify-center rounded-xl bg-accent/15 ring-1 ring-accent/20">
@@ -147,7 +147,7 @@ export default function Home() {
             <div className="mx-auto max-w-3xl text-center">
 
               {/* Badge statut */}
-              <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-black/10 dark:border-white/12 bg-white/70 dark:bg-white/6 px-4 py-2 text-[11px] font-medium text-muted backdrop-blur-sm shadow-sm">
+              <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-black/10 dark:border-white/12 bg-white/70 dark:bg-white/6 px-4 py-2 text-[11px] font-medium text-muted shadow-sm">
                 <span className="flex size-4 items-center justify-center rounded-full bg-success/15">
                   <span className="size-1.5 animate-pulse rounded-full bg-success" />
                 </span>
@@ -178,7 +178,7 @@ export default function Home() {
                   </Button>
                 </Link>
                 <Link href="https://alfycore.pro" target="_blank" className="no-underline">
-                  <Button variant="tertiary" size="lg" className="border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6 px-8 backdrop-blur-sm">
+                  <Button variant="tertiary" size="lg" className="border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6 px-8">
                     AlfyCore →
                   </Button>
                 </Link>
@@ -262,7 +262,7 @@ export default function Home() {
                           <div className={`max-w-52 rounded-2xl px-3 py-1.5 text-[11px] leading-relaxed shadow-sm ${
                             m.own
                               ? 'rounded-br-sm bg-accent text-white'
-                              : 'rounded-bl-sm border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/8 backdrop-blur-sm'
+                              : 'rounded-bl-sm border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/8'
                           }`}>
                             {m.text}
                           </div>
@@ -271,7 +271,7 @@ export default function Home() {
                     </div>
                     {/* Input */}
                     <div className="border-t border-black/6 dark:border-white/6 p-3">
-                      <div className="flex items-center gap-2 rounded-xl border border-black/8 dark:border-white/10 bg-white/60 dark:bg-white/6 px-3.5 py-2.5 backdrop-blur-sm">
+                      <div className="flex items-center gap-2 rounded-xl border border-black/8 dark:border-white/10 bg-white/60 dark:bg-white/6 px-3.5 py-2.5">
                         <span className="flex-1 text-[10px] text-muted">Écrire un message chiffré…</span>
                         <div className="flex size-6 items-center justify-center rounded-lg bg-accent shadow-sm shadow-accent/30">
                           <SendIcon size={11} className="text-white" />
@@ -290,7 +290,7 @@ export default function Home() {
       </section>
 
       {/* ━━ Stats band ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="border-y border-black/8 dark:border-white/8 bg-white/40 dark:bg-white/3 backdrop-blur-sm">
+      <div className="border-y border-black/8 dark:border-white/8 bg-white/40 dark:bg-white/3">
         <div className="mx-auto grid max-w-4xl grid-cols-2 divide-x divide-black/8 dark:divide-white/8 md:grid-cols-4">
           {[
             { icon: LockIcon,  value: 'ECDH P-256', label: 'Chiffrement clé' },
@@ -334,7 +334,7 @@ export default function Home() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f, i) => (
               <Reveal key={f.title} direction="up" delay={i * 70}>
-                <div className={`group h-full rounded-2xl border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/4 p-6 backdrop-blur-sm shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${f.border} ${f.glow}`}>
+                <div className={`group h-full rounded-2xl border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/4 p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${f.border} ${f.glow}`}>
                   <div className={`mb-4 inline-flex size-12 items-center justify-center rounded-2xl border border-current/10 bg-current/8 shadow-sm`}>
                     <f.icon size={22} className={f.color} />
                   </div>
@@ -368,7 +368,7 @@ export default function Home() {
           <div className="grid gap-4 md:grid-cols-4">
             {steps.map((s, i) => (
               <Reveal key={s.n} direction="up" delay={i * 90}>
-                <div className="group relative rounded-2xl border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/4 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                <div className="group relative rounded-2xl border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/4 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                   {/* Connecteur */}
                   {i < steps.length - 1 && (
                     <div className="absolute -right-2 top-1/2 z-10 hidden -translate-y-1/2 md:block">
@@ -471,7 +471,7 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
             {techStack.map((t, i) => (
               <Reveal key={t.label} direction="up" delay={i * 60}>
-                <div className="group flex flex-col items-center gap-3 rounded-2xl border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/4 px-3 py-5 text-center backdrop-blur-sm shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-current/20">
+                <div className="group flex flex-col items-center gap-3 rounded-2xl border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/4 px-3 py-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-current/20">
                   <div className={`flex size-11 items-center justify-center rounded-2xl ${t.bg} shadow-sm`}>
                     <t.icon size={20} className={t.color} />
                   </div>
@@ -505,13 +505,13 @@ export default function Home() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Link href="https://alfycore.pro" target="_blank" className="no-underline">
-                    <Button variant="tertiary" size="sm" className="gap-2 border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6 backdrop-blur-sm">
+                    <Button variant="tertiary" size="sm" className="gap-2 border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6">
                       <GlobeIcon size={14} />
                       alfycore.pro
                     </Button>
                   </Link>
                   <Link href="mailto:contact@alfycore.org" className="no-underline">
-                    <Button variant="tertiary" size="sm" className="gap-2 border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6 backdrop-blur-sm">
+                    <Button variant="tertiary" size="sm" className="gap-2 border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6">
                       contact@alfycore.org
                     </Button>
                   </Link>
@@ -522,7 +522,7 @@ export default function Home() {
             <Reveal direction="right">
               <div className="grid grid-cols-2 gap-3">
                 {openSourceFacts.map((f) => (
-                  <div key={f.label} className="rounded-2xl border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/4 p-5 backdrop-blur-sm transition-all duration-200 hover:shadow-md">
+                  <div key={f.label} className="rounded-2xl border border-black/8 dark:border-white/8 bg-white/60 dark:bg-white/4 p-5 transition-all duration-200 hover:shadow-md">
                     <div className="mb-3 flex size-9 items-center justify-center rounded-xl border border-accent/15 bg-accent/10">
                       <f.icon size={16} className="text-accent" />
                     </div>
@@ -572,7 +572,7 @@ export default function Home() {
                   </div>
                   <div className="mt-4 flex items-center justify-center gap-2.5">
                     {[VideoIcon, MonitorUpIcon].map((Icon, i) => (
-                      <div key={i} className="flex size-9 items-center justify-center rounded-full border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/6 backdrop-blur-sm">
+                      <div key={i} className="flex size-9 items-center justify-center rounded-full border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/6">
                         <Icon size={14} className="text-muted" />
                       </div>
                     ))}
@@ -625,7 +625,7 @@ export default function Home() {
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,oklch(0.6_0.2_280/10%),transparent_65%)]" />
 
               <div className="relative flex flex-col items-center gap-6 px-8 py-12 text-center">
-                <div className="inline-flex items-center gap-2 rounded-full border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6 px-4 py-2 text-xs text-muted backdrop-blur-sm">
+                <div className="inline-flex items-center gap-2 rounded-full border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6 px-4 py-2 text-xs text-muted">
                   <UsersIcon size={12} className="text-accent/70" />
                   AlfyCore · Association loi 1901 · alfycore.pro
                 </div>
@@ -641,7 +641,7 @@ export default function Home() {
 
                 <div className="flex flex-wrap justify-center gap-2">
                   {['100% Open source', 'Hébergé en France', 'RGPD natif', 'Gratuit'].map((t) => (
-                    <span key={t} className="flex items-center gap-1.5 rounded-full border border-black/8 dark:border-white/10 bg-white/60 dark:bg-white/6 px-3 py-1 text-[11px] text-muted backdrop-blur-sm">
+                    <span key={t} className="flex items-center gap-1.5 rounded-full border border-black/8 dark:border-white/10 bg-white/60 dark:bg-white/6 px-3 py-1 text-[11px] text-muted">
                       <span className="flex size-3.5 items-center justify-center rounded-full bg-success/15">
                         <CheckIcon size={8} className="text-success" />
                       </span>
@@ -658,7 +658,7 @@ export default function Home() {
                     </Button>
                   </Link>
                   <Link href="/login" className="no-underline">
-                    <Button variant="tertiary" size="lg" className="border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6 px-8 backdrop-blur-sm">
+                    <Button variant="tertiary" size="lg" className="border border-black/10 dark:border-white/12 bg-white/60 dark:bg-white/6 px-8">
                       Se connecter
                     </Button>
                   </Link>
@@ -670,7 +670,7 @@ export default function Home() {
       </section>
 
       {/* ━━ Footer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <footer className="border-t border-black/8 dark:border-white/8 bg-white/30 dark:bg-white/2 backdrop-blur-sm">
+      <footer className="border-t border-black/8 dark:border-white/8 bg-white/30 dark:bg-white/2">
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="mb-8 grid gap-8 md:grid-cols-5">
             <div className="md:col-span-2">

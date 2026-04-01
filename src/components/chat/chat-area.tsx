@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   useState,
@@ -502,9 +502,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             Ouvrir les conversations
           </Button>
         )}
-        <Card className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-8 py-7 shadow-none backdrop-blur-sm">
+        <Card className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-8 py-7 shadow-none">
           <div className="relative">
-            <div className="absolute inset-0 rounded-3xl bg-[var(--accent)]/15 blur-2xl" />
+            <div className="absolute inset-0 rounded-3xl bg-[var(--accent)]/15 " />
             <div className="relative flex size-20 items-center justify-center rounded-3xl bg-[var(--accent)]/10 md:size-24">
               <MessageCircleIcon size={36} className="text-[var(--accent)] md:size-11" />
             </div>
@@ -674,7 +674,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
-            <Card className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-5 shadow-none backdrop-blur-sm">
+            <Card className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-5 shadow-none">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--surface-secondary)]/60">
                 <MessageCircleIcon size={22} className="text-[var(--muted)]/50" />
               </div>
@@ -752,7 +752,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
       {/* Cooldown */}
       {cooldownActive && (
-        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/8 px-3 py-2 text-[12px] font-medium text-orange-400 backdrop-blur-sm md:mx-4">
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/8 px-3 py-2 text-[12px] font-medium text-orange-400 md:mx-4">
           Calme-toi ! Tu envoies trop de messages.
         </div>
       )}

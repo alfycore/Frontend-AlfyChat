@@ -224,7 +224,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* Mobile overlay */}
       {isMobile && (showSidebar || showMemberList) && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={closeAll} />
+        <div className="fixed inset-0 z-40 bg-black/60" onClick={closeAll} />
       )}
 
       {/* ── DESKTOP: Server list TOP ── */}

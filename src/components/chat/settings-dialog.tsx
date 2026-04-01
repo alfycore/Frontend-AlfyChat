@@ -2567,10 +2567,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               label: 'Vitré arrondi',
                               preview: (
                                 <div className="flex h-14 w-full gap-1 overflow-hidden rounded-xl border border-[var(--border)]/20 bg-[var(--background)]/50 p-1.5">
-                                  <div className="w-4 rounded-xl bg-[var(--accent)]/40 backdrop-blur-sm" />
-                                  <div className="w-6 rounded-xl bg-[var(--surface-secondary)]/50 backdrop-blur-sm" />
-                                  <div className="flex-1 rounded-xl bg-[var(--surface-secondary)]/20 backdrop-blur-sm" />
-                                  <div className="w-5 rounded-xl bg-[var(--surface-secondary)]/30 backdrop-blur-sm" />
+                                  <div className="w-4 rounded-xl bg-[var(--accent)]/40" />
+                                  <div className="w-6 rounded-xl bg-[var(--surface-secondary)]/50" />
+                                  <div className="flex-1 rounded-xl bg-[var(--surface-secondary)]/20" />
+                                  <div className="w-5 rounded-xl bg-[var(--surface-secondary)]/30" />
                                 </div>
                               ),
                             },

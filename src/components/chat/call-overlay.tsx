@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -147,7 +147,7 @@ export function CallOverlay({
 
             {/* Media error */}
             {mediaError && (
-              <div className="mx-auto max-w-sm rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400 backdrop-blur-sm">
+              <div className="mx-auto max-w-sm rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400">
                 {mediaError}
               </div>
             )}
@@ -169,7 +169,7 @@ export function CallOverlay({
       </div>
 
       {/* Controls bar */}
-      <div className="flex items-center justify-center gap-3 border-t border-[var(--border)]/40 bg-[var(--surface)]/80 px-8 py-4 backdrop-blur-xl">
+      <div className="flex items-center justify-center gap-3 border-t border-[var(--border)]/40 bg-[var(--surface)]/80 px-8 py-4">
         <Tooltip delay={0}>
           <Button
             isIconOnly

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import {
@@ -201,7 +201,7 @@ export function GroupSettingsDialog({
         <Modal.Dialog className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl border border-[var(--border)]/60 p-0 shadow-2xl">
           <div className="flex h-full">
           {/* ── Sidebar ── */}
-          <aside className="flex w-48 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl py-6">
+          <aside className="flex w-48 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 py-6">
             <div className="mb-4 px-4">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">Groupe</p>
               <p className="mt-0.5 truncate text-sm font-medium text-[var(--foreground)]">{group?.name || 'Groupe'}</p>
@@ -249,7 +249,7 @@ export function GroupSettingsDialog({
           </aside>
 
           {/* ── Content ── */}
-          <div className="flex flex-1 flex-col overflow-hidden bg-[var(--surface)]/50 backdrop-blur-sm">
+          <div className="flex flex-1 flex-col overflow-hidden bg-[var(--surface)]/50">
             <div className="flex-1 overflow-y-auto p-6">
               {/* ── Général ── */}
               {section === 'general' && (

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
 import { MessageCircleIcon, UsersIcon, SettingsIcon } from '@/components/icons';
@@ -50,7 +50,7 @@ export function MobileBottomNav() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch border-t border-[var(--border)]/30 bg-[var(--surface)]/80 backdrop-blur-xl md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch border-t border-[var(--border)]/30 bg-[var(--surface)]/80 md:hidden">
       {TABS.map((tab) => {
         const active = isActive(tab.id);
         return (

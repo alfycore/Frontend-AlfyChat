@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -48,7 +48,7 @@ export default function ChangelogsPage() {
     return (
       <div className="flex h-full flex-col overflow-hidden">
         {/* Header skeleton */}
-        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-white/5 px-6 backdrop-blur-sm">
+        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-white/5 px-6">
           <Skeleton className="size-9 rounded-2xl" animationType="shimmer" />
           <Skeleton className="h-4 w-28" animationType="shimmer" />
           <Skeleton className="ml-auto h-5 w-16 rounded-full" animationType="shimmer" />
@@ -57,7 +57,7 @@ export default function ChangelogsPage() {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
+              className="rounded-2xl border border-white/10 bg-white/5 p-4"
             >
               <div className="mb-3 flex gap-2">
                 <Skeleton className="h-5 w-12 rounded-full" animationType="shimmer" />
@@ -80,13 +80,13 @@ export default function ChangelogsPage() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* ── Header ── */}
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-white/5 px-4 backdrop-blur-sm md:px-6">
+      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-white/5 px-4 md:px-6">
         <div className="flex size-9 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">
           <SparklesIcon size={16} className="text-[var(--accent-foreground)]" />
         </div>
         <span className="text-[15px] font-bold tracking-tight text-[var(--foreground)]">Changelogs</span>
         {!loading && changelogs.length > 0 && (
-          <span className="ml-auto rounded-full border border-white/15 bg-white/30 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--muted)] backdrop-blur-sm dark:border-white/10 dark:bg-white/8">
+          <span className="ml-auto rounded-full border border-white/15 bg-white/30 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--muted)] dark:border-white/10 dark:bg-white/8">
             {changelogs.length} mises à jour
           </span>
         )}
@@ -94,9 +94,9 @@ export default function ChangelogsPage() {
 
       {changelogs.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center p-6">
-          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/30 px-8 py-10 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/30 px-8 py-10 text-center dark:border-white/10 dark:bg-white/5">
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent)]/15 via-transparent to-violet-500/10" />
-            <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/20 blur-3xl" />
+            <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/20 " />
             <div className="relative flex flex-col items-center gap-4">
               <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-xl shadow-[var(--accent)]/30">
                 <SparklesIcon size={26} className="text-[var(--accent-foreground)]" />
@@ -159,7 +159,7 @@ export default function ChangelogsPage() {
                     />
 
                     {/* Card */}
-                    <div className="overflow-hidden rounded-2xl border border-white/15 bg-white/30 backdrop-blur-sm transition-all duration-150 hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/8">
+                    <div className="overflow-hidden rounded-2xl border border-white/15 bg-white/30 transition-all duration-150 hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/8">
                       {/* Banner */}
                       {log.banner_url && (
                         <div className="relative h-36 w-full overflow-hidden">
@@ -187,7 +187,7 @@ export default function ChangelogsPage() {
                           </span>
 
                           {/* Version */}
-                          <span className="rounded-full border border-white/20 bg-white/30 px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--foreground)]/60 backdrop-blur-sm dark:border-white/10 dark:bg-white/8">
+                          <span className="rounded-full border border-white/20 bg-white/30 px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--foreground)]/60 dark:border-white/10 dark:bg-white/8">
                             v{log.version}
                           </span>
 
@@ -240,7 +240,7 @@ export default function ChangelogsPage() {
                         {/* Author */}
                         {log.author_username && (
                           <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-2.5 dark:border-white/8">
-                            <span className="flex size-5 items-center justify-center rounded-full border border-white/20 bg-white/30 text-[9px] font-bold uppercase text-[var(--foreground)]/60 backdrop-blur-sm dark:border-white/10 dark:bg-white/8">
+                            <span className="flex size-5 items-center justify-center rounded-full border border-white/20 bg-white/30 text-[9px] font-bold uppercase text-[var(--foreground)]/60 dark:border-white/10 dark:bg-white/8">
                               {log.author_username.charAt(0)}
                             </span>
                             <p className="text-[11px] text-[var(--muted)]/60">

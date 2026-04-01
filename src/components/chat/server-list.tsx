@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
@@ -216,7 +216,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     <>
       {/* ── Sidebar ── */}
       <div className={cn(
-        'flex items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60 backdrop-blur-xl transition-all duration-200',
+        'flex items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60 transition-all duration-200',
         horizontal
           ? 'h-14 w-full flex-row border-b border-[var(--border)]/20 px-2'
           : cn('h-full flex-col py-3', compact ? 'w-13' : 'w-17'),

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { UsersRoundIcon, SearchIcon, CheckIcon, XIcon, UserPlusIcon, PencilIcon, ArrowRightIcon } from '@/components/icons';
@@ -158,7 +158,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
         <Modal.Dialog className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl border border-[var(--border)]/60 p-0 shadow-2xl">
           <div className="flex h-full">
           {/* ── Left navigation ── */}
-          <aside className="flex w-52 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 backdrop-blur-xl py-6">
+          <aside className="flex w-52 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 py-6">
             <div className="mb-4 px-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
                 Nouveau groupe
@@ -242,7 +242,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
           </aside>
 
           {/* ── Right content ── */}
-          <div className="flex flex-1 flex-col overflow-hidden bg-[var(--surface)]/50 backdrop-blur-sm">
+          <div className="flex flex-1 flex-col overflow-hidden bg-[var(--surface)]/50">
             <div className="flex-1 overflow-y-auto p-8">
               {/* ── STEP 1: SELECT FRIENDS ── */}
               {step === 'select' && (
@@ -283,7 +283,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                     </div>
                   )}
 
-                  <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60 backdrop-blur-sm">
+                  <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
                     <InputGroup.Prefix><SearchIcon size={16} className="text-[var(--muted)]/60" /></InputGroup.Prefix>
                     <InputGroup.Input
                       placeholder="Rechercher des amis..."
@@ -372,7 +372,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                     </p>
                     <div className="space-y-1">
                       <span className="text-xs font-medium">Nom du groupe</span>
-                      <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60 backdrop-blur-sm">
+                      <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
                         <InputGroup.Input
                           placeholder={
                             selectedFriends.map((f) => f.displayName).slice(0, 3).join(', ') +

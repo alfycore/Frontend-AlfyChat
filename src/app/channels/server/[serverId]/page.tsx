@@ -170,7 +170,7 @@ export default function ServerWelcomePage() {
       <div className="flex-1 space-y-6 px-8 py-6">
         {/* Description */}
         {serverInfo?.description && (
-          <Card className="max-w-xl rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 backdrop-blur-sm shadow-none">
+          <Card className="max-w-xl rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 shadow-none">
             <Card.Header>
               <Card.Title className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
                 À propos
@@ -221,7 +221,7 @@ export default function ServerWelcomePage() {
 
         {/* Quick start */}
         {firstTextChannel && (
-          <Card className="max-w-lg rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 backdrop-blur-sm shadow-none">
+          <Card className="max-w-lg rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 shadow-none">
             <Card.Header>
               <div className="flex items-center gap-2.5">
                 <div className="flex size-8 items-center justify-center rounded-xl bg-yellow-500/10">
@@ -254,7 +254,7 @@ export default function ServerWelcomePage() {
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted/70">
               Salons
             </h3>
-            <Card className="rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 p-2 backdrop-blur-sm shadow-none">
+            <Card className="rounded-2xl border border-[var(--border)]/25 bg-[var(--surface)]/50 p-2 shadow-none">
               <Card.Content className="space-y-0.5 p-0">
                 {channels.slice(0, 10).map((ch) => (
                   <Button

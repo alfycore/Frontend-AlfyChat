@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
 import { Card } from '@heroui/react';
 import { ShieldIcon, DownloadIcon, Trash2Icon, EyeIcon, FileCheckIcon, UserCheckIcon, ScaleIcon, MailIcon } from '@/components/icons';
 
@@ -112,7 +112,7 @@ export default function RGPDPage() {
 
 function Section({ icon: Icon, title, badge, children }: { icon: React.ComponentType<{ size?: number; className?: string }>; title: string; badge?: string; children: React.ReactNode }) {
   return (
-    <Card className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white/60 p-0 shadow-sm backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
+    <Card className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white/60 p-0 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
       <div className="px-5 pt-5 pb-3">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
           <Icon size={20} className="text-[var(--accent)]" />

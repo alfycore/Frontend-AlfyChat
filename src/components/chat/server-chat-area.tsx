@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   useState,
@@ -470,7 +470,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         </div>
         <h2 className="truncate text-[14px] font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
         <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Chip variant="soft" size="sm" className="hidden rounded-xl border border-white/15 bg-white/20 text-[10px] font-medium text-[var(--muted)] backdrop-blur-sm dark:border-white/10 dark:bg-white/8 md:flex">
+          <Chip variant="soft" size="sm" className="hidden rounded-xl border border-white/15 bg-white/20 text-[10px] font-medium text-[var(--muted)] dark:border-white/10 dark:bg-white/8 md:flex">
             <Chip.Label>{meta.label}</Chip.Label>
           </Chip>
           <Button
@@ -496,8 +496,8 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
               <div className="relative mb-6">
                 {/* Glow blob */}
-                <div className="absolute inset-0 -m-4 rounded-full bg-[var(--accent)]/20 blur-2xl" />
-                <div className="relative flex size-20 items-center justify-center rounded-3xl border border-white/20 bg-white/30 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                <div className="absolute inset-0 -m-4 rounded-full bg-[var(--accent)]/20 " />
+                <div className="relative flex size-20 items-center justify-center rounded-3xl border border-white/20 bg-white/30 shadow-xl dark:border-white/10 dark:bg-white/5">
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent dark:from-white/10" />
                   <div className="relative flex size-10 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">

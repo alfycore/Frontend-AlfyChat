@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -143,11 +143,11 @@ function RegisterContent() {
       </div>
 
       <div className="w-full max-w-[900px]">
-        <Card className="overflow-hidden rounded-3xl border border-white/20 bg-white/80 p-0 shadow-2xl backdrop-blur-2xl dark:bg-black/60 dark:border-white/10">
+        <Card className="overflow-hidden rounded-3xl border border-white/20 bg-white/80 p-0 shadow-2xl dark:bg-black/60 dark:border-white/10">
           <div className="grid md:grid-cols-[300px_1fr]">
             {/* ── Panneau visuel ── */}
             <div className="relative hidden overflow-hidden border-r border-white/20 dark:border-white/10 md:flex md:flex-col md:items-center md:justify-center md:p-8">
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/20 via-transparent to-emerald-600/15 backdrop-blur-sm" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/20 via-transparent to-emerald-600/15" />
               <div className="relative flex flex-col items-center gap-6">
                 <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-xl shadow-[var(--accent)]/30">
                   <MessageCircleIcon size={28} className="text-[var(--accent-foreground)]" />
@@ -166,7 +166,7 @@ function RegisterContent() {
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="flex items-center gap-3 rounded-xl border border-white/25 bg-white/30 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/8"
+                      className="flex items-center gap-3 rounded-xl border border-white/25 bg-white/30 px-4 py-3 dark:border-white/10 dark:bg-white/8"
                     >
                       <item.icon size={18} className={item.color} />
                       <div>
