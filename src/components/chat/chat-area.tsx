@@ -34,7 +34,7 @@ import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { notify } from '@/hooks/use-notification';
 import {
-  Button, Card, ScrollShadow, Spinner, TextArea, Tooltip,
+  Button, Card, ScrollShadow, Spinner, Tooltip,
 } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { GifPicker } from '@/components/chat/gif-picker';
@@ -272,18 +272,29 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
     const MAX = 10 * 1024 * 1024;
     const ACCEPTED_IMAGES = ['image/png','image/jpeg','image/jpg','image/gif','image/webp'];
-    const ACCEPTED_DOCS = ['application/pdf','application/msword',
+    const ACCEPTED_DOCS = [
+      'application/pdf','application/x-pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-powerpoint',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'text/plain','text/csv'];
+      'text/plain','text/csv',
+      // Variantes Windows (DOCX/XLSX = ZIP)
+      'application/zip','application/x-zip-compressed','application/octet-stream',
+    ];
     const ACCEPTED = [...ACCEPTED_IMAGES, ...ACCEPTED_DOCS];
+    const ACCEPTED_EXTS = ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','csv',
+                           'png','jpg','jpeg','gif','webp'];
 
     for (const file of files) {
       if (file.size > MAX) { notify.error('Fichier trop volumineux', `${file.name} dépasse 10 Mo`); continue; }
-      if (!ACCEPTED.includes(file.type)) { notify.error('Type non supporté', `${file.name} n'est pas accepté`); continue; }
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      if (!ACCEPTED.includes(file.type) && !ACCEPTED_EXTS.includes(ext)) {
+        notify.error('Type non supporté', `${file.name} n'est pas accepté`);
+        continue;
+      }
 
       setIsUploading(true);
       try {
@@ -711,7 +722,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         )}
 
         {typingUsers.length > 0 && (
-          <div className="flex items-center gap-1.5 px-4 py-1.5">
+          <div className="flex items-center gap-1.5 px-4 py-1">
             <div className="flex gap-0.5">
               <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--muted)]/50 [animation-delay:0ms]" />
               <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--muted)]/50 [animation-delay:150ms]" />
@@ -723,6 +734,21 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         )}
       </ScrollShadow>
+
+      {/* Typing indicator strip (outside scroll, above input) */}
+      {typingUsers.length > 0 && (
+        <div className="flex shrink-0 items-center gap-2 px-4 py-1">
+          <div className="flex items-center gap-0.5">
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--accent)]/60 [animation-delay:0ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--accent)]/60 [animation-delay:150ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--accent)]/60 [animation-delay:300ms]" />
+          </div>
+          <span className="text-[11px] font-medium text-[var(--muted)]">
+            <span className="text-[var(--foreground)]/70">{typingUsers.map((u) => u.username).join(', ')}</span>
+            {typingUsers.length > 1 ? ' sont en train d’écrire…' : ' est en train d’écrire…'}
+          </span>
+        </div>
+      )}
 
       {/* Cooldown */}
       {cooldownActive && (
@@ -823,15 +849,15 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             )}
 
             {/* Text input */}
-            <TextArea
+            <textarea
               ref={textareaRef}
               rows={1}
               value={messageInput}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder={`Message ${recipientId ? recipientName || '' : '#général'}`}
-              className="min-h-[34px] w-full flex-1 resize-none border-0 bg-transparent text-[13px] leading-5 shadow-none focus:ring-0"
-              style={{ maxHeight: '110px', overflowY: 'auto' }}
+              className="w-full resize-none border-0 bg-transparent text-[13px] leading-5 text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/50"
+              style={{ minHeight: '20px', maxHeight: '110px', overflowY: 'auto' }}
               aria-label="Message"
             />
           </div>

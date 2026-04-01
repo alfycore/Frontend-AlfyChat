@@ -43,8 +43,22 @@ function parseAttachments(content: string): {
 
 // ── Attachment embed ─────────────────────────────────────────────────────────
 
+const FILE_ICONS: Record<string, string> = {
+  pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊',
+  ppt: '📊', pptx: '📊', txt: '📃', csv: '📃',
+};
+
+function fileExt(name: string) {
+  return name.split('.').pop()?.toLowerCase() ?? '';
+}
+
+function isPreviewable(name: string) {
+  return ['pdf', 'txt', 'csv'].includes(fileExt(name));
+}
+
 function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: string; url: string }[] }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [filePreview, setFilePreview] = useState<{ name: string; src: string } | null>(null);
   if (!images.length && !files.length) return null;
   return (
     <div className="mt-1.5 flex flex-col gap-1.5">
@@ -62,19 +76,42 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
           </div>
         );
       })}
-      {files.map((f, i) => (
-        <a
-          key={i}
-          href={resolveMediaUrl(f.url) ?? f.url}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex max-w-xs items-center gap-2 rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40 px-3 py-2 text-[12px] text-[var(--foreground)]/80 transition-colors hover:bg-[var(--surface-secondary)]/70"
-          download={f.name}
-        >
-          <svg className="size-4 shrink-0 text-[var(--muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7l-5-5H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-          <span className="max-w-[180px] truncate">{f.name}</span>
-        </a>
-      ))}
+      {files.map((f, i) => {
+        const src = resolveMediaUrl(f.url) ?? f.url;
+        const ext = fileExt(f.name);
+        const icon = FILE_ICONS[ext] ?? '📎';
+        const canPreview = isPreviewable(f.name);
+        return (
+          <div key={i} className="inline-flex max-w-sm items-center gap-0 overflow-hidden rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40">
+            {/* Preview / download button */}
+            <button
+              type="button"
+              className="flex flex-1 items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-secondary)]/70"
+              onClick={() => canPreview ? setFilePreview({ name: f.name, src }) : window.open(src, '_blank')}
+            >
+              <span className="text-xl leading-none">{icon}</span>
+              <div className="min-w-0">
+                <p className="max-w-[180px] truncate text-[12px] font-medium text-[var(--foreground)]/85">{f.name}</p>
+                <p className="text-[10px] uppercase text-[var(--muted)]/60">{ext || 'fichier'}{canPreview ? ' · Aperçu disponible' : ''}</p>
+              </div>
+            </button>
+            {/* Download button */}
+            <a
+              href={src}
+              download={f.name}
+              className="flex shrink-0 items-center border-l border-[var(--border)]/20 px-2.5 py-2.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]"
+              title="Télécharger"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+              </svg>
+            </a>
+          </div>
+        );
+      })}
+
+      {/* Image lightbox */}
       {lightbox && (
         <div
           className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80 backdrop-blur-sm"
@@ -83,12 +120,42 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
           role="dialog"
           aria-modal
         >
-          <img
-            src={lightbox}
-            alt=""
-            className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
+          <img src={lightbox} alt="" className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
+      {/* File preview modal */}
+      {filePreview && (
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setFilePreview(null)}
+          onKeyDown={(e) => e.key === 'Escape' && setFilePreview(null)}
+          role="dialog"
+          aria-modal
+        >
+          <div
+            className="flex h-[90vh] w-[90vw] max-w-4xl flex-col overflow-hidden rounded-2xl bg-[var(--surface)] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
-          />
+          >
+            {/* Modal header */}
+            <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)]/20 px-4 py-3">
+              <span className="max-w-[300px] truncate text-[13px] font-medium text-[var(--foreground)]">{filePreview.name}</span>
+              <div className="flex items-center gap-2">
+                <a href={filePreview.src} download={filePreview.name} className="rounded-lg border border-[var(--border)]/30 px-3 py-1.5 text-[11px] text-[var(--muted)] transition-colors hover:text-[var(--foreground)]">
+                  Télécharger
+                </a>
+                <button type="button" className="rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:text-[var(--foreground)]" onClick={() => setFilePreview(null)}>
+                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            {/* Iframe preview */}
+            <iframe
+              src={filePreview.src}
+              title={filePreview.name}
+              className="min-h-0 flex-1 w-full border-0"
+            />
+          </div>
         </div>
       )}
     </div>
