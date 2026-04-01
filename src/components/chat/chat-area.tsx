@@ -815,12 +815,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         )}
 
-        <div className={`flex items-end gap-1 px-1.5 py-1 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''} ${iBlockedThem || theyBlockedMe ? 'pointer-events-none opacity-40' : ''}`}>
+        <div className={`flex items-center gap-1 px-1.5 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''} ${iBlockedThem || theyBlockedMe ? 'pointer-events-none opacity-40' : ''}`}>
           {/* Attachment / File upload */}
           <Tooltip delay={0}>
             <Button
               isIconOnly size="sm" variant="tertiary"
-              className="mb-0.5 size-7 shrink-0 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
+              className="size-7 shrink-0 self-end rounded-xl pb-0.5 text-[var(--muted)] hover:text-[var(--foreground)]"
               isDisabled={isUploading}
               onPress={() => fileInputRef.current?.click()}
             >
@@ -856,14 +856,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder={`Message ${recipientId ? recipientName || '' : '#général'}`}
-              className="w-full resize-none border-0 bg-transparent text-[13px] leading-5 text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/50"
+              className="w-full resize-none border-0 bg-transparent py-0.5 text-[13px] leading-5 text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/50"
               style={{ minHeight: '20px', maxHeight: '110px', overflowY: 'auto' }}
               aria-label="Message"
             />
           </div>
 
           {/* Actions */}
-          <div className="mb-0.5 flex shrink-0 items-center gap-0.5">
+          <div className="flex shrink-0 self-end items-center gap-0.5 pb-0.5">
             <EmojiPicker onSelect={handleEmojiInsert}>
               <Button
                 isIconOnly
