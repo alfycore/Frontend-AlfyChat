@@ -5,7 +5,7 @@ import { MicIcon, MicOffIcon, HeadphonesIcon, SettingsIcon, CheckIcon, PencilIco
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import {
-  Avatar, Button, Dropdown, InputGroup, Tooltip,
+  Avatar, Button, Dropdown, InputGroup, Modal, Tooltip,
 } from '@heroui/react';
 import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
@@ -97,7 +97,15 @@ export function UserPanel({ user }: UserPanelProps) {
               if (['online', 'idle', 'dnd', 'invisible'].includes(key as string)) {
                 handleStatusChange(key as 'online' | 'idle' | 'dnd' | 'invisible');
               } else if (key === 'edit-custom-status') {
-                setEditingCustomStatus(true);
+                // Dropdown closes first (by HeroUI default), then we open the modal
+                setTimeout(() => setEditingCustomStatus(true), 0);
+              } else if (key === 'clear-custom-status') {
+                socketService.updatePresence(
+                  user.status === 'offline' ? 'online' : (user.status as 'online' | 'idle' | 'dnd' | 'invisible'),
+                  null,
+                );
+                updateUser({ customStatus: null });
+                setCustomStatusDraft('');
               }
             }}
           >
@@ -110,39 +118,20 @@ export function UserPanel({ user }: UserPanelProps) {
 
             {/* Statut personnalisé */}
             <Dropdown.Item id="edit-custom-status" textValue="Statut personnalisé">
-              {editingCustomStatus ? (
-                <div className="flex w-full items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  <InputGroup className="flex-1">
-                    <InputGroup.Input
-                      ref={customStatusInputRef}
-                      value={customStatusDraft}
-                      onChange={(e) => setCustomStatusDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') saveCustomStatus();
-                        if (e.key === 'Escape') setEditingCustomStatus(false);
-                      }}
-                      maxLength={100}
-                      placeholder="Définir un statut..."
-                      className="text-[12px]"
-                    />
-                  </InputGroup>
-                  <Button
-                    size="sm"
-                    onPress={saveCustomStatus}
-                    className="shrink-0"
-                  >
-                    OK
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex w-full items-center gap-2">
-                  <PencilIcon size={13} className="shrink-0 text-[var(--muted)]" />
-                  <span className="flex-1 truncate text-[13px] text-[var(--muted)]">
-                    {user.customStatus || 'Définir un statut...'}
-                  </span>
-                </div>
-              )}
+              <div className="flex w-full items-center gap-2">
+                <PencilIcon size={13} className="shrink-0 text-[var(--muted)]" />
+                <span className="flex-1 truncate text-[13px] text-[var(--muted)]">
+                  {user.customStatus || 'Définir un statut...'}
+                </span>
+              </div>
             </Dropdown.Item>
+
+            {/* Effacer le statut personnalisé */}
+            {user.customStatus && (
+              <Dropdown.Item id="clear-custom-status" textValue="Effacer le statut">
+                <span className="text-[13px] text-red-400">Effacer le statut</span>
+              </Dropdown.Item>
+            )}
 
             {/* Statuts disponibles */}
             {(['online', 'idle', 'dnd', 'invisible'] as const).map((s) => {
@@ -160,6 +149,37 @@ export function UserPanel({ user }: UserPanelProps) {
         </Dropdown.Popover>
       </Dropdown>
       </div>
+
+      {/* Modal statut personnalisé — ouvert séparément pour ne pas fermer le dropdown avant validation */}
+      <Modal isOpen={editingCustomStatus} onOpenChange={(open) => { if (!open) setEditingCustomStatus(false); }} size="sm">
+        <Modal.Content>
+          {() => (
+            <>
+              <Modal.Header>Définir un statut personnalisé</Modal.Header>
+              <Modal.Body>
+                <InputGroup>
+                  <InputGroup.Input
+                    ref={customStatusInputRef}
+                    value={customStatusDraft}
+                    onChange={(e) => setCustomStatusDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveCustomStatus();
+                      if (e.key === 'Escape') setEditingCustomStatus(false);
+                    }}
+                    maxLength={100}
+                    placeholder="Définir un statut..."
+                    autoFocus
+                  />
+                </InputGroup>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="ghost" onPress={() => setEditingCustomStatus(false)}>Annuler</Button>
+                <Button onPress={saveCustomStatus}>Enregistrer</Button>
+              </Modal.Footer>
+            </>
+          )}
+        </Modal.Content>
+      </Modal>
 
       {/* Audio controls + settings */}
       <div className="flex shrink-0 items-center gap-0.5">

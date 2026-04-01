@@ -55,9 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const handleProfileUpdate = (data: unknown) => {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
-      const p = payload as { userId?: string; displayName?: string; avatarUrl?: string; bio?: string; status?: 'online' | 'idle' | 'dnd' | 'invisible' | 'offline' };
-      // Si c'est notre propre profil qui a été mis à jour par un autre client
-      if (p?.userId === user.id) {
+      const p = payload as { id?: string; userId?: string; displayName?: string; avatarUrl?: string; bio?: string; status?: 'online' | 'idle' | 'dnd' | 'invisible' | 'offline' };
+      // Mise à jour de son propre profil (réponse du gateway) OU notification d'un autre client
+      const targetId = p?.id || p?.userId;
+      if (!targetId || targetId === user.id) {
         setUser((prev) => prev ? { ...prev, ...p } : prev);
       }
     };

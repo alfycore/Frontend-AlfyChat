@@ -44,6 +44,8 @@ interface VoiceContextType extends VoiceState {
   toggleMute: () => void;
   toggleDeafen: () => void;
   getChannelParticipants: (channelId: string) => VoiceParticipant[];
+  /** Fetch the current voice snapshot from the gateway (on mount/server-change). */
+  refreshVoiceState: (serverId: string) => void;
 }
 
 const VoiceContext = createContext<VoiceContextType | null>(null);
@@ -341,6 +343,21 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     return channelParticipants.get(channelId) || [];
   }, [channelParticipants]);
 
+  const refreshVoiceState = useCallback((serverId: string) => {
+    socketService.requestVoiceState(serverId, (channels) => {
+      if (channels.length === 0) return;
+      setChannelParticipants((prev) => {
+        const next = new Map(prev);
+        channels.forEach(({ channelId, participants: ps }) => {
+          if (ps && ps.length > 0) {
+            next.set(channelId, ps);
+          }
+        });
+        return next;
+      });
+    });
+  }, []);
+
   // ── Socket event handlers ──
   useEffect(() => {
     const handleVoiceStateUpdate = (data: any) => {
@@ -488,6 +505,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     toggleMute,
     toggleDeafen,
     getChannelParticipants,
+    refreshVoiceState,
   };
 
   return (

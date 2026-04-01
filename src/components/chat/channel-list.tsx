@@ -390,31 +390,30 @@ export function ChannelList({
           );
         }
       } catch {}
-      setConversations(sorted);
-      if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
-      if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
-
-      // Refresh the presence data from Redis via socket for accurate real-time status
+      // Refresh presence from Redis first, then render — avoids flicker from stale DB status
       const dmRecipientIds = sorted
         .filter((c) => c.type === 'dm')
         .map((c) => c.recipientId)
         .filter(Boolean);
+
       if (dmRecipientIds.length > 0) {
         socketService.requestBulkPresence(dmRecipientIds, (presence) => {
-          if (presence.length === 0) return;
-          setPresenceMap((prev) => {
-            const next = new Map(prev);
-            presence.forEach(({ userId, status }) => next.set(userId, status));
-            return next;
+          // Merge Redis presence over the API-sourced presence
+          const finalPresence = new Map(initialPresence);
+          const finalCustomStatus = new Map(initialCustomStatus);
+          presence.forEach(({ userId, status, customStatus }) => {
+            finalPresence.set(userId, status);
+            if (customStatus !== undefined) finalCustomStatus.set(userId, customStatus);
           });
-          setCustomStatusMap((prev) => {
-            const next = new Map(prev);
-            presence.forEach(({ userId, customStatus }) => {
-              if (customStatus !== undefined) next.set(userId, customStatus);
-            });
-            return next;
-          });
+          // Single batched render: conversations + correct presence at once
+          setConversations(sorted);
+          setPresenceMap((prev) => { const next = new Map(prev); finalPresence.forEach((v, k) => next.set(k, v)); return next; });
+          setCustomStatusMap((prev) => { const next = new Map(prev); finalCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
         });
+      } else {
+        setConversations(sorted);
+        if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
+        if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
       }
     } catch (e) {
       console.error('Erreur chargement conversations:', e);
@@ -513,6 +512,12 @@ export function ChannelList({
       loadConversations();
     }
   }, [serverId, loadChannels, loadConversations]);
+
+  // Snapshot de l'état vocal du serveur à l'ouverture (évite le compteur "0" avant le 1er VOICE_STATE_UPDATE)
+  useEffect(() => {
+    if (!serverId || !voice) return;
+    voice.refreshVoiceState(serverId);
+  }, [serverId]);
 
   // Quand l'utilisateur sélectionne une conversation → vider son compteur non-lu
   useEffect(() => {

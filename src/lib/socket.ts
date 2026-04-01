@@ -370,6 +370,15 @@ class SocketService {
     }).catch(() => callback([]));
   }
 
+  /** Récupère l'état vocal actuel d'un serveur (channelId → participants[]). */
+  requestVoiceState(serverId: string, callback: (data: Array<{ channelId: string; participants: any[] }>) => void): void {
+    this.waitForConnection().then(() => {
+      this.socket!.emit('GET_VOICE_STATE', { serverId }, (res: any) => {
+        callback(res?.channels || []);
+      });
+    }).catch(() => callback([]));
+  }
+
   /** Expulse un membre via socket. */
   kickMember(serverId: string, targetUserId: string): void {
     this.socket?.emit('MEMBER_KICK', { serverId, targetUserId });
