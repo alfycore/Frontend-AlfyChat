@@ -216,8 +216,8 @@ body[data-wallpaper] [data-slot="tooltip"],
 body[data-wallpaper] aside,
 body[data-wallpaper] nav,
 body[data-wallpaper] header {
-  ) saturate(1.4);
-  -webkit-) saturate(1.4);
+  backdrop-filter: saturate(1.4);
+  -webkit-backdrop-filter: saturate(1.4);
 }
 
 /* ── Glassmorphism : grandes zones de l'interface ──────────────────────────── */
@@ -236,15 +236,15 @@ body[data-wallpaper] [data-layout="member-list"] {
   overflow: hidden;
   border: 1px solid oklch(100% 0 0 / 0.10);
   background: oklch(10% 0.01 282 / 0.45);
-  ) saturate(1.5);
-  -webkit-) saturate(1.5);
+  backdrop-filter: saturate(1.5);
+  -webkit-backdrop-filter: saturate(1.5);
 }
 
 /* Zone chat principal */
 body[data-wallpaper] [data-tour="chat-area"] {
   background: oklch(8% 0.01 282 / 0.40);
-  ) saturate(1.6);
-  -webkit-) saturate(1.6);
+  backdrop-filter: saturate(1.6);
+  -webkit-backdrop-filter: saturate(1.6);
   border-radius: 0.875rem;
   border: 1px solid oklch(100% 0 0 / 0.08);
 }
@@ -252,8 +252,8 @@ body[data-wallpaper] [data-tour="chat-area"] {
 /* Zone amis */
 body[data-wallpaper] [data-tour="friends-panel"] {
   background: oklch(8% 0.01 282 / 0.40);
-  ) saturate(1.6);
-  -webkit-) saturate(1.6);
+  backdrop-filter: saturate(1.6);
+  -webkit-backdrop-filter: saturate(1.6);
   border-radius: 0.875rem;
   border: 1px solid oklch(100% 0 0 / 0.08);
 }
@@ -269,8 +269,6 @@ body[data-wallpaper] [data-tour="friends-panel"] > div > div:first-child {
 body[data-wallpaper] [data-section="dm-list"] {
   background: oklch(100% 0 0 / 0.06);
   border-color: oklch(100% 0 0 / 0.12);
-  
-  -webkit-
 }
 
 /* Input message glass */
