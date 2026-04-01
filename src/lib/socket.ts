@@ -124,7 +124,9 @@ class SocketService {
       // Si le token est invalide, stopper les tentatives automatiques et
       // attendre que le token soit rafraîchi par l'API avant de réessayer
       if (error.message === 'Token invalide' || error.message === 'jwt expired') {
-        this.socket?.io.opts.reconnection = false;
+        if (this.socket) {
+          this.socket.io.opts.reconnection = false;
+        }
       }
     });
 
