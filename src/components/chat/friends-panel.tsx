@@ -833,21 +833,22 @@ function FriendRow({
   return (
     <div className={`group flex items-center gap-3 px-4 py-3 transition-all duration-150 ${ui.row}`}>
       <UserProfilePopover userId={friend.id} onOpenDM={onMessage}>
-        <button type="button" className="relative shrink-0">
-          <Avatar className="size-9 ring-2 ring-white/20 transition-all group-hover:ring-[var(--accent)]/30">
-            <Avatar.Image src={resolveMediaUrl(friend.avatarUrl)} />
-            <Avatar.Fallback className="text-xs">{friend.username.charAt(0).toUpperCase()}</Avatar.Fallback>
-          </Avatar>
-          <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)]', status.color)} />
+        <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left">
+          <span className="relative shrink-0">
+            <Avatar className="size-9 ring-2 ring-white/20 transition-all group-hover:ring-[var(--accent)]/30">
+              <Avatar.Image src={resolveMediaUrl(friend.avatarUrl)} />
+              <Avatar.Fallback className="text-xs">{friend.username.charAt(0).toUpperCase()}</Avatar.Fallback>
+            </Avatar>
+            <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)]', status.color)} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-semibold leading-tight text-[var(--foreground)]">{friend.displayName}</p>
+            <p className="truncate text-[10px] text-[var(--muted)]/60">{friend.customStatus || statusLabel}</p>
+          </span>
         </button>
       </UserProfilePopover>
 
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-semibold leading-tight text-[var(--foreground)]">{friend.displayName}</p>
-        <p className="truncate text-[10px] text-[var(--muted)]/60">{friend.customStatus || statusLabel}</p>
-      </div>
-
-      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         <Tooltip delay={0}>
           <Button isIconOnly size="sm" variant="ghost" onPress={onMessage} className="rounded-xl">
             <MessageCircleIcon size={15} />

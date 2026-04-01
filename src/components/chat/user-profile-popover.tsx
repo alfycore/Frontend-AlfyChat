@@ -279,7 +279,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId }: Use
       onOpenChange={setIsOpen}
     >
       <Popover.Trigger>{children}</Popover.Trigger>
-      <Popover.Content placement="right top" offset={8} className="w-80 overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
+      <Popover.Content placement="right" shouldFlip offset={8} className="w-80 overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
         {loading || !profile ? (
           /* ──── Skeleton ──── */
           <div className="space-y-3 p-4">

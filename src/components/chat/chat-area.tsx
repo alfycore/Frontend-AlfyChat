@@ -408,6 +408,13 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 <MessageCircleIcon size={14} className="text-[var(--accent-foreground)]" />
               </div>
               <span className="truncate text-[13px] font-semibold text-[var(--foreground)] md:text-sm">{recipientName || 'Message privé'}</span>
+              <Tooltip delay={0}>
+                <span className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                  <ShieldCheckIcon size={10} />
+                  E2EE
+                </span>
+                <Tooltip.Content>Chiffrement de bout en bout (Signal Protocol) — le serveur ne peut pas lire vos messages</Tooltip.Content>
+              </Tooltip>
             </>
           ) : (
             <>

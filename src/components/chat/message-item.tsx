@@ -219,18 +219,25 @@ export const MessageItem = memo(function MessageItem({
             {/* Corps du message */}
             {isEditing ? (
               <div className="mt-1.5 space-y-1.5">
-                <InputGroup className="rounded-xl border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 shadow-sm backdrop-blur-sm">
-                  <InputGroup.Input
-                    value={editInput}
-                    onChange={(e) => onSetEditInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSaveEdit(message.id); }
-                      if (e.key === 'Escape') onCancelEdit();
-                    }}
-                    aria-label="Modifier le message"
-                    autoFocus
-                  />
-                </InputGroup>
+                <textarea
+                  value={editInput}
+                  onChange={(e) => {
+                    onSetEditInput(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSaveEdit(message.id); }
+                    if (e.key === 'Escape') onCancelEdit();
+                  }}
+                  ref={(el) => {
+                    if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; }
+                  }}
+                  rows={1}
+                  aria-label="Modifier le message"
+                  autoFocus
+                  className="w-full resize-none overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 px-3 py-2 text-sm text-[var(--foreground)] shadow-sm outline-none backdrop-blur-sm placeholder:text-[var(--muted)]/50 focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20"
+                />
                 <p className="text-[10px] text-[var(--muted)]/40">Entrée pour sauvegarder · Échap pour annuler</p>
               </div>
             ) : (
