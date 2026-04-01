@@ -480,6 +480,24 @@ class ApiService {
     return this.request(`/api/friends/block-status/${recipientId}`);
   }
 
+  async uploadDocument(file: File): Promise<{ success: boolean; error?: string; data?: { url: string; filename: string; size: number; mimeType: string; isImage: boolean } }> {
+    const token = this.getToken();
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await fetch(`${this.baseUrl}/api/media/upload/document`, {
+        method: 'POST',
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) return { success: false, error: data.error || 'Erreur upload' };
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Erreur réseau' };
+    }
+  }
+
   // ============ SERVEURS ============
   async getServers() {
     return this.request('/api/servers');

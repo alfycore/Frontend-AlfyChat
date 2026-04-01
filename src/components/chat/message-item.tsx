@@ -119,11 +119,13 @@ export const MessageItem = memo(function MessageItem({
   const shortTime = new Date(message.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className={cn(
-      'group relative px-2 md:px-3',
-      isGrouped ? 'py-px' : 'py-0.5',
-      message.pending && 'opacity-60',
-    )}>
+    <div
+      data-message-id={message.id}
+      className={cn(
+        'group relative px-2 md:px-3',
+        isGrouped ? 'py-px' : 'py-0.5',
+        message.pending && 'opacity-60',
+      )}>
       {/* ── Toolbar flottant ── */}
       <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/80 px-1 py-0.5 opacity-0 shadow-lg shadow-black/10 backdrop-blur-xl transition-all duration-150 group-hover:opacity-100">
         <Tooltip delay={0}>

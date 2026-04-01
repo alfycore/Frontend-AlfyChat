@@ -22,6 +22,9 @@ import {
   MenuIcon,
   ArrowLeftIcon,
   BanIcon,
+  SearchIcon,
+  PaperclipIcon,
+  FileTextIcon,
 } from '@/components/icons';
 import { useMessages } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
@@ -73,6 +76,16 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   // ── Block status (DM only) ──
   const [iBlockedThem, setIBlockedThem] = useState(false);
   const [theyBlockedMe, setTheyBlockedMe] = useState(false);
+
+  // ── File attachments ──
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<{ name: string; url: string; isImage: boolean }[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // ── Message search ──
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchIndex, setSearchIndex] = useState(0);
 
   // Mention state
   const [mentionQuery, setMentionQuery] = useState('');
@@ -219,6 +232,73 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     return () => obs.disconnect();
   }, [scrollToBottom]);
 
+  // Auto-grow textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [messageInput]);
+
+  // Reset search when changing channel/DM
+  useEffect(() => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchIndex(0);
+    setPendingAttachments([]);
+  }, [channelId, recipientId]);
+
+  // Scroll to search result
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return dedupedMessages
+      .map((m, i) => ({ msg: m, idx: i }))
+      .filter(({ msg }) => msg.content?.toLowerCase().includes(q));
+  }, [searchQuery, dedupedMessages]);
+
+  useEffect(() => { setSearchIndex(0); }, [searchQuery]);
+
+  useEffect(() => {
+    if (!searchResults[searchIndex]) return;
+    const el = document.querySelector(`[data-message-id="${searchResults[searchIndex].msg.id}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [searchIndex, searchResults]);
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    e.target.value = '';
+
+    const MAX = 10 * 1024 * 1024;
+    const ACCEPTED_IMAGES = ['image/png','image/jpeg','image/jpg','image/gif','image/webp'];
+    const ACCEPTED_DOCS = ['application/pdf','application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain','text/csv'];
+    const ACCEPTED = [...ACCEPTED_IMAGES, ...ACCEPTED_DOCS];
+
+    for (const file of files) {
+      if (file.size > MAX) { notify.error('Fichier trop volumineux', `${file.name} dépasse 10 Mo`); continue; }
+      if (!ACCEPTED.includes(file.type)) { notify.error('Type non supporté', `${file.name} n'est pas accepté`); continue; }
+
+      setIsUploading(true);
+      try {
+        const res = await api.uploadDocument(file);
+        if (res.success && res.data) {
+          setPendingAttachments((prev) => [...prev, { name: file.name, url: res.data!.url, isImage: res.data!.isImage }]);
+        } else {
+          notify.error('Erreur upload', res.error || 'Impossible d\'uploader le fichier');
+        }
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  }, []);
+
   // Fetch block status when opening a DM
   useEffect(() => {
     if (!recipientId) {
@@ -237,7 +317,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageInput.trim()) return;
+    const hasText = messageInput.trim();
+    const hasAttachments = pendingAttachments.length > 0;
+    if (!hasText && !hasAttachments) return;
 
     const now = Date.now();
     msgTimestampsRef.current = msgTimestampsRef.current.filter(t => now - t < 5000);
@@ -248,8 +330,18 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     }
     msgTimestampsRef.current.push(now);
 
-    sendMessage(messageInput.trim(), replyingTo?.id);
+    // Build content: text + attachments
+    let content = messageInput.trim();
+    for (const att of pendingAttachments) {
+      const attStr = att.isImage
+        ? `\n${att.url}`
+        : `\n[${att.name}](${att.url})`;
+      content = content ? content + attStr : attStr.trimStart();
+    }
+
+    sendMessage(content, replyingTo?.id);
     setMessageInput('');
+    setPendingAttachments([]);
     setReplyingTo(null);
     stopTyping();
     isAtBottomRef.current = true;
@@ -452,6 +544,17 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         {/* Call buttons (DM only) */}
         {recipientId && (
           <div data-tour="call-buttons" className="flex shrink-0 items-center gap-0.5">
+            {/* Message search */}
+            <Tooltip delay={0}>
+              <Button
+                isIconOnly size="sm" variant="tertiary"
+                className={`size-8 rounded-xl transition-colors ${searchOpen ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
+                onPress={() => { setSearchOpen((v) => !v); setSearchQuery(''); }}
+              >
+                <SearchIcon size={16} />
+              </Button>
+              <Tooltip.Content>Rechercher dans la conversation</Tooltip.Content>
+            </Tooltip>
             <Tooltip delay={0}>
                 <Button
                   isIconOnly
@@ -481,6 +584,42 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         )}
       </div>
+
+      {/* Search bar */}
+      {searchOpen && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-[var(--border)]/20 bg-[var(--surface)] px-3 py-2 md:px-4">
+          <SearchIcon size={14} className="shrink-0 text-[var(--muted)]" />
+          <input
+            autoFocus
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Rechercher dans les messages…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[var(--muted)]/50"
+          />
+          {searchQuery && (
+            <>
+              <span className="shrink-0 text-[11px] text-[var(--muted)]">
+                {searchResults.length > 0
+                  ? `${searchIndex + 1}/${searchResults.length}`
+                  : '0 résultat'}
+              </span>
+              <div className="flex items-center gap-0.5">
+                <Button isIconOnly size="sm" variant="ghost" className="size-6 rounded-lg text-[var(--muted)]" isDisabled={searchResults.length === 0}
+                  onPress={() => setSearchIndex((i) => (i - 1 + searchResults.length) % searchResults.length)}>
+                  <span className="text-[10px] leading-none">▲</span>
+                </Button>
+                <Button isIconOnly size="sm" variant="ghost" className="size-6 rounded-lg text-[var(--muted)]" isDisabled={searchResults.length === 0}
+                  onPress={() => setSearchIndex((i) => (i + 1) % searchResults.length)}>
+                  <span className="text-[10px] leading-none">▼</span>
+                </Button>
+              </div>
+            </>
+          )}
+          <Button isIconOnly size="sm" variant="ghost" className="size-6 rounded-lg text-[var(--muted)]" onPress={() => { setSearchOpen(false); setSearchQuery(''); }}>
+            <XIcon size={12} />
+          </Button>
+        </div>
+      )}
 
       {/* Call panel */}
       {callStatus !== 'idle' && callStatus !== 'ended' && (
@@ -608,6 +747,16 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
       {/* Input area */}
       <form onSubmit={handleSendMessage} className="relative shrink-0 px-3 pb-3 pt-1 md:px-4 md:pb-4">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="sr-only"
+          multiple
+          accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv"
+          onChange={handleFileSelect}
+        />
+
         {/* Mention popover */}
         <MentionPopover
           query={mentionQuery}
@@ -641,20 +790,51 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         )}
 
         <div className={`flex items-end gap-1 px-1.5 py-1 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''} ${iBlockedThem || theyBlockedMe ? 'pointer-events-none opacity-40' : ''}`}>
-          {/* E2EE indicator */}
-          
+          {/* Attachment / File upload */}
+          <Tooltip delay={0}>
+            <Button
+              isIconOnly size="sm" variant="tertiary"
+              className="mb-0.5 size-7 shrink-0 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
+              isDisabled={isUploading}
+              onPress={() => fileInputRef.current?.click()}
+            >
+              {isUploading ? <Spinner size="sm" /> : <PaperclipIcon size={16} />}
+            </Button>
+            <Tooltip.Content>Joindre un fichier (image, PDF, DOCX… &lt;10 Mo)</Tooltip.Content>
+          </Tooltip>
 
-          {/* Text input */}
-          <TextArea
-            ref={textareaRef}
-            rows={1}
-            value={messageInput}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message ${recipientId ? recipientName || '' : '#général'}`}
-            className="min-h-[34px] flex-1 resize-none border-0 bg-transparent text-[13px] shadow-none focus:ring-0"
-            aria-label="Message"
-          />
+          {/* Pending attachments + text input wrapper */}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            {/* Pending attachment chips */}
+            {pendingAttachments.length > 0 && (
+              <div className="flex flex-wrap gap-1 px-0.5 pt-1">
+                {pendingAttachments.map((att, i) => (
+                  <div key={i} className="flex items-center gap-1 rounded-lg border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-2 py-0.5 text-[11px]">
+                    {att.isImage
+                      ? <ImageIcon size={11} className="shrink-0 text-blue-400" />
+                      : <FileTextIcon size={11} className="shrink-0 text-orange-400" />}
+                    <span className="max-w-[120px] truncate text-[var(--foreground)]/70">{att.name}</span>
+                    <button type="button" className="ml-0.5 text-[var(--muted)] hover:text-red-400" onClick={() => setPendingAttachments((p) => p.filter((_, j) => j !== i))}>
+                      <XIcon size={10} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Text input */}
+            <TextArea
+              ref={textareaRef}
+              rows={3}
+              value={messageInput}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={`Message ${recipientId ? recipientName || '' : '#général'}`}
+              className="min-h-[60px] w-full flex-1 resize-none border-0 bg-transparent text-[13px] shadow-none focus:ring-0"
+              style={{ maxHeight: '160px', overflowY: 'auto' }}
+              aria-label="Message"
+            />
+          </div>
 
           {/* Actions */}
           <div className="mb-0.5 flex shrink-0 items-center gap-0.5">
@@ -684,10 +864,10 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               isIconOnly
               size="sm"
               variant="tertiary"
-              className={`size-7 rounded-xl transition-colors ${messageInput.trim() ? 'text-[var(--accent)]' : 'text-[var(--muted)]/40'}`}
-              isDisabled={!messageInput.trim()}
+              className={`size-7 rounded-xl transition-colors ${messageInput.trim() || pendingAttachments.length > 0 ? 'text-[var(--accent)]' : 'text-[var(--muted)]/40'}`}
+              isDisabled={!messageInput.trim() && pendingAttachments.length === 0}
               onPress={() => {
-                if (messageInput.trim()) {
+                if (messageInput.trim() || pendingAttachments.length > 0) {
                   handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
                 }
               }}
