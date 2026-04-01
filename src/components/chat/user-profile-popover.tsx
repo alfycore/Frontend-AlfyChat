@@ -10,6 +10,7 @@ import {
   ShieldCheckIcon,
   BanIcon,
   UserXIcon,
+  PaletteIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
@@ -104,6 +105,8 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
   const [banReason, setBanReason] = useState('');
   const [canManageRoles, setCanManageRoles] = useState(false);
   const [canKickBan, setCanKickBan] = useState(false);
+  const [localCardColor, setLocalCardColor] = useState<string | null>(null);
+  const colorSaveTimer = useState<ReturnType<typeof setTimeout> | null>(null);
 
   const isMe = currentUser?.id === userId;
 
@@ -222,6 +225,14 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
     socketService.updateMember(serverId, userId, { roleIds: newRoleIds });
   };
 
+  const handleColorChange = (newColor: string) => {
+    setLocalCardColor(newColor);
+    if (colorSaveTimer[0]) clearTimeout(colorSaveTimer[0]);
+    colorSaveTimer[0] = setTimeout(async () => {
+      try { await api.updateProfile({ cardColor: newColor }); } catch {}
+    }, 600);
+  };
+
   const handleSendMessage = () => {
     if (profile && onOpenDM) {
       onOpenDM(profile.id, profile.displayName || profile.username);
@@ -254,7 +265,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
   };
 
   const status = statusConfig[profile?.status || 'offline'] ?? statusConfig.offline;
-  const cardColor = profile?.cardColor || '#5865F2';
+  const cardColor = localCardColor ?? profile?.cardColor ?? '#5865F2';
   const badgeColor = ({ online: 'success', idle: 'warning', dnd: 'danger' } as Record<string, 'success' | 'warning' | 'danger'>)[profile?.status || ''];
 
   const createdDate = profile?.createdAt
@@ -318,6 +329,24 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
               )}
               {/* bottom fade into card bg */}
               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[var(--surface)] to-transparent" />
+              {/* Color picker — visible only on my own card */}
+              {isMe && (
+                <Tooltip delay={0}>
+                  <label className="absolute right-2.5 bottom-2.5 z-10 flex size-7 cursor-pointer items-center justify-center rounded-lg bg-black/30 text-white backdrop-blur-sm transition-all hover:bg-black/50">
+                    <PaletteIcon size={13} />
+                    <input
+                      type="color"
+                      className="sr-only"
+                      value={cardColor}
+                      onChange={(e) => handleColorChange(e.target.value)}
+                    />
+                  </label>
+                  <Tooltip.Content showArrow placement="left">
+                    <Tooltip.Arrow />
+                    <p className="text-xs">Changer la couleur de la carte</p>
+                  </Tooltip.Content>
+                </Tooltip>
+              )}
             </div>
 
             {/* ── Avatar row ── */}
@@ -515,6 +544,45 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                 </div>
               )}
             </div>
+
+            {/* ── Bottom action buttons (message + add friend) ── */}
+            {!isMe && (
+              <>
+                <div className="mx-4"><Separator /></div>
+                <div className="flex gap-2 px-4 pb-4 pt-3">
+                  <Button
+                    size="sm"
+                    className="flex-1 gap-1.5 rounded-xl font-semibold text-white shadow-md"
+                    style={{ backgroundColor: cardColor }}
+                    onPress={handleSendMessage}
+                  >
+                    <MessageCircleIcon size={14} />
+                    Message
+                  </Button>
+
+                  {friendStatus === 'none' && (
+                    <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[12px]" onPress={handleAddFriend}>
+                      <UserPlusIcon size={13} />Ajouter
+                    </Button>
+                  )}
+                  {friendStatus === 'friend' && (
+                    <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[12px] text-green-500 border-green-500/30" isDisabled>
+                      <UserCheckIcon size={13} />Ami
+                    </Button>
+                  )}
+                  {friendStatus === 'pending_sent' && (
+                    <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[12px] text-yellow-500 border-yellow-500/30" isDisabled>
+                      <CheckIcon size={13} />En attente
+                    </Button>
+                  )}
+                  {friendStatus === 'pending_received' && (
+                    <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[12px] text-blue-400 border-blue-400/30" onPress={handleAddFriend}>
+                      <UserPlusIcon size={13} />Accepter
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* ── Kick / Ban ── */}
             {!isMe && serverId && canKickBan && (
