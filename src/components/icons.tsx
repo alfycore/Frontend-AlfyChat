@@ -6,7 +6,6 @@
  *   import { MailIcon } from '@/components/icons';
  *   <MailIcon size={16} className="text-muted-foreground" />
  */
-
 import React from 'react';
 
 interface FiProps {
