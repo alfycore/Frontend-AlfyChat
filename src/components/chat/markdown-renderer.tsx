@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId } from 'react';
+import React, { useId, useState } from 'react';
 import { twemojify } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
 
@@ -17,7 +17,32 @@ interface MarkdownRendererProps {
  */
 export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content }: MarkdownRendererProps) {
   const uid = useId();
-  
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  const handleClick = (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'IMG') {
+      setLightboxSrc((target as HTMLImageElement).src);
+    }
+  };
+
+  const lightbox = lightboxSrc ? (
+    <div
+      className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={() => setLightboxSrc(null)}
+      onKeyDown={(e) => e.key === 'Escape' && setLightboxSrc(null)}
+      role="dialog"
+      aria-modal
+    >
+      <img
+        src={lightboxSrc}
+        alt=""
+        className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  ) : null;
+
   // Si le contenu est uniquement une URL d'image/GIF, l'afficher directement
   const trimmed = content.trim();
   const isExternalImage = /^https?:\/\/\S+\.(gif|png|jpe?g|webp)(\?\S*)?$/i.test(trimmed) ||
@@ -27,12 +52,26 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content }
   if (isExternalImage || isLocalUpload || isServerFile) {
     const src = (isLocalUpload || isServerFile) ? resolveMediaUrl(trimmed) : trimmed;
     return (
-      <img src={src} alt="" className="max-h-60 max-w-xs rounded-xl shadow-sm" loading="lazy" />
+      <>
+        <img
+          src={src} alt=""
+          className="max-h-60 max-w-xs cursor-zoom-in rounded-xl shadow-sm"
+          loading="lazy"
+          onClick={() => setLightboxSrc(src)}
+        />
+        {lightbox}
+      </>
     );
   }
 
   const elements = parseMarkdown(content, uid);
-  return <div className="whitespace-pre-wrap wrap-break-word">{elements}</div>;
+  return (
+    <>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div className="whitespace-pre-wrap wrap-break-word" onClick={handleClick}>{elements}</div>
+      {lightbox}
+    </>
+  );
 });
 
 // ── Top-level parser: split by code blocks ──
@@ -250,7 +289,7 @@ function formatInline(text: string, keyPrefix: string): React.ReactNode[] {
           key={k}
           src={resolveMediaUrl(m[2]) || m[2]}
           alt={m[1]}
-          className="my-1 inline-block max-h-60 max-w-xs rounded-xl shadow-sm"
+          className="my-1 inline-block max-h-60 max-w-xs cursor-zoom-in rounded-xl shadow-sm"
           loading="lazy"
         />
       ),

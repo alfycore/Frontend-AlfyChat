@@ -232,12 +232,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     return () => obs.disconnect();
   }, [scrollToBottom]);
 
-  // Auto-grow textarea
+  // Auto-grow textarea (1 line min, 5 lines max)
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 110)}px`;
   }, [messageInput]);
 
   // Reset search when changing channel/DM
@@ -825,13 +825,13 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             {/* Text input */}
             <TextArea
               ref={textareaRef}
-              rows={3}
+              rows={1}
               value={messageInput}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder={`Message ${recipientId ? recipientName || '' : '#général'}`}
-              className="min-h-[60px] w-full flex-1 resize-none border-0 bg-transparent text-[13px] shadow-none focus:ring-0"
-              style={{ maxHeight: '160px', overflowY: 'auto' }}
+              className="min-h-[34px] w-full flex-1 resize-none border-0 bg-transparent text-[13px] leading-5 shadow-none focus:ring-0"
+              style={{ maxHeight: '110px', overflowY: 'auto' }}
               aria-label="Message"
             />
           </div>
