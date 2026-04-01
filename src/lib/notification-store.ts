@@ -66,6 +66,11 @@ function notify() {
 /** S'abonner aux changements du store (retourne un unsubscribe). */
 export function subscribe(listener: Listener): () => void {
   listeners.add(listener);
+  // À la première écoute côté client, forcer une synchronisation immédiate
+  // pour que React remplace le snapshot SSR (vide) par les données localStorage.
+  if (typeof window !== 'undefined' && state.unread.size > 0) {
+    Promise.resolve().then(listener);
+  }
   return () => listeners.delete(listener);
 }
 
@@ -143,9 +148,20 @@ export function getAllUnread(): ReadonlyMap<string, number> {
 import { useSyncExternalStore } from 'react';
 
 /**
+ * Snapshot vide pour le rendu serveur (SSR).
+ * Doit être cohérent avec le HTML rendu côté serveur (aucun badge).
+ * React hydrate avec ce snapshot puis bascule sur getSnapshot() côté client.
+ */
+const SERVER_SNAPSHOT: NotificationState = {
+  activeRecipientId: null,
+  activeGroupId: null,
+  unread: new Map(),
+};
+
+/**
  * Hook React pour s'abonner au store de notifications.
  * Déclenche un re-render uniquement quand le store change.
  */
 export function useNotificationStore() {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useSyncExternalStore(subscribe, getSnapshot, () => SERVER_SNAPSHOT);
 }
