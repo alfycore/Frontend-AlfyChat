@@ -37,6 +37,7 @@ import { MentionPopover, type MentionUser } from '@/components/chat/mention-popo
 import { CallPanel } from '@/components/chat/call-panel';
 import {
   MessageItem,
+  shouldGroup,
   type MessageSender,
   type MessageData,
 } from '@/components/chat/message-item';
@@ -520,8 +521,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 <span className="text-[12px]">Chargement des anciens messages…</span>
               </div>
             )}
-            {dedupedMessages.map((message) => {
+            {dedupedMessages.map((message, idx) => {
               const isEditing = editingMessageId === message.id;
+              const grouped = idx > 0 && shouldGroup(dedupedMessages[idx - 1], message);
               return (
                 <MessageItem
                   key={message.id}
@@ -530,6 +532,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                   recipientName={recipientName}
                   isEditing={isEditing}
                   editInput={isEditing ? editInput : ''}
+                  isGrouped={grouped}
                   replyMessage={message.replyToId ? (messagesById.get(message.replyToId) ?? null) : null}
                   onSetEditInput={handleSetEditInput}
                   onReply={handleReply}

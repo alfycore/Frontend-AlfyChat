@@ -19,6 +19,7 @@ import { Button, Chip, ScrollShadow, Separator, Skeleton } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import {
   MessageItem,
+  shouldGroup,
   type MessageSender,
   type MessageData,
 } from '@/components/chat/message-item';
@@ -515,10 +516,14 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
               {dateGroups.map((group, gi) => (
                 <div key={gi}>
                   <DateSeparator date={group.date} />
-                  {group.messages.map((message) => {
+                  {group.messages.map((message, midx) => {
                     const replyMsg = message.replyToId
                       ? (messagesById.get(message.replyToId) ?? null)
                       : null;
+                    const grouped =
+                      midx > 0
+                        ? shouldGroup(group.messages[midx - 1], message)
+                        : false;
                     return (
                       <MessageItem
                         key={message.id}
@@ -526,6 +531,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
                         currentUser={currentUser}
                         isEditing={editingMessageId === message.id}
                         editInput={editInput}
+                        isGrouped={grouped}
                         replyMessage={replyMsg}
                         onSetEditInput={handleSetEditInput}
                         onReply={handleReply}

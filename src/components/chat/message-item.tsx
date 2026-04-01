@@ -55,6 +55,18 @@ export const formatTime = (dateString: string): string => {
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Retourne true si le message `curr` doit être groupé avec `prev`
+ * (même auteur, même conversation, moins de 3 minutes d'écart).
+ */
+export function shouldGroup(prev: MessageData, curr: MessageData): boolean {
+  if (prev.authorId !== curr.authorId) return false;
+  if (curr.isSystem || prev.isSystem) return false;
+  if (curr.replyToId) return false; // une réponse affiche toujours le header
+  const diff = new Date(curr.createdAt).getTime() - new Date(prev.createdAt).getTime();
+  return diff < 3 * 60 * 1000;
+}
+
 export interface MessageItemProps {
   message: MessageData;
   currentUser: MessageSender | null;
@@ -62,6 +74,8 @@ export interface MessageItemProps {
   isEditing: boolean;
   editInput: string;
   replyMessage: MessageData | null;
+  /** Quand true : même auteur que le message précédent < 3 min → masque avatar + nom */
+  isGrouped?: boolean;
   onSetEditInput: Dispatch<SetStateAction<string>>;
   onReply: (id: string, content: string, authorName: string) => void;
   onCopy: (content: string) => void;
@@ -77,6 +91,7 @@ export interface MessageItemProps {
 
 export const MessageItem = memo(function MessageItem({
   message, currentUser, recipientName, isEditing, editInput, replyMessage,
+  isGrouped = false,
   onSetEditInput, onReply, onCopy, onReaction, onRemoveReaction,
   onStartEdit, onSaveEdit, onCancelEdit, onDelete,
 }: MessageItemProps) {
@@ -100,9 +115,13 @@ export const MessageItem = memo(function MessageItem({
     );
   }
 
+  // Heure courte pour l'indicateur de groupe (HH:MM)
+  const shortTime = new Date(message.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
   return (
     <div className={cn(
-      'group relative px-2 py-1 md:px-3',
+      'group relative px-2 md:px-3',
+      isGrouped ? 'py-0.5' : 'py-1',
       message.pending && 'opacity-60',
     )}>
       {/* ── Toolbar flottant ── */}
@@ -155,22 +174,30 @@ export const MessageItem = memo(function MessageItem({
       <div className="rounded-xl px-3 py-1.5 transition-colors duration-100 hover:bg-[var(--surface-secondary)]/20">
         <div className="flex items-start gap-2.5 md:gap-3">
 
-          {/* ── Avatar ── */}
-          <UserProfilePopover userId={message.authorId}>
-            <button type="button" className="mt-0.5 shrink-0">
-              <Avatar className="size-8 cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm transition-all duration-150 hover:scale-105 hover:ring-[var(--accent)]/30 md:size-9">
-                <Avatar.Image src={resolveMediaUrl(isMe ? currentUser?.avatarUrl : message.sender?.avatarUrl)} alt={displayName} />
-                <Avatar.Fallback className={cn(
-                  'font-bold text-sm',
-                  isMe
-                    ? 'bg-[var(--accent)] text-[var(--accent-foreground)]'
-                    : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white',
-                )}>
-                  {initial}
-                </Avatar.Fallback>
-              </Avatar>
-            </button>
-          </UserProfilePopover>
+          {/* ── Avatar ou indicateur d'heure (groupé) ── */}
+          {isGrouped ? (
+            <div className="flex w-8 shrink-0 items-center justify-end md:w-9">
+              <span className="select-none tabular-nums text-[10px] text-[var(--muted)]/0 transition-colors duration-100 group-hover:text-[var(--muted)]/40">
+                {shortTime}
+              </span>
+            </div>
+          ) : (
+            <UserProfilePopover userId={message.authorId}>
+              <button type="button" className="mt-0.5 shrink-0">
+                <Avatar className="size-8 cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm transition-all duration-150 hover:scale-105 hover:ring-[var(--accent)]/30 md:size-9">
+                  <Avatar.Image src={resolveMediaUrl(isMe ? currentUser?.avatarUrl : message.sender?.avatarUrl)} alt={displayName} />
+                  <Avatar.Fallback className={cn(
+                    'font-bold text-sm',
+                    isMe
+                      ? 'bg-[var(--accent)] text-[var(--accent-foreground)]'
+                      : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white',
+                  )}>
+                    {initial}
+                  </Avatar.Fallback>
+                </Avatar>
+              </button>
+            </UserProfilePopover>
+          )}
 
           {/* ── Contenu ── */}
           <div className="min-w-0 flex-1">
@@ -189,32 +216,34 @@ export const MessageItem = memo(function MessageItem({
               );
             })()}
 
-            {/* Auteur + horodatage */}
-            <div className="mb-0.5 flex items-center gap-2">
-              <span className="text-[13px] font-semibold text-[var(--foreground)]">{displayName}</span>
+            {/* Auteur + horodatage — masqué si groupé */}
+            {!isGrouped && (
+              <div className="mb-0.5 flex items-center gap-2">
+                <span className="text-[13px] font-semibold text-[var(--foreground)]">{displayName}</span>
 
-              {message.sender?.isBot && (
-                <Chip
-                  size="sm"
-                  variant={message.sender.isVerifiedBot ? 'soft' : 'secondary'}
-                  color={message.sender.isVerifiedBot ? 'accent' : 'default'}
-                  className="h-4 px-1.5 text-[8px] font-bold uppercase"
-                >
-                  {message.sender.isVerifiedBot && (
-                    <svg className="mr-0.5 size-2" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M8 0l2.5 3.5L14.5 2l-1.5 4L16 8l-3.5 2.5L14.5 14l-4-1.5L8 16l-2.5-3.5L1.5 14l1.5-4L0 8l3.5-2.5L1.5 2l4 1.5L8 0z"/>
-                    </svg>
-                  )}
-                  BOT
-                </Chip>
-              )}
+                {message.sender?.isBot && (
+                  <Chip
+                    size="sm"
+                    variant={message.sender.isVerifiedBot ? 'soft' : 'secondary'}
+                    color={message.sender.isVerifiedBot ? 'accent' : 'default'}
+                    className="h-4 px-1.5 text-[8px] font-bold uppercase"
+                  >
+                    {message.sender.isVerifiedBot && (
+                      <svg className="mr-0.5 size-2" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0l2.5 3.5L14.5 2l-1.5 4L16 8l-3.5 2.5L14.5 14l-4-1.5L8 16l-2.5-3.5L1.5 14l1.5-4L0 8l3.5-2.5L1.5 2l4 1.5L8 0z"/>
+                      </svg>
+                    )}
+                    BOT
+                  </Chip>
+                )}
 
-              <span className="text-[10px] tabular-nums text-[var(--muted)]/45 md:text-[11px]">
-                {formatTime(message.createdAt)}
-              </span>
-              {message.pending && <ClockIcon size={11} className="text-[var(--muted)]/30" />}
-              {!!message.isEdited && <span className="text-[10px] italic text-[var(--muted)]/40">(modifié)</span>}
-            </div>
+                <span className="text-[10px] tabular-nums text-[var(--muted)]/45 md:text-[11px]">
+                  {formatTime(message.createdAt)}
+                </span>
+                {message.pending && <ClockIcon size={11} className="text-[var(--muted)]/30" />}
+                {!!message.isEdited && <span className="text-[10px] italic text-[var(--muted)]/40">(modifié)</span>}
+              </div>
+            )}
 
             {/* Corps du message */}
             {isEditing ? (

@@ -37,6 +37,28 @@ export function useNotification() {
   // Set pour dédupliquer les messages (même id reçu 2x à cause des 2 rooms)
   const seenIdsRef = useRef<Set<string>>(new Set());
 
+  // Demander la permission OS au montage (ne bloque pas l'UX, juste demande)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  const showOSNotification = useCallback((title: string, body?: string) => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    try {
+      const n = new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: 'alfychat-msg',   // remplace le précédent au lieu d'en empiler
+        renotify: true,
+      });
+      setTimeout(() => n.close(), 6000);
+    } catch { /* navigateur sans support ou permission révoquée */ }
+  }, []);
+
   const playNotificationSound = useCallback(() => {
     try {
       if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
@@ -128,6 +150,9 @@ export function useNotification() {
         duration: 4000,
       });
 
+      // Notification système OS (si l'onglet n'est pas actif ou que le document est masqué)
+      showOSNotification(senderName, truncated || undefined);
+
       playNotificationSound();
     };
 
@@ -140,6 +165,7 @@ export function useNotification() {
         description: `${name} vous a envoyé une demande d'ami`,
         duration: 5000,
       });
+      showOSNotification('Demande d\'ami', `${name} vous a envoyé une demande d'ami`);
       playNotificationSound();
     };
 
@@ -212,7 +238,7 @@ export function useNotification() {
       socketService.off('connect', handleReconnect);
       socketService.off('PENDING_PINGS', handlePendingPings);
     };
-  }, [playNotificationSound]);
+  }, [playNotificationSound, showOSNotification]);
 
   // Nettoyer l'AudioContext à la destruction du composant
   useEffect(() => {

@@ -35,6 +35,7 @@ import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { GroupSettingsDialog } from '@/components/chat/group-settings-dialog';
 import {
   MessageItem,
+  shouldGroup,
   type MessageSender,
   type MessageData,
 } from '@/components/chat/message-item';
@@ -468,8 +469,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             </div>
           ) : (
             <div className="space-y-1" ref={messagesContainerRef}>
-              {enrichedMessages.map((message) => {
+              {enrichedMessages.map((message, idx) => {
                 const isEditing = editingMessageId === message.id;
+                const grouped = idx > 0 && shouldGroup(enrichedMessages[idx - 1], message);
                 return (
                   <MessageItem
                     key={message.id}
@@ -477,6 +479,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                     currentUser={currentUser}
                     isEditing={isEditing}
                     editInput={isEditing ? editInput : ''}
+                    isGrouped={grouped}
                     replyMessage={message.replyToId ? (messagesById.get(message.replyToId) ?? null) : null}
                     onSetEditInput={handleSetEditInput}
                     onReply={handleReply}

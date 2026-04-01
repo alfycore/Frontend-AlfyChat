@@ -670,6 +670,8 @@ export function useMessages(channelId?: string, recipientId?: string) {
   }, [getConversationId]);
 
   const deleteMessage = useCallback((messageId: string) => {
+    // Suppression optimiste côté expéditeur : retirer du state immédiatement
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
     socketService.deleteMessage(messageId, getConversationId() || undefined);
   }, [getConversationId]);
 
