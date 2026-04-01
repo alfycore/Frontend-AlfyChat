@@ -476,6 +476,10 @@ class ApiService {
     return this.request('/api/friends/blocked');
   }
 
+  async getBlockStatus(recipientId: string): Promise<{ success: boolean; data?: { iBlockedThem: boolean; theyBlockedMe: boolean } }> {
+    return this.request(`/api/friends/block-status/${recipientId}`);
+  }
+
   // ============ SERVEURS ============
   async getServers() {
     return this.request('/api/servers');

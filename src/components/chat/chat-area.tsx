@@ -21,9 +21,11 @@ import {
   VideoIcon,
   MenuIcon,
   ArrowLeftIcon,
+  BanIcon,
 } from '@/components/icons';
 import { useMessages } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
+import { api } from '@/lib/api';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useUIStyle } from '@/hooks/use-ui-style';
@@ -67,6 +69,10 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   // ── Message cooldown ──
   const msgTimestampsRef = useRef<number[]>([]);
   const [cooldownActive, setCooldownActive] = useState(false);
+
+  // ── Block status (DM only) ──
+  const [iBlockedThem, setIBlockedThem] = useState(false);
+  const [theyBlockedMe, setTheyBlockedMe] = useState(false);
 
   // Mention state
   const [mentionQuery, setMentionQuery] = useState('');
@@ -212,6 +218,22 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     obs.observe(messagesContainerRef.current);
     return () => obs.disconnect();
   }, [scrollToBottom]);
+
+  // Fetch block status when opening a DM
+  useEffect(() => {
+    if (!recipientId) {
+      setIBlockedThem(false);
+      setTheyBlockedMe(false);
+      return;
+    }
+    api.getBlockStatus(recipientId).then((res: any) => {
+      const data = res?.data ?? res;
+      if (data && typeof data === 'object') {
+        setIBlockedThem(!!data.iBlockedThem);
+        setTheyBlockedMe(!!data.theyBlockedMe);
+      }
+    }).catch(() => {});
+  }, [recipientId]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -570,6 +592,20 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         </div>
       )}
 
+      {/* Block notices */}
+      {iBlockedThem && (
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-3 py-2.5 text-[12px] text-[var(--muted)] md:mx-4">
+          <BanIcon size={14} className="shrink-0" />
+          <span>Vous avez bloqué cet utilisateur. <button type="button" className="font-semibold underline" onClick={async () => { await api.unblockUser(recipientId!); setIBlockedThem(false); }}>Débloquer</button></span>
+        </div>
+      )}
+      {!iBlockedThem && theyBlockedMe && (
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-3 py-2.5 text-[12px] text-[var(--muted)] md:mx-4">
+          <BanIcon size={14} className="shrink-0" />
+          <span>Vous ne pouvez pas envoyer de message à cet utilisateur tant qu’il ne vous a pas débloqué.</span>
+        </div>
+      )}
+
       {/* Input area */}
       <form onSubmit={handleSendMessage} className="relative shrink-0 px-3 pb-3 pt-1 md:px-4 md:pb-4">
         {/* Mention popover */}
@@ -604,7 +640,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         )}
 
-        <div className={`flex items-end gap-1 px-1.5 py-1 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''}`}>
+        <div className={`flex items-end gap-1 px-1.5 py-1 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''} ${iBlockedThem || theyBlockedMe ? 'pointer-events-none opacity-40' : ''}`}>
           {/* E2EE indicator */}
           
 
