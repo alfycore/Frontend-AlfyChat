@@ -558,7 +558,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                     onClick={handleSendMessage}
                     onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSendMessage(); }}
                   />
-                  <InputGroup.Element>
+                  <div className="flex shrink-0 items-center pr-1">
                     <Button
                       isIconOnly size="sm" variant="ghost"
                       className="size-7 rounded-lg text-[var(--muted)]"
@@ -566,7 +566,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                     >
                       <SmileIcon size={14} />
                     </Button>
-                  </InputGroup.Element>
+                  </div>
                 </InputGroup>
               </div>
             )}
