@@ -121,7 +121,7 @@ export const MessageItem = memo(function MessageItem({
   return (
     <div className={cn(
       'group relative px-2 md:px-3',
-      isGrouped ? 'py-0.5' : 'py-1',
+      isGrouped ? 'py-px' : 'py-0.5',
       message.pending && 'opacity-60',
     )}>
       {/* ── Toolbar flottant ── */}
