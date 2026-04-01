@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { socketService } from '@/lib/socket';
+import { signalService } from '@/lib/signal-service';
 import {
   isDMActive,
   isGroupActive,
@@ -89,7 +90,7 @@ export function useNotification() {
 
   useEffect(() => {
     // ── Nouveau message (DM ou groupe) ───────────────────────────────────────
-    const handleNewMessage = (data: any) => {
+    const handleNewMessage = async (data: any) => {
       const payload = data?.payload || data;
       if (!payload) return;
 
@@ -137,13 +138,30 @@ export function useNotification() {
         incrementUnread(`group:${groupId}`);
       }
 
-      // ── Toast + son ──────────────────────────────────────────────────────
+      // ── Déchiffrer si nécessaire ─────────────────────────────────────────
       const senderName =
         payload.authorName || payload.senderName || 'Nouveau message';
-      const content = payload.content || '';
-      const truncated =
-        content.length > 80 ? content.substring(0, 80) + '…' : content;
+      let rawContent: string = payload.content || '';
 
+      if (payload.e2eeType && senderId && myId && rawContent.startsWith('ecdh:')) {
+        try {
+          rawContent = await signalService.decrypt(
+            senderId,
+            myId,
+            rawContent,
+            payload.senderContent,
+            payload.e2eeType as 1 | 3,
+          );
+        } catch {
+          // Déchiffrement impossible depuis le hook (session pas encore prête)
+          rawContent = '🔒 Nouveau message chiffré';
+        }
+      }
+
+      const truncated =
+        rawContent.length > 80 ? rawContent.substring(0, 80) + '…' : rawContent;
+
+      // ── Toast + son ──────────────────────────────────────────────────────
       toast.message(senderName, {
         description: truncated || undefined,
         duration: 4000,
