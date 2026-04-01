@@ -116,7 +116,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         setFriends((prev) =>
           prev.map((f) =>
             f.id === p.userId
-              ? { ...f, status: p.status as Friend['status'], customStatus: p.customStatus ?? f.customStatus, isOnline: p.status === 'online' }
+              ? { ...f, status: p.status as Friend['status'], customStatus: p.customStatus ?? f.customStatus, isOnline: p.status !== 'offline' && p.status !== 'invisible' }
               : f
           )
         );
@@ -140,11 +140,13 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       );
     };
 
+    const handleReconnect = () => loadFriends();
     socketService.onFriendRequest(handleFriendRequest);
     socketService.onFriendAccepted(handleFriendAccepted);
     socketService.onPresenceUpdate(handlePresenceUpdate);
     socketService.on('FRIEND_REMOVE', handleFriendRemove);
     socketService.onProfileUpdate(handleProfileUpdate);
+    socketService.on('socket:reconnected', handleReconnect);
 
     return () => {
       socketService.off('FRIEND_REQUEST', handleFriendRequest as any);
@@ -152,6 +154,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       socketService.off('PRESENCE_UPDATE', handlePresenceUpdate as any);
       socketService.off('FRIEND_REMOVE', handleFriendRemove as any);
       socketService.off('PROFILE_UPDATE', handleProfileUpdate as any);
+      socketService.off('socket:reconnected', handleReconnect as any);
     };
   }, []);
 

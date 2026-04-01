@@ -294,6 +294,7 @@ export function ChannelList({
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const conversationsRef = useRef<Conversation[]>([]);
   const [presenceMap, setPresenceMap] = useState<Map<string, string>>(new Map());
   const [customStatusMap, setCustomStatusMap] = useState<Map<string, string | null>>(new Map());
   const [showGroupCreate, setShowGroupCreate] = useState(false);
@@ -428,6 +429,10 @@ export function ChannelList({
     loadConversationsRef.current = loadConversations;
   }, [loadConversations]);
 
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
   // Store de notifications (badges non-lus)
   const notifStore = useNotificationStore();
 
@@ -534,6 +539,20 @@ export function ChannelList({
       const msgAuthorId = message.senderId || message.authorId;
       const msgRecipientId = message.recipientId;
       const createdAt = message.createdAt || new Date().toISOString();
+      const isFromMe = msgAuthorId === user?.id;
+      // Incrémenter le badge non-lu si le message est reçu (pas envoyé par moi)
+      if (!isFromMe) {
+        const conv = conversationsRef.current.find(
+          (c) => c.id === convId || c.recipientId === msgAuthorId || c.recipientId === msgRecipientId,
+        );
+        if (conv) {
+          if (conv.type === 'group') {
+            if (!isGroupActive(conv.id)) incrementUnread(`group:${conv.id}`);
+          } else {
+            if (!isDMActive(msgAuthorId)) incrementUnread(msgAuthorId);
+          }
+        }
+      }
       setConversations((prev) => {
         const idx = prev.findIndex(
           (c) =>
@@ -562,6 +581,7 @@ export function ChannelList({
       setPresenceMap((prev) => { const next = new Map(prev); next.set(userId, status); return next; });
       if (customStatus !== undefined) setCustomStatusMap((prev) => { const next = new Map(prev); next.set(userId, customStatus); return next; });
     };
+    const handleReconnect = () => loadConversationsRef.current();
     socketService.on('message:new', handleMessageNew);
     socketService.onGroupCreate(handleRefresh);
     socketService.onFriendAccepted(handleRefresh);
@@ -570,6 +590,7 @@ export function ChannelList({
     socketService.onGroupMemberAdd(handleRefresh);
     socketService.onGroupMemberRemove(handleRefresh);
     socketService.onPresenceUpdate(handlePresence);
+    socketService.on('socket:reconnected', handleReconnect);
     return () => {
       socketService.off('message:new', handleMessageNew);
       socketService.off('GROUP_CREATE', handleRefresh);
@@ -579,6 +600,7 @@ export function ChannelList({
       socketService.off('GROUP_MEMBER_ADD', handleRefresh);
       socketService.off('GROUP_MEMBER_REMOVE', handleRefresh);
       socketService.off('PRESENCE_UPDATE', handlePresence);
+      socketService.off('socket:reconnected', handleReconnect);
     };
   }, [serverId, user]);
 
