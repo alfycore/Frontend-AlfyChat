@@ -14,6 +14,10 @@ import {
   UserMinusIcon,
   BanIcon,
   ShieldOffIcon,
+  PhoneIcon,
+  UserIcon,
+  ServerIcon,
+  SettingsIcon,
 } from '@/components/icons';
 import {
   Avatar,
@@ -21,6 +25,7 @@ import {
   Chip,
   Dropdown,
   InputGroup,
+  Popover,
   ScrollShadow,
   Separator,
   Skeleton,
@@ -62,6 +67,14 @@ interface BlockedUser {
   avatarUrl?: string;
 }
 
+type DisplayField = 'customStatus' | 'username' | 'status';
+
+const DISPLAY_FIELD_LABELS: Record<DisplayField, string> = {
+  customStatus: 'Statut personnalisé',
+  username: "Nom d'utilisateur",
+  status: 'Statut en ligne',
+};
+
 interface FriendsPanelProps {
   onOpenDM?: (recipientId: string, recipientName: string) => void;
 }
@@ -91,6 +104,28 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const [addFriendInput, setAddFriendInput] = useState('');
   const [addFriendLoading, setAddFriendLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [displayFields, setDisplayFields] = useState<DisplayField[]>(() => {
+    if (typeof window === 'undefined') return ['customStatus'];
+    try {
+      const stored = localStorage.getItem('alfychat_friend_row_fields');
+      return stored ? (JSON.parse(stored) as DisplayField[]) : ['customStatus'];
+    } catch { return ['customStatus']; }
+  });
+
+  const toggleDisplayField = (field: DisplayField) => {
+    setDisplayFields((prev) => {
+      let next: DisplayField[];
+      if (prev.includes(field)) {
+        next = prev.filter((f) => f !== field);
+      } else if (prev.length < 2) {
+        next = [...prev, field];
+      } else {
+        return prev; // max 2 atteint
+      }
+      localStorage.setItem('alfychat_friend_row_fields', JSON.stringify(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     const el = tabsListRef.current;
@@ -484,6 +519,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                         <FriendRow
                           key={friend.id}
                           friend={friend}
+                          displayFields={displayFields}
                           onMessage={() => onOpenDM?.(friend.id, friend.displayName)}
                           onRemove={() => handleRemoveFriend(friend.id)}
                           onBlock={() => handleBlockUser(friend.id, friend.displayName)}
@@ -509,6 +545,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                         <FriendRow
                           key={friend.id}
                           friend={friend}
+                          displayFields={displayFields}
                           onMessage={() => onOpenDM?.(friend.id, friend.displayName)}
                           onRemove={() => handleRemoveFriend(friend.id)}
                           onBlock={() => handleBlockUser(friend.id, friend.displayName)}
@@ -768,6 +805,42 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
             {t.friends.onlineSidebar}
           </span>
           <Chip size="sm" variant="soft" className="ml-auto">{onlineFriends.length}</Chip>
+          <Popover>
+            <Popover.Trigger>
+              <Button isIconOnly size="sm" variant="ghost" className="size-6 rounded-lg shrink-0">
+                <SettingsIcon size={11} className="text-[var(--muted)]/50" />
+              </Button>
+            </Popover.Trigger>
+            <Popover.Content className="w-52 rounded-xl p-3" placement="bottom end">
+              <p className="mb-0.5 text-[11px] font-bold text-[var(--foreground)]">Afficher dans les cartes</p>
+              <p className="mb-2.5 text-[10px] text-[var(--muted)]">Max 2 éléments simultanés</p>
+              <div className="flex flex-col gap-0.5">
+                {(Object.keys(DISPLAY_FIELD_LABELS) as DisplayField[]).map((field) => {
+                  const active = displayFields.includes(field);
+                  const atMax = displayFields.length >= 2 && !active;
+                  return (
+                    <button
+                      key={field}
+                      type="button"
+                      disabled={atMax}
+                      onClick={() => toggleDisplayField(field)}
+                      className={cn(
+                        'flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[11px] transition-colors',
+                        active
+                          ? 'bg-[var(--accent)]/15 text-[var(--foreground)]'
+                          : atMax
+                            ? 'opacity-35 cursor-not-allowed text-[var(--muted)]'
+                            : 'hover:bg-[var(--surface-secondary)] text-[var(--muted)]',
+                      )}
+                    >
+                      {DISPLAY_FIELD_LABELS[field]}
+                      {active && <CheckIcon size={11} className="shrink-0 text-[var(--accent)]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </Popover.Content>
+          </Popover>
         </div>
 
         {/* Online list */}
@@ -799,7 +872,9 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-medium leading-tight">{friend.displayName}</p>
-                        <p className="truncate text-[9px] text-[var(--muted)]/50">{friend.customStatus || statusLabel}</p>
+                        <p className="truncate text-[9px] text-[var(--muted)]/50">
+                          {displayFields[0] === 'username' ? `@${friend.username}` : displayFields[0] === 'status' ? statusLabel : (friend.customStatus || statusLabel)}
+                        </p>
                       </div>
                     </button>
                   </UserProfilePopover>
@@ -819,23 +894,33 @@ function FriendRow({
   onMessage,
   onRemove,
   onBlock,
+  displayFields,
 }: {
   friend: Friend;
   onMessage: () => void;
   onRemove: () => void;
   onBlock: () => void;
+  displayFields: DisplayField[];
 }) {
   const { t } = useTranslation();
   const ui = useUIStyle();
   const status = statusConfig[friend.status] ?? statusConfig.offline;
   const statusLabel = (t.status as Record<string, string>)[friend.status] ?? t.status.offline;
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const fieldValue: Record<DisplayField, string | null> = {
+    customStatus: friend.customStatus || null,
+    username: `@${friend.username}`,
+    status: statusLabel,
+  };
+  const activeFields = displayFields.length > 0 ? displayFields : ['customStatus' as DisplayField];
 
   return (
-    <div className={`group flex items-center gap-3 px-4 py-3 transition-all duration-150 ${ui.row}`}>
-      <UserProfilePopover userId={friend.id} onOpenDM={onMessage}>
+    <div className={`flex items-center gap-3 px-4 py-3 transition-all duration-150 ${ui.row}`}>
+      <UserProfilePopover userId={friend.id} onOpenDM={onMessage} open={profileOpen} onOpenChange={setProfileOpen}>
         <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left">
           <span className="relative shrink-0">
-            <Avatar className="size-9 ring-2 ring-white/20 transition-all group-hover:ring-[var(--accent)]/30">
+            <Avatar className="size-9 ring-2 ring-white/20 transition-all hover:ring-[var(--accent)]/30">
               <Avatar.Image src={resolveMediaUrl(friend.avatarUrl)} />
               <Avatar.Fallback className="text-xs">{friend.username.charAt(0).toUpperCase()}</Avatar.Fallback>
             </Avatar>
@@ -843,12 +928,16 @@ function FriendRow({
           </span>
           <span className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-semibold leading-tight text-[var(--foreground)]">{friend.displayName}</p>
-            <p className="truncate text-[10px] text-[var(--muted)]/60">{friend.customStatus || statusLabel}</p>
+            {activeFields.map((f) => {
+              const val = fieldValue[f];
+              if (!val) return null;
+              return <p key={f} className="truncate text-[10px] leading-snug text-[var(--muted)]/60">{val}</p>;
+            })}
           </span>
         </button>
       </UserProfilePopover>
 
-      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex shrink-0 items-center gap-0.5">
         <Tooltip delay={0}>
           <Button isIconOnly size="sm" variant="ghost" onPress={onMessage} className="rounded-xl">
             <MessageCircleIcon size={15} />
@@ -864,8 +953,17 @@ function FriendRow({
           </Dropdown.Trigger>
           <Dropdown.Popover placement="bottom end">
             <Dropdown.Menu aria-label={t.friends.moreActions}>
+              <Dropdown.Item id="profile" onPress={() => setProfileOpen(true)} className="gap-2">
+                <UserIcon size={15} />Voir le profil
+              </Dropdown.Item>
               <Dropdown.Item id="message" onPress={onMessage} className="gap-2">
                 <MessageCircleIcon size={15} />{t.friends.sendMessage}
+              </Dropdown.Item>
+              <Dropdown.Item id="call" className="gap-2">
+                <PhoneIcon size={15} />Appel vocal
+              </Dropdown.Item>
+              <Dropdown.Item id="invite" className="gap-2">
+                <ServerIcon size={15} />Inviter sur un serveur
               </Dropdown.Item>
               <Dropdown.Item id="remove" onPress={onRemove} className="gap-2 text-red-500">
                 <UserMinusIcon size={15} />{t.friends.removeFriend}

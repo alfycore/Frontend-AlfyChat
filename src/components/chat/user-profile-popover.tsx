@@ -81,12 +81,17 @@ interface UserProfilePopoverProps {
   children: React.ReactNode;
   onOpenDM?: (recipientId: string, recipientName: string) => void;
   serverId?: string;
+  /** Contrôle externe de l'ouverture (optionnel) */
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
 }
 
-export function UserProfilePopover({ userId, children, onOpenDM, serverId }: UserProfilePopoverProps) {
+export function UserProfilePopover({ userId, children, onOpenDM, serverId, open: externalOpen, onOpenChange: externalOnOpenChange }: UserProfilePopoverProps) {
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState<UserProfileData | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setIsOpen = (v: boolean) => { setInternalOpen(v); externalOnOpenChange?.(v); };
   const [loading, setLoading] = useState(false);
   const [friendStatus, setFriendStatus] = useState<FriendStatus>('none');
 
