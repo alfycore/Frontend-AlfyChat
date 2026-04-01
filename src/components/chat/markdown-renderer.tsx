@@ -50,7 +50,7 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content }
   const isLocalUpload = /^\/uploads\/\S+\.(gif|png|jpe?g|webp)$/i.test(trimmed);
   const isServerFile = /^\/api\/servers\/[^/]+\/files\/\S+\.(gif|png|jpe?g|webp)$/i.test(trimmed);
   if (isExternalImage || isLocalUpload || isServerFile) {
-    const src = (isLocalUpload || isServerFile) ? resolveMediaUrl(trimmed) : trimmed;
+    const src = ((isLocalUpload || isServerFile) ? resolveMediaUrl(trimmed) : trimmed) ?? trimmed;
     return (
       <>
         <img
