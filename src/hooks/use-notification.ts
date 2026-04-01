@@ -52,9 +52,8 @@ export function useNotification() {
         body,
         icon: '/favicon.ico',
         badge: '/favicon.ico',
-        tag: 'alfychat-msg',   // remplace le précédent au lieu d'en empiler
-        renotify: true,
-      });
+        tag: 'alfychat-msg',
+      } as NotificationOptions);
       setTimeout(() => n.close(), 6000);
     } catch { /* navigateur sans support ou permission révoquée */ }
   }, []);
