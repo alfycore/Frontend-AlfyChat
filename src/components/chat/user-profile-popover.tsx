@@ -416,7 +416,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                   <Chip
                     size="sm"
                     variant="soft"
-                    color={profile.isVerifiedBot ? 'primary' : 'default'}
+                    color={profile.isVerifiedBot ? 'accent' : 'default'}
                     className="h-4 px-1 text-[9px] font-bold uppercase"
                   >
                     {profile.isVerifiedBot && (
