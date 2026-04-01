@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { socketService } from '@/lib/socket';
 import { signalService } from '@/lib/signal-service';
+import { useAuth } from '@/hooks/use-auth';
 import {
   isDMActive,
   isGroupActive,
@@ -26,11 +27,17 @@ import {
 export function useNotification() {
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
+  const { user } = useAuth();
+  const userIdRef = useRef<string | null>(user?.id ?? null);
 
-  // Garder la ref synchronisée avec le pathname Next.js (toujours à jour)
+  // Garder les refs synchronisées
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
+
+  useEffect(() => {
+    userIdRef.current = user?.id ?? null;
+  }, [user?.id]);
 
   // Contexte audio partagé — un seul par session
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -104,7 +111,7 @@ export function useNotification() {
       }
 
       const senderId = payload.senderId || payload.authorId;
-      const myId = (window as any).__alfychat_user_id;
+      const myId = userIdRef.current;
 
       // Ne pas notifier pour ses propres messages
       if (myId && senderId === myId) return;
@@ -225,7 +232,7 @@ export function useNotification() {
       for (const [convId, { count, senderName }] of entries) {
         // convId est "dm_{id1}_{id2}" — extraire le recipientId
         const parts = convId.split('_');
-        const myId = (window as any).__alfychat_user_id;
+        const myId = userIdRef.current;
         const recipientId = parts.find((p) => p !== 'dm' && p !== myId);
         if (recipientId) incrementUnread(recipientId);
         totalCount += count;
