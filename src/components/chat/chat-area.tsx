@@ -334,8 +334,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     let content = messageInput.trim();
     for (const att of pendingAttachments) {
       const attStr = att.isImage
-        ? `\n${att.url}`
-        : `\n[${att.name}](${att.url})`;
+        ? `\n[attach:img]:${att.url}`
+        : `\n[attach:file]:${att.name}|${att.url}`;
       content = content ? content + attStr : attStr.trimStart();
     }
 

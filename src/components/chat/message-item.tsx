@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, type Dispatch, type SetStateAction } from 'react';
+import { memo, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon,
 } from '@/components/icons';
@@ -14,6 +14,86 @@ import { InviteEmbed, extractInviteCodes } from '@/components/chat/invite-embed'
 import { Twemoji } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
+
+// ── Attachment parser ────────────────────────────────────────────────────────
+
+function parseAttachments(content: string): {
+  textContent: string;
+  images: string[];
+  files: { name: string; url: string }[];
+} {
+  const lines = content.split('\n');
+  const textLines: string[] = [];
+  const images: string[] = [];
+  const files: { name: string; url: string }[] = [];
+  for (const line of lines) {
+    if (line.startsWith('[attach:img]:')) {
+      images.push(line.slice('[attach:img]:'.length).trim());
+    } else if (line.startsWith('[attach:file]:')) {
+      const rest = line.slice('[attach:file]:'.length);
+      const pipeIdx = rest.indexOf('|');
+      if (pipeIdx >= 0) files.push({ name: rest.slice(0, pipeIdx), url: rest.slice(pipeIdx + 1) });
+      else files.push({ name: rest, url: rest });
+    } else {
+      textLines.push(line);
+    }
+  }
+  return { textContent: textLines.join('\n').trim(), images, files };
+}
+
+// ── Attachment embed ─────────────────────────────────────────────────────────
+
+function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: string; url: string }[] }) {
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  if (!images.length && !files.length) return null;
+  return (
+    <div className="mt-1.5 flex flex-col gap-1.5">
+      {images.map((url, i) => {
+        const src = resolveMediaUrl(url) ?? url;
+        return (
+          <div key={i} className="inline-block">
+            <img
+              src={src}
+              alt=""
+              className="max-h-72 max-w-xs cursor-zoom-in rounded-xl object-cover shadow-md ring-1 ring-[var(--border)]/20 transition-opacity hover:opacity-95"
+              loading="lazy"
+              onClick={() => setLightbox(src)}
+            />
+          </div>
+        );
+      })}
+      {files.map((f, i) => (
+        <a
+          key={i}
+          href={resolveMediaUrl(f.url) ?? f.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex max-w-xs items-center gap-2 rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/40 px-3 py-2 text-[12px] text-[var(--foreground)]/80 transition-colors hover:bg-[var(--surface-secondary)]/70"
+          download={f.name}
+        >
+          <svg className="size-4 shrink-0 text-[var(--muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7l-5-5H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+          <span className="max-w-[180px] truncate">{f.name}</span>
+        </a>
+      ))}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightbox(null)}
+          onKeyDown={(e) => e.key === 'Escape' && setLightbox(null)}
+          role="dialog"
+          aria-modal
+        >
+          <img
+            src={lightbox}
+            alt=""
+            className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -271,14 +351,18 @@ export const MessageItem = memo(function MessageItem({
                 />
                 <p className="text-[10px] text-[var(--muted)]/40">Entrée pour sauvegarder · Échap pour annuler</p>
               </div>
-            ) : (
-              <div className="mt-0.5 text-[13px] leading-relaxed text-[var(--foreground)]/90 md:text-sm">
-                <MarkdownRenderer content={message.content} />
-                {!message.isSystem && extractInviteCodes(message.content).map((code) => (
-                  <InviteEmbed key={code} code={code} />
-                ))}
-              </div>
-            )}
+            ) : (() => {
+              const { textContent, images, files } = parseAttachments(message.content ?? '');
+              return (
+                <div className="mt-0.5 text-[13px] leading-relaxed text-[var(--foreground)]/90 md:text-sm">
+                  {textContent && <MarkdownRenderer content={textContent} />}
+                  {!message.isSystem && extractInviteCodes(message.content).map((code) => (
+                    <InviteEmbed key={code} code={code} />
+                  ))}
+                  <AttachmentsEmbed images={images} files={files} />
+                </div>
+              );
+            })()}
 
             {/* Réactions */}
             {message.reactions && message.reactions.length > 0 && (
