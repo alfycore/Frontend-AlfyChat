@@ -11,6 +11,7 @@ import {
   BanIcon,
   UserXIcon,
   PaletteIcon,
+  SmileIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
@@ -105,6 +106,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
   const [banReason, setBanReason] = useState('');
   const [canManageRoles, setCanManageRoles] = useState(false);
   const [canKickBan, setCanKickBan] = useState(false);
+  const [showFullBio, setShowFullBio] = useState(false);
   const [localCardColor, setLocalCardColor] = useState<string | null>(null);
   const colorSaveTimer = useState<ReturnType<typeof setTimeout> | null>(null);
 
@@ -291,21 +293,29 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
   const visibleBadges =
     profile?.showBadges !== false && profile?.badges ? profile.badges.slice(0, 6) : [];
 
+  const statusTextColor: Record<string, string> = {
+    online: 'text-green-500',
+    idle: 'text-yellow-500',
+    dnd: 'text-red-500',
+    invisible: 'text-gray-400',
+    offline: 'text-gray-400',
+  };
+
   return (
     <Popover
       isOpen={isOpen}
       onOpenChange={setIsOpen}
     >
       <Popover.Trigger>{children}</Popover.Trigger>
-      <Popover.Content placement="right" shouldFlip offset={8} className="w-[300px] overflow-hidden rounded-2xl border border-[var(--border)]/20 bg-[var(--surface)] p-0 shadow-2xl">
+      <Popover.Content placement="right" shouldFlip offset={8} className="w-[300px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)] p-0">
         {loading || !profile ? (
           /* ── Skeleton ── */
           <div className="flex flex-col">
-            <Skeleton className="h-[88px] w-full rounded-none" />
-            <div className="px-4 -mt-10 mb-2 flex items-end justify-between">
-              <Skeleton className="size-[72px] rounded-full ring-4 ring-[var(--surface)]" />
+            <Skeleton className="h-[110px] w-full rounded-none" />
+            <div className="px-3 -mt-8 mb-2">
+              <Skeleton className="size-16 rounded-full ring-4 ring-[var(--surface)]" />
             </div>
-            <div className="space-y-2 px-4 pb-4">
+            <div className="space-y-2 px-3 pb-4">
               <Skeleton className="h-[14px] w-32 rounded-lg" />
               <Skeleton className="h-3 w-20 rounded-lg" />
               <Skeleton className="h-3 w-full mt-3 rounded-lg" />
@@ -316,48 +326,79 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
           <div className="flex flex-col">
 
             {/* ── Banner ── */}
-            <div className="relative h-[88px] shrink-0 overflow-hidden">
+            <div className="relative h-[110px] shrink-0 overflow-hidden">
               {profile.bannerUrl ? (
                 <img src={resolveMediaUrl(profile.bannerUrl)} alt="" className="size-full object-cover" />
               ) : (
-                <div
-                  className="size-full"
-                  style={{
-                    background: `linear-gradient(160deg, ${cardColor} 0%, ${cardColor}bb 40%, ${cardColor}44 100%)`,
-                  }}
-                />
+                <div className="size-full" style={{ backgroundColor: cardColor }} />
               )}
-              {/* bottom fade into card bg */}
-              <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[var(--surface)] to-transparent" />
-              {/* Color picker — visible only on my own card */}
-              {isMe && (
-                <Tooltip delay={0}>
-                  <label className="absolute right-2.5 bottom-2.5 z-10 flex size-7 cursor-pointer items-center justify-center rounded-lg bg-black/30 text-white backdrop-blur-sm transition-all hover:bg-black/50">
-                    <PaletteIcon size={13} />
-                    <input
-                      type="color"
-                      className="sr-only"
-                      value={cardColor}
-                      onChange={(e) => handleColorChange(e.target.value)}
-                    />
-                  </label>
-                  <Tooltip.Content showArrow placement="left">
-                    <Tooltip.Arrow />
-                    <p className="text-xs">Changer la couleur de la carte</p>
-                  </Tooltip.Content>
-                </Tooltip>
-              )}
+
+              {/* Top-right corner: friend action or color picker */}
+              <div className="absolute right-2 top-2 flex gap-1">
+                {isMe ? (
+                  <Tooltip delay={0}>
+                    <label className="flex size-7 cursor-pointer items-center justify-center rounded-lg bg-[var(--surface)]/80 text-[var(--foreground)]">
+                      <PaletteIcon size={13} />
+                      <input
+                        type="color"
+                        className="sr-only"
+                        value={cardColor}
+                        onChange={(e) => handleColorChange(e.target.value)}
+                      />
+                    </label>
+                    <Tooltip.Content showArrow placement="left">
+                      <Tooltip.Arrow />
+                      <p className="text-xs">Couleur de la carte</p>
+                    </Tooltip.Content>
+                  </Tooltip>
+                ) : (
+                  <>
+                    {friendStatus === 'none' && (
+                      <Tooltip delay={0}>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg" onPress={handleAddFriend}>
+                          <UserPlusIcon size={13} />
+                        </Button>
+                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Ajouter en ami</p></Tooltip.Content>
+                      </Tooltip>
+                    )}
+                    {friendStatus === 'friend' && (
+                      <Tooltip delay={0}>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg text-green-500" isDisabled>
+                          <UserCheckIcon size={13} />
+                        </Button>
+                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Ami</p></Tooltip.Content>
+                      </Tooltip>
+                    )}
+                    {friendStatus === 'pending_sent' && (
+                      <Tooltip delay={0}>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg text-yellow-500" isDisabled>
+                          <CheckIcon size={13} />
+                        </Button>
+                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Demande envoyée</p></Tooltip.Content>
+                      </Tooltip>
+                    )}
+                    {friendStatus === 'pending_received' && (
+                      <Tooltip delay={0}>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg text-blue-400" onPress={handleAddFriend}>
+                          <UserPlusIcon size={13} />
+                        </Button>
+                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Accepter</p></Tooltip.Content>
+                      </Tooltip>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* ── Avatar row ── */}
-            <div className="flex items-end justify-between px-4 -mt-10 mb-2">
+            {/* ── Avatar ── */}
+            <div className="px-3 -mt-8 mb-1">
               <Badge.Anchor>
                 <Avatar
-                  className="size-[72px] ring-4 ring-[var(--surface)] shadow-lg"
+                  className="size-16 ring-4 ring-[var(--surface)]"
                   style={{ backgroundColor: cardColor + '25', color: cardColor }}
                 >
                   <Avatar.Image src={resolveMediaUrl(profile.avatarUrl)} />
-                  <Avatar.Fallback className="text-2xl font-bold">
+                  <Avatar.Fallback className="text-xl font-bold">
                     {profile.displayName?.[0]?.toUpperCase() || '?'}
                   </Avatar.Fallback>
                 </Avatar>
@@ -365,236 +406,182 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                   <Badge color={badgeColor} placement="bottom-right" size="sm" />
                 )}
               </Badge.Anchor>
-
-              {!isMe && (
-                <div className="flex items-center gap-1.5">
-                  <Tooltip delay={0}>
-                    <Button
-                      isIconOnly size="sm"
-                      className="size-8 rounded-full text-white shadow-md"
-                      style={{ backgroundColor: cardColor }}
-                      onPress={handleSendMessage}
-                    >
-                      <MessageCircleIcon size={15} />
-                    </Button>
-                    <Tooltip.Content showArrow><Tooltip.Arrow /><p className="text-xs">Message</p></Tooltip.Content>
-                  </Tooltip>
-
-                  {friendStatus === 'none' && (
-                    <Tooltip delay={0}>
-                      <Button isIconOnly size="sm" variant="secondary" className="size-8 rounded-full" onPress={handleAddFriend}>
-                        <UserPlusIcon size={14} />
-                      </Button>
-                      <Tooltip.Content showArrow><Tooltip.Arrow /><p className="text-xs">Ajouter en ami</p></Tooltip.Content>
-                    </Tooltip>
-                  )}
-                  {friendStatus === 'friend' && (
-                    <Tooltip delay={0}>
-                      <Button isIconOnly size="sm" variant="secondary" className="size-8 rounded-full text-green-500" isDisabled>
-                        <UserCheckIcon size={14} />
-                      </Button>
-                      <Tooltip.Content showArrow><Tooltip.Arrow /><p className="text-xs">Déjà ami</p></Tooltip.Content>
-                    </Tooltip>
-                  )}
-                  {friendStatus === 'pending_sent' && (
-                    <Tooltip delay={0}>
-                      <Button isIconOnly size="sm" variant="secondary" className="size-8 rounded-full text-yellow-500" isDisabled>
-                        <CheckIcon size={14} />
-                      </Button>
-                      <Tooltip.Content showArrow><Tooltip.Arrow /><p className="text-xs">Demande envoyée</p></Tooltip.Content>
-                    </Tooltip>
-                  )}
-                  {friendStatus === 'pending_received' && (
-                    <Tooltip delay={0}>
-                      <Button isIconOnly size="sm" variant="secondary" className="size-8 rounded-full text-blue-400" onPress={handleAddFriend}>
-                        <UserPlusIcon size={14} />
-                      </Button>
-                      <Tooltip.Content showArrow><Tooltip.Arrow /><p className="text-xs">Accepter</p></Tooltip.Content>
-                    </Tooltip>
-                  )}
-                </div>
-              )}
             </div>
 
-            {/* ── Name / username / status ── */}
-            <div className="px-4 pb-3">
-              <div className="flex items-center gap-1.5">
-                <h3 className="truncate text-base font-bold leading-tight">{profile.displayName}</h3>
+            {/* ── Identity ── */}
+            <div className="px-3 pb-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h3 className="text-base font-bold leading-tight">{profile.displayName}</h3>
                 {profile.isBot && (
-                  <span className={cn(
-                    'shrink-0 inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-bold uppercase',
-                    profile.isVerifiedBot
-                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                      : 'bg-[var(--muted)]/15 text-[var(--muted)] border border-[var(--muted)]/30',
-                  )}>
-                    {profile.isVerifiedBot && <svg className="size-2.5" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l2.5 3.5L14.5 2l-1.5 4L16 8l-3.5 2.5L14.5 14l-4-1.5L8 16l-2.5-3.5L1.5 14l1.5-4L0 8l3.5-2.5L1.5 2l4 1.5L8 0z"/></svg>}
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    color={profile.isVerifiedBot ? 'primary' : 'default'}
+                    className="h-4 px-1 text-[9px] font-bold uppercase"
+                  >
+                    {profile.isVerifiedBot && (
+                      <svg className="mr-0.5 inline size-2" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0l2.5 3.5L14.5 2l-1.5 4L16 8l-3.5 2.5L14.5 14l-4-1.5L8 16l-2.5-3.5L1.5 14l1.5-4L0 8l3.5-2.5L1.5 2l4 1.5L8 0z" />
+                      </svg>
+                    )}
                     BOT
-                  </span>
+                  </Chip>
                 )}
               </div>
-              <p className="text-xs text-[var(--muted)]">@{profile.username}</p>
-              <div className="mt-1.5 flex items-center gap-1.5">
-                <span className={cn('size-2 shrink-0 rounded-full shadow-sm', status.dot)} />
-                <span className="text-xs text-[var(--muted)]">{status.label}</span>
-              </div>
+              <p className="mt-0.5 text-xs text-[var(--muted)]">
+                @{profile.username}{' • '}
+                <span className={statusTextColor[profile.status] ?? 'text-gray-400'}>{status.label}</span>
+              </p>
             </div>
 
-            {/* ── Separator ── */}
-            <div className="mx-4"><Separator /></div>
-
-            {/* ── Body ── */}
-            <div className="flex flex-col gap-3 px-4 py-3">
-
-              {/* Badges */}
-              {visibleBadges.length > 0 && (
-                <div>
-                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/50">Badges</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {visibleBadges.map((badge) => (
-                      <Tooltip key={badge.id} delay={0}>
-                        <button
-                          type="button"
-                          className="flex size-7 items-center justify-center rounded-lg transition-all hover:scale-110 hover:brightness-110"
-                          style={{ backgroundColor: badge.color + '18', border: `1px solid ${badge.color}35` }}
-                        >
-                          {renderBadgeIcon(badge)}
-                        </button>
-                        <Tooltip.Content showArrow>
-                          <Tooltip.Arrow />
-                          <p className="text-xs font-semibold">{badge.name}</p>
-                          <p className="text-[10px] opacity-60">Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}</p>
-                        </Tooltip.Content>
-                      </Tooltip>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Bio */}
-              {profile.bio && (
-                <div>
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/50">À propos</p>
-                  <p className="whitespace-pre-wrap text-[13px] leading-snug text-[var(--foreground)]/80">{profile.bio}</p>
-                </div>
-              )}
-
-              {/* Interests */}
-              {profile.interests && profile.interests.length > 0 && (
-                <div>
-                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/50">Intérêts</p>
-                  <div className="flex flex-wrap gap-1">
-                    {profile.interests.map((interest) => (
-                      <span
-                        key={interest}
-                        className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                        style={{ backgroundColor: cardColor + '18', color: cardColor, border: `1px solid ${cardColor}30` }}
+            {/* ── Badges ── */}
+            {visibleBadges.length > 0 && (
+              <div className="px-3 pb-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {visibleBadges.map((badge) => (
+                    <Tooltip key={badge.id} delay={0}>
+                      <button
+                        type="button"
+                        className="flex size-7 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: badge.color + '18', border: `1px solid ${badge.color}35` }}
                       >
-                        {interest}
-                      </span>
-                    ))}
-                  </div>
+                        {renderBadgeIcon(badge)}
+                      </button>
+                      <Tooltip.Content showArrow>
+                        <Tooltip.Arrow />
+                        <p className="text-xs font-semibold">{badge.name}</p>
+                        <p className="text-[10px] opacity-60">Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}</p>
+                      </Tooltip.Content>
+                    </Tooltip>
+                  ))}
                 </div>
-              )}
-
-              {/* Member since */}
-              <div className="flex items-center gap-2 text-[12px]">
-                <CalendarIcon size={13} className="shrink-0 text-[var(--muted)]" />
-                <span className="text-[var(--muted)]">Membre depuis</span>
-                <span className="ml-auto font-semibold text-[var(--foreground)]/80">{memberSince}</span>
               </div>
+            )}
 
-              {/* Server roles */}
-              {serverId && serverRoles.length > 0 && canManageRoles && (
-                <div>
+            <div className="mx-3"><Separator /></div>
+
+            {/* ── Bio ── */}
+            {profile.bio && (
+              <div className="px-3 py-2">
+                <p className={cn('whitespace-pre-wrap text-[13px] leading-snug text-[var(--foreground)]/80', !showFullBio && 'line-clamp-3')}>
+                  {profile.bio}
+                </p>
+                {profile.bio.length > 120 && (
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between"
-                    onClick={() => setShowRoles((v) => !v)}
+                    className="mt-1 text-[11px] font-medium text-[var(--accent)] hover:underline"
+                    onClick={() => setShowFullBio((v) => !v)}
                   >
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/50">Rôles</p>
-                    <ShieldCheckIcon size={12} className={cn('text-[var(--muted)] transition-transform', showRoles && 'rotate-180')} />
+                    {showFullBio ? 'Réduire' : 'Afficher la bio complète'}
                   </button>
-                  {showRoles && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {serverRoles.map((role: any) => {
-                        const active = memberRoleIds.includes(role.id);
-                        return (
-                          <button
-                            key={role.id}
-                            type="button"
-                            className={cn(
-                              'flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] transition-all',
-                              active ? 'opacity-100' : 'opacity-40 hover:opacity-70',
-                            )}
-                            style={{
-                              borderColor: role.color || '#888',
-                              backgroundColor: active ? (role.color || '#888') + '20' : 'transparent',
-                              color: role.color || '#888',
-                            }}
-                            onClick={() => toggleRole(role.id)}
-                          >
-                            <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: role.color || '#888' }} />
-                            {role.name}
-                            {active && <CheckIcon size={10} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                )}
+              </div>
+            )}
+
+            {/* ── Interests ── */}
+            {profile.interests && profile.interests.length > 0 && (
+              <div className="px-3 pb-2">
+                <div className="flex flex-wrap gap-1">
+                  {profile.interests.map((interest) => (
+                    <Chip
+                      key={interest}
+                      size="sm"
+                      variant="flat"
+                      className="h-5 rounded-full text-[11px] font-medium"
+                      style={{ backgroundColor: cardColor + '18', color: cardColor, border: `1px solid ${cardColor}30` }}
+                    >
+                      {interest}
+                    </Chip>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
+
+            {/* ── Member since ── */}
+            <div className="flex items-center gap-2 px-3 pb-2 text-[12px] text-[var(--muted)]">
+              <CalendarIcon size={13} className="shrink-0" />
+              <span>Membre depuis</span>
+              <span className="ml-auto font-semibold text-[var(--foreground)]/80">{memberSince}</span>
             </div>
 
-            {/* ── Bottom action buttons (message + add friend) ── */}
-            {!isMe && (
-              <>
-                <div className="mx-4"><Separator /></div>
-                <div className="flex gap-2 px-4 pb-4 pt-3">
-                  <Button
-                    size="sm"
-                    className="flex-1 gap-1.5 rounded-xl font-semibold text-white shadow-md"
-                    style={{ backgroundColor: cardColor }}
-                    onPress={handleSendMessage}
-                  >
-                    <MessageCircleIcon size={14} />
-                    Message
-                  </Button>
+            {/* ── Server roles ── */}
+            {serverId && serverRoles.length > 0 && canManageRoles && (
+              <div className="px-3 pb-2">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between"
+                  onClick={() => setShowRoles((v) => !v)}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/50">Rôles</p>
+                  <ShieldCheckIcon size={12} className={cn('text-[var(--muted)] transition-transform', showRoles && 'rotate-180')} />
+                </button>
+                {showRoles && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {serverRoles.map((role: any) => {
+                      const active = memberRoleIds.includes(role.id);
+                      return (
+                        <button
+                          key={role.id}
+                          type="button"
+                          className={cn(
+                            'flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] transition-all',
+                            active ? 'opacity-100' : 'opacity-40 hover:opacity-70',
+                          )}
+                          style={{
+                            borderColor: role.color || '#888',
+                            backgroundColor: active ? (role.color || '#888') + '20' : 'transparent',
+                            color: role.color || '#888',
+                          }}
+                          onClick={() => toggleRole(role.id)}
+                        >
+                          <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: role.color || '#888' }} />
+                          {role.name}
+                          {active && <CheckIcon size={10} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
-                  {friendStatus === 'none' && (
-                    <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[12px]" onPress={handleAddFriend}>
-                      <UserPlusIcon size={13} />Ajouter
+            <div className="mx-3"><Separator /></div>
+
+            {/* ── Message input ── */}
+            {!isMe && (
+              <div className="px-3 pb-3 pt-2">
+                <InputGroup variant="secondary" className="h-9 rounded-xl">
+                  <InputGroup.Input
+                    placeholder={`Envoyer un message à @${profile.username}`}
+                    className="cursor-pointer text-[12px]"
+                    readOnly
+                    onClick={handleSendMessage}
+                    onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSendMessage(); }}
+                  />
+                  <InputGroup.Element>
+                    <Button
+                      isIconOnly size="sm" variant="ghost"
+                      className="size-7 rounded-lg text-[var(--muted)]"
+                      onPress={handleSendMessage}
+                    >
+                      <SmileIcon size={14} />
                     </Button>
-                  )}
-                  {friendStatus === 'friend' && (
-                    <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[12px] text-green-500 border-green-500/30" isDisabled>
-                      <UserCheckIcon size={13} />Ami
-                    </Button>
-                  )}
-                  {friendStatus === 'pending_sent' && (
-                    <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[12px] text-yellow-500 border-yellow-500/30" isDisabled>
-                      <CheckIcon size={13} />En attente
-                    </Button>
-                  )}
-                  {friendStatus === 'pending_received' && (
-                    <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[12px] text-blue-400 border-blue-400/30" onPress={handleAddFriend}>
-                      <UserPlusIcon size={13} />Accepter
-                    </Button>
-                  )}
-                </div>
-              </>
+                  </InputGroup.Element>
+                </InputGroup>
+              </div>
             )}
 
             {/* ── Kick / Ban ── */}
             {!isMe && serverId && canKickBan && (
               <>
-                <div className="mx-4"><Separator /></div>
-                <div className="flex flex-col gap-2 px-4 pb-3 pt-2">
+                <div className="mx-3"><Separator /></div>
+                <div className="flex flex-col gap-2 px-3 pb-3 pt-2">
                   {!confirmKick && !confirmBan && (
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-full text-[11px] text-orange-400 border-orange-400/30 hover:bg-orange-500/10" onPress={() => setConfirmKick(true)}>
+                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[11px] text-orange-400 border-orange-400/30" onPress={() => setConfirmKick(true)}>
                         <UserXIcon size={13} />Expulser
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-full text-[11px] text-red-400 border-red-400/30 hover:bg-red-500/10" onPress={() => setConfirmBan(true)}>
+                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[11px] text-red-400 border-red-400/30" onPress={() => setConfirmBan(true)}>
                         <BanIcon size={13} />Bannir
                       </Button>
                     </div>
