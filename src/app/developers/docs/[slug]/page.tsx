@@ -1911,6 +1911,539 @@ function BotPermissionsSection() {
   );
 }
 
+/* ─── Gateway REST Reference ───────────────────────────────── */
+function GatewayRestSection() {
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        icon={CodeIcon}
+        title="Référence REST complète"
+        description="Tous les endpoints HTTP du Gateway — auth, users, messages, friends, serveurs, bots, media."
+        badge="Complet"
+      />
+
+      <Card className="border border-border/60 bg-surface/40">
+        <Card.Content className="p-5">
+          <div className="flex flex-wrap items-center gap-6">
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Base URL</p>
+              <code className="font-mono text-sm font-bold text-accent">https://gateway.alfychat.app</code>
+            </div>
+            <Separator orientation="vertical" className="hidden sm:block h-8" />
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Préfixe</p>
+              <code className="font-mono text-sm font-bold">/api</code>
+            </div>
+            <Separator orientation="vertical" className="hidden sm:block h-8" />
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Auth utilisateur</p>
+              <code className="font-mono text-sm font-bold">Bearer &lt;jwt&gt;</code>
+            </div>
+            <Separator orientation="vertical" className="hidden sm:block h-8" />
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Auth bot</p>
+              <code className="font-mono text-sm font-bold">Bot &lt;token&gt;</code>
+            </div>
+          </div>
+        </Card.Content>
+      </Card>
+
+      {/* ── Auth ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-blue-400">Authentification — /api/auth</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="POST"  path="/api/auth/register" desc="Créer un compte — body: { username, email, password }" />
+          <EndpointRow method="POST"  path="/api/auth/login"    desc="Connexion — body: { email, password } → { token, refreshToken, user }" />
+          <EndpointRow method="POST"  path="/api/auth/refresh"  desc="Renouveler le JWT — body: { refreshToken } → { token, refreshToken }" />
+          <EndpointRow method="POST"  path="/api/auth/logout"   desc="Révoquer la session — body: { refreshToken }" />
+        </div>
+        <div className="mt-3">
+          <CodeBlock lang="json" title="Réponse POST /api/auth/login" code={`{
+  "token":        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "a1b2c3d4e5f67890...",
+  "user": {
+    "id":         "u1a2b3c4-...",
+    "username":   "Alice",
+    "email":      "alice@example.com",
+    "avatarUrl":  "https://media.alfychat.app/avatars/...",
+    "isVerified": true,
+    "role":       "user"
+  }
+}`} />
+        </div>
+      </div>
+
+      {/* ── Users ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-violet-400">Utilisateurs — /api/users</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/users/me"               desc="Profil de l'utilisateur connecté" />
+          <EndpointRow method="PATCH"  path="/api/users/me"               desc="Modifier le profil — body: { username?, displayName?, bio?, avatarUrl? }" />
+          <EndpointRow method="GET"    path="/api/users/:id"              desc="Profil public d'un utilisateur par ID" />
+          <EndpointRow method="GET"    path="/api/users/:id/preferences"  desc="Préférences de l'utilisateur (auth requise)" />
+          <EndpointRow method="PATCH"  path="/api/users/:id"             desc="Mettre à jour le profil d'un utilisateur" />
+          <EndpointRow method="PATCH"  path="/api/users/:id/status"      desc="Changer le statut de présence — body: { status, customStatus? }" />
+          <EndpointRow method="PATCH"  path="/api/users/:id/last-seen"   desc="Mettre à jour la dernière connexion (automatique)" />
+        </div>
+        <div className="mt-3">
+          <CodeBlock lang="json" title="Réponse GET /api/users/me" code={`{
+  "id":          "u1a2b3c4-...",
+  "username":    "Alice",
+  "displayName": "Alice 🌸",
+  "email":       "alice@example.com",
+  "avatarUrl":   "https://media.alfychat.app/avatars/...",
+  "bio":         "Développeuse passionnée",
+  "role":        "user",
+  "isVerified":  true,
+  "createdAt":   "2026-01-01T00:00:00.000Z"
+}`} />
+        </div>
+      </div>
+
+      {/* ── RGPD ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-amber-400">RGPD — /api/rgpd</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/rgpd/export"  desc="Exporter toutes les données personnelles (zip)" />
+          <EndpointRow method="DELETE" path="/api/rgpd/account" desc="Supprimer définitivement le compte" />
+        </div>
+      </div>
+
+      {/* ── Messages ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-emerald-400">Messages & Conversations — /api/messages & /api/conversations</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/messages"                            desc="Lister les messages (query: conversationId, limit, before)" />
+          <EndpointRow method="POST"   path="/api/messages"                            desc="Envoyer un message — body: { conversationId, content, replyToId? }" />
+          <EndpointRow method="PATCH"  path="/api/messages/:id"                        desc="Modifier un message — body: { content }" />
+          <EndpointRow method="DELETE" path="/api/messages/:id"                        desc="Supprimer un message" />
+          <EndpointRow method="POST"   path="/api/messages/:id/reactions"              desc="Ajouter une réaction — body: { emoji }" />
+          <EndpointRow method="DELETE" path="/api/messages/:id/reactions/:emoji"       desc="Retirer une réaction" />
+          <EndpointRow method="GET"    path="/api/conversations"                       desc="Lister les conversations de l'utilisateur connecté" />
+          <EndpointRow method="POST"   path="/api/conversations"                       desc="Créer une conversation — body: { type, participantIds[], name? }" />
+          <EndpointRow method="PATCH"  path="/api/conversations/:id"                   desc="Modifier une conversation — body: { name?, avatarUrl? }" />
+          <EndpointRow method="DELETE" path="/api/conversations/:id"                   desc="Supprimer une conversation" />
+          <EndpointRow method="POST"   path="/api/conversations/:id/participants"      desc="Ajouter un participant — body: { userId }" />
+          <EndpointRow method="DELETE" path="/api/conversations/:id/participants/:uid" desc="Retirer un participant" />
+          <EndpointRow method="POST"   path="/api/conversations/:id/leave"             desc="Quitter une conversation de groupe" />
+        </div>
+        <div className="mt-3">
+          <CodeBlock lang="json" title="Réponse POST /api/messages" code={`{
+  "id":             "m1a2b3c4-...",
+  "conversationId": "dm_user1_user2",
+  "senderId":       "u1a2b3c4-...",
+  "content":        "Salut !",
+  "replyToId":      null,
+  "createdAt":      "2026-04-02T10:00:00.000Z",
+  "isEdited":       false,
+  "reactions":      []
+}`} />
+        </div>
+      </div>
+
+      {/* ── Notifications ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-pink-400">Notifications — /api/notifications</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"   path="/api/notifications"         desc="Récupérer les notifications non-lues de l'utilisateur connecté" />
+          <EndpointRow method="PATCH" path="/api/notifications/read"    desc="Marquer toutes les notifications comme lues" />
+        </div>
+      </div>
+
+      {/* ── Archive DM ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-cyan-400">Archive DM (système hybride) — /api/archive</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"  path="/api/archive/status/:convId"  desc="Statut d'archivage d'une conversation" />
+          <EndpointRow method="GET"  path="/api/archive/stats/:convId"   desc="Statistiques d'archive (messages archivés, quota)" />
+          <EndpointRow method="GET"  path="/api/archive/quota/:convId"   desc="Vérifier le quota avant archivage" />
+          <EndpointRow method="POST" path="/api/archive/confirm"         desc="Confirmer un archivage P2P — body: { conversationId, archiveLogId }" />
+          <EndpointRow method="GET"  path="/api/archive/message/:id"     desc="Récupérer un message archivé depuis le cache" />
+          <EndpointRow method="POST" path="/api/archive/cache"           desc="Mettre en cache des messages archivés — body: { messages[] }" />
+        </div>
+        <InfoCard color="blue" title="Système hybride DM">
+          AlfyChat utilise un système d&apos;archivage P2P pour les anciens messages DM.
+          Les messages récents sont en base de données ; les anciens sont archivés côté client et échangeables entre pairs connectés via les events WebSocket <code>DM_ARCHIVE_REQUEST</code> / <code>DM_ARCHIVE_PEER_RESPONSE</code>.
+        </InfoCard>
+      </div>
+
+      {/* ── Friends ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-orange-400">Amis — /api/friends</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/friends"                             desc="Liste des amis de l'utilisateur connecté" />
+          <EndpointRow method="GET"    path="/api/friends/requests"                    desc="Demandes reçues et envoyées → { received[], sent[] }" />
+          <EndpointRow method="GET"    path="/api/friends/blocked"                     desc="Liste des utilisateurs bloqués" />
+          <EndpointRow method="POST"   path="/api/friends/request"                     desc="Envoyer une demande d'ami — body: { toUserId, message? }" />
+          <EndpointRow method="POST"   path="/api/friends/requests/:id/accept"         desc="Accepter une demande → notifie les deux utilisateurs via WS" />
+          <EndpointRow method="POST"   path="/api/friends/requests/:id/decline"        desc="Refuser une demande d'ami" />
+          <EndpointRow method="DELETE" path="/api/friends/:friendId"                   desc="Supprimer un ami → notifie les deux via WS" />
+          <EndpointRow method="POST"   path="/api/friends/:targetId/block"             desc="Bloquer un utilisateur — body: { userId }" />
+          <EndpointRow method="POST"   path="/api/friends/:targetId/unblock"           desc="Débloquer un utilisateur" />
+        </div>
+      </div>
+
+      {/* ── Calls ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-red-400">Appels — /api/calls</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"  path="/api/calls"      desc="Historique des appels de l'utilisateur" />
+          <EndpointRow method="POST" path="/api/calls"      desc="Créer un appel (usage interne — préférer l'event WebSocket CALL_INITIATE)" />
+          <EndpointRow method="GET"  path="/api/calls/:id"  desc="Détails d'un appel" />
+        </div>
+        <InfoCard color="amber" title="Appels WebRTC">
+          La création d&apos;appels se fait via l&apos;événement WebSocket <code>CALL_INITIATE</code>.
+          L&apos;API REST <code>/api/calls</code> n&apos;est utilisée qu&apos;en interne par le gateway.
+          Le signaling WebRTC (offer / answer / ICE) passe entièrement par WebSocket.
+        </InfoCard>
+      </div>
+
+      {/* ── Servers ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-teal-400">Serveurs — /api/servers</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/servers"                          desc="Serveurs dont l'utilisateur est membre" />
+          <EndpointRow method="POST"   path="/api/servers"                          desc="Créer un serveur — body: { name, iconUrl?, description? }" />
+          <EndpointRow method="GET"    path="/api/servers/:id"                      desc="Détails d'un serveur (channels, membres, rôles)" />
+          <EndpointRow method="PATCH"  path="/api/servers/:id"                      desc="Modifier un serveur — body: { name?, iconUrl?, bannerUrl? }" />
+          <EndpointRow method="DELETE" path="/api/servers/:id"                      desc="Supprimer un serveur" />
+          <EndpointRow method="POST"   path="/api/servers/join"                     desc="Rejoindre via code d'invitation — body: { inviteCode }" />
+          <EndpointRow method="POST"   path="/api/servers/:id/leave"                desc="Quitter un serveur" />
+          <EndpointRow method="GET"    path="/api/servers/:id/channels"             desc="Liste des salons d'un serveur" />
+          <EndpointRow method="POST"   path="/api/servers/:id/channels"             desc="Créer un salon — body: { name, type: 'text'|'voice'|'announcement' }" />
+          <EndpointRow method="PATCH"  path="/api/servers/:id/channels/:chId"       desc="Modifier un salon" />
+          <EndpointRow method="DELETE" path="/api/servers/:id/channels/:chId"       desc="Supprimer un salon" />
+          <EndpointRow method="GET"    path="/api/servers/:id/members"              desc="Liste des membres du serveur" />
+          <EndpointRow method="DELETE" path="/api/servers/:id/members/:uid"         desc="Exclure (kick) un membre" />
+          <EndpointRow method="POST"   path="/api/servers/:id/bans/:uid"            desc="Bannir un membre — body: { reason? }" />
+          <EndpointRow method="GET"    path="/api/servers/:id/roles"                desc="Liste des rôles" />
+          <EndpointRow method="POST"   path="/api/servers/:id/roles"                desc="Créer un rôle — body: { name, color?, permissions? }" />
+          <EndpointRow method="PATCH"  path="/api/servers/:id/roles/:roleId"        desc="Modifier un rôle" />
+          <EndpointRow method="DELETE" path="/api/servers/:id/roles/:roleId"        desc="Supprimer un rôle" />
+          <EndpointRow method="GET"    path="/api/servers/invite/:code"             desc="Infos d'une invitation par code" />
+          <EndpointRow method="POST"   path="/api/servers/invites/:id"              desc="Créer un lien d'invitation" />
+          <EndpointRow method="GET"    path="/api/servers/public/*"                 desc="Serveurs publics (annuaire)" />
+          <EndpointRow method="GET"    path="/api/servers/discover/*"               desc="Découverte de serveurs" />
+          <EndpointRow method="GET"    path="/api/servers/:id/node-token"           desc="Obtenir un token pour se connecter à un server-node" />
+          <EndpointRow method="POST"   path="/api/servers/:id/files"                desc="Uploader un fichier dans un serveur (multipart/form-data)" />
+          <EndpointRow method="GET"    path="/api/servers/:id/files/:filename"      desc="Télécharger un fichier uploadé dans un serveur" />
+        </div>
+        <InfoCard color="violet" title="Server Nodes">
+          Les requêtes sur <code>/api/servers/:id/*</code> sont automatiquement redirigées vers le
+          <strong> server-node</strong> hébergeant ce serveur si un node est connecté au gateway.
+          En l&apos;absence de node, c&apos;est le microservice central <code>servers</code> qui traite la requête.
+        </InfoCard>
+      </div>
+
+      {/* ── Bots ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-fuchsia-400">Bots — /api/bots</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/bots/me"                              desc="Lister vos bots (JWT requis)" />
+          <EndpointRow method="POST"   path="/api/bots"                                 desc="Créer un bot — body: { name, prefix, description?, isPublic? }" />
+          <EndpointRow method="GET"    path="/api/bots/:id"                             desc="Détails d'un bot" />
+          <EndpointRow method="PATCH"  path="/api/bots/:id"                             desc="Modifier un bot — body: { name?, prefix?, description?, isPublic?, tags? }" />
+          <EndpointRow method="DELETE" path="/api/bots/:id"                             desc="Supprimer un bot" />
+          <EndpointRow method="POST"   path="/api/bots/authenticate"                    desc="Authentifier un bot — header: Bot &lt;token&gt;" />
+          <EndpointRow method="POST"   path="/api/bots/:id/regenerate-token"            desc="Régénérer le token du bot" />
+          <EndpointRow method="PATCH"  path="/api/bots/:id/status"                      desc="Changer le statut — body: { status: 'online'|'offline'|'maintenance' }" />
+          <EndpointRow method="GET"    path="/api/bots/:id/commands"                    desc="Lister les commandes du bot" />
+          <EndpointRow method="POST"   path="/api/bots/:id/commands"                    desc="Créer une commande — body: { name, description, cooldown? }" />
+          <EndpointRow method="PATCH"  path="/api/bots/:id/commands/:cmdId"             desc="Modifier une commande" />
+          <EndpointRow method="DELETE" path="/api/bots/:id/commands/:cmdId"             desc="Supprimer une commande" />
+          <EndpointRow method="GET"    path="/api/bots/public"                          desc="Bots publics (query: search, tag)" />
+          <EndpointRow method="GET"    path="/api/bots/servers/:serverId"               desc="Bots installés dans un serveur" />
+          <EndpointRow method="POST"   path="/api/bots/:id/servers"                     desc="Ajouter un bot dans un serveur — body: { serverId }" />
+          <EndpointRow method="DELETE" path="/api/bots/:id/servers/:serverId"           desc="Retirer un bot d'un serveur" />
+          <EndpointRow method="POST"   path="/api/bots/:id/certification"               desc="Soumettre une demande de certification" />
+          <EndpointRow method="GET"    path="/api/bots/certification/pending"           desc="Demandes en attente (admin uniquement)" />
+          <EndpointRow method="POST"   path="/api/bots/certification/:reqId/review"     desc="Approuver/refuser une certification (admin)" />
+        </div>
+      </div>
+
+      {/* ── Media ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-lime-400">Médias — /api/media</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="POST" path="/api/media/upload/:type"                      desc="Uploader un fichier — :type = avatars | banners | icons | attachments — query ?location=EU|US" />
+          <EndpointRow method="GET"  path="/api/media/:location/:serviceId/:folder/:filename" desc="Télécharger un média via le CDN géo-distribué" />
+          <EndpointRow method="GET"  path="/uploads/:folder/:filename"                   desc="Télécharger un fichier (URL legacy, redirigé vers le service média)" />
+        </div>
+        <div className="mt-3 space-y-2">
+          <CodeBlock lang="bash" title="Exemple upload — curl" code={`# Uploader un avatar
+curl -X POST https://gateway.alfychat.app/api/media/upload/avatars \\
+  -H "Authorization: Bearer $TOKEN" \\
+  -F "file=@mon-avatar.png"
+
+# Réponse
+{
+  "url": "https://gateway.alfychat.app/api/media/EU/media-eu-1/avatars/user123-abc.webp",
+  "path": "avatars/user123-abc.webp"
+}`} />
+        </div>
+      </div>
+
+      {/* ── Admin ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-red-400">Admin & Monitoring — /api/admin (admin uniquement)</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/admin/gateway/stats"             desc="Stats de rate limiting et IPs bannies" />
+          <EndpointRow method="POST"   path="/api/admin/gateway/ban-ip"            desc="Bannir une IP — body: { ip, reason? }" />
+          <EndpointRow method="DELETE" path="/api/admin/gateway/ban-ip/:ip"        desc="Débannir une IP" />
+          <EndpointRow method="GET"    path="/api/admin/monitoring"                desc="Statut actuel de tous les services + historique 24h" />
+          <EndpointRow method="GET"    path="/api/admin/monitoring/service/:name"  desc="Historique d'un service spécifique (query: hours=24)" />
+          <EndpointRow method="GET"    path="/api/admin/monitoring/users/chart"    desc="Graphique connexions (query: period=30min|10min|hour|day|month)" />
+          <EndpointRow method="GET"    path="/api/admin/services"                  desc="Liste toutes les instances de microservices enregistrées" />
+          <EndpointRow method="GET"    path="/api/admin/services/:type"            desc="Instances d'un type de service donné" />
+          <EndpointRow method="POST"   path="/api/admin/services"                  desc="Ajouter manuellement une instance" />
+          <EndpointRow method="PATCH"  path="/api/admin/services/:id"              desc="Activer/désactiver une instance — body: { enabled: boolean }" />
+          <EndpointRow method="DELETE" path="/api/admin/services/:id"              desc="Supprimer et bannir une instance définitivement" />
+          <EndpointRow method="GET"    path="/api/admin/status/incidents"          desc="Incidents (query: includeResolved=true)" />
+          <EndpointRow method="POST"   path="/api/admin/status/incidents"          desc="Créer un incident — body: { title, severity, message?, services?, status? }" />
+          <EndpointRow method="PATCH"  path="/api/admin/status/incidents/:id"      desc="Modifier un incident" />
+          <EndpointRow method="DELETE" path="/api/admin/status/incidents/:id"      desc="Supprimer un incident" />
+        </div>
+      </div>
+
+      {/* ── Public ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-gray-400">Public (sans auth)</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET" path="/api/status"  desc="Statut public des services, incidents actifs et uptime 90 jours" />
+          <EndpointRow method="GET" path="/health"      desc="Health check du gateway — { status: 'ok', uptime, connections }" />
+          <EndpointRow method="GET" path="/stats"       desc="Statistiques temps réel — { connections, rooms }" />
+        </div>
+        <div className="mt-3">
+          <CodeBlock lang="json" title="GET /api/status" code={`{
+  "services": [
+    { "service": "users",    "status": "up",       "responseTimeMs": 12 },
+    { "service": "messages", "status": "up",       "responseTimeMs": 8  },
+    { "service": "media",    "status": "degraded", "responseTimeMs": 340 }
+  ],
+  "incidents": [],
+  "uptime": {
+    "users": [ { "date": "2026-04-01", "uptime": 100 }, ... ]
+  }
+}`} />
+        </div>
+      </div>
+
+      {/* ── Internal ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-slate-500">Interne — /api/internal (microservices uniquement)</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="POST" path="/api/internal/service/register"    desc="Enregistrer une instance — header: INTERNAL_SECRET — body: { id, serviceType, endpoint, domain, location, metrics }" />
+          <EndpointRow method="POST" path="/api/internal/service/heartbeat"   desc="Heartbeat d'une instance — body: { id, secret, metrics }" />
+          <EndpointRow method="POST" path="/api/internal/service/deregister"  desc="Désenregistrer une instance (arrêt gracieux) — body: { id, secret }" />
+          <EndpointRow method="GET"  path="/api/internal/service/list"        desc="Lister toutes les instances (header X-Internal-Secret)" />
+        </div>
+        <InfoCard color="red" title="Endpoints internes">
+          Ces routes sont réservées aux microservices AlfyChat via le secret partagé
+          <code> INTERNAL_SECRET</code>. Tout appel non autorisé retourne <code>401</code>.
+        </InfoCard>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Gateway WebSocket ─────────────────────────────────────── */
+function GatewayWebSocketSection() {
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        icon={WifiIcon}
+        title="WebSocket — Socket.IO"
+        description="Connexion temps réel via Socket.IO v4 — auth, rooms, heartbeat et gestion de la déconnexion."
+      />
+
+      <Card className="border border-border/60 bg-surface/40">
+        <Card.Content className="p-5">
+          <div className="flex flex-wrap items-center gap-6">
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">URL WebSocket</p>
+              <code className="font-mono text-sm font-bold text-accent">wss://gateway.alfychat.app</code>
+            </div>
+            <Separator orientation="vertical" className="hidden sm:block h-8" />
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Librairie</p>
+              <code className="font-mono text-sm font-bold">Socket.IO v4</code>
+            </div>
+            <Separator orientation="vertical" className="hidden sm:block h-8" />
+            <div>
+              <p className="text-[11px] font-semibold text-muted mb-1">Namespace bots</p>
+              <code className="font-mono text-sm font-bold">/</code>
+            </div>
+          </div>
+        </Card.Content>
+      </Card>
+
+      {/* Connexion */}
+      <div className="space-y-3">
+        <SectionTitle>Connexion & authentification</SectionTitle>
+        <p className="text-sm text-muted">
+          Le token JWT est passé dans l&apos;option <code>auth</code> lors de la connexion.
+          Le gateway le vérifie, charge le profil de l&apos;utilisateur, et émet <code>READY</code> en retour.
+        </p>
+        <CodeBlock lang="js" title="Connexion Socket.IO (utilisateur)" code={`import { io } from 'socket.io-client';
+
+const socket = io('https://gateway.alfychat.app', {
+  auth: { token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+  reconnection: true,
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000,
+});
+
+socket.on('connect',       () => console.log('✅ Connecté, id:', socket.id));
+socket.on('disconnect',    (reason) => console.log('❌', reason));
+socket.on('connect_error', (err) => console.error('Auth error:', err.message));
+
+// Premier événement reçu après connexion réussie
+socket.on('READY', (data) => {
+  console.log('userId :', data.user.id);
+  console.log('sessionId :', data.sessionId);
+});`} />
+        <CodeBlock lang="js" title="Connexion Socket.IO (bot)" code={`const socket = io('https://gateway.alfychat.app', {
+  auth: { token: process.env.BOT_TOKEN, type: 'bot' },
+});`} />
+      </div>
+
+      {/* READY event */}
+      <div className="space-y-2">
+        <SectionTitle>Événement READY</SectionTitle>
+        <p className="text-xs text-muted">Reçu immédiatement après la connexion — contient l&apos;état initial de la session.</p>
+        <CodeBlock lang="json" title="Payload READY" code={`{
+  "user":      { "id": "u1a2b3c4-...", "username": "Alice", "avatarUrl": "..." },
+  "sessionId": "s9z8y7x6-...",
+  "servers":   [],
+  "friends":   [],
+  "conversations": []
+}`} />
+      </div>
+
+      {/* Rooms */}
+      <div className="space-y-2">
+        <SectionTitle>Rooms Socket.IO</SectionTitle>
+        <p className="text-xs text-muted">À la connexion, le gateway auto-rejoint les rooms suivantes :</p>
+        <div className="overflow-hidden rounded-xl border border-border/60">
+          {([
+            { room: 'user:{userId}',              desc: 'Room personnelle — notifications directes (DM, demandes d\'ami, appels)' },
+            { room: 'conversation:{convId}',      desc: 'Room d\'une conversation DM ou de groupe — auto-jointe pour toutes les convs existantes' },
+            { room: 'server:{serverId}',          desc: 'Room d\'un serveur — events membres, rôles, channels' },
+            { room: 'channel:{channelId}',        desc: 'Room d\'un channel textuel — messages du serveur' },
+            { room: 'voice:{channelId}',          desc: 'Room vocale — signaling WebRTC entre participants' },
+            { room: 'call:{callId}',              desc: 'Room d\'un appel — signaling offre/réponse/ICE' },
+          ] as const).map((r, i) => (
+            <div key={r.room} className={`flex items-start gap-3 px-4 py-3 ${i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20'}`}>
+              <code className="mt-0.5 shrink-0 font-mono text-xs font-bold text-accent">{r.room}</code>
+              <span className="text-[11px] text-muted">{r.desc}</span>
+            </div>
+          ))}
+        </div>
+        <CodeBlock lang="js" title="Rejoindre une conversation manuellement" code={`// Rejoindre une conversation (DM ou groupe)
+socket.emit('conversation:join', { conversationId: 'uuid-de-la-conv' });
+// ou pour un nouveau DM avec un utilisateur :
+socket.emit('conversation:join', { recipientId: 'user-id-du-destinataire' });
+
+// Confirmation
+socket.on('conversation:joined', ({ conversationId }) => {
+  console.log('Rejoint :', conversationId);
+});`} />
+      </div>
+
+      {/* Heartbeat */}
+      <div className="space-y-2">
+        <SectionTitle>Heartbeat</SectionTitle>
+        <CodeBlock lang="js" title="Maintenir la connexion active (toutes les 30s)" code={`// Envoyer le heartbeat
+socket.emit('HEARTBEAT');
+
+// Réponse immédiate du serveur
+socket.on('HEARTBEAT_ACK', ({ timestamp }) => {
+  // timestamp = Date.now() côté serveur
+});
+
+// Automatiser
+const hb = setInterval(() => socket.emit('HEARTBEAT'), 30_000);
+socket.on('disconnect', () => clearInterval(hb));`} />
+        <InfoCard color="amber" title="Délais de timeout">
+          <code>pingInterval</code> = 25s · <code>pingTimeout</code> = 60s.
+          Sans heartbeat, la connexion est terminée après <strong>60 secondes</strong> d&apos;inactivité.
+        </InfoCard>
+      </div>
+
+      {/* Messages DM */}
+      <div className="space-y-2">
+        <SectionTitle>Envoyer un message (livraison optimiste)</SectionTitle>
+        <p className="text-xs text-muted">
+          L&apos;event <code>message:send</code> utilise une livraison optimiste — le message est diffusé
+          immédiatement avant la sauvegarde en base. Un <code>message:failed</code> est émis en cas d&apos;erreur DB.
+        </p>
+        <CodeBlock lang="js" title="message:send (DM ou groupe)" code={`socket.emit('message:send', {
+  conversationId: 'uuid-conversation',  // ou recipientId pour un DM
+  recipientId:    'user-id',            // optionnel — crée le convId déterministe
+  content:        'Salut !',
+  replyToId:      'msg-id',             // optionnel
+  // Chiffrement E2EE (optionnel) :
+  senderContent:  'contenu chiffré pour le destinataire',
+  e2eeType:       1,
+});
+
+// Confirmation immédiate (avant DB)
+socket.on('message:sent', ({ message }) => {
+  console.log('Envoyé (optimiste) :', message.id);
+});
+
+// Disponible pour tous les participants
+socket.on('message:new', (message) => {
+  console.log(message.sender.username, ':', message.content);
+});
+
+// En cas d'échec DB
+socket.on('message:failed', ({ messageId, error }) => {
+  console.error('Échec sauvegarde :', messageId, error);
+});`} />
+      </div>
+
+      {/* Rate limiting WS */}
+      <div className="space-y-2">
+        <SectionTitle>Rate limiting WebSocket</SectionTitle>
+        <div className="overflow-hidden rounded-xl border border-border/60">
+          {([
+            { event: 'message:send', limit: '5 messages / 5 secondes', note: 'Par utilisateur' },
+          ] as const).map((r) => (
+            <div key={r.event} className="flex items-start gap-3 px-4 py-3 bg-background/20">
+              <code className="mt-0.5 shrink-0 font-mono text-xs font-bold text-accent">{r.event}</code>
+              <code className="text-xs text-amber-400">{r.limit}</code>
+              <span className="text-[11px] text-muted">{r.note}</span>
+            </div>
+          ))}
+        </div>
+        <CodeBlock lang="json" title="Réponse en cas de rate limit" code={`// event : message:error
+{
+  "error": "RATE_LIMITED",
+  "message": "Trop de messages envoyés. Calme-toi !"
+}`} />
+      </div>
+
+      {/* Reconnexion */}
+      <div className="space-y-2">
+        <SectionTitle>Reconnexion & CALL_REJOIN</SectionTitle>
+        <CodeBlock lang="js" title="Gestion de la reconnexion" code={`socket.on('disconnect', (reason) => {
+  console.log('Déconnecté :', reason);
+  // Socket.IO tente la reconnexion automatique
+  // Vos rooms sont restaurées automatiquement à la reconnexion
+});
+
+socket.on('connect', () => {
+  // Si vous étiez dans un appel, rejoindre à nouveau la call room
+  if (currentCallId) {
+    socket.emit('CALL_REJOIN', { callId: currentCallId });
+  }
+});`} />
+      </div>
+    </div>
+  );
+}
+
 /* ─── Gateway Overview ─────────────────────────────────────── */
 function GatewayOverviewSection() {
   return (
@@ -2065,76 +2598,340 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`} />
 /* ─── Gateway Events ────────────────────────────────────────── */
 function GatewayEventsSection() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         icon={ZapIcon}
-        title="Événements WebSocket"
-        description="Référence exhaustive de tous les événements Socket.IO — direction, payload et exemples."
-        badge="30+"
+        title="Référence des événements Socket.IO"
+        description="Tous les events client → serveur et serveur → client — payload exact, callback, et exemples de code."
+        badge="80+"
       />
 
       <MultiCodeBlock title="Écouter les événements — exemple complet" examples={EX.gatewayEventsListen} />
 
-      <div className="space-y-2">
+      {/* ═══ CLIENT → SERVEUR ════════════════════════════════════ */}
+      <div className="space-y-3">
+        <SectionTitle>Événements émis par le client (client → serveur)</SectionTitle>
+
+        {/* ── Connexion / Session ── */}
+        <h4 className="text-xs font-bold text-muted uppercase tracking-widest">Connexion & session</h4>
+        <EventTable color="blue" events={[
+          { event: 'HEARTBEAT',        payload: '—',                                            cb: 'HEARTBEAT_ACK → { timestamp }',                     desc: 'Maintenir la connexion active (toutes les 30s)' },
+          { event: 'PRESENCE_UPDATE',  payload: '{ status, customStatus? }',                    cb: '—',                                                 desc: '"online" | "idle" | "dnd" | "invisible"' },
+          { event: 'PROFILE_UPDATE',   payload: '{ username?, displayName?, avatarUrl?, bio? }', cb: '—',                                                 desc: 'Met à jour le profil et notifie les amis/serveurs' },
+          { event: 'GET_BULK_PRESENCE',payload: '{ userIds: string[] }',                        cb: '{ presences: Record<userId, PresenceState> }',       desc: 'Récupérer la présence de plusieurs utilisateurs' },
+        ]} />
+
+        {/* ── DM ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Messages directs & conversations</h4>
+        <EventTable color="blue" events={[
+          { event: 'conversation:join',   payload: '{ conversationId?, recipientId? }',                  cb: 'conversation:joined → { conversationId }',  desc: 'Rejoindre une conversation DM (crée le convId déterministe si besoin)' },
+          { event: 'message:send',        payload: '{ conversationId, recipientId?, content, replyToId?, senderContent?, e2eeType? }', cb: 'message:sent → { message }',  desc: 'Envoyer un message DM (livraison optimiste)' },
+          { event: 'message:edit',        payload: '{ messageId, content }',                              cb: '—',                                         desc: 'Modifier un message' },
+          { event: 'message:delete',      payload: '{ messageId, conversationId? }',                      cb: '—',                                         desc: 'Supprimer un message' },
+          { event: 'TYPING_START',        payload: '{ conversationId }',                                  cb: '—',                                         desc: 'Afficher l\'indicateur "en train d\'écrire"' },
+          { event: 'TYPING_STOP',         payload: '{ conversationId }',                                  cb: '—',                                         desc: 'Masquer l\'indicateur de frappe' },
+          { event: 'REACTION_ADD',        payload: '{ messageId, conversationId, emoji }',                cb: '—',                                         desc: 'Ajouter une réaction à un DM' },
+          { event: 'REACTION_REMOVE',     payload: '{ messageId, conversationId, emoji }',                cb: '—',                                         desc: 'Retirer une réaction d\'un DM' },
+        ]} />
+
+        {/* ── Archive DM ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Archive DM (P2P)</h4>
+        <EventTable color="blue" events={[
+          { event: 'DM_ARCHIVE_REQUEST',       payload: '{ conversationId, before, limit }',              cb: '—',                                         desc: 'Demander des messages archivés à l\'autre pair en ligne' },
+          { event: 'DM_ARCHIVE_PEER_RESPONSE', payload: '{ conversationId, messages[], archiveLogId }',   cb: '—',                                         desc: 'Répondre à une demande d\'archive d\'un pair' },
+          { event: 'DM_ARCHIVE_CONFIRM',       payload: '{ conversationId, archiveLogId }',               cb: '—',                                         desc: 'Confirmer la réception d\'une archive' },
+          { event: 'DM_ARCHIVE_STATUS',        payload: '{ conversationId }',                             cb: '{ status: ArchiveStatus }',                  desc: 'Demander le statut d\'archive d\'une conversation' },
+        ]} />
+
+        {/* ── Amis ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Amis</h4>
+        <EventTable color="blue" events={[
+          { event: 'FRIEND_REQUEST', payload: '{ toUserId, message? }',        cb: '—', desc: 'Envoyer une demande d\'ami' },
+          { event: 'FRIEND_ACCEPT',  payload: '{ requestId }',                 cb: '—', desc: 'Accepter une demande d\'ami' },
+        ]} />
+
+        {/* ── Appels WebRTC ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Appels (WebRTC)</h4>
+        <EventTable color="blue" events={[
+          { event: 'CALL_INITIATE',        payload: '{ type, recipientId?, conversationId?, channelId? }', cb: '(callId: string)',                           desc: '"audio" | "video" | "channel" — callback avec l\'ID d\'appel' },
+          { event: 'CALL_ACCEPT',          payload: '{ callId }',                                          cb: '—',                                         desc: 'Accepter un appel entrant' },
+          { event: 'CALL_REJECT',          payload: '{ callId }',                                          cb: '—',                                         desc: 'Refuser un appel entrant' },
+          { event: 'CALL_END',             payload: '{ callId }',                                          cb: '—',                                         desc: 'Terminer un appel en cours' },
+          { event: 'CALL_REJOIN',          payload: '{ callId }',                                          cb: '—',                                         desc: 'Rejoindre un appel après reconnexion WebSocket' },
+          { event: 'WEBRTC_OFFER',         payload: '{ callId, offer: RTCSessionDescription }',            cb: '—',                                         desc: 'Signaling — envoyer l\'offer SDP' },
+          { event: 'WEBRTC_ANSWER',        payload: '{ callId, answer: RTCSessionDescription }',           cb: '—',                                         desc: 'Signaling — répondre à une offer SDP' },
+          { event: 'WEBRTC_ICE_CANDIDATE', payload: '{ callId, candidate: RTCIceCandidate }',              cb: '—',                                         desc: 'Signaling — partager un candidat ICE' },
+        ]} />
+
+        {/* ── Voice (serveur) ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Canaux vocaux (serveurs)</h4>
+        <EventTable color="blue" events={[
+          { event: 'VOICE_JOIN',          payload: '{ serverId, channelId }',                               cb: '—',                                         desc: 'Rejoindre un canal vocal' },
+          { event: 'VOICE_LEAVE',         payload: '{ serverId, channelId }',                               cb: '—',                                         desc: 'Quitter un canal vocal' },
+          { event: 'VOICE_STATE_UPDATE',  payload: '{ channelId, muted, deafened }',                        cb: '—',                                         desc: 'Mettre à jour son état micro/casque' },
+          { event: 'VOICE_OFFER',         payload: '{ channelId, targetUserId, offer }',                    cb: '—',                                         desc: 'Signaling vocal — offer vers un participant' },
+          { event: 'VOICE_ANSWER',        payload: '{ channelId, targetUserId, answer }',                   cb: '—',                                         desc: 'Signaling vocal — answer vers un participant' },
+          { event: 'VOICE_ICE_CANDIDATE', payload: '{ channelId, targetUserId, candidate }',                cb: '—',                                         desc: 'Signaling vocal — candidat ICE' },
+          { event: 'GET_VOICE_STATE',     payload: '{ serverId }',                                          cb: '{ voiceStates: VoiceState[] }',              desc: 'Récupérer les états vocaux d\'un serveur' },
+        ]} />
+
+        {/* ── Serveurs — messages ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Messages de serveur</h4>
+        <EventTable color="blue" events={[
+          { event: 'SERVER_MESSAGE_SEND',      payload: '{ serverId, channelId, content, replyToId? }',      cb: '—',                                         desc: 'Envoyer un message dans un salon de serveur' },
+          { event: 'SERVER_MESSAGE_EDIT',      payload: '{ serverId, channelId, messageId, content }',        cb: '—',                                         desc: 'Modifier un message de serveur' },
+          { event: 'SERVER_MESSAGE_DELETE',    payload: '{ serverId, channelId, messageId }',                 cb: '—',                                         desc: 'Supprimer un message de serveur' },
+          { event: 'SERVER_MESSAGE_HISTORY',   payload: '{ serverId, channelId, before?, limit? }',           cb: '{ messages[] }',                            desc: 'Récupérer l\'historique (100 max, paginer avec before)' },
+          { event: 'SERVER_REACTION_ADD',      payload: '{ serverId, channelId, messageId, emoji }',          cb: '—',                                         desc: 'Ajouter une réaction dans un serveur' },
+          { event: 'SERVER_REACTION_REMOVE',   payload: '{ serverId, channelId, messageId, emoji }',          cb: '—',                                         desc: 'Retirer une réaction dans un serveur' },
+          { event: 'SERVER_TYPING_START',      payload: '{ serverId, channelId }',                            cb: '—',                                         desc: 'Afficher l\'indicateur de frappe dans un salon' },
+          { event: 'SERVER_TYPING_STOP',       payload: '{ serverId, channelId }',                            cb: '—',                                         desc: 'Masquer l\'indicateur de frappe' },
+        ]} />
+
+        {/* ── Serveurs — gestion ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Gestion des serveurs & membres</h4>
+        <EventTable color="blue" events={[
+          { event: 'SERVER_JOIN',      payload: '{ serverId }',                                           cb: '—',                                         desc: 'Rejoindre un serveur existant (room auto-join)' },
+          { event: 'SERVER_LEAVE',     payload: '{ serverId }',                                           cb: '—',                                         desc: 'Quitter un serveur' },
+          { event: 'SERVER_INFO',      payload: '{ serverId }',                                           cb: '{ server: ServerDetails }',                 desc: 'Récupérer les infos complètes d\'un serveur' },
+          { event: 'SERVER_GET_CHANNELS', payload: '{ serverId }',                                        cb: '{ channels[] }',                            desc: 'Lister les canaux d\'un serveur' },
+          { event: 'MEMBER_LIST',      payload: '{ serverId }',                                           cb: '{ members[] }',                             desc: 'Lister les membres d\'un serveur' },
+          { event: 'MEMBER_UPDATE',    payload: '{ serverId, targetUserId, roleIds[], nickname? }',        cb: '{ member }',                                desc: 'Modifier le rôle ou le pseudo d\'un membre' },
+          { event: 'MEMBER_KICK',      payload: '{ serverId, targetUserId, reason? }',                    cb: '—',                                         desc: 'Exclure un membre (permission requis)' },
+          { event: 'MEMBER_BAN',       payload: '{ serverId, targetUserId, reason? }',                    cb: '—',                                         desc: 'Bannir un membre' },
+        ]} />
+
+        {/* ── Canaux ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Canaux</h4>
+        <EventTable color="blue" events={[
+          { event: 'CHANNEL_CREATE',  payload: '{ serverId, name, type }',                               cb: '—',                                         desc: 'Créer un canal dans un serveur' },
+          { event: 'CHANNEL_UPDATE',  payload: '{ serverId, channelId, name?, position? }',               cb: '—',                                         desc: 'Modifier un canal' },
+          { event: 'CHANNEL_DELETE',  payload: '{ serverId, channelId }',                                 cb: '—',                                         desc: 'Supprimer un canal' },
+        ]} />
+
+        {/* ── Rôles ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Rôles</h4>
+        <EventTable color="blue" events={[
+          { event: 'ROLE_LIST',    payload: '{ serverId }',                                              cb: '{ roles[] }',                               desc: 'Lister les rôles d\'un serveur' },
+          { event: 'ROLE_CREATE',  payload: '{ serverId, name, color?, permissions? }',                  cb: '—',                                         desc: 'Créer un rôle' },
+          { event: 'ROLE_UPDATE',  payload: '{ serverId, roleId, name?, color?, permissions? }',          cb: '—',                                         desc: 'Modifier un rôle' },
+          { event: 'ROLE_DELETE',  payload: '{ serverId, roleId }',                                      cb: '—',                                         desc: 'Supprimer un rôle' },
+        ]} />
+
+        {/* ── Invitations ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Invitations</h4>
+        <EventTable color="blue" events={[
+          { event: 'INVITE_LIST',    payload: '{ serverId }',                                            cb: '{ invites[] }',                             desc: 'Lister les invitations actives' },
+          { event: 'INVITE_CREATE',  payload: '{ serverId, maxUses?, expiresIn? }',                      cb: '{ invite }',                                desc: 'Créer un lien d\'invitation' },
+          { event: 'INVITE_DELETE',  payload: '{ serverId, code }',                                      cb: '—',                                         desc: 'Révoquer une invitation' },
+          { event: 'INVITE_VERIFY',  payload: '{ code }',                                                cb: '{ valid, server? }',                        desc: 'Vérifier un code d\'invitation' },
+        ]} />
+
+        {/* ── Groupes ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Groupes (DM multi)</h4>
+        <EventTable color="blue" events={[
+          { event: 'GROUP_CREATE',  payload: '{ name, memberIds[] }',                                    cb: '{ group }',                                 desc: 'Créer un groupe' },
+          { event: 'GROUP_UPDATE',  payload: '{ groupId, name?, avatarUrl? }',                           cb: '—',                                         desc: 'Modifier un groupe' },
+          { event: 'GROUP_LEAVE',   payload: '{ groupId }',                                              cb: '—',                                         desc: 'Quitter un groupe' },
+          { event: 'GROUP_DELETE',  payload: '{ groupId }',                                              cb: '—',                                         desc: 'Supprimer un groupe (propriétaire uniquement)' },
+        ]} />
+      </div>
+
+      {/* ═══ SERVEUR → CLIENT ════════════════════════════════════ */}
+      <div className="space-y-3">
         <SectionTitle>Événements reçus (serveur → client)</SectionTitle>
-        <div className="overflow-hidden rounded-xl border border-border/60">
-          {([
-            { event: 'READY',            payload: '{ userId, guilds[], dmChannels[] }',             desc: 'Connexion établie — état initial de la session' },
-            { event: 'MESSAGE_CREATE',   payload: '{ id, content, channelId, author, createdAt }',  desc: 'Nouveau message dans un salon ou DM' },
-            { event: 'MESSAGE_UPDATE',   payload: '{ id, content, channelId, editedAt }',           desc: 'Message modifié par son auteur' },
-            { event: 'MESSAGE_DELETE',   payload: '{ id, channelId }',                              desc: 'Message supprimé' },
-            { event: 'TYPING_START',     payload: '{ userId, channelId }',                          desc: 'Indicateur "en train d\'écrire"' },
-            { event: 'TYPING_STOP',      payload: '{ userId, channelId }',                          desc: 'Fin de l\'indicateur de frappe' },
-            { event: 'PRESENCE_UPDATE',  payload: '{ userId, status, activity? }',                  desc: 'Changement de statut d\'un ami (online/away/dnd/offline)' },
-            { event: 'FRIEND_REQUEST',   payload: '{ from: { id, username, avatar } }',              desc: 'Demande d\'ami reçue' },
-            { event: 'FRIEND_ACCEPT',    payload: '{ userId, username }',                           desc: 'Votre demande d\'ami a été acceptée' },
-            { event: 'FRIEND_REMOVE',    payload: '{ userId }',                                     desc: 'Ami supprimé ou demande refusée' },
-            { event: 'MEMBER_JOIN',      payload: '{ serverId, member: { userId, roles[] } }',      desc: 'Nouveau membre dans un serveur' },
-            { event: 'MEMBER_LEAVE',     payload: '{ serverId, userId }',                           desc: 'Membre a quitté un serveur' },
-            { event: 'CHANNEL_CREATE',   payload: '{ serverId, channel: { id, name, type } }',      desc: 'Nouveau salon créé' },
-            { event: 'CHANNEL_DELETE',   payload: '{ serverId, channelId }',                        desc: 'Salon supprimé' },
-            { event: 'ROLE_UPDATE',      payload: '{ serverId, role: { id, name, color, perms } }', desc: 'Rôle modifié sur un serveur' },
-            { event: 'CALL_INITIATE',    payload: '{ callId, channelId, initiator }',               desc: 'Appel entrant' },
-            { event: 'CALL_END',         payload: '{ callId }',                                     desc: 'Appel terminé' },
-            { event: 'HEARTBEAT_ACK',    payload: '{}',                                             desc: 'Accusé de réception du heartbeat' },
-          ] as const).map((ev, i) => (
-            <div key={ev.event} className={cn('grid grid-cols-[auto_1fr] items-start gap-3 px-4 py-3', i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20')}>
-              <code className="mt-0.5 font-mono text-xs font-bold text-accent whitespace-nowrap">{ev.event}</code>
-              <div>
-                <code className="block font-mono text-[10px] text-violet-400/80 mb-0.5">{ev.payload}</code>
-                <span className="text-[11px] text-muted">{ev.desc}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+
+        {/* ── Init ── */}
+        <h4 className="text-xs font-bold text-muted uppercase tracking-widest">Connexion & session</h4>
+        <EventTable color="accent" events={[
+          { event: 'READY',           payload: '{ user, sessionId, servers[], friends[], conversations[] }', cb: '—', desc: 'État initial de la session, émis juste après la connexion' },
+          { event: 'HEARTBEAT_ACK',   payload: '{ timestamp }',                                              cb: '—', desc: 'Accusé de réception du heartbeat' },
+          { event: 'PENDING_PINGS',   payload: '{ pings: Notification[] }',                                  cb: '—', desc: 'Notifications manquées reçues lors de la reconnexion' },
+          { event: 'PRESENCE_UPDATE', payload: '{ userId, status, customStatus? }',                          cb: '—', desc: 'Changement de statut d\'un ami (online/idle/dnd/invisible)' },
+          { event: 'PROFILE_UPDATE',  payload: '{ userId, username?, displayName?, avatarUrl?, bio? }',      cb: '—', desc: 'Mise à jour de profil d\'un utilisateur dans nos serveurs/amis' },
+        ]} />
+
+        {/* ── DM messages ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Messages directs</h4>
+        <EventTable color="accent" events={[
+          { event: 'message:new',       payload: '{ id, conversationId, sender, content, replyTo?, createdAt, reactions[] }', cb: '—', desc: 'Nouveau DM reçu (et copie pour l\'expéditeur)' },
+          { event: 'message:sent',      payload: '{ message }',                                                               cb: '—', desc: 'Confirmation d\'envoi optimiste pour l\'expéditeur' },
+          { event: 'message:edited',    payload: '{ id, conversationId, content, editedAt }',                                 cb: '—', desc: 'DM modifié' },
+          { event: 'message:deleted',   payload: '{ id, conversationId }',                                                    cb: '—', desc: 'DM supprimé' },
+          { event: 'message:failed',    payload: '{ messageId, error }',                                                      cb: '—', desc: 'Échec sauvegarde (livraison optimiste)' },
+          { event: 'TYPING_START',      payload: '{ userId, conversationId }',                                                cb: '—', desc: 'Indicateur de frappe dans un DM' },
+          { event: 'TYPING_STOP',       payload: '{ userId, conversationId }',                                                cb: '—', desc: 'Fin de l\'indicateur dans un DM' },
+        ]} />
+
+        {/* ── Archive DM ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Archive DM (P2P)</h4>
+        <EventTable color="accent" events={[
+          { event: 'DM_ARCHIVE_PUSH',          payload: '{ conversationId, messages[], total }',              cb: '—', desc: 'Messages archivés envoyés par un pair (réponse à DM_ARCHIVE_REQUEST)' },
+          { event: 'DM_ARCHIVE_PEER_REQUEST',  payload: '{ conversationId, before, limit, fromUserId }',      cb: '—', desc: 'Un pair demande vos archives — répondre avec DM_ARCHIVE_PEER_RESPONSE' },
+          { event: 'DM_ARCHIVE_RESPONSE',      payload: '{ conversationId, status }',                         cb: '—', desc: 'Statut de réponse à une demande (from server)' },
+        ]} />
+
+        {/* ── Amis ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Amis</h4>
+        <EventTable color="accent" events={[
+          { event: 'FRIEND_REQUEST',  payload: '{ requestId, from: { id, username, avatarUrl } }', cb: '—', desc: 'Demande d\'ami reçue' },
+          { event: 'FRIEND_ACCEPT',   payload: '{ requestId, friend: { id, username, avatarUrl } }', cb: '—', desc: 'Votre demande d\'ami a été acceptée' },
+          { event: 'FRIEND_REMOVE',   payload: '{ userId }',                                         cb: '—', desc: 'Ami supprimé ou vous avez été retiré' },
+        ]} />
+
+        {/* ── Appels ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Appels WebRTC</h4>
+        <EventTable color="accent" events={[
+          { event: 'CALL_INCOMING',          payload: '{ callId, type, from: { id, username, avatarUrl } }', cb: '—', desc: 'Appel entrant (accepter avec CALL_ACCEPT)' },
+          { event: 'CALL_ACCEPT',            payload: '{ callId, userId }',                                  cb: '—', desc: 'Un participant a accepté l\'appel' },
+          { event: 'CALL_REJECT',            payload: '{ callId, userId }',                                  cb: '—', desc: 'Un participant a refusé l\'appel' },
+          { event: 'CALL_END',               payload: '{ callId }',                                          cb: '—', desc: 'Appel terminé' },
+          { event: 'CALL_PARTICIPANT_JOINED',payload: '{ callId, userId, username }',                        cb: '—', desc: 'Nouveau participant dans l\'appel' },
+          { event: 'CALL_PEER_RECONNECTED',  payload: '{ callId, userId }',                                  cb: '—', desc: 'Un participant a reconnecté après perte de connexion' },
+          { event: 'WEBRTC_OFFER',           payload: '{ callId, offer, from: userId }',                     cb: '—', desc: 'Offer SDP reçue d\'un pair' },
+          { event: 'WEBRTC_ANSWER',          payload: '{ callId, answer, from: userId }',                    cb: '—', desc: 'Answer SDP reçue d\'un pair' },
+          { event: 'WEBRTC_ICE_CANDIDATE',   payload: '{ callId, candidate, from: userId }',                 cb: '—', desc: 'Candidat ICE reçu' },
+        ]} />
+
+        {/* ── Voice ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Canaux vocaux</h4>
+        <EventTable color="accent" events={[
+          { event: 'VOICE_USER_JOINED',   payload: '{ channelId, userId, username }',              cb: '—', desc: 'Un utilisateur a rejoint le canal vocal' },
+          { event: 'VOICE_USER_LEFT',     payload: '{ channelId, userId }',                        cb: '—', desc: 'Un utilisateur a quitté le canal vocal' },
+          { event: 'VOICE_STATE_UPDATE',  payload: '{ channelId, userId, muted, deafened }',       cb: '—', desc: 'Changement d\'état micro/casque d\'un participant' },
+          { event: 'VOICE_OFFER',         payload: '{ channelId, from: userId, offer }',           cb: '—', desc: 'Signaling vocal — offer' },
+          { event: 'VOICE_ANSWER',        payload: '{ channelId, from: userId, answer }',          cb: '—', desc: 'Signaling vocal — answer' },
+          { event: 'VOICE_ICE_CANDIDATE', payload: '{ channelId, from: userId, candidate }',       cb: '—', desc: 'Signaling vocal — candidat ICE' },
+        ]} />
+
+        {/* ── Serveur messages ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Messages de serveur</h4>
+        <EventTable color="accent" events={[
+          { event: 'SERVER_TYPING_START',    payload: '{ serverId, channelId, userId }',                    cb: '—', desc: 'Frappe en cours dans un canal de serveur' },
+          { event: 'SERVER_TYPING_STOP',     payload: '{ serverId, channelId, userId }',                    cb: '—', desc: 'Fin frappe dans un canal' },
+        ]} />
+
+        {/* ── Serveur gestion ── */}
+        <h4 className="mt-4 text-xs font-bold text-muted uppercase tracking-widest">Membres & structure</h4>
+        <EventTable color="accent" events={[
+          { event: 'MEMBER_JOIN',       payload: '{ serverId, member: { userId, username, roles[] } }',      cb: '—', desc: 'Nouveau membre arrivé dans un serveur' },
+          { event: 'CHANNEL_CREATE',    payload: '{ serverId, channel: { id, name, type } }',                cb: '—', desc: 'Nouveau canal créé dans un serveur' },
+          { event: 'CHANNEL_UPDATE',    payload: '{ serverId, channel }',                                    cb: '—', desc: 'Canal modifié' },
+          { event: 'CHANNEL_DELETE',    payload: '{ serverId, channelId }',                                  cb: '—', desc: 'Canal supprimé' },
+          { event: 'ROLE_CREATE',       payload: '{ serverId, role }',                                       cb: '—', desc: 'Rôle créé' },
+          { event: 'ROLE_UPDATE',       payload: '{ serverId, role }',                                       cb: '—', desc: 'Rôle modifié' },
+          { event: 'ROLE_DELETE',       payload: '{ serverId, roleId }',                                     cb: '—', desc: 'Rôle supprimé' },
+        ]} />
       </div>
 
-      <div className="space-y-2">
-        <SectionTitle>Événements émis (client → serveur)</SectionTitle>
-        <div className="overflow-hidden rounded-xl border border-border/60">
-          {([
-            { event: 'join_channel',  payload: '{ channelId }', desc: 'S\'abonner aux events d\'un salon' },
-            { event: 'leave_channel', payload: '{ channelId }', desc: 'Se désabonner d\'un salon' },
-            { event: 'HEARTBEAT',     payload: '{}',            desc: 'Maintenir la connexion active (toutes les 30s)' },
-            { event: 'typing_start',  payload: '{ channelId }', desc: 'Afficher l\'indicateur de frappe' },
-            { event: 'typing_stop',   payload: '{ channelId }', desc: 'Masquer l\'indicateur de frappe' },
-          ] as const).map((ev, i) => (
-            <div key={ev.event} className={cn('grid grid-cols-[auto_1fr] items-start gap-3 px-4 py-3', i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20')}>
-              <code className="mt-0.5 font-mono text-xs font-bold text-blue-400 whitespace-nowrap">{ev.event}</code>
-              <div>
-                <code className="block font-mono text-[10px] text-violet-400/80 mb-0.5">{ev.payload}</code>
-                <span className="text-[11px] text-muted">{ev.desc}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Exemples */}
+      <div className="space-y-3">
+        <SectionTitle>Exemples de code</SectionTitle>
+        <CodeBlock lang="js" title="Appel WebRTC — initiation + signaling" code={`// 1. Initier un appel (callback avec l'id de l'appel)
+socket.emit('CALL_INITIATE', { type: 'video', recipientId: 'user-uuid' }, (callId) => {
+  console.log('Appel créé :', callId);
+});
+
+// 2. L'autre end reçoit
+socket.on('CALL_INCOMING', ({ callId, from }) => {
+  const accept = window.confirm(\`Appel de \${from.username} ?\`);
+  socket.emit(accept ? 'CALL_ACCEPT' : 'CALL_REJECT', { callId });
+});
+
+// 3. Signaling WebRTC (après CALL_ACCEPT)
+const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.alfychat.app' }] });
+
+pc.onicecandidate = ({ candidate }) => {
+  if (candidate) socket.emit('WEBRTC_ICE_CANDIDATE', { callId, candidate });
+};
+
+const offer = await pc.createOffer();
+await pc.setLocalDescription(offer);
+socket.emit('WEBRTC_OFFER', { callId, offer });
+
+socket.on('WEBRTC_ANSWER', async ({ answer }) => {
+  await pc.setRemoteDescription(new RTCSessionDescription(answer));
+});
+socket.on('WEBRTC_ICE_CANDIDATE', async ({ candidate }) => {
+  await pc.addIceCandidate(new RTCIceCandidate(candidate));
+});`} />
+        <CodeBlock lang="js" title="Canal vocal de serveur — rejoindre + signaling" code={`// Rejoindre le canal vocal
+socket.emit('VOICE_JOIN', { serverId: 'srv-uuid', channelId: 'ch-uuid' });
+
+socket.on('VOICE_USER_JOINED', async ({ channelId, userId }) => {
+  // Créer une connexion WebRTC par participant
+  const pc = createPeerConnectionFor(userId);
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  socket.emit('VOICE_OFFER', { channelId, targetUserId: userId, offer });
+});
+
+socket.on('VOICE_OFFER',  async ({ from, offer }) => {
+  const pc = getOrCreatePC(from);
+  await pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  socket.emit('VOICE_ANSWER', { channelId: 'ch-uuid', targetUserId: from, answer });
+});`} />
+        <CodeBlock lang="js" title="Commandes de serveur avec callback" code={`// Historique paginé
+socket.emit('SERVER_MESSAGE_HISTORY',
+  { serverId: 'srv-id', channelId: 'ch-id', limit: 50 },
+  ({ messages }) => {
+    messages.forEach(m => console.log(m.author.username, ':', m.content));
+  }
+);
+
+// Mettre à jour un membre (rôle)
+socket.emit('MEMBER_UPDATE',
+  { serverId: 'srv-id', targetUserId: 'usr-id', roleIds: ['role-id-1'] },
+  ({ member }) => console.log('Rôle mis à jour :', member)
+);`} />
       </div>
 
-      <InfoCard color="blue" title="Heartbeat">
-        Envoyez <code>HEARTBEAT</code> toutes les <strong>30 secondes</strong>. Sans heartbeat, le
-        serveur déconnecte le client après <strong>60 secondes</strong> d'inactivité. Le serveur
-        répond avec <code>HEARTBEAT_ACK</code> pour confirmer la connexion active.
+      <InfoCard color="blue" title="Heartbeat obligatoire">
+        Sans <code>HEARTBEAT</code> toutes les <strong>30 secondes</strong>, la connexion est
+        coupée après <strong>60 secondes</strong> d&apos;inactivité (<code>pingTimeout</code>).
+        Le serveur répond avec <code>HEARTBEAT_ACK &#123; timestamp &#125;</code>.
       </InfoCard>
+    </div>
+  );
+}
+
+/* Helper interne — table d'événements */
+function EventTable({
+  events,
+  color = 'blue',
+}: {
+  events: { event: string; payload: string; cb: string; desc: string }[];
+  color?: 'blue' | 'accent';
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-border/60">
+      {events.map((ev, i) => (
+        <div
+          key={ev.event}
+          className={cn(
+            'grid grid-cols-[minmax(180px,auto)_1fr] items-start gap-3 px-4 py-3',
+            i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20',
+          )}
+        >
+          <code
+            className={cn(
+              'mt-0.5 font-mono text-xs font-bold whitespace-nowrap',
+              color === 'accent' ? 'text-accent' : 'text-blue-400',
+            )}
+          >
+            {ev.event}
+          </code>
+          <div className="min-w-0 space-y-0.5">
+            <code className="block font-mono text-[10px] text-violet-400/80 break-all">{ev.payload}</code>
+            {ev.cb !== '—' && (
+              <code className="block font-mono text-[10px] text-amber-400/80 break-all">↩ {ev.cb}</code>
+            )}
+            <span className="text-[11px] text-muted">{ev.desc}</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -2155,8 +2952,8 @@ const SECTIONS = {
   /* ── Gateway API ───────────────────────────────────────── */
   'gateway-overview':   { title: "Vue d'ensemble",       icon: GlobeIcon,        Component: GatewayOverviewSection},
   'gateway-auth':       { title: 'Authentification',     icon: LockIcon,         Component: GatewayAuthSection    },
-  'gateway-rest':       { title: 'Référence REST',        icon: CodeIcon,         Component: EndpointsSection      },
-  'gateway-websocket':  { title: 'WebSocket',            icon: WifiIcon,         Component: WebSocketSection      },
+  'gateway-rest':       { title: 'Référence REST',        icon: CodeIcon,         Component: GatewayRestSection       },
+  'gateway-websocket':  { title: 'WebSocket',            icon: WifiIcon,         Component: GatewayWebSocketSection },
   'gateway-events':     { title: 'Événements',           icon: ZapIcon,          Component: GatewayEventsSection  },
   'gateway-limits':     { title: 'Limites & Erreurs',    icon: AlertTriangleIcon,Component: ErrorsSection         },
 } as const;
