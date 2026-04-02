@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
@@ -43,6 +43,8 @@ import { cn } from '@/lib/utils';
 import { ServerSettingsDialog } from '@/components/chat/server-settings-dialog';
 import { useTranslation } from '@/components/locale-provider';
 
+//  Types 
+
 interface Server {
   id: string;
   name: string;
@@ -55,128 +57,109 @@ interface ServerListProps {
   horizontal?: boolean;
 }
 
-/** Pill indicator — visible when active, mini on group-hover */
+//  Pill indicator (left edge, visible when active) 
+
 function Indicator({ active }: { active: boolean }) {
   return (
     <span
+      aria-hidden
       className={cn(
         'pointer-events-none absolute left-0 top-1/2 w-1 -translate-y-1/2 rounded-r-full bg-foreground transition-all duration-200',
-        active
-          ? 'h-8 opacity-100 shadow-[0_0_8px_2px_rgba(255,255,255,0.25)]'
-          : 'h-3 opacity-0 group-hover:opacity-60',
+        active ? 'h-8 opacity-100' : 'h-3 opacity-0 group-hover:opacity-60',
       )}
     />
   );
 }
+
+//  ServerList 
 
 export function ServerList({ selectedServer, onSelectServer, horizontal = false }: ServerListProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const { prefs: layoutPrefs } = useLayoutPrefs();
   const compact = layoutPrefs.compactServerList;
-  const btnSize = compact ? 'size-9' : horizontal ? 'size-10' : 'size-12';
+
+  const btnSize  = compact ? 'size-9' : horizontal ? 'size-10' : 'size-12';
   const iconSize = compact ? 16 : horizontal ? 18 : 22;
-  const tooltipPlacement = horizontal ? 'bottom' : 'right';
+  const side     = horizontal ? 'bottom' : 'right';
 
-  const [servers, setServers] = useState<Server[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [settingsServerId, setSettingsServerId] = useState<string | null>(null);
-  const [nodeOnlineServers, setNodeOnlineServers] = useState<Set<string>>(new Set());
-  const [dropdownOpenId, setDropdownOpenId] = useState<string | null>(null);
-  const [confirmLeaveServerId, setConfirmLeaveServerId] = useState<string | null>(null);
+  //  State 
 
-  const [inviteCode, setInviteCode] = useState('');
-  const [isJoining, setIsJoining] = useState(false);
-  const [joinError, setJoinError] = useState('');
+  const [servers,     setServers    ] = useState<Server[]>([]);
+  const [loading,     setLoading    ] = useState(true);
+  const [joinModal,   setJoinModal  ] = useState(false);
+  const [settingsId,  setSettingsId ] = useState<string | null>(null);
+  const [nodeOnline,  setNodeOnline ] = useState<Set<string>>(new Set());
+  const [contextId,   setContextId  ] = useState<string | null>(null);
+  const [leaveId,     setLeaveId    ] = useState<string | null>(null);
+
+  const [inviteCode,  setInviteCode ] = useState('');
+  const [isJoining,   setIsJoining  ] = useState(false);
+  const [joinError,   setJoinError  ] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
 
   // Drag & drop
-  const dragIdRef = useRef<string | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const dragRef = useRef<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
+
+  //  Effects 
 
   useEffect(() => { loadServers(); }, []);
 
   useEffect(() => {
-    const handleOnline = (data: any) => {
-      const sId = data?.payload?.serverId || data?.serverId;
-      if (sId) setNodeOnlineServers((prev) => new Set(prev).add(sId));
+    const onOnline  = (d: any) => { const id = d?.payload?.serverId ?? d?.serverId; if (id) setNodeOnline((p) => new Set(p).add(id)); };
+    const onOffline = (d: any) => { const id = d?.payload?.serverId ?? d?.serverId; if (id) setNodeOnline((p) => { const s = new Set(p); s.delete(id); return s; }); };
+    const onUpdate  = (d: any) => {
+      const s  = d?.payload ?? d?.updates ?? d;
+      const id = s?.id ?? s?.serverId;
+      if (!id) return;
+      setServers((p) => p.map((sv) =>
+        sv.id === id
+          ? { ...sv, ...(s.name != null && { name: s.name }), ...(s.iconUrl !== undefined && { iconUrl: s.iconUrl || undefined }) }
+          : sv,
+      ));
     };
-    const handleOffline = (data: any) => {
-      const sId = data?.payload?.serverId || data?.serverId;
-      if (sId) setNodeOnlineServers((prev) => { const s = new Set(prev); s.delete(sId); return s; });
-    };
-    const handleServerUpdate = (data: any) => {
-      const s = data?.payload || data?.updates || data;
-      const id = s?.id || s?.serverId;
-      if (id) {
-        setServers((prev) => prev.map((sv) =>
-          sv.id === id
-            ? {
-                ...sv,
-                ...(s.name != null && { name: s.name }),
-                ...(s.iconUrl !== undefined && { iconUrl: s.iconUrl || undefined }),
-                ...(s.bannerUrl !== undefined && { bannerUrl: s.bannerUrl || undefined }),
-              }
-            : sv,
-        ));
-      }
-    };
-    const handleServerDelete = (data: any) => {
-      const sId = data?.payload?.serverId || data?.serverId;
-      if (!sId) return;
-      setServers((prev) => prev.filter((sv) => sv.id !== sId));
-      if (selectedServer === sId) onSelectServer(null);
-    };
-    const handleServerRemoved = (data: any) => {
-      const sId = data?.payload?.serverId || data?.serverId;
-      if (!sId) return;
-      setServers((prev) => prev.filter((sv) => sv.id !== sId));
-      if (selectedServer === sId) onSelectServer(null);
-      toast.warning('Vous avez été retiré du serveur.');
-    };
-    socketService.on('SERVER_NODE_ONLINE', handleOnline);
-    socketService.on('SERVER_NODE_OFFLINE', handleOffline);
-    socketService.on('SERVER_UPDATE', handleServerUpdate);
-    socketService.on('SERVER_DELETE', handleServerDelete);
-    socketService.on('SERVER_KICKED', handleServerRemoved);
-    socketService.on('SERVER_BANNED', handleServerRemoved);
+    const onDelete  = (d: any) => { const id = d?.payload?.serverId ?? d?.serverId; if (id) { setServers((p) => p.filter((sv) => sv.id !== id)); if (selectedServer === id) onSelectServer(null); } };
+    const onRemoved = (d: any) => { const id = d?.payload?.serverId ?? d?.serverId; if (id) { setServers((p) => p.filter((sv) => sv.id !== id)); if (selectedServer === id) onSelectServer(null); toast.warning('Vous avez été retiré du serveur.'); } };
+
+    socketService.on('SERVER_NODE_ONLINE',  onOnline);
+    socketService.on('SERVER_NODE_OFFLINE', onOffline);
+    socketService.on('SERVER_UPDATE',       onUpdate);
+    socketService.on('SERVER_DELETE',       onDelete);
+    socketService.on('SERVER_KICKED',       onRemoved);
+    socketService.on('SERVER_BANNED',       onRemoved);
+
     return () => {
-      socketService.off('SERVER_NODE_ONLINE', handleOnline);
-      socketService.off('SERVER_NODE_OFFLINE', handleOffline);
-      socketService.off('SERVER_UPDATE', handleServerUpdate);
-      socketService.off('SERVER_DELETE', handleServerDelete);
-      socketService.off('SERVER_KICKED', handleServerRemoved);
-      socketService.off('SERVER_BANNED', handleServerRemoved);
+      socketService.off('SERVER_NODE_ONLINE',  onOnline);
+      socketService.off('SERVER_NODE_OFFLINE', onOffline);
+      socketService.off('SERVER_UPDATE',       onUpdate);
+      socketService.off('SERVER_DELETE',       onDelete);
+      socketService.off('SERVER_KICKED',       onRemoved);
+      socketService.off('SERVER_BANNED',       onRemoved);
     };
   }, [selectedServer]);
 
+  //  API calls 
+
   const loadServers = async () => {
-    setIsLoading(true);
+    setLoading(true);
     const res = await api.getServers();
     if (res.success && res.data) {
-      let list: Server[] = (res.data as any[]).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        iconUrl: s.iconUrl || s.icon_url,
-      }));
+      let list: Server[] = (res.data as any[]).map((s: any) => ({ id: s.id, name: s.name, iconUrl: s.iconUrl || s.icon_url }));
       try {
         const saved = JSON.parse(localStorage.getItem('alfychat_server_order') || '[]') as string[];
         if (saved.length > 0) {
-          const orderMap = new Map(saved.map((id, i) => [id, i]));
-          list = [...list].sort((a, b) =>
-            (orderMap.has(a.id) ? orderMap.get(a.id)! : list.length) -
-            (orderMap.has(b.id) ? orderMap.get(b.id)! : list.length),
-          );
+          const idx = new Map(saved.map((id, i) => [id, i]));
+          list = list.sort((a, b) => (idx.get(a.id) ?? list.length) - (idx.get(b.id) ?? list.length));
         }
       } catch {}
       setServers(list);
     }
-    setIsLoading(false);
+    setLoading(false);
   };
 
-  const handleJoinServer = async () => {
+  const handleJoin = async () => {
     if (!inviteCode.trim() || isJoining) return;
     setIsJoining(true);
     setJoinError('');
@@ -185,50 +168,86 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     setIsJoining(false);
     if (res.success && res.data) {
       const s = res.data as any;
-      const joined: Server = { id: s.id || s.serverId, name: s.name, iconUrl: s.iconUrl };
-      setServers((prev) => [...prev, joined]);
-      setJoinSuccess(`Bienvenue sur ${joined.name} !`);
-      setTimeout(() => { setIsJoinModalOpen(false); resetJoinForm(); onSelectServer(joined.id); }, 1200);
+      const joined: Server = { id: s.id ?? s.serverId, name: s.name, iconUrl: s.iconUrl };
+      setServers((p) => [...p, joined]);
+      setJoinSuccess(`Bienvenue sur ${joined.name} !`);
+      setTimeout(() => { setJoinModal(false); resetJoin(); onSelectServer(joined.id); }, 1200);
     } else {
-      setJoinError(res.error || 'Code invalide ou serveur introuvable.');
+      setJoinError(res.error ?? 'Code invalide ou serveur introuvable.');
     }
   };
 
-  const handleLeaveServer = async (serverId: string) => {
-    const res = await api.leaveServer(serverId);
+  const handleLeave = async (id: string) => {
+    const res = await api.leaveServer(id);
     if (res.success) {
-      setServers((prev) => prev.filter((s) => s.id !== serverId));
-      if (selectedServer === serverId) onSelectServer(null);
+      setServers((p) => p.filter((s) => s.id !== id));
+      if (selectedServer === id) onSelectServer(null);
       toast.success('Serveur quitté.');
     } else {
-      toast.warning(res.error || res.message || 'Impossible de quitter le serveur.');
+      toast.warning((res as any).error ?? (res as any).message ?? 'Impossible de quitter le serveur.');
     }
-    setConfirmLeaveServerId(null);
+    setLeaveId(null);
   };
 
-  const resetJoinForm = () => {
-    setInviteCode('');
-    setJoinError('');
-    setJoinSuccess('');
+  const resetJoin = () => { setInviteCode(''); setJoinError(''); setJoinSuccess(''); };
+
+  //  Drag & drop 
+
+  const handleDragStart = (id: string) => (e: React.DragEvent) => {
+    dragRef.current = id;
+    setDragging(id);
+    e.dataTransfer.effectAllowed = 'move';
   };
+
+  const handleDragOver = (id: string) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragRef.current !== id) setDragOver(id);
+  };
+
+  const handleDrop = (id: string) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const from = dragRef.current;
+    if (!from || from === id) { setDragOver(null); return; }
+    setServers((prev) => {
+      const arr = [...prev];
+      const fi  = arr.findIndex((s) => s.id === from);
+      const ti  = arr.findIndex((s) => s.id === id);
+      if (fi === -1 || ti === -1) return prev;
+      const [item] = arr.splice(fi, 1);
+      arr.splice(ti, 0, item);
+      try { localStorage.setItem('alfychat_server_order', JSON.stringify(arr.map((s) => s.id))); } catch {}
+      return arr;
+    });
+    dragRef.current = null;
+    setDragging(null);
+    setDragOver(null);
+  };
+
+  const handleDragEnd = () => { dragRef.current = null; setDragging(null); setDragOver(null); };
+
+  //  Render 
 
   return (
     <>
-      {/* ── Sidebar ── */}
-      <div className={cn(
-        'flex items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60 transition-all duration-200',
-        horizontal
-          ? 'h-14 w-full flex-row border-b border-[var(--border)]/20 px-2'
-          : cn('h-full flex-col py-3', compact ? 'w-13' : 'w-17'),
-      )}>
-
+      {/*  BAR  */}
+      <nav
+        aria-label="Serveurs"
+        className={cn(
+          'flex shrink-0 items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60',
+          horizontal
+            ? 'h-14 w-full flex-row border-b border-[var(--border)]/20 px-2'
+            : cn('h-full flex-col py-3', compact ? 'w-13' : 'w-17'),
+        )}
+      >
         {/* DMs */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
+            aria-label={t.serverList?.dms ?? 'Messages directs'}
             className={cn(
-              'group relative rounded-2xl transition-all duration-200 shrink-0',
+              'group relative shrink-0 rounded-2xl transition-all duration-200',
               btnSize,
               selectedServer === null
                 ? 'rounded-xl bg-accent text-accent-foreground shadow-lg shadow-accent/20'
@@ -239,216 +258,197 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
             <Indicator active={selectedServer === null} />
             <MessageCircleIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={tooltipPlacement}>
+          <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
-            <p className="text-[11px] font-medium">{t.serverList?.dms || 'Messages directs'}</p>
+            <p className="text-[11px] font-medium">{t.serverList?.dms ?? 'Messages directs'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> D</Kbd>
           </Tooltip.Content>
         </Tooltip>
 
-        <Separator className={horizontal ? 'h-8 opacity-30' : 'w-8 opacity-30'} orientation={horizontal ? 'vertical' : 'horizontal'} />
+        <Separator orientation={horizontal ? 'vertical' : 'horizontal'} className={cn('opacity-30', horizontal ? 'h-8' : 'w-8')} />
 
-        {/* Server list */}
+        {/* Server scroll list */}
         <ScrollShadow
+          orientation={horizontal ? 'horizontal' : 'vertical'}
+          hideScrollBar
           className={cn(
             'flex items-center gap-1.5',
             horizontal
               ? 'h-full flex-1 flex-row overflow-x-auto px-1'
               : 'w-full flex-1 flex-col overflow-y-auto px-2 pb-1',
           )}
-          hideScrollBar
-          orientation={horizontal ? 'horizontal' : 'vertical'}
         >
-          {isLoading
+          {loading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className={cn('shrink-0 rounded-2xl', compact ? 'size-9' : horizontal ? 'size-10' : 'size-12')} animationType="shimmer" />
+                <Skeleton key={i} animationType="shimmer" className={cn('shrink-0 rounded-2xl', btnSize)} />
               ))
-            : servers.map((server) => (
-                <div
-                  key={server.id}
-                  draggable
-                  onDragStart={(e) => {
-                    dragIdRef.current = server.id;
-                    setDraggingId(server.id);
-                    e.dataTransfer.effectAllowed = 'move';
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    if (dragIdRef.current !== server.id) setDragOverId(server.id);
-                  }}
-                  onDragLeave={(e) => {
-                    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverId(null);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const from = dragIdRef.current;
-                    if (!from || from === server.id) { setDragOverId(null); return; }
-                    setServers((prev) => {
-                      const arr = [...prev];
-                      const fromIdx = arr.findIndex((s) => s.id === from);
-                      const toIdx = arr.findIndex((s) => s.id === server.id);
-                      if (fromIdx === -1 || toIdx === -1) return prev;
-                      const [item] = arr.splice(fromIdx, 1);
-                      arr.splice(toIdx, 0, item);
-                      try { localStorage.setItem('alfychat_server_order', JSON.stringify(arr.map((s) => s.id))); } catch {}
-                      return arr;
-                    });
-                    dragIdRef.current = null;
-                    setDraggingId(null);
-                    setDragOverId(null);
-                  }}
-                  onDragEnd={() => { dragIdRef.current = null; setDraggingId(null); setDragOverId(null); }}
-                  className={cn(
-                    'transition-all duration-150',
-                    draggingId === server.id && 'opacity-40 scale-95',
-                    dragOverId === server.id && draggingId !== server.id && 'translate-y-0.5 opacity-70',
-                  )}
-                >
-                <Dropdown
-                  isOpen={dropdownOpenId === server.id}
-                  onOpenChange={(open) => setDropdownOpenId(open ? server.id : null)}
-                >
-                  <Tooltip delay={0}>
-                    <div
-                      slot="trigger"
-                      className={cn(
-                        'group relative flex shrink-0 cursor-pointer items-center justify-center rounded-2xl transition-all duration-200',
-                        btnSize,
-                        selectedServer === server.id
-                          ? 'rounded-xl ring-2 ring-accent/25 ring-offset-1 ring-offset-background'
-                          : 'hover:rounded-xl',
-                        dragOverId === server.id && 'ring-2 ring-[var(--accent)]/40 ring-offset-1 ring-offset-[var(--background)]',
-                      )}
-                      onClick={() => onSelectServer(server.id)}
-                      onContextMenu={(e) => { e.preventDefault(); setDropdownOpenId(server.id); }}
-                    >
-                      <Indicator active={selectedServer === server.id} />
-                      <Badge.Anchor>
-                        <Avatar className={cn('rounded-2xl transition-all duration-200 group-hover:rounded-xl', btnSize)}>
-                          <Avatar.Image
-                            src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
-                            alt={server.name}
-                          />
-                          <Avatar.Fallback className="rounded-2xl bg-surface-secondary text-sm font-semibold transition-all duration-200 group-hover:rounded-xl">
-                            {server.name.charAt(0).toUpperCase()}
-                          </Avatar.Fallback>
-                        </Avatar>
-                        {nodeOnlineServers.has(server.id) && (
-                          <Badge color="success" size="sm" placement="bottom-right" />
-                        )}
-                      </Badge.Anchor>
-                    </div>
+            : servers.map((server) => {
+                const active    = selectedServer === server.id;
+                const isDragged = dragging === server.id;
+                const isOver    = dragOver  === server.id;
 
-                    <Tooltip.Content showArrow placement={tooltipPlacement}>
-                      <Tooltip.Arrow />
-                      <p className="text-[11px] font-semibold">{server.name}</p>
-                      {nodeOnlineServers.has(server.id) && (
-                        <Chip color="success" variant="soft" size="sm" className="mt-1">
-                          <Chip.Label className="text-[10px]">Node en ligne</Chip.Label>
-                        </Chip>
-                      )}
-                    </Tooltip.Content>
-                  </Tooltip>
-
-                  <Dropdown.Popover placement="right top" className="min-w-47">
-                    <Dropdown.Menu
-                      aria-label={t.serverList?.serverOptions || 'Options du serveur'}
-                      onAction={(key) => {
-                        setDropdownOpenId(null);
-                        if (key === 'settings') setSettingsServerId(server.id);
-                        if (key === 'invite') {
-                          navigator.clipboard.writeText(`${window.location.origin}/invite/${server.id}`);
-                          toast.success("Lien d'invitation copié !");
-                        }
-                        if (key === 'leave') setConfirmLeaveServerId(server.id);
-                      }}
+                return (
+                  <div
+                    key={server.id}
+                    draggable
+                    onDragStart={handleDragStart(server.id)}
+                    onDragOver={handleDragOver(server.id)}
+                    onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null); }}
+                    onDrop={handleDrop(server.id)}
+                    onDragEnd={handleDragEnd}
+                    className={cn(
+                      'transition-all duration-150',
+                      isDragged && 'scale-95 opacity-40',
+                      isOver && !isDragged && 'translate-y-0.5 opacity-70',
+                    )}
+                  >
+                    <Dropdown
+                      isOpen={contextId === server.id}
+                      onOpenChange={(open) => setContextId(open ? server.id : null)}
                     >
-                      <Dropdown.Item id="settings" textValue="Paramètres">
-                        <SettingsIcon size={14} className="mr-2 shrink-0 opacity-60" />
-                        <Label>Paramètres</Label>
-                      </Dropdown.Item>
-                      <Dropdown.Item id="invite" textValue="Copier l'invitation">
-                        <CopyIcon size={14} className="mr-2 shrink-0 opacity-60" />
-                        <Label>Copier l&apos;invitation</Label>
-                      </Dropdown.Item>
-                      <Dropdown.Item id="leave" className="text-danger" textValue="Quitter">
-                        <LogOutIcon size={14} className="mr-2 shrink-0" />
-                        <Label>{t.serverList?.leaveServer || 'Quitter'}</Label>
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown.Popover>
-                </Dropdown>
-                </div>
-              ))}
+                      <Tooltip delay={0}>
+                        <div
+                          slot="trigger"
+                          role="button"
+                          tabIndex={0}
+                          aria-label={server.name}
+                          aria-pressed={active}
+                          onClick={() => onSelectServer(server.id)}
+                          onKeyDown={(e) => e.key === 'Enter' && onSelectServer(server.id)}
+                          onContextMenu={(e) => { e.preventDefault(); setContextId(server.id); }}
+                          className={cn(
+                            'group relative flex shrink-0 cursor-pointer select-none items-center justify-center rounded-2xl transition-all duration-200',
+                            btnSize,
+                            active
+                              ? 'rounded-xl ring-2 ring-accent/25 ring-offset-1 ring-offset-background'
+                              : 'hover:rounded-xl',
+                            isOver && 'ring-2 ring-accent/40 ring-offset-1 ring-offset-background',
+                          )}
+                        >
+                          <Indicator active={active} />
+                          <Badge.Anchor>
+                            <Avatar className={cn('rounded-2xl transition-all duration-200 group-hover:rounded-xl', btnSize)}>
+                              <Avatar.Image src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined} alt={server.name} />
+                              <Avatar.Fallback className="rounded-2xl bg-[var(--surface-secondary)] text-sm font-semibold transition-all duration-200 group-hover:rounded-xl">
+                                {server.name.charAt(0).toUpperCase()}
+                              </Avatar.Fallback>
+                            </Avatar>
+                            {nodeOnline.has(server.id) && (
+                              <Badge color="success" size="sm" placement="bottom-right" />
+                            )}
+                          </Badge.Anchor>
+                        </div>
+
+                        <Tooltip.Content showArrow placement={side}>
+                          <Tooltip.Arrow />
+                          <p className="text-[11px] font-semibold">{server.name}</p>
+                          {nodeOnline.has(server.id) && (
+                            <Chip color="success" variant="soft" size="sm" className="mt-1">
+                              <Chip.Label className="text-[10px]">Node en ligne</Chip.Label>
+                            </Chip>
+                          )}
+                        </Tooltip.Content>
+                      </Tooltip>
+
+                      <Dropdown.Popover placement="right top" className="min-w-44">
+                        <Dropdown.Menu
+                          aria-label={t.serverList?.serverOptions ?? 'Options du serveur'}
+                          onAction={(key) => {
+                            setContextId(null);
+                            if (key === 'settings') setSettingsId(server.id);
+                            if (key === 'invite') { navigator.clipboard.writeText(`${window.location.origin}/invite/${server.id}`); toast.success("Lien d'invitation copié !"); }
+                            if (key === 'leave')    setLeaveId(server.id);
+                          }}
+                        >
+                          <Dropdown.Item id="settings" textValue="Paramètres">
+                            <SettingsIcon size={14} className="mr-2 shrink-0 opacity-60" />
+                            <Label>Paramètres</Label>
+                          </Dropdown.Item>
+                          <Dropdown.Item id="invite" textValue="Copier l'invitation">
+                            <CopyIcon size={14} className="mr-2 shrink-0 opacity-60" />
+                            <Label>Copier l&apos;invitation</Label>
+                          </Dropdown.Item>
+                          <Dropdown.Item id="leave" className="text-danger" textValue="Quitter">
+                            <LogOutIcon size={14} className="mr-2 shrink-0" />
+                            <Label>{t.serverList?.leaveServer ?? 'Quitter'}</Label>
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown.Popover>
+                    </Dropdown>
+                  </div>
+                );
+              })}
         </ScrollShadow>
 
-        <Separator className={horizontal ? 'h-8 opacity-30' : 'w-8 opacity-30'} orientation={horizontal ? 'vertical' : 'horizontal'} />
+        <Separator orientation={horizontal ? 'vertical' : 'horizontal'} className={cn('opacity-30', horizontal ? 'h-8' : 'w-8')} />
 
-        {/* Join server */}
+        {/* Rejoindre */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
+            aria-label={t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}
             className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success', btnSize)}
-            onPress={() => setIsJoinModalOpen(true)}
+            onPress={() => setJoinModal(true)}
           >
             <PlusIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={tooltipPlacement}>
+          <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
-            <p className="text-[11px] font-medium">{t.serverList?.modal?.joinNav || 'Rejoindre un serveur'}</p>
+            <p className="text-[11px] font-medium">{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> N</Kbd>
           </Tooltip.Content>
         </Tooltip>
 
-        {/* Discover */}
+        {/* Découvrir */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
+            aria-label={t.serverList?.discoverServers ?? 'Découvrir des serveurs'}
             className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', btnSize)}
             onPress={() => router.push('/channels/discover-server')}
           >
             <CompassIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={tooltipPlacement}>
+          <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
-            <p className="text-[11px] font-medium">{t.serverList?.discoverServers || 'Découvrir'}</p>
+            <p className="text-[11px] font-medium">{t.serverList?.discoverServers ?? 'Découvrir'}</p>
           </Tooltip.Content>
         </Tooltip>
 
-        {/* Welcome page */}
+        {/* Accueil */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
+            aria-label="Bienvenue"
             className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', btnSize)}
             onPress={() => router.push('/channels/gotostart')}
           >
             <HomeIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={tooltipPlacement}>
+          <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">Bienvenue</p>
           </Tooltip.Content>
         </Tooltip>
-      </div>
+      </nav>
 
-      {/* ── Server Settings Dialog ── */}
-      {settingsServerId && (
+      {/*  SERVER SETTINGS  */}
+      {settingsId && (
         <ServerSettingsDialog
-          serverId={settingsServerId}
-          open={!!settingsServerId}
-          onOpenChange={(open) => { if (!open) setSettingsServerId(null); }}
+          serverId={settingsId}
+          open={!!settingsId}
+          onOpenChange={(open) => { if (!open) setSettingsId(null); }}
           onServerUpdated={loadServers}
         />
       )}
 
-      {/* ── Confirm Leave Modal ── */}
+      {/*  CONFIRM LEAVE  */}
       <Modal.Backdrop
-        isOpen={!!confirmLeaveServerId}
-        onOpenChange={(open) => { if (!open) setConfirmLeaveServerId(null); }}
+        isOpen={!!leaveId}
+        onOpenChange={(open) => { if (!open) setLeaveId(null); }}
         variant="blur"
       >
         <Modal.Container size="sm">
@@ -463,25 +463,22 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               </p>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-4">
-              <Button variant="secondary" onPress={() => setConfirmLeaveServerId(null)}>
+              <Button variant="secondary" onPress={() => setLeaveId(null)}>
                 Annuler
               </Button>
-              <Button
-                variant="danger"
-                onPress={() => confirmLeaveServerId && handleLeaveServer(confirmLeaveServerId)}
-              >
+              <Button variant="danger" onPress={() => leaveId && handleLeave(leaveId)}>
                 <LogOutIcon size={14} />
-                {t.serverList?.leaveServer || 'Quitter'}
+                {t.serverList?.leaveServer ?? 'Quitter'}
               </Button>
             </div>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
 
-      {/* ── Join Server Modal ── */}
+      {/*  JOIN SERVER  */}
       <Modal.Backdrop
-        isOpen={isJoinModalOpen}
-        onOpenChange={(open) => { setIsJoinModalOpen(open); if (!open) resetJoinForm(); }}
+        isOpen={joinModal}
+        onOpenChange={(open) => { setJoinModal(open); if (!open) resetJoin(); }}
         variant="blur"
       >
         <Modal.Container size="md">
@@ -494,15 +491,11 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                   <Link2Icon size={18} className="text-accent" />
                 </div>
                 <div>
-                  <h2 className="text-[15px] font-bold">
-                    {t.serverList?.modal?.joinNav || 'Rejoindre un serveur'}
-                  </h2>
-                  <p className="text-[11px] text-[var(--muted)]/60">
-                    Entrez un code ou un lien d&apos;invitation
-                  </p>
+                  <h2 className="text-[15px] font-bold">{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</h2>
+                  <p className="text-[11px] text-[var(--muted)]/60">Entrez un code ou un lien d&apos;invitation</p>
                 </div>
               </div>
-              <CloseButton onPress={() => setIsJoinModalOpen(false)} className="shrink-0" />
+              <CloseButton onPress={() => setJoinModal(false)} className="shrink-0" />
             </div>
 
             {/* Body */}
@@ -528,7 +521,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 </Alert>
               )}
 
-              <Form onSubmit={(e) => { e.preventDefault(); handleJoinServer(); }}>
+              <Form onSubmit={(e) => { e.preventDefault(); handleJoin(); }}>
                 <div className="space-y-2">
                   <Label className="text-[13px] font-semibold">Code ou lien d&apos;invitation</Label>
                   <InputGroup>
@@ -536,7 +529,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                       value={inviteCode}
                       onChange={(e) => setInviteCode(e.target.value)}
                       placeholder="https://alfychat.app/invite/... ou ABCD1234"
-                      onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleJoinServer()}
+                      onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleJoin()}
                       autoFocus
                     />
                   </InputGroup>
@@ -568,13 +561,11 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
                   <Button
                     type="submit"
-                    onPress={handleJoinServer}
+                    onPress={handleJoin}
                     isDisabled={!inviteCode.trim() || isJoining}
                     className="min-w-28 shrink-0"
                   >
-                    {isJoining
-                      ? <Spinner size="sm" color="current" />
-                      : <ArrowRightIcon size={14} />}
+                    {isJoining ? <Spinner size="sm" color="current" /> : <ArrowRightIcon size={14} />}
                     Rejoindre
                   </Button>
                 </div>
@@ -588,7 +579,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 size="sm"
                 variant="ghost"
                 className="h-7 gap-1.5 px-2 text-[11px] text-accent hover:bg-accent/10"
-                onPress={() => { setIsJoinModalOpen(false); router.push('/channels/discover-server'); }}
+                onPress={() => { setJoinModal(false); router.push('/channels/discover-server'); }}
               >
                 <CompassIcon size={12} />
                 Découvrir
