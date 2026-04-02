@@ -64,8 +64,8 @@ function Indicator({ active }: { active: boolean }) {
     <span
       aria-hidden
       className={cn(
-        'pointer-events-none absolute left-0 top-1/2 w-1 -translate-y-1/2 rounded-r-full bg-foreground transition-all duration-200',
-        active ? 'h-8 opacity-100' : 'h-3 opacity-0 group-hover:opacity-60',
+        'pointer-events-none absolute -left-0.5 top-1/2 w-[3px] -translate-y-1/2 rounded-r-full bg-white transition-all duration-200',
+        active ? 'h-9 opacity-100 shadow-[0_0_6px_1px_rgba(255,255,255,0.4)]' : 'h-2 opacity-0 group-hover:opacity-50',
       )}
     />
   );
@@ -230,28 +230,31 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
   return (
     <>
-      {/*  BAR  */}
+      {/* ─────────────────────────────── BAR ─────────────────────────────── */}
       <nav
         aria-label="Serveurs"
         className={cn(
-          'flex shrink-0 items-center gap-1.5 overflow-hidden bg-[var(--surface)]/60',
+          'flex shrink-0 items-center gap-1.5 bg-[var(--background)]',
           horizontal
-            ? 'h-14 w-full flex-row border-b border-[var(--border)]/20 px-2'
-            : cn('h-full flex-col py-3', compact ? 'w-13' : 'w-17'),
+            ? 'h-14 w-full flex-row border-b border-white/5 px-3'
+            : cn(
+                'h-full flex-col border-r border-white/5 py-3',
+                compact ? 'w-[56px]' : 'w-[72px]',
+              ),
         )}
       >
-        {/* DMs */}
+        {/* ── DMs ── */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
             aria-label={t.serverList?.dms ?? 'Messages directs'}
             className={cn(
-              'group relative shrink-0 rounded-2xl transition-all duration-200',
+              'group relative mx-auto shrink-0 transition-all duration-200',
               btnSize,
               selectedServer === null
-                ? 'rounded-xl bg-accent text-accent-foreground shadow-lg shadow-accent/20'
-                : 'bg-[var(--surface-secondary)]/50 text-muted hover:rounded-xl hover:bg-accent/10 hover:text-accent',
+                ? '!rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
+                : '!rounded-full bg-white/5 text-white/50 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
             )}
             onPress={() => onSelectServer(null)}
           >
@@ -265,22 +268,22 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           </Tooltip.Content>
         </Tooltip>
 
-        <Separator orientation={horizontal ? 'vertical' : 'horizontal'} className={cn('opacity-30', horizontal ? 'h-8' : 'w-8')} />
+        <div className={cn('shrink-0 rounded-full bg-white/10', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
-        {/* Server scroll list */}
+        {/* ── Server scroll list ── */}
         <ScrollShadow
           orientation={horizontal ? 'horizontal' : 'vertical'}
           hideScrollBar
           className={cn(
-            'flex items-center gap-1.5',
+            'flex items-center gap-1',
             horizontal
               ? 'h-full flex-1 flex-row overflow-x-auto px-1'
-              : 'w-full flex-1 flex-col overflow-y-auto px-2 pb-1',
+              : 'w-full flex-1 flex-col items-center overflow-y-auto py-0.5',
           )}
         >
           {loading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} animationType="shimmer" className={cn('shrink-0 rounded-2xl', btnSize)} />
+                <Skeleton key={i} animationType="shimmer" className={cn('shrink-0 rounded-full', btnSize)} />
               ))
             : servers.map((server) => {
                 const active    = selectedServer === server.id;
@@ -297,9 +300,9 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                     onDrop={handleDrop(server.id)}
                     onDragEnd={handleDragEnd}
                     className={cn(
-                      'transition-all duration-150',
-                      isDragged && 'scale-95 opacity-40',
-                      isOver && !isDragged && 'translate-y-0.5 opacity-70',
+                      'flex items-center justify-center transition-all duration-150',
+                      isDragged && 'scale-90 opacity-40',
+                      isOver && !isDragged && 'scale-105 opacity-80',
                     )}
                   >
                     <Dropdown
@@ -317,19 +320,28 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                           onKeyDown={(e) => e.key === 'Enter' && onSelectServer(server.id)}
                           onContextMenu={(e) => { e.preventDefault(); setContextId(server.id); }}
                           className={cn(
-                            'group relative flex shrink-0 cursor-pointer select-none items-center justify-center rounded-2xl transition-all duration-200',
+                            'group relative flex shrink-0 cursor-pointer select-none items-center justify-center transition-all duration-200',
                             btnSize,
-                            active
-                              ? 'rounded-xl ring-2 ring-accent/25 ring-offset-1 ring-offset-background'
-                              : 'hover:rounded-xl',
-                            isOver && 'ring-2 ring-accent/40 ring-offset-1 ring-offset-background',
+                            active ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]',
                           )}
                         >
                           <Indicator active={active} />
                           <Badge.Anchor>
-                            <Avatar className={cn('rounded-2xl transition-all duration-200 group-hover:rounded-xl', btnSize)}>
+                            <Avatar
+                              className={cn(
+                                'transition-all duration-200',
+                                btnSize,
+                                active ? 'rounded-[14px] shadow-lg shadow-black/40' : 'rounded-full group-hover:rounded-[14px]',
+                                isOver && 'ring-2 ring-accent ring-offset-1 ring-offset-[var(--background)]',
+                              )}
+                            >
                               <Avatar.Image src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined} alt={server.name} />
-                              <Avatar.Fallback className="rounded-2xl bg-[var(--surface-secondary)] text-sm font-semibold transition-all duration-200 group-hover:rounded-xl">
+                              <Avatar.Fallback
+                                className={cn(
+                                  'bg-[var(--surface-secondary)] text-sm font-bold transition-all duration-200',
+                                  active ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]',
+                                )}
+                              >
                                 {server.name.charAt(0).toUpperCase()}
                               </Avatar.Fallback>
                             </Avatar>
@@ -337,6 +349,10 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                               <Badge color="success" size="sm" placement="bottom-right" />
                             )}
                           </Badge.Anchor>
+                          {/* Glow ring on active */}
+                          {active && (
+                            <span className="pointer-events-none absolute inset-0 rounded-[14px] ring-2 ring-white/20 ring-offset-1 ring-offset-[var(--background)]" />
+                          )}
                         </div>
 
                         <Tooltip.Content showArrow placement={side}>
@@ -380,15 +396,18 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               })}
         </ScrollShadow>
 
-        <Separator orientation={horizontal ? 'vertical' : 'horizontal'} className={cn('opacity-30', horizontal ? 'h-8' : 'w-8')} />
+        <div className={cn('shrink-0 rounded-full bg-white/10', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
-        {/* Rejoindre */}
+        {/* ── Rejoindre ── */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
             aria-label={t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}
-            className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-success-soft hover:text-success', btnSize)}
+            className={cn(
+              'mx-auto shrink-0 !rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:!rounded-[14px] hover:bg-success/15 hover:text-success',
+              btnSize,
+            )}
             onPress={() => setJoinModal(true)}
           >
             <PlusIcon size={iconSize} />
@@ -400,13 +419,16 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           </Tooltip.Content>
         </Tooltip>
 
-        {/* Découvrir */}
+        {/* ── Découvrir ── */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
             aria-label={t.serverList?.discoverServers ?? 'Découvrir des serveurs'}
-            className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', btnSize)}
+            className={cn(
+              'mx-auto shrink-0 !rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
+              btnSize,
+            )}
             onPress={() => router.push('/channels/discover-server')}
           >
             <CompassIcon size={iconSize} />
@@ -417,13 +439,16 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           </Tooltip.Content>
         </Tooltip>
 
-        {/* Accueil */}
+        {/* ── Accueil ── */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
             variant="ghost"
             aria-label="Bienvenue"
-            className={cn('shrink-0 rounded-2xl bg-[var(--surface-secondary)]/50 text-muted transition-all duration-200 hover:rounded-xl hover:bg-accent-soft hover:text-accent', btnSize)}
+            className={cn(
+              'mx-auto shrink-0 !rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
+              btnSize,
+            )}
             onPress={() => router.push('/channels/gotostart')}
           >
             <HomeIcon size={iconSize} />
