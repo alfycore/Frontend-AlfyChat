@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -24,6 +24,7 @@ import {
   LockIcon,
   WifiIcon,
   AlertTriangleIcon,
+  UserPlusIcon,
 } from '@/components/icons';
 import { Accordion, Card, Chip, ScrollShadow, Separator } from '@heroui/react';
 import { cn } from '@/lib/utils';
@@ -1911,15 +1912,25 @@ function BotPermissionsSection() {
   );
 }
 
-/* ─── Gateway REST Reference ───────────────────────────────── */
+/* ─── Gateway REST — Index ──────────────────────────────────── */
+function RestBreadcrumb({ title }: { title: string }) {
+  return (
+    <div className="mb-2 flex items-center gap-1.5 text-xs text-muted/60">
+      <Link href="/developers/docs/gateway-rest" className="hover:text-accent no-underline transition-colors">Référence REST</Link>
+      <span>/</span>
+      <span className="text-foreground/80">{title}</span>
+    </div>
+  );
+}
+
 function GatewayRestSection() {
   return (
     <div className="space-y-8">
       <PageHeader
         icon={CodeIcon}
-        title="Référence REST complète"
-        description="Tous les endpoints HTTP du Gateway — auth, users, messages, friends, serveurs, bots, media."
-        badge="Complet"
+        title="Référence REST"
+        description="Tous les endpoints HTTP du Gateway — organisés par domaine. Choisissez une section pour l'explorer en détail."
+        badge="REST"
       />
 
       <Card className="border border-border/60 bg-surface/40">
@@ -1936,98 +1947,217 @@ function GatewayRestSection() {
             </div>
             <Separator orientation="vertical" className="hidden sm:block h-8" />
             <div>
-              <p className="text-[11px] font-semibold text-muted mb-1">Auth utilisateur</p>
-              <code className="font-mono text-sm font-bold">Bearer &lt;jwt&gt;</code>
+              <p className="text-[11px] font-semibold text-muted mb-1">Auth header</p>
+              <code className="font-mono text-sm font-bold">Authorization: Bearer &lt;jwt&gt;</code>
             </div>
             <Separator orientation="vertical" className="hidden sm:block h-8" />
             <div>
-              <p className="text-[11px] font-semibold text-muted mb-1">Auth bot</p>
-              <code className="font-mono text-sm font-bold">Bot &lt;token&gt;</code>
+              <p className="text-[11px] font-semibold text-muted mb-1">Auth bots</p>
+              <code className="font-mono text-sm font-bold">Authorization: Bot &lt;token&gt;</code>
             </div>
           </div>
         </Card.Content>
       </Card>
 
-      {/* ── Auth ── */}
+      <div>
+        <SectionTitle>Sections détaillées</SectionTitle>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {([
+            { slug: 'gateway-rest-auth',     icon: KeyIcon,          title: 'Auth & RGPD',            desc: 'Inscription, connexion, refresh token, révocation de session, export et suppression de données.', count: 6,  paths: ['/api/auth/*', '/api/rgpd/*'],      color: 'text-blue-400'   },
+            { slug: 'gateway-rest-users',    icon: BookOpenIcon,     title: 'Utilisateurs',           desc: 'Profil, préférences, statut de présence et last-seen.',                                             count: 7,  paths: ['/api/users/*'],                    color: 'text-violet-400' },
+            { slug: 'gateway-rest-messages', icon: MessageCircleIcon,title: 'Messages & Conversations',desc: 'Messages DM, conversations groupe, réactions, notifications et archive P2P.',                        count: 17, paths: ['/api/messages/*', '/api/conversations/*', '/api/archive/*'], color: 'text-emerald-400'},
+            { slug: 'gateway-rest-friends',  icon: UserPlusIcon,     title: 'Amis & Appels',          desc: "Demandes d'ami, blocage et historique d'appels. Side-effects WebSocket documentés.",                count: 12, paths: ['/api/friends/*', '/api/calls/*'],  color: 'text-orange-400' },
+            { slug: 'gateway-rest-servers',  icon: ServerIcon,       title: 'Serveurs',               desc: 'CRUD serveurs, channels, membres, rôles, invitations, fichiers et routing vers server-nodes.',      count: 26, paths: ['/api/servers/*'],                  color: 'text-teal-400'   },
+            { slug: 'gateway-rest-bots',     icon: BotIcon,          title: 'Bots',                   desc: 'Création, authentification, commandes, gestion dans les serveurs et certification.',                count: 18, paths: ['/api/bots/*'],                     color: 'text-fuchsia-400'},
+            { slug: 'gateway-rest-media',    icon: TerminalIcon,     title: 'Médias',                 desc: 'Upload multipart vers le CDN géo-distribué — avatars, banners, icons, pièces jointes.',            count: 3,  paths: ['/api/media/*', '/uploads/*'],      color: 'text-lime-400'   },
+            { slug: 'gateway-rest-admin',    icon: ShieldCheckIcon,  title: 'Admin & Monitoring',     desc: 'Stats gateway, ban IP, monitoring des services, incidents, endpoints publics et internes.',         count: 20, paths: ['/api/admin/*', '/api/status', '/api/internal/*'], color: 'text-red-400'},
+          ] as const).map((p) => (
+            <Link
+              key={p.slug}
+              href={`/developers/docs/${p.slug}`}
+              className="group flex flex-col gap-2 rounded-xl border border-border/60 bg-surface/30 p-4 no-underline transition-all hover:border-accent/30 hover:bg-surface/60"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <p.icon size={14} className={cn('shrink-0', p.color)} />
+                  <span className="text-sm font-bold text-foreground">{p.title}</span>
+                </div>
+                <span className="shrink-0 rounded-full bg-background/60 px-2 py-0.5 font-mono text-[10px] text-muted">{p.count} ep.</span>
+              </div>
+              <p className="text-xs text-muted leading-relaxed">{p.desc}</p>
+              <div className="flex flex-wrap gap-1">
+                {p.paths.map((path) => (
+                  <code key={path} className="rounded bg-background/60 px-1.5 py-0.5 font-mono text-[10px] text-accent/80">{path}</code>
+                ))}
+              </div>
+              <span className="text-[11px] text-accent/60 group-hover:text-accent transition-colors">Voir la documentation →</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── REST — Auth & RGPD ────────────────────────────────────── */
+function GatewayRestAuthSection() {
+  return (
+    <div className="space-y-8">
+      <RestBreadcrumb title="Auth & RGPD" />
+      <PageHeader icon={KeyIcon} title="Auth & RGPD" description="Inscription, connexion, refresh token, révocation de session et droits RGPD (export, suppression)." />
+
       <div>
         <h3 className="mb-3 text-sm font-bold text-blue-400">Authentification — /api/auth</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="POST"  path="/api/auth/register" desc="Créer un compte — body: { username, email, password }" />
-          <EndpointRow method="POST"  path="/api/auth/login"    desc="Connexion — body: { email, password } → { token, refreshToken, user }" />
-          <EndpointRow method="POST"  path="/api/auth/refresh"  desc="Renouveler le JWT — body: { refreshToken } → { token, refreshToken }" />
-          <EndpointRow method="POST"  path="/api/auth/logout"   desc="Révoquer la session — body: { refreshToken }" />
+          <EndpointRow method="POST" path="/api/auth/register" desc="Créer un compte — body: { username, email, password }" />
+          <EndpointRow method="POST" path="/api/auth/login"    desc="Connexion — body: { email, password } → { token, refreshToken, user }" />
+          <EndpointRow method="POST" path="/api/auth/refresh"  desc="Renouveler le JWT — body: { refreshToken } → { token, refreshToken }" />
+          <EndpointRow method="POST" path="/api/auth/logout"   desc="Révoquer la session active — body: { refreshToken }" />
         </div>
-        <div className="mt-3">
+        <div className="mt-4 space-y-3">
+          <CodeBlock lang="js" title="POST /api/auth/register" code={`const res = await fetch('https://gateway.alfychat.app/api/auth/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    username: 'alice',
+    email:    'alice@example.com',
+    password: 'My$ecureP@ssword1',
+  }),
+});
+const { token, refreshToken, user } = await res.json();`} />
           <CodeBlock lang="json" title="Réponse POST /api/auth/login" code={`{
   "token":        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "refreshToken": "a1b2c3d4e5f67890...",
   "user": {
     "id":         "u1a2b3c4-...",
-    "username":   "Alice",
+    "username":   "alice",
     "email":      "alice@example.com",
     "avatarUrl":  "https://media.alfychat.app/avatars/...",
     "isVerified": true,
     "role":       "user"
   }
 }`} />
+          <CodeBlock lang="js" title="POST /api/auth/refresh" code={`const res = await fetch('https://gateway.alfychat.app/api/auth/refresh', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ refreshToken: storedToken }),
+});
+const { token, refreshToken } = await res.json();`} />
         </div>
+        <InfoCard color="amber" title="Durée de vie des tokens">
+          Le <strong>JWT</strong> expire après <strong>15 minutes</strong>. Le <strong>refreshToken</strong> est valable <strong>30 jours</strong>.
+          Appelez <code>/api/auth/refresh</code> avant l&apos;expiration du JWT pour éviter de déconnecter l&apos;utilisateur.
+        </InfoCard>
       </div>
 
-      {/* ── Users ── */}
-      <div>
-        <h3 className="mb-3 text-sm font-bold text-violet-400">Utilisateurs — /api/users</h3>
-        <div className="space-y-1.5">
-          <EndpointRow method="GET"    path="/api/users/me"               desc="Profil de l'utilisateur connecté" />
-          <EndpointRow method="PATCH"  path="/api/users/me"               desc="Modifier le profil — body: { username?, displayName?, bio?, avatarUrl? }" />
-          <EndpointRow method="GET"    path="/api/users/:id"              desc="Profil public d'un utilisateur par ID" />
-          <EndpointRow method="GET"    path="/api/users/:id/preferences"  desc="Préférences de l'utilisateur (auth requise)" />
-          <EndpointRow method="PATCH"  path="/api/users/:id"             desc="Mettre à jour le profil d'un utilisateur" />
-          <EndpointRow method="PATCH"  path="/api/users/:id/status"      desc="Changer le statut de présence — body: { status, customStatus? }" />
-          <EndpointRow method="PATCH"  path="/api/users/:id/last-seen"   desc="Mettre à jour la dernière connexion (automatique)" />
-        </div>
-        <div className="mt-3">
-          <CodeBlock lang="json" title="Réponse GET /api/users/me" code={`{
-  "id":          "u1a2b3c4-...",
-  "username":    "Alice",
-  "displayName": "Alice 🌸",
-  "email":       "alice@example.com",
-  "avatarUrl":   "https://media.alfychat.app/avatars/...",
-  "bio":         "Développeuse passionnée",
-  "role":        "user",
-  "isVerified":  true,
-  "createdAt":   "2026-01-01T00:00:00.000Z"
-}`} />
-        </div>
-      </div>
-
-      {/* ── RGPD ── */}
       <div>
         <h3 className="mb-3 text-sm font-bold text-amber-400">RGPD — /api/rgpd</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="GET"    path="/api/rgpd/export"  desc="Exporter toutes les données personnelles (zip)" />
-          <EndpointRow method="DELETE" path="/api/rgpd/account" desc="Supprimer définitivement le compte" />
-        </div>
-      </div>
-
-      {/* ── Messages ── */}
-      <div>
-        <h3 className="mb-3 text-sm font-bold text-emerald-400">Messages & Conversations — /api/messages & /api/conversations</h3>
-        <div className="space-y-1.5">
-          <EndpointRow method="GET"    path="/api/messages"                            desc="Lister les messages (query: conversationId, limit, before)" />
-          <EndpointRow method="POST"   path="/api/messages"                            desc="Envoyer un message — body: { conversationId, content, replyToId? }" />
-          <EndpointRow method="PATCH"  path="/api/messages/:id"                        desc="Modifier un message — body: { content }" />
-          <EndpointRow method="DELETE" path="/api/messages/:id"                        desc="Supprimer un message" />
-          <EndpointRow method="POST"   path="/api/messages/:id/reactions"              desc="Ajouter une réaction — body: { emoji }" />
-          <EndpointRow method="DELETE" path="/api/messages/:id/reactions/:emoji"       desc="Retirer une réaction" />
-          <EndpointRow method="GET"    path="/api/conversations"                       desc="Lister les conversations de l'utilisateur connecté" />
-          <EndpointRow method="POST"   path="/api/conversations"                       desc="Créer une conversation — body: { type, participantIds[], name? }" />
-          <EndpointRow method="PATCH"  path="/api/conversations/:id"                   desc="Modifier une conversation — body: { name?, avatarUrl? }" />
-          <EndpointRow method="DELETE" path="/api/conversations/:id"                   desc="Supprimer une conversation" />
-          <EndpointRow method="POST"   path="/api/conversations/:id/participants"      desc="Ajouter un participant — body: { userId }" />
-          <EndpointRow method="DELETE" path="/api/conversations/:id/participants/:uid" desc="Retirer un participant" />
-          <EndpointRow method="POST"   path="/api/conversations/:id/leave"             desc="Quitter une conversation de groupe" />
+          <EndpointRow method="GET"    path="/api/rgpd/export"  desc="Exporter toutes vos données personnelles — retourne un fichier ZIP" />
+          <EndpointRow method="DELETE" path="/api/rgpd/account" desc="Supprimer définitivement votre compte et toutes vos données" />
         </div>
         <div className="mt-3">
+          <CodeBlock lang="js" title="Export de données RGPD" code={`const res = await fetch('https://gateway.alfychat.app/api/rgpd/export', {
+  headers: { 'Authorization': \`Bearer \${token}\` },
+});
+const blob = await res.blob();
+const url  = URL.createObjectURL(blob);
+// Le navigateur téléchargera le ZIP automatiquement`} />
+        </div>
+        <InfoCard color="red" title="Suppression irréversible">
+          <code>DELETE /api/rgpd/account</code> est <strong>irréversible</strong>.
+          Toutes les données sont supprimées dans les <strong>30 jours</strong> conformément au RGPD.
+        </InfoCard>
+      </div>
+    </div>
+  );
+}
+
+/* ─── REST — Utilisateurs ───────────────────────────────────── */
+function GatewayRestUsersSection() {
+  return (
+    <div className="space-y-8">
+      <RestBreadcrumb title="Utilisateurs" />
+      <PageHeader icon={BookOpenIcon} title="Utilisateurs" description="Profil, préférences, statut de présence et dernière connexion." />
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-violet-400">Profil — /api/users</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"   path="/api/users/me"              desc="Profil complet de l'utilisateur connecté (nécessite un JWT valide)" />
+          <EndpointRow method="PATCH" path="/api/users/me"              desc="Modifier le profil — body: { username?, displayName?, bio?, avatarUrl? }" />
+          <EndpointRow method="GET"   path="/api/users/:id"             desc="Profil public d'un utilisateur par son ID" />
+          <EndpointRow method="PATCH" path="/api/users/:id"             desc="Mettre à jour le profil (propre profil ou admin)" />
+          <EndpointRow method="GET"   path="/api/users/:id/preferences" desc="Préférences (thème, langue, notifications) — auth requise" />
+          <EndpointRow method="PATCH" path="/api/users/:id/status"      desc="Changer le statut — body: { status, customStatus? }" />
+          <EndpointRow method="PATCH" path="/api/users/:id/last-seen"   desc="Mettre à jour la dernière connexion (appelé automatiquement)" />
+        </div>
+        <div className="mt-4 space-y-3">
+          <CodeBlock lang="json" title="GET /api/users/me — réponse complète" code={`{
+  "id":           "u1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+  "username":     "alice",
+  "displayName":  "Alice 🌸",
+  "email":        "alice@example.com",
+  "avatarUrl":    "https://media.alfychat.app/avatars/alice-abc123.webp",
+  "bio":          "Développeuse passionnée",
+  "role":         "user",
+  "isVerified":   true,
+  "status":       "online",
+  "customStatus": "🎵 En train de coder",
+  "createdAt":    "2026-01-01T00:00:00.000Z",
+  "lastSeenAt":   "2026-04-02T10:00:00.000Z"
+}`} />
+          <CodeBlock lang="js" title="PATCH /api/users/me — modifier le profil" code={`const res = await fetch('https://gateway.alfychat.app/api/users/me', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': \`Bearer \${token}\`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ displayName: 'Alice ✨', bio: 'Nouvelle bio !' }),
+});
+const { user } = await res.json();`} />
+          <CodeBlock lang="json" title="PATCH /api/users/:id/status — valeurs possibles" code={`{ "status": "online" }    // En ligne
+{ "status": "idle" }      // Absent
+{ "status": "dnd" }       // Ne pas déranger
+{ "status": "invisible" } // Hors ligne (visible uniquement par vous)
+
+// Avec statut personnalisé
+{ "status": "dnd", "customStatus": "🎮 En jeu" }`} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── REST — Messages & Conversations ──────────────────────── */
+function GatewayRestMessagesSection() {
+  return (
+    <div className="space-y-8">
+      <RestBreadcrumb title="Messages & Conversations" />
+      <PageHeader icon={MessageCircleIcon} title="Messages & Conversations" description="Messages DM, conversations groupe, réactions, participants, notifications et archive P2P." />
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-emerald-400">Messages — /api/messages</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/messages"                      desc="Lister les messages — query: conversationId (required), limit (50 par défaut), before (curseur UUID)" />
+          <EndpointRow method="POST"   path="/api/messages"                      desc="Envoyer un message — body: { conversationId, content, replyToId? }" />
+          <EndpointRow method="PATCH"  path="/api/messages/:id"                  desc="Modifier — body: { content } (auteur uniquement)" />
+          <EndpointRow method="DELETE" path="/api/messages/:id"                  desc="Supprimer (auteur ou admin)" />
+          <EndpointRow method="POST"   path="/api/messages/:id/reactions"        desc="Ajouter une réaction — body: { emoji }" />
+          <EndpointRow method="DELETE" path="/api/messages/:id/reactions/:emoji" desc="Retirer une réaction (URL-encode l'emoji si nécessaire)" />
+        </div>
+        <div className="mt-4 space-y-3">
+          <CodeBlock lang="js" title="Charger l'historique + pagination" code={`// Page 1
+const res = await fetch(
+  'https://gateway.alfychat.app/api/messages?conversationId=dm_abc&limit=50',
+  { headers: { 'Authorization': \`Bearer \${token}\` } }
+);
+const { messages } = await res.json();
+
+// Page 2 (pagination par curseur)
+const older = await fetch(
+  \`https://gateway.alfychat.app/api/messages?conversationId=dm_abc&limit=50&before=\${messages.at(-1).id}\`,
+  { headers: { 'Authorization': \`Bearer \${token}\` } }
+);`} />
           <CodeBlock lang="json" title="Réponse POST /api/messages" code={`{
   "id":             "m1a2b3c4-...",
   "conversationId": "dm_user1_user2",
@@ -2041,177 +2171,377 @@ function GatewayRestSection() {
         </div>
       </div>
 
-      {/* ── Notifications ── */}
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-sky-400">Conversations — /api/conversations</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/conversations"                       desc="Lister toutes les conversations de l'utilisateur (DM + groupes)" />
+          <EndpointRow method="POST"   path="/api/conversations"                       desc="Créer — body: { type: 'dm'|'group', participantIds[], name? }" />
+          <EndpointRow method="PATCH"  path="/api/conversations/:id"                   desc="Modifier — body: { name?, avatarUrl? } (groupes uniquement)" />
+          <EndpointRow method="DELETE" path="/api/conversations/:id"                   desc="Supprimer (admin / propriétaire)" />
+          <EndpointRow method="POST"   path="/api/conversations/:id/participants"      desc="Ajouter un participant — body: { userId }" />
+          <EndpointRow method="DELETE" path="/api/conversations/:id/participants/:uid" desc="Retirer un participant du groupe" />
+          <EndpointRow method="POST"   path="/api/conversations/:id/leave"             desc="Quitter un groupe (désabonnement propre)" />
+        </div>
+      </div>
+
       <div>
         <h3 className="mb-3 text-sm font-bold text-pink-400">Notifications — /api/notifications</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="GET"   path="/api/notifications"         desc="Récupérer les notifications non-lues de l'utilisateur connecté" />
-          <EndpointRow method="PATCH" path="/api/notifications/read"    desc="Marquer toutes les notifications comme lues" />
+          <EndpointRow method="GET"   path="/api/notifications"      desc="Liste des notifications non-lues (DMs, demandes d'ami, mentions)" />
+          <EndpointRow method="PATCH" path="/api/notifications/read" desc="Marquer toutes les notifications comme lues" />
         </div>
       </div>
 
-      {/* ── Archive DM ── */}
       <div>
         <h3 className="mb-3 text-sm font-bold text-cyan-400">Archive DM (système hybride) — /api/archive</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="GET"  path="/api/archive/status/:convId"  desc="Statut d'archivage d'une conversation" />
-          <EndpointRow method="GET"  path="/api/archive/stats/:convId"   desc="Statistiques d'archive (messages archivés, quota)" />
-          <EndpointRow method="GET"  path="/api/archive/quota/:convId"   desc="Vérifier le quota avant archivage" />
-          <EndpointRow method="POST" path="/api/archive/confirm"         desc="Confirmer un archivage P2P — body: { conversationId, archiveLogId }" />
-          <EndpointRow method="GET"  path="/api/archive/message/:id"     desc="Récupérer un message archivé depuis le cache" />
-          <EndpointRow method="POST" path="/api/archive/cache"           desc="Mettre en cache des messages archivés — body: { messages[] }" />
+          <EndpointRow method="GET"  path="/api/archive/status/:convId" desc="Statut d'archivage d'une conversation" />
+          <EndpointRow method="GET"  path="/api/archive/stats/:convId"  desc="Messages archivés, quota utilisé" />
+          <EndpointRow method="GET"  path="/api/archive/quota/:convId"  desc="Vérifier le quota disponible avant archivage" />
+          <EndpointRow method="POST" path="/api/archive/confirm"        desc="Confirmer la réception d'une archive P2P — body: { conversationId, archiveLogId }" />
+          <EndpointRow method="GET"  path="/api/archive/message/:id"    desc="Récupérer un message archivé depuis le cache serveur" />
+          <EndpointRow method="POST" path="/api/archive/cache"          desc="Mettre en cache des messages archivés — body: { messages[] }" />
         </div>
         <InfoCard color="blue" title="Système hybride DM">
-          AlfyChat utilise un système d&apos;archivage P2P pour les anciens messages DM.
-          Les messages récents sont en base de données ; les anciens sont archivés côté client et échangeables entre pairs connectés via les events WebSocket <code>DM_ARCHIVE_REQUEST</code> / <code>DM_ARCHIVE_PEER_RESPONSE</code>.
+          Les messages récents sont en base de données. Les anciens sont archivés <strong>côté client</strong> et échangeables
+          entre pairs via les events WebSocket <code>DM_ARCHIVE_REQUEST</code> / <code>DM_ARCHIVE_PEER_RESPONSE</code>.
+          Le serveur ne stocke que les métadonnées et un cache limité.
         </InfoCard>
       </div>
+    </div>
+  );
+}
 
-      {/* ── Friends ── */}
+/* ─── REST — Amis & Appels ──────────────────────────────────── */
+function GatewayRestFriendsSection() {
+  return (
+    <div className="space-y-8">
+      <RestBreadcrumb title="Amis & Appels" />
+      <PageHeader icon={UserPlusIcon} title="Amis & Appels" description="Gestion des amis, des demandes, du blocage et de l'historique des appels." />
+
       <div>
         <h3 className="mb-3 text-sm font-bold text-orange-400">Amis — /api/friends</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="GET"    path="/api/friends"                             desc="Liste des amis de l'utilisateur connecté" />
-          <EndpointRow method="GET"    path="/api/friends/requests"                    desc="Demandes reçues et envoyées → { received[], sent[] }" />
-          <EndpointRow method="GET"    path="/api/friends/blocked"                     desc="Liste des utilisateurs bloqués" />
-          <EndpointRow method="POST"   path="/api/friends/request"                     desc="Envoyer une demande d'ami — body: { toUserId, message? }" />
-          <EndpointRow method="POST"   path="/api/friends/requests/:id/accept"         desc="Accepter une demande → notifie les deux utilisateurs via WS" />
-          <EndpointRow method="POST"   path="/api/friends/requests/:id/decline"        desc="Refuser une demande d'ami" />
-          <EndpointRow method="DELETE" path="/api/friends/:friendId"                   desc="Supprimer un ami → notifie les deux via WS" />
-          <EndpointRow method="POST"   path="/api/friends/:targetId/block"             desc="Bloquer un utilisateur — body: { userId }" />
-          <EndpointRow method="POST"   path="/api/friends/:targetId/unblock"           desc="Débloquer un utilisateur" />
+          <EndpointRow method="GET"    path="/api/friends"                      desc="Liste des amis de l'utilisateur connecté" />
+          <EndpointRow method="GET"    path="/api/friends/requests"             desc="Demandes d'ami → { received: [], sent: [] }" />
+          <EndpointRow method="GET"    path="/api/friends/blocked"              desc="Liste des utilisateurs bloqués" />
+          <EndpointRow method="POST"   path="/api/friends/request"              desc="Envoyer une demande — body: { toUserId, message? } ⚡ émet WS FRIEND_REQUEST au destinataire" />
+          <EndpointRow method="POST"   path="/api/friends/requests/:id/accept"  desc="Accepter ⚡ émet WS FRIEND_ACCEPT aux deux utilisateurs" />
+          <EndpointRow method="POST"   path="/api/friends/requests/:id/decline" desc="Refuser une demande" />
+          <EndpointRow method="DELETE" path="/api/friends/:friendId"            desc="Supprimer un ami ⚡ émet WS FRIEND_REMOVE aux deux utilisateurs" />
+          <EndpointRow method="POST"   path="/api/friends/:targetId/block"      desc="Bloquer un utilisateur" />
+          <EndpointRow method="POST"   path="/api/friends/:targetId/unblock"    desc="Débloquer un utilisateur" />
+        </div>
+        <InfoCard color="blue" title="⚡ Side-effects WebSocket">
+          Certaines routes amis déclenchent des notifications WebSocket <strong>en temps réel</strong>.
+          Si le destinataire est hors ligne, il recevra l&apos;événement via <code>PENDING_PINGS</code> à sa prochaine connexion.
+        </InfoCard>
+        <div className="mt-4">
+          <CodeBlock lang="js" title="Envoyer une demande d'ami" code={`const res = await fetch('https://gateway.alfychat.app/api/friends/request', {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${token}\`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    toUserId: 'u2b3c4d5-...',
+    message:  'Salut, je te connais du serveur AlfyChat !',
+  }),
+});
+// L'utilisateur cible reçoit l'event WS FRIEND_REQUEST en temps réel`} />
         </div>
       </div>
 
-      {/* ── Calls ── */}
       <div>
         <h3 className="mb-3 text-sm font-bold text-red-400">Appels — /api/calls</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="GET"  path="/api/calls"      desc="Historique des appels de l'utilisateur" />
-          <EndpointRow method="POST" path="/api/calls"      desc="Créer un appel (usage interne — préférer l'event WebSocket CALL_INITIATE)" />
-          <EndpointRow method="GET"  path="/api/calls/:id"  desc="Détails d'un appel" />
+          <EndpointRow method="GET"  path="/api/calls"     desc="Historique des appels (manqués, effectués, reçus)" />
+          <EndpointRow method="POST" path="/api/calls"     desc="Créer un appel (usage interne — préférer l'event WebSocket CALL_INITIATE)" />
+          <EndpointRow method="GET"  path="/api/calls/:id" desc="Détails d'un appel spécifique (durée, participants, type)" />
         </div>
-        <InfoCard color="amber" title="Appels WebRTC">
-          La création d&apos;appels se fait via l&apos;événement WebSocket <code>CALL_INITIATE</code>.
-          L&apos;API REST <code>/api/calls</code> n&apos;est utilisée qu&apos;en interne par le gateway.
-          Le signaling WebRTC (offer / answer / ICE) passe entièrement par WebSocket.
+        <InfoCard color="amber" title="Appels WebRTC — via WebSocket uniquement">
+          Pour initier un appel, utilisez l&apos;event WebSocket <code>CALL_INITIATE</code>.
+          Tout le signaling WebRTC (offer / answer / ICE) se fait via Socket.IO.
+          L&apos;API REST <code>/api/calls</code> sert uniquement à consulter l&apos;historique.
         </InfoCard>
       </div>
+    </div>
+  );
+}
 
-      {/* ── Servers ── */}
+/* ─── REST — Serveurs ───────────────────────────────────────── */
+function GatewayRestServersSection() {
+  return (
+    <div className="space-y-8">
+      <RestBreadcrumb title="Serveurs" />
+      <PageHeader icon={ServerIcon} title="Serveurs" description="CRUD serveurs, channels, membres, rôles, invitations et fichiers. Routing intelligent vers server-nodes." />
+
       <div>
         <h3 className="mb-3 text-sm font-bold text-teal-400">Serveurs — /api/servers</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="GET"    path="/api/servers"                          desc="Serveurs dont l'utilisateur est membre" />
-          <EndpointRow method="POST"   path="/api/servers"                          desc="Créer un serveur — body: { name, iconUrl?, description? }" />
-          <EndpointRow method="GET"    path="/api/servers/:id"                      desc="Détails d'un serveur (channels, membres, rôles)" />
-          <EndpointRow method="PATCH"  path="/api/servers/:id"                      desc="Modifier un serveur — body: { name?, iconUrl?, bannerUrl? }" />
-          <EndpointRow method="DELETE" path="/api/servers/:id"                      desc="Supprimer un serveur" />
-          <EndpointRow method="POST"   path="/api/servers/join"                     desc="Rejoindre via code d'invitation — body: { inviteCode }" />
-          <EndpointRow method="POST"   path="/api/servers/:id/leave"                desc="Quitter un serveur" />
-          <EndpointRow method="GET"    path="/api/servers/:id/channels"             desc="Liste des salons d'un serveur" />
-          <EndpointRow method="POST"   path="/api/servers/:id/channels"             desc="Créer un salon — body: { name, type: 'text'|'voice'|'announcement' }" />
-          <EndpointRow method="PATCH"  path="/api/servers/:id/channels/:chId"       desc="Modifier un salon" />
-          <EndpointRow method="DELETE" path="/api/servers/:id/channels/:chId"       desc="Supprimer un salon" />
-          <EndpointRow method="GET"    path="/api/servers/:id/members"              desc="Liste des membres du serveur" />
-          <EndpointRow method="DELETE" path="/api/servers/:id/members/:uid"         desc="Exclure (kick) un membre" />
-          <EndpointRow method="POST"   path="/api/servers/:id/bans/:uid"            desc="Bannir un membre — body: { reason? }" />
-          <EndpointRow method="GET"    path="/api/servers/:id/roles"                desc="Liste des rôles" />
-          <EndpointRow method="POST"   path="/api/servers/:id/roles"                desc="Créer un rôle — body: { name, color?, permissions? }" />
-          <EndpointRow method="PATCH"  path="/api/servers/:id/roles/:roleId"        desc="Modifier un rôle" />
-          <EndpointRow method="DELETE" path="/api/servers/:id/roles/:roleId"        desc="Supprimer un rôle" />
-          <EndpointRow method="GET"    path="/api/servers/invite/:code"             desc="Infos d'une invitation par code" />
-          <EndpointRow method="POST"   path="/api/servers/invites/:id"              desc="Créer un lien d'invitation" />
-          <EndpointRow method="GET"    path="/api/servers/public/*"                 desc="Serveurs publics (annuaire)" />
-          <EndpointRow method="GET"    path="/api/servers/discover/*"               desc="Découverte de serveurs" />
-          <EndpointRow method="GET"    path="/api/servers/:id/node-token"           desc="Obtenir un token pour se connecter à un server-node" />
-          <EndpointRow method="POST"   path="/api/servers/:id/files"                desc="Uploader un fichier dans un serveur (multipart/form-data)" />
-          <EndpointRow method="GET"    path="/api/servers/:id/files/:filename"      desc="Télécharger un fichier uploadé dans un serveur" />
+          <EndpointRow method="GET"    path="/api/servers"              desc="Serveurs dont l'utilisateur est membre" />
+          <EndpointRow method="POST"   path="/api/servers"              desc="Créer un serveur — body: { name, iconUrl?, description? }" />
+          <EndpointRow method="GET"    path="/api/servers/:id"          desc="Détails complets (channels, membres, rôles)" />
+          <EndpointRow method="PATCH"  path="/api/servers/:id"          desc="Modifier — body: { name?, iconUrl?, bannerUrl? }" />
+          <EndpointRow method="DELETE" path="/api/servers/:id"          desc="Supprimer le serveur (propriétaire uniquement)" />
+          <EndpointRow method="POST"   path="/api/servers/join"         desc="Rejoindre via code d'invitation — body: { inviteCode }" />
+          <EndpointRow method="POST"   path="/api/servers/:id/leave"    desc="Quitter un serveur" />
+          <EndpointRow method="GET"    path="/api/servers/public/*"     desc="Annuaire des serveurs publics" />
+          <EndpointRow method="GET"    path="/api/servers/discover/*"   desc="Découverte de serveurs recommandés" />
+          <EndpointRow method="GET"    path="/api/servers/:id/node-token" desc="Token temporaire pour connexion directe au server-node" />
         </div>
-        <InfoCard color="violet" title="Server Nodes">
-          Les requêtes sur <code>/api/servers/:id/*</code> sont automatiquement redirigées vers le
-          <strong> server-node</strong> hébergeant ce serveur si un node est connecté au gateway.
-          En l&apos;absence de node, c&apos;est le microservice central <code>servers</code> qui traite la requête.
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-teal-300">Channels — /api/servers/:id/channels</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/servers/:id/channels"           desc="Liste des channels" />
+          <EndpointRow method="POST"   path="/api/servers/:id/channels"           desc="Créer — body: { name, type: 'text'|'voice'|'announcement', position? }" />
+          <EndpointRow method="PATCH"  path="/api/servers/:id/channels/:chId"     desc="Modifier — body: { name?, position?, isPrivate? }" />
+          <EndpointRow method="DELETE" path="/api/servers/:id/channels/:chId"     desc="Supprimer le channel" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-teal-300">Membres — /api/servers/:id/members</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/servers/:id/members"            desc="Liste des membres (id, username, rôles, joinedAt)" />
+          <EndpointRow method="DELETE" path="/api/servers/:id/members/:uid"       desc="Exclure (kick) — requiert permission KICK_MEMBERS" />
+          <EndpointRow method="POST"   path="/api/servers/:id/bans/:uid"          desc="Bannir — body: { reason? } — requiert permission BAN_MEMBERS" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-teal-300">Rôles — /api/servers/:id/roles</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/servers/:id/roles"              desc="Liste des rôles" />
+          <EndpointRow method="POST"   path="/api/servers/:id/roles"              desc="Créer — body: { name, color?, permissions? }" />
+          <EndpointRow method="PATCH"  path="/api/servers/:id/roles/:roleId"      desc="Modifier — body: { name?, color?, permissions?, position? }" />
+          <EndpointRow method="DELETE" path="/api/servers/:id/roles/:roleId"      desc="Supprimer le rôle" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-teal-300">Invitations & Fichiers</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"  path="/api/servers/invite/:code"        desc="Infos d'une invitation par code (sans auth requis)" />
+          <EndpointRow method="POST" path="/api/servers/invites/:id"         desc="Créer une invitation — body: { maxUses?, expiresIn? }" />
+          <EndpointRow method="POST" path="/api/servers/:id/files"           desc="Uploader un fichier — multipart/form-data" />
+          <EndpointRow method="GET"  path="/api/servers/:id/files/:filename" desc="Télécharger un fichier du serveur" />
+        </div>
+      </div>
+
+      <InfoCard color="violet" title="Server Nodes — routing intelligent">
+        Les requêtes sur <code>/api/servers/:id/*</code> sont automatiquement redirigées vers le
+        <strong> server-node</strong> hébergeant ce serveur si un node est connecté au gateway.
+        En l&apos;absence de node actif, le microservice central <code>servers</code> traite la requête.
+      </InfoCard>
+
+      <CodeBlock lang="js" title="Créer un serveur" code={`const res = await fetch('https://gateway.alfychat.app/api/servers', {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${token}\`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    name:        'Mon Super Serveur',
+    iconUrl:     'https://media.alfychat.app/icons/srv-icon.webp',
+    description: 'Serveur de développement AlfyChat',
+  }),
+});
+const { server } = await res.json();`} />
+    </div>
+  );
+}
+
+/* ─── REST — Bots ───────────────────────────────────────────── */
+function GatewayRestBotsSection() {
+  return (
+    <div className="space-y-8">
+      <RestBreadcrumb title="Bots" />
+      <PageHeader icon={BotIcon} title="Bots" description="Création, authentification, commandes, gestion dans les serveurs et certification officielle." />
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-fuchsia-400">CRUD Bots — /api/bots</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/bots/me"     desc="Lister vos bots (JWT requis)" />
+          <EndpointRow method="POST"   path="/api/bots"        desc="Créer — body: { name, prefix, description?, isPublic? }" />
+          <EndpointRow method="GET"    path="/api/bots/:id"    desc="Détails d'un bot (public si isPublic=true)" />
+          <EndpointRow method="PATCH"  path="/api/bots/:id"    desc="Modifier — body: { name?, prefix?, description?, isPublic?, tags? }" />
+          <EndpointRow method="DELETE" path="/api/bots/:id"    desc="Supprimer le bot et révoquer son token" />
+          <EndpointRow method="GET"    path="/api/bots/public" desc="Annuaire des bots publics — query: search, tag, page" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-fuchsia-300">Auth & Token</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="POST"  path="/api/bots/authenticate"         desc="Authentifier le bot — header: Authorization: Bot &lt;token&gt; → infos bot" />
+          <EndpointRow method="POST"  path="/api/bots/:id/regenerate-token" desc="Régénérer un nouveau token (invalide l'ancien immédiatement)" />
+          <EndpointRow method="PATCH" path="/api/bots/:id/status"           desc="Changer le statut — body: { status: 'online'|'offline'|'maintenance' }" />
+        </div>
+        <div className="mt-3">
+          <CodeBlock lang="js" title="Authentifier un bot" code={`const res = await fetch('https://gateway.alfychat.app/api/bots/authenticate', {
+  method: 'POST',
+  headers: { 'Authorization': \`Bot \${process.env.BOT_TOKEN}\` },
+});
+const { bot } = await res.json();
+console.log('Bot:', bot.name, '| prefix:', bot.prefix);`} />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-fuchsia-300">Commandes — /api/bots/:id/commands</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/bots/:id/commands"        desc="Lister les commandes enregistrées" />
+          <EndpointRow method="POST"   path="/api/bots/:id/commands"        desc="Créer — body: { name, description, cooldown?, options? }" />
+          <EndpointRow method="PATCH"  path="/api/bots/:id/commands/:cmdId" desc="Modifier une commande" />
+          <EndpointRow method="DELETE" path="/api/bots/:id/commands/:cmdId" desc="Supprimer une commande" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-fuchsia-300">Bots dans les serveurs</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/bots/servers/:serverId"     desc="Bots installés dans un serveur" />
+          <EndpointRow method="POST"   path="/api/bots/:id/servers"           desc="Ajouter le bot dans un serveur — body: { serverId }" />
+          <EndpointRow method="DELETE" path="/api/bots/:id/servers/:serverId" desc="Retirer le bot d'un serveur" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-amber-400">Certification</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="POST"  path="/api/bots/:id/certification"           desc="Soumettre une demande de certification" />
+          <EndpointRow method="GET"   path="/api/bots/certification/pending"       desc="Demandes en attente (admin uniquement)" />
+          <EndpointRow method="POST"  path="/api/bots/certification/:reqId/review" desc="Approuver/refuser — body: { approved: boolean, reason? } (admin)" />
+        </div>
+        <InfoCard color="violet" title="Badge de certification">
+          Un bot certifié reçoit un badge ✅ visible dans l&apos;annuaire public.
+          La certification est manuelle et validée par l&apos;équipe AlfyChat.
         </InfoCard>
       </div>
+    </div>
+  );
+}
 
-      {/* ── Bots ── */}
-      <div>
-        <h3 className="mb-3 text-sm font-bold text-fuchsia-400">Bots — /api/bots</h3>
-        <div className="space-y-1.5">
-          <EndpointRow method="GET"    path="/api/bots/me"                              desc="Lister vos bots (JWT requis)" />
-          <EndpointRow method="POST"   path="/api/bots"                                 desc="Créer un bot — body: { name, prefix, description?, isPublic? }" />
-          <EndpointRow method="GET"    path="/api/bots/:id"                             desc="Détails d'un bot" />
-          <EndpointRow method="PATCH"  path="/api/bots/:id"                             desc="Modifier un bot — body: { name?, prefix?, description?, isPublic?, tags? }" />
-          <EndpointRow method="DELETE" path="/api/bots/:id"                             desc="Supprimer un bot" />
-          <EndpointRow method="POST"   path="/api/bots/authenticate"                    desc="Authentifier un bot — header: Bot &lt;token&gt;" />
-          <EndpointRow method="POST"   path="/api/bots/:id/regenerate-token"            desc="Régénérer le token du bot" />
-          <EndpointRow method="PATCH"  path="/api/bots/:id/status"                      desc="Changer le statut — body: { status: 'online'|'offline'|'maintenance' }" />
-          <EndpointRow method="GET"    path="/api/bots/:id/commands"                    desc="Lister les commandes du bot" />
-          <EndpointRow method="POST"   path="/api/bots/:id/commands"                    desc="Créer une commande — body: { name, description, cooldown? }" />
-          <EndpointRow method="PATCH"  path="/api/bots/:id/commands/:cmdId"             desc="Modifier une commande" />
-          <EndpointRow method="DELETE" path="/api/bots/:id/commands/:cmdId"             desc="Supprimer une commande" />
-          <EndpointRow method="GET"    path="/api/bots/public"                          desc="Bots publics (query: search, tag)" />
-          <EndpointRow method="GET"    path="/api/bots/servers/:serverId"               desc="Bots installés dans un serveur" />
-          <EndpointRow method="POST"   path="/api/bots/:id/servers"                     desc="Ajouter un bot dans un serveur — body: { serverId }" />
-          <EndpointRow method="DELETE" path="/api/bots/:id/servers/:serverId"           desc="Retirer un bot d'un serveur" />
-          <EndpointRow method="POST"   path="/api/bots/:id/certification"               desc="Soumettre une demande de certification" />
-          <EndpointRow method="GET"    path="/api/bots/certification/pending"           desc="Demandes en attente (admin uniquement)" />
-          <EndpointRow method="POST"   path="/api/bots/certification/:reqId/review"     desc="Approuver/refuser une certification (admin)" />
-        </div>
-      </div>
+/* ─── REST — Médias ─────────────────────────────────────────── */
+function GatewayRestMediaSection() {
+  return (
+    <div className="space-y-8">
+      <RestBreadcrumb title="Médias" />
+      <PageHeader icon={TerminalIcon} title="Médias" description="Upload multipart vers le CDN géo-distribué et téléchargement via les URLs de distribution." />
 
-      {/* ── Media ── */}
       <div>
-        <h3 className="mb-3 text-sm font-bold text-lime-400">Médias — /api/media</h3>
+        <h3 className="mb-3 text-sm font-bold text-lime-400">Upload — /api/media/upload</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="POST" path="/api/media/upload/:type"                      desc="Uploader un fichier — :type = avatars | banners | icons | attachments — query ?location=EU|US" />
-          <EndpointRow method="GET"  path="/api/media/:location/:serviceId/:folder/:filename" desc="Télécharger un média via le CDN géo-distribué" />
-          <EndpointRow method="GET"  path="/uploads/:folder/:filename"                   desc="Télécharger un fichier (URL legacy, redirigé vers le service média)" />
+          <EndpointRow method="POST" path="/api/media/upload/:type" desc="Uploader — :type = avatars | banners | icons | attachments — query: ?location=EU|US" />
         </div>
-        <div className="mt-3 space-y-2">
-          <CodeBlock lang="bash" title="Exemple upload — curl" code={`# Uploader un avatar
-curl -X POST https://gateway.alfychat.app/api/media/upload/avatars \\
+        <div className="mt-4 space-y-3">
+          <CodeBlock lang="bash" title="Upload via curl" code={`# Avatar (EU)
+curl -X POST "https://gateway.alfychat.app/api/media/upload/avatars?location=EU" \\
   -H "Authorization: Bearer $TOKEN" \\
   -F "file=@mon-avatar.png"
 
-# Réponse
-{
-  "url": "https://gateway.alfychat.app/api/media/EU/media-eu-1/avatars/user123-abc.webp",
-  "path": "avatars/user123-abc.webp"
+# Pièce jointe
+curl -X POST "https://gateway.alfychat.app/api/media/upload/attachments" \\
+  -H "Authorization: Bearer $TOKEN" \\
+  -F "file=@document.pdf"`} />
+          <CodeBlock lang="js" title="Upload avec JavaScript (FormData)" code={`const formData = new FormData();
+formData.append('file', fileInput.files[0]);
+
+const res = await fetch(
+  'https://gateway.alfychat.app/api/media/upload/avatars?location=EU',
+  {
+    method:  'POST',
+    headers: { 'Authorization': \`Bearer \${token}\` },
+    body:    formData,
+    // Ne PAS définir Content-Type manuellement (boundary auto)
+  }
+);
+const { url, path } = await res.json();`} />
+          <CodeBlock lang="json" title="Réponse upload" code={`{
+  "url":  "https://gateway.alfychat.app/api/media/EU/media-eu-1/avatars/user123-abc123.webp",
+  "path": "avatars/user123-abc123.webp"
 }`} />
         </div>
+        <InfoCard color="blue" title="Types et limites">
+          <strong>avatars / banners / icons</strong> : PNG, JPG, WEBP, GIF — max 10 MB — converti en WEBP automatiquement. <br />
+          <strong>attachments</strong> : tous types — max 25 MB (utilisateurs) / 100 MB (bots certifiés).
+        </InfoCard>
       </div>
 
-      {/* ── Admin ── */}
       <div>
-        <h3 className="mb-3 text-sm font-bold text-red-400">Admin & Monitoring — /api/admin (admin uniquement)</h3>
+        <h3 className="mb-3 text-sm font-bold text-lime-400">Téléchargement — CDN géo-distribué</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="GET"    path="/api/admin/gateway/stats"             desc="Stats de rate limiting et IPs bannies" />
-          <EndpointRow method="POST"   path="/api/admin/gateway/ban-ip"            desc="Bannir une IP — body: { ip, reason? }" />
-          <EndpointRow method="DELETE" path="/api/admin/gateway/ban-ip/:ip"        desc="Débannir une IP" />
-          <EndpointRow method="GET"    path="/api/admin/monitoring"                desc="Statut actuel de tous les services + historique 24h" />
-          <EndpointRow method="GET"    path="/api/admin/monitoring/service/:name"  desc="Historique d'un service spécifique (query: hours=24)" />
-          <EndpointRow method="GET"    path="/api/admin/monitoring/users/chart"    desc="Graphique connexions (query: period=30min|10min|hour|day|month)" />
-          <EndpointRow method="GET"    path="/api/admin/services"                  desc="Liste toutes les instances de microservices enregistrées" />
-          <EndpointRow method="GET"    path="/api/admin/services/:type"            desc="Instances d'un type de service donné" />
-          <EndpointRow method="POST"   path="/api/admin/services"                  desc="Ajouter manuellement une instance" />
-          <EndpointRow method="PATCH"  path="/api/admin/services/:id"              desc="Activer/désactiver une instance — body: { enabled: boolean }" />
-          <EndpointRow method="DELETE" path="/api/admin/services/:id"              desc="Supprimer et bannir une instance définitivement" />
-          <EndpointRow method="GET"    path="/api/admin/status/incidents"          desc="Incidents (query: includeResolved=true)" />
-          <EndpointRow method="POST"   path="/api/admin/status/incidents"          desc="Créer un incident — body: { title, severity, message?, services?, status? }" />
-          <EndpointRow method="PATCH"  path="/api/admin/status/incidents/:id"      desc="Modifier un incident" />
-          <EndpointRow method="DELETE" path="/api/admin/status/incidents/:id"      desc="Supprimer un incident" />
+          <EndpointRow method="GET" path="/api/media/:location/:serviceId/:folder/:filename" desc="Télécharger — :location = EU | US · :serviceId = id instance media" />
+          <EndpointRow method="GET" path="/uploads/:folder/:filename"                        desc="URL legacy — redirigée automatiquement vers le service media" />
+        </div>
+        <InfoCard color="violet" title="CDN géographique">
+          Les médias sont stockés sur l&apos;instance la plus proche de l&apos;utilisateur (EU ou US).
+          Les URLs contiennent le location et l&apos;ID du service pour un routing direct sans lookup Redis.
+        </InfoCard>
+      </div>
+    </div>
+  );
+}
+
+/* ─── REST — Admin & Monitoring ─────────────────────────────── */
+function GatewayRestAdminSection() {
+  return (
+    <div className="space-y-8">
+      <RestBreadcrumb title="Admin & Monitoring" />
+      <PageHeader icon={ShieldCheckIcon} title="Admin & Monitoring" description="Routes réservées aux administrateurs — stats, ban IP, monitoring des microservices et gestion des incidents." />
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-red-400">Gateway — /api/admin/gateway</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/admin/gateway/stats"      desc="Stats rate-limiting : requêtes/min, IPs bannies, hit rate" />
+          <EndpointRow method="POST"   path="/api/admin/gateway/ban-ip"     desc="Bannir une IP — body: { ip, reason? }" />
+          <EndpointRow method="DELETE" path="/api/admin/gateway/ban-ip/:ip" desc="Débannir une IP" />
         </div>
       </div>
 
-      {/* ── Public ── */}
       <div>
-        <h3 className="mb-3 text-sm font-bold text-gray-400">Public (sans auth)</h3>
+        <h3 className="mb-3 text-sm font-bold text-red-400">Monitoring — /api/admin/monitoring</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="GET" path="/api/status"  desc="Statut public des services, incidents actifs et uptime 90 jours" />
-          <EndpointRow method="GET" path="/health"      desc="Health check du gateway — { status: 'ok', uptime, connections }" />
-          <EndpointRow method="GET" path="/stats"       desc="Statistiques temps réel — { connections, rooms }" />
+          <EndpointRow method="GET" path="/api/admin/monitoring"                desc="Statut de tous les services + latence + historique 24h" />
+          <EndpointRow method="GET" path="/api/admin/monitoring/service/:name"  desc="Historique d'un service — query: hours=24" />
+          <EndpointRow method="GET" path="/api/admin/monitoring/users/chart"    desc="Graphique connexions — query: period=30min|10min|hour|day|month" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-red-400">Services — /api/admin/services</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/admin/services"       desc="Liste toutes les instances de microservices enregistrées" />
+          <EndpointRow method="GET"    path="/api/admin/services/:type" desc="Instances filtrées par type (users, messages, media…)" />
+          <EndpointRow method="POST"   path="/api/admin/services"       desc="Enregistrer manuellement une instance" />
+          <EndpointRow method="PATCH"  path="/api/admin/services/:id"   desc="Activer / désactiver — body: { enabled: boolean }" />
+          <EndpointRow method="DELETE" path="/api/admin/services/:id"   desc="Supprimer et bannir définitivement une instance" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-red-400">Incidents — /api/admin/status/incidents</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET"    path="/api/admin/status/incidents"      desc="Liste des incidents — query: includeResolved=true" />
+          <EndpointRow method="POST"   path="/api/admin/status/incidents"      desc="Créer — body: { title, severity, message?, services?, status? }" />
+          <EndpointRow method="PATCH"  path="/api/admin/status/incidents/:id"  desc="Mettre à jour (résolution, update…)" />
+          <EndpointRow method="DELETE" path="/api/admin/status/incidents/:id"  desc="Supprimer un incident" />
+        </div>
+        <InfoCard color="amber" title="Accès admin requis">
+          Toutes les routes <code>/api/admin/*</code> nécessitent un JWT avec <code>role: &quot;admin&quot;</code>.
+          Tout appel sans ce rôle retourne <code>403 Forbidden</code>.
+        </InfoCard>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold text-gray-400">Public (sans authentification)</h3>
+        <div className="space-y-1.5">
+          <EndpointRow method="GET" path="/api/status" desc="Statut public des services, incidents actifs et uptime 90 jours" />
+          <EndpointRow method="GET" path="/health"     desc="Health check du gateway — { status: 'ok', uptime, connections }" />
+          <EndpointRow method="GET" path="/stats"      desc="Statistiques temps réel — { connections, rooms }" />
         </div>
         <div className="mt-3">
           <CodeBlock lang="json" title="GET /api/status" code={`{
@@ -2228,23 +2558,24 @@ curl -X POST https://gateway.alfychat.app/api/media/upload/avatars \\
         </div>
       </div>
 
-      {/* ── Internal ── */}
       <div>
         <h3 className="mb-3 text-sm font-bold text-slate-500">Interne — /api/internal (microservices uniquement)</h3>
         <div className="space-y-1.5">
-          <EndpointRow method="POST" path="/api/internal/service/register"    desc="Enregistrer une instance — header: INTERNAL_SECRET — body: { id, serviceType, endpoint, domain, location, metrics }" />
-          <EndpointRow method="POST" path="/api/internal/service/heartbeat"   desc="Heartbeat d'une instance — body: { id, secret, metrics }" />
-          <EndpointRow method="POST" path="/api/internal/service/deregister"  desc="Désenregistrer une instance (arrêt gracieux) — body: { id, secret }" />
-          <EndpointRow method="GET"  path="/api/internal/service/list"        desc="Lister toutes les instances (header X-Internal-Secret)" />
+          <EndpointRow method="POST" path="/api/internal/service/register"   desc="Enregistrer une instance — header: INTERNAL_SECRET — body: { id, serviceType, endpoint, domain, location, metrics }" />
+          <EndpointRow method="POST" path="/api/internal/service/heartbeat"  desc="Heartbeat — body: { id, secret, metrics }" />
+          <EndpointRow method="POST" path="/api/internal/service/deregister" desc="Arrêt gracieux — body: { id, secret }" />
+          <EndpointRow method="GET"  path="/api/internal/service/list"       desc="Lister toutes les instances — header: X-Internal-Secret" />
         </div>
         <InfoCard color="red" title="Endpoints internes">
-          Ces routes sont réservées aux microservices AlfyChat via le secret partagé
-          <code> INTERNAL_SECRET</code>. Tout appel non autorisé retourne <code>401</code>.
+          Réservés aux microservices via <code>INTERNAL_SECRET</code>. Tout appel non autorisé retourne <code>401</code>.
+          Ne jamais exposer ce secret côté client.
         </InfoCard>
       </div>
     </div>
   );
 }
+
+
 
 /* ─── Gateway WebSocket ─────────────────────────────────────── */
 function GatewayWebSocketSection() {
@@ -2952,8 +3283,16 @@ const SECTIONS = {
   /* ── Gateway API ───────────────────────────────────────── */
   'gateway-overview':   { title: "Vue d'ensemble",       icon: GlobeIcon,        Component: GatewayOverviewSection},
   'gateway-auth':       { title: 'Authentification',     icon: LockIcon,         Component: GatewayAuthSection    },
-  'gateway-rest':       { title: 'Référence REST',        icon: CodeIcon,         Component: GatewayRestSection       },
-  'gateway-websocket':  { title: 'WebSocket',            icon: WifiIcon,         Component: GatewayWebSocketSection },
+  'gateway-rest':          { title: 'Référence REST',            icon: CodeIcon,          Component: GatewayRestSection         },
+  'gateway-rest-auth':     { title: 'Auth & RGPD',              icon: KeyIcon,           Component: GatewayRestAuthSection     },
+  'gateway-rest-users':    { title: 'Utilisateurs',             icon: BookOpenIcon,      Component: GatewayRestUsersSection    },
+  'gateway-rest-messages': { title: 'Messages & Conversations', icon: MessageCircleIcon, Component: GatewayRestMessagesSection },
+  'gateway-rest-friends':  { title: 'Amis & Appels',            icon: UserPlusIcon,      Component: GatewayRestFriendsSection  },
+  'gateway-rest-servers':  { title: 'Serveurs',                 icon: ServerIcon,        Component: GatewayRestServersSection  },
+  'gateway-rest-bots':     { title: 'Bots',                     icon: BotIcon,           Component: GatewayRestBotsSection     },
+  'gateway-rest-media':    { title: 'Médias',                   icon: TerminalIcon,      Component: GatewayRestMediaSection    },
+  'gateway-rest-admin':    { title: 'Admin & Monitoring',       icon: ShieldCheckIcon,   Component: GatewayRestAdminSection    },
+  'gateway-websocket':     { title: 'WebSocket',                icon: WifiIcon,          Component: GatewayWebSocketSection   },
   'gateway-events':     { title: 'Événements',           icon: ZapIcon,          Component: GatewayEventsSection  },
   'gateway-limits':     { title: 'Limites & Erreurs',    icon: AlertTriangleIcon,Component: ErrorsSection         },
 } as const;
