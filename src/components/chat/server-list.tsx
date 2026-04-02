@@ -245,7 +245,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       >
         {/* ── DMs ── */}
         <Tooltip delay={0}>
-          <div className="group relative mx-auto flex shrink-0 items-center justify-center">
+          <div className={cn('group relative mx-auto flex shrink-0 items-center justify-center', btnSize)}>
             <Indicator active={selectedServer === null} />
             <Button
               isIconOnly
