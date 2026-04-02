@@ -42,7 +42,7 @@ import {
 } from '@heroui/react';
 import { ServerSettingsDialog } from '@/components/chat/server-settings-dialog';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Server {
   id: string;
@@ -56,23 +56,7 @@ interface ServerListProps {
   horizontal?: boolean;
 }
 
-// ─── ActivePill ──────────────────────────────────────────────────────────────
-
-function ActivePill({ visible }: { visible: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'pointer-events-none absolute -left-0.5 top-1/2 w-[3px] -translate-y-1/2 rounded-r-full bg-white transition-all duration-200',
-        visible
-          ? 'h-9 opacity-100 shadow-[0_0_6px_1px_rgba(255,255,255,0.35)]'
-          : 'h-2 opacity-0 group-hover:opacity-40',
-      )}
-    />
-  );
-}
-
-// ─── ServerList ──────────────────────────────────────────────────────────────
+// ─── ServerList ───────────────────────────────────────────────────────────────
 
 export function ServerList({ selectedServer, onSelectServer, horizontal = false }: ServerListProps) {
   const router = useRouter();
@@ -80,34 +64,29 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const { prefs } = useLayoutPrefs();
   const compact = prefs.compactServerList;
 
-  // Layout helpers
   const btnSize  = compact ? 'size-9' : horizontal ? 'size-10' : 'size-12';
   const iconSize = compact ? 16 : horizontal ? 18 : 22;
-  const tooltipSide = horizontal ? 'bottom' : 'right';
+  const side     = horizontal ? 'bottom' : 'right';
 
-  // ── Core state ──────────────────────────────────────────────────────────────
+  // ── State ─────────────────────────────────────────────────────────────────
   const [servers,    setServers   ] = useState<Server[]>([]);
   const [loading,    setLoading   ] = useState(true);
   const [onlineIds,  setOnlineIds ] = useState<Set<string>>(new Set());
   const [contextId,  setContextId ] = useState<string | null>(null);
-
-  // ── Modals ──────────────────────────────────────────────────────────────────
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [leaveId,    setLeaveId   ] = useState<string | null>(null);
   const [joinOpen,   setJoinOpen  ] = useState(false);
-
-  // ── Join form ────────────────────────────────────────────────────────────────
   const [invite,     setInvite    ] = useState('');
   const [joining,    setJoining   ] = useState(false);
   const [joinErr,    setJoinErr   ] = useState('');
   const [joinOk,     setJoinOk    ] = useState('');
 
-  // ── Drag & drop ──────────────────────────────────────────────────────────────
-  const dragId = useRef<string | null>(null);
+  // ── Drag & drop refs ──────────────────────────────────────────────────────
+  const dragId  = useRef<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
-  // ── Load servers ─────────────────────────────────────────────────────────────
+  // ── Load servers ──────────────────────────────────────────────────────────
   const loadServers = useCallback(async () => {
     setLoading(true);
     const res = await api.getServers();
@@ -115,7 +94,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       let list: Server[] = (res.data as any[]).map((s: any) => ({
         id: s.id,
         name: s.name,
-        iconUrl: s.iconUrl || s.icon_url || undefined,
+        iconUrl: s.iconUrl ?? s.icon_url ?? undefined,
       }));
       try {
         const order = JSON.parse(localStorage.getItem('alfychat_server_order') ?? '[]') as string[];
@@ -131,7 +110,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
   useEffect(() => { loadServers(); }, [loadServers]);
 
-  // ── Socket events ────────────────────────────────────────────────────────────
+  // ── Socket events ─────────────────────────────────────────────────────────
   useEffect(() => {
     const getId = (d: any): string | null => d?.payload?.serverId ?? d?.serverId ?? null;
 
@@ -139,12 +118,12 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     const onOffline = (d: any) => { const id = getId(d); if (id) setOnlineIds(p => { const s = new Set(p); s.delete(id); return s; }); };
 
     const onUpdate = (d: any) => {
-      const payload = d?.payload ?? d?.updates ?? d;
-      const id = payload?.id ?? payload?.serverId;
+      const p = d?.payload ?? d?.updates ?? d;
+      const id = p?.id ?? p?.serverId;
       if (!id) return;
       setServers(prev => prev.map(sv =>
         sv.id === id
-          ? { ...sv, ...(payload.name != null ? { name: payload.name } : {}), ...(payload.iconUrl !== undefined ? { iconUrl: payload.iconUrl || undefined } : {}) }
+          ? { ...sv, ...(p.name != null ? { name: p.name } : {}), ...(p.iconUrl !== undefined ? { iconUrl: p.iconUrl || undefined } : {}) }
           : sv,
       ));
     };
@@ -174,7 +153,9 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     };
   }, [selectedServer, onSelectServer]);
 
-  // ── Join ─────────────────────────────────────────────────────────────────────
+  // ── Join ──────────────────────────────────────────────────────────────────
+  const resetJoin = () => { setInvite(''); setJoinErr(''); setJoinOk(''); };
+
   const handleJoin = async () => {
     if (!invite.trim() || joining) return;
     setJoining(true);
@@ -193,9 +174,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     }
   };
 
-  const resetJoin = () => { setInvite(''); setJoinErr(''); setJoinOk(''); };
-
-  // ── Leave ────────────────────────────────────────────────────────────────────
+  // ── Leave ─────────────────────────────────────────────────────────────────
   const handleLeave = async (id: string) => {
     const res = await api.leaveServer(id);
     if (res.success) {
@@ -208,7 +187,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     setLeaveId(null);
   };
 
-  // ── Drag & drop ──────────────────────────────────────────────────────────────
+  // ── Drag & drop ───────────────────────────────────────────────────────────
   const handleDragStart = (id: string) => (e: React.DragEvent) => {
     dragId.current = id;
     setDragging(id);
@@ -242,11 +221,10 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
   const handleDragEnd = () => { dragId.current = null; setDragging(null); setDragOver(null); };
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* ── Sidebar / Top bar ── */}
       <nav
         aria-label="Serveurs"
         className={cn(
@@ -256,27 +234,24 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
             : cn('h-full flex-col border-r border-white/5 py-3', compact ? 'w-[56px]' : 'w-[72px]'),
         )}
       >
-        {/* DMs */}
+        {/* ── DMs ── */}
         <Tooltip delay={0}>
-          <div className={cn('group relative mx-auto flex shrink-0 items-center justify-center', btnSize)}>
-            <ActivePill visible={selectedServer === null} />
-            <Button
-              isIconOnly
-              variant="ghost"
-              aria-label={t.serverList?.dms ?? 'Messages directs'}
-              className={cn(
-                'shrink-0 transition-all duration-200',
-                btnSize,
-                selectedServer === null
-                  ? '!rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
-                  : '!rounded-full bg-white/5 text-white/50 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
-              )}
-              onPress={() => onSelectServer(null)}
-            >
-              <MessageCircleIcon size={iconSize} />
-            </Button>
-          </div>
-          <Tooltip.Content showArrow placement={tooltipSide}>
+          <Button
+            isIconOnly
+            variant="ghost"
+            aria-label={t.serverList?.dms ?? 'Messages directs'}
+            className={cn(
+              'mx-auto shrink-0 transition-all duration-200',
+              btnSize,
+              selectedServer === null
+                ? '!rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
+                : '!rounded-full bg-white/5 text-white/50 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
+            )}
+            onPress={() => onSelectServer(null)}
+          >
+            <MessageCircleIcon size={iconSize} />
+          </Button>
+          <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.dms ?? 'Messages directs'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> D</Kbd>
@@ -285,7 +260,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
         <div className={cn('shrink-0 rounded-full bg-white/10', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
-        {/* Server list */}
+        {/* ── Server list ── */}
         <ScrollShadow
           orientation={horizontal ? 'horizontal' : 'vertical'}
           hideScrollBar
@@ -302,7 +277,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               ))
             : servers.map((server) => {
                 const active    = selectedServer === server.id;
-                const isDragged = dragging  === server.id;
+                const isDragged = dragging === server.id;
                 const isOver    = dragOver  === server.id;
 
                 return (
@@ -315,7 +290,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                     onDrop={handleDrop(server.id)}
                     onDragEnd={handleDragEnd}
                     className={cn(
-                      'flex items-center justify-center transition-all duration-150',
+                      'transition-all duration-150',
                       isDragged && 'scale-90 opacity-40',
                       isOver && !isDragged && 'scale-105 opacity-80',
                     )}
@@ -340,17 +315,21 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                             active ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]',
                           )}
                         >
-                          <ActivePill visible={active} />
                           <Badge.Anchor>
                             <Avatar
                               className={cn(
                                 'transition-all duration-200',
                                 btnSize,
-                                active ? 'rounded-[14px] shadow-lg shadow-black/40' : 'rounded-full group-hover:rounded-[14px]',
+                                active
+                                  ? 'rounded-[14px] shadow-lg shadow-black/40 ring-2 ring-white/20 ring-offset-1 ring-offset-[var(--background)]'
+                                  : 'rounded-full group-hover:rounded-[14px]',
                                 isOver && 'ring-2 ring-accent ring-offset-1 ring-offset-[var(--background)]',
                               )}
                             >
-                              <Avatar.Image src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined} alt={server.name} />
+                              <Avatar.Image
+                                src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
+                                alt={server.name}
+                              />
                               <Avatar.Fallback
                                 className={cn(
                                   'bg-[var(--surface-secondary)] text-sm font-bold transition-all duration-200',
@@ -364,13 +343,9 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                               <Badge color="success" size="sm" placement="bottom-right" />
                             )}
                           </Badge.Anchor>
-                          {/* Glow ring on active */}
-                          {active && (
-                            <span className="pointer-events-none absolute inset-0 rounded-[14px] ring-2 ring-white/20 ring-offset-1 ring-offset-[var(--background)]" />
-                          )}
                         </div>
 
-                        <Tooltip.Content showArrow placement={tooltipSide}>
+                        <Tooltip.Content showArrow placement={side}>
                           <Tooltip.Arrow />
                           <p className="text-[11px] font-semibold">{server.name}</p>
                           {onlineIds.has(server.id) && (
@@ -387,8 +362,11 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                           onAction={(key) => {
                             setContextId(null);
                             if (key === 'settings') setSettingsId(server.id);
-                            if (key === 'invite') { navigator.clipboard.writeText(`${window.location.origin}/invite/${server.id}`); toast.success("Lien d'invitation copié !"); }
-                            if (key === 'leave')    setLeaveId(server.id);
+                            if (key === 'invite') {
+                              navigator.clipboard.writeText(`${window.location.origin}/invite/${server.id}`);
+                              toast.success("Lien d'invitation copié !");
+                            }
+                            if (key === 'leave') setLeaveId(server.id);
                           }}
                         >
                           <Dropdown.Item id="settings" textValue="Paramètres">
@@ -413,7 +391,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
         <div className={cn('shrink-0 rounded-full bg-white/10', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
-        {/* Join */}
+        {/* ── Join ── */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
@@ -427,14 +405,14 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           >
             <PlusIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={tooltipSide}>
+          <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> N</Kbd>
           </Tooltip.Content>
         </Tooltip>
 
-        {/* Discover */}
+        {/* ── Discover ── */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
@@ -448,13 +426,13 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           >
             <CompassIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={tooltipSide}>
+          <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.discoverServers ?? 'Découvrir'}</p>
           </Tooltip.Content>
         </Tooltip>
 
-        {/* Home */}
+        {/* ── Home ── */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
@@ -468,24 +446,24 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           >
             <HomeIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={tooltipSide}>
+          <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">Bienvenue</p>
           </Tooltip.Content>
         </Tooltip>
       </nav>
 
-      {/* Server settings */}
+      {/* ── Server settings ── */}
       {settingsId && (
         <ServerSettingsDialog
-          serverId={settingsId!}
+          serverId={settingsId}
           open={!!settingsId}
           onOpenChange={(open) => { if (!open) setSettingsId(null); }}
           onServerUpdated={loadServers}
         />
       )}
 
-      {/* Leave confirmation */}
+      {/* ── Leave confirmation ── */}
       <Modal.Backdrop
         isOpen={!!leaveId}
         onOpenChange={(open) => { if (!open) setLeaveId(null); }}
@@ -515,7 +493,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         </Modal.Container>
       </Modal.Backdrop>
 
-      {/* Join server */}
+      {/* ── Join server ── */}
       <Modal.Backdrop
         isOpen={joinOpen}
         onOpenChange={(open) => { setJoinOpen(open); if (!open) resetJoin(); }}
@@ -524,7 +502,6 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         <Modal.Container size="md">
           <Modal.Dialog className="max-w-105 overflow-hidden rounded-2xl border border-[var(--border)]/30 p-0 shadow-2xl">
 
-            {/* Header */}
             <div className="flex items-start justify-between border-b border-[var(--border)]/20 px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
@@ -538,7 +515,6 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               <CloseButton onPress={() => setJoinOpen(false)} className="shrink-0" />
             </div>
 
-            {/* Body */}
             <div className="space-y-4 px-6 py-5">
               {joinErr && (
                 <Alert status="danger">
@@ -612,7 +588,6 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               </Form>
             </div>
 
-            {/* Footer */}
             <div className="flex items-center justify-between border-t border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-3">
               <p className="text-[11px] text-[var(--muted)]/50">Explorer les serveurs publics</p>
               <Button
