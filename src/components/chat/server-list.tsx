@@ -1,22 +1,24 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
-import {
-  MessageCircleIcon,
-  Link2Icon,
-  ArrowRightIcon,
-  CompassIcon,
-  HelpCircleIcon,
-  HomeIcon,
-  SettingsIcon,
-  LogOutIcon,
-  CopyIcon,
-  PlusIcon,
-} from '@/components/icons';
+import { useTranslation } from '@/components/locale-provider';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
-import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import {
+  ArrowRightIcon,
+  CompassIcon,
+  CopyIcon,
+  HelpCircleIcon,
+  HomeIcon,
+  Link2Icon,
+  LogOutIcon,
+  MessageCircleIcon,
+  PlusIcon,
+  SettingsIcon,
+} from '@/components/icons';
 import {
   Alert,
   Avatar,
@@ -33,17 +35,14 @@ import {
   Modal,
   Popover,
   ScrollShadow,
-  Separator,
   Skeleton,
   Spinner,
   toast,
   Tooltip,
 } from '@heroui/react';
-import { cn } from '@/lib/utils';
 import { ServerSettingsDialog } from '@/components/chat/server-settings-dialog';
-import { useTranslation } from '@/components/locale-provider';
 
-//  Types 
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Server {
   id: string;
@@ -53,134 +52,154 @@ interface Server {
 
 interface ServerListProps {
   selectedServer: string | null;
-  onSelectServer: (serverId: string | null) => void;
+  onSelectServer: (id: string | null) => void;
   horizontal?: boolean;
 }
 
-//  Pill indicator (left edge, visible when active) 
+// ─── ActivePill ──────────────────────────────────────────────────────────────
 
-function Indicator({ active }: { active: boolean }) {
+function ActivePill({ visible }: { visible: boolean }) {
   return (
     <span
       aria-hidden
       className={cn(
         'pointer-events-none absolute -left-0.5 top-1/2 w-[3px] -translate-y-1/2 rounded-r-full bg-white transition-all duration-200',
-        active ? 'h-9 opacity-100 shadow-[0_0_6px_1px_rgba(255,255,255,0.4)]' : 'h-2 opacity-0 group-hover:opacity-50',
+        visible
+          ? 'h-9 opacity-100 shadow-[0_0_6px_1px_rgba(255,255,255,0.35)]'
+          : 'h-2 opacity-0 group-hover:opacity-40',
       )}
     />
   );
 }
 
-//  ServerList 
+// ─── ServerList ──────────────────────────────────────────────────────────────
 
 export function ServerList({ selectedServer, onSelectServer, horizontal = false }: ServerListProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { prefs: layoutPrefs } = useLayoutPrefs();
-  const compact = layoutPrefs.compactServerList;
+  const { prefs } = useLayoutPrefs();
+  const compact = prefs.compactServerList;
 
+  // Layout helpers
   const btnSize  = compact ? 'size-9' : horizontal ? 'size-10' : 'size-12';
   const iconSize = compact ? 16 : horizontal ? 18 : 22;
-  const side     = horizontal ? 'bottom' : 'right';
+  const tooltipSide = horizontal ? 'bottom' : 'right';
 
-  //  State 
+  // ── Core state ──────────────────────────────────────────────────────────────
+  const [servers,    setServers   ] = useState<Server[]>([]);
+  const [loading,    setLoading   ] = useState(true);
+  const [onlineIds,  setOnlineIds ] = useState<Set<string>>(new Set());
+  const [contextId,  setContextId ] = useState<string | null>(null);
 
-  const [servers,     setServers    ] = useState<Server[]>([]);
-  const [loading,     setLoading    ] = useState(true);
-  const [joinModal,   setJoinModal  ] = useState(false);
-  const [settingsId,  setSettingsId ] = useState<string | null>(null);
-  const [nodeOnline,  setNodeOnline ] = useState<Set<string>>(new Set());
-  const [contextId,   setContextId  ] = useState<string | null>(null);
-  const [leaveId,     setLeaveId    ] = useState<string | null>(null);
+  // ── Modals ──────────────────────────────────────────────────────────────────
+  const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [leaveId,    setLeaveId   ] = useState<string | null>(null);
+  const [joinOpen,   setJoinOpen  ] = useState(false);
 
-  const [inviteCode,  setInviteCode ] = useState('');
-  const [isJoining,   setIsJoining  ] = useState(false);
-  const [joinError,   setJoinError  ] = useState('');
-  const [joinSuccess, setJoinSuccess] = useState('');
+  // ── Join form ────────────────────────────────────────────────────────────────
+  const [invite,     setInvite    ] = useState('');
+  const [joining,    setJoining   ] = useState(false);
+  const [joinErr,    setJoinErr   ] = useState('');
+  const [joinOk,     setJoinOk    ] = useState('');
 
-  // Drag & drop
-  const dragRef = useRef<string | null>(null);
+  // ── Drag & drop ──────────────────────────────────────────────────────────────
+  const dragId = useRef<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
-  //  Effects 
+  // ── Load servers ─────────────────────────────────────────────────────────────
+  const loadServers = useCallback(async () => {
+    setLoading(true);
+    const res = await api.getServers();
+    if (res.success && res.data) {
+      let list: Server[] = (res.data as any[]).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        iconUrl: s.iconUrl || s.icon_url || undefined,
+      }));
+      try {
+        const order = JSON.parse(localStorage.getItem('alfychat_server_order') ?? '[]') as string[];
+        if (order.length) {
+          const rank = new Map(order.map((id, i) => [id, i]));
+          list = list.sort((a, b) => (rank.get(a.id) ?? list.length) - (rank.get(b.id) ?? list.length));
+        }
+      } catch { /* ignore */ }
+      setServers(list);
+    }
+    setLoading(false);
+  }, []);
 
-  useEffect(() => { loadServers(); }, []);
+  useEffect(() => { loadServers(); }, [loadServers]);
 
+  // ── Socket events ────────────────────────────────────────────────────────────
   useEffect(() => {
-    const onOnline  = (d: any) => { const id = d?.payload?.serverId ?? d?.serverId; if (id) setNodeOnline((p) => new Set(p).add(id)); };
-    const onOffline = (d: any) => { const id = d?.payload?.serverId ?? d?.serverId; if (id) setNodeOnline((p) => { const s = new Set(p); s.delete(id); return s; }); };
-    const onUpdate  = (d: any) => {
-      const s  = d?.payload ?? d?.updates ?? d;
-      const id = s?.id ?? s?.serverId;
+    const getId = (d: any): string | null => d?.payload?.serverId ?? d?.serverId ?? null;
+
+    const onOnline  = (d: any) => { const id = getId(d); if (id) setOnlineIds(p => new Set(p).add(id)); };
+    const onOffline = (d: any) => { const id = getId(d); if (id) setOnlineIds(p => { const s = new Set(p); s.delete(id); return s; }); };
+
+    const onUpdate = (d: any) => {
+      const payload = d?.payload ?? d?.updates ?? d;
+      const id = payload?.id ?? payload?.serverId;
       if (!id) return;
-      setServers((p) => p.map((sv) =>
+      setServers(prev => prev.map(sv =>
         sv.id === id
-          ? { ...sv, ...(s.name != null && { name: s.name }), ...(s.iconUrl !== undefined && { iconUrl: s.iconUrl || undefined }) }
+          ? { ...sv, ...(payload.name != null ? { name: payload.name } : {}), ...(payload.iconUrl !== undefined ? { iconUrl: payload.iconUrl || undefined } : {}) }
           : sv,
       ));
     };
-    const onDelete  = (d: any) => { const id = d?.payload?.serverId ?? d?.serverId; if (id) { setServers((p) => p.filter((sv) => sv.id !== id)); if (selectedServer === id) onSelectServer(null); } };
-    const onRemoved = (d: any) => { const id = d?.payload?.serverId ?? d?.serverId; if (id) { setServers((p) => p.filter((sv) => sv.id !== id)); if (selectedServer === id) onSelectServer(null); toast.warning('Vous avez été retiré du serveur.'); } };
+
+    const onGone = (d: any, warn?: string) => {
+      const id = getId(d);
+      if (!id) return;
+      setServers(p => p.filter(sv => sv.id !== id));
+      if (selectedServer === id) onSelectServer(null);
+      if (warn) toast.warning(warn);
+    };
 
     socketService.on('SERVER_NODE_ONLINE',  onOnline);
     socketService.on('SERVER_NODE_OFFLINE', onOffline);
     socketService.on('SERVER_UPDATE',       onUpdate);
-    socketService.on('SERVER_DELETE',       onDelete);
-    socketService.on('SERVER_KICKED',       onRemoved);
-    socketService.on('SERVER_BANNED',       onRemoved);
+    socketService.on('SERVER_DELETE',       (d) => onGone(d));
+    socketService.on('SERVER_KICKED',       (d) => onGone(d, 'Vous avez été retiré du serveur.'));
+    socketService.on('SERVER_BANNED',       (d) => onGone(d, 'Vous avez été banni du serveur.'));
 
     return () => {
       socketService.off('SERVER_NODE_ONLINE',  onOnline);
       socketService.off('SERVER_NODE_OFFLINE', onOffline);
       socketService.off('SERVER_UPDATE',       onUpdate);
-      socketService.off('SERVER_DELETE',       onDelete);
-      socketService.off('SERVER_KICKED',       onRemoved);
-      socketService.off('SERVER_BANNED',       onRemoved);
+      socketService.off('SERVER_DELETE',       onGone);
+      socketService.off('SERVER_KICKED',       onGone);
+      socketService.off('SERVER_BANNED',       onGone);
     };
-  }, [selectedServer]);
+  }, [selectedServer, onSelectServer]);
 
-  //  API calls 
-
-  const loadServers = async () => {
-    setLoading(true);
-    const res = await api.getServers();
-    if (res.success && res.data) {
-      let list: Server[] = (res.data as any[]).map((s: any) => ({ id: s.id, name: s.name, iconUrl: s.iconUrl || s.icon_url }));
-      try {
-        const saved = JSON.parse(localStorage.getItem('alfychat_server_order') || '[]') as string[];
-        if (saved.length > 0) {
-          const idx = new Map(saved.map((id, i) => [id, i]));
-          list = list.sort((a, b) => (idx.get(a.id) ?? list.length) - (idx.get(b.id) ?? list.length));
-        }
-      } catch {}
-      setServers(list);
-    }
-    setLoading(false);
-  };
-
+  // ── Join ─────────────────────────────────────────────────────────────────────
   const handleJoin = async () => {
-    if (!inviteCode.trim() || isJoining) return;
-    setIsJoining(true);
-    setJoinError('');
-    setJoinSuccess('');
-    const res = await api.joinServer(inviteCode.trim());
-    setIsJoining(false);
+    if (!invite.trim() || joining) return;
+    setJoining(true);
+    setJoinErr('');
+    setJoinOk('');
+    const res = await api.joinServer(invite.trim());
+    setJoining(false);
     if (res.success && res.data) {
       const s = res.data as any;
-      const joined: Server = { id: s.id ?? s.serverId, name: s.name, iconUrl: s.iconUrl };
-      setServers((p) => [...p, joined]);
-      setJoinSuccess(`Bienvenue sur ${joined.name} !`);
-      setTimeout(() => { setJoinModal(false); resetJoin(); onSelectServer(joined.id); }, 1200);
+      const newServer: Server = { id: s.id ?? s.serverId, name: s.name, iconUrl: s.iconUrl };
+      setServers(p => [...p, newServer]);
+      setJoinOk(`Bienvenue sur ${newServer.name} !`);
+      setTimeout(() => { setJoinOpen(false); resetJoin(); onSelectServer(newServer.id); }, 1200);
     } else {
-      setJoinError(res.error ?? 'Code invalide ou serveur introuvable.');
+      setJoinErr(res.error ?? 'Code invalide ou serveur introuvable.');
     }
   };
 
+  const resetJoin = () => { setInvite(''); setJoinErr(''); setJoinOk(''); };
+
+  // ── Leave ────────────────────────────────────────────────────────────────────
   const handleLeave = async (id: string) => {
     const res = await api.leaveServer(id);
     if (res.success) {
-      setServers((p) => p.filter((s) => s.id !== id));
+      setServers(p => p.filter(s => s.id !== id));
       if (selectedServer === id) onSelectServer(null);
       toast.success('Serveur quitté.');
     } else {
@@ -189,12 +208,9 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     setLeaveId(null);
   };
 
-  const resetJoin = () => { setInviteCode(''); setJoinError(''); setJoinSuccess(''); };
-
-  //  Drag & drop 
-
+  // ── Drag & drop ──────────────────────────────────────────────────────────────
   const handleDragStart = (id: string) => (e: React.DragEvent) => {
-    dragRef.current = id;
+    dragId.current = id;
     setDragging(id);
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -202,51 +218,48 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const handleDragOver = (id: string) => (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (dragRef.current !== id) setDragOver(id);
+    if (dragId.current !== id) setDragOver(id);
   };
 
-  const handleDrop = (id: string) => (e: React.DragEvent) => {
+  const handleDrop = (targetId: string) => (e: React.DragEvent) => {
     e.preventDefault();
-    const from = dragRef.current;
-    if (!from || from === id) { setDragOver(null); return; }
-    setServers((prev) => {
-      const arr = [...prev];
-      const fi  = arr.findIndex((s) => s.id === from);
-      const ti  = arr.findIndex((s) => s.id === id);
-      if (fi === -1 || ti === -1) return prev;
-      const [item] = arr.splice(fi, 1);
-      arr.splice(ti, 0, item);
-      try { localStorage.setItem('alfychat_server_order', JSON.stringify(arr.map((s) => s.id))); } catch {}
-      return arr;
+    const fromId = dragId.current;
+    if (!fromId || fromId === targetId) { setDragOver(null); return; }
+    setServers(prev => {
+      const next = [...prev];
+      const from = next.findIndex(s => s.id === fromId);
+      const to   = next.findIndex(s => s.id === targetId);
+      if (from === -1 || to === -1) return prev;
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      try { localStorage.setItem('alfychat_server_order', JSON.stringify(next.map(s => s.id))); } catch { /* ignore */ }
+      return next;
     });
-    dragRef.current = null;
+    dragId.current = null;
     setDragging(null);
     setDragOver(null);
   };
 
-  const handleDragEnd = () => { dragRef.current = null; setDragging(null); setDragOver(null); };
+  const handleDragEnd = () => { dragId.current = null; setDragging(null); setDragOver(null); };
 
-  //  Render 
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* ─────────────────────────────── BAR ─────────────────────────────── */}
+      {/* ── Sidebar / Top bar ── */}
       <nav
         aria-label="Serveurs"
         className={cn(
           'flex shrink-0 items-center gap-1.5 bg-[var(--background)]',
           horizontal
             ? 'h-14 w-full flex-row border-b border-white/5 px-3'
-            : cn(
-                'h-full flex-col border-r border-white/5 py-3',
-                compact ? 'w-[56px]' : 'w-[72px]',
-              ),
+            : cn('h-full flex-col border-r border-white/5 py-3', compact ? 'w-[56px]' : 'w-[72px]'),
         )}
       >
-        {/* ── DMs ── */}
+        {/* DMs */}
         <Tooltip delay={0}>
           <div className={cn('group relative mx-auto flex shrink-0 items-center justify-center', btnSize)}>
-            <Indicator active={selectedServer === null} />
+            <ActivePill visible={selectedServer === null} />
             <Button
               isIconOnly
               variant="ghost"
@@ -263,7 +276,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               <MessageCircleIcon size={iconSize} />
             </Button>
           </div>
-          <Tooltip.Content showArrow placement={side}>
+          <Tooltip.Content showArrow placement={tooltipSide}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.dms ?? 'Messages directs'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> D</Kbd>
@@ -272,7 +285,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
         <div className={cn('shrink-0 rounded-full bg-white/10', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
-        {/* ── Server scroll list ── */}
+        {/* Server list */}
         <ScrollShadow
           orientation={horizontal ? 'horizontal' : 'vertical'}
           hideScrollBar
@@ -289,7 +302,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               ))
             : servers.map((server) => {
                 const active    = selectedServer === server.id;
-                const isDragged = dragging === server.id;
+                const isDragged = dragging  === server.id;
                 const isOver    = dragOver  === server.id;
 
                 return (
@@ -327,7 +340,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                             active ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]',
                           )}
                         >
-                          <Indicator active={active} />
+                          <ActivePill visible={active} />
                           <Badge.Anchor>
                             <Avatar
                               className={cn(
@@ -347,7 +360,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                                 {server.name.charAt(0).toUpperCase()}
                               </Avatar.Fallback>
                             </Avatar>
-                            {nodeOnline.has(server.id) && (
+                            {onlineIds.has(server.id) && (
                               <Badge color="success" size="sm" placement="bottom-right" />
                             )}
                           </Badge.Anchor>
@@ -357,10 +370,10 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                           )}
                         </div>
 
-                        <Tooltip.Content showArrow placement={side}>
+                        <Tooltip.Content showArrow placement={tooltipSide}>
                           <Tooltip.Arrow />
                           <p className="text-[11px] font-semibold">{server.name}</p>
-                          {nodeOnline.has(server.id) && (
+                          {onlineIds.has(server.id) && (
                             <Chip color="success" variant="soft" size="sm" className="mt-1">
                               <Chip.Label className="text-[10px]">Node en ligne</Chip.Label>
                             </Chip>
@@ -400,7 +413,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
         <div className={cn('shrink-0 rounded-full bg-white/10', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
-        {/* ── Rejoindre ── */}
+        {/* Join */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
@@ -410,18 +423,18 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               'mx-auto shrink-0 !rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:!rounded-[14px] hover:bg-success/15 hover:text-success',
               btnSize,
             )}
-            onPress={() => setJoinModal(true)}
+            onPress={() => setJoinOpen(true)}
           >
             <PlusIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={side}>
+          <Tooltip.Content showArrow placement={tooltipSide}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> N</Kbd>
           </Tooltip.Content>
         </Tooltip>
 
-        {/* ── Découvrir ── */}
+        {/* Discover */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
@@ -435,13 +448,13 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           >
             <CompassIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={side}>
+          <Tooltip.Content showArrow placement={tooltipSide}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.discoverServers ?? 'Découvrir'}</p>
           </Tooltip.Content>
         </Tooltip>
 
-        {/* ── Accueil ── */}
+        {/* Home */}
         <Tooltip delay={0}>
           <Button
             isIconOnly
@@ -455,24 +468,24 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           >
             <HomeIcon size={iconSize} />
           </Button>
-          <Tooltip.Content showArrow placement={side}>
+          <Tooltip.Content showArrow placement={tooltipSide}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">Bienvenue</p>
           </Tooltip.Content>
         </Tooltip>
       </nav>
 
-      {/*  SERVER SETTINGS  */}
+      {/* Server settings */}
       {settingsId && (
         <ServerSettingsDialog
-          serverId={settingsId}
+          serverId={settingsId!}
           open={!!settingsId}
           onOpenChange={(open) => { if (!open) setSettingsId(null); }}
           onServerUpdated={loadServers}
         />
       )}
 
-      {/*  CONFIRM LEAVE  */}
+      {/* Leave confirmation */}
       <Modal.Backdrop
         isOpen={!!leaveId}
         onOpenChange={(open) => { if (!open) setLeaveId(null); }}
@@ -502,10 +515,10 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         </Modal.Container>
       </Modal.Backdrop>
 
-      {/*  JOIN SERVER  */}
+      {/* Join server */}
       <Modal.Backdrop
-        isOpen={joinModal}
-        onOpenChange={(open) => { setJoinModal(open); if (!open) resetJoin(); }}
+        isOpen={joinOpen}
+        onOpenChange={(open) => { setJoinOpen(open); if (!open) resetJoin(); }}
         variant="blur"
       >
         <Modal.Container size="md">
@@ -522,28 +535,28 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                   <p className="text-[11px] text-[var(--muted)]/60">Entrez un code ou un lien d&apos;invitation</p>
                 </div>
               </div>
-              <CloseButton onPress={() => setJoinModal(false)} className="shrink-0" />
+              <CloseButton onPress={() => setJoinOpen(false)} className="shrink-0" />
             </div>
 
             {/* Body */}
             <div className="space-y-4 px-6 py-5">
-              {joinError && (
+              {joinErr && (
                 <Alert status="danger">
                   <Alert.Indicator />
                   <Alert.Content>
                     <Alert.Title>Erreur</Alert.Title>
-                    <Alert.Description>{joinError}</Alert.Description>
+                    <Alert.Description>{joinErr}</Alert.Description>
                   </Alert.Content>
-                  <CloseButton onPress={() => setJoinError('')} />
+                  <CloseButton onPress={() => setJoinErr('')} />
                 </Alert>
               )}
 
-              {joinSuccess && (
+              {joinOk && (
                 <Alert status="success">
                   <Alert.Indicator />
                   <Alert.Content>
                     <Alert.Title>Succès&nbsp;!</Alert.Title>
-                    <Alert.Description>{joinSuccess}</Alert.Description>
+                    <Alert.Description>{joinOk}</Alert.Description>
                   </Alert.Content>
                 </Alert>
               )}
@@ -553,8 +566,8 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                   <Label className="text-[13px] font-semibold">Code ou lien d&apos;invitation</Label>
                   <InputGroup>
                     <InputGroup.Input
-                      value={inviteCode}
-                      onChange={(e) => setInviteCode(e.target.value)}
+                      value={invite}
+                      onChange={(e) => setInvite(e.target.value)}
                       placeholder="https://alfychat.app/invite/... ou ABCD1234"
                       onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleJoin()}
                       autoFocus
@@ -589,10 +602,10 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                   <Button
                     type="submit"
                     onPress={handleJoin}
-                    isDisabled={!inviteCode.trim() || isJoining}
+                    isDisabled={!invite.trim() || joining}
                     className="min-w-28 shrink-0"
                   >
-                    {isJoining ? <Spinner size="sm" color="current" /> : <ArrowRightIcon size={14} />}
+                    {joining ? <Spinner size="sm" color="current" /> : <ArrowRightIcon size={14} />}
                     Rejoindre
                   </Button>
                 </div>
@@ -606,7 +619,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 size="sm"
                 variant="ghost"
                 className="h-7 gap-1.5 px-2 text-[11px] text-accent hover:bg-accent/10"
-                onPress={() => { setJoinModal(false); router.push('/channels/discover-server'); }}
+                onPress={() => { setJoinOpen(false); router.push('/channels/discover-server'); }}
               >
                 <CompassIcon size={12} />
                 Découvrir
