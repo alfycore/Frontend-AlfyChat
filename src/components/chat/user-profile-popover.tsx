@@ -2,20 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import {
-  MessageCircleIcon,
-  UserPlusIcon,
-  UserCheckIcon,
+  BanIcon,
   CalendarIcon,
   CheckIcon,
-  ShieldCheckIcon,
-  BanIcon,
-  UserXIcon,
+  MessageCircleIcon,
   PaletteIcon,
+  ShieldCheckIcon,
   SmileIcon,
+  UserCheckIcon,
+  UserPlusIcon,
+  UserXIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { socketService } from '@/lib/socket';
+import { sanitizeSvg } from '@/lib/sanitize';
+import { cn } from '@/lib/utils';
 import {
   Avatar,
   Badge,
@@ -27,10 +29,8 @@ import {
   Skeleton,
   Tooltip,
 } from '@heroui/react';
-import { cn } from '@/lib/utils';
-import { sanitizeSvg } from '@/lib/sanitize';
 
-/* ------------------------------------------------------------------ */
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface UserBadge {
   id: string;
@@ -60,22 +60,6 @@ interface UserProfileData {
   interests?: string[];
 }
 
-const statusConfig: Record<string, { color: string; label: string; dot: string }> = {
-  online: { color: 'bg-green-500', label: 'En ligne', dot: 'bg-green-500 shadow-green-500/50' },
-  idle: { color: 'bg-yellow-500', label: 'Absent', dot: 'bg-yellow-500 shadow-yellow-500/50' },
-  dnd: { color: 'bg-red-500', label: 'Ne pas déranger', dot: 'bg-red-500 shadow-red-500/50' },
-  invisible: { color: 'bg-gray-500', label: 'Invisible', dot: 'bg-gray-400 shadow-gray-400/50' },
-  offline: { color: 'bg-gray-500', label: 'Hors ligne', dot: 'bg-gray-400 shadow-gray-400/50' },
-};
-
-function renderBadgeIcon(badge: UserBadge) {
-  const iconKey = badge.iconValue || badge.icon;
-  if (badge.iconType === 'svg') {
-    return <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(iconKey) }} />;
-  }
-  return <i className={`bi ${iconKey}`} style={{ color: badge.color, fontSize: '14px' }} />;
-}
-
 type FriendStatus = 'none' | 'friend' | 'pending_sent' | 'pending_received';
 
 interface UserProfilePopoverProps {
@@ -83,242 +67,232 @@ interface UserProfilePopoverProps {
   children: React.ReactNode;
   onOpenDM?: (recipientId: string, recipientName: string) => void;
   serverId?: string;
-  /** Contrôle externe de l'ouverture (optionnel) */
   open?: boolean;
   onOpenChange?: (v: boolean) => void;
 }
 
-export function UserProfilePopover({ userId, children, onOpenDM, serverId, open: externalOpen, onOpenChange: externalOnOpenChange }: UserProfilePopoverProps) {
-  const { user: currentUser } = useAuth();
-  const [profile, setProfile] = useState<UserProfileData | null>(null);
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const STATUS = {
+  online:    { label: 'En ligne',          badge: 'success' as const, text: 'text-green-500'  },
+  idle:      { label: 'Absent',            badge: 'warning' as const, text: 'text-yellow-500' },
+  dnd:       { label: 'Ne pas déranger',   badge: 'danger'  as const, text: 'text-red-500'    },
+  invisible: { label: 'Invisible',         badge: undefined,          text: 'text-gray-400'   },
+  offline:   { label: 'Hors ligne',        badge: undefined,          text: 'text-gray-400'   },
+} as const;
+
+function getStatus(s: string) {
+  return STATUS[s as keyof typeof STATUS] ?? STATUS.offline;
+}
+
+function formatMemberSince(createdAt: string): string {
+  const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000);
+  if (diff < 30) return `${diff} jour${diff > 1 ? 's' : ''}`;
+  if (diff < 365) { const m = Math.floor(diff / 30); return `${m} mois`; }
+  const y = Math.floor(diff / 365);
+  const rm = Math.floor((diff % 365) / 30);
+  return rm > 0 ? `${y} an${y > 1 ? 's' : ''} et ${rm} mois` : `${y} an${y > 1 ? 's' : ''}`;
+}
+
+function BadgeIcon({ badge }: { badge: UserBadge }) {
+  const val = badge.iconValue || badge.icon;
+  if (badge.iconType === 'svg') return <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(val) }} />;
+  return <i className={`bi ${val}`} style={{ color: badge.color, fontSize: 14 }} />;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function UserProfilePopover({
+  userId,
+  children,
+  onOpenDM,
+  serverId,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
+}: UserProfilePopoverProps) {
+  const { user: me } = useAuth();
+  const isMe = me?.id === userId;
+
+  // ── Open state ────────────────────────────────────────────────────────────
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
   const setIsOpen = (v: boolean) => { setInternalOpen(v); externalOnOpenChange?.(v); };
-  const [loading, setLoading] = useState(false);
+
+  // ── Profile data ──────────────────────────────────────────────────────────
+  const [profile,      setProfile     ] = useState<UserProfileData | null>(null);
+  const [loading,      setLoading     ] = useState(false);
   const [friendStatus, setFriendStatus] = useState<FriendStatus>('none');
+  const [localColor,   setLocalColor  ] = useState<string | null>(null);
+  const [showFullBio,  setShowFullBio ] = useState(false);
 
-  /* Server role management */
-  const [serverRoles, setServerRoles] = useState<Array<{ id: string; name: string; color: string; position: number }>>([]);
+  // ── Server moderation ─────────────────────────────────────────────────────
+  const [serverRoles,   setServerRoles  ] = useState<Array<{ id: string; name: string; color: string; position: number; permissions?: any }>>([]);
   const [memberRoleIds, setMemberRoleIds] = useState<string[]>([]);
-  const [showRoles, setShowRoles] = useState(false);
-  const [confirmKick, setConfirmKick] = useState(false);
-  const [confirmBan, setConfirmBan] = useState(false);
-  const [banReason, setBanReason] = useState('');
+  const [showRoles,     setShowRoles    ] = useState(false);
   const [canManageRoles, setCanManageRoles] = useState(false);
-  const [canKickBan, setCanKickBan] = useState(false);
-  const [showFullBio, setShowFullBio] = useState(false);
-  const [localCardColor, setLocalCardColor] = useState<string | null>(null);
-  const colorSaveTimer = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [canKickBan,    setCanKickBan   ] = useState(false);
+  const [confirmKick,   setConfirmKick  ] = useState(false);
+  const [confirmBan,    setConfirmBan   ] = useState(false);
+  const [banReason,     setBanReason    ] = useState('');
 
-  const isMe = currentUser?.id === userId;
+  // ── Color save debounce ───────────────────────────────────────────────────
+  const [colorTimer, setColorTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Load on open ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (isOpen && !profile) {
-      loadProfile();
-      if (!isMe) checkFriendship();
-    }
-    if (isOpen && serverId) {
-      loadServerRoles();
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
+    if (!profile) loadProfile();
+    if (!isMe) checkFriendship();
+    if (serverId) loadServerRoles();
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Presence socket ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isOpen || !userId) return;
-    const handlePresence = (data: unknown) => {
-      const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
-      const p = payload as { userId?: string; status?: string };
+    if (!isOpen) return;
+    const handler = (data: unknown) => {
+      const p = ((data as any)?.payload ?? data) as { userId?: string; status?: string };
       if (p?.userId === userId && p?.status) {
-        setProfile((prev) => (prev ? { ...prev, status: p.status as string } : prev));
+        setProfile(prev => prev ? { ...prev, status: p.status! } : prev);
       }
     };
-    socketService.onPresenceUpdate(handlePresence);
-    return () => socketService.off('PRESENCE_UPDATE', handlePresence);
+    socketService.onPresenceUpdate(handler);
+    return () => socketService.off('PRESENCE_UPDATE', handler);
   }, [isOpen, userId]);
 
-  const loadProfile = async () => {
+  // ── Loaders ───────────────────────────────────────────────────────────────
+  async function loadProfile() {
     setLoading(true);
     try {
-      const response = await api.getUser(userId);
-      if (response.success && response.data) {
-        setProfile(response.data as UserProfileData);
-      }
-    } catch (e) {
-      console.error('Erreur chargement profil:', e);
-    }
+      const res = await api.getUser(userId);
+      if (res.success && res.data) setProfile(res.data as UserProfileData);
+    } catch { /* ignore */ }
     setLoading(false);
-  };
+  }
 
-  const checkFriendship = async () => {
+  async function checkFriendship() {
     try {
-      const friendsRes = await api.getFriends();
-      if (friendsRes.success && Array.isArray(friendsRes.data)) {
-        const isFriend = friendsRes.data.some((f: any) => f.id === userId);
-        if (isFriend) { setFriendStatus('friend'); return; }
+      const fr = await api.getFriends();
+      if (fr.success && Array.isArray(fr.data) && fr.data.some((f: any) => f.id === userId)) {
+        setFriendStatus('friend'); return;
       }
-      const reqRes = await api.getFriendRequests();
-      if (reqRes.success && reqRes.data) {
-        const data = reqRes.data as any;
-        const sent = data.sent || [];
-        const received = data.received || [];
+      const rr = await api.getFriendRequests();
+      if (rr.success && rr.data) {
+        const { sent = [], received = [] } = rr.data as any;
         if (sent.some((r: any) => r.receiverId === userId || r.id === userId)) { setFriendStatus('pending_sent'); return; }
         if (received.some((r: any) => r.senderId === userId || r.id === userId)) { setFriendStatus('pending_received'); return; }
       }
       setFriendStatus('none');
-    } catch {
-      setFriendStatus('none');
-    }
-  };
+    } catch { setFriendStatus('none'); }
+  }
 
-  const loadServerRoles = () => {
+  function loadServerRoles() {
     if (!serverId) return;
     socketService.requestRoles(serverId, (roleData: any) => {
-      const rawRoles = (roleData?.roles || []).map((r: any) => ({
-        id: r.id, name: r.name, color: r.color || '#99AAB5', position: r.position || 0, permissions: r.permissions,
-      }));
-      rawRoles.sort((a: any, b: any) => b.position - a.position);
-      setServerRoles(rawRoles);
+      const roles = (roleData?.roles ?? [])
+        .map((r: any) => ({ id: r.id, name: r.name, color: r.color ?? '#99AAB5', position: r.position ?? 0, permissions: r.permissions }))
+        .sort((a: any, b: any) => b.position - a.position);
+      setServerRoles(roles);
 
-      socketService.requestMembers(serverId, (memberData: any) => {
-        const members = memberData?.members || [];
-        const member = members.find((m: any) => (m.userId || m.user_id || m.id) === userId);
-        if (member) {
-          let roleIds = member.roleIds || member.role_ids || [];
-          if (typeof roleIds === 'string') { try { roleIds = JSON.parse(roleIds); } catch { roleIds = []; } }
-          setMemberRoleIds(roleIds);
+      socketService.requestMembers(serverId!, (memberData: any) => {
+        const members: any[] = memberData?.members ?? [];
+
+        const target = members.find(m => (m.userId ?? m.user_id ?? m.id) === userId);
+        if (target) {
+          let ids = target.roleIds ?? target.role_ids ?? [];
+          if (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch { ids = []; } }
+          setMemberRoleIds(ids);
         }
-        const currentMember = members.find((m: any) => (m.userId || m.user_id || m.id) === currentUser?.id);
-        if (!currentMember) return;
-        let myRoleIds = currentMember.roleIds || currentMember.role_ids || [];
-        if (typeof myRoleIds === 'string') { try { myRoleIds = JSON.parse(myRoleIds); } catch { myRoleIds = []; } }
-        let combinedPerms = 0;
-        for (const role of rawRoles) {
-          if (myRoleIds.includes(role.id)) {
-            const perms = (role as any).permissions;
-            if (Array.isArray(perms)) {
-              for (const p of perms) {
-                if (p === 'ADMIN') combinedPerms |= 0x40;
-                if (p === 'MANAGE_ROLES') combinedPerms |= 0x100;
-                if (p === 'KICK') combinedPerms |= 0x10;
-                if (p === 'BAN') combinedPerms |= 0x20;
-              }
-            } else {
-              const p = typeof perms === 'number' ? perms : parseInt(String(perms) || '0', 10);
-              combinedPerms |= p;
+
+        const current = members.find(m => (m.userId ?? m.user_id ?? m.id) === me?.id);
+        if (!current) return;
+        let myIds = current.roleIds ?? current.role_ids ?? [];
+        if (typeof myIds === 'string') { try { myIds = JSON.parse(myIds); } catch { myIds = []; } }
+
+        let perms = 0;
+        for (const role of roles) {
+          if (!myIds.includes(role.id)) continue;
+          if (Array.isArray(role.permissions)) {
+            for (const p of role.permissions) {
+              if (p === 'ADMIN')        perms |= 0x40;
+              if (p === 'MANAGE_ROLES') perms |= 0x100;
+              if (p === 'KICK')         perms |= 0x10;
+              if (p === 'BAN')          perms |= 0x20;
             }
+          } else {
+            perms |= (typeof role.permissions === 'number' ? role.permissions : parseInt(String(role.permissions ?? 0), 10));
           }
         }
-        const isAdmin = !!(combinedPerms & 0x40);
-        setCanManageRoles(isAdmin || !!(combinedPerms & 0x100));
-        setCanKickBan(isAdmin || !!((combinedPerms & 0x10) || (combinedPerms & 0x20)));
-        socketService.requestServerInfo(serverId, (serverData: any) => {
-          const ownerId = serverData?.ownerId || serverData?.owner_id;
-          if (ownerId === currentUser?.id) { setCanManageRoles(true); setCanKickBan(true); }
+        const admin = !!(perms & 0x40);
+        setCanManageRoles(admin || !!(perms & 0x100));
+        setCanKickBan(admin || !!((perms & 0x10) || (perms & 0x20)));
+
+        socketService.requestServerInfo(serverId!, (srv: any) => {
+          if ((srv?.ownerId ?? srv?.owner_id) === me?.id) { setCanManageRoles(true); setCanKickBan(true); }
         });
       });
     });
-  };
+  }
 
-  const toggleRole = (roleId: string) => {
-    if (!serverId) return;
-    const newRoleIds = memberRoleIds.includes(roleId)
-      ? memberRoleIds.filter((id) => id !== roleId)
-      : [...memberRoleIds, roleId];
-    setMemberRoleIds(newRoleIds);
-    socketService.updateMember(serverId, userId, { roleIds: newRoleIds });
-  };
+  // ── Actions ───────────────────────────────────────────────────────────────
+  function handleColorChange(color: string) {
+    setLocalColor(color);
+    if (colorTimer) clearTimeout(colorTimer);
+    setColorTimer(setTimeout(() => { api.updateProfile({ cardColor: color }).catch(() => {}); }, 600));
+  }
 
-  const handleColorChange = (newColor: string) => {
-    setLocalCardColor(newColor);
-    if (colorSaveTimer[0]) clearTimeout(colorSaveTimer[0]);
-    colorSaveTimer[0] = setTimeout(async () => {
-      try { await api.updateProfile({ cardColor: newColor }); } catch {}
-    }, 600);
-  };
+  async function handleAddFriend() {
+    if (!profile) return;
+    try { await api.sendFriendRequest(profile.username); setFriendStatus('pending_sent'); } catch { /* ignore */ }
+  }
 
-  const handleSendMessage = () => {
-    if (profile && onOpenDM) {
-      onOpenDM(profile.id, profile.displayName || profile.username);
-      setIsOpen(false);
+  function handleSendMessage() {
+    if (profile && onOpenDM) { onOpenDM(profile.id, profile.displayName || profile.username); setIsOpen(false); }
+  }
+
+  function handleKick() { if (serverId) { socketService.kickMember(serverId, userId); setConfirmKick(false); setIsOpen(false); } }
+
+  function handleBan() {
+    if (serverId) {
+      socketService.banMember(serverId, userId, banReason || undefined);
+      setConfirmBan(false); setBanReason(''); setIsOpen(false);
     }
-  };
+  }
 
-  const handleKick = () => {
+  function toggleRole(roleId: string) {
     if (!serverId) return;
-    socketService.kickMember(serverId, userId);
-    setConfirmKick(false);
-    setIsOpen(false);
-  };
+    const next = memberRoleIds.includes(roleId) ? memberRoleIds.filter(id => id !== roleId) : [...memberRoleIds, roleId];
+    setMemberRoleIds(next);
+    socketService.updateMember(serverId, userId, { roleIds: next });
+  }
 
-  const handleBan = () => {
-    if (!serverId) return;
-    socketService.banMember(serverId, userId, banReason || undefined);
-    setConfirmBan(false);
-    setBanReason('');
-    setIsOpen(false);
-  };
+  // ── Derived values ────────────────────────────────────────────────────────
+  const cardColor    = localColor ?? profile?.cardColor ?? '#5865F2';
+  const statusInfo   = getStatus(profile?.status ?? 'offline');
+  const visibleBadges = profile?.showBadges !== false ? (profile?.badges ?? []).slice(0, 6) : [];
+  const memberSince  = profile?.createdAt ? formatMemberSince(profile.createdAt) : null;
 
-  const handleAddFriend = async () => {
-    try {
-      await api.sendFriendRequest(profile?.username || '');
-      setFriendStatus('pending_sent');
-    } catch (e) {
-      console.error('Erreur envoi demande ami:', e);
-    }
-  };
-
-  const status = statusConfig[profile?.status || 'offline'] ?? statusConfig.offline;
-  const cardColor = localCardColor ?? profile?.cardColor ?? '#5865F2';
-  const badgeColor = ({ online: 'success', idle: 'warning', dnd: 'danger' } as Record<string, 'success' | 'warning' | 'danger'>)[profile?.status || ''];
-
-  const createdDate = profile?.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
-    : null;
-
-  const memberSince = profile?.createdAt
-    ? (() => {
-        const created = new Date(profile.createdAt);
-        const now = new Date();
-        const diffMs = now.getTime() - created.getTime();
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (diffDays < 30) return `${diffDays} jour${diffDays > 1 ? 's' : ''}`;
-        if (diffDays < 365) { const months = Math.floor(diffDays / 30); return `${months} mois`; }
-        const years = Math.floor(diffDays / 365);
-        const remainingMonths = Math.floor((diffDays % 365) / 30);
-        return remainingMonths > 0
-          ? `${years} an${years > 1 ? 's' : ''} et ${remainingMonths} mois`
-          : `${years} an${years > 1 ? 's' : ''}`;
-      })()
-    : null;
-
-  const visibleBadges =
-    profile?.showBadges !== false && profile?.badges ? profile.badges.slice(0, 6) : [];
-
-  const statusTextColor: Record<string, string> = {
-    online: 'text-green-500',
-    idle: 'text-yellow-500',
-    dnd: 'text-red-500',
-    invisible: 'text-gray-400',
-    offline: 'text-gray-400',
-  };
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <Popover
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-    >
+    <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
       <Popover.Trigger>{children}</Popover.Trigger>
-      <Popover.Content placement="left" shouldFlip offset={8} className="w-[300px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)] p-0">
+
+      <Popover.Content
+        placement="left"
+        shouldFlip
+        offset={8}
+        className="w-[300px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)] p-0"
+      >
         {loading || !profile ? (
           /* ── Skeleton ── */
           <div className="flex flex-col">
             <Skeleton className="h-[110px] w-full rounded-none" />
-            <div className="px-3 -mt-8 mb-2">
+            <div className="-mt-8 mb-2 px-3">
               <Skeleton className="size-16 rounded-full ring-4 ring-[var(--surface)]" />
             </div>
             <div className="space-y-2 px-3 pb-4">
               <Skeleton className="h-[14px] w-32 rounded-lg" />
               <Skeleton className="h-3 w-20 rounded-lg" />
-              <Skeleton className="h-3 w-full mt-3 rounded-lg" />
+              <Skeleton className="mt-3 h-3 w-full rounded-lg" />
               <Skeleton className="h-3 w-3/4 rounded-lg" />
             </div>
           </div>
@@ -327,24 +301,18 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
 
             {/* ── Banner ── */}
             <div className="relative h-[110px] shrink-0 overflow-hidden">
-              {profile.bannerUrl ? (
-                <img src={resolveMediaUrl(profile.bannerUrl)} alt="" className="size-full object-cover" />
-              ) : (
-                <div className="size-full" style={{ backgroundColor: cardColor }} />
-              )}
+              {profile.bannerUrl
+                ? <img src={resolveMediaUrl(profile.bannerUrl)} alt="" className="size-full object-cover" />
+                : <div className="size-full" style={{ background: `linear-gradient(135deg, ${cardColor}cc, ${cardColor}88)` }} />
+              }
 
-              {/* Top-right corner: friend action or color picker */}
+              {/* Actions top-right */}
               <div className="absolute right-2 top-2 flex gap-1">
                 {isMe ? (
                   <Tooltip delay={0}>
-                    <label className="flex size-7 cursor-pointer items-center justify-center rounded-lg bg-[var(--surface)]/80 text-[var(--foreground)]">
+                    <label className="flex size-7 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60">
                       <PaletteIcon size={13} />
-                      <input
-                        type="color"
-                        className="sr-only"
-                        value={cardColor}
-                        onChange={(e) => handleColorChange(e.target.value)}
-                      />
+                      <input type="color" className="sr-only" value={cardColor} onChange={(e) => handleColorChange(e.target.value)} />
                     </label>
                     <Tooltip.Content showArrow placement="left">
                       <Tooltip.Arrow />
@@ -355,7 +323,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                   <>
                     {friendStatus === 'none' && (
                       <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg" onPress={handleAddFriend}>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg backdrop-blur-sm" onPress={handleAddFriend}>
                           <UserPlusIcon size={13} />
                         </Button>
                         <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Ajouter en ami</p></Tooltip.Content>
@@ -382,7 +350,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                         <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg text-blue-400" onPress={handleAddFriend}>
                           <UserPlusIcon size={13} />
                         </Button>
-                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Accepter</p></Tooltip.Content>
+                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Accepter la demande</p></Tooltip.Content>
                       </Tooltip>
                     )}
                   </>
@@ -391,19 +359,19 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
             </div>
 
             {/* ── Avatar ── */}
-            <div className="px-3 -mt-8 mb-1">
+            <div className="-mt-8 mb-1 px-3">
               <Badge.Anchor>
-                <Avatar
-                  className="size-16 ring-4 ring-[var(--surface)]"
-                  style={{ backgroundColor: cardColor + '25', color: cardColor }}
-                >
-                  <Avatar.Image src={resolveMediaUrl(profile.avatarUrl)} />
-                  <Avatar.Fallback className="text-xl font-bold">
-                    {profile.displayName?.[0]?.toUpperCase() || '?'}
+                <Avatar className="size-16 ring-4 ring-[var(--surface)]">
+                  <Avatar.Image src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} />
+                  <Avatar.Fallback
+                    className="text-xl font-bold"
+                    style={{ backgroundColor: cardColor + '25', color: cardColor }}
+                  >
+                    {(profile.displayName?.[0] ?? '?').toUpperCase()}
                   </Avatar.Fallback>
                 </Avatar>
-                {badgeColor && (
-                  <Badge color={badgeColor} placement="bottom-right" size="sm" />
+                {statusInfo.badge && (
+                  <Badge color={statusInfo.badge} placement="bottom-right" size="sm" />
                 )}
               </Badge.Anchor>
             </div>
@@ -417,7 +385,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                     size="sm"
                     variant="soft"
                     color={profile.isVerifiedBot ? 'accent' : 'default'}
-                    className="h-4 px-1 text-[9px] font-bold uppercase"
+                    className="h-4 px-1.5 text-[9px] font-bold uppercase"
                   >
                     {profile.isVerifiedBot && (
                       <svg className="mr-0.5 inline size-2" viewBox="0 0 16 16" fill="currentColor">
@@ -429,8 +397,9 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                 )}
               </div>
               <p className="mt-0.5 text-xs text-[var(--muted)]">
-                @{profile.username}{' • '}
-                <span className={statusTextColor[profile.status] ?? 'text-gray-400'}>{status.label}</span>
+                @{profile.username}
+                {' · '}
+                <span className={statusInfo.text}>{statusInfo.label}</span>
               </p>
             </div>
 
@@ -442,15 +411,17 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                     <Tooltip key={badge.id} delay={0}>
                       <button
                         type="button"
-                        className="flex size-7 items-center justify-center rounded-lg"
+                        className="flex size-7 items-center justify-center rounded-lg transition hover:scale-110"
                         style={{ backgroundColor: badge.color + '18', border: `1px solid ${badge.color}35` }}
                       >
-                        {renderBadgeIcon(badge)}
+                        <BadgeIcon badge={badge} />
                       </button>
                       <Tooltip.Content showArrow>
                         <Tooltip.Arrow />
                         <p className="text-xs font-semibold">{badge.name}</p>
-                        <p className="text-[10px] opacity-60">Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}</p>
+                        <p className="text-[10px] opacity-60">
+                          Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}
+                        </p>
                       </Tooltip.Content>
                     </Tooltip>
                   ))}
@@ -470,27 +441,27 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                   <button
                     type="button"
                     className="mt-1 text-[11px] font-medium text-[var(--accent)] hover:underline"
-                    onClick={() => setShowFullBio((v) => !v)}
+                    onClick={() => setShowFullBio(v => !v)}
                   >
-                    {showFullBio ? 'Réduire' : 'Afficher la bio complète'}
+                    {showFullBio ? 'Réduire' : 'Lire la suite'}
                   </button>
                 )}
               </div>
             )}
 
             {/* ── Interests ── */}
-            {profile.interests && profile.interests.length > 0 && (
+            {(profile.interests?.length ?? 0) > 0 && (
               <div className="px-3 pb-2">
                 <div className="flex flex-wrap gap-1">
-                  {profile.interests.map((interest) => (
+                  {profile.interests!.map((tag) => (
                     <Chip
-                      key={interest}
+                      key={tag}
                       size="sm"
                       variant="soft"
                       className="h-5 rounded-full text-[11px] font-medium"
                       style={{ backgroundColor: cardColor + '18', color: cardColor, border: `1px solid ${cardColor}30` }}
                     >
-                      {interest}
+                      {tag}
                     </Chip>
                   ))}
                 </div>
@@ -498,26 +469,28 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
             )}
 
             {/* ── Member since ── */}
-            <div className="flex items-center gap-2 px-3 pb-2 text-[12px] text-[var(--muted)]">
-              <CalendarIcon size={13} className="shrink-0" />
-              <span>Membre depuis</span>
-              <span className="ml-auto font-semibold text-[var(--foreground)]/80">{memberSince}</span>
-            </div>
+            {memberSince && (
+              <div className="flex items-center gap-2 px-3 pb-2 text-[12px] text-[var(--muted)]">
+                <CalendarIcon size={13} className="shrink-0" />
+                <span>Membre depuis</span>
+                <span className="ml-auto font-semibold text-[var(--foreground)]/80">{memberSince}</span>
+              </div>
+            )}
 
             {/* ── Server roles ── */}
             {serverId && serverRoles.length > 0 && canManageRoles && (
               <div className="px-3 pb-2">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between"
-                  onClick={() => setShowRoles((v) => !v)}
+                  className="flex w-full items-center justify-between py-0.5"
+                  onClick={() => setShowRoles(v => !v)}
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/50">Rôles</p>
-                  <ShieldCheckIcon size={12} className={cn('text-[var(--muted)] transition-transform', showRoles && 'rotate-180')} />
+                  <ShieldCheckIcon size={12} className={cn('text-[var(--muted)] transition-transform duration-200', showRoles && 'rotate-180')} />
                 </button>
                 {showRoles && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {serverRoles.map((role: any) => {
+                    {serverRoles.map((role) => {
                       const active = memberRoleIds.includes(role.id);
                       return (
                         <button
@@ -528,13 +501,13 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                             active ? 'opacity-100' : 'opacity-40 hover:opacity-70',
                           )}
                           style={{
-                            borderColor: role.color || '#888',
-                            backgroundColor: active ? (role.color || '#888') + '20' : 'transparent',
-                            color: role.color || '#888',
+                            borderColor: role.color,
+                            backgroundColor: active ? role.color + '20' : 'transparent',
+                            color: role.color,
                           }}
                           onClick={() => toggleRole(role.id)}
                         >
-                          <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: role.color || '#888' }} />
+                          <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: role.color }} />
                           {role.name}
                           {active && <CheckIcon size={10} />}
                         </button>
@@ -547,7 +520,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
 
             <div className="mx-3"><Separator /></div>
 
-            {/* ── Message input ── */}
+            {/* ── DM input ── */}
             {!isMe && (
               <div className="px-3 pb-3 pt-2">
                 <InputGroup variant="secondary" className="h-9 rounded-xl">
@@ -559,11 +532,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                     onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSendMessage(); }}
                   />
                   <div className="flex shrink-0 items-center pr-1">
-                    <Button
-                      isIconOnly size="sm" variant="ghost"
-                      className="size-7 rounded-lg text-[var(--muted)]"
-                      onPress={handleSendMessage}
-                    >
+                    <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-lg text-[var(--muted)]" onPress={handleSendMessage}>
                       <SmileIcon size={14} />
                     </Button>
                   </div>
@@ -578,35 +547,42 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
                 <div className="flex flex-col gap-2 px-3 pb-3 pt-2">
                   {!confirmKick && !confirmBan && (
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[11px] text-orange-400 border-orange-400/30" onPress={() => setConfirmKick(true)}>
-                        <UserXIcon size={13} />Expulser
+                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl border-orange-400/30 text-[11px] text-orange-400" onPress={() => setConfirmKick(true)}>
+                        <UserXIcon size={13} /> Expulser
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl text-[11px] text-red-400 border-red-400/30" onPress={() => setConfirmBan(true)}>
-                        <BanIcon size={13} />Bannir
+                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl border-red-400/30 text-[11px] text-red-400" onPress={() => setConfirmBan(true)}>
+                        <BanIcon size={13} /> Bannir
                       </Button>
                     </div>
                   )}
+
                   {confirmKick && (
                     <div className="space-y-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-2.5">
-                      <p className="text-[11px] text-orange-300">Expulser {profile?.displayName} ?</p>
+                      <p className="text-[11px] text-orange-300">Expulser {profile.displayName} ?</p>
                       <div className="flex gap-2">
                         <Button size="sm" variant="ghost" className="flex-1 rounded-xl text-[11px]" onPress={() => setConfirmKick(false)}>Annuler</Button>
-                        <Button size="sm" className="flex-1 gap-1 rounded-xl text-[11px] bg-orange-600 hover:bg-orange-500" onPress={handleKick}>
-                          <UserXIcon size={11} />Confirmer
+                        <Button size="sm" className="flex-1 gap-1 rounded-xl bg-orange-600 text-[11px] hover:bg-orange-500" onPress={handleKick}>
+                          <UserXIcon size={11} /> Confirmer
                         </Button>
                       </div>
                     </div>
                   )}
+
                   {confirmBan && (
                     <div className="space-y-2 rounded-xl border border-red-500/20 bg-red-500/5 p-2.5">
-                      <p className="text-[11px] text-red-300">Bannir {profile?.displayName} ?</p>
-                      <InputGroup className="h-7 rounded-xl border-[var(--border)]/50" variant="secondary">
-                        <InputGroup.Input placeholder="Raison (optionnel)" value={banReason} onChange={(e) => setBanReason(e.target.value)} className="text-[11px]" />
+                      <p className="text-[11px] text-red-300">Bannir {profile.displayName} ?</p>
+                      <InputGroup variant="secondary" className="h-7 rounded-xl border-[var(--border)]/50">
+                        <InputGroup.Input
+                          placeholder="Raison (optionnel)"
+                          value={banReason}
+                          onChange={(e) => setBanReason(e.target.value)}
+                          className="text-[11px]"
+                        />
                       </InputGroup>
                       <div className="flex gap-2">
                         <Button size="sm" variant="ghost" className="flex-1 rounded-xl text-[11px]" onPress={() => { setConfirmBan(false); setBanReason(''); }}>Annuler</Button>
-                        <Button size="sm" className="flex-1 gap-1 rounded-xl text-[11px] bg-red-600 hover:bg-red-500" onPress={handleBan}>
-                          <BanIcon size={11} />Confirmer
+                        <Button size="sm" className="flex-1 gap-1 rounded-xl bg-red-600 text-[11px] hover:bg-red-500" onPress={handleBan}>
+                          <BanIcon size={11} /> Confirmer
                         </Button>
                       </div>
                     </div>
