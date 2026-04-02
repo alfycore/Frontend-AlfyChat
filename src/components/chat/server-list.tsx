@@ -245,22 +245,24 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       >
         {/* ── DMs ── */}
         <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant="ghost"
-            aria-label={t.serverList?.dms ?? 'Messages directs'}
-            className={cn(
-              'group relative mx-auto shrink-0 transition-all duration-200',
-              btnSize,
-              selectedServer === null
-                ? '!rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
-                : '!rounded-full bg-white/5 text-white/50 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
-            )}
-            onPress={() => onSelectServer(null)}
-          >
+          <div className="group relative mx-auto flex shrink-0 items-center justify-center">
             <Indicator active={selectedServer === null} />
-            <MessageCircleIcon size={iconSize} />
-          </Button>
+            <Button
+              isIconOnly
+              variant="ghost"
+              aria-label={t.serverList?.dms ?? 'Messages directs'}
+              className={cn(
+                'shrink-0 transition-all duration-200',
+                btnSize,
+                selectedServer === null
+                  ? '!rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
+                  : '!rounded-full bg-white/5 text-white/50 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
+              )}
+              onPress={() => onSelectServer(null)}
+            >
+              <MessageCircleIcon size={iconSize} />
+            </Button>
+          </div>
           <Tooltip.Content showArrow placement={side}>
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.dms ?? 'Messages directs'}</p>
