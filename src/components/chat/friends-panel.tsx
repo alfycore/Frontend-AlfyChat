@@ -90,6 +90,7 @@ const statusConfig: Record<string, { color: string }> = {
 export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const { isMobile, openSidebar } = useMobileNav();
   const { user: currentUser } = useAuth();
+  const prevUserIdRef = useRef<string | null>(null);
   const ui = useUIStyle();
   const { t, tx } = useTranslation();
   const tabsListRef = useRef<HTMLDivElement>(null);
@@ -193,6 +194,14 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (currentUser?.id && currentUser.id !== prevUserIdRef.current) {
+      prevUserIdRef.current = currentUser.id;
+      loadFriends();
+      loadRequests();
+    }
+  }, [currentUser?.id]);
+
   const loadBlockedUsers = async () => {
     try {
       const response = await api.getBlockedUsers();
@@ -201,6 +210,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   };
 
   const loadFriends = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('alfychat_token') : null;
+    if (!token) return;
     try {
       const response = await api.getFriends();
       if (response.success && response.data) {

@@ -285,6 +285,7 @@ export function ChannelList({
 }: ChannelListProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const prevUserIdRef = useRef<string | null>(null);
   const voice = useVoice();
   const { t } = useTranslation();
   const ui = useUIStyle();
@@ -327,6 +328,9 @@ export function ChannelList({
   // ── Conversations (DM mode) ──────────────────────────────────────────────
 
   const loadConversations = useCallback(async () => {
+    // Ne pas charger si pas encore authentifié
+    const token = typeof window !== 'undefined' ? localStorage.getItem('alfychat_token') : null;
+    if (!token) return;
     try {
       const response = await api.getConversations();
       if (!response.success || !response.data) return;
@@ -512,6 +516,14 @@ export function ChannelList({
       loadConversations();
     }
   }, [serverId, loadChannels, loadConversations]);
+
+  // Reload conversations when the user logs in (resolves empty DM list on hard refresh)
+  useEffect(() => {
+    if (!serverId && user?.id && user.id !== prevUserIdRef.current) {
+      prevUserIdRef.current = user.id;
+      loadConversations();
+    }
+  }, [user?.id, serverId, loadConversations]);
 
   // Snapshot de l'état vocal du serveur à l'ouverture (évite le compteur "0" avant le 1er VOICE_STATE_UPDATE)
   useEffect(() => {
@@ -955,8 +967,8 @@ export function ChannelList({
                               {customStatusMap.get(conv.recipientId)}
                             </p>
                           ) : (
-                            <p className="text-[10px] text-[var(--muted)]/40 leading-tight capitalize">
-                              {presence ?? 'hors ligne'}
+                            <p className="text-[10px] text-[var(--muted)]/40 leading-tight">
+                              {presence === 'online' ? 'En ligne' : presence === 'idle' ? 'Absent' : presence === 'dnd' ? 'Ne pas déranger' : presence === 'invisible' ? 'Invisible' : 'Hors ligne'}
                             </p>
                           )}
                         </div>

@@ -685,7 +685,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             </Card>
           </div>
         ) : (
-          <div className="space-y-0.5" ref={messagesContainerRef}>
+          <div className="space-y-0" ref={messagesContainerRef}>
             {/* Indicateur de chargement des anciens messages */}
             {isLoadingMoreMessages && (
               <div className="flex items-center justify-center gap-2 py-3 text-[var(--muted)]">
@@ -715,6 +715,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                   onSaveEdit={handleSaveEdit}
                   onCancelEdit={handleCancelEdit}
                   onDelete={deleteMessage}
+                  highlight={searchQuery.trim() || undefined}
                 />
               );
             })}

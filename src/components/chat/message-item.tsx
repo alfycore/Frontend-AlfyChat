@@ -232,6 +232,27 @@ export interface MessageItemProps {
   onSaveEdit: (id: string) => void;
   onCancelEdit: () => void;
   onDelete: (id: string) => void;
+  highlight?: string;
+}
+
+// ── HighlightText ─────────────────────────────────────────────────────────────
+
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark key={i} className="rounded bg-yellow-400/40 text-[var(--foreground)] px-0.5 not-italic">{part}</mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
 }
 
 // ── MessageItem ───────────────────────────────────────────────────────────────
@@ -241,6 +262,7 @@ export const MessageItem = memo(function MessageItem({
   isGrouped = false,
   onSetEditInput, onReply, onCopy, onReaction, onRemoveReaction,
   onStartEdit, onSaveEdit, onCancelEdit, onDelete,
+  highlight = '',
 }: MessageItemProps) {
   const isMe = !!currentUser && message.authorId === currentUser.id;
   const displayName = isMe
@@ -270,7 +292,7 @@ export const MessageItem = memo(function MessageItem({
       data-message-id={message.id}
       className={cn(
         'group relative px-2 md:px-3',
-        isGrouped ? 'py-px' : 'py-0.5',
+        isGrouped ? 'py-[1px]' : 'py-[1px]',
         message.pending && 'opacity-60',
       )}>
       {/* ── Toolbar flottant ── */}
@@ -422,7 +444,11 @@ export const MessageItem = memo(function MessageItem({
               const { textContent, images, files } = parseAttachments(message.content ?? '');
               return (
                 <div className="mt-0.5 text-[13px] leading-relaxed text-[var(--foreground)]/90 md:text-sm">
-                  {textContent && <MarkdownRenderer content={textContent} />}
+                  {textContent && (
+                    highlight
+                      ? <HighlightText text={textContent} query={highlight} />
+                      : <MarkdownRenderer content={textContent} />
+                  )}
                   {!message.isSystem && extractInviteCodes(message.content).map((code) => (
                     <InviteEmbed key={code} code={code} />
                   ))}

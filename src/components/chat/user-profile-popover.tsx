@@ -307,7 +307,7 @@ export function UserProfilePopover({ userId, children, onOpenDM, serverId, open:
       onOpenChange={setIsOpen}
     >
       <Popover.Trigger>{children}</Popover.Trigger>
-      <Popover.Content placement="right" shouldFlip offset={8} className="w-[300px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)] p-0">
+      <Popover.Content placement="left" shouldFlip offset={8} className="w-[300px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)] p-0">
         {loading || !profile ? (
           /* ── Skeleton ── */
           <div className="flex flex-col">
