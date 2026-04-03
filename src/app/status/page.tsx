@@ -488,6 +488,30 @@ export default function StatusPage() {
           </p>
         </section>
 
+        {/* ── External monitoring (status.alfychat.app) ── */}
+        <section className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Monitoring externe
+          </h2>
+          <div className="rounded-xl border border-border/50 overflow-hidden bg-white">
+            <iframe src="https://status.alfychat.app/embed/monitor-eu?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+            <iframe src="https://status.alfychat.app/embed/monitor-su1?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+            <iframe src="https://status.alfychat.app/embed/monitor-sm1?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+            <iframe src="https://status.alfychat.app/embed/monitor-sf1?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+            <iframe src="https://status.alfychat.app/embed/monitor-sc1?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+            <iframe src="https://status.alfychat.app/embed/monitor-sb1?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+            <iframe src="https://status.alfychat.app/embed/monitor-ss1?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+            <iframe src="https://status.alfychat.app/embed/monitor-ws?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+            <iframe src="https://status.alfychat.app/embed/monitor-media3to?theme=light&days=60" width="100%" height="70" frameBorder="0" allowFullScreen />
+          </div>
+          <div className="rounded-xl border border-border/50 overflow-hidden bg-white">
+            <iframe src="https://status.alfychat.app/embed/events/live?theme=light&incidents=1&maintenance=1" width="100%" height="300" frameBorder="0" allowFullScreen />
+          </div>
+          <p className="text-xs text-muted-foreground/40 text-center">
+            Données issues de status.alfychat.app · 60 derniers jours
+          </p>
+        </section>
+
       </main>
 
       {/* ── Footer ── */}
