@@ -58,16 +58,23 @@ export default function StatusPage() {
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Monitoring externe
           </h2>
-          <div className={`rounded-xl border border-border/50 overflow-hidden ${bg}`}>
-            <iframe src={`https://status.alfychat.app/embed/monitor-eu?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
-            <iframe src={`https://status.alfychat.app/embed/monitor-su1?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
-            <iframe src={`https://status.alfychat.app/embed/monitor-sm1?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
-            <iframe src={`https://status.alfychat.app/embed/monitor-sf1?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
-            <iframe src={`https://status.alfychat.app/embed/monitor-sc1?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
-            <iframe src={`https://status.alfychat.app/embed/monitor-sb1?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
-            <iframe src={`https://status.alfychat.app/embed/monitor-ss1?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
-            <iframe src={`https://status.alfychat.app/embed/monitor-ws?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
-            <iframe src={`https://status.alfychat.app/embed/monitor-media3to?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
+          <div className={`rounded-xl border border-border/50 overflow-hidden divide-y divide-border/30 ${bg}`}>
+            {[
+              { slug: 'monitor-eu', name: 'API Gateway' },
+              { slug: 'monitor-su1', name: 'Users Service' },
+              { slug: 'monitor-sm1', name: 'Messages Service' },
+              { slug: 'monitor-sf1', name: 'Friends Service' },
+              { slug: 'monitor-sc1', name: 'Calls Service' },
+              { slug: 'monitor-sb1', name: 'Bots Service' },
+              { slug: 'monitor-ss1', name: 'Servers Service' },
+              { slug: 'monitor-ws', name: 'WebSocket Gateway' },
+              { slug: 'monitor-media3to', name: 'Media Service' },
+            ].map(({ slug, name }) => (
+              <div key={slug}>
+                <div className="px-4 pt-2 text-xs font-medium text-muted-foreground">{name}</div>
+                <iframe src={`https://status.alfychat.app/embed/${slug}?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
+              </div>
+            ))}
           </div>
           <p className="text-xs text-muted-foreground/40 text-center">
             Données issues de status.alfychat.app · 60 derniers jours
