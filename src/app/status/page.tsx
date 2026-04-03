@@ -40,11 +40,16 @@ export default function StatusPage() {
 
       <main className="mx-auto max-w-4xl px-4 py-10 space-y-8">
 
+        {/* -- Incidents / maintenance (top) -- */}
+        <div className={`rounded-xl border border-border/50 overflow-hidden ${bg}`}>
+          <iframe src={`https://status.alfychat.app/embed/events/live?theme=${theme}&incidents=1&maintenance=1`} width="100%" height="300" frameBorder="0" allowFullScreen />
+        </div>
+
         {/* -- Hero -- */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">�tat des services</h1>
+          <h1 className="text-3xl font-bold tracking-tight">État des services</h1>
           <p className="text-muted-foreground text-sm">
-            Surveillance en temps r�el de l&apos;infrastructure AlfyChat
+            Surveillance en temps réel de l&apos;infrastructure AlfyChat
           </p>
         </div>
 
@@ -64,11 +69,8 @@ export default function StatusPage() {
             <iframe src={`https://status.alfychat.app/embed/monitor-ws?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
             <iframe src={`https://status.alfychat.app/embed/monitor-media3to?theme=${theme}&days=60`} width="100%" height="70" frameBorder="0" allowFullScreen />
           </div>
-          <div className={`rounded-xl border border-border/50 overflow-hidden ${bg}`}>
-            <iframe src={`https://status.alfychat.app/embed/events/live?theme=${theme}&incidents=1&maintenance=1`} width="100%" height="300" frameBorder="0" allowFullScreen />
-          </div>
           <p className="text-xs text-muted-foreground/40 text-center">
-            Donn�es issues de status.alfychat.app � 60 derniers jours
+            Données issues de status.alfychat.app · 60 derniers jours
           </p>
         </section>
 
