@@ -2,18 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeftIcon, ZapIcon } from '@/components/icons';
+import {
+  ArrowLeftIcon,
+  ZapIcon,
+  GlobeIcon,
+  UserIcon,
+  MessageCircleIcon,
+  UsersIcon,
+  PhoneIcon,
+  BotIcon,
+  ServerIcon,
+  WifiIcon,
+  ImageIcon,
+} from '@/components/icons';
 
 const monitors = [
-  { slug: 'monitor-eu',       name: 'API Gateway',       icon: '🌐' },
-  { slug: 'monitor-su1',      name: 'Users',             icon: '👤' },
-  { slug: 'monitor-sm1',      name: 'Messages',          icon: '💬' },
-  { slug: 'monitor-sf1',      name: 'Friends',           icon: '🤝' },
-  { slug: 'monitor-sc1',      name: 'Calls',             icon: '📞' },
-  { slug: 'monitor-sb1',      name: 'Bots',              icon: '🤖' },
-  { slug: 'monitor-ss1',      name: 'Servers',           icon: '🖥️' },
-  { slug: 'monitor-ws',       name: 'WebSocket',         icon: '⚡' },
-  { slug: 'monitor-media3to', name: 'Media',             icon: '🖼️' },
+  { slug: 'monitor-eu',       name: 'API Gateway',  Icon: GlobeIcon },
+  { slug: 'monitor-su1',      name: 'Users',         Icon: UserIcon },
+  { slug: 'monitor-sm1',      name: 'Messages',      Icon: MessageCircleIcon },
+  { slug: 'monitor-sf1',      name: 'Friends',       Icon: UsersIcon },
+  { slug: 'monitor-sc1',      name: 'Calls',         Icon: PhoneIcon },
+  { slug: 'monitor-sb1',      name: 'Bots',          Icon: BotIcon },
+  { slug: 'monitor-ss1',      name: 'Servers',       Icon: ServerIcon },
+  { slug: 'monitor-ws',       name: 'WebSocket',     Icon: WifiIcon,  tall: true },
+  { slug: 'monitor-media3to', name: 'Media',         Icon: ImageIcon },
 ] as const;
 
 export default function StatusPage() {
@@ -76,7 +88,7 @@ export default function StatusPage() {
             <iframe
               src={`https://status.alfychat.app/embed/events/live?theme=${theme}&incidents=1&maintenance=1`}
               width="100%"
-              height="300"
+              height="420"
               frameBorder="0"
               allowFullScreen
             />
@@ -87,13 +99,13 @@ export default function StatusPage() {
         <section className="space-y-4">
           <SectionHeader title="Services · 60 derniers jours" />
           <div className="grid gap-3">
-            {monitors.map(({ slug, name, icon }) => (
+            {monitors.map(({ slug, name, Icon, ...rest }) => (
               <div
                 key={slug}
                 className="group rounded-2xl border border-border/40 bg-card shadow-sm hover:shadow-md hover:border-border/70 transition-all overflow-hidden"
               >
                 <div className="flex items-center gap-2.5 px-5 pt-3.5 pb-1">
-                  <span className="text-base leading-none">{icon}</span>
+                  <Icon size={14} className="text-muted-foreground" />
                   <span className="text-[13px] font-semibold tracking-tight text-foreground/90">
                     {name}
                   </span>
@@ -101,10 +113,9 @@ export default function StatusPage() {
                 <iframe
                   src={`https://status.alfychat.app/embed/${slug}?theme=${theme}&days=60`}
                   width="100%"
-                  height="70"
+                  height={'tall' in rest ? '110' : '90'}
                   frameBorder="0"
                   allowFullScreen
-                  className="pointer-events-auto"
                 />
               </div>
             ))}
