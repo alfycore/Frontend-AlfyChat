@@ -357,7 +357,7 @@ export function ServerSettingsDialog({
 
   return (
     <Modal isOpen={open} onOpenChange={onOpenChange}>
-      <Modal.Backdrop isDismissable>
+      <Modal.Backdrop>
       <Modal.Container size="lg">
         <Modal.Dialog className="h-[88vh] max-w-4xl overflow-hidden rounded-2xl border border-[var(--border)]/40 p-0 shadow-2xl">
           <div className="flex h-full">

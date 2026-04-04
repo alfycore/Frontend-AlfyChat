@@ -153,7 +153,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
 
   return (
     <Modal isOpen={open} onOpenChange={onOpenChange}>
-      <Modal.Backdrop isDismissable>
+      <Modal.Backdrop>
       <Modal.Container size="lg">
         <Modal.Dialog className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl border border-[var(--border)]/60 p-0 shadow-2xl">
           <div className="flex h-full">

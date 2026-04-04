@@ -300,10 +300,8 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                       onOpenChange={(open) => setContextId(open ? server.id : null)}
                     >
                       <Tooltip delay={0}>
-                        <div
-                          slot="trigger"
-                          role="button"
-                          tabIndex={0}
+                        <button
+                          type="button"
                           aria-label={server.name}
                           aria-pressed={active}
                           onClick={() => onSelectServer(server.id)}
@@ -343,7 +341,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                               <Badge color="success" size="sm" placement="bottom-right" />
                             )}
                           </Badge.Anchor>
-                        </div>
+                        </button>
 
                         <Tooltip.Content showArrow placement={side}>
                           <Tooltip.Arrow />

@@ -6,6 +6,8 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  memo,
+  type Dispatch,
   type SetStateAction,
 } from 'react';
 import {
@@ -53,6 +55,75 @@ interface ChatAreaProps {
   recipientId?: string;
   recipientName?: string;
 }
+
+// ── MessageList (memoized) ────────────────────────────────────────────────────
+// Isolated from ChatArea re-renders caused by messageInput / typing state changes.
+
+interface MessageListProps {
+  dedupedMessages: MessageData[];
+  editingMessageId: string | null;
+  editInput: string;
+  messagesById: Map<string, MessageData>;
+  searchQuery: string;
+  currentUser: MessageSender | null;
+  recipientName?: string;
+  isLoadingMoreMessages: boolean;
+  messagesContainerRef: React.RefObject<HTMLDivElement | null>;
+  onSetEditInput: Dispatch<SetStateAction<string>>;
+  onReply: (id: string, content: string, authorName: string) => void;
+  onCopy: (content: string) => void;
+  onReaction: (id: string, emoji: string) => void;
+  onRemoveReaction: (id: string, emoji: string) => void;
+  onStartEdit: (id: string, content: string) => void;
+  onSaveEdit: (id: string) => void;
+  onCancelEdit: () => void;
+  onDelete: (id: string) => void;
+}
+
+const MessageList = memo(function MessageList({
+  dedupedMessages, editingMessageId, editInput, messagesById, searchQuery,
+  currentUser, recipientName, isLoadingMoreMessages, messagesContainerRef,
+  onSetEditInput, onReply, onCopy, onReaction, onRemoveReaction,
+  onStartEdit, onSaveEdit, onCancelEdit, onDelete,
+}: MessageListProps) {
+  const highlight = searchQuery.trim() || undefined;
+  return (
+    <div className="space-y-0" ref={messagesContainerRef}>
+      {isLoadingMoreMessages && (
+        <div className="flex items-center justify-center gap-2 py-3 text-[var(--muted)]">
+          <Spinner size="sm" />
+          <span className="text-[12px]">Chargement des anciens messages…</span>
+        </div>
+      )}
+      {dedupedMessages.map((message, idx) => {
+        const isEditing = editingMessageId === message.id;
+        const grouped = idx > 0 && shouldGroup(dedupedMessages[idx - 1], message);
+        return (
+          <MessageItem
+            key={message.id}
+            message={message}
+            currentUser={currentUser}
+            recipientName={recipientName}
+            isEditing={isEditing}
+            editInput={isEditing ? editInput : ''}
+            isGrouped={grouped}
+            replyMessage={message.replyToId ? (messagesById.get(message.replyToId) ?? null) : null}
+            onSetEditInput={onSetEditInput}
+            onReply={onReply}
+            onCopy={onCopy}
+            onReaction={onReaction}
+            onRemoveReaction={onRemoveReaction}
+            onStartEdit={onStartEdit}
+            onSaveEdit={onSaveEdit}
+            onCancelEdit={onCancelEdit}
+            onDelete={onDelete}
+            highlight={highlight}
+          />
+        );
+      })}
+    </div>
+  );
+});
 
 // ── ChatArea ──────────────────────────────────────────────────────────────────
 
@@ -685,54 +756,26 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             </Card>
           </div>
         ) : (
-          <div className="space-y-0" ref={messagesContainerRef}>
-            {/* Indicateur de chargement des anciens messages */}
-            {isLoadingMoreMessages && (
-              <div className="flex items-center justify-center gap-2 py-3 text-[var(--muted)]">
-                <Spinner size="sm" />
-                <span className="text-[12px]">Chargement des anciens messages…</span>
-              </div>
-            )}
-            {dedupedMessages.map((message, idx) => {
-              const isEditing = editingMessageId === message.id;
-              const grouped = idx > 0 && shouldGroup(dedupedMessages[idx - 1], message);
-              return (
-                <MessageItem
-                  key={message.id}
-                  message={message}
-                  currentUser={user}
-                  recipientName={recipientName}
-                  isEditing={isEditing}
-                  editInput={isEditing ? editInput : ''}
-                  isGrouped={grouped}
-                  replyMessage={message.replyToId ? (messagesById.get(message.replyToId) ?? null) : null}
-                  onSetEditInput={handleSetEditInput}
-                  onReply={handleReply}
-                  onCopy={handleCopyMessage}
-                  onReaction={handleReaction}
-                  onRemoveReaction={handleRemoveReaction}
-                  onStartEdit={handleStartEdit}
-                  onSaveEdit={handleSaveEdit}
-                  onCancelEdit={handleCancelEdit}
-                  onDelete={deleteMessage}
-                  highlight={searchQuery.trim() || undefined}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {typingUsers.length > 0 && (
-          <div className="flex items-center gap-1.5 px-4 py-1">
-            <div className="flex gap-0.5">
-              <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--muted)]/50 [animation-delay:0ms]" />
-              <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--muted)]/50 [animation-delay:150ms]" />
-              <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--muted)]/50 [animation-delay:300ms]" />
-            </div>
-            <span className="text-[11px] text-[var(--muted)]/60">
-              {typingUsers.map((u) => u.username).join(', ')} est en train d&apos;écrire
-            </span>
-          </div>
+          <MessageList
+            dedupedMessages={dedupedMessages}
+            editingMessageId={editingMessageId}
+            editInput={editInput}
+            messagesById={messagesById}
+            searchQuery={searchQuery}
+            currentUser={user as MessageSender | null}
+            recipientName={recipientName}
+            isLoadingMoreMessages={isLoadingMoreMessages}
+            messagesContainerRef={messagesContainerRef}
+            onSetEditInput={handleSetEditInput}
+            onReply={handleReply}
+            onCopy={handleCopyMessage}
+            onReaction={handleReaction}
+            onRemoveReaction={handleRemoveReaction}
+            onStartEdit={handleStartEdit}
+            onSaveEdit={handleSaveEdit}
+            onCancelEdit={handleCancelEdit}
+            onDelete={deleteMessage}
+          />
         )}
       </ScrollShadow>
 
@@ -820,7 +863,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           {/* Attachment / File upload */}
           <Tooltip delay={0}>
             <Button
-              isIconOnly size="sm" variant="tertiary"
+              isIconOnly size="sm" variant="ghost"
               className="size-7 shrink-0 self-end rounded-xl pb-0.5 text-[var(--muted)] hover:text-[var(--foreground)]"
               isDisabled={isUploading}
               onPress={() => fileInputRef.current?.click()}
@@ -864,12 +907,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
 
           {/* Actions */}
-          <div className="flex shrink-0 self-end items-center gap-0.5 pb-0.5">
+          <div className="flex shrink-0 self-end items-center gap-0.5 ">
             <EmojiPicker onSelect={handleEmojiInsert}>
               <Button
                 isIconOnly
                 size="sm"
-                variant="tertiary"
+                variant="ghost"
                 className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 <SmileIcon size={18} />
@@ -880,7 +923,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               <Button
                 isIconOnly
                 size="sm"
-                variant="tertiary"
+                variant="ghost"
                 className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 <ImageIcon size={18} />
@@ -890,7 +933,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             <Button
               isIconOnly
               size="sm"
-              variant="tertiary"
+              variant="ghost"
               className={`size-7 rounded-xl transition-colors ${messageInput.trim() || pendingAttachments.length > 0 ? 'text-[var(--accent)]' : 'text-[var(--muted)]/40'}`}
               isDisabled={!messageInput.trim() && pendingAttachments.length === 0}
               onPress={() => {

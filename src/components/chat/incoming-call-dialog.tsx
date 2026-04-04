@@ -59,7 +59,7 @@ export function IncomingCallDialog({
 
   return (
     <Modal isOpen={open}>
-      <Modal.Backdrop isDismissable={false}>
+      <Modal.Backdrop>
         <Modal.Container size="sm">
           <Modal.Dialog className="max-w-sm rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl">
           {/* ── Header ── */}

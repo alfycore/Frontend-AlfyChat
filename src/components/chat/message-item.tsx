@@ -309,16 +309,16 @@ export const MessageItem = memo(function MessageItem({
         </Tooltip>
 
         <EmojiPicker onSelect={(emoji) => onReaction(message.id, emoji)}>
-          <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]">
+          <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
             <SmileIcon size={14} />
-          </Button>
+          </div>
         </EmojiPicker>
 
         <Dropdown>
           <Dropdown.Trigger>
-            <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]">
+            <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
               <MoreHorizontalIcon size={14} />
-            </Button>
+            </div>
           </Dropdown.Trigger>
           <Dropdown.Popover className="min-w-44">
             <Dropdown.Menu

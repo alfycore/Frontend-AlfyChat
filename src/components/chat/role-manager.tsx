@@ -454,7 +454,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
 
       {/* Delete confirmation modal */}
       <Modal isOpen={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <Modal.Backdrop isDismissable>
+        <Modal.Backdrop>
         <Modal.Container size="sm">
           <Modal.Dialog className="rounded-2xl border border-[var(--border)]/60 p-0">
             <Modal.Header>

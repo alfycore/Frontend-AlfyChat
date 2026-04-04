@@ -959,10 +959,10 @@ function FriendRow({
         </Tooltip>
 
         <Dropdown>
-          <Dropdown.Trigger>
-            <Button isIconOnly size="sm" variant="ghost" aria-label={t.friends.moreActions} className="rounded-xl">
+          <Dropdown.Trigger aria-label={t.friends.moreActions}>
+            <div className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]">
               <MoreVerticalIcon size={14} />
-            </Button>
+            </div>
           </Dropdown.Trigger>
           <Dropdown.Popover placement="bottom end">
             <Dropdown.Menu aria-label={t.friends.moreActions}>

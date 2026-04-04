@@ -1,15 +1,21 @@
 ﻿'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Button, InputGroup, Popover, ScrollShadow } from '@heroui/react';
+import { Button, Popover, ScrollShadow, SearchField } from '@heroui/react';
 import { Twemoji, emojiToTwemojiUrl } from '@/lib/twemoji';
 import { SmileIcon } from '@/components/icons';
 
 // ==========================================
-// EMOJI DATA — Version étendue
+// EMOJI DATA
 // ==========================================
 
-const EMOJI_CATEGORIES: { name: string; icon: string; emojis: string[] }[] = [
+interface EmojiCategory {
+  name: string;
+  icon: string;
+  emojis: string[];
+}
+
+const EMOJI_CATEGORIES: EmojiCategory[] = [
   {
     name: 'Populaires',
     icon: '⭐',
@@ -1108,7 +1114,7 @@ const EMOJI_SEARCH_NAMES: Record<string, string> = {
 };
 
 // ==========================================
-// CACHE SYSTEM
+// RECENT EMOJIS (localStorage)
 // ==========================================
 
 const CACHE_KEY = 'alfychat_emoji_cache_v1';
@@ -1118,42 +1124,27 @@ const MAX_RECENT = 24;
 function getAllEmojis(): string[] {
   const set = new Set<string>();
   for (const cat of EMOJI_CATEGORIES) {
-    for (const emoji of cat.emojis) {
-      set.add(emoji);
-    }
+    for (const e of cat.emojis) set.add(e);
   }
   return Array.from(set);
 }
 
 function preloadEmojiImages(): void {
   if (typeof window === 'undefined') return;
+  if (localStorage.getItem(CACHE_KEY) === 'done') return;
 
-  const cached = localStorage.getItem(CACHE_KEY);
-  if (cached === 'done') return;
+  const all = getAllEmojis();
+  let done = 0;
 
-  console.log('[EMOJI] First connection — caching emoji images in background...');
-
-  const allEmojis = getAllEmojis();
-  let loaded = 0;
-  let failed = 0;
-
-  for (const emoji of allEmojis) {
+  for (const emoji of all) {
     const img = new Image();
     img.src = emojiToTwemojiUrl(emoji);
-    img.onload = () => {
-      loaded++;
-      if (loaded + failed >= allEmojis.length) {
-        localStorage.setItem(CACHE_KEY, 'done');
-        console.log(`[EMOJI] Cache complete: ${loaded} loaded, ${failed} failed`);
-      }
+    const tick = () => {
+      done++;
+      if (done >= all.length) localStorage.setItem(CACHE_KEY, 'done');
     };
-    img.onerror = () => {
-      failed++;
-      if (loaded + failed >= allEmojis.length) {
-        localStorage.setItem(CACHE_KEY, 'done');
-        console.log(`[EMOJI] Cache complete: ${loaded} loaded, ${failed} failed`);
-      }
-    };
+    img.onload = tick;
+    img.onerror = tick;
   }
 }
 
@@ -1161,9 +1152,10 @@ function getRecentEmojis(): string[] {
   if (typeof window === 'undefined') return [];
   try {
     const saved = localStorage.getItem(RECENT_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch { /* ignore */ }
-  return [];
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
 }
 
 function saveRecentEmoji(emoji: string): void {
@@ -1174,6 +1166,40 @@ function saveRecentEmoji(emoji: string): void {
     if (recent.length > MAX_RECENT) recent.length = MAX_RECENT;
     localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
   } catch { /* ignore */ }
+}
+
+// ==========================================
+// SEARCH HELPERS
+// ==========================================
+
+function normalize(str: string): string {
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function searchEmojis(query: string): EmojiCategory[] {
+  const q = normalize(query.trim());
+  if (!q) return [];
+
+  const results: string[] = [];
+  const seen = new Set<string>();
+
+  for (const cat of EMOJI_CATEGORIES) {
+    for (const emoji of cat.emojis) {
+      if (seen.has(emoji)) continue;
+      if (emoji.includes(q)) {
+        results.push(emoji);
+        seen.add(emoji);
+        continue;
+      }
+      const names = EMOJI_SEARCH_NAMES[emoji];
+      if (names && normalize(names).includes(q)) {
+        results.push(emoji);
+        seen.add(emoji);
+      }
+    }
+  }
+
+  return results.length > 0 ? [{ name: 'Résultats', icon: '🔍', emojis: results }] : [];
 }
 
 // ==========================================
@@ -1188,107 +1214,56 @@ interface EmojiPickerProps {
 export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState(-1);
+  const [activeCategory, setActiveCategory] = useState(0);
   const [recentEmojis, setRecentEmojis] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    preloadEmojiImages();
-  }, []);
+  // Preload twemoji images once
+  useEffect(() => { preloadEmojiImages(); }, []);
 
+  // Reset state on open/close
   useEffect(() => {
     if (open) {
       setRecentEmojis(getRecentEmojis());
       setTimeout(() => searchInputRef.current?.focus(), 100);
     } else {
       setSearch('');
-      setActiveCategory(recentEmojis.length > 0 ? -1 : 0);
+      setActiveCategory(0);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const handleSelect = useCallback(
-    (emoji: string) => {
-      saveRecentEmoji(emoji);
-      setRecentEmojis((prev) => {
-        const next = prev.filter((e) => e !== emoji);
-        next.unshift(emoji);
-        if (next.length > MAX_RECENT) next.length = MAX_RECENT;
-        return next;
-      });
-      onSelect(emoji);
-      setOpen(false);
-    },
-    [onSelect],
-  );
+  const handleSelect = useCallback((emoji: string) => {
+    saveRecentEmoji(emoji);
+    setRecentEmojis((prev) => {
+      const next = prev.filter((e) => e !== emoji);
+      next.unshift(emoji);
+      if (next.length > MAX_RECENT) next.length = MAX_RECENT;
+      return next;
+    });
+    onSelect(emoji);
+    setOpen(false);
+  }, [onSelect]);
 
-  const displayCategories = useMemo(() => {
-    const cats: { name: string; icon: string; emojis: string[] }[] = [];
-
-    if (recentEmojis.length > 0) {
-      cats.push({ name: 'Récents', icon: '🕐', emojis: recentEmojis });
-    }
-
-    cats.push(...EMOJI_CATEGORIES);
-    return cats;
+  // Build the full category list (with Récents prepended if any)
+  const allCategories = useMemo<EmojiCategory[]>(() => {
+    if (recentEmojis.length === 0) return EMOJI_CATEGORIES;
+    return [{ name: 'Récents', icon: '🕐', emojis: recentEmojis }, ...EMOJI_CATEGORIES];
   }, [recentEmojis]);
 
-  const filteredCategories = useMemo(() => {
-    if (!search.trim()) return displayCategories;
+  // Filtered results when searching
+  const visibleCategories = useMemo(() => {
+    return search.trim() ? searchEmojis(search) : allCategories;
+  }, [search, allCategories]);
 
-    const q = search
-      .toLowerCase()
-      .trim()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-
-    const results: string[] = [];
-    const seen = new Set<string>();
-
-    for (const cat of EMOJI_CATEGORIES) {
-      for (const emoji of cat.emojis) {
-        if (seen.has(emoji)) continue;
-
-        if (emoji.includes(q)) {
-          results.push(emoji);
-          seen.add(emoji);
-          continue;
-        }
-
-        const names = EMOJI_SEARCH_NAMES[emoji];
-        if (names) {
-          const normalized = names
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '');
-          if (normalized.includes(q)) {
-            results.push(emoji);
-            seen.add(emoji);
-          }
-        }
-      }
-    }
-
-    if (results.length === 0) return [];
-    return [{ name: 'Résultats', icon: '🔍', emojis: results }];
-  }, [search, displayCategories]);
+  // Navigation tabs
+  const navTabs = useMemo(() => {
+    return allCategories.map((cat, i) => ({ name: cat.name, icon: cat.icon, index: i }));
+  }, [allCategories]);
 
   const scrollToCategory = useCallback((index: number) => {
     setActiveCategory(index);
-    const el = document.getElementById(`emoji-cat-${index}`);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById(`emoji-cat-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
-
-  const navCategories = useMemo(() => {
-    const cats: { name: string; icon: string; catIndex: number }[] = [];
-    if (recentEmojis.length > 0) {
-      cats.push({ name: 'Récents', icon: '🕐', catIndex: 0 });
-    }
-    const offset = recentEmojis.length > 0 ? 1 : 0;
-    EMOJI_CATEGORIES.forEach((cat, i) => {
-      cats.push({ name: cat.name, icon: cat.icon, catIndex: i + offset });
-    });
-    return cats;
-  }, [recentEmojis]);
 
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
@@ -1299,36 +1274,40 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
           </Button>
         )}
       </Popover.Trigger>
+
       <Popover.Content placement="top end" className="w-[340px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/98 p-0 shadow-2xl sm:w-[380px]">
-        {/* Search bar */}
-        <div className="border-b border-[var(--border)]/20 px-3 pt-3 pb-2">
-          <InputGroup className="h-9 rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
-            <InputGroup.Input
-              ref={searchInputRef}
-              placeholder="Rechercher un emoji..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-3"
-            />
-          </InputGroup>
+        {/* Search */}
+        <div className="px-3 pt-3 pb-2">
+          <SearchField name="emoji-search" className="rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
+            <SearchField.Group>
+              <SearchField.SearchIcon />
+              <SearchField.Input
+                ref={searchInputRef}
+                placeholder="Rechercher un emoji..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <SearchField.ClearButton />
+            </SearchField.Group>
+          </SearchField>
         </div>
 
-        {/* Category tabs - horizontal at top */}
+        {/* Category navigation */}
         {!search && (
           <div className="flex items-center gap-0.5 overflow-x-auto border-b border-[var(--border)]/20 px-2 py-1.5 scrollbar-none">
-            {navCategories.map((cat) => (
+            {navTabs.map((tab) => (
               <button
-                key={`nav-${cat.catIndex}`}
+                key={`nav-${tab.index}`}
                 type="button"
                 className={`flex shrink-0 items-center justify-center rounded-lg p-1.5 transition-all duration-150 ${
-                  activeCategory === cat.catIndex
+                  activeCategory === tab.index
                     ? 'bg-[var(--accent)]/15 ring-1 ring-[var(--accent)]/20'
                     : 'opacity-60 hover:opacity-100 hover:bg-[var(--surface-secondary)]/50'
                 }`}
-                onClick={() => scrollToCategory(cat.catIndex)}
-                title={cat.name}
+                onClick={() => scrollToCategory(tab.index)}
+                title={tab.name}
               >
-                <Twemoji emoji={cat.icon} size={18} />
+                <Twemoji emoji={tab.icon} size={18} />
               </button>
             ))}
           </div>
@@ -1337,15 +1316,13 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
         {/* Emoji grid */}
         <ScrollShadow className="h-[280px] sm:h-[320px]">
           <div className="px-2.5 py-2">
-            {filteredCategories.length === 0 ? (
+            {visibleCategories.length === 0 ? (
               <div className="flex h-48 flex-col items-center justify-center gap-2">
                 <span className="text-3xl">🔍</span>
-                <p className="text-[13px] text-[var(--muted)]/60">
-                  Aucun emoji trouvé
-                </p>
+                <p className="text-[13px] text-[var(--muted)]/60">Aucun emoji trouvé</p>
               </div>
             ) : (
-              filteredCategories.map((category, catIndex) => (
+              visibleCategories.map((category, catIndex) => (
                 <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2">
                   <div className="sticky top-0 z-10 mb-1 bg-[var(--surface)]/95 py-1">
                     <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-semibold text-[var(--muted)]/70">
@@ -1353,9 +1330,9 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
                     </p>
                   </div>
                   <div className="grid grid-cols-8 gap-px sm:grid-cols-9">
-                    {category.emojis.map((emoji, emojiIndex) => (
+                    {category.emojis.map((emoji, i) => (
                       <button
-                        key={`${catIndex}-${emojiIndex}`}
+                        key={`${catIndex}-${i}`}
                         type="button"
                         className="group flex aspect-square items-center justify-center rounded-lg transition-all duration-100 hover:scale-[1.15] hover:bg-[var(--accent)]/10 active:scale-95"
                         onClick={() => handleSelect(emoji)}

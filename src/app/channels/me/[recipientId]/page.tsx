@@ -7,14 +7,17 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { ChatArea } from '@/components/chat/chat-area';
+import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
 
 export default function DMPage() {
   const { user, isLoading: authLoading } = useAuth();
   const params = useParams();
   const recipientId = params.recipientId as string;
 
-  const [recipientName, setRecipientName] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialiser depuis le cache si disponible → affichage instantané
+  const cached = recipientId ? dmPrefetchCache.getUser(recipientId) : null;
+  const [recipientName, setRecipientName] = useState(cached?.displayName ?? '');
+  const [isLoading, setIsLoading] = useState(!cached);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -22,14 +25,51 @@ export default function DMPage() {
     if (authLoading || !user) return;
     if (!recipientId) return;
 
+    // Vérifier le cache d'abord
+    const hit = dmPrefetchCache.getUser(recipientId);
+    if (hit) {
+      setRecipientName(hit.displayName);
+      setIsLoading(false);
+      // Rafraîchir silencieusement en fond sans spinner
+      api.getUser(recipientId).then((res) => {
+        if (res.success && res.data) {
+          const u = res.data as any;
+          const name = u.displayName || u.username;
+          setRecipientName(name);
+          dmPrefetchCache.setUser(recipientId, {
+            id: u.id,
+            username: u.username,
+            displayName: name,
+            avatarUrl: u.avatarUrl,
+            bannerUrl: u.bannerUrl,
+            bio: u.bio,
+            status: u.status,
+            customStatus: u.customStatus ?? null,
+          });
+        }
+      }).catch(() => {});
+      return;
+    }
+
     const loadRecipient = async () => {
       setIsLoading(true);
       setError(false);
       try {
         const response = await api.getUser(recipientId);
         if (response.success && response.data) {
-          const userData = response.data as { displayName: string };
-          setRecipientName(userData.displayName);
+          const u = response.data as any;
+          const name = u.displayName || u.username;
+          setRecipientName(name);
+          dmPrefetchCache.setUser(recipientId, {
+            id: u.id,
+            username: u.username,
+            displayName: name,
+            avatarUrl: u.avatarUrl,
+            bannerUrl: u.bannerUrl,
+            bio: u.bio,
+            status: u.status,
+            customStatus: u.customStatus ?? null,
+          });
         } else {
           setError(true);
         }

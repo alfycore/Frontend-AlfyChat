@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LocaleProvider } from "@/components/locale-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 import { BackgroundProvider } from "@/components/background-provider";
+import { PrefetchDMs } from "@/components/prefetch-dms";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,6 +58,7 @@ export default function RootLayout({
         <ThemeProvider>
           <LocaleProvider>
             <AuthProvider>
+              <PrefetchDMs />
               <BackgroundProvider>
                 {children}
               </BackgroundProvider>

@@ -1,10 +1,10 @@
-﻿@import "tailwindcss";
-@import "@heroui/styles/css";
+﻿@import "@heroui/styles/css";
+@import "tailwindcss";
 /*
  * HeroUI Theme Customization
  * Add this to your global.css after importing @heroui/styles
  * Only includes base variables from variables.css
- * @see https://v3.heroui.com/docs/react/getting-started/theming
+ * @see https://heroui.com/docs/react/getting-started/theming
  */
 
 :root,
@@ -13,41 +13,40 @@
 [data-theme="light"],
 [data-theme="default"] {
   /* Theme Colors (Light Mode) */
-  --bg-solid: oklch(97.02% 0.0096 282.03);
-  --accent: oklch(57.74% 0.2091 282.03);
+  --accent: oklch(57.74% 0.2091 273.85);
   --accent-foreground: oklch(99.11% 0 0);
-  --background: oklch(97.02% 0.0096 282.03);
-  --border: oklch(90.00% 0.0096 282.03);
-  --danger: oklch(65.32% 0.2373 29.12);
-  --danger-foreground: oklch(99.11% 0 0);
-  --default: oklch(94.00% 0.0096 282.03);
-  --default-foreground: oklch(21.03% 0.0059 282.03);
-  --field-background: oklch(100.00% 0.0048 282.03);
-  --field-foreground: oklch(21.03% 0.0096 282.03);
-  --field-placeholder: oklch(55.17% 0.0192 282.03);
-  --focus: oklch(57.74% 0.2091 282.03);
-  --foreground: oklch(21.03% 0.0096 282.03);
-  --muted: oklch(55.17% 0.0192 282.03);
-  --overlay: oklch(100.00% 0.0029 282.03);
-  --overlay-foreground: oklch(21.03% 0.0096 282.03);
-  --scrollbar: oklch(87.10% 0.0096 282.03);
-  --segment: oklch(100.00% 0.0096 282.03);
-  --segment-foreground: oklch(21.03% 0.0096 282.03);
-  --separator: oklch(92.00% 0.0096 282.03);
-  --success: oklch(73.29% 0.1972 154.19);
-  --success-foreground: oklch(21.03% 0.0059 154.19);
-  --surface: oklch(100.00% 0.0048 282.03);
-  --surface-foreground: oklch(21.03% 0.0096 282.03);
-  --surface-secondary: oklch(95.24% 0.0077 282.03);
-  --surface-secondary-foreground: oklch(21.03% 0.0096 282.03);
-  --surface-tertiary: oklch(93.73% 0.0077 282.03);
-  --surface-tertiary-foreground: oklch(21.03% 0.0096 282.03);
-  --warning: oklch(78.19% 0.1615 75.71);
-  --warning-foreground: oklch(21.03% 0.0059 75.71);
+  --background: oklch(97.02% 0.0100 273.85);
+  --border: oklch(90.00% 0.0100 273.85);
+  --danger: oklch(0.5884 0.1993 24.39);
+  --danger-foreground: oklch(98% 0.0199 24.39);
+  --default: oklch(94.00% 0.0100 273.85);
+  --default-foreground: oklch(21.03% 0.0059 273.85);
+  --field-background: oklch(100.00% 0.0050 273.85);
+  --field-foreground: oklch(21.03% 0.0100 273.85);
+  --field-placeholder: oklch(55.17% 0.0200 273.85);
+  --focus: oklch(57.74% 0.2091 273.85);
+  --foreground: oklch(21.03% 0.0100 273.85);
+  --muted: oklch(55.17% 0.0200 273.85);
+  --overlay: oklch(100.00% 0.0030 273.85);
+  --overlay-foreground: oklch(21.03% 0.0100 273.85);
+  --scrollbar: oklch(87.10% 0.0100 273.85);
+  --segment: oklch(100.00% 0.0100 273.85);
+  --segment-foreground: oklch(21.03% 0.0100 273.85);
+  --separator: oklch(92.00% 0.0100 273.85);
+  --success: oklch(0.532 0.1238 151.57);
+  --success-foreground: oklch(98% 0.0124 151.57);
+  --surface: oklch(100.00% 0.0050 273.85);
+  --surface-foreground: oklch(21.03% 0.0100 273.85);
+  --surface-secondary: oklch(95.24% 0.0080 273.85);
+  --surface-secondary-foreground: oklch(21.03% 0.0100 273.85);
+  --surface-tertiary: oklch(93.73% 0.0080 273.85);
+  --surface-tertiary-foreground: oklch(21.03% 0.0100 273.85);
+  --warning: oklch(0.9218 0.1571 99.87);
+  --warning-foreground: oklch(15% 0.0471 99.87);
 
   /* Border Radius */
-  --radius: 0.5rem;
-  --field-radius: 0.5rem;
+  --radius: 0.25rem;
+  --field-radius: 0.75rem;
 
   /* Font Family */
   /* Make sure to load Inter font in your app */
@@ -58,301 +57,34 @@
 [data-theme="dark"] {
   color-scheme: dark;
   /* Theme Colors (Dark Mode) */
-  --bg-solid: oklch(12.00% 0.0096 282.03);
-  --accent: oklch(57.74% 0.2091 282.03);
+  --accent: oklch(57.74% 0.2091 273.85);
   --accent-foreground: oklch(99.11% 0 0);
-  --background: oklch(12.00% 0.0096 282.03);
-  --border: oklch(28.00% 0.0096 282.03);
-  --danger: oklch(59.40% 0.2005 28.01);
-  --danger-foreground: oklch(99.11% 0 0);
-  --default: oklch(27.40% 0.0096 282.03);
+  --background: oklch(12.00% 0.0100 273.85);
+  --border: oklch(28.00% 0.0100 273.85);
+  --danger: oklch(0.6318 0.2075 24.57);
+  --danger-foreground: oklch(98% 0.0200 24.57);
+  --default: oklch(27.40% 0.0100 273.85);
   --default-foreground: oklch(99.11% 0 0);
-  --field-background: oklch(21.03% 0.0192 282.03);
-  --field-foreground: oklch(99.11% 0.0096 282.03);
-  --field-placeholder: oklch(70.50% 0.0192 282.03);
-  --focus: oklch(57.74% 0.2091 282.03);
-  --foreground: oklch(99.11% 0.0096 282.03);
-  --muted: oklch(70.50% 0.0192 282.03);
-  --overlay: oklch(21.03% 0.0192 282.03);
-  --overlay-foreground: oklch(99.11% 0.0096 282.03);
-  --scrollbar: oklch(70.50% 0.0096 282.03);
-  --segment: oklch(39.64% 0.0096 282.03);
-  --segment-foreground: oklch(99.11% 0.0096 282.03);
-  --separator: oklch(25.00% 0.0096 282.03);
-  --success: oklch(73.29% 0.1972 154.19);
-  --success-foreground: oklch(21.03% 0.0059 154.19);
-  --surface: oklch(21.03% 0.0192 282.03);
-  --surface-foreground: oklch(99.11% 0.0096 282.03);
-  --surface-secondary: oklch(25.70% 0.0144 282.03);
-  --surface-secondary-foreground: oklch(99.11% 0.0096 282.03);
-  --surface-tertiary: oklch(27.21% 0.0144 282.03);
-  --surface-tertiary-foreground: oklch(99.11% 0.0096 282.03);
-  --warning: oklch(82.03% 0.1415 79.72);
-  --warning-foreground: oklch(21.03% 0.0059 79.72);
-}
-/* ============================================================
-   SCROLLBAR PERSONNALISÉE
-   ============================================================ */
-
-/* Chromium (Chrome, Edge, Safari, Opera) */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar);
-  border-radius: 999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--muted);
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar) transparent;
-}
-
-/* ============================================================
-   LAYOUT PANELS — bordure séparatrice sans wallpaper
-   ============================================================ */
-
-[data-layout="sidebar"],
-[data-layout="server-list"] {
-  border-right: 1px solid var(--border);
-}
-
-[data-layout="member-list"] {
-  border-left: 1px solid var(--border);
-}
-
-/* ============================================================
-   FLAT UI style — activé quand data-ui-style="flat"
-   Supprime l'espacement flottant et les coins arrondis des panneaux
-   ============================================================ */
-
-[data-ui-style="flat"][data-layout="root"] {
-  padding: 0;
-  gap: 0;
-}
-
-[data-ui-style="flat"] [data-layout="sidebar"],
-[data-ui-style="flat"] [data-layout="server-list"],
-[data-ui-style="flat"] [data-layout="member-list"],
-[data-ui-style="flat"] [data-layout="content"] {
-  border-radius: 0;
-}
-
-/* En mode flat, les panneaux affichent des bordures pleines */
-[data-ui-style="flat"] [data-layout="sidebar"],
-[data-ui-style="flat"] [data-layout="server-list"] {
-  border-right: 1px solid var(--border);
-}
-
-[data-ui-style="flat"] [data-layout="member-list"] {
-  border-left: 1px solid var(--border);
-}
-
-/* ============================================================
-   GLASSMORPHISM — activé quand body[data-wallpaper] est présent
-   ============================================================ */
-
-:root {
-  --glass-blur: 20px;
-  --glass-opacity: 0.7;
-}
-
-/* Light mode + wallpaper */
-body[data-wallpaper] {
-  --background: oklch(97.02% 0.0096 282.03 / 0.25);
-  --surface: oklch(100.00% 0.0048 282.03 / var(--glass-opacity));
-  --surface-secondary: oklch(95.24% 0.0077 282.03 / var(--glass-opacity));
-  --surface-tertiary: oklch(93.73% 0.0077 282.03 / var(--glass-opacity));
-  --overlay: oklch(100.00% 0.0029 282.03 / calc(var(--glass-opacity) + 0.1));
-  --default: oklch(94.00% 0.0096 282.03 / var(--glass-opacity));
-  --border: oklch(90.00% 0.0096 282.03 / 0.5);
-  --field-background: oklch(100.00% 0.0048 282.03 / calc(var(--glass-opacity) + 0.1));
-  --segment: oklch(100.00% 0.0096 282.03 / var(--glass-opacity));
-}
-
-/* Dark mode + wallpaper */
-.dark body[data-wallpaper] {
-  --background: oklch(12.00% 0.0096 282.03 / 0.2);
-  --surface: oklch(21.03% 0.0192 282.03 / var(--glass-opacity));
-  --surface-secondary: oklch(25.70% 0.0144 282.03 / var(--glass-opacity));
-  --surface-tertiary: oklch(27.21% 0.0144 282.03 / var(--glass-opacity));
-  --overlay: oklch(21.03% 0.0192 282.03 / calc(var(--glass-opacity) + 0.1));
-  --default: oklch(27.40% 0.0096 282.03 / var(--glass-opacity));
-  --border: oklch(28.00% 0.0096 282.03 / 0.4);
-  --field-background: oklch(21.03% 0.0192 282.03 / calc(var(--glass-opacity) + 0.1));
-  --segment: oklch(39.64% 0.0096 282.03 / var(--glass-opacity));
-}
-
-/* Apply backdrop-filter to all surface/panel elements */
-body[data-wallpaper] [data-slot="base"],
-body[data-wallpaper] [data-slot="card-base"],
-body[data-wallpaper] [data-slot="wrapper"],
-body[data-wallpaper] [data-slot="dialog"],
-body[data-wallpaper] [data-slot="popover"],
-body[data-wallpaper] [data-slot="content"],
-body[data-wallpaper] [data-slot="overlay"],
-body[data-wallpaper] [data-slot="section"],
-body[data-wallpaper] [data-slot="menu"],
-body[data-wallpaper] [data-slot="list"],
-body[data-wallpaper] [data-slot="tooltip"],
-body[data-wallpaper] aside,
-body[data-wallpaper] nav,
-body[data-wallpaper] header {
-  backdrop-filter: saturate(1.4);
-  -webkit-backdrop-filter: saturate(1.4);
-}
-
-/* ── Glassmorphism : grandes zones de l'interface ──────────────────────────── */
-
-/* Layout root — espacement flottant entre les panneaux */
-body[data-wallpaper] [data-layout="root"] {
-  padding: 0.4rem;
-  gap: 0.4rem;
-}
-
-/* Panneaux latéraux flottants */
-body[data-wallpaper] [data-layout="sidebar"],
-body[data-wallpaper] [data-layout="server-list"],
-body[data-wallpaper] [data-layout="member-list"] {
-  border-radius: 0.875rem;
-  overflow: hidden;
-  border: 1px solid oklch(100% 0 0 / 0.10);
-  background: oklch(10% 0.01 282 / 0.45);
-  backdrop-filter: saturate(1.5);
-  -webkit-backdrop-filter: saturate(1.5);
-}
-
-/* Zone chat principal */
-body[data-wallpaper] [data-tour="chat-area"] {
-  background: oklch(8% 0.01 282 / 0.40);
-  backdrop-filter: saturate(1.6);
-  -webkit-backdrop-filter: saturate(1.6);
-  border-radius: 0.875rem;
-  border: 1px solid oklch(100% 0 0 / 0.08);
-}
-
-/* Zone amis */
-body[data-wallpaper] [data-tour="friends-panel"] {
-  background: oklch(8% 0.01 282 / 0.40);
-  backdrop-filter: saturate(1.6);
-  -webkit-backdrop-filter: saturate(1.6);
-  border-radius: 0.875rem;
-  border: 1px solid oklch(100% 0 0 / 0.08);
-}
-
-/* Header interne des zones glass */
-body[data-wallpaper] [data-tour="chat-area"] > div:first-child,
-body[data-wallpaper] [data-tour="friends-panel"] > div > div:first-child {
-  background: oklch(100% 0 0 / 0.04);
-  border-bottom-color: oklch(100% 0 0 / 0.08);
-}
-
-/* Section DM list dans la sidebar */
-body[data-wallpaper] [data-section="dm-list"] {
-  background: oklch(100% 0 0 / 0.06);
-  border-color: oklch(100% 0 0 / 0.12);
-}
-
-/* Input message glass */
-body[data-wallpaper] [data-tour="chat-area"] form > div:last-child > div {
-  background: oklch(100% 0 0 / 0.07) !important;
-  border-color: oklch(100% 0 0 / 0.12) !important;
-}
-
-/* Texte adaptatif selon la luminance du wallpaper */
-body[data-wallpaper] [data-tour="chat-area"],
-body[data-wallpaper] [data-tour="friends-panel"] {
-  color: var(--adaptive-fg, inherit);
-}
-
-body[data-wallpaper] [data-tour="chat-area"] p,
-body[data-wallpaper] [data-tour="chat-area"] span,
-body[data-wallpaper] [data-tour="chat-area"] button,
-body[data-wallpaper] [data-tour="friends-panel"] p,
-body[data-wallpaper] [data-tour="friends-panel"] span,
-body[data-wallpaper] [data-tour="friends-panel"] button {
-  color: var(--adaptive-fg, inherit);
-}
-
-body[data-wallpaper] [data-tour="chat-area"] .text-muted,
-body[data-wallpaper] [data-tour="chat-area"] [class*="text-muted"],
-body[data-wallpaper] [data-tour="friends-panel"] .text-muted,
-body[data-wallpaper] [data-tour="friends-panel"] [class*="text-muted"] {
-  color: var(--adaptive-fg-muted, inherit) !important;
-}
-
-body[data-wallpaper] [data-tour="conversations"] {
-  color: var(--adaptive-fg-muted, inherit);
-}
-
-/* Light mode wallpaper */
-body[data-wallpaper-light] [data-layout="sidebar"],
-body[data-wallpaper-light] [data-layout="server-list"],
-body[data-wallpaper-light] [data-layout="member-list"] {
-  background: oklch(96% 0.005 282 / 0.60);
-  border-color: oklch(0% 0 0 / 0.08);
-}
-
-body[data-wallpaper-light] [data-tour="chat-area"],
-body[data-wallpaper-light] [data-tour="friends-panel"] {
-  background: oklch(98% 0.005 282 / 0.55);
-  border-color: oklch(0% 0 0 / 0.08);
-}
-
-body[data-wallpaper-light] [data-section="dm-list"] {
-  background: oklch(0% 0 0 / 0.04);
-  border-color: oklch(0% 0 0 / 0.08);
-}
-
-/* ── Pages that must always be opaque (developers, static/legal pages) ── */
-/* Re-declare all CSS vars overridden by wallpaper back to their opaque defaults */
-[data-no-wallpaper] {
-  --background: oklch(97.02% 0.0096 282.03);
-  --surface: oklch(100.00% 0.0048 282.03);
-  --surface-secondary: oklch(95.24% 0.0077 282.03);
-  --surface-tertiary: oklch(93.73% 0.0077 282.03);
-  --overlay: oklch(100.00% 0.0029 282.03);
-  --default: oklch(94.00% 0.0096 282.03);
-  --border: oklch(90.00% 0.0096 282.03);
-  --field-background: oklch(100.00% 0.0048 282.03);
-  --segment: oklch(100.00% 0.0096 282.03);
-  background-color: oklch(97.02% 0.0096 282.03) !important;
-  background-image: none !important;
-  isolation: isolate;
-}
-.dark [data-no-wallpaper] {
-  --background: oklch(12.00% 0.0096 282.03);
-  --surface: oklch(21.03% 0.0192 282.03);
-  --surface-secondary: oklch(25.70% 0.0144 282.03);
-  --surface-tertiary: oklch(27.21% 0.0144 282.03);
-  --overlay: oklch(21.03% 0.0192 282.03);
-  --default: oklch(27.40% 0.0096 282.03);
-  --border: oklch(28.00% 0.0096 282.03);
-  --field-background: oklch(21.03% 0.0192 282.03);
-  --segment: oklch(39.64% 0.0096 282.03);
-  background-color: oklch(12.00% 0.0096 282.03) !important;
-}
-/* Remove backdrop-filter from all children so nothing blurs through to body wallpaper */
-body[data-wallpaper] [data-no-wallpaper] *,
-body[data-wallpaper-light] [data-no-wallpaper] * {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  --field-background: oklch(21.03% 0.0200 273.85);
+  --field-foreground: oklch(99.11% 0.0100 273.85);
+  --field-placeholder: oklch(70.50% 0.0200 273.85);
+  --focus: oklch(57.74% 0.2091 273.85);
+  --foreground: oklch(99.11% 0.0100 273.85);
+  --muted: oklch(70.50% 0.0200 273.85);
+  --overlay: oklch(21.03% 0.0200 273.85);
+  --overlay-foreground: oklch(99.11% 0.0100 273.85);
+  --scrollbar: oklch(70.50% 0.0100 273.85);
+  --segment: oklch(39.64% 0.0100 273.85);
+  --segment-foreground: oklch(99.11% 0.0100 273.85);
+  --separator: oklch(25.00% 0.0100 273.85);
+  --success: oklch(0.8548 0.1967 150.16);
+  --success-foreground: oklch(15% 0.0500 150.16);
+  --surface: oklch(21.03% 0.0200 273.85);
+  --surface-foreground: oklch(99.11% 0.0100 273.85);
+  --surface-secondary: oklch(25.70% 0.0150 273.85);
+  --surface-secondary-foreground: oklch(99.11% 0.0100 273.85);
+  --surface-tertiary: oklch(27.21% 0.0150 273.85);
+  --surface-tertiary-foreground: oklch(99.11% 0.0100 273.85);
+  --warning: oklch(0.9218 0.1571 99.87);
+  --warning-foreground: oklch(15% 0.0471 99.87);
 }

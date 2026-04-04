@@ -121,6 +121,7 @@ function RegisterContent() {
       if (result.success) {
         router.push('/channels/gotostart');
       } else if ((result as any).emailNotVerified) {
+        // Compte créé mais email à vérifier → rediriger vers login avec message
         router.push('/login?emailVerification=1&email=' + encodeURIComponent(email));
       } else {
         setError(result.error || "Erreur lors de l'inscription");
@@ -135,26 +136,20 @@ function RegisterContent() {
   };
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center p-4">
-      {/* Background image */}
-      <div className="fixed inset-0 -z-10">
-        <img src="/backgound/defaut.jpg" alt="" className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-black/30 backdrop-brightness-90" />
-      </div>
-
+    <div className="flex min-h-dvh items-center justify-center bg-[var(--background)] p-4">
       <div className="w-full max-w-[900px]">
-        <Card className="overflow-hidden rounded-3xl border border-white/20 bg-white/80 p-0 shadow-2xl dark:bg-black/60 dark:border-white/10">
-          <div className="grid md:grid-cols-[300px_1fr]">
+        <Card className="overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0 shadow-xl">
+          <div className="grid md:grid-cols-[340px_1fr]">
             {/* ── Panneau visuel ── */}
-            <div className="relative hidden overflow-hidden border-r border-white/20 dark:border-white/10 md:flex md:flex-col md:items-center md:justify-center md:p-8">
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/20 via-transparent to-emerald-600/15" />
+            <div className="relative hidden overflow-hidden border-r border-[var(--border)] bg-[var(--surface-secondary)] md:flex md:flex-col md:items-center md:justify-center md:p-8">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_100%,var(--accent)/8%,transparent_70%)]" />
               <div className="relative flex flex-col items-center gap-6">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-xl shadow-[var(--accent)]/30">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/20">
                   <MessageCircleIcon size={28} className="text-[var(--accent-foreground)]" />
                 </div>
                 <div className="text-center">
                   <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">Rejoignez AlfyChat</h2>
-                  <p className="mt-1.5 max-w-52 text-sm leading-relaxed text-[var(--muted)]">
+                  <p className="mt-1.5 max-w-56 text-sm leading-relaxed text-[var(--muted)]">
                     La messagerie chiffrée nouvelle generation
                   </p>
                 </div>
@@ -166,7 +161,7 @@ function RegisterContent() {
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="flex items-center gap-3 rounded-xl border border-white/25 bg-white/30 px-4 py-3 dark:border-white/10 dark:bg-white/8"
+                      className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-tertiary)] px-4 py-3"
                     >
                       <item.icon size={18} className={item.color} />
                       <div>
@@ -183,7 +178,7 @@ function RegisterContent() {
             <div className="p-8 md:p-10">
               {/* En-tete */}
               <div className="mb-6 flex flex-col items-center gap-3 md:items-start">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25 md:hidden">
+                <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)] md:hidden">
                   <MessageCircleIcon size={22} className="text-[var(--accent-foreground)]" />
                 </div>
                 <div className="text-center md:text-left">
@@ -228,7 +223,7 @@ function RegisterContent() {
                   {/* Email */}
                   <TextField fullWidth name="email" isRequired value={email} onChange={setEmail}>
                     <Label>Adresse email</Label>
-                    <InputGroup fullWidth className="bg-white/60 border-black/10 dark:bg-white/8 dark:border-white/15">
+                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
                         <MailIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -246,7 +241,7 @@ function RegisterContent() {
                       onChange={(v: string) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                     >
                       <Label>Identifiant</Label>
-                      <InputGroup fullWidth className="bg-white/60 border-black/10 dark:bg-white/8 dark:border-white/15">
+                      <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                         <InputGroup.Prefix>
                           <AtSignIcon size={16} className="text-[var(--muted)]" />
                         </InputGroup.Prefix>
@@ -256,7 +251,7 @@ function RegisterContent() {
 
                     <TextField fullWidth name="displayName" value={displayName} onChange={setDisplayName}>
                       <Label>Nom d&apos;affichage</Label>
-                      <InputGroup fullWidth className="bg-white/60 border-black/10 dark:bg-white/8 dark:border-white/15">
+                      <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                         <InputGroup.Prefix>
                           <UserIcon size={16} className="text-[var(--muted)]" />
                         </InputGroup.Prefix>
@@ -268,7 +263,7 @@ function RegisterContent() {
                   {/* Mot de passe */}
                   <TextField fullWidth name="password" isRequired value={password} onChange={setPassword}>
                     <Label>Mot de passe</Label>
-                    <InputGroup fullWidth className="bg-white/60 border-black/10 dark:bg-white/8 dark:border-white/15">
+                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
                         <KeyRoundIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -294,7 +289,7 @@ function RegisterContent() {
                   {/* Confirmation */}
                   <TextField fullWidth name="confirmPassword" isRequired value={confirmPassword} onChange={setConfirmPassword}>
                     <Label>Confirmer le mot de passe</Label>
-                    <InputGroup fullWidth className="bg-white/60 border-black/10 dark:bg-white/8 dark:border-white/15">
+                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
                       <InputGroup.Prefix>
                         <KeyRoundIcon size={16} className="text-[var(--muted)]" />
                       </InputGroup.Prefix>
@@ -311,7 +306,7 @@ function RegisterContent() {
                     onChange={setAcceptTerms}
                     name="terms"
                   >
-                    <Checkbox.Control className='bg-white/60 border-black/10 dark:bg-white/8 dark:border-white/15 data-[state=checked]:border-[var(--accent)]'>
+                    <Checkbox.Control className='bg-[var(--surface-secondary)] border-[var(--border)] data-[state=checked]:border-[var(--accent)]'>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
                     <Checkbox.Content>

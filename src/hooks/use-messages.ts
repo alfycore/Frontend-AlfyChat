@@ -7,6 +7,7 @@ import { useDMArchive } from '@/hooks/use-dm-archive';
 import { signalService } from '@/lib/signal-service';
 import { api } from '@/lib/api';
 import { notify } from '@/hooks/use-notification';
+import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
 
 interface Reaction {
   emoji: string;
@@ -218,6 +219,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
     // Écouter les nouveaux messages (événement message:new)
     const handleNewMessage = async (message: any) => {
       console.log('📨 Nouveau message reçu:', message);
+
+      // Invalider le cache pour cette conversation (données potentiellement périmées)
+      const convCacheKey = recipientId ?? channelId;
+      if (convCacheKey) dmPrefetchCache.invalidateMessages(convCacheKey);
 
       // ── Filtre de conversation ──────────────────────────────────────────────
       // Ne traiter que les messages de la conversation actuellement ouverte.
@@ -458,7 +463,66 @@ export function useMessages(channelId?: string, recipientId?: string) {
 
   const loadMessages = async () => {
     setIsLoading(true);
+    let servedFromCache = false;
     try {
+      // ── Cache de prefetch ─────────────────────────────────────────────────
+      // Si des messages ont été pré-chargés au démarrage, les afficher immédiatement
+      // sans attendre la requête API (latence perçue = 0).
+      const cacheKey = recipientId ?? channelId;
+      if (cacheKey) {
+        const cached = dmPrefetchCache.getMessages(cacheKey);
+        if (cached && cached.length > 0) {
+          servedFromCache = true;
+          dmPrefetchCache.invalidateMessages(cacheKey); // consommer le cache
+          const currentUserId = userIdRef.current || user?.id || '';
+          const immediate = cached.map((m: any) => ({
+            id: m.id,
+            content: m.e2eeType ? '' : m.content,
+            e2ee: !!m.e2eeType,
+            authorId: m.senderId || m.authorId,
+            channelId: m.channelId,
+            conversationId: m.conversationId,
+            recipientId: m.recipientId,
+            replyToId: m.replyToId,
+            createdAt: m.createdAt,
+            updatedAt: m.updatedAt,
+            isEdited: !!m.isEdited,
+            reactions: groupReactions(m.reactions || []),
+            sender: m.sender,
+          }));
+          setMessages(immediate);
+          setHasMoreMessages(cached.length >= 10);
+          setIsLoading(false);
+
+          // Déchiffrer les messages cachés en arrière-plan
+          const encryptedCached = cached.filter((m: any) => m.e2eeType);
+          if (encryptedCached.length > 0) {
+            const bundleReady = recipientId ? ensureSignalSession(recipientId) : Promise.resolve(true);
+            await bundleReady;
+            await Promise.all(
+              encryptedCached.map(async (m: any) => {
+                const { content, e2ee } = await decryptMessage(
+                  {
+                    content: m.content,
+                    senderContent: m.senderContent,
+                    e2eeType: m.e2eeType,
+                    senderId: m.senderId || m.authorId,
+                  },
+                  currentUserId
+                );
+                setMessages((prev) =>
+                  prev.map((msg) => (msg.id === m.id ? { ...msg, content, e2ee } : msg))
+                );
+              })
+            );
+          }
+
+          // Rafraîchir ensuite en arrière-plan pour avoir les messages manquants
+          // (le prefetch ne charge que 10 messages, et d'autres ont pu arriver)
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
       // Lancer le fetch du bundle E2EE en parallèle avec les messages
       const bundlePromise = recipientId ? ensureSignalSession(recipientId) : Promise.resolve(true);
       const response = await api.getMessages(channelId, recipientId);
@@ -484,7 +548,31 @@ export function useMessages(channelId?: string, recipientId?: string) {
           reactions: groupReactions(m.reactions || []),
           sender: m.sender,
         }));
-        setMessages(immediate);
+
+        if (servedFromCache) {
+          // Des messages sont déjà affichés depuis le cache → merger sans flash.
+          // On remplace uniquement par les données fraîches (merge par ID),
+          // et on ajoute les messages plus récents non encore présents.
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const freshIds = new Set(immediate.map((m) => m.id));
+            // Garder les pending + messages non présents dans la réponse fraîche
+            const kept = prev.filter((m) => m.pending || !freshIds.has(m.id));
+            // Depuis la réponse fraîche : mettre à jour les existants, ajouter les nouveaux
+            const updated = immediate.map((m) => {
+              const existing = prev.find((p) => p.id === m.id);
+              // Préserver le contenu déchiffré déjà affiché (évite le flash vide)
+              return existing && !existing.pending ? { ...m, content: existing.content || m.content, e2ee: existing.e2ee } : m;
+            });
+            const added = kept.filter((m) => !freshIds.has(m.id));
+            return [...updated, ...added].sort((a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+          });
+        } else {
+          setMessages(immediate);
+        }
+
         setHasMoreMessages(rawMessages.length >= 50);
         // Afficher sans attendre le déchiffrement → latence perçue = 0
         setIsLoading(false);

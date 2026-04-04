@@ -158,7 +158,7 @@ export function UserPanel({ user }: UserPanelProps) {
 
       {/* Modal statut personnalisé — ouvert séparément pour ne pas fermer le dropdown avant validation */}
       <Modal isOpen={editingCustomStatus} onOpenChange={(open) => { if (!open) setEditingCustomStatus(false); }}>
-        <Modal.Backdrop isDismissable>
+        <Modal.Backdrop>
           <Modal.Container size="sm">
             <Modal.Dialog>
               <Modal.Header>Définir un statut personnalisé</Modal.Header>
