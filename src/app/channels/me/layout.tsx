@@ -14,7 +14,6 @@ import { setActiveDM, setActiveGroup } from '@/lib/notification-store';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { MemberList } from '@/components/chat/member-list';
-import { CallBar } from '@/components/chat/call-bar';
 import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
 import { GroupChatArea } from '@/components/chat/group-chat-area';
 import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
@@ -64,7 +63,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const groupId = params?.groupId as string | undefined;
 
   const handleSelectServer = useCallback((id: string | null) => {
-    if (id) {
+    if (id === 'groups') {
+      router.push('/channels/groups');
+    } else if (id) {
       router.push(`/channels/server/${id}`);
     }
   }, [router]);
@@ -87,31 +88,35 @@ function LayoutInner({ children }: { children: ReactNode }) {
     declineCall,
   } = useCallContext();
 
-  // Audio persistant : survit aux changements de page
+  // Audio persistant : joue l'audio remote UNIQUEMENT quand le CallPanel n'est pas visible
+  // (quand l'utilisateur est dans une autre conversation et que le CallBar s'affiche à la place)
+  // Si le CallPanel est visible, c'est lui qui gère l'audio via son <video> hidden → évite le double-play
   const persistentAudioRef = useRef<HTMLAudioElement>(null);
 
+  const isInCallConversation = !!(recipientId && (
+    recipientId === callRecipientId ||
+    callConversationId === `dm_${[recipientId, user?.id || ''].sort().join('_')}`
+  ));
+
   useEffect(() => {
-    if (remoteStreams.size > 0 && persistentAudioRef.current) {
+    const el = persistentAudioRef.current;
+    if (!el) return;
+
+    // Jouer seulement si l'utilisateur est sur une autre page (CallPanel absent)
+    if (!isInCallConversation && remoteStreams.size > 0) {
       const firstStream = remoteStreams.values().next().value as MediaStream | undefined;
       if (firstStream) {
-        const audioTracks = firstStream.getAudioTracks();
-        console.log('[AUDIO] Remote stream tracks:', audioTracks.length, 'enabled:', audioTracks.map(t => t.enabled));
-
-        // Toujours rattacher — certains navigateurs perdent le srcObject
-        persistentAudioRef.current.srcObject = firstStream;
-        persistentAudioRef.current.volume = 1.0;
-
-        const playPromise = persistentAudioRef.current.play();
-        if (playPromise) {
-          playPromise.catch((err) => {
-            console.warn('[AUDIO] Autoplay bloqué:', err.message, '— sera relu au prochain geste utilisateur');
-          });
-        }
+        el.srcObject = firstStream;
+        el.volume = 1.0;
+        el.play().catch((err) => {
+          console.warn('[AUDIO] Autoplay bloqué:', err.message);
+        });
       }
-    } else if (persistentAudioRef.current) {
-      persistentAudioRef.current.srcObject = null;
+    } else {
+      // CallPanel visible → il gère l'audio lui-même, on coupe ici
+      el.srcObject = null;
     }
-  }, [remoteStreams]);
+  }, [remoteStreams, isInCallConversation]);
 
   const [incomingCall, setIncomingCall] = useState<{
     callerName: string;
@@ -176,7 +181,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       router.push(`/channels/me/${newRecipientId}`);
     } else if (channel?.startsWith('group:')) {
       const newGroupId = channel.replace('group:', '');
-      router.push(`/channels/me/g/${newGroupId}`);
+      router.push(`/channels/groups/${newGroupId}`);
     } else {
       setSelectedChannel(channel);
     }
@@ -225,13 +230,6 @@ function LayoutInner({ children }: { children: ReactNode }) {
   // ── Content area (shared between top/bottom and left/right layouts) ──
   const mainContent = (
     <div data-layout="content" className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.isGlass ? 'rounded-2xl' : ''} ${recipientId ? '' : 'pb-16'} md:pb-0`}>
-      {callStatus !== 'idle' && callStatus !== 'ended' && callStatus !== 'ringing' && (() => {
-        const isInCallConversation = recipientId && (
-          recipientId === callRecipientId ||
-          callConversationId === (recipientId ? `dm_${[recipientId, user?.id || ''].sort().join('_')}` : null)
-        );
-        return !isInCallConversation ? <CallBar /> : null;
-      })()}
       {selectedChannel?.startsWith('group:') ? (
         <GroupChatArea groupId={selectedChannel.replace('group:', '')} onLeave={() => router.push('/channels/me')} />
       ) : children}

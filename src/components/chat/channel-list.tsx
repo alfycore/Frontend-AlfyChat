@@ -55,8 +55,9 @@ import {
   Tooltip,
 } from '@heroui/react';
 import { UserPanel } from '@/components/chat/user-panel';
+import { CallBar } from '@/components/chat/call-bar';
 import { useTranslation } from '@/components/locale-provider';
-import { GroupCreateDialog } from '@/components/chat/group-create-dialog';
+
 import { useVoice, type VoiceParticipant } from '@/hooks/use-voice';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { cn } from '@/lib/utils';
@@ -295,7 +296,7 @@ export function ChannelList({
   const conversationsRef = useRef<Conversation[]>([]);
   const [presenceMap, setPresenceMap] = useState<Map<string, string>>(new Map());
   const [customStatusMap, setCustomStatusMap] = useState<Map<string, string | null>>(new Map());
-  const [showGroupCreate, setShowGroupCreate] = useState(false);
+
   const [serverName, setServerName] = useState('Serveur');
   const [serverBannerUrl, setServerBannerUrl] = useState<string | null>(null);
   const [serverBadges, setServerBadges] = useState<{ isCertified: boolean; isPartnered: boolean }>({
@@ -584,22 +585,12 @@ export function ChannelList({
     };
     const handleReconnect = () => loadConversationsRef.current();
     socketService.on('message:new', handleMessageNew);
-    socketService.onGroupCreate(handleRefresh);
     socketService.onFriendAccepted(handleRefresh);
-    socketService.onGroupLeave(handleRefresh);
-    socketService.onGroupDelete(handleRefresh);
-    socketService.onGroupMemberAdd(handleRefresh);
-    socketService.onGroupMemberRemove(handleRefresh);
     socketService.onPresenceUpdate(handlePresence);
     socketService.on('socket:reconnected', handleReconnect);
     return () => {
       socketService.off('message:new', handleMessageNew);
-      socketService.off('GROUP_CREATE', handleRefresh);
       socketService.off('FRIEND_ACCEPT', handleRefresh);
-      socketService.off('GROUP_LEAVE', handleRefresh);
-      socketService.off('GROUP_DELETE', handleRefresh);
-      socketService.off('GROUP_MEMBER_ADD', handleRefresh);
-      socketService.off('GROUP_MEMBER_REMOVE', handleRefresh);
       socketService.off('PRESENCE_UPDATE', handlePresence);
       socketService.off('socket:reconnected', handleReconnect);
     };
@@ -754,25 +745,12 @@ export function ChannelList({
 
   if (!serverId) {
     const dmConversations = conversations.filter((c) => c.type !== 'group');
-    const groupConversations = conversations.filter((c) => c.type === 'group');
 
     return (
       <div className={`flex h-full w-full flex-col overflow-hidden ${ui.sidebarBg}`}>
         {/* ── Header ── */}
-        <div className={`flex h-13 shrink-0 items-center justify-between px-3 ${ui.header}`}>
+        <div className={`flex h-13 shrink-0 items-center px-3 ${ui.header}`}>
           <span className="text-[13px] font-bold tracking-tight text-[var(--foreground)]">{t.channelList.messagesTitle}</span>
-          <Tooltip delay={0}>
-            <Button
-              variant="ghost"
-              isIconOnly
-              size="sm"
-              className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
-              onPress={() => setShowGroupCreate(true)}
-            >
-              <PlusIcon size={15} />
-            </Button>
-            <Tooltip.Content>{t.channelList.createGroup}</Tooltip.Content>
-          </Tooltip>
         </div>
 
         <ScrollShadow className="flex-1 overflow-y-auto">
@@ -823,58 +801,6 @@ export function ChannelList({
             <div className="px-1 py-1.5">
               <Separator />
             </div>
-
-            {/* ── Groupes ── */}
-            {groupConversations.length > 0 && (
-              <div data-tour="groups" className="mb-1">
-                <div className="mb-1.5 flex items-center gap-1.5 px-2 pt-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
-                    {t.channelList.groups}
-                  </span>
-                </div>
-                <div className="space-y-0.5">
-                  {groupConversations.map((conv) => {
-                    const isActive = selectedChannel === `group:${conv.id}`;
-                    const groupUnread = notifStore.unread.get(`group:${conv.id}`) ?? 0;
-                    return (
-                      <button
-                        key={conv.id}
-                        onClick={() => onSelectChannel(isActive ? null : `group:${conv.id}`)}
-                        className={cn(
-                          'group flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-150',
-                          isActive
-                            ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
-                            : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/60 hover:text-[var(--foreground)]',
-                        )}
-                      >
-                        <div className={cn(
-                          'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
-                          isActive
-                            ? 'bg-indigo-500/20 text-indigo-400 shadow-sm shadow-indigo-500/20'
-                            : 'bg-indigo-500/10 text-indigo-400/70 group-hover:bg-indigo-500/15 group-hover:text-indigo-400',
-                        )}>
-                          <UsersRoundIcon size={15} />
-                        </div>
-                        <div className="min-w-0 flex-1 text-left">
-                          <p className="truncate text-[13px] font-medium leading-tight">{conv.recipientName}</p>
-                          <p className="text-[10px] text-[var(--muted)]/50 leading-tight">
-                            {conv.participants?.length ?? 0} membres
-                          </p>
-                        </div>
-                        {groupUnread > 0 && (
-                          <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 h-5 text-[10px]">
-                            {groupUnread}
-                          </Chip>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="px-1 py-1.5">
-                  <Separator />
-                </div>
-              </div>
-            )}
 
             {/* ── Messages privés ── */}
             <div data-section="dm-list" className="mx-0.5 mt-0.5 rounded-xl  p-1.5 transition-all">
@@ -987,16 +913,10 @@ export function ChannelList({
           </div>
         </ScrollShadow>
 
+        <CallBar />
         {user && <UserPanel user={user} />}
 
-        <GroupCreateDialog
-          open={showGroupCreate}
-          onOpenChange={setShowGroupCreate}
-          onCreated={(groupId) => {
-            loadConversations();
-            if (groupId) onSelectChannel(`group:${groupId}`);
-          }}
-        />
+
       </div>
     );
   }
@@ -1213,6 +1133,7 @@ export function ChannelList({
         </div>
       </ScrollShadow>
 
+      <CallBar />
       {user && <UserPanel user={user} />}
 
       {/* Modal : Créer un salon / une catégorie */}

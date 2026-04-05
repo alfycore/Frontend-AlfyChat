@@ -11,12 +11,13 @@ import {
 import {
   UsersRoundIcon, SendIcon, SmileIcon, MoreHorizontalIcon, ReplyIcon, XIcon,
   LogOutIcon, SettingsIcon, CrownIcon, ImageIcon as ImageIcn, MenuIcon,
-  UserPlusIcon, PhoneIcon, VideoIcon,
+  UserPlusIcon, PhoneIcon, VideoIcon, PaperclipIcon, FileTextIcon,
 } from '@/components/icons';
 import { useMessages } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useCallContext } from '@/hooks/use-call-context';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { notify } from '@/hooks/use-notification';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -30,7 +31,7 @@ import {
   Tooltip,
 } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
-import { GifPicker } from '@/components/chat/gif-picker';
+
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { GroupSettingsDialog } from '@/components/chat/group-settings-dialog';
 import {
@@ -66,6 +67,7 @@ interface GroupChatAreaProps {
 export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const { user } = useAuth();
   const { isMobile, toggleSidebar } = useMobileNav();
+  const ui = useUIStyle();
   const [messageInput, setMessageInput] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editInput, setEditInput] = useState('');
@@ -74,6 +76,15 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const [showMembers, setShowMembers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState<'general' | 'members'>('general');
+
+  // ── File attachments ──
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<{ name: string; url: string; isImage: boolean }[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // ── Cooldown ──
+  const msgTimestampsRef = useRef<number[]>([]);
+  const [cooldownActive, setCooldownActive] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -196,6 +207,14 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
     return () => obs.disconnect();
   }, [scrollToBottom]);
 
+  // Auto-grow textarea (1 line min, 5 lines max)
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 110)}px`;
+  }, [messageInput]);
+
   const enrichedMessages: MessageData[] = useMemo(() => {
     if (!groupInfo) return messages as MessageData[];
     return messages.map((msg) => {
@@ -223,11 +242,75 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
     ? { id: user.id, username: user.username, displayName: user.displayName, avatarUrl: user.avatarUrl }
     : null;
 
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    e.target.value = '';
+
+    const MAX = 10 * 1024 * 1024;
+    const ACCEPTED_IMAGES = ['image/png','image/jpeg','image/jpg','image/gif','image/webp'];
+    const ACCEPTED_DOCS = [
+      'application/pdf','application/x-pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain','text/csv',
+      'application/zip','application/x-zip-compressed','application/octet-stream',
+    ];
+    const ACCEPTED = [...ACCEPTED_IMAGES, ...ACCEPTED_DOCS];
+    const ACCEPTED_EXTS = ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','csv',
+                           'png','jpg','jpeg','gif','webp'];
+
+    for (const file of files) {
+      if (file.size > MAX) { notify.error('Fichier trop volumineux', `${file.name} dépasse 10 Mo`); continue; }
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      if (!ACCEPTED.includes(file.type) && !ACCEPTED_EXTS.includes(ext)) {
+        notify.error('Type non supporté', `${file.name} n'est pas accepté`);
+        continue;
+      }
+      setIsUploading(true);
+      try {
+        const res = await api.uploadDocument(file);
+        if (res.success && res.data) {
+          setPendingAttachments((prev) => [...prev, { name: file.name, url: res.data!.url, isImage: res.data!.isImage }]);
+        } else {
+          notify.error('Erreur upload', res.error || "Impossible d'uploader le fichier");
+        }
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  }, []);
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageInput.trim()) return;
-    sendMessage(messageInput.trim(), replyingTo?.id);
+    const hasText = messageInput.trim();
+    const hasAttachments = pendingAttachments.length > 0;
+    if (!hasText && !hasAttachments) return;
+
+    const now = Date.now();
+    msgTimestampsRef.current = msgTimestampsRef.current.filter(t => now - t < 5000);
+    if (msgTimestampsRef.current.length >= 5) {
+      setCooldownActive(true);
+      setTimeout(() => setCooldownActive(false), 3000);
+      return;
+    }
+    msgTimestampsRef.current.push(now);
+
+    let content = messageInput.trim();
+    for (const att of pendingAttachments) {
+      const attStr = att.isImage
+        ? `\n[attach:img]:${att.url}`
+        : `\n[attach:file]:${att.name}|${att.url}`;
+      content = content ? content + attStr : attStr.trimStart();
+    }
+
+    sendMessage(content, replyingTo?.id);
     setMessageInput('');
+    setPendingAttachments([]);
     setReplyingTo(null);
     stopTyping();
     isAtBottomRef.current = true;
@@ -297,7 +380,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (messageInput.trim()) handleSendMessage(e as unknown as React.FormEvent);
+      if (messageInput.trim() || pendingAttachments.length > 0) handleSendMessage(e as unknown as React.FormEvent);
     }
   };
 
@@ -512,55 +595,105 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
           )}
         </ScrollShadow>
 
-        {/* ── Reply bar ── */}
-        {replyingTo && (
-          <div className="flex items-center gap-2 rounded-t-xl border border-b-0 border-[var(--border)]/40 bg-[var(--surface-secondary)]/30 px-4 py-2">
-            <ReplyIcon size={16} className="text-[var(--muted)]" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium">{replyingTo.authorName}</p>
-              <p className="truncate text-xs text-[var(--muted)]">{replyingTo.content}</p>
-            </div>
-            <Button isIconOnly size="sm" variant="ghost" onPress={() => setReplyingTo(null)}>
-              <XIcon size={14} />
-            </Button>
+        {/* ── Cooldown notice ── */}
+        {cooldownActive && (
+          <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/8 px-3 py-2 text-[12px] font-medium text-orange-400 md:mx-4">
+            Calme-toi ! Tu envoies trop de messages.
           </div>
         )}
 
         {/* ── Input area ── */}
-        <div className="shrink-0 px-4 pb-4">
-          <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-            <div className={`relative flex min-w-0 flex-1 items-end gap-1 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/80 px-2 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 ${replyingTo ? 'rounded-t-none border-t-0' : ''}`}>
-              <EmojiPicker onSelect={handleEmojiInsert}>
-                <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
-                  <SmileIcon size={18} />
+        <form onSubmit={handleSendMessage} className="relative shrink-0 px-3 pb-3 pt-1 md:px-4 md:pb-4">
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="sr-only"
+            multiple
+            accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv"
+            onChange={handleFileSelect}
+          />
+
+          {/* Reply preview */}
+          {replyingTo && (
+            <div className={`mb-2 flex items-center gap-2 px-3 py-2 ${ui.replyBar}`}>
+              <div className="h-4 w-0.5 rounded-full bg-[var(--accent)]" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-[var(--accent)]">Réponse à {replyingTo.authorName}</p>
+                <p className="truncate text-[11px] text-[var(--muted)]/60">{replyingTo.content}</p>
+              </div>
+              <Button isIconOnly size="sm" variant="tertiary" className="size-6 rounded-xl" onPress={() => setReplyingTo(null)}>
+                <XIcon size={14} />
+              </Button>
+            </div>
+          )}
+
+          <div className={`flex items-center gap-1 px-1.5 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''}`}>
+            {/* File attachment button */}
+            <Tooltip delay={0}>
+              <Button
+                isIconOnly size="sm" variant="ghost"
+                className="size-7 shrink-0 self-end rounded-xl pb-0.5 text-[var(--muted)] hover:text-[var(--foreground)]"
+                isDisabled={isUploading}
+                onPress={() => fileInputRef.current?.click()}
+              >
+                {isUploading ? <Spinner size="sm" /> : <PaperclipIcon size={16} />}
+              </Button>
+              <Tooltip.Content>Joindre un fichier (image, PDF, DOCX… &lt;10 Mo)</Tooltip.Content>
+            </Tooltip>
+
+            {/* Pending attachments + text input */}
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              {pendingAttachments.length > 0 && (
+                <div className="flex flex-wrap gap-1 px-0.5 pt-1">
+                  {pendingAttachments.map((att, i) => (
+                    <div key={i} className="flex items-center gap-1 rounded-lg border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-2 py-0.5 text-[11px]">
+                      {att.isImage
+                        ? <ImageIcn size={11} className="shrink-0 text-blue-400" />
+                        : <FileTextIcon size={11} className="shrink-0 text-orange-400" />}
+                      <span className="max-w-[120px] truncate text-[var(--foreground)]/70">{att.name}</span>
+                      <button type="button" className="ml-0.5 text-[var(--muted)] hover:text-red-400" onClick={() => setPendingAttachments((p) => p.filter((_, j) => j !== i))}>
+                        <XIcon size={10} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              </EmojiPicker>
+              )}
               <textarea
                 ref={textareaRef}
+                rows={1}
                 value={messageInput}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={`Écrire dans ${groupInfo?.name || 'le groupe'}…`}
-                className="min-h-9 max-h-30 flex-1 resize-none border-0 bg-transparent py-1.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)]/50 focus:outline-none"
-                rows={1}
+                className="w-full resize-none border-0 bg-transparent py-0.5 text-[13px] leading-5 text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/50"
+                style={{ minHeight: '20px', maxHeight: '110px', overflowY: 'auto' }}
+                aria-label="Message"
               />
-              <GifPicker onSelect={handleGifSelect}>
-                <div className="mb-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
-                  <ImageIcn size={18} />
-                </div>
-              </GifPicker>
             </div>
-            <Button
-              type="submit"
-              isIconOnly
-              size="sm"
-              isDisabled={!messageInput.trim()}
-              className={`mb-0.5 size-8 shrink-0 rounded-xl transition-all ${messageInput.trim() ? 'bg-[var(--accent)] text-[var(--accent-foreground)]' : 'bg-[var(--surface-secondary)] text-[var(--muted)] opacity-50'}`}
-            >
-              <SendIcon size={16} />
-            </Button>
-          </form>
-        </div>
+
+            {/* Actions */}
+            <div className="flex shrink-0 self-end items-center gap-0.5">
+              <EmojiPicker onSelect={handleEmojiInsert} onGifSelect={handleGifSelect}>
+                <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]">
+                  <SmileIcon size={18} />
+                </Button>
+              </EmojiPicker>
+              <Button
+                isIconOnly size="sm" variant="ghost"
+                className={`size-7 rounded-xl transition-colors ${messageInput.trim() || pendingAttachments.length > 0 ? 'text-[var(--accent)]' : 'text-[var(--muted)]/40'}`}
+                isDisabled={!messageInput.trim() && pendingAttachments.length === 0}
+                onPress={() => {
+                  if (messageInput.trim() || pendingAttachments.length > 0) {
+                    handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
+                  }
+                }}
+              >
+                <SendIcon size={18} />
+              </Button>
+            </div>
+          </div>
+        </form>
       </div>
 
       {/* ── Panel membres (sidebar droite) ── */}

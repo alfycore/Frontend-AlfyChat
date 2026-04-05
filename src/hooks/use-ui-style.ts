@@ -1,15 +1,10 @@
 ﻿'use client';
 
-import { useLayoutPrefs } from './use-layout-prefs';
-
 /**
- * Returns pre-built Tailwind class strings for the two UI styles:
- *  - 'glass': rounded glassmorphism panels with
- *  - 'flat': solid Discord-like surfaces, no blur, no gaps
+ * Returns pre-built Tailwind class strings for the flat UI style.
  */
 export function useUIStyle() {
-  const { prefs } = useLayoutPrefs();
-  const g = prefs.uiStyle !== 'flat'; // isGlass
+  const g = false; // isGlass — vitré arrondi désactivé
 
   return {
     isGlass: g,

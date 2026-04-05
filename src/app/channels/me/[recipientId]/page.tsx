@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { MessageCircleIcon, Loader2Icon, UserXIcon, ArrowLeftIcon } from '@/components/icons';
+import { MessageCircleIcon, UserXIcon, ArrowLeftIcon } from '@/components/icons';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
@@ -17,7 +17,6 @@ export default function DMPage() {
   // Initialiser depuis le cache si disponible → affichage instantané
   const cached = recipientId ? dmPrefetchCache.getUser(recipientId) : null;
   const [recipientName, setRecipientName] = useState(cached?.displayName ?? '');
-  const [isLoading, setIsLoading] = useState(!cached);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -25,96 +24,27 @@ export default function DMPage() {
     if (authLoading || !user) return;
     if (!recipientId) return;
 
-    // Vérifier le cache d'abord
-    const hit = dmPrefetchCache.getUser(recipientId);
-    if (hit) {
-      setRecipientName(hit.displayName);
-      setIsLoading(false);
-      // Rafraîchir silencieusement en fond sans spinner
-      api.getUser(recipientId).then((res) => {
-        if (res.success && res.data) {
-          const u = res.data as any;
-          const name = u.displayName || u.username;
-          setRecipientName(name);
-          dmPrefetchCache.setUser(recipientId, {
-            id: u.id,
-            username: u.username,
-            displayName: name,
-            avatarUrl: u.avatarUrl,
-            bannerUrl: u.bannerUrl,
-            bio: u.bio,
-            status: u.status,
-            customStatus: u.customStatus ?? null,
-          });
-        }
-      }).catch(() => {});
-      return;
-    }
-
-    const loadRecipient = async () => {
-      setIsLoading(true);
-      setError(false);
-      try {
-        const response = await api.getUser(recipientId);
-        if (response.success && response.data) {
-          const u = response.data as any;
-          const name = u.displayName || u.username;
-          setRecipientName(name);
-          dmPrefetchCache.setUser(recipientId, {
-            id: u.id,
-            username: u.username,
-            displayName: name,
-            avatarUrl: u.avatarUrl,
-            bannerUrl: u.bannerUrl,
-            bio: u.bio,
-            status: u.status,
-            customStatus: u.customStatus ?? null,
-          });
-        } else {
-          setError(true);
-        }
-      } catch (err) {
-        console.error('Erreur chargement destinataire:', err);
+    // Rafraîchir le nom en arrière-plan (cache ou fetch) — sans spinner
+    api.getUser(recipientId).then((res) => {
+      if (res.success && res.data) {
+        const u = res.data as any;
+        const name = u.displayName || u.username;
+        setRecipientName(name);
+        dmPrefetchCache.setUser(recipientId, {
+          id: u.id,
+          username: u.username,
+          displayName: name,
+          avatarUrl: u.avatarUrl,
+          bannerUrl: u.bannerUrl,
+          bio: u.bio,
+          status: u.status,
+          customStatus: u.customStatus ?? null,
+        });
+      } else if (!cached) {
         setError(true);
-      } finally {
-        setIsLoading(false);
       }
-    };
-    loadRecipient();
+    }).catch(() => { if (!cached) setError(true); });
   }, [recipientId, user, authLoading]);
-
-  /* ── Auth ou données encore en chargement ── */
-  if (authLoading || isLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-[var(--background)]/50">
-        <div className="flex flex-col items-center gap-5 animate-in fade-in-0 duration-500">
-          <div className="flex size-16 items-center justify-center rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/80 shadow-2xl">
-              <Loader2Icon size={28} className="animate-spin text-[var(--accent)]" />
-            </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <p className="text-sm font-medium text-[var(--foreground)]/80">Chargement de la conversation</p>
-            <p className="text-[11px] text-[var(--muted)]/60">Veuillez patienter…</p>
-          </div>
-          {/* Skeleton shimmer */}
-          <div className="mt-4 w-72 space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 rounded-xl border border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 p-3"
-                style={{ opacity: 1 - i * 0.25 }}
-              >
-                <div className="size-8 shrink-0 animate-pulse rounded-full bg-[var(--surface-secondary)]/40" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-2.5 w-20 animate-pulse rounded-full bg-[var(--surface-secondary)]/40" />
-                  <div className="h-2 animate-pulse rounded-full bg-[var(--surface-secondary)]/30" style={{ width: `${80 - i * 15}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   /* ── Error state ── */
   if (error) {

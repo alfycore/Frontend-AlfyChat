@@ -1,9 +1,8 @@
-﻿'use client';
+'use client';
 
-import { PhoneIcon, PhoneOffIcon, MonitorUpIcon } from '@/components/icons';
+import { PhoneIcon, PhoneOffIcon, MonitorUpIcon, MicIcon, MicOffIcon, VideoIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useCallContext } from '@/hooks/use-call-context';
-import { Button } from '@heroui/react';
 import { cn } from '@/lib/utils';
 
 export function CallBar() {
@@ -14,7 +13,9 @@ export function CallBar() {
     callRecipientId,
     callDuration,
     isScreenSharing,
+    isMuted,
     endCall,
+    toggleMute,
   } = useCallContext();
   const router = useRouter();
 
@@ -26,69 +27,108 @@ export function CallBar() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const statusText: Record<string, string> = {
+  const isConnected = callStatus === 'connected';
+
+  const statusLabel: Record<string, string> = {
     calling: 'Appel en cours…',
     ringing: 'Sonnerie…',
     connecting: 'Connexion…',
-    connected: formatDuration(callDuration),
+    connected: callType === 'video' ? 'Vidéo connectée' : 'Vocal connecté',
   };
 
-  const handleClick = () => {
-    if (callRecipientId) {
-      router.push(`/channels/me/${callRecipientId}`);
-    }
+  const handleNavigate = () => {
+    if (callRecipientId) router.push(`/channels/me/${callRecipientId}`);
   };
-
-  const handleEndCall = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    endCall();
-  };
-
-  const isConnected = callStatus === 'connected';
 
   return (
-    <div
-      onClick={handleClick}
-      className={cn(
-        'flex cursor-pointer items-center justify-between border-b border-[var(--border)]/40 px-3 py-2 text-sm font-medium transition-all duration-200 md:px-4 md:py-1.5',
-        isConnected
-          ? 'bg-green-500/10 text-green-600 hover:bg-green-500/15 dark:text-green-400'
-          : 'bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/15',
-      )}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-2.5">
-        <div
-          className={cn(
-            'flex size-7 items-center justify-center rounded-lg',
-            isConnected ? 'bg-green-500/15' : 'bg-[var(--accent)]/15',
+    <div className={cn(
+      'shrink-0 border-t px-2 py-2',
+      isConnected
+        ? 'border-green-500/20 bg-green-500/6'
+        : 'border-[var(--border)]/30 bg-[var(--background)]/60',
+    )}>
+      {/* Status row */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleNavigate}
+        onKeyDown={(e) => e.key === 'Enter' && handleNavigate()}
+        className="mb-1.5 flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-white/5"
+      >
+        {/* Animated signal dot */}
+        <span className="relative flex size-2 shrink-0">
+          {isConnected ? (
+            <>
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-40" />
+              <span className="relative inline-flex size-2 rounded-full bg-green-400" />
+            </>
+          ) : (
+            <span className="relative inline-flex size-2 rounded-full bg-[var(--accent)]" />
           )}
-        >
-          <PhoneIcon size={14} className="shrink-0" />
+        </span>
+
+        <span className={cn(
+          'flex-1 truncate text-[11px] font-semibold',
+          isConnected ? 'text-green-400' : 'text-[var(--muted)]',
+        )}>
+          {statusLabel[callStatus] ?? 'Appel…'}
+        </span>
+
+        {isConnected && (
+          <span className="shrink-0 font-mono text-[10px] text-green-400/70">
+            {formatDuration(callDuration)}
+          </span>
+        )}
+      </div>
+
+      {/* Info + actions row */}
+      <div className="flex items-center gap-1 px-1">
+        {/* Call type icon */}
+        <div className={cn(
+          'mr-1 flex size-6 shrink-0 items-center justify-center rounded-md',
+          isConnected ? 'bg-green-500/15' : 'bg-white/6',
+        )}>
+          {callType === 'video'
+            ? <VideoIcon size={12} className={isConnected ? 'text-green-400' : 'text-white/50'} />
+            : <PhoneIcon size={12} className={isConnected ? 'text-green-400' : 'text-white/50'} />
+          }
         </div>
 
-        <span className="truncate text-sm">
-          {callType === 'video' ? 'Vidéo' : 'Vocal'} — {callerName || 'En ligne'}
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-[var(--foreground)]/70">
+          {callerName || 'Appel en cours'}
         </span>
 
         {isScreenSharing && (
-          <div className="hidden items-center gap-1 rounded-lg bg-[var(--surface-secondary)]/40 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] sm:flex">
-            <MonitorUpIcon size={12} />
-            Partage
-          </div>
+          <MonitorUpIcon size={12} className="shrink-0 text-[var(--accent)]" title="Partage d'écran" />
         )}
 
-        <span className="hidden text-xs opacity-70 sm:inline">{statusText[callStatus] || ''}</span>
-      </div>
+        {/* Mute toggle */}
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-label={isMuted ? 'Réactiver le micro' : 'Couper le micro'}
+          title={isMuted ? 'Réactiver le micro' : 'Couper le micro'}
+          className={cn(
+            'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-150 hover:scale-110 active:scale-95',
+            isMuted
+              ? 'bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'
+              : 'bg-white/6 text-[var(--muted)] hover:bg-white/12 hover:text-[var(--foreground)]',
+          )}
+        >
+          {isMuted ? <MicOffIcon size={13} /> : <MicIcon size={13} />}
+        </button>
 
-      <Button
-        isIconOnly
-        size="sm"
-        variant="danger"
-        className="rounded-lg"
-        onPress={() => endCall()}
-      >
-        <PhoneOffIcon size={16} />
-      </Button>
+        {/* End call */}
+        <button
+          type="button"
+          onClick={endCall}
+          aria-label="Raccrocher"
+          title="Raccrocher"
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-red-500/15 text-red-400 transition-all duration-150 hover:scale-110 hover:bg-red-500 hover:text-white active:scale-95"
+        >
+          <PhoneOffIcon size={13} />
+        </button>
+      </div>
     </div>
   );
 }

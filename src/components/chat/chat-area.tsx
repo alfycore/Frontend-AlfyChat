@@ -39,7 +39,7 @@ import {
   Button, Card, ScrollShadow, Spinner, Tooltip,
 } from '@heroui/react';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
-import { GifPicker } from '@/components/chat/gif-picker';
+
 import { MentionPopover, type MentionUser } from '@/components/chat/mention-popover';
 import { CallPanel } from '@/components/chat/call-panel';
 import {
@@ -176,6 +176,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     isMuted,
     isVideoOff,
     isScreenSharing,
+    remoteIsScreenSharing,
     mediaError,
     callDuration,
     toggleMute,
@@ -223,6 +224,20 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   useEffect(() => {
     scrollToBottom();
   }, [channelId, recipientId, scrollToBottom]);
+
+  // Re-scroll quand une image se charge et augmente la hauteur du chat
+  // (load ne bubble pas → phase capture sur le scroll container)
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const onLoad = (e: Event) => {
+      if ((e.target as HTMLElement).tagName === 'IMG' && isAtBottomRef.current) {
+        scrollToBottom();
+      }
+    };
+    scroller.addEventListener('load', onLoad, true);
+    return () => scroller.removeEventListener('load', onLoad, true);
+  }, [scrollToBottom]);
 
   const mentionUsersMemo = useMemo(() => {
     const usersMap = new Map<string, MentionUser>();
@@ -717,6 +732,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           isMuted={isMuted}
           isVideoOff={isVideoOff}
           isScreenSharing={isScreenSharing}
+          remoteIsScreenSharing={remoteIsScreenSharing}
           recipientName={ctxCallerName || recipientName || 'Utilisateur'}
           recipientAvatar={callerAvatar}
           currentUserName={user?.displayName || user?.username || 'Vous'}
@@ -737,11 +753,30 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         ref={scrollRef}
       >
         {isLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="flex flex-col items-center gap-3 text-[var(--muted)]">
-              <Spinner size="md" />
-              <span className="text-[13px]">Chargement des messages...</span>
-            </div>
+          /* Skeleton "messages" — perçu comme instantané vs spinner plein écran */
+          <div className="flex h-full flex-col justify-end gap-3 px-2 pb-2">
+            {[...Array(6)].map((_, i) => {
+              const isSelf = i % 3 === 2;
+              const widths = ['w-48', 'w-64', 'w-40', 'w-56', 'w-32', 'w-72'];
+              return (
+                <div
+                  key={i}
+                  className={`flex items-end gap-2.5 ${isSelf ? 'flex-row-reverse' : ''}`}
+                  style={{ opacity: 0.35 + i * 0.1 }}
+                >
+                  {!isSelf && (
+                    <div className="size-8 shrink-0 animate-pulse rounded-full bg-[var(--surface-secondary)]/60" />
+                  )}
+                  <div className={`flex flex-col gap-1 ${isSelf ? 'items-end' : 'items-start'}`}>
+                    {!isSelf && <div className="mb-0.5 h-2.5 w-20 animate-pulse rounded-full bg-[var(--surface-secondary)]/40" />}
+                    <div className={`animate-pulse rounded-2xl bg-[var(--surface-secondary)]/50 px-3 py-2.5 ${widths[i]}`}>
+                      <div className="h-3 rounded-full bg-[var(--surface-secondary)]/60" />
+                      {i % 2 === 0 && <div className="mt-1.5 h-3 w-4/5 rounded-full bg-[var(--surface-secondary)]/40" />}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
@@ -908,7 +943,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
           {/* Actions */}
           <div className="flex shrink-0 self-end items-center gap-0.5 ">
-            <EmojiPicker onSelect={handleEmojiInsert}>
+            <EmojiPicker onSelect={handleEmojiInsert} onGifSelect={handleGifSelect}>
               <Button
                 isIconOnly
                 size="sm"
@@ -918,17 +953,6 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 <SmileIcon size={18} />
               </Button>
             </EmojiPicker>
-
-            <GifPicker onSelect={handleGifSelect}>
-              <Button
-                isIconOnly
-                size="sm"
-                variant="ghost"
-                className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                <ImageIcon size={18} />
-              </Button>
-            </GifPicker>
 
             <Button
               isIconOnly

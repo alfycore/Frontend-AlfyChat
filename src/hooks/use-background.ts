@@ -47,59 +47,18 @@ export function useBackground(): BackgroundState {
     };
   }, []);
 
-  // Apply to body
+  // Apply to body — clear any previously stored wallpaper
   useEffect(() => {
-    const root = document.documentElement;
-    if (wallpaper) {
-      document.body.style.backgroundImage = `url(${wallpaper})`;
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundRepeat = 'no-repeat';
-      document.body.style.backgroundAttachment = 'fixed';
-      document.body.setAttribute('data-wallpaper', 'true');
-      root.style.setProperty('--glass-blur', `${blur}px`);
-      root.style.setProperty('--glass-opacity', String(opacity / 100));
-
-      // Analyse de la luminance pour adapter la couleur du texte
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 50;
-        canvas.height = 50;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0, 50, 50);
-        const { data } = ctx.getImageData(0, 0, 50, 50);
-        let total = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          // Luminance perceptuelle (sRGB)
-          total += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        }
-        const avg = total / (data.length / 4);
-        // Image claire → texte sombre, image sombre → texte blanc
-        if (avg > 140) {
-          root.style.setProperty('--adaptive-fg', 'oklch(15% 0.01 282)');
-          root.style.setProperty('--adaptive-fg-muted', 'oklch(25% 0.01 282 / 0.7)');
-          document.body.setAttribute('data-wallpaper-light', 'true');
-        } else {
-          root.style.setProperty('--adaptive-fg', 'oklch(97% 0 0)');
-          root.style.setProperty('--adaptive-fg-muted', 'oklch(97% 0 0 / 0.6)');
-          document.body.removeAttribute('data-wallpaper-light');
-        }
-      };
-      img.src = wallpaper;
-    } else {
-      document.body.style.backgroundImage = '';
-      document.body.removeAttribute('data-wallpaper');
-      document.body.removeAttribute('data-wallpaper-light');
-      const root2 = document.documentElement;
-      root2.style.removeProperty('--glass-blur');
-      root2.style.removeProperty('--glass-opacity');
-      root2.style.removeProperty('--adaptive-fg');
-      root2.style.removeProperty('--adaptive-fg-muted');
-    }
-  }, [wallpaper, blur, opacity]);
+    document.body.style.backgroundImage = '';
+    document.body.removeAttribute('data-wallpaper');
+    document.body.removeAttribute('data-wallpaper-light');
+    document.documentElement.style.removeProperty('--glass-blur');
+    document.documentElement.style.removeProperty('--glass-opacity');
+    document.documentElement.style.removeProperty('--adaptive-fg');
+    document.documentElement.style.removeProperty('--adaptive-fg-muted');
+    // Clear stored wallpaper so it never comes back
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
 
   const setWallpaper = useCallback((url: string | null) => {
     if (url) {

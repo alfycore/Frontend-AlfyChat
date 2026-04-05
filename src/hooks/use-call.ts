@@ -20,6 +20,8 @@ interface CallState {
   isVideoOff: boolean;
   isScreenSharing: boolean;
   screenStream: MediaStream | null;
+  /** true when the REMOTE participant is sharing their screen */
+  remoteIsScreenSharing: boolean;
   callerName?: string;
   callerAvatar?: string;
   mediaError?: string;
@@ -38,6 +40,7 @@ const INITIAL_STATE: CallState = {
   isVideoOff: false,
   isScreenSharing: false,
   screenStream: null,
+  remoteIsScreenSharing: false,
 };
 
 // ==========================================
@@ -317,19 +320,29 @@ export function useCall(options: UseCallOptions = {}) {
       }
     };
 
-    // ── Remote tracks keyed by peerId ──
+    // ── Remote tracks ──
+    // Convention :
+    //   • stream avec audio  → caméra/voix du peer  → clé peerId
+    //   • stream sans audio  → screen share          → clé `${peerId}_screen`
     pc.ontrack = (event) => {
-      const remoteStream = event.streams[0];
-      if (!remoteStream) return;
+      const stream = event.streams[0];
+      if (!stream) return;
+
+      const hasAudio = stream.getAudioTracks().length > 0;
+      const key = hasAudio ? peerId : `${peerId}_screen`;
+
+      console.log(`[CALL] ontrack from ${peerId} — stream ${stream.id} — key=${key} hasAudio=${hasAudio}`);
+
       setState((prev) => {
         const newStreams = new Map(prev.remoteStreams);
-        newStreams.set(peerId, remoteStream);
+        newStreams.set(key, stream);
         return { ...prev, remoteStreams: newStreams };
       });
-      remoteStream.onaddtrack = () => {
+
+      stream.onaddtrack = () => {
         setState((prev) => {
           const s = new Map(prev.remoteStreams);
-          s.set(peerId, remoteStream);
+          s.set(key, stream);
           return { ...prev, remoteStreams: s };
         });
       };
@@ -582,6 +595,25 @@ export function useCall(options: UseCallOptions = {}) {
       }
     };
 
+    // ── Remote screen share notification ──
+    const handleRemoteScreenShare = (data: unknown) => {
+      const p = parsePayload(data);
+      const active = p.active as boolean;
+      const fromUserId = p.fromUserId as string;
+      console.log('[CALL] Remote screen share:', active, 'from:', fromUserId);
+
+      setState((prev) => {
+        const newStreams = new Map(prev.remoteStreams);
+        if (!active) {
+          // Supprimer les streams screen du remote (clé `${fromUserId}_screen` ou toutes les clés `_screen`)
+          for (const key of newStreams.keys()) {
+            if (key.endsWith('_screen')) newStreams.delete(key);
+          }
+        }
+        return { ...prev, remoteStreams: newStreams, remoteIsScreenSharing: active };
+      });
+    };
+
     // ── Socket reconnection ──
     const handleReconnect = () => {
       if (callIdRef.current) {
@@ -606,6 +638,7 @@ export function useCall(options: UseCallOptions = {}) {
     socketService.onWebRTCAnswer(handleAnswer);
     socketService.onICECandidate(handleICE);
     socketService.onReconnected(handleReconnect);
+    socketService.on('CALL_SCREEN_SHARE', handleRemoteScreenShare);
 
     return () => {
       socketService.off('CALL_INCOMING', handleIncoming);
@@ -618,6 +651,7 @@ export function useCall(options: UseCallOptions = {}) {
       socketService.off('WEBRTC_ANSWER', handleAnswer);
       socketService.off('WEBRTC_ICE_CANDIDATE', handleICE);
       socketService.off('socket:reconnected', handleReconnect);
+      socketService.off('CALL_SCREEN_SHARE', handleRemoteScreenShare);
     };
   }, [createPeerConnection, flushIceCandidates, cleanup]);
 
@@ -805,56 +839,64 @@ export function useCall(options: UseCallOptions = {}) {
     }
   }, []);
 
-  /** Start screen sharing */
+  /** Start screen sharing — addTrack sur un stream séparé, la caméra reste intacte */
   const startScreenShare = useCallback(async () => {
-    const stream = localStreamRef.current;
-    if (!stream) return;
+    if (!localStreamRef.current) return;
 
     try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
         video: { cursor: 'always' } as MediaTrackConstraints,
         audio: false,
       });
 
-      const screenTrack = screenStream.getVideoTracks()[0];
-      screenStreamRef.current = screenStream;
+      const screenTrack = displayStream.getVideoTracks()[0];
+      screenStreamRef.current = displayStream;
 
-      const existingVideoTrack = stream.getVideoTracks()[0];
-      if (existingVideoTrack) originalVideoTrackRef.current = existingVideoTrack;
+      // Stream séparé contenant UNIQUEMENT le screen track (pas d'audio)
+      // → le receiver identifie ce stream par l'absence d'audio tracks
+      const screenOnlyStream = new MediaStream([screenTrack]);
 
-      // Replace or add screen track in all peer connections
       pcsRef.current.forEach((pc) => {
-        const videoSender = pc.getSenders().find((s) => s.track?.kind === 'video');
-        if (videoSender) {
-          videoSender.replaceTrack(screenTrack);
-        } else {
-          pc.addTrack(screenTrack, stream);
-        }
+        // IMPORTANT: addTrack (pas replaceTrack) → caméra reste dans son sender
+        pc.addTrack(screenTrack, screenOnlyStream);
       });
 
-      setState((prev) => ({ ...prev, isScreenSharing: true, screenStream }));
+      setState((prev) => ({ ...prev, isScreenSharing: true, screenStream: displayStream }));
+
+      if (callIdRef.current) {
+        socketService.notifyScreenShare(callIdRef.current, true);
+      }
 
       screenTrack.onended = () => stopScreenShare();
     } catch {
-      // User cancelled the picker — not an error
+      // User cancelled
     }
   }, []);
 
-  /** Stop screen sharing */
+  /** Stop screen sharing — retire le sender screen de chaque PC */
   const stopScreenShare = useCallback(async () => {
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current = null;
+    const screenStream = screenStreamRef.current;
+    if (screenStream) {
+      const screenTrackIds = new Set(screenStream.getVideoTracks().map((t) => t.id));
 
-    const originalTrack = originalVideoTrackRef.current;
-    if (originalTrack) {
       pcsRef.current.forEach((pc) => {
-        const videoSender = pc.getSenders().find((s) => s.track?.kind === 'video');
-        if (videoSender) videoSender.replaceTrack(originalTrack);
+        pc.getSenders().forEach((sender) => {
+          if (sender.track && screenTrackIds.has(sender.track.id)) {
+            pc.removeTrack(sender);
+          }
+        });
       });
-      originalVideoTrackRef.current = null;
+
+      screenStream.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
     }
 
+    originalVideoTrackRef.current = null;
     setState((prev) => ({ ...prev, isScreenSharing: false, screenStream: null }));
+
+    if (callIdRef.current) {
+      socketService.notifyScreenShare(callIdRef.current, false);
+    }
   }, []);
 
   /** Switch audio input device live */

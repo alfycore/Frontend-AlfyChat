@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Button, Popover, ScrollShadow, SearchField } from '@heroui/react';
+import { Button, Popover, ScrollShadow, SearchField, Spinner } from '@heroui/react';
 import { Twemoji, emojiToTwemojiUrl } from '@/lib/twemoji';
 import { SmileIcon } from '@/components/icons';
 
@@ -1203,34 +1203,127 @@ function searchEmojis(query: string): EmojiCategory[] {
 }
 
 // ==========================================
+// GIF SUPPORT
+// ==========================================
+
+const TENOR_KEY = 'AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ';
+const GIF_PAGE_SIZE = 30;
+
+interface GifResult {
+  id: string;
+  url: string;
+  previewUrl: string;
+  title: string;
+}
+
+// ==========================================
 // COMPONENT
 // ==========================================
 
 interface EmojiPickerProps {
   onSelect: (emoji: string) => void;
+  onGifSelect?: (gifUrl: string) => void;
   children?: React.ReactNode;
 }
 
-export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
+export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProps) {
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'emoji' | 'gif' | 'sticker'>('emoji');
+
+  // ─── Emoji state ───────────────────────────────────────────────────────────
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(0);
   const [recentEmojis, setRecentEmojis] = useState<string[]>([]);
+  const [hoveredEmoji, setHoveredEmoji] = useState<{ emoji: string; name: string } | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Preload twemoji images once
+  // ─── GIF state ─────────────────────────────────────────────────────────────
+  const [gifSearch, setGifSearch] = useState('');
+  const [gifs, setGifs] = useState<GifResult[]>([]);
+  const [isLoadingGifs, setIsLoadingGifs] = useState(false);
+  const [isLoadingMoreGifs, setIsLoadingMoreGifs] = useState(false);
+  const [hasMoreGifs, setHasMoreGifs] = useState(true);
+  const tenorNextRef = useRef<string>('');
+  const gifDebounceRef = useRef<NodeJS.Timeout>(undefined);
+  const gifSentinelRef = useRef<HTMLDivElement>(null);
+
+  // ─── GIF fetching ──────────────────────────────────────────────────────────
+  const fetchTenorGifs = useCallback(async (query: string, next?: string): Promise<GifResult[]> => {
+    try {
+      let url = query
+        ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_KEY}&limit=${GIF_PAGE_SIZE}&media_filter=gif,tinygif`
+        : `https://tenor.googleapis.com/v2/featured?key=${TENOR_KEY}&limit=${GIF_PAGE_SIZE}&media_filter=gif,tinygif`;
+      if (next) url += `&pos=${next}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      tenorNextRef.current = data.next || '';
+      return (data.results || []).map((item: any) => ({
+        id: item.id,
+        url: item.media_formats?.gif?.url || item.media_formats?.mediumgif?.url || '',
+        previewUrl: item.media_formats?.tinygif?.url || item.media_formats?.nanogif?.url || '',
+        title: item.title || '',
+      }));
+    } catch { return []; }
+  }, []);
+
+  const loadGifs = useCallback(async (query: string, append = false) => {
+    if (append) { setIsLoadingMoreGifs(true); } else { setIsLoadingGifs(true); tenorNextRef.current = ''; }
+    const results = await fetchTenorGifs(query, append ? tenorNextRef.current : undefined);
+    setHasMoreGifs(results.length >= GIF_PAGE_SIZE);
+    if (append) {
+      setGifs(prev => {
+        const ids = new Set(prev.map(g => g.id));
+        return [...prev, ...results.filter(g => !ids.has(g.id))];
+      });
+      setIsLoadingMoreGifs(false);
+    } else {
+      setGifs(results);
+      setIsLoadingGifs(false);
+    }
+  }, [fetchTenorGifs]);
+
+  // Infinite scroll sentinel for GIFs
+  useEffect(() => {
+    const sentinel = gifSentinelRef.current;
+    if (!sentinel) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMoreGifs && !isLoadingMoreGifs && !isLoadingGifs) {
+          loadGifs(gifSearch, true);
+        }
+      },
+      { rootMargin: '160px' },
+    );
+    obs.observe(sentinel);
+    return () => obs.disconnect();
+  }, [hasMoreGifs, isLoadingMoreGifs, isLoadingGifs, gifSearch, loadGifs]);
+
+  // Load GIFs when GIF tab becomes active
+  useEffect(() => {
+    if (open && activeTab === 'gif') { loadGifs(''); setGifSearch(''); }
+  }, [open, activeTab, loadGifs]);
+
+  // Debounced GIF search
+  useEffect(() => {
+    if (activeTab !== 'gif') return;
+    if (gifDebounceRef.current) clearTimeout(gifDebounceRef.current);
+    gifDebounceRef.current = setTimeout(() => loadGifs(gifSearch), 400);
+    return () => { if (gifDebounceRef.current) clearTimeout(gifDebounceRef.current); };
+  }, [gifSearch, activeTab, loadGifs]);
+
+  // ─── Emoji logic ───────────────────────────────────────────────────────────
   useEffect(() => { preloadEmojiImages(); }, []);
 
-  // Reset state on open/close
   useEffect(() => {
     if (open) {
       setRecentEmojis(getRecentEmojis());
-      setTimeout(() => searchInputRef.current?.focus(), 100);
+      if (activeTab === 'emoji') setTimeout(() => searchInputRef.current?.focus(), 100);
     } else {
       setSearch('');
       setActiveCategory(0);
+      setHoveredEmoji(null);
     }
-  }, [open]);
+  }, [open, activeTab]);
 
   const handleSelect = useCallback((emoji: string) => {
     saveRecentEmoji(emoji);
@@ -1244,18 +1337,22 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
     setOpen(false);
   }, [onSelect]);
 
-  // Build the full category list (with Récents prepended if any)
+  const handleGifSelect = useCallback((gif: GifResult) => {
+    if (onGifSelect) onGifSelect(gif.url);
+    else onSelect(gif.url);
+    setOpen(false);
+    setGifSearch('');
+  }, [onGifSelect, onSelect]);
+
   const allCategories = useMemo<EmojiCategory[]>(() => {
     if (recentEmojis.length === 0) return EMOJI_CATEGORIES;
     return [{ name: 'Récents', icon: '🕐', emojis: recentEmojis }, ...EMOJI_CATEGORIES];
   }, [recentEmojis]);
 
-  // Filtered results when searching
   const visibleCategories = useMemo(() => {
     return search.trim() ? searchEmojis(search) : allCategories;
   }, [search, allCategories]);
 
-  // Navigation tabs
   const navTabs = useMemo(() => {
     return allCategories.map((cat, i) => ({ name: cat.name, icon: cat.icon, index: i }));
   }, [allCategories]);
@@ -1276,77 +1373,181 @@ export function EmojiPicker({ onSelect, children }: EmojiPickerProps) {
       </Popover.Trigger>
 
       <Popover.Content placement="top end" className="w-[340px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/98 p-0 shadow-2xl sm:w-[380px]">
-        {/* Search */}
-        <div className="px-3 pt-3 pb-2">
-          <SearchField name="emoji-search" className="rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
-            <SearchField.Group>
-              <SearchField.SearchIcon />
-              <SearchField.Input
-                ref={searchInputRef}
-                placeholder="Rechercher un emoji..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <SearchField.ClearButton />
-            </SearchField.Group>
-          </SearchField>
+        {/* ── Tab bar ── */}
+        <div className="flex shrink-0 items-center border-b border-[var(--border)]/20 px-2">
+          {(['gif', 'sticker', 'emoji'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => { setActiveTab(tab); setSearch(''); }}
+              className={`px-3 py-2.5 text-[12px] font-semibold transition-colors ${
+                activeTab === tab
+                  ? 'border-b-2 border-[var(--accent)] text-[var(--accent)]'
+                  : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+              }`}
+            >
+              {tab === 'gif' ? 'GIF' : tab === 'sticker' ? 'Autocollants' : 'Émoji'}
+            </button>
+          ))}
         </div>
 
-        {/* Category navigation */}
-        {!search && (
-          <div className="flex items-center gap-0.5 overflow-x-auto border-b border-[var(--border)]/20 px-2 py-1.5 scrollbar-none">
-            {navTabs.map((tab) => (
-              <button
-                key={`nav-${tab.index}`}
-                type="button"
-                className={`flex shrink-0 items-center justify-center rounded-lg p-1.5 transition-all duration-150 ${
-                  activeCategory === tab.index
-                    ? 'bg-[var(--accent)]/15 ring-1 ring-[var(--accent)]/20'
-                    : 'opacity-60 hover:opacity-100 hover:bg-[var(--surface-secondary)]/50'
-                }`}
-                onClick={() => scrollToCategory(tab.index)}
-                title={tab.name}
-              >
-                <Twemoji emoji={tab.icon} size={18} />
-              </button>
-            ))}
-          </div>
+        {/* ── Emoji tab ── */}
+        {activeTab === 'emoji' && (
+          <>
+            {/* Search */}
+            <div className="px-3 pt-3 pb-2">
+              <SearchField name="emoji-search" className="rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input
+                    ref={searchInputRef}
+                    placeholder="Rechercher un emoji..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
+            </div>
+
+            {/* Category navigation */}
+            {!search && (
+              <div className="flex items-center gap-0.5 overflow-x-auto border-b border-[var(--border)]/20 px-2 py-1.5 scrollbar-none">
+                {navTabs.map((tab) => (
+                  <button
+                    key={`nav-${tab.index}`}
+                    type="button"
+                    className={`flex shrink-0 items-center justify-center rounded-lg p-1.5 transition-all duration-150 ${
+                      activeCategory === tab.index
+                        ? 'bg-[var(--accent)]/15 ring-1 ring-[var(--accent)]/20'
+                        : 'opacity-60 hover:opacity-100 hover:bg-[var(--surface-secondary)]/50'
+                    }`}
+                    onClick={() => scrollToCategory(tab.index)}
+                    title={tab.name}
+                  >
+                    <Twemoji emoji={tab.icon} size={18} />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Emoji grid */}
+            <ScrollShadow className="h-[260px] sm:h-[295px]">
+              <div className="px-2.5 py-2">
+                {visibleCategories.length === 0 ? (
+                  <div className="flex h-48 flex-col items-center justify-center gap-2">
+                    <span className="text-3xl">🔍</span>
+                    <p className="text-[13px] text-[var(--muted)]/60">Aucun emoji trouvé</p>
+                  </div>
+                ) : (
+                  visibleCategories.map((category, catIndex) => (
+                    <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2">
+                      <div className="sticky top-0 z-10 mb-1 bg-[var(--surface)]/95 py-1">
+                        <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-semibold text-[var(--muted)]/70">
+                          {category.name}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-8 gap-px sm:grid-cols-9">
+                        {category.emojis.map((emoji, i) => (
+                          <button
+                            key={`${catIndex}-${i}`}
+                            type="button"
+                            className="group flex aspect-square items-center justify-center rounded-lg transition-all duration-100 hover:scale-[1.15] hover:bg-[var(--accent)]/10 active:scale-95"
+                            onClick={() => handleSelect(emoji)}
+                            onMouseEnter={() => setHoveredEmoji({ emoji, name: EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji })}
+                            onMouseLeave={() => setHoveredEmoji(null)}
+                            title={EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji}
+                          >
+                            <Twemoji emoji={emoji} size={24} className="transition-transform group-hover:drop-shadow-sm" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollShadow>
+
+            {/* Hover preview bar */}
+            <div className="flex h-8 shrink-0 items-center gap-2 border-t border-[var(--border)]/20 px-3">
+              {hoveredEmoji ? (
+                <>
+                  <Twemoji emoji={hoveredEmoji.emoji} size={16} />
+                  <span className="text-[11px] text-[var(--muted)]">:{hoveredEmoji.name}:</span>
+                </>
+              ) : (
+                <span className="text-[11px] text-[var(--muted)]/40">Survolez un emoji…</span>
+              )}
+            </div>
+          </>
         )}
 
-        {/* Emoji grid */}
-        <ScrollShadow className="h-[280px] sm:h-[320px]">
-          <div className="px-2.5 py-2">
-            {visibleCategories.length === 0 ? (
-              <div className="flex h-48 flex-col items-center justify-center gap-2">
-                <span className="text-3xl">🔍</span>
-                <p className="text-[13px] text-[var(--muted)]/60">Aucun emoji trouvé</p>
-              </div>
-            ) : (
-              visibleCategories.map((category, catIndex) => (
-                <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2">
-                  <div className="sticky top-0 z-10 mb-1 bg-[var(--surface)]/95 py-1">
-                    <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-semibold text-[var(--muted)]/70">
-                      {category.name}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-8 gap-px sm:grid-cols-9">
-                    {category.emojis.map((emoji, i) => (
-                      <button
-                        key={`${catIndex}-${i}`}
-                        type="button"
-                        className="group flex aspect-square items-center justify-center rounded-lg transition-all duration-100 hover:scale-[1.15] hover:bg-[var(--accent)]/10 active:scale-95"
-                        onClick={() => handleSelect(emoji)}
-                        title={EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji}
-                      >
-                        <Twemoji emoji={emoji} size={24} className="transition-transform group-hover:drop-shadow-sm" />
-                      </button>
-                    ))}
-                  </div>
+        {/* ── GIF tab ── */}
+        {activeTab === 'gif' && (
+          <>
+            <div className="px-3 pt-3 pb-2">
+              <SearchField name="gif-search" className="rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
+                <SearchField.Group>
+                  <SearchField.SearchIcon />
+                  <SearchField.Input
+                    placeholder="Rechercher un GIF..."
+                    value={gifSearch}
+                    onChange={(e) => setGifSearch(e.target.value)}
+                  />
+                  <SearchField.ClearButton />
+                </SearchField.Group>
+              </SearchField>
+            </div>
+
+            <ScrollShadow className="h-[308px] sm:h-[343px]">
+              {isLoadingGifs ? (
+                <div className="flex h-60 items-center justify-center">
+                  <Spinner size="sm" />
                 </div>
-              ))
-            )}
+              ) : gifs.length === 0 ? (
+                <div className="flex h-60 flex-col items-center justify-center gap-2">
+                  <span className="text-3xl">🎞️</span>
+                  <p className="text-[13px] text-[var(--muted)]/60">Aucun GIF trouvé</p>
+                </div>
+              ) : (
+                <div className="columns-2 gap-1 px-2 pb-2">
+                  {gifs.map((gif) => (
+                    <button
+                      key={gif.id}
+                      type="button"
+                      className="mb-1 block w-full overflow-hidden rounded-lg transition-all duration-200 hover:opacity-80 hover:scale-[1.02]"
+                      onClick={() => handleGifSelect(gif)}
+                    >
+                      <img
+                        src={gif.previewUrl || gif.url}
+                        alt={gif.title}
+                        className="w-full object-cover"
+                        loading="lazy"
+                      />
+                    </button>
+                  ))}
+                  <div ref={gifSentinelRef} className="h-4 w-full col-span-2" />
+                  {isLoadingMoreGifs && (
+                    <div className="flex justify-center py-2 col-span-2">
+                      <Spinner size="sm" />
+                    </div>
+                  )}
+                </div>
+              )}
+            </ScrollShadow>
+
+            <p className="py-1 text-center text-[10px] text-[var(--muted)]/50">Powered by Tenor</p>
+          </>
+        )}
+
+        {/* ── Autocollants tab ── */}
+        {activeTab === 'sticker' && (
+          <div className="flex h-[355px] sm:h-[393px] flex-col items-center justify-center gap-3">
+            <span className="text-4xl">🧩</span>
+            <p className="text-[13px] font-medium text-[var(--muted)]">Autocollants</p>
+            <p className="text-[11px] text-[var(--muted)]/60">Bientôt disponible</p>
           </div>
-        </ScrollShadow>
+        )}
       </Popover.Content>
     </Popover>
   );

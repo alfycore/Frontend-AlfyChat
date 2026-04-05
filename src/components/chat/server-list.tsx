@@ -18,6 +18,7 @@ import {
   MessageCircleIcon,
   PlusIcon,
   SettingsIcon,
+  UsersRoundIcon,
 } from '@/components/icons';
 import {
   Alert,
@@ -255,6 +256,29 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
             <Tooltip.Arrow />
             <p className="text-[11px] font-medium">{t.serverList?.dms ?? 'Messages directs'}</p>
             <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> D</Kbd>
+          </Tooltip.Content>
+        </Tooltip>
+
+        {/* ── Groups ── */}
+        <Tooltip delay={0}>
+          <Button
+            isIconOnly
+            variant="ghost"
+            aria-label="Groupes"
+            className={cn(
+              'mx-auto shrink-0 transition-all duration-200',
+              btnSize,
+              selectedServer === 'groups'
+                ? '!rounded-[14px] bg-indigo-500 text-white shadow-lg shadow-indigo-500/40'
+                : '!rounded-full bg-white/5 text-white/50 hover:!rounded-[14px] hover:bg-indigo-500/15 hover:text-indigo-400',
+            )}
+            onPress={() => onSelectServer('groups')}
+          >
+            <UsersRoundIcon size={iconSize} />
+          </Button>
+          <Tooltip.Content showArrow placement={side}>
+            <Tooltip.Arrow />
+            <p className="text-[11px] font-medium">Groupes</p>
           </Tooltip.Content>
         </Tooltip>
 

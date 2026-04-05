@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -7,223 +7,341 @@ import {
   VideoIcon,
   VideoOffIcon,
   PhoneOffIcon,
+  MonitorUpIcon,
+  MonitorOffIcon,
   Maximize2Icon,
   Minimize2Icon,
-  Volume2Icon,
 } from '@/components/icons';
-import { Avatar, Button, Tooltip } from '@heroui/react';
+import { Avatar } from '@heroui/react';
 import { resolveMediaUrl } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { useAudioLevel } from '@/hooks/use-audio-level';
 
 interface CallOverlayProps {
   type: 'voice' | 'video';
   status: 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended';
   localStream: MediaStream | null;
   remoteStreams: Map<string, MediaStream>;
+  screenStream: MediaStream | null;
   isMuted: boolean;
   isVideoOff: boolean;
+  isScreenSharing: boolean;
   recipientName: string;
   recipientAvatar?: string;
+  currentUserName?: string;
+  currentUserAvatar?: string;
   duration: number;
   mediaError?: string;
   onToggleMute: () => void;
   onToggleVideo: () => void;
+  onStartScreenShare?: () => void;
+  onStopScreenShare?: () => void;
   onEndCall: () => void;
 }
+
+function formatDuration(s: number) {
+  const m = Math.floor(s / 60);
+  return `${m.toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+}
+
+// ── Tile ──────────────────────────────────────────────────────────
+
+function SpeakingBars({ active }: { active: boolean }) {
+  return (
+    <span className="flex items-end gap-[2px]" aria-hidden>
+      {[3, 5, 4].map((h, i) => (
+        <span
+          key={i}
+          className={cn('w-[3px] rounded-full transition-all duration-100', active ? 'bg-green-400 animate-pulse' : 'bg-white/25')}
+          style={{ height: active ? `${h * 2}px` : '4px', animationDelay: `${i * 80}ms` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function Tile({
+  label, avatarSrc, stream, micMuted, muteVideo, isLocal, isConnected, isScreenShare,
+}: {
+  label: string; avatarSrc?: string; stream: MediaStream | null;
+  micMuted?: boolean; muteVideo?: boolean; isLocal?: boolean;
+  isConnected?: boolean; isScreenShare?: boolean;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const speaking = useAudioLevel(micMuted ? null : stream);
+
+  // Toujours re-attacher après chaque render — évite le bug srcObject perdu
+  // quand hasVideo change (replaceTrack/addTrack sans changement de référence stream)
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.srcObject !== stream) el.srcObject = stream ?? null;
+  });
+
+  const hasVideo = !!(
+    stream &&
+    !muteVideo &&
+    stream.getVideoTracks().length > 0 &&
+    stream.getVideoTracks().some((t) => t.readyState === 'live' && t.enabled)
+  );
+
+  return (
+    <div className={cn(
+      'relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 transition-all duration-200',
+      speaking
+        ? 'ring-2 ring-green-400 shadow-[0_0_14px_2px_rgba(74,222,128,0.35)]'
+        : 'ring-1 ring-white/8',
+    )}>
+      {/* Un seul <video> toujours monté */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted={!!isLocal}
+        className={cn(
+          'absolute inset-0 size-full object-cover transition-opacity duration-200',
+          !hasVideo && 'opacity-0 pointer-events-none',
+        )}
+      />
+
+      {!hasVideo && (
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className={cn('rounded-full p-0.5 transition-all duration-200', speaking ? 'ring-2 ring-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : '')}>
+            <Avatar className="size-20 rounded-full shadow-2xl ring-1 ring-white/10">
+              <Avatar.Image src={resolveMediaUrl(avatarSrc)} />
+              <Avatar.Fallback className="bg-zinc-600 text-white text-3xl font-bold">
+                {label[0]?.toUpperCase() || '?'}
+              </Avatar.Fallback>
+            </Avatar>
+          </div>
+          {!isConnected && !isLocal && (
+            <span className="flex gap-1.5">
+              {[0, 0.12, 0.24].map((d) => (
+                <span key={d} className="size-2 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: `${d}s` }} />
+              ))}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Gradient */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-black/70 to-transparent" />
+
+      {/* Name + bars */}
+      <div className="absolute bottom-3 left-3 flex items-center gap-2">
+        <SpeakingBars active={speaking} />
+        <span className="rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">{label}</span>
+        {isScreenShare && (
+          <span className="rounded-lg bg-red-500/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">EN DIRECT</span>
+        )}
+      </div>
+
+      {/* Muted */}
+      {micMuted && (
+        <div className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-red-500/90">
+          <MicOffIcon size={13} className="text-white" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Overlay ───────────────────────────────────────────────────────
 
 export function CallOverlay({
   type,
   status,
   localStream,
   remoteStreams,
+  screenStream,
   isMuted,
   isVideoOff,
+  isScreenSharing,
   recipientName,
   recipientAvatar,
+  currentUserName,
+  currentUserAvatar,
   duration,
   mediaError,
   onToggleMute,
   onToggleVideo,
+  onStartScreenShare,
+  onStopScreenShare,
   onEndCall,
 }: CallOverlayProps) {
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteAudioRef = useRef<HTMLAudioElement>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
+  const isConnected = status === 'connected';
 
-  useEffect(() => {
-    if (remoteStreams.size > 0) {
-      const firstStream = remoteStreams.values().next().value;
-      if (firstStream) {
-        if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = firstStream;
-          remoteAudioRef.current.play().catch((e) =>
-            console.warn('[CALL] Audio autoplay blocked:', e)
-          );
-        }
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = firstStream;
-        }
-      }
-    }
-  }, [remoteStreams]);
+  const remoteStream = remoteStreams.size > 0
+    ? (remoteStreams.values().next().value as MediaStream | undefined) ?? null
+    : null;
 
-  const formatDuration = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
+  const hasLocalVideo =
+    !!localStream && !isVideoOff &&
+    localStream.getVideoTracks().some((t) => t.readyState === 'live' && t.enabled);
 
   const toggleFullscreen = () => {
-    if (!overlayRef.current) return;
-    if (!isFullscreen) {
-      overlayRef.current.requestFullscreen?.();
+    if (!document.fullscreenElement) {
+      overlayRef.current?.requestFullscreen();
+      setIsFullscreen(true);
     } else {
-      document.exitFullscreen?.();
+      document.exitFullscreen();
+      setIsFullscreen(false);
     }
-    setIsFullscreen(!isFullscreen);
   };
 
-  const statusLabels: Record<string, string> = {
-    calling: 'Appel en cours...',
-    ringing: 'Sonnerie...',
-    connecting: 'Connexion...',
-    connected: formatDuration(duration),
-    ended: 'Appel terminé',
-  };
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
-  const isWaiting = status === 'calling' || status === 'ringing' || status === 'connecting';
+  const statusLabel =
+    status === 'calling' ? 'Appel en cours…'
+    : status === 'ringing' ? 'Sonnerie…'
+    : status === 'connecting' ? 'Connexion…'
+    : isConnected ? formatDuration(duration)
+    : '';
 
   return (
     <div
       ref={overlayRef}
-      className="absolute inset-0 z-50 flex flex-col bg-[var(--background)]"
+      className="absolute inset-0 z-50 flex flex-col bg-zinc-950"
     >
-      {/* Hidden audio element — plays remote audio for ALL call types */}
-      <audio ref={remoteAudioRef} autoPlay playsInline />
+      {/* ── Top bar ── */}
+      <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <span className={cn(
+            'text-xs font-semibold uppercase tracking-wider',
+            isConnected ? 'text-green-400' : 'text-white/50',
+          )}>
+            {isConnected ? `⬤ ${statusLabel}` : statusLabel}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/8 hover:text-white"
+        >
+          {isFullscreen ? <Minimize2Icon size={16} /> : <Maximize2Icon size={16} />}
+        </button>
+      </div>
 
-      {/* Main video / avatar area */}
-      <div className="relative flex flex-1 items-center justify-center">
-        {type === 'video' && status === 'connected' && remoteStreams.size > 0 ? (
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="size-full object-cover"
+      {/* ── Grid ── */}
+      <div className="flex-1 overflow-hidden p-4">
+        <div className={cn(
+          'grid h-full gap-3',
+          isScreenSharing && screenStream
+            ? 'grid-cols-2 grid-rows-2'
+            : 'grid-cols-2 grid-rows-1',
+        )}>
+          {/* Screen share tile (top, full width) */}
+          {isScreenSharing && screenStream && (
+            <div className="col-span-2 overflow-hidden rounded-2xl">
+              <Tile
+                label={currentUserName || 'Vous'}
+                avatarSrc={currentUserAvatar}
+                stream={screenStream}
+                isLocal={true}
+                isConnected={isConnected}
+                isScreenShare={true}
+              />
+            </div>
+          )}
+
+          {/* Local tile */}
+          <Tile
+            label="Vous"
+            avatarSrc={currentUserAvatar}
+            stream={localStream}
+            micMuted={isMuted}
+            muteVideo={isVideoOff}
+            isLocal={true}
+            isConnected={isConnected}
           />
-        ) : (
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative">
-              <Avatar className="size-32 ring-4 ring-[var(--border)]/40">
-                <Avatar.Image src={resolveMediaUrl(recipientAvatar)} />
-                <Avatar.Fallback className="bg-[var(--accent)]/90 text-[var(--accent-foreground)] text-4xl font-bold">
-                  {recipientName[0]?.toUpperCase() || '?'}
-                </Avatar.Fallback>
-              </Avatar>
-              {isWaiting && (
-                <>
-                  <div className="absolute inset-0 animate-ping rounded-full border-2 border-[var(--accent)]/40" />
-                  <div className="absolute -inset-3 animate-pulse rounded-full border border-[var(--accent)]/20" />
-                </>
-              )}
-              {status === 'connected' && (
-                <div className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-xl bg-green-500 shadow-lg shadow-green-500/30">
-                  <Volume2Icon size={16} className="text-white" />
-                </div>
-              )}
-            </div>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white">{recipientName}</h2>
-              <p className={`mt-1 text-lg ${status === 'connected' ? 'text-green-400' : 'text-[var(--muted)]'}`}>
-                {statusLabels[status]}
-              </p>
-            </div>
 
-            {/* Media error */}
-            {mediaError && (
-              <div className="mx-auto max-w-sm rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400">
-                {mediaError}
-              </div>
-            )}
-          </div>
-        )}
+          {/* Remote tile */}
+          <Tile
+            label={recipientName}
+            avatarSrc={recipientAvatar}
+            stream={remoteStream}
+            isLocal={false}
+            isConnected={isConnected && !!remoteStream}
+          />
+        </div>
 
-        {/* Local video PiP */}
-        {type === 'video' && localStream && !isVideoOff && (
-          <div className="absolute bottom-4 right-4 overflow-hidden rounded-2xl border-2 border-[var(--border)]/40 shadow-2xl">
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              className="h-36 w-48 object-cover"
-            />
+        {/* Media error */}
+        {mediaError && (
+          <div className="absolute inset-x-4 bottom-24 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 backdrop-blur-sm">
+            <span className="text-xs text-red-400">{mediaError}</span>
           </div>
         )}
       </div>
 
-      {/* Controls bar */}
-      <div className="flex items-center justify-center gap-3 border-t border-[var(--border)]/40 bg-[var(--surface)]/80 px-8 py-4">
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant={isMuted ? 'danger' : 'secondary'}
-            size="lg"
-            className="size-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
-            onPress={onToggleMute}
-          >
-            {isMuted ? <MicOffIcon size={24} /> : <MicIcon size={24} />}
-          </Button>
-          <Tooltip.Content>{isMuted ? 'Activer le micro' : 'Couper le micro'}</Tooltip.Content>
-        </Tooltip>
+      {/* ── Controls ── */}
+      <div className="flex items-center justify-center gap-5 border-t border-white/5 bg-zinc-900/60 px-6 py-4 backdrop-blur-md">
+        <CtrlBtn active={isMuted} onClick={onToggleMute} label={isMuted ? 'Muet' : 'Micro'}>
+          {isMuted ? <MicOffIcon size={20} /> : <MicIcon size={20} />}
+        </CtrlBtn>
 
-        {type === 'video' && (
-          <Tooltip delay={0}>
-            <Button
-              isIconOnly
-              variant={isVideoOff ? 'danger' : 'secondary'}
-              size="lg"
-              className="size-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
-              onPress={onToggleVideo}
-            >
-              {isVideoOff ? <VideoOffIcon size={24} /> : <VideoIcon size={24} />}
-            </Button>
-            <Tooltip.Content>{isVideoOff ? 'Activer la caméra' : 'Couper la caméra'}</Tooltip.Content>
-          </Tooltip>
+        <CtrlBtn active={hasLocalVideo} onClick={onToggleVideo} label="Caméra">
+          {isVideoOff || !hasLocalVideo ? <VideoOffIcon size={20} /> : <VideoIcon size={20} />}
+        </CtrlBtn>
+
+        {isConnected && onStartScreenShare && onStopScreenShare && (
+          <CtrlBtn
+            active={isScreenSharing}
+            onClick={isScreenSharing ? onStopScreenShare : onStartScreenShare}
+            label={isScreenSharing ? 'Arrêter' : 'Écran'}
+          >
+            {isScreenSharing ? <MonitorOffIcon size={20} /> : <MonitorUpIcon size={20} />}
+          </CtrlBtn>
         )}
 
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant="danger"
-            size="lg"
-            className="size-16 rounded-full shadow-xl shadow-red-600/30 transition-all duration-200 hover:scale-105"
-            onPress={onEndCall}
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onEndCall}
+            aria-label="Raccrocher"
+            className="flex size-14 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl shadow-red-500/40 transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
           >
-            <PhoneOffIcon size={28} />
-          </Button>
-          <Tooltip.Content>Raccrocher</Tooltip.Content>
-        </Tooltip>
-
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant="secondary"
-            size="lg"
-            className="size-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
-            onPress={toggleFullscreen}
-          >
-            {isFullscreen ? <Minimize2Icon size={24} /> : <Maximize2Icon size={24} />}
-          </Button>
-          <Tooltip.Content>{isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}</Tooltip.Content>
-        </Tooltip>
+            <PhoneOffIcon size={24} />
+          </button>
+          <span className="text-[10px] font-medium text-white/40">Raccrocher</span>
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ── Shared button ─────────────────────────────────────────────────
+
+function CtrlBtn({
+  active, danger, onClick, label, children,
+}: {
+  active?: boolean; danger?: boolean; onClick: () => void;
+  label: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={label}
+        className={cn(
+          'flex size-12 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95',
+          danger
+            ? 'bg-red-500 text-white shadow-lg shadow-red-500/40 hover:bg-red-400'
+            : active
+              ? 'bg-(--accent) text-accent-foreground shadow-lg shadow-(--accent)/30'
+              : 'bg-white/10 text-white hover:bg-white/20',
+        )}
+      >
+        {children}
+      </button>
+      <span className="text-[10px] font-medium text-white/40">{label}</span>
     </div>
   );
 }

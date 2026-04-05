@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef } from 'react';
 import { PhoneIcon, PhoneOffIcon, VideoIcon } from '@/components/icons';
@@ -24,31 +24,42 @@ export function IncomingCallDialog({
 }: IncomingCallDialogProps) {
   const ctxRef = useRef<AudioContext | null>(null);
 
-  // ── Ringtone (440 Hz oscillator, 0.5s on / 1s off) ──
+  // ── Ringtone: two-tone pulse (440 Hz + 480 Hz), 0.6s on / 1.2s off ──
   useEffect(() => {
     if (!open) return;
 
     try {
       const ctx = new AudioContext();
       ctxRef.current = ctx;
-      const osc = ctx.createOscillator();
+
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.connect(gain);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
       gain.connect(ctx.destination);
-      osc.frequency.value = 440;
-      osc.type = 'sine';
+
+      osc1.frequency.value = 440;
+      osc2.frequency.value = 480;
+      osc1.type = 'sine';
+      osc2.type = 'sine';
       gain.gain.value = 0;
-      osc.start();
+      osc1.start();
+      osc2.start();
 
       const interval = setInterval(() => {
         const t = ctx.currentTime;
-        gain.gain.setValueAtTime(0.12, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-      }, 1500);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      }, 1800);
 
       return () => {
         clearInterval(interval);
-        osc.stop();
+        // Silence immédiatement avant d'arrêter pour éviter le clic audio résiduel
+        try { gain.gain.setValueAtTime(0, ctx.currentTime); } catch { /* ignore */ }
+        try { osc1.stop(); } catch { /* ignore */ }
+        try { osc2.stop(); } catch { /* ignore */ }
         ctx.close().catch(() => {});
         ctxRef.current = null;
       };
@@ -61,56 +72,56 @@ export function IncomingCallDialog({
     <Modal isOpen={open}>
       <Modal.Backdrop>
         <Modal.Container size="sm">
-          <Modal.Dialog className="max-w-sm rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl">
-          {/* ── Header ── */}
-          <div className="relative overflow-hidden">
-            {/* Background glow */}
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute left-1/2 top-1/4 size-48 -translate-x-1/2 animate-pulse rounded-full bg-[var(--accent)]/15 " />
-            </div>
+          <Modal.Dialog className="max-w-[320px] overflow-hidden rounded-3xl border-0 bg-zinc-900 shadow-2xl">
 
-            <div className="relative flex flex-col items-center gap-4 px-6 pb-5 pt-8 sm:px-8">
-              {/* Avatar with ping animation */}
-              <div className="relative">
-                <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/80 p-1 shadow-2xl">
-                  <Avatar className="size-20 rounded-xl sm:size-24">
+            {/* ── Top section: avatar + info ── */}
+            <div className="relative flex flex-col items-center px-8 pb-6 pt-10">
+              {/* Ambient glow behind avatar */}
+              <div className="pointer-events-none absolute inset-0 flex items-start justify-center overflow-hidden">
+                <div className="mt-4 size-48 animate-pulse rounded-full bg-(--accent)/10 blur-3xl" />
+              </div>
+
+              {/* Avatar with animated rings */}
+              <div className="relative mb-5 flex items-center justify-center">
+                <span className="absolute size-28 animate-ping rounded-full border border-white/8" style={{ animationDuration: '1.6s' }} />
+                <span className="absolute size-22 animate-ping rounded-full border border-white/12" style={{ animationDuration: '1.2s', animationDelay: '0.2s' }} />
+                <div className="relative rounded-full p-1 ring-2 ring-white/10 shadow-xl">
+                  <Avatar className="size-20 rounded-full">
                     <Avatar.Image src={resolveMediaUrl(callerAvatar)} />
-                    <Avatar.Fallback className="bg-[var(--accent)]/80 text-[var(--accent-foreground)] text-3xl font-bold">
+                    <Avatar.Fallback className="bg-zinc-700 text-white text-3xl font-bold">
                       {callerName[0]?.toUpperCase() || '?'}
                     </Avatar.Fallback>
                   </Avatar>
                 </div>
-                <span className="absolute -inset-1 animate-ping rounded-2xl border border-[var(--accent)]/30" />
-                <span className="absolute -inset-3 animate-pulse rounded-3xl border border-[var(--accent)]/15" />
               </div>
 
-              {/* Caller info */}
-              <div className="flex flex-col items-center gap-1.5 text-center">
-                <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{callerName}</h2>
-                <div className="flex items-center gap-1.5 rounded-xl bg-[var(--surface-secondary)]/40 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-                  <span className="relative flex size-2">
-                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--accent)]/60" />
-                    <span className="relative inline-flex size-2 rounded-full bg-[var(--accent)]" />
+              {/* Caller name + badge */}
+              <div className="flex flex-col items-center gap-2 text-center">
+                <h2 className="text-xl font-bold tracking-tight text-white">{callerName}</h2>
+                <div className="flex items-center gap-1.5 rounded-full bg-white/8 px-3 py-1">
+                  <span className="relative flex size-1.5">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-(--accent) opacity-60" />
+                    <span className="relative inline-flex size-1.5 rounded-full bg-(--accent)" />
                   </span>
-                  {callType === 'video' ? 'Appel vidéo entrant' : 'Appel vocal entrant'}
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-white/60">
+                    {callType === 'video' ? 'Appel vidéo' : 'Appel vocal'}
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* ── Action buttons ── */}
-          <div className="rounded-b-2xl border-t border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 px-6 py-5 sm:px-8">
-            <div className="flex items-center justify-center gap-10 sm:gap-14">
+            {/* ── Bottom section: action buttons ── */}
+            <div className="flex items-center justify-center gap-12 border-t border-white/6 bg-zinc-950/50 px-8 py-6">
               {/* Decline */}
               <div className="flex flex-col items-center gap-2">
                 <Button
                   isIconOnly
                   onPress={onDecline}
-                  className="size-14 rounded-2xl bg-red-500/90 text-white shadow-lg shadow-red-500/25 transition-all duration-200 hover:scale-105 hover:bg-red-500 active:scale-95 sm:size-16"
+                  className="size-16 rounded-full bg-red-500 text-white shadow-xl shadow-red-500/30 transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
                 >
-                  <PhoneOffIcon size={24} />
+                  <PhoneOffIcon size={26} />
                 </Button>
-                <span className="text-[11px] font-medium tracking-wide text-[var(--muted)]/70">Refuser</span>
+                <span className="text-[11px] font-medium text-white/40">Refuser</span>
               </div>
 
               {/* Accept */}
@@ -118,18 +129,17 @@ export function IncomingCallDialog({
                 <Button
                   isIconOnly
                   onPress={onAccept}
-                  className="size-14 rounded-2xl bg-green-500/90 text-white shadow-lg shadow-green-500/25 transition-all duration-200 hover:scale-105 hover:bg-green-500 active:scale-95 sm:size-16"
+                  className="size-16 rounded-full bg-green-500 text-white shadow-xl shadow-green-500/30 transition-all duration-200 hover:scale-110 hover:bg-green-400 active:scale-95"
                 >
                   {callType === 'video' ? (
-                    <VideoIcon size={24} />
+                    <VideoIcon size={26} />
                   ) : (
-                    <PhoneIcon size={24} />
+                    <PhoneIcon size={26} />
                   )}
                 </Button>
-                <span className="text-[11px] font-medium tracking-wide text-[var(--muted)]/70">Accepter</span>
+                <span className="text-[11px] font-medium text-white/40">Accepter</span>
               </div>
             </div>
-          </div>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>

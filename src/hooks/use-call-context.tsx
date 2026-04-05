@@ -17,6 +17,7 @@ interface CallContextValue {
   isMuted: boolean;
   isVideoOff: boolean;
   isScreenSharing: boolean;
+  remoteIsScreenSharing: boolean;
   screenStream: MediaStream | null;
   mediaError?: string;
   callDuration: number;
@@ -49,6 +50,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
     isMuted,
     isVideoOff,
     isScreenSharing,
+    remoteIsScreenSharing,
     screenStream,
     mediaError,
     initiateCall,
@@ -89,6 +91,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         isMuted,
         isVideoOff,
         isScreenSharing,
+        remoteIsScreenSharing,
         screenStream,
         mediaError,
         callDuration,

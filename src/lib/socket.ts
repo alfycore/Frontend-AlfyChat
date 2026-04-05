@@ -283,6 +283,10 @@ class SocketService {
     this.socket?.emit('CALL_REJOIN', { callId });
   }
 
+  notifyScreenShare(callId: string, active: boolean): void {
+    this.socket?.emit('CALL_SCREEN_SHARE', { callId, active });
+  }
+
   // ── Appels groupe LiveKit SFU ──
 
   initiateGroupCall(channelId: string, type: 'voice' | 'video'): void {

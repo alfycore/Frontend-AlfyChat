@@ -280,17 +280,17 @@ export function UserProfilePopover({
         placement="left"
         shouldFlip
         offset={8}
-        className="w-[300px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)] p-0"
+        className="w-[320px] overflow-hidden rounded-2xl border border-(--border)/40 bg-background p-0 shadow-2xl"
       >
         {loading || !profile ? (
           /* ── Skeleton ── */
           <div className="flex flex-col">
-            <Skeleton className="h-[110px] w-full rounded-none" />
-            <div className="-mt-8 mb-2 px-3">
-              <Skeleton className="size-16 rounded-full ring-4 ring-[var(--surface)]" />
+            <Skeleton className="h-24 w-full rounded-none" />
+            <div className="-mt-8 mb-2 px-4">
+              <Skeleton className="size-16 rounded-full ring-4 ring-background" />
             </div>
-            <div className="space-y-2 px-3 pb-4">
-              <Skeleton className="h-[14px] w-32 rounded-lg" />
+            <div className="space-y-2 px-4 pb-4">
+              <Skeleton className="h-4 w-32 rounded-lg" />
               <Skeleton className="h-3 w-20 rounded-lg" />
               <Skeleton className="mt-3 h-3 w-full rounded-lg" />
               <Skeleton className="h-3 w-3/4 rounded-lg" />
@@ -299,15 +299,39 @@ export function UserProfilePopover({
         ) : (
           <div className="flex flex-col">
 
-            {/* ── Banner ── */}
-            <div className="relative h-[110px] shrink-0 overflow-hidden">
-              {profile.bannerUrl
-                ? <img src={resolveMediaUrl(profile.bannerUrl)} alt="" className="size-full object-cover" />
-                : <div className="size-full" style={{ background: `linear-gradient(135deg, ${cardColor}cc, ${cardColor}88)` }} />
-              }
+            {/* ── Banner + avatar block ── */}
+            <div className="relative">
+              {/* Banner */}
+              <div className="h-24 w-full overflow-hidden">
+                {profile.bannerUrl
+                  ? <img src={resolveMediaUrl(profile.bannerUrl)} alt="" className="size-full object-cover" />
+                  : <div
+                      className="size-full"
+                      style={{ background: `linear-gradient(135deg, ${cardColor}dd 0%, ${cardColor}66 60%, ${cardColor}22 100%)` }}
+                    />
+                }
+              </div>
 
-              {/* Actions top-right */}
-              <div className="absolute right-2 top-2 flex gap-1">
+              {/* Avatar */}
+              <div className="absolute -bottom-7 left-4">
+                <Badge.Anchor>
+                  <Avatar className="size-14.5 ring-[3px] ring-background">
+                    <Avatar.Image src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} />
+                    <Avatar.Fallback
+                      className="text-xl font-bold"
+                      style={{ backgroundColor: cardColor + '30', color: cardColor }}
+                    >
+                      {(profile.displayName?.[0] ?? '?').toUpperCase()}
+                    </Avatar.Fallback>
+                  </Avatar>
+                  {statusInfo.badge && (
+                    <Badge color={statusInfo.badge} placement="bottom-right" size="sm" />
+                  )}
+                </Badge.Anchor>
+              </div>
+
+              {/* Action buttons — top right */}
+              <div className="absolute right-2.5 top-2.5 flex gap-1">
                 {isMe ? (
                   <Tooltip delay={0}>
                     <label className="flex size-7 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60">
@@ -323,7 +347,7 @@ export function UserProfilePopover({
                   <>
                     {friendStatus === 'none' && (
                       <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg backdrop-blur-sm" onPress={handleAddFriend}>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg bg-black/40 text-white backdrop-blur-sm hover:bg-black/60" onPress={handleAddFriend}>
                           <UserPlusIcon size={13} />
                         </Button>
                         <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Ajouter en ami</p></Tooltip.Content>
@@ -331,7 +355,7 @@ export function UserProfilePopover({
                     )}
                     {friendStatus === 'friend' && (
                       <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg text-green-500" isDisabled>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg bg-black/40 text-green-400 backdrop-blur-sm" isDisabled>
                           <UserCheckIcon size={13} />
                         </Button>
                         <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Ami</p></Tooltip.Content>
@@ -339,7 +363,7 @@ export function UserProfilePopover({
                     )}
                     {friendStatus === 'pending_sent' && (
                       <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg text-yellow-500" isDisabled>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg bg-black/40 text-yellow-400 backdrop-blur-sm" isDisabled>
                           <CheckIcon size={13} />
                         </Button>
                         <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Demande envoyée</p></Tooltip.Content>
@@ -347,7 +371,7 @@ export function UserProfilePopover({
                     )}
                     {friendStatus === 'pending_received' && (
                       <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg text-blue-400" onPress={handleAddFriend}>
+                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg bg-black/40 text-blue-400 backdrop-blur-sm hover:bg-black/60" onPress={handleAddFriend}>
                           <UserPlusIcon size={13} />
                         </Button>
                         <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Accepter la demande</p></Tooltip.Content>
@@ -358,34 +382,16 @@ export function UserProfilePopover({
               </div>
             </div>
 
-            {/* ── Avatar ── */}
-            <div className="-mt-8 mb-1 px-3">
-              <Badge.Anchor>
-                <Avatar className="size-16 ring-4 ring-[var(--surface)]">
-                  <Avatar.Image src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} />
-                  <Avatar.Fallback
-                    className="text-xl font-bold"
-                    style={{ backgroundColor: cardColor + '25', color: cardColor }}
-                  >
-                    {(profile.displayName?.[0] ?? '?').toUpperCase()}
-                  </Avatar.Fallback>
-                </Avatar>
-                {statusInfo.badge && (
-                  <Badge color={statusInfo.badge} placement="bottom-right" size="sm" />
-                )}
-              </Badge.Anchor>
-            </div>
-
             {/* ── Identity ── */}
-            <div className="px-3 pb-2">
+            <div className="mt-9 px-4 pb-1">
               <div className="flex flex-wrap items-center gap-1.5">
-                <h3 className="text-base font-bold leading-tight">{profile.displayName}</h3>
+                <h3 className="text-[15px] font-bold leading-tight">{profile.displayName}</h3>
                 {profile.isBot && (
                   <Chip
                     size="sm"
                     variant="soft"
                     color={profile.isVerifiedBot ? 'accent' : 'default'}
-                    className="h-4 px-1.5 text-[9px] font-bold uppercase"
+                    className="h-4.5 px-1.5 text-[9px] font-bold uppercase tracking-wide"
                   >
                     {profile.isVerifiedBot && (
                       <svg className="mr-0.5 inline size-2" viewBox="0 0 16 16" fill="currentColor">
@@ -396,51 +402,58 @@ export function UserProfilePopover({
                   </Chip>
                 )}
               </div>
-              <p className="mt-0.5 text-xs text-[var(--muted)]">
+              <p className="text-[12px] text-muted">
                 @{profile.username}
-                {' · '}
+                <span className="mx-1 opacity-40">·</span>
                 <span className={statusInfo.text}>{statusInfo.label}</span>
               </p>
             </div>
 
             {/* ── Badges ── */}
             {visibleBadges.length > 0 && (
-              <div className="px-3 pb-2">
+              <div className="px-4 pb-3 pt-2">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-(--muted)/60">Badges</p>
                 <div className="flex flex-wrap gap-1.5">
                   {visibleBadges.map((badge) => (
-                    <Tooltip key={badge.id} delay={0}>
-                      <button
-                        type="button"
-                        className="flex size-7 items-center justify-center rounded-lg transition hover:scale-110"
-                        style={{ backgroundColor: badge.color + '18', border: `1px solid ${badge.color}35` }}
-                      >
+                    <div
+                      key={badge.id}
+                      className="group relative flex items-center gap-1.5 rounded-xl px-2 py-1 transition-all hover:scale-[1.03]"
+                      style={{
+                        backgroundColor: badge.color + '18',
+                        border: `1px solid ${badge.color}35`,
+                      }}
+                    >
+                      {/* Icon */}
+                      <span className="flex size-4.5 shrink-0 items-center justify-center">
                         <BadgeIcon badge={badge} />
-                      </button>
-                      <Tooltip.Content showArrow>
-                        <Tooltip.Arrow />
-                        <p className="text-xs font-semibold">{badge.name}</p>
-                        <p className="text-[10px] opacity-60">
-                          Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}
-                        </p>
-                      </Tooltip.Content>
-                    </Tooltip>
+                      </span>
+                      {/* Name always visible */}
+                      <span className="text-[11px] font-semibold" style={{ color: badge.color }}>
+                        {badge.name}
+                      </span>
+                      {/* Date on hover */}
+                      <span className="pointer-events-none absolute -top-7 left-0 z-10 whitespace-nowrap rounded-lg bg-surface px-2 py-1 text-[10px] text-muted opacity-0 shadow-lg ring-1 ring-(--border)/30 transition-opacity group-hover:opacity-100">
+                        Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="mx-3"><Separator /></div>
+            {/* ── Divider ── */}
+            <div className="mx-4"><Separator /></div>
 
             {/* ── Bio ── */}
             {profile.bio && (
-              <div className="px-3 py-2">
-                <p className={cn('whitespace-pre-wrap text-[13px] leading-snug text-[var(--foreground)]/80', !showFullBio && 'line-clamp-3')}>
+              <div className="px-4 py-2.5">
+                <p className={cn('whitespace-pre-wrap text-[12.5px] leading-relaxed text-(--foreground)/80', !showFullBio && 'line-clamp-3')}>
                   {profile.bio}
                 </p>
                 {profile.bio.length > 120 && (
                   <button
                     type="button"
-                    className="mt-1 text-[11px] font-medium text-[var(--accent)] hover:underline"
+                    className="mt-1 text-[11px] font-medium text-(--accent) hover:underline"
                     onClick={() => setShowFullBio(v => !v)}
                   >
                     {showFullBio ? 'Réduire' : 'Lire la suite'}
@@ -451,7 +464,7 @@ export function UserProfilePopover({
 
             {/* ── Interests ── */}
             {(profile.interests?.length ?? 0) > 0 && (
-              <div className="px-3 pb-2">
+              <div className="px-4 pb-2.5">
                 <div className="flex flex-wrap gap-1">
                   {profile.interests!.map((tag) => (
                     <Chip
@@ -470,23 +483,23 @@ export function UserProfilePopover({
 
             {/* ── Member since ── */}
             {memberSince && (
-              <div className="flex items-center gap-2 px-3 pb-2 text-[12px] text-[var(--muted)]">
-                <CalendarIcon size={13} className="shrink-0" />
+              <div className="flex items-center gap-2 px-4 pb-2.5 text-[11.5px] text-muted">
+                <CalendarIcon size={12} className="shrink-0 opacity-60" />
                 <span>Membre depuis</span>
-                <span className="ml-auto font-semibold text-[var(--foreground)]/80">{memberSince}</span>
+                <span className="ml-auto font-semibold text-(--foreground)/70">{memberSince}</span>
               </div>
             )}
 
             {/* ── Server roles ── */}
             {serverId && serverRoles.length > 0 && canManageRoles && (
-              <div className="px-3 pb-2">
+              <div className="px-4 pb-2.5">
                 <button
                   type="button"
                   className="flex w-full items-center justify-between py-0.5"
                   onClick={() => setShowRoles(v => !v)}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/50">Rôles</p>
-                  <ShieldCheckIcon size={12} className={cn('text-[var(--muted)] transition-transform duration-200', showRoles && 'rotate-180')} />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-(--muted)/50">Rôles</p>
+                  <ShieldCheckIcon size={12} className={cn('text-muted transition-transform duration-200', showRoles && 'rotate-180')} />
                 </button>
                 {showRoles && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
@@ -518,11 +531,12 @@ export function UserProfilePopover({
               </div>
             )}
 
-            <div className="mx-3"><Separator /></div>
+            {/* ── Divider ── */}
+            <div className="mx-4"><Separator /></div>
 
-            {/* ── DM input ── */}
+            {/* ── DM field ── */}
             {!isMe && (
-              <div className="px-3 pb-3 pt-2">
+              <div className="px-4 pb-3 pt-2.5">
                 <InputGroup variant="secondary" className="h-9 rounded-xl">
                   <InputGroup.Input
                     placeholder={`Envoyer un message à @${profile.username}`}
@@ -532,7 +546,7 @@ export function UserProfilePopover({
                     onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSendMessage(); }}
                   />
                   <div className="flex shrink-0 items-center pr-1">
-                    <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-lg text-[var(--muted)]" onPress={handleSendMessage}>
+                    <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-lg text-muted" onPress={handleSendMessage}>
                       <SmileIcon size={14} />
                     </Button>
                   </div>
@@ -543,14 +557,14 @@ export function UserProfilePopover({
             {/* ── Kick / Ban ── */}
             {!isMe && serverId && canKickBan && (
               <>
-                <div className="mx-3"><Separator /></div>
-                <div className="flex flex-col gap-2 px-3 pb-3 pt-2">
+                <div className="mx-4"><Separator /></div>
+                <div className="flex flex-col gap-2 px-4 pb-3 pt-2.5">
                   {!confirmKick && !confirmBan && (
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl border-orange-400/30 text-[11px] text-orange-400" onPress={() => setConfirmKick(true)}>
+                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl border-orange-400/30 text-[11px] text-orange-400 hover:bg-orange-500/10" onPress={() => setConfirmKick(true)}>
                         <UserXIcon size={13} /> Expulser
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl border-red-400/30 text-[11px] text-red-400" onPress={() => setConfirmBan(true)}>
+                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl border-red-400/30 text-[11px] text-red-400 hover:bg-red-500/10" onPress={() => setConfirmBan(true)}>
                         <BanIcon size={13} /> Bannir
                       </Button>
                     </div>
@@ -558,7 +572,7 @@ export function UserProfilePopover({
 
                   {confirmKick && (
                     <div className="space-y-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-2.5">
-                      <p className="text-[11px] text-orange-300">Expulser {profile.displayName} ?</p>
+                      <p className="text-[11px] text-orange-300">Expulser <span className="font-semibold">{profile.displayName}</span> du serveur ?</p>
                       <div className="flex gap-2">
                         <Button size="sm" variant="ghost" className="flex-1 rounded-xl text-[11px]" onPress={() => setConfirmKick(false)}>Annuler</Button>
                         <Button size="sm" className="flex-1 gap-1 rounded-xl bg-orange-600 text-[11px] hover:bg-orange-500" onPress={handleKick}>
@@ -570,8 +584,8 @@ export function UserProfilePopover({
 
                   {confirmBan && (
                     <div className="space-y-2 rounded-xl border border-red-500/20 bg-red-500/5 p-2.5">
-                      <p className="text-[11px] text-red-300">Bannir {profile.displayName} ?</p>
-                      <InputGroup variant="secondary" className="h-7 rounded-xl border-[var(--border)]/50">
+                      <p className="text-[11px] text-red-300">Bannir <span className="font-semibold">{profile.displayName}</span> définitivement ?</p>
+                      <InputGroup variant="secondary" className="h-7 rounded-xl border-(--border)/50">
                         <InputGroup.Input
                           placeholder="Raison (optionnel)"
                           value={banReason}
@@ -591,7 +605,7 @@ export function UserProfilePopover({
               </>
             )}
 
-            <div className="h-1" />
+            <div className="h-1.5" />
           </div>
         )}
       </Popover.Content>

@@ -217,11 +217,15 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       if (response.success && response.data) {
         const data = response.data as Friend[];
 
-        // Fetch Redis presence first, then render — avoids flicker from stale DB status
+        // Afficher immédiatement avec les statuts DB (pas de délai)
+        setFriends(data);
+
+        // Puis mettre à jour la présence Redis en arrière-plan silencieusement
         const friendIds = data.map((f) => f.id).filter(Boolean);
         if (friendIds.length > 0) {
           socketService.requestBulkPresence(friendIds, (presence) => {
-            const merged = data.map((f) => {
+            if (presence.length === 0) return;
+            setFriends((prev) => prev.map((f) => {
               const p = presence.find((x) => x.userId === f.id);
               if (!p) return f;
               return {
@@ -230,11 +234,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                 customStatus: p.customStatus ?? f.customStatus,
                 isOnline: p.status !== 'offline' && p.status !== 'invisible',
               };
-            });
-            setFriends(merged);
+            }));
           });
-        } else {
-          setFriends(data);
         }
       }
     } catch {}
