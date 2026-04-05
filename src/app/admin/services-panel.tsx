@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   RefreshCwIcon, PlusIcon, XIcon, ZoomInIcon, ZoomOutIcon,
-  MaximizeIcon, LayoutGridIcon, Link2Icon,
+  Maximize2Icon as MaximizeIcon, LayoutGridIcon, Link2Icon,
   Trash2Icon, MoreHorizontalIcon, CloudIcon, GitBranchIcon,
   Layers3Icon, RotateCcwIcon, RadioIcon, MonitorIcon, ServerIcon,
-} from 'lucide-react';
+} from '@/components/icons';
 import { api } from '@/lib/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────

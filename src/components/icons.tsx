@@ -1,10 +1,13 @@
 /**
  * Centralized Flaticon UIcons components for the entire app.
- * Style: regular-rounded (fi-rr-*)
+ * Style: bold-rounded (fi-br-*) + brands (fi-brands-*)
+ * CDN: https://cdn-uicons.flaticon.com/4.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css
+ *      https://cdn-uicons.flaticon.com/4.0.0/uicons-brands/css/uicons-brands.css
  *
  * Usage:
- *   import { MailIcon } from '@/components/icons';
+ *   import { MailIcon, DiscordIcon } from '@/components/icons';
  *   <MailIcon size={16} className="text-muted-foreground" />
+ *   <DiscordIcon size={20} />
  */
 import React from 'react';
 
@@ -17,11 +20,22 @@ interface FiProps {
 function fi(name: string) {
   const Comp = ({ size = 20, className, style }: FiProps) => (
     <i
-      className={`fi fi-rr-${name}${className ? ` ${className}` : ''}`}
+      className={`fi fi-br-${name}${className ? ` ${className}` : ''}`}
       style={{ fontSize: size, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
     />
   );
   Comp.displayName = `FiIcon(${name})`;
+  return Comp;
+}
+
+function fiBrands(name: string) {
+  const Comp = ({ size = 20, className, style }: FiProps) => (
+    <i
+      className={`fi fi-brands-${name}${className ? ` ${className}` : ''}`}
+      style={{ fontSize: size, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
+    />
+  );
+  Comp.displayName = `FiBrandsIcon(${name})`;
   return Comp;
 }
 
@@ -247,3 +261,32 @@ export const MediaIcon = fi('photo-video');
 export const DirectoryIcon = fi('compass-alt');
 export const ContentIcon = fi('magic-wand');
 export const LayoutIcon = fi('columns');
+
+// ── Zoom ──
+export const ZoomInIcon = fi('zoom-in');
+export const ZoomOutIcon = fi('zoom-out');
+
+// ── Layout / Grid ──
+export const LayoutGridIcon = fi('grid');
+export const CircleIcon = fi('circle');
+export const PanelLeftIcon = fi('sidebar');
+
+// ── Cloud / Network ──
+export const CloudIcon = fi('cloud');
+export const GitBranchIcon = fi('code-branch');
+export const Layers3Icon = fi('layers');
+export const RadioIcon = fi('signal-alt-2');
+
+// ── Brands (fi-brands-*) ──
+export const DiscordIcon = fiBrands('discord');
+export const GithubIcon = fiBrands('github');
+export const GoogleIcon = fiBrands('google');
+export const TwitterIcon = fiBrands('twitter');
+export const YoutubeIcon = fiBrands('youtube');
+export const TwitchIcon = fiBrands('twitch');
+export const RedditIcon = fiBrands('reddit');
+export const SpotifyIcon = fiBrands('spotify');
+export const SteamIcon = fiBrands('steam');
+export const LinkedinIcon = fiBrands('linkedin');
+export const InstagramIcon = fiBrands('instagram');
+export const TiktokIcon = fiBrands('tiktok');

@@ -47,44 +47,47 @@ import { sanitizeSvg } from '@/lib/sanitize';
 import { Button, Card, Modal, Switch } from '@heroui/react';
 import { ServicesPanel } from './services-panel';
 
-// Liste d'icônes Bootstrap Icons (vraies classes bi-*)
-const BOOTSTRAP_ICONS = [
-  { value: 'bi-star-fill', label: 'Étoile' },
-  { value: 'bi-trophy-fill', label: 'Trophée' },
-  { value: 'bi-crown-fill', label: 'Couronne' },
-  { value: 'bi-shield-fill', label: 'Bouclier' },
-  { value: 'bi-gem', label: 'Gemme' },
-  { value: 'bi-fire', label: 'Feu' },
-  { value: 'bi-heart-fill', label: 'Cœur' },
-  { value: 'bi-lightning-fill', label: 'Éclair' },
-  { value: 'bi-rocket-fill', label: 'Fusée' },
-  { value: 'bi-bug-fill', label: 'Bug' },
-  { value: 'bi-code-slash', label: 'Code' },
-  { value: 'bi-palette-fill', label: 'Palette' },
-  { value: 'bi-music-note-beamed', label: 'Musique' },
-  { value: 'bi-camera-fill', label: 'Caméra' },
-  { value: 'bi-controller', label: 'Manette' },
-  { value: 'bi-brush-fill', label: 'Pinceau' },
-  { value: 'bi-cpu-fill', label: 'CPU' },
-  { value: 'bi-gift-fill', label: 'Cadeau' },
-  { value: 'bi-award-fill', label: 'Médaille' },
-  { value: 'bi-patch-check-fill', label: 'Vérifié' },
-  { value: 'bi-person-badge-fill', label: 'Badge ID' },
-  { value: 'bi-chat-heart-fill', label: 'Chat Cœur' },
-  { value: 'bi-hand-thumbs-up-fill', label: 'Pouce' },
-  { value: 'bi-emoji-sunglasses-fill', label: 'Cool' },
-  { value: 'bi-flag-fill', label: 'Drapeau' },
-  { value: 'bi-tools', label: 'Outils' },
-  { value: 'bi-wrench-adjustable', label: 'Clé' },
-  { value: 'bi-terminal-fill', label: 'Terminal' },
-  { value: 'bi-globe2', label: 'Globe' },
-  { value: 'bi-mortarboard-fill', label: 'Diplômé' },
-  { value: 'bi-eye-fill', label: 'Œil' },
-  { value: 'bi-diamond-fill', label: 'Diamant' },
-  { value: 'bi-flower1', label: 'Fleur' },
-  { value: 'bi-snow2', label: 'Flocon' },
-  { value: 'bi-sun-fill', label: 'Soleil' },
-  { value: 'bi-moon-fill', label: 'Lune' },
+// Liste d'icônes UIcons Bold-Rounded (fi-br-*)
+const UICONS_LIST = [
+  { value: 'star', label: 'Étoile' },
+  { value: 'trophy', label: 'Trophée' },
+  { value: 'crown', label: 'Couronne' },
+  { value: 'shield', label: 'Bouclier' },
+  { value: 'diamond', label: 'Gemme' },
+  { value: 'fire-flame-simple', label: 'Feu' },
+  { value: 'heart', label: 'Cœur' },
+  { value: 'bolt', label: 'Éclair' },
+  { value: 'rocket', label: 'Fusée' },
+  { value: 'bug', label: 'Bug' },
+  { value: 'code-simple', label: 'Code' },
+  { value: 'palette', label: 'Palette' },
+  { value: 'music-note', label: 'Musique' },
+  { value: 'camera', label: 'Caméra' },
+  { value: 'gamepad', label: 'Manette' },
+  { value: 'paint-brush', label: 'Pinceau' },
+  { value: 'microchip', label: 'CPU' },
+  { value: 'gift', label: 'Cadeau' },
+  { value: 'badge', label: 'Médaille' },
+  { value: 'check-circle', label: 'Vérifié' },
+  { value: 'user-check', label: 'Badge ID' },
+  { value: 'comment-heart', label: 'Chat Cœur' },
+  { value: 'thumbs-up', label: 'Pouce' },
+  { value: 'sunglasses', label: 'Cool' },
+  { value: 'flag', label: 'Drapeau' },
+  { value: 'wrench-alt', label: 'Outils' },
+  { value: 'terminal', label: 'Terminal' },
+  { value: 'world', label: 'Globe' },
+  { value: 'graduation-cap', label: 'Diplômé' },
+  { value: 'eye', label: 'Œil' },
+  { value: 'flower', label: 'Fleur' },
+  { value: 'snowflake', label: 'Flocon' },
+  { value: 'sun', label: 'Soleil' },
+  { value: 'moon', label: 'Lune' },
+  { value: 'skull', label: 'Crâne' },
+  { value: 'sword', label: 'Épée' },
+  { value: 'magic-wand', label: 'Magie' },
+  { value: 'scale', label: 'Justice' },
+  { value: 'at', label: 'Arobase' },
 ];
 
 type Tab = 'overview' | 'badges' | 'users' | 'discovery' | 'server-badges' | 'security' | 'changelogs' | 'settings' | 'monitoring' | 'status' | 'services';
@@ -126,7 +129,7 @@ export default function AdminPage() {
   const [badgeForm, setBadgeForm] = useState({
     name: '',
     description: '',
-    iconType: 'bootstrap' as 'bootstrap' | 'svg',
+    iconType: 'uicons' as 'uicons' | 'svg',
     iconValue: '',
     color: '#5865F2',
     displayOrder: 999,
@@ -548,7 +551,7 @@ export default function AdminPage() {
     setBadgeForm({
       name: '',
       description: '',
-      iconType: 'bootstrap',
+      iconType: 'uicons',
       iconValue: '',
       color: '#5865F2',
       displayOrder: 999,
@@ -557,21 +560,21 @@ export default function AdminPage() {
     setIconSearch('');
   };
 
-  const filteredIcons = BOOTSTRAP_ICONS.filter(
+  const filteredIcons = UICONS_LIST.filter(
     (icon) =>
       icon.label.toLowerCase().includes(iconSearch.toLowerCase()) ||
       icon.value.toLowerCase().includes(iconSearch.toLowerCase())
   );
 
-  // Rendu d'une icône de badge (Bootstrap Icon ou SVG)
+  // Rendu d'une icône de badge (UIcons Bold-Rounded ou SVG)
   const renderBadgeIcon = (
     iconType: string,
     iconValue: string,
     color: string,
     size: string = 'text-xl'
   ) => {
-    if (iconType === 'bootstrap' && iconValue) {
-      return <i className={`bi ${iconValue} ${size}`} style={{ color }} />;
+    if (iconType === 'uicons' && iconValue) {
+      return <i className={`fi fi-br-${iconValue} ${size}`} style={{ color }} />;
     }
     if (iconType === 'svg' && iconValue) {
       return (
@@ -581,7 +584,7 @@ export default function AdminPage() {
         />
       );
     }
-    return <i className={`bi bi-question-circle ${size} text-[var(--muted)]`} />;
+    return <i className="fi fi-br-question text-xl text-[var(--muted)]" />;
   };
 
   // ============ Guard ============
@@ -803,8 +806,8 @@ export default function AdminPage() {
                               </td>
                               <td className="px-4 py-3">
                                 <span className="rounded-full bg-[var(--surface-secondary)] px-2 py-0.5 text-xs text-[var(--muted)]">
-                                  {badge.iconType === 'bootstrap'
-                                    ? 'Bootstrap'
+                                  {badge.iconType === 'uicons'
+                                    ? 'UIcons'
                                     : 'SVG'}
                                 </span>
                               </td>
@@ -1149,7 +1152,7 @@ export default function AdminPage() {
                                       title={b.name}
                                     >
                                       {renderBadgeIcon(
-                                        b.iconType || 'bootstrap',
+                                        b.iconType || 'uicons',
                                         b.iconValue || b.icon,
                                         b.color || '#5865F2',
                                         'text-xs'
@@ -2452,15 +2455,15 @@ export default function AdminPage() {
                   className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
                   value={badgeForm.iconType}
                   onChange={(e) =>
-                    setBadgeForm({ ...badgeForm, iconType: e.target.value as 'bootstrap' | 'svg', iconValue: '' })
+                    setBadgeForm({ ...badgeForm, iconType: e.target.value as 'uicons' | 'svg', iconValue: '' })
                   }
                 >
-                  <option value="bootstrap">Icône Bootstrap</option>
+                  <option value="uicons">Icône UIcons</option>
                   <option value="svg">Upload SVG</option>
                 </select>
               </div>
 
-              {badgeForm.iconType === 'bootstrap' ? (
+              {badgeForm.iconType === 'uicons' ? (
                 <div className="grid gap-2">
                   <label className="text-sm font-medium text-[var(--foreground)]">Icône Bootstrap</label>
                   <input
@@ -2665,7 +2668,7 @@ export default function AdminPage() {
                             }}
                           >
                             {renderBadgeIcon(
-                              b.iconType || 'bootstrap',
+                              b.iconType || 'uicons',
                               b.iconValue || b.icon,
                               b.color || '#5865F2',
                               'text-sm'
