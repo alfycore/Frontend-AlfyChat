@@ -99,7 +99,7 @@ export function CallBar() {
         </span>
 
         {isScreenSharing && (
-          <MonitorUpIcon size={12} className="shrink-0 text-[var(--accent)]" title="Partage d'écran" />
+          <MonitorUpIcon size={12} className="shrink-0 text-[var(--accent)]" aria-label="Partage d'écran" />
         )}
 
         {/* Mute toggle */}
