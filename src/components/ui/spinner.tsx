@@ -20,6 +20,7 @@ function Spinner({
   return (
     <HugeiconsIcon
       icon={Loading03Icon}
+      {...props}
       strokeWidth={2}
       role="status"
       aria-label="Loading"
@@ -30,7 +31,6 @@ function Spinner({
         color === "accent" && "text-[var(--accent)]",
         className,
       )}
-      {...props}
     />
   )
 }
