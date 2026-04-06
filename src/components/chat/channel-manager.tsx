@@ -30,23 +30,60 @@ import {
 import { socketService } from '@/lib/socket';
 import {
   Button,
-  InputGroup,
-  Spinner,
-} from '@heroui/react';
+} from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
-// ── Permission flags ──
-const PERM_FLAGS = [
-  { flag: 1 << 0, label: 'Voir le salon', key: 'view' },
-  { flag: 1 << 1, label: 'Envoyer des messages', key: 'send' },
-  { flag: 1 << 2, label: 'Gérer les messages', key: 'manage_messages' },
-  { flag: 1 << 3, label: 'Joindre des fichiers', key: 'attach' },
-  { flag: 1 << 4, label: 'Mentionner @everyone', key: 'mention_everyone' },
-  { flag: 1 << 5, label: 'Gérer le salon', key: 'manage_channel' },
-  { flag: 1 << 10, label: 'Se connecter (vocal)', key: 'voice_connect' },
-  { flag: 1 << 11, label: 'Parler (vocal)', key: 'voice_speak' },
-  { flag: 1 << 12, label: 'Rendre muet (vocal)', key: 'voice_mute' },
+// ── Permission categories by channel type ──
+
+type PermFlag = { flag: number; label: string; key: string; description?: string };
+
+// Values MUST match server-node/src/enums/Permission.ts
+const PERM_GENERAL: PermFlag[] = [
+  { flag: 0x1, label: 'Voir le salon', key: 'view', description: 'Permet de voir le salon dans la liste' },
+  { flag: 0x80, label: 'Gérer le salon', key: 'manage_channel', description: 'Modifier le nom, la description, les permissions…' },
 ];
+
+const PERM_TEXT: PermFlag[] = [
+  { flag: 0x2, label: 'Envoyer des messages', key: 'send', description: 'Publier des messages dans le salon' },
+  { flag: 0x200, label: 'Gérer les messages', key: 'manage_messages', description: 'Supprimer ou épingler les messages des autres' },
+  { flag: 0x8, label: 'Joindre des fichiers', key: 'attach', description: 'Envoyer des images et fichiers' },
+  { flag: 0x4000, label: 'Mentionner @everyone', key: 'mention_everyone', description: 'Utiliser @everyone et @here' },
+];
+
+const PERM_VOICE: PermFlag[] = [
+  { flag: 0x10, label: 'Se connecter', key: 'voice_connect', description: 'Rejoindre le salon vocal' },
+  { flag: 0x20, label: 'Parler', key: 'voice_speak', description: 'Transmettre du son dans le salon' },
+];
+
+/** Types considered "vocal" for permission display */
+const VOICE_TYPES = new Set<ChannelType>(['voice', 'stage']);
+
+/** Types considered "text-only" — no vocal section */
+const TEXT_ONLY_TYPES = new Set<ChannelType>([
+  'text', 'announcement', 'forum', 'gallery', 'poll',
+  'suggestion', 'doc', 'counting', 'vent', 'thread', 'media',
+]);
+
+/** Build the permission dict for a given channel type */
+function getPermDict(channelType: ChannelType): Record<string, PermFlag[]> {
+  const dict: Record<string, PermFlag[]> = { 'Général': PERM_GENERAL };
+
+  if (VOICE_TYPES.has(channelType)) {
+    // Vocal channels: show voice perms, no text perms
+    dict['Vocal'] = PERM_VOICE;
+  } else if (TEXT_ONLY_TYPES.has(channelType)) {
+    // Text-based channels: show text perms, no vocal perms
+    dict['Texte'] = PERM_TEXT;
+  } else {
+    // Fallback: show all
+    dict['Texte'] = PERM_TEXT;
+    dict['Vocal'] = PERM_VOICE;
+  }
+
+  return dict;
+}
 
 interface ChannelPerm {
   channelId: string;
@@ -257,8 +294,8 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
         )}
       </p>
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" onPress={() => setDeleteTarget(null)}>Annuler</Button>
-        <Button size="sm" className="bg-red-500 text-white hover:bg-red-600" onPress={handleDelete}>Supprimer</Button>
+        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>Annuler</Button>
+        <Button size="sm" className="bg-red-500 text-white hover:bg-red-600" onClick={handleDelete}>Supprimer</Button>
       </div>
     </div>
   );
@@ -279,25 +316,23 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           {channel.type !== 'category' && (
             <Button
               variant="ghost"
-              isIconOnly
-              size="sm"
-              onPress={() => setPermsChannel(permsChannel?.id === channel.id ? null : channel)}
-              isDisabled={isEditorOpen}
+              size="icon-sm"
+              onClick={() => setPermsChannel(permsChannel?.id === channel.id ? null : channel)}
+              disabled={isEditorOpen}
               className={cn(permsChannel?.id === channel.id && 'text-[var(--accent)]')}
             >
               <ShieldIcon size={14} />
             </Button>
           )}
-          <Button variant="ghost" isIconOnly size="sm" onPress={() => openEdit(channel)} isDisabled={isEditorOpen}>
+          <Button variant="ghost" size="icon-sm" onClick={() => openEdit(channel)} disabled={isEditorOpen}>
             <PencilIcon size={14} />
           </Button>
           <Button
             variant="ghost"
-            isIconOnly
-            size="sm"
+            size="icon-sm"
             className="text-red-500"
-            onPress={() => setDeleteTarget(deleteTarget?.id === channel.id ? null : channel)}
-            isDisabled={isEditorOpen}
+            onClick={() => setDeleteTarget(deleteTarget?.id === channel.id ? null : channel)}
+            disabled={isEditorOpen}
           >
             <Trash2Icon size={14} />
           </Button>
@@ -332,20 +367,19 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
               </span>
               <div className="flex items-center gap-1">
                 {!isEditorOpen && (
-                  <Button variant="ghost" isIconOnly size="sm" onPress={() => openCreate('text', cat.id)}>
+                  <Button variant="ghost" size="icon-sm" onClick={() => openCreate('text', cat.id)}>
                     <PlusIcon size={14} />
                   </Button>
                 )}
-                <Button variant="ghost" isIconOnly size="sm" onPress={() => openEdit(cat)} isDisabled={isEditorOpen}>
+                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(cat)} disabled={isEditorOpen}>
                   <PencilIcon size={14} />
                 </Button>
                 <Button
                   variant="ghost"
-                  isIconOnly
-                  size="sm"
+                  size="icon-sm"
                   className="text-red-500"
-                  onPress={() => setDeleteTarget(deleteTarget?.id === cat.id ? null : cat)}
-                  isDisabled={isEditorOpen}>
+                  onClick={() => setDeleteTarget(deleteTarget?.id === cat.id ? null : cat)}
+                  disabled={isEditorOpen}>
                   <Trash2Icon size={14} />
                 </Button>
               </div>
@@ -373,7 +407,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             variant="outline"
             size="sm"
             className="flex-1 gap-2 rounded-xl border-[var(--border)]/60"
-            onPress={() => openCreate('text')}
+            onClick={() => openCreate('text')}
           >
             <PlusIcon size={14} />
             Nouveau salon
@@ -382,7 +416,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             variant="outline"
             size="sm"
             className="gap-2 rounded-xl border-[var(--border)]/60"
-            onPress={() => openCreate('category')}
+            onClick={() => openCreate('category')}
           >
             <FolderOpenIcon size={14} />
             Catégorie
@@ -431,8 +465,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
               {formType === 'category' ? 'Nom de la catégorie' : 'Nom du salon'}
             </span>
-            <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
-              <InputGroup.Input
+            <Input
                 value={formName}
                 onChange={(e) =>
                   setFormName(formType === 'category' ? e.target.value : e.target.value.toLowerCase().replace(/\s+/g, '-'))
@@ -440,8 +473,8 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
                 placeholder={formType === 'category' ? 'GÉNÉRAL' : 'mon-salon'}
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60"
               />
-            </InputGroup>
           </div>
 
           {/* Category pills */}
@@ -481,11 +514,11 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           )}
 
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onPress={cancelEdit} isDisabled={isSaving} className="rounded-lg">
+            <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving} className="rounded-lg">
               <XIcon size={14} className="mr-1.5" />
               Annuler
             </Button>
-            <Button size="sm" onPress={handleSave} isDisabled={!formName.trim() || isSaving} className="rounded-lg">
+            <Button size="sm" onClick={handleSave} disabled={!formName.trim() || isSaving} className="rounded-lg">
               {isSaving ? (
                 <Loader2Icon size={14} className="mr-1.5 animate-spin" />
               ) : (
@@ -571,6 +604,7 @@ function ChannelPermissionsEditor({
   };
 
   const selectedRole = roles.find((r) => r.id === selectedRoleId);
+  const permDict = getPermDict(channel.type);
 
   if (loading) {
     return (
@@ -583,6 +617,12 @@ function ChannelPermissionsEditor({
     );
   }
 
+  const STATE_LABEL: Record<string, string> = {
+    allow: 'Autoriser',
+    deny: 'Refuser',
+    inherit: 'Hériter',
+  };
+
   return (
     <div className="space-y-3 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/20 p-5">
       <div className="flex items-center justify-between">
@@ -591,8 +631,11 @@ function ChannelPermissionsEditor({
             <ShieldIcon size={16} />
           </div>
           Permissions — #{channel.name}
+          <span className="ml-1 rounded-lg bg-[var(--surface-secondary)]/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">
+            {channel.type}
+          </span>
         </h4>
-        <Button variant="ghost" isIconOnly size="sm" onPress={onClose}>
+        <Button variant="ghost" size="icon-sm" onClick={onClose}>
           <XIcon size={14} />
         </Button>
       </div>
@@ -601,6 +644,7 @@ function ChannelPermissionsEditor({
         <p className="text-xs text-[var(--muted)]">Aucun rôle configuré.</p>
       ) : (
         <>
+          {/* Role selector */}
           <div className="flex flex-wrap gap-1.5">
             {roles.map((role) => (
               <button
@@ -623,36 +667,59 @@ function ChannelPermissionsEditor({
             ))}
           </div>
 
+          {/* Permission categories */}
           {selectedRole && (
-            <div className="space-y-1">
-              {PERM_FLAGS.map(({ flag, label }) => {
-                const state = getPermState(selectedRole.id, flag);
-                return (
-                  <button
-                    key={flag}
-                    onClick={() => cyclePermState(selectedRole.id, flag)}
-                    className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm transition-all duration-200 hover:bg-[var(--surface-secondary)]/30"
-                  >
-                    <span
-                      className={cn(
-                        'flex size-5 items-center justify-center rounded-lg border text-xs transition-colors',
-                        state === 'allow' && 'border-green-500 bg-green-500/10 text-green-500',
-                        state === 'deny' && 'border-red-500 bg-red-500/10 text-red-500',
-                        state === 'inherit' && 'border-[var(--border)] text-[var(--muted)]',
-                      )}
-                    >
-                      {state === 'allow' && <CheckIcon size={12} />}
-                      {state === 'deny' && <XIcon size={12} />}
-                      {state === 'inherit' && <MinusIcon size={12} />}
-                    </span>
-                    <span className="flex-1 text-left">{label}</span>
-                    <span className="text-[10px] uppercase text-[var(--muted)]">
-                      {state === 'allow' ? 'Autoriser' : state === 'deny' ? 'Refuser' : 'Hériter'}
-                    </span>
-                  </button>
-                );
-              })}
-              <p className="mt-2 text-[10px] text-[var(--muted)]">
+            <div className="space-y-4">
+              {Object.entries(permDict).map(([category, flags]) => (
+                <div key={category}>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+                    {category}
+                  </p>
+                  <div className="space-y-1 rounded-xl border border-[var(--border)]/30 bg-[var(--background)]/30 p-1">
+                    {flags.map(({ flag, label, description }) => {
+                      const state = getPermState(selectedRole.id, flag);
+                      return (
+                        <button
+                          key={flag}
+                          onClick={() => cyclePermState(selectedRole.id, flag)}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm transition-all duration-200 hover:bg-[var(--surface-secondary)]/30"
+                        >
+                          <span
+                            className={cn(
+                              'flex size-5 shrink-0 items-center justify-center rounded-lg border text-xs transition-colors',
+                              state === 'allow' && 'border-green-500 bg-green-500/10 text-green-500',
+                              state === 'deny' && 'border-red-500 bg-red-500/10 text-red-500',
+                              state === 'inherit' && 'border-[var(--border)] text-[var(--muted)]',
+                            )}
+                          >
+                            {state === 'allow' && <CheckIcon size={12} />}
+                            {state === 'deny' && <XIcon size={12} />}
+                            {state === 'inherit' && <MinusIcon size={12} />}
+                          </span>
+                          <div className="min-w-0 flex-1 text-left">
+                            <span className="block text-[13px] font-medium">{label}</span>
+                            {description && (
+                              <span className="block text-[11px] text-[var(--muted)]/70">{description}</span>
+                            )}
+                          </div>
+                          <span
+                            className={cn(
+                              'shrink-0 rounded-lg px-1.5 py-0.5 text-[10px] font-semibold uppercase',
+                              state === 'allow' && 'bg-green-500/10 text-green-500',
+                              state === 'deny' && 'bg-red-500/10 text-red-500',
+                              state === 'inherit' && 'bg-[var(--surface-secondary)]/50 text-[var(--muted)]',
+                            )}
+                          >
+                            {STATE_LABEL[state]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              <p className="text-[10px] text-[var(--muted)]">
                 Cliquez pour alterner : Hériter → Autoriser → Refuser → Hériter
               </p>
             </div>

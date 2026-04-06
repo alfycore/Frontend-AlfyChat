@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { LogInIcon } from '@/components/icons';
-import { Button, Link } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export function NavAuthButtons() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

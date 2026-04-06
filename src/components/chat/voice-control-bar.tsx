@@ -2,7 +2,7 @@
 
 import { MicIcon, MicOffIcon, HeadphonesIcon, HeadphoneOffIcon, PhoneOffIcon, Volume2Icon, Loader2Icon } from '@/components/icons';
 import { useVoice } from '@/hooks/use-voice';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export function VoiceControlBar() {
@@ -44,17 +44,17 @@ export function VoiceControlBar() {
 
       {/* Controls */}
       <div className="flex items-center gap-1 rounded-xl bg-[var(--surface-secondary)]/30 p-1">
-        <Button isIconOnly size="sm" variant="ghost" onPress={toggleMute}
+        <Button size="icon-sm" variant="ghost" onClick={toggleMute}
           className={cn('size-8 flex-1 rounded-xl transition-all duration-150',
-            isMuted ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'text-[var(--muted)]/70 hover:text-[var(--foreground)]'
+            isMuted ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'text-muted-foreground/70 hover:text-foreground'
           )}
         >
           {isMuted ? <MicOffIcon size={15} /> : <MicIcon size={15} />}
         </Button>
 
-        <Button isIconOnly size="sm" variant="ghost" onPress={toggleDeafen}
+        <Button size="icon-sm" variant="ghost" onClick={toggleDeafen}
           className={cn('size-8 flex-1 rounded-xl transition-all duration-150',
-            isDeafened ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'text-[var(--muted)]/70 hover:text-[var(--foreground)]'
+            isDeafened ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'text-muted-foreground/70 hover:text-foreground'
           )}
         >
           {isDeafened ? <HeadphoneOffIcon size={15} /> : <HeadphonesIcon size={15} />}
@@ -62,9 +62,9 @@ export function VoiceControlBar() {
 
         <div className="mx-1 h-5 w-px rounded-full bg-[var(--border)]/30" />
 
-        <Button isIconOnly size="sm" variant="ghost"
+        <Button size="icon-sm" variant="ghost"
           className="size-8 flex-1 rounded-xl bg-red-500/15 text-red-400 transition-all duration-150 hover:bg-red-500/25"
-          onPress={leaveChannel}
+          onClick={leaveChannel}
         >
           <PhoneOffIcon size={15} />
         </Button>

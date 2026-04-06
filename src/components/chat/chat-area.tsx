@@ -17,16 +17,15 @@ import {
   SendIcon,
   HashIcon,
   ImageIcon,
-  ReplyIcon,
   XIcon,
   PhoneIcon,
   VideoIcon,
-  MenuIcon,
   ArrowLeftIcon,
   BanIcon,
   SearchIcon,
   PaperclipIcon,
   FileTextIcon,
+  MenuIcon,
 } from '@/components/icons';
 import { useMessages } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
@@ -34,20 +33,30 @@ import { api } from '@/lib/api';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { notify } from '@/hooks/use-notification';
-import {
-  Button, Card, ScrollShadow, Spinner, Tooltip,
-} from '@heroui/react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
-
 import { MentionPopover, type MentionUser } from '@/components/chat/mention-popover';
 import { CallPanel } from '@/components/chat/call-panel';
+import { SearchPanel } from '@/components/chat/search-panel';
 import {
   MessageItem,
   shouldGroup,
   type MessageSender,
   type MessageData,
 } from '@/components/chat/message-item';
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Types                                                                      */
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 interface ChatAreaProps {
   channelId?: string | null;
@@ -56,15 +65,12 @@ interface ChatAreaProps {
   recipientName?: string;
 }
 
-// ── MessageList (memoized) ────────────────────────────────────────────────────
-// Isolated from ChatArea re-renders caused by messageInput / typing state changes.
-
 interface MessageListProps {
   dedupedMessages: MessageData[];
   editingMessageId: string | null;
   editInput: string;
   messagesById: Map<string, MessageData>;
-  searchQuery: string;
+  highlightedMessageId: string | null;
   currentUser: MessageSender | null;
   recipientName?: string;
   isLoadingMoreMessages: boolean;
@@ -80,88 +86,132 @@ interface MessageListProps {
   onDelete: (id: string) => void;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  MessageList (memoized)                                                     */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 const MessageList = memo(function MessageList({
-  dedupedMessages, editingMessageId, editInput, messagesById, searchQuery,
-  currentUser, recipientName, isLoadingMoreMessages, messagesContainerRef,
-  onSetEditInput, onReply, onCopy, onReaction, onRemoveReaction,
-  onStartEdit, onSaveEdit, onCancelEdit, onDelete,
+  dedupedMessages,
+  editingMessageId,
+  editInput,
+  messagesById,
+  highlightedMessageId,
+  currentUser,
+  recipientName,
+  isLoadingMoreMessages,
+  messagesContainerRef,
+  onSetEditInput,
+  onReply,
+  onCopy,
+  onReaction,
+  onRemoveReaction,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onDelete,
 }: MessageListProps) {
-  const highlight = searchQuery.trim() || undefined;
   return (
     <div className="space-y-0" ref={messagesContainerRef}>
       {isLoadingMoreMessages && (
-        <div className="flex items-center justify-center gap-2 py-3 text-[var(--muted)]">
+        <div className="flex items-center justify-center gap-2 py-3 text-muted-foreground">
           <Spinner size="sm" />
-          <span className="text-[12px]">Chargement des anciens messages…</span>
+          <span className="text-xs">Chargement des anciens messages…</span>
         </div>
       )}
+
       {dedupedMessages.map((message, idx) => {
         const isEditing = editingMessageId === message.id;
         const grouped = idx > 0 && shouldGroup(dedupedMessages[idx - 1], message);
+        const isHighlighted = highlightedMessageId === message.id;
+
         return (
-          <MessageItem
+          <div
             key={message.id}
-            message={message}
-            currentUser={currentUser}
-            recipientName={recipientName}
-            isEditing={isEditing}
-            editInput={isEditing ? editInput : ''}
-            isGrouped={grouped}
-            replyMessage={message.replyToId ? (messagesById.get(message.replyToId) ?? null) : null}
-            onSetEditInput={onSetEditInput}
-            onReply={onReply}
-            onCopy={onCopy}
-            onReaction={onReaction}
-            onRemoveReaction={onRemoveReaction}
-            onStartEdit={onStartEdit}
-            onSaveEdit={onSaveEdit}
-            onCancelEdit={onCancelEdit}
-            onDelete={onDelete}
-            highlight={highlight}
-          />
+            className={isHighlighted ? 'animate-pulse rounded-lg bg-primary/10 transition-colors duration-500' : ''}
+          >
+            <MessageItem
+              message={message}
+              currentUser={currentUser}
+              recipientName={recipientName}
+              isEditing={isEditing}
+              editInput={isEditing ? editInput : ''}
+              isGrouped={grouped}
+              replyMessage={
+                message.replyToId
+                  ? (messagesById.get(message.replyToId) ?? null)
+                  : null
+              }
+              onSetEditInput={onSetEditInput}
+              onReply={onReply}
+              onCopy={onCopy}
+              onReaction={onReaction}
+              onRemoveReaction={onRemoveReaction}
+              onStartEdit={onStartEdit}
+              onSaveEdit={onSaveEdit}
+              onCancelEdit={onCancelEdit}
+              onDelete={onDelete}
+            />
+          </div>
         );
       })}
     </div>
   );
 });
 
-// ── ChatArea ──────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  ChatArea                                                                   */
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProps) {
   const { user } = useAuth();
+  const ui = useUIStyle();
+  const { isMobile, openSidebar } = useMobileNav();
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
+
+  /* ── Local state ── */
   const [messageInput, setMessageInput] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editInput, setEditInput] = useState('');
-  const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; authorName: string } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{
+    id: string;
+    content: string;
+    authorName: string;
+  } | null>(null);
+
+  const [cooldownActive, setCooldownActive] = useState(false);
+  const [iBlockedThem, setIBlockedThem] = useState(false);
+  const [theyBlockedMe, setTheyBlockedMe] = useState(false);
+
+  const [pendingAttachments, setPendingAttachments] = useState<
+    { name: string; url: string; isImage: boolean }[]
+  >([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionVisible, setMentionVisible] = useState(false);
+
+  /* ── Refs ── */
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isAtBottomRef = useRef(true);
   const editInputRef = useRef('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
-  // ── Message cooldown ──
   const msgTimestampsRef = useRef<number[]>([]);
-  const [cooldownActive, setCooldownActive] = useState(false);
-
-  // ── Block status (DM only) ──
-  const [iBlockedThem, setIBlockedThem] = useState(false);
-  const [theyBlockedMe, setTheyBlockedMe] = useState(false);
-
-  // ── File attachments ──
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [pendingAttachments, setPendingAttachments] = useState<{ name: string; url: string; isImage: boolean }[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const isTypingRef = useRef(false);
+  const hasInitialScrollRef = useRef(false);
 
-  // ── Message search ──
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchIndex, setSearchIndex] = useState(0);
+  /** Resolve the actual scrollable viewport inside Radix ScrollArea */
+  const getViewport = useCallback(() => {
+    return scrollAreaRef.current?.querySelector<HTMLDivElement>('[data-slot="scroll-area-viewport"]') ?? null;
+  }, []);
 
-  // Mention state
-  const [mentionQuery, setMentionQuery] = useState('');
-  const [mentionVisible, setMentionVisible] = useState(false);
-
+  /* ── Hooks ── */
   const {
     initiateCall,
     callStatus,
@@ -202,42 +252,20 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     loadMoreMessages,
   } = useMessages(channelId || undefined, recipientId);
 
-  const ui = useUIStyle();
+  /* ── Derived data ── */
+  const dedupedMessages = useMemo(() => {
+    const seen = new Set<string>();
+    return messages.filter((m) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
+  }, [messages]);
 
-  const scrollToBottom = useCallback(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, []);
-
-  const checkIfAtBottom = useCallback(() => {
-    if (scrollRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-      isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isAtBottomRef.current) scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [channelId, recipientId, scrollToBottom]);
-
-  // Re-scroll quand une image se charge et augmente la hauteur du chat
-  // (load ne bubble pas → phase capture sur le scroll container)
-  useEffect(() => {
-    const scroller = scrollRef.current;
-    if (!scroller) return;
-    const onLoad = (e: Event) => {
-      if ((e.target as HTMLElement).tagName === 'IMG' && isAtBottomRef.current) {
-        scrollToBottom();
-      }
-    };
-    scroller.addEventListener('load', onLoad, true);
-    return () => scroller.removeEventListener('load', onLoad, true);
-  }, [scrollToBottom]);
+  const messagesById = useMemo(
+    () => new Map(dedupedMessages.map((m) => [m.id, m])),
+    [dedupedMessages],
+  );
 
   const mentionUsersMemo = useMemo(() => {
     const usersMap = new Map<string, MentionUser>();
@@ -262,52 +290,87 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     return Array.from(usersMap.values());
   }, [messages, user]);
 
-  // Dédupliquer par ID (garde-fou contre les doublons de state)
-  const dedupedMessages = useMemo(() => {
-    const seen = new Set<string>();
-    return messages.filter(m => {
-      if (seen.has(m.id)) return false;
-      seen.add(m.id);
-      return true;
-    });
-  }, [messages]);
+  /* ── Scroll helpers ── */
+  const scrollToBottom = useCallback(() => {
+    const vp = getViewport();
+    if (vp) vp.scrollTop = vp.scrollHeight;
+  }, [getViewport]);
 
-  const messagesById = useMemo(
-    () => new Map(dedupedMessages.map((m) => [m.id, m])),
-    [dedupedMessages]
-  );
+  const checkIfAtBottom = useCallback(() => {
+    const vp = getViewport();
+    if (vp) {
+      const { scrollTop, scrollHeight, clientHeight } = vp;
+      isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
+    }
+  }, [getViewport]);
+
+  /* ── Effects ── */
+  // Scroll to bottom when new messages arrive (only if already at bottom)
+  useEffect(() => {
+    if (isAtBottomRef.current) scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // Scroll to bottom when switching conversations
+  useEffect(() => {
+    // Reset to bottom on conversation change
+    isAtBottomRef.current = true;
+    hasInitialScrollRef.current = false;
+    // Use rAF to ensure the DOM has rendered messages before scrolling
+    requestAnimationFrame(() => {
+      scrollToBottom();
+      // Double rAF for Radix ScrollArea which may need an extra frame
+      requestAnimationFrame(scrollToBottom);
+    });
+  }, [channelId, recipientId, scrollToBottom]);
+
+  // Scroll to bottom once on initial load only
+  useEffect(() => {
+    if (!isLoading && messages.length > 0 && !hasInitialScrollRef.current) {
+      hasInitialScrollRef.current = true;
+      requestAnimationFrame(() => {
+        scrollToBottom();
+        requestAnimationFrame(scrollToBottom);
+      });
+    }
+  }, [isLoading, scrollToBottom, messages.length]);
 
   useEffect(() => {
-    const el = scrollRef.current;
+    const scroller = getViewport();
+    if (!scroller) return;
+    const onLoad = (e: Event) => {
+      if ((e.target as HTMLElement).tagName === 'IMG' && isAtBottomRef.current) scrollToBottom();
+    };
+    scroller.addEventListener('load', onLoad, true);
+    return () => scroller.removeEventListener('load', onLoad, true);
+  }, [scrollToBottom, getViewport]);
+
+  useEffect(() => {
+    const el = getViewport();
     if (el) {
       el.addEventListener('scroll', checkIfAtBottom);
       return () => el.removeEventListener('scroll', checkIfAtBottom);
     }
-  }, [checkIfAtBottom]);
+  }, [checkIfAtBottom, getViewport]);
 
-  // Charger les messages plus anciens quand l'utilisateur scrolle en haut
   useEffect(() => {
-    const el = scrollRef.current;
+    const el = getViewport();
     if (!el) return;
-
     const handleScrollTop = () => {
       checkIfAtBottom();
       if (el.scrollTop < 120 && hasMoreMessages && !isLoadingMoreMessages) {
+        isAtBottomRef.current = false;
         const prevHeight = el.scrollHeight;
         loadMoreMessages().then(() => {
-          // Maintenir la position de scroll après ajout de messages en haut
           requestAnimationFrame(() => {
-            if (scrollRef.current) {
-              scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
-            }
+            const vp = getViewport();
+            if (vp) vp.scrollTop = vp.scrollHeight - prevHeight;
           });
         });
       }
     };
-
     el.addEventListener('scroll', handleScrollTop);
     return () => el.removeEventListener('scroll', handleScrollTop);
-  }, [checkIfAtBottom, hasMoreMessages, isLoadingMoreMessages, loadMoreMessages]);
+  }, [checkIfAtBottom, hasMoreMessages, isLoadingMoreMessages, loadMoreMessages, getViewport]);
 
   useEffect(() => {
     if (!messagesContainerRef.current) return;
@@ -318,7 +381,6 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     return () => obs.disconnect();
   }, [scrollToBottom]);
 
-  // Auto-grow textarea (1 line min, 5 lines max)
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -326,92 +388,90 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     el.style.height = `${Math.min(el.scrollHeight, 110)}px`;
   }, [messageInput]);
 
-  // Reset search when changing channel/DM
   useEffect(() => {
     setSearchOpen(false);
-    setSearchQuery('');
-    setSearchIndex(0);
     setPendingAttachments([]);
   }, [channelId, recipientId]);
 
-  // Scroll to search result
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
-    return dedupedMessages
-      .map((m, i) => ({ msg: m, idx: i }))
-      .filter(({ msg }) => msg.content?.toLowerCase().includes(q));
-  }, [searchQuery, dedupedMessages]);
-
-  useEffect(() => { setSearchIndex(0); }, [searchQuery]);
-
-  useEffect(() => {
-    if (!searchResults[searchIndex]) return;
-    const el = document.querySelector(`[data-message-id="${searchResults[searchIndex].msg.id}"]`);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [searchIndex, searchResults]);
-
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    e.target.value = '';
-
-    const MAX = 10 * 1024 * 1024;
-    const ACCEPTED_IMAGES = ['image/png','image/jpeg','image/jpg','image/gif','image/webp'];
-    const ACCEPTED_DOCS = [
-      'application/pdf','application/x-pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'text/plain','text/csv',
-      // Variantes Windows (DOCX/XLSX = ZIP)
-      'application/zip','application/x-zip-compressed','application/octet-stream',
-    ];
-    const ACCEPTED = [...ACCEPTED_IMAGES, ...ACCEPTED_DOCS];
-    const ACCEPTED_EXTS = ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','csv',
-                           'png','jpg','jpeg','gif','webp'];
-
-    for (const file of files) {
-      if (file.size > MAX) { notify.error('Fichier trop volumineux', `${file.name} dépasse 10 Mo`); continue; }
-      const ext = file.name.split('.').pop()?.toLowerCase() || '';
-      if (!ACCEPTED.includes(file.type) && !ACCEPTED_EXTS.includes(ext)) {
-        notify.error('Type non supporté', `${file.name} n'est pas accepté`);
-        continue;
-      }
-
-      setIsUploading(true);
-      try {
-        const res = await api.uploadDocument(file);
-        if (res.success && res.data) {
-          setPendingAttachments((prev) => [...prev, { name: file.name, url: res.data!.url, isImage: res.data!.isImage }]);
-        } else {
-          notify.error('Erreur upload', res.error || 'Impossible d\'uploader le fichier');
-        }
-      } finally {
-        setIsUploading(false);
-      }
-    }
-  }, []);
-
-  // Fetch block status when opening a DM
+  /* ── Block status (DM) ── */
   useEffect(() => {
     if (!recipientId) {
       setIBlockedThem(false);
       setTheyBlockedMe(false);
       return;
     }
-    api.getBlockStatus(recipientId).then((res: any) => {
-      const data = res?.data ?? res;
-      if (data && typeof data === 'object') {
-        setIBlockedThem(!!data.iBlockedThem);
-        setTheyBlockedMe(!!data.theyBlockedMe);
-      }
-    }).catch(() => {});
+    api
+      .getBlockStatus(recipientId)
+      .then((res: any) => {
+        const data = res?.data ?? res;
+        if (data && typeof data === 'object') {
+          setIBlockedThem(!!data.iBlockedThem);
+          setTheyBlockedMe(!!data.theyBlockedMe);
+        }
+      })
+      .catch(() => {});
   }, [recipientId]);
 
+  /* ── File upload ── */
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      e.target.value = '';
+
+      const MAX = 10 * 1024 * 1024;
+      const ACCEPTED_IMAGES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+      const ACCEPTED_DOCS = [
+        'application/pdf',
+        'application/x-pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/plain',
+        'text/csv',
+        'application/zip',
+        'application/x-zip-compressed',
+        'application/octet-stream',
+      ];
+      const ACCEPTED = [...ACCEPTED_IMAGES, ...ACCEPTED_DOCS];
+      const ACCEPTED_EXTS = [
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+        'txt', 'csv', 'png', 'jpg', 'jpeg', 'gif', 'webp',
+      ];
+
+      for (const file of files) {
+        if (file.size > MAX) {
+          notify.error('Fichier trop volumineux', `${file.name} dépasse 10 Mo`);
+          continue;
+        }
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        if (!ACCEPTED.includes(file.type) && !ACCEPTED_EXTS.includes(ext)) {
+          notify.error('Type non supporté', `${file.name} n'est pas accepté`);
+          continue;
+        }
+        setIsUploading(true);
+        try {
+          const res = await api.uploadDocument(file);
+          if (res.success && res.data) {
+            setPendingAttachments((prev) => [
+              ...prev,
+              { name: file.name, url: res.data!.url, isImage: res.data!.isImage },
+            ]);
+          } else {
+            notify.error('Erreur upload', res.error || "Impossible d'uploader le fichier");
+          }
+        } finally {
+          setIsUploading(false);
+        }
+      }
+    },
+    [],
+  );
+
+  /* ── Send message ── */
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     const hasText = messageInput.trim();
@@ -419,7 +479,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     if (!hasText && !hasAttachments) return;
 
     const now = Date.now();
-    msgTimestampsRef.current = msgTimestampsRef.current.filter(t => now - t < 5000);
+    msgTimestampsRef.current = msgTimestampsRef.current.filter((t) => now - t < 5000);
     if (msgTimestampsRef.current.length >= 5) {
       setCooldownActive(true);
       setTimeout(() => setCooldownActive(false), 3000);
@@ -427,7 +487,6 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     }
     msgTimestampsRef.current.push(now);
 
-    // Build content: text + attachments
     let content = messageInput.trim();
     for (const att of pendingAttachments) {
       const attStr = att.isImage
@@ -445,6 +504,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     scrollToBottom();
   };
 
+  /* ── Edit handlers ── */
   const handleSetEditInput = useCallback((value: SetStateAction<string>) => {
     setEditInput((prev) => {
       const next = typeof value === 'function' ? (value as (p: string) => string)(prev) : value;
@@ -459,13 +519,16 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     setEditingMessageId(messageId);
   }, []);
 
-  const handleSaveEdit = useCallback((messageId: string) => {
-    const value = editInputRef.current;
-    if (value.trim()) editMessage(messageId, value.trim());
-    setEditingMessageId(null);
-    setEditInput('');
-    editInputRef.current = '';
-  }, [editMessage]);
+  const handleSaveEdit = useCallback(
+    (messageId: string) => {
+      const value = editInputRef.current;
+      if (value.trim()) editMessage(messageId, value.trim());
+      setEditingMessageId(null);
+      setEditInput('');
+      editInputRef.current = '';
+    },
+    [editMessage],
+  );
 
   const handleCancelEdit = useCallback(() => {
     setEditingMessageId(null);
@@ -473,23 +536,27 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     editInputRef.current = '';
   }, []);
 
-  const handleReply = useCallback((messageId: string, content: string, authorName: string) => {
-    setReplyingTo({ id: messageId, content, authorName });
-    textareaRef.current?.focus();
-  }, []);
+  const handleReply = useCallback(
+    (messageId: string, content: string, authorName: string) => {
+      setReplyingTo({ id: messageId, content, authorName });
+      textareaRef.current?.focus();
+    },
+    [],
+  );
 
   const handleCopyMessage = useCallback((content: string) => {
     navigator.clipboard.writeText(content);
     notify.success('Copié', 'Message copié dans le presse-papiers');
   }, []);
 
-  const handleReaction = useCallback((messageId: string, emoji: string) => {
-    addReaction(messageId, emoji);
-  }, [addReaction]);
-
-  const handleRemoveReaction = useCallback((messageId: string, emoji: string) => {
-    removeReaction(messageId, emoji);
-  }, [removeReaction]);
+  const handleReaction = useCallback(
+    (messageId: string, emoji: string) => addReaction(messageId, emoji),
+    [addReaction],
+  );
+  const handleRemoveReaction = useCallback(
+    (messageId: string, emoji: string) => removeReaction(messageId, emoji),
+    [removeReaction],
+  );
 
   const handleEmojiInsert = (emoji: string) => {
     setMessageInput((prev) => prev + emoji);
@@ -503,22 +570,18 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (mentionVisible && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Tab' || e.key === 'Enter' || e.key === 'Escape')) {
+    if (mentionVisible && ['ArrowUp', 'ArrowDown', 'Tab', 'Enter', 'Escape'].includes(e.key))
       return;
-    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (messageInput.trim()) {
-        handleSendMessage(e as unknown as React.FormEvent);
-      }
+      if (messageInput.trim()) handleSendMessage(e as unknown as React.FormEvent);
     }
   };
-
-  const isTypingRef = useRef(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setMessageInput(value);
+
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     if (value) {
       if (!isTypingRef.current) {
@@ -552,13 +615,13 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
     if (mentionMatch) {
       const beforeMention = textBeforeCursor.slice(0, mentionMatch.index);
-      const newValue = `${beforeMention}@${mentionUser.username} ${textAfterCursor}`;
-      setMessageInput(newValue);
+      setMessageInput(`${beforeMention}@${mentionUser.username} ${textAfterCursor}`);
       setMentionVisible(false);
       textareaRef.current?.focus();
     }
   };
 
+  /* ── Call helpers ── */
   const getConversationId = useCallback(() => {
     if (channelId) return channelId;
     if (recipientId && user) {
@@ -571,207 +634,205 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   const handleStartVoiceCall = () => {
     if (recipientId) initiateCall(recipientId, 'voice', getConversationId(), recipientName);
   };
-
   const handleStartVideoCall = () => {
     if (recipientId) initiateCall(recipientId, 'video', getConversationId(), recipientName);
   };
 
-  const { isMobile, openSidebar } = useMobileNav();
+  const isBlocked = iBlockedThem || theyBlockedMe;
 
-  // ── Empty state ──
+  /* ══════════════════════════════════════════════════════════════════════════ */
+  /*  Empty state                                                              */
+  /* ══════════════════════════════════════════════════════════════════════════ */
+
   if (!channelId && !recipientId) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         {isMobile && (
-          <Button variant="outline" size="lg" className="mb-2 gap-2 rounded-xl" onPress={openSidebar}>
-            <MenuIcon size={20} />
+          <Button
+            variant="outline"
+            size="lg"
+            className="mb-2 gap-2 rounded-xl"
+            onClick={openSidebar}
+          >
+            <MenuIcon size={18} />
             Ouvrir les conversations
           </Button>
         )}
-        <Card className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-8 py-7 shadow-none">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-3xl bg-[var(--accent)]/15 " />
-            <div className="relative flex size-20 items-center justify-center rounded-3xl bg-[var(--accent)]/10 md:size-24">
-              <MessageCircleIcon size={36} className="text-[var(--accent)] md:size-11" />
-            </div>
+        <Card className="flex flex-col items-center gap-5 border-border/30 bg-card px-10 py-8 shadow-sm">
+          <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+            <MessageCircleIcon size={32} className="text-primary" />
           </div>
           <div className="space-y-1.5">
-            <h2 className="text-lg font-bold text-[var(--foreground)] md:text-xl">Bienvenue sur AlfyChat</h2>
-            <p className="text-[13px] text-[var(--muted)]">Sélectionnez une conversation ou un salon pour commencer</p>
+            <CardTitle className="text-xl font-bold">Bienvenue sur AlfyChat</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Sélectionnez une conversation ou un salon pour commencer à discuter.
+            </CardDescription>
           </div>
         </Card>
       </div>
     );
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════ */
+  /*  Main render                                                              */
+  /* ══════════════════════════════════════════════════════════════════════════ */
+
   return (
-    <div data-tour="chat-area" className="flex h-full flex-1 flex-col overflow-hidden">
-      {/* Header */}
-      <div className={`flex h-14 shrink-0 items-center justify-between px-3 md:px-4 ${ui.header}`}>
+    <div data-tour="chat-area" className="flex h-full flex-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <header className={`flex ${d.headerH} shrink-0 items-center justify-between px-3 md:px-4 ${ui.header}`}>
         <div className="flex min-w-0 items-center gap-2.5">
           {isMobile && (
-            <Button isIconOnly size="sm" variant="tertiary" onPress={openSidebar} className="shrink-0 md:hidden">
-              <ArrowLeftIcon size={20} />
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={openSidebar}
+              className="size-8 shrink-0 md:hidden"
+            >
+              <ArrowLeftIcon size={18} />
             </Button>
           )}
+
           {recipientId ? (
             <>
-              <div className={`flex size-8 items-center justify-center ${ui.iconBadge}`}>
-                <MessageCircleIcon size={14} className="text-[var(--accent-foreground)]" />
+              <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+                <MessageCircleIcon size={14} className="text-primary" />
               </div>
-              <span className="truncate text-[13px] font-semibold text-[var(--foreground)] md:text-sm">{recipientName || 'Message privé'}</span>
-              <Tooltip delay={0}>
-                <span className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                  <ShieldCheckIcon size={10} />
-                  E2EE
-                </span>
-                <Tooltip.Content>Chiffrement de bout en bout (Signal Protocol) — le serveur ne peut pas lire vos messages</Tooltip.Content>
-              </Tooltip>
+              <span className="truncate text-sm font-semibold text-foreground">
+                {recipientName || 'Message privé'}
+              </span>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className="shrink-0 gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-500"
+                    >
+                      <ShieldCheckIcon size={10} />
+                      E2EE
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Chiffrement de bout en bout (Signal Protocol) — le serveur ne peut pas lire vos
+                    messages
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </>
           ) : (
             <>
-              <div className="flex size-7 items-center justify-center rounded-xl bg-[var(--surface-secondary)]/60">
-                <HashIcon size={14} className="text-[var(--muted)]" />
+              <div className="flex size-8 items-center justify-center rounded-full bg-muted">
+                <HashIcon size={14} className="text-muted-foreground" />
               </div>
-              <span className="truncate text-[13px] font-semibold text-[var(--foreground)] md:text-sm">général</span>
+              <span className="truncate text-sm font-semibold text-foreground">général</span>
             </>
           )}
         </div>
 
-        {/* Call buttons (DM only) */}
         {recipientId && (
-          <div data-tour="call-buttons" className="flex shrink-0 items-center gap-0.5">
-            {/* Message search */}
-            <Tooltip delay={0}>
-              <Button
-                isIconOnly size="sm" variant="tertiary"
-                className={`size-8 rounded-xl transition-colors ${searchOpen ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
-                onPress={() => { setSearchOpen((v) => !v); setSearchQuery(''); }}
-              >
-                <SearchIcon size={16} />
-              </Button>
-              <Tooltip.Content>Rechercher dans la conversation</Tooltip.Content>
-            </Tooltip>
-            <Tooltip delay={0}>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="tertiary"
-                  onPress={handleStartVoiceCall}
-                  className="size-8 rounded-xl text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-                  isDisabled={callStatus !== 'idle'}
-                >
-                  <PhoneIcon size={16} />
-                </Button>
-                <Tooltip.Content>Appel vocal</Tooltip.Content>
-            </Tooltip>
-            <Tooltip delay={0}>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="tertiary"
-                  onPress={handleStartVideoCall}
-                  className="size-8 rounded-xl text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-                  isDisabled={callStatus !== 'idle'}
-                >
-                  <VideoIcon size={16} />
-                </Button>
-                <Tooltip.Content>Appel vidéo</Tooltip.Content>
-            </Tooltip>
+          <div data-tour="call-buttons" className="flex shrink-0 items-center gap-1">
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant={searchOpen ? 'secondary' : 'ghost'}
+                    className="size-8"
+                    onClick={() => setSearchOpen((v) => !v)}
+                  >
+                    <SearchIcon size={15} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Rechercher dans la conversation</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 text-muted-foreground hover:text-foreground"
+                    onClick={handleStartVoiceCall}
+                    disabled={callStatus !== 'idle'}
+                  >
+                    <PhoneIcon size={15} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Appel vocal</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 text-muted-foreground hover:text-foreground"
+                    onClick={handleStartVideoCall}
+                    disabled={callStatus !== 'idle'}
+                  >
+                    <VideoIcon size={15} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Appel vidéo</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         )}
-      </div>
+      </header>
 
-      {/* Search bar */}
-      {searchOpen && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-[var(--border)]/20 bg-[var(--surface)] px-3 py-2 md:px-4">
-          <SearchIcon size={14} className="shrink-0 text-[var(--muted)]" />
-          <input
-            autoFocus
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher dans les messages…"
-            className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[var(--muted)]/50"
+      {/* ── Call panel ─────────────────────────────────────────────────────── */}
+      {callStatus !== 'idle' &&
+        callStatus !== 'ended' &&
+        (callConversationId === getConversationId() ||
+          (recipientId && callRecipientId === recipientId)) && (
+          <CallPanel
+            type={callType || 'voice'}
+            status={callStatus as 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended'}
+            localStream={localStream}
+            remoteStreams={remoteStreams}
+            screenStream={screenStream}
+            isMuted={isMuted}
+            isVideoOff={isVideoOff}
+            isScreenSharing={isScreenSharing}
+            remoteIsScreenSharing={remoteIsScreenSharing}
+            recipientName={ctxCallerName || recipientName || 'Utilisateur'}
+            recipientAvatar={callerAvatar}
+            currentUserName={user?.displayName || user?.username || 'Vous'}
+            currentUserAvatar={user?.avatarUrl}
+            duration={callDuration}
+            mediaError={mediaError}
+            onToggleMute={toggleMute}
+            onToggleVideo={toggleVideo}
+            onStartScreenShare={startScreenShare}
+            onStopScreenShare={stopScreenShare}
+            onEndCall={endCall}
           />
-          {searchQuery && (
-            <>
-              <span className="shrink-0 text-[11px] text-[var(--muted)]">
-                {searchResults.length > 0
-                  ? `${searchIndex + 1}/${searchResults.length}`
-                  : '0 résultat'}
-              </span>
-              <div className="flex items-center gap-0.5">
-                <Button isIconOnly size="sm" variant="ghost" className="size-6 rounded-lg text-[var(--muted)]" isDisabled={searchResults.length === 0}
-                  onPress={() => setSearchIndex((i) => (i - 1 + searchResults.length) % searchResults.length)}>
-                  <span className="text-[10px] leading-none">▲</span>
-                </Button>
-                <Button isIconOnly size="sm" variant="ghost" className="size-6 rounded-lg text-[var(--muted)]" isDisabled={searchResults.length === 0}
-                  onPress={() => setSearchIndex((i) => (i + 1) % searchResults.length)}>
-                  <span className="text-[10px] leading-none">▼</span>
-                </Button>
-              </div>
-            </>
-          )}
-          <Button isIconOnly size="sm" variant="ghost" className="size-6 rounded-lg text-[var(--muted)]" onPress={() => { setSearchOpen(false); setSearchQuery(''); }}>
-            <XIcon size={12} />
-          </Button>
-        </div>
-      )}
+        )}
 
-      {/* Call panel */}
-      {callStatus !== 'idle' && callStatus !== 'ended' && (
-        callConversationId === getConversationId() ||
-        (recipientId && (callRecipientId === recipientId))
-      ) && (
-        <CallPanel
-          type={callType || 'voice'}
-          status={callStatus as 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended'}
-          localStream={localStream}
-          remoteStreams={remoteStreams}
-          screenStream={screenStream}
-          isMuted={isMuted}
-          isVideoOff={isVideoOff}
-          isScreenSharing={isScreenSharing}
-          remoteIsScreenSharing={remoteIsScreenSharing}
-          recipientName={ctxCallerName || recipientName || 'Utilisateur'}
-          recipientAvatar={callerAvatar}
-          currentUserName={user?.displayName || user?.username || 'Vous'}
-          currentUserAvatar={user?.avatarUrl}
-          duration={callDuration}
-          mediaError={mediaError}
-          onToggleMute={toggleMute}
-          onToggleVideo={toggleVideo}
-          onStartScreenShare={startScreenShare}
-          onStopScreenShare={stopScreenShare}
-          onEndCall={endCall}
-        />
-      )}
-
-      {/* Messages */}
-      <ScrollShadow
-        className="min-h-0 flex-1 px-1 py-2 md:px-2 md:py-4"
-        ref={scrollRef}
-      >
+      {/* ── Messages area ──────────────────────────────────────────────────── */}
+      <ScrollArea className="min-h-0 flex-1 px-1 py-2 md:px-2 md:py-4" ref={scrollAreaRef}>
         {isLoading ? (
-          /* Skeleton "messages" — perçu comme instantané vs spinner plein écran */
-          <div className="flex h-full flex-col justify-end gap-3 px-2 pb-2">
-            {[...Array(6)].map((_, i) => {
-              const isSelf = i % 3 === 2;
-              const widths = ['w-48', 'w-64', 'w-40', 'w-56', 'w-32', 'w-72'];
+          <div className="flex h-full flex-col justify-end gap-4 px-2 pb-2">
+            {[...Array(5)].map((_, i) => {
+              const isSelf = i % 3 === 0;
+              const widths = ['w-48', 'w-64', 'w-40', 'w-56', 'w-36'];
               return (
                 <div
                   key={i}
                   className={`flex items-end gap-2.5 ${isSelf ? 'flex-row-reverse' : ''}`}
-                  style={{ opacity: 0.35 + i * 0.1 }}
+                  style={{ opacity: 0.3 + i * 0.14 }}
                 >
-                  {!isSelf && (
-                    <div className="size-8 shrink-0 animate-pulse rounded-full bg-[var(--surface-secondary)]/60" />
-                  )}
+                  {!isSelf && <Skeleton className="size-8 shrink-0 rounded-full" />}
                   <div className={`flex flex-col gap-1 ${isSelf ? 'items-end' : 'items-start'}`}>
-                    {!isSelf && <div className="mb-0.5 h-2.5 w-20 animate-pulse rounded-full bg-[var(--surface-secondary)]/40" />}
-                    <div className={`animate-pulse rounded-2xl bg-[var(--surface-secondary)]/50 px-3 py-2.5 ${widths[i]}`}>
-                      <div className="h-3 rounded-full bg-[var(--surface-secondary)]/60" />
-                      {i % 2 === 0 && <div className="mt-1.5 h-3 w-4/5 rounded-full bg-[var(--surface-secondary)]/40" />}
+                    {!isSelf && <Skeleton className="mb-0.5 h-3 w-20 rounded" />}
+                    <div className={`space-y-1.5 rounded-2xl bg-muted/50 px-3 py-2.5 ${widths[i]}`}>
+                      <Skeleton className="h-3 w-full rounded" />
+                      {i % 2 === 0 && <Skeleton className="h-3 w-3/4 rounded" />}
                     </div>
                   </div>
                 </div>
@@ -780,13 +841,17 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
-            <Card className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-5 shadow-none">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--surface-secondary)]/60">
-                <MessageCircleIcon size={22} className="text-[var(--muted)]/50" />
+            <Card className="flex flex-col items-center gap-4 border-border/30 bg-card px-8 py-6 shadow-none">
+              <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+                <MessageCircleIcon size={24} className="text-muted-foreground" />
               </div>
               <div className="text-center">
-                <p className="text-[13px] font-medium text-[var(--foreground)]/70">Aucun message</p>
-                <p className="mt-0.5 text-[11px] text-[var(--muted)]/50">Soyez le premier à écrire !</p>
+                <CardTitle className="text-sm font-medium text-foreground">
+                  Aucun message
+                </CardTitle>
+                <CardDescription className="mt-1 text-xs text-muted-foreground">
+                  Soyez le premier à écrire !
+                </CardDescription>
               </div>
             </Card>
           </div>
@@ -796,7 +861,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             editingMessageId={editingMessageId}
             editInput={editInput}
             messagesById={messagesById}
-            searchQuery={searchQuery}
+            highlightedMessageId={highlightedMessageId}
             currentUser={user as MessageSender | null}
             recipientName={recipientName}
             isLoadingMoreMessages={isLoadingMoreMessages}
@@ -812,47 +877,65 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             onDelete={deleteMessage}
           />
         )}
-      </ScrollShadow>
+      </ScrollArea>
 
-      {/* Typing indicator strip (outside scroll, above input) */}
+      {/* ── Typing indicator ───────────────────────────────────────────────── */}
       {typingUsers.length > 0 && (
-        <div className="flex shrink-0 items-center gap-2 px-4 py-1">
+        <div className="flex shrink-0 items-center gap-2 px-4 py-1.5">
           <div className="flex items-center gap-0.5">
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--accent)]/60 [animation-delay:0ms]" />
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--accent)]/60 [animation-delay:150ms]" />
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-[var(--accent)]/60 [animation-delay:300ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
           </div>
-          <span className="text-[11px] font-medium text-[var(--muted)]">
-            <span className="text-[var(--foreground)]/70">{typingUsers.map((u) => u.username).join(', ')}</span>
-            {typingUsers.length > 1 ? ' sont en train d’écrire…' : ' est en train d’écrire…'}
+          <span className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">
+              {typingUsers.map((u) => u.username).join(', ')}
+            </span>
+            {typingUsers.length > 1
+              ? ' sont en train d\u2019écrire…'
+              : ' est en train d\u2019écrire…'}
           </span>
         </div>
       )}
 
-      {/* Cooldown */}
+      {/* ── Cooldown warning ───────────────────────────────────────────────── */}
       {cooldownActive && (
-        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/8 px-3 py-2 text-[12px] font-medium text-orange-400 md:mx-4">
+        <div className="mx-3 mb-1 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive md:mx-4">
           Calme-toi ! Tu envoies trop de messages.
         </div>
       )}
 
-      {/* Block notices */}
+      {/* ── Block notices ──────────────────────────────────────────────────── */}
       {iBlockedThem && (
-        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-3 py-2.5 text-[12px] text-[var(--muted)] md:mx-4">
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2.5 text-xs text-muted-foreground md:mx-4">
           <BanIcon size={14} className="shrink-0" />
-          <span>Vous avez bloqué cet utilisateur. <button type="button" className="font-semibold underline" onClick={async () => { await api.unblockUser(recipientId!); setIBlockedThem(false); }}>Débloquer</button></span>
+          <span>
+            Vous avez bloqué cet utilisateur.{' '}
+            <button
+              type="button"
+              className="font-semibold text-primary underline underline-offset-2"
+              onClick={async () => {
+                await api.unblockUser(recipientId!);
+                setIBlockedThem(false);
+              }}
+            >
+              Débloquer
+            </button>
+          </span>
         </div>
       )}
       {!iBlockedThem && theyBlockedMe && (
-        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-3 py-2.5 text-[12px] text-[var(--muted)] md:mx-4">
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2.5 text-xs text-muted-foreground md:mx-4">
           <BanIcon size={14} className="shrink-0" />
-          <span>Vous ne pouvez pas envoyer de message à cet utilisateur tant qu’il ne vous a pas débloqué.</span>
+          <span>
+            Vous ne pouvez pas envoyer de message à cet utilisateur tant qu&apos;il ne vous a pas
+            débloqué.
+          </span>
         </div>
       )}
 
-      {/* Input area */}
+      {/* ── Input area ─────────────────────────────────────────────────────── */}
       <form onSubmit={handleSendMessage} className="relative shrink-0 px-3 pb-3 pt-1 md:px-4 md:pb-4">
-        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -862,7 +945,6 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           onChange={handleFileSelect}
         />
 
-        {/* Mention popover */}
         <MentionPopover
           query={mentionQuery}
           users={mentionUsersMemo}
@@ -875,59 +957,76 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         {/* Reply preview */}
         {replyingTo && (
           <div className={`mb-2 flex items-center gap-2 px-3 py-2 ${ui.replyBar}`}>
-            <div className="h-4 w-0.5 rounded-full bg-[var(--accent)]" />
+            <div className="h-4 w-0.5 rounded-full bg-primary" />
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-[var(--accent)]">
+              <p className="text-[11px] font-semibold text-primary">
                 Réponse à {replyingTo.authorName}
               </p>
-              <p className="truncate text-[11px] text-[var(--muted)]/60">{replyingTo.content}</p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {replyingTo.content}
+              </p>
             </div>
             <Button
-              isIconOnly
-              size="sm"
-              variant="tertiary"
-              className="size-6 rounded-xl"
-              onPress={() => setReplyingTo(null)}
+              size="icon"
+              variant="ghost"
+              className="size-6"
+              onClick={() => setReplyingTo(null)}
             >
-              <XIcon size={14} />
+              <XIcon size={12} />
             </Button>
           </div>
         )}
 
-        <div className={`flex items-center gap-1 px-1.5 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''} ${iBlockedThem || theyBlockedMe ? 'pointer-events-none opacity-40' : ''}`}>
-          {/* Attachment / File upload */}
-          <Tooltip delay={0}>
-            <Button
-              isIconOnly size="sm" variant="ghost"
-              className="size-7 shrink-0 self-end rounded-xl pb-0.5 text-[var(--muted)] hover:text-[var(--foreground)]"
-              isDisabled={isUploading}
-              onPress={() => fileInputRef.current?.click()}
-            >
-              {isUploading ? <Spinner size="sm" /> : <PaperclipIcon size={16} />}
-            </Button>
-            <Tooltip.Content>Joindre un fichier (image, PDF, DOCX… &lt;10 Mo)</Tooltip.Content>
-          </Tooltip>
+        {/* Input bar */}
+        <div
+          className={`flex items-center gap-1.5 px-2 py-1.5 transition-colors focus-within:border-primary/40 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''} ${isBlocked ? 'pointer-events-none opacity-40' : ''}`}
+        >
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-8 shrink-0 self-end text-muted-foreground hover:text-foreground"
+                  disabled={isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {isUploading ? <Spinner size="sm" /> : <PaperclipIcon size={16} />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Joindre un fichier (image, PDF, DOCX… &lt;10 Mo)</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-          {/* Pending attachments + text input wrapper */}
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            {/* Pending attachment chips */}
             {pendingAttachments.length > 0 && (
               <div className="flex flex-wrap gap-1 px-0.5 pt-1">
                 {pendingAttachments.map((att, i) => (
-                  <div key={i} className="flex items-center gap-1 rounded-lg border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-2 py-0.5 text-[11px]">
-                    {att.isImage
-                      ? <ImageIcon size={11} className="shrink-0 text-blue-400" />
-                      : <FileTextIcon size={11} className="shrink-0 text-orange-400" />}
-                    <span className="max-w-[120px] truncate text-[var(--foreground)]/70">{att.name}</span>
-                    <button type="button" className="ml-0.5 text-[var(--muted)] hover:text-red-400" onClick={() => setPendingAttachments((p) => p.filter((_, j) => j !== i))}>
+                  <Badge
+                    key={i}
+                    variant="secondary"
+                    className="gap-1 py-0.5 text-[11px]"
+                  >
+                    {att.isImage ? (
+                      <ImageIcon size={11} className="shrink-0 text-blue-500" />
+                    ) : (
+                      <FileTextIcon size={11} className="shrink-0 text-orange-500" />
+                    )}
+                    <span className="max-w-30 truncate">{att.name}</span>
+                    <button
+                      type="button"
+                      className="ml-0.5 text-muted-foreground hover:text-destructive"
+                      onClick={() =>
+                        setPendingAttachments((p) => p.filter((_, j) => j !== i))
+                      }
+                    >
                       <XIcon size={10} />
                     </button>
-                  </div>
+                  </Badge>
                 ))}
               </div>
             )}
 
-            {/* Text input */}
             <textarea
               ref={textareaRef}
               rows={1}
@@ -935,42 +1034,64 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder={`Message ${recipientId ? recipientName || '' : '#général'}`}
-              className="w-full resize-none border-0 bg-transparent py-0.5 text-[13px] leading-5 text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/50"
-              style={{ minHeight: '20px', maxHeight: '110px', overflowY: 'auto' }}
+              className="w-full resize-none border-0 bg-transparent py-1 text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground/50"
+              style={{ minHeight: '22px', maxHeight: '110px', overflowY: 'auto' }}
               aria-label="Message"
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex shrink-0 self-end items-center gap-0.5 ">
+          <div className="flex shrink-0 items-center gap-0.5 self-end">
             <EmojiPicker onSelect={handleEmojiInsert} onGifSelect={handleGifSelect}>
               <Button
-                isIconOnly
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
+                className="size-8 text-muted-foreground hover:text-foreground"
               >
-                <SmileIcon size={18} />
+                <SmileIcon size={17} />
               </Button>
             </EmojiPicker>
 
             <Button
-              isIconOnly
-              size="sm"
+              size="icon"
               variant="ghost"
-              className={`size-7 rounded-xl transition-colors ${messageInput.trim() || pendingAttachments.length > 0 ? 'text-[var(--accent)]' : 'text-[var(--muted)]/40'}`}
-              isDisabled={!messageInput.trim() && pendingAttachments.length === 0}
-              onPress={() => {
-                if (messageInput.trim() || pendingAttachments.length > 0) {
+              className={`size-8 transition-colors ${
+                messageInput.trim() || pendingAttachments.length > 0
+                  ? 'text-primary hover:text-primary/80'
+                  : 'text-muted-foreground/40'
+              }`}
+              disabled={!messageInput.trim() && pendingAttachments.length === 0}
+              onClick={() => {
+                if (messageInput.trim() || pendingAttachments.length > 0)
                   handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
-                }
               }}
             >
-              <SendIcon size={18} />
+              <SendIcon size={17} />
             </Button>
           </div>
         </div>
       </form>
+      </div>
+
+      {/* ── Search panel (right side) ──────────────────────────────────────── */}
+      {searchOpen && (
+        <SearchPanel
+          localMessages={dedupedMessages}
+          conversationId={getConversationId()}
+          isDM={!!recipientId}
+          loadMoreMessages={loadMoreMessages}
+          hasMoreMessages={hasMoreMessages}
+          isLoadingMore={isLoadingMoreMessages}
+          onClose={() => setSearchOpen(false)}
+          onJumpToMessage={(messageId) => {
+            setHighlightedMessageId(messageId);
+            setTimeout(() => setHighlightedMessageId(null), 2000);
+            const el = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

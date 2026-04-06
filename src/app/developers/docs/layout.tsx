@@ -7,7 +7,7 @@ function LangBar() {
   const { lang, setLang } = useLang();
   return (
     <div className="sticky top-0 z-30 flex items-center gap-1.5 border-b border-border/60 bg-background/95 px-6 py-2.5">
-      <span className="mr-2 text-[11px] font-semibold text-muted/70">Langage&nbsp;:</span>
+      <span className="mr-2 text-[11px] font-semibold text-muted-foreground/70">Langage&nbsp;:</span>
       {LANGS.map((l) => (
         <button
           key={l.id}
@@ -16,7 +16,7 @@ function LangBar() {
             'flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-all',
             lang === l.id
               ? 'bg-surface text-foreground shadow-sm ring-1 ring-border/60'
-              : 'text-muted hover:bg-surface/50 hover:text-foreground',
+              : 'text-muted-foreground hover:bg-surface/50 hover:text-foreground',
           )}
         >
           <span

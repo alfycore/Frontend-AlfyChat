@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
+import { toast } from 'sonner';
+import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { useTranslation } from '@/components/locale-provider';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -19,28 +20,51 @@ import {
   PlusIcon,
   SettingsIcon,
   UsersRoundIcon,
+  XIcon,
 } from '@/components/icons';
+import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
-  Alert,
-  Avatar,
-  Badge,
-  Button,
-  Chip,
-  CloseButton,
-  Description,
-  Dropdown,
-  Form,
-  InputGroup,
-  Kbd,
-  Label,
-  Modal,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogMedia,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+} from '@/components/ui/context-menu';
+import {
   Popover,
-  ScrollShadow,
-  Skeleton,
-  Spinner,
-  toast,
-  Tooltip,
-} from '@heroui/react';
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+} from '@/components/ui/popover';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Input } from '@/components/ui/input';
+import { Kbd } from '@/components/ui/kbd';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { ServerSettingsDialog } from '@/components/chat/server-settings-dialog';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -63,17 +87,16 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const router = useRouter();
   const { t } = useTranslation();
   const { prefs } = useLayoutPrefs();
-  const compact = prefs.compactServerList;
+  const d = densityCls(prefs.density);
 
-  const btnSize  = compact ? 'size-9' : horizontal ? 'size-10' : 'size-12';
-  const iconSize = compact ? 16 : horizontal ? 18 : 22;
-  const side     = horizontal ? 'bottom' : 'right';
+  const btnSize  = d.serverBtn;
+  const iconSize = d.serverIcon;
+  const side: 'bottom' | 'right' = horizontal ? 'bottom' : 'right';
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [servers,    setServers   ] = useState<Server[]>([]);
   const [loading,    setLoading   ] = useState(true);
   const [onlineIds,  setOnlineIds ] = useState<Set<string>>(new Set());
-  const [contextId,  setContextId ] = useState<string | null>(null);
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [leaveId,    setLeaveId   ] = useState<string | null>(null);
   const [joinOpen,   setJoinOpen  ] = useState(false);
@@ -188,6 +211,16 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     setLeaveId(null);
   };
 
+  // ── Context menu actions ──────────────────────────────────────────────────
+  const handleContextAction = (serverId: string, action: string) => {
+    if (action === 'settings') setSettingsId(serverId);
+    if (action === 'invite') {
+      navigator.clipboard.writeText(`${window.location.origin}/invite/${serverId}`);
+      toast.success("Lien d'invitation copié !");
+    }
+    if (action === 'leave') setLeaveId(serverId);
+  };
+
   // ── Drag & drop ───────────────────────────────────────────────────────────
   const handleDragStart = (id: string) => (e: React.DragEvent) => {
     dragId.current = id;
@@ -225,253 +258,239 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <>
+    <TooltipProvider>
       <nav
         aria-label="Serveurs"
         className={cn(
-          'flex shrink-0 items-center gap-1.5 bg-[var(--background)]',
+          'flex shrink-0 items-center gap-1.5 bg-background',
           horizontal
             ? 'h-14 w-full flex-row border-b border-white/5 px-3'
-            : cn('h-full flex-col border-r border-white/5 py-3', compact ? 'w-[56px]' : 'w-[72px]'),
+            : cn('h-full flex-col border-r border-white/5 py-3', prefs.density === 'compact' ? 'w-14' : prefs.density === 'comfortable' ? 'w-20' : 'w-18'),
         )}
       >
         {/* ── DMs ── */}
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant="ghost"
-            aria-label={t.serverList?.dms ?? 'Messages directs'}
-            className={cn(
-              'mx-auto shrink-0 transition-all duration-200',
-              btnSize,
-              selectedServer === null
-                ? '!rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
-                : '!rounded-full bg-white/5 text-white/50 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
-            )}
-            onPress={() => onSelectServer(null)}
-          >
-            <MessageCircleIcon size={iconSize} />
-          </Button>
-          <Tooltip.Content showArrow placement={side}>
-            <Tooltip.Arrow />
-            <p className="text-[11px] font-medium">{t.serverList?.dms ?? 'Messages directs'}</p>
-            <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> D</Kbd>
-          </Tooltip.Content>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t.serverList?.dms ?? 'Messages directs'}
+              className={cn(
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
+                btnSize,
+                selectedServer === null
+                  ? 'rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
+                  : 'rounded-full bg-white/5 text-white/50 hover:rounded-[14px] hover:bg-accent/15 hover:text-accent',
+              )}
+              onClick={() => onSelectServer(null)}
+            >
+              <MessageCircleIcon size={iconSize} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side={side}>
+            {t.serverList?.dms ?? 'Messages directs'}
+            <Kbd>Ctrl D</Kbd>
+          </TooltipContent>
         </Tooltip>
 
         {/* ── Groups ── */}
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant="ghost"
-            aria-label="Groupes"
-            className={cn(
-              'mx-auto shrink-0 transition-all duration-200',
-              btnSize,
-              selectedServer === 'groups'
-                ? '!rounded-[14px] bg-indigo-500 text-white shadow-lg shadow-indigo-500/40'
-                : '!rounded-full bg-white/5 text-white/50 hover:!rounded-[14px] hover:bg-indigo-500/15 hover:text-indigo-400',
-            )}
-            onPress={() => onSelectServer('groups')}
-          >
-            <UsersRoundIcon size={iconSize} />
-          </Button>
-          <Tooltip.Content showArrow placement={side}>
-            <Tooltip.Arrow />
-            <p className="text-[11px] font-medium">Groupes</p>
-          </Tooltip.Content>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="Groupes"
+              className={cn(
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
+                btnSize,
+                selectedServer === 'groups'
+                  ? 'rounded-[14px] bg-indigo-500 text-white shadow-lg shadow-indigo-500/40'
+                  : 'rounded-full bg-white/5 text-white/50 hover:rounded-[14px] hover:bg-indigo-500/15 hover:text-indigo-400',
+              )}
+              onClick={() => onSelectServer('groups')}
+            >
+              <UsersRoundIcon size={iconSize} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side={side}>Groupes</TooltipContent>
         </Tooltip>
 
         <div className={cn('shrink-0 rounded-full bg-white/10', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
         {/* ── Server list ── */}
-        <ScrollShadow
-          orientation={horizontal ? 'horizontal' : 'vertical'}
-          hideScrollBar
+        <ScrollArea
           className={cn(
-            'flex items-center gap-1',
             horizontal
-              ? 'h-full flex-1 flex-row overflow-x-auto px-1'
-              : 'w-full flex-1 flex-col items-center overflow-y-auto py-0.5',
+              ? 'h-full flex-1 overflow-x-auto'
+              : 'w-full flex-1 overflow-y-auto',
           )}
         >
-          {loading
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} animationType="shimmer" className={cn('shrink-0 rounded-full', btnSize)} />
-              ))
-            : servers.map((server) => {
-                const active    = selectedServer === server.id;
-                const isDragged = dragging === server.id;
-                const isOver    = dragOver  === server.id;
+          <div
+            className={cn(
+              'flex items-center gap-1',
+              horizontal ? 'flex-row px-1' : 'flex-col py-0.5',
+            )}
+          >
+            {loading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className={cn('shrink-0 rounded-full', btnSize)} />
+                ))
+              : servers.map((server) => {
+                  const active    = selectedServer === server.id;
+                  const isDragged = dragging === server.id;
+                  const isOver    = dragOver  === server.id;
 
-                return (
-                  <div
-                    key={server.id}
-                    draggable
-                    onDragStart={handleDragStart(server.id)}
-                    onDragOver={handleDragOver(server.id)}
-                    onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null); }}
-                    onDrop={handleDrop(server.id)}
-                    onDragEnd={handleDragEnd}
-                    className={cn(
-                      'transition-all duration-150',
-                      isDragged && 'scale-90 opacity-40',
-                      isOver && !isDragged && 'scale-105 opacity-80',
-                    )}
-                  >
-                    <Dropdown
-                      isOpen={contextId === server.id}
-                      onOpenChange={(open) => setContextId(open ? server.id : null)}
+                  return (
+                    <div
+                      key={server.id}
+                      draggable
+                      onDragStart={handleDragStart(server.id)}
+                      onDragOver={handleDragOver(server.id)}
+                      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null); }}
+                      onDrop={handleDrop(server.id)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        'transition-all duration-150',
+                        isDragged && 'scale-90 opacity-40',
+                        isOver && !isDragged && 'scale-105 opacity-80',
+                      )}
                     >
-                      <Tooltip delay={0}>
-                        <button
-                          type="button"
-                          aria-label={server.name}
-                          aria-pressed={active}
-                          onClick={() => onSelectServer(server.id)}
-                          onKeyDown={(e) => e.key === 'Enter' && onSelectServer(server.id)}
-                          onContextMenu={(e) => { e.preventDefault(); setContextId(server.id); }}
-                          className={cn(
-                            'group relative flex shrink-0 cursor-pointer select-none items-center justify-center transition-all duration-200',
-                            btnSize,
-                            active ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]',
-                          )}
-                        >
-                          <Badge.Anchor>
-                            <Avatar
-                              className={cn(
-                                'transition-all duration-200',
-                                btnSize,
-                                active
-                                  ? 'rounded-[14px] shadow-lg shadow-black/40 ring-2 ring-white/20 ring-offset-1 ring-offset-[var(--background)]'
-                                  : 'rounded-full group-hover:rounded-[14px]',
-                                isOver && 'ring-2 ring-accent ring-offset-1 ring-offset-[var(--background)]',
-                              )}
-                            >
-                              <Avatar.Image
-                                src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
-                                alt={server.name}
-                              />
-                              <Avatar.Fallback
+                      <ContextMenu>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <ContextMenuTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label={server.name}
+                                aria-pressed={active}
+                                onClick={() => onSelectServer(server.id)}
+                                onKeyDown={(e) => e.key === 'Enter' && onSelectServer(server.id)}
                                 className={cn(
-                                  'bg-[var(--surface-secondary)] text-sm font-bold transition-all duration-200',
-                                  active ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]',
+                                  'group relative flex shrink-0 cursor-pointer select-none items-center justify-center transition-all duration-200',
+                                  btnSize,
+                                  active ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]',
                                 )}
                               >
-                                {server.name.charAt(0).toUpperCase()}
-                              </Avatar.Fallback>
-                            </Avatar>
+                                <Avatar
+                                  className={cn(
+                                    'transition-all duration-200',
+                                    btnSize,
+                                    active
+                                      ? 'rounded-[14px] shadow-lg shadow-black/40 ring-2 ring-white/20 ring-offset-1 ring-offset-background'
+                                      : 'rounded-full group-hover:rounded-[14px]',
+                                    isOver && 'ring-2 ring-accent ring-offset-1 ring-offset-background',
+                                  )}
+                                >
+                                  <AvatarImage
+                                    src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
+                                    alt={server.name}
+                                    className={cn(active ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]')}
+                                  />
+                                  <AvatarFallback
+                                    className={cn(
+                                      'bg-surface-secondary text-sm font-bold transition-all duration-200',
+                                      active ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]',
+                                    )}
+                                  >
+                                    {server.name.charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                  {onlineIds.has(server.id) && (
+                                    <AvatarBadge className="bg-emerald-500" />
+                                  )}
+                                </Avatar>
+                              </button>
+                            </ContextMenuTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent side={side}>
+                            <span className="font-semibold">{server.name}</span>
                             {onlineIds.has(server.id) && (
-                              <Badge color="success" size="sm" placement="bottom-right" />
+                              <Badge variant="secondary" className="ml-1.5 bg-emerald-500/15 text-[10px] text-emerald-400">
+                                Node en ligne
+                              </Badge>
                             )}
-                          </Badge.Anchor>
-                        </button>
+                          </TooltipContent>
+                        </Tooltip>
 
-                        <Tooltip.Content showArrow placement={side}>
-                          <Tooltip.Arrow />
-                          <p className="text-[11px] font-semibold">{server.name}</p>
-                          {onlineIds.has(server.id) && (
-                            <Chip color="success" variant="soft" size="sm" className="mt-1">
-                              <Chip.Label className="text-[10px]">Node en ligne</Chip.Label>
-                            </Chip>
-                          )}
-                        </Tooltip.Content>
-                      </Tooltip>
-
-                      <Dropdown.Popover placement="right top" className="min-w-44">
-                        <Dropdown.Menu
-                          aria-label={t.serverList?.serverOptions ?? 'Options du serveur'}
-                          onAction={(key) => {
-                            setContextId(null);
-                            if (key === 'settings') setSettingsId(server.id);
-                            if (key === 'invite') {
-                              navigator.clipboard.writeText(`${window.location.origin}/invite/${server.id}`);
-                              toast.success("Lien d'invitation copié !");
-                            }
-                            if (key === 'leave') setLeaveId(server.id);
-                          }}
-                        >
-                          <Dropdown.Item id="settings" textValue="Paramètres">
+                        <ContextMenuContent className="min-w-44">
+                          <ContextMenuItem onClick={() => handleContextAction(server.id, 'settings')}>
                             <SettingsIcon size={14} className="mr-2 shrink-0 opacity-60" />
-                            <Label>Paramètres</Label>
-                          </Dropdown.Item>
-                          <Dropdown.Item id="invite" textValue="Copier l'invitation">
+                            Paramètres
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleContextAction(server.id, 'invite')}>
                             <CopyIcon size={14} className="mr-2 shrink-0 opacity-60" />
-                            <Label>Copier l&apos;invitation</Label>
-                          </Dropdown.Item>
-                          <Dropdown.Item id="leave" className="text-danger" textValue="Quitter">
+                            Copier l&apos;invitation
+                          </ContextMenuItem>
+                          <ContextMenuItem
+                            variant="destructive"
+                            onClick={() => handleContextAction(server.id, 'leave')}
+                          >
                             <LogOutIcon size={14} className="mr-2 shrink-0" />
-                            <Label>{t.serverList?.leaveServer ?? 'Quitter'}</Label>
-                          </Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown.Popover>
-                    </Dropdown>
-                  </div>
-                );
-              })}
-        </ScrollShadow>
+                            {t.serverList?.leaveServer ?? 'Quitter'}
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
+                    </div>
+                  );
+                })}
+          </div>
+          <ScrollBar orientation={horizontal ? 'horizontal' : 'vertical'} className="hidden" />
+        </ScrollArea>
 
         <div className={cn('shrink-0 rounded-full bg-white/10', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
         {/* ── Join ── */}
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant="ghost"
-            aria-label={t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}
-            className={cn(
-              'mx-auto shrink-0 !rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:!rounded-[14px] hover:bg-success/15 hover:text-success',
-              btnSize,
-            )}
-            onPress={() => setJoinOpen(true)}
-          >
-            <PlusIcon size={iconSize} />
-          </Button>
-          <Tooltip.Content showArrow placement={side}>
-            <Tooltip.Arrow />
-            <p className="text-[11px] font-medium">{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</p>
-            <Kbd className="mt-1 text-[10px]"><Kbd.Abbr keyValue="ctrl" /> N</Kbd>
-          </Tooltip.Content>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}
+              className={cn(
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:rounded-[14px] hover:bg-emerald-500/15 hover:text-emerald-400',
+                btnSize,
+              )}
+              onClick={() => setJoinOpen(true)}
+            >
+              <PlusIcon size={iconSize} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side={side}>
+            {t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}
+            <Kbd>Ctrl N</Kbd>
+          </TooltipContent>
         </Tooltip>
 
         {/* ── Discover ── */}
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant="ghost"
-            aria-label={t.serverList?.discoverServers ?? 'Découvrir des serveurs'}
-            className={cn(
-              'mx-auto shrink-0 !rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
-              btnSize,
-            )}
-            onPress={() => router.push('/channels/discover-server')}
-          >
-            <CompassIcon size={iconSize} />
-          </Button>
-          <Tooltip.Content showArrow placement={side}>
-            <Tooltip.Arrow />
-            <p className="text-[11px] font-medium">{t.serverList?.discoverServers ?? 'Découvrir'}</p>
-          </Tooltip.Content>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t.serverList?.discoverServers ?? 'Découvrir des serveurs'}
+              className={cn(
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:rounded-[14px] hover:bg-accent/15 hover:text-accent',
+                btnSize,
+              )}
+              onClick={() => router.push('/channels/discover-server')}
+            >
+              <CompassIcon size={iconSize} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side={side}>{t.serverList?.discoverServers ?? 'Découvrir'}</TooltipContent>
         </Tooltip>
 
         {/* ── Home ── */}
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly
-            variant="ghost"
-            aria-label="Bienvenue"
-            className={cn(
-              'mx-auto shrink-0 !rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:!rounded-[14px] hover:bg-accent/15 hover:text-accent',
-              btnSize,
-            )}
-            onPress={() => router.push('/channels/gotostart')}
-          >
-            <HomeIcon size={iconSize} />
-          </Button>
-          <Tooltip.Content showArrow placement={side}>
-            <Tooltip.Arrow />
-            <p className="text-[11px] font-medium">Bienvenue</p>
-          </Tooltip.Content>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="Bienvenue"
+              className={cn(
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/5 text-white/40 transition-all duration-200 hover:rounded-[14px] hover:bg-accent/15 hover:text-accent',
+                btnSize,
+              )}
+              onClick={() => router.push('/channels/gotostart')}
+            >
+              <HomeIcon size={iconSize} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side={side}>Bienvenue</TooltipContent>
         </Tooltip>
       </nav>
 
@@ -486,145 +505,124 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       )}
 
       {/* ── Leave confirmation ── */}
-      <Modal.Backdrop
-        isOpen={!!leaveId}
-        onOpenChange={(open) => { if (!open) setLeaveId(null); }}
-        variant="blur"
-      >
-        <Modal.Container size="sm">
-          <Modal.Dialog className="overflow-hidden rounded-2xl border border-[var(--border)]/30 p-0 shadow-2xl">
-            <div className="px-6 pt-6 pb-5">
-              <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-danger/10 ring-1 ring-danger/20">
-                <LogOutIcon size={20} className="text-danger" />
-              </div>
-              <h3 className="text-[15px] font-bold">Quitter ce serveur&nbsp;?</h3>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--muted)]/70">
-                Vous devrez être réinvité pour le rejoindre à nouveau.
-              </p>
-            </div>
-            <div className="flex items-center justify-end gap-2 border-t border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-4">
-              <Button variant="secondary" onPress={() => setLeaveId(null)}>
-                Annuler
-              </Button>
-              <Button variant="danger" onPress={() => leaveId && handleLeave(leaveId)}>
-                <LogOutIcon size={14} />
-                {t.serverList?.leaveServer ?? 'Quitter'}
-              </Button>
-            </div>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+      <AlertDialog open={!!leaveId} onOpenChange={(open) => { if (!open) setLeaveId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10">
+              <LogOutIcon size={20} className="text-destructive" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Quitter ce serveur&nbsp;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous devrez être réinvité pour le rejoindre à nouveau.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => leaveId && handleLeave(leaveId)}
+            >
+              <LogOutIcon size={14} />
+              {t.serverList?.leaveServer ?? 'Quitter'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── Join server ── */}
-      <Modal.Backdrop
-        isOpen={joinOpen}
-        onOpenChange={(open) => { setJoinOpen(open); if (!open) resetJoin(); }}
-        variant="blur"
-      >
-        <Modal.Container size="md">
-          <Modal.Dialog className="max-w-105 overflow-hidden rounded-2xl border border-[var(--border)]/30 p-0 shadow-2xl">
-
-            <div className="flex items-start justify-between border-b border-[var(--border)]/20 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
-                  <Link2Icon size={18} className="text-accent" />
-                </div>
-                <div>
-                  <h2 className="text-[15px] font-bold">{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</h2>
-                  <p className="text-[11px] text-[var(--muted)]/60">Entrez un code ou un lien d&apos;invitation</p>
-                </div>
+      <Dialog open={joinOpen} onOpenChange={(open) => { setJoinOpen(open); if (!open) resetJoin(); }}>
+        <DialogContent className="sm:max-w-md" showCloseButton>
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
+                <Link2Icon size={18} className="text-accent" />
               </div>
-              <CloseButton onPress={() => setJoinOpen(false)} className="shrink-0" />
+              <div>
+                <DialogTitle>{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</DialogTitle>
+                <DialogDescription>Entrez un code ou un lien d&apos;invitation</DialogDescription>
+              </div>
             </div>
+          </DialogHeader>
 
-            <div className="space-y-4 px-6 py-5">
-              {joinErr && (
-                <Alert status="danger">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Title>Erreur</Alert.Title>
-                    <Alert.Description>{joinErr}</Alert.Description>
-                  </Alert.Content>
-                  <CloseButton onPress={() => setJoinErr('')} />
-                </Alert>
-              )}
+          <div className="space-y-4">
+            {joinErr && (
+              <Alert variant="destructive">
+                <AlertTitle>Erreur</AlertTitle>
+                <AlertDescription>{joinErr}</AlertDescription>
+              </Alert>
+            )}
 
-              {joinOk && (
-                <Alert status="success">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Title>Succès&nbsp;!</Alert.Title>
-                    <Alert.Description>{joinOk}</Alert.Description>
-                  </Alert.Content>
-                </Alert>
-              )}
+            {joinOk && (
+              <Alert>
+                <AlertTitle>Succès&nbsp;!</AlertTitle>
+                <AlertDescription>{joinOk}</AlertDescription>
+              </Alert>
+            )}
 
-              <Form onSubmit={(e) => { e.preventDefault(); handleJoin(); }}>
-                <div className="space-y-2">
-                  <Label className="text-[13px] font-semibold">Code ou lien d&apos;invitation</Label>
-                  <InputGroup>
-                    <InputGroup.Input
-                      value={invite}
-                      onChange={(e) => setInvite(e.target.value)}
-                      placeholder="https://alfychat.app/invite/... ou ABCD1234"
-                      onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleJoin()}
-                      autoFocus
-                    />
-                  </InputGroup>
-                  <Description className="text-[11px] text-[var(--muted)]/50">
-                    Collez un lien ou saisissez le code court.
-                  </Description>
-                </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleJoin(); }} className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[13px] font-semibold">Code ou lien d&apos;invitation</Label>
+                <Input
+                  value={invite}
+                  onChange={(e) => setInvite(e.target.value)}
+                  placeholder="https://alfychat.app/invite/... ou ABCD1234"
+                  onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                  autoFocus
+                />
+                <p className="text-[11px] text-muted-foreground/50">
+                  Collez un lien ou saisissez le code court.
+                </p>
+              </div>
 
-                <div className="mt-5 flex items-center justify-between gap-3">
-                  <Popover>
+              <div className="flex items-center justify-between gap-3">
+                <Popover>
+                  <PopoverTrigger asChild>
                     <Button
-                      size="sm"
+                      type="button"
                       variant="ghost"
-                      className="h-8 gap-1.5 px-2 text-[11px] text-[var(--muted)]/60 hover:text-muted"
+                      size="sm"
+                      className="h-8 gap-1.5 px-2 text-[11px] text-muted-foreground/60 hover:text-muted-foreground"
                     >
                       <HelpCircleIcon size={12} />
                       Où trouver un code&nbsp;?
                     </Button>
-                    <Popover.Content className="max-w-56">
-                      <Popover.Dialog>
-                        <Popover.Arrow />
-                        <Popover.Heading className="text-[13px] font-semibold">Trouver un code</Popover.Heading>
-                        <p className="mt-1 text-[11px] text-[var(--muted)]/70">
-                          Demandez à un administrateur ou explorez les serveurs publics.
-                        </p>
-                      </Popover.Dialog>
-                    </Popover.Content>
-                  </Popover>
+                  </PopoverTrigger>
+                  <PopoverContent className="max-w-56">
+                    <PopoverHeader>
+                      <PopoverTitle className="text-[13px] font-semibold">Trouver un code</PopoverTitle>
+                    </PopoverHeader>
+                    <p className="text-[11px] text-muted-foreground/70">
+                      Demandez à un administrateur ou explorez les serveurs publics.
+                    </p>
+                  </PopoverContent>
+                </Popover>
 
-                  <Button
-                    type="submit"
-                    onPress={handleJoin}
-                    isDisabled={!invite.trim() || joining}
-                    className="min-w-28 shrink-0"
-                  >
-                    {joining ? <Spinner size="sm" color="current" /> : <ArrowRightIcon size={14} />}
-                    Rejoindre
-                  </Button>
-                </div>
-              </Form>
-            </div>
+                <Button
+                  type="submit"
+                  disabled={!invite.trim() || joining}
+                  className="min-w-28 shrink-0"
+                >
+                  {joining ? <Spinner size="sm" /> : <ArrowRightIcon size={14} />}
+                  Rejoindre
+                </Button>
+              </div>
+            </form>
+          </div>
 
-            <div className="flex items-center justify-between border-t border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-6 py-3">
-              <p className="text-[11px] text-[var(--muted)]/50">Explorer les serveurs publics</p>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 gap-1.5 px-2 text-[11px] text-accent hover:bg-accent/10"
-                onPress={() => { setJoinOpen(false); router.push('/channels/discover-server'); }}
-              >
-                <CompassIcon size={12} />
-                Découvrir
-              </Button>
-            </div>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </>
+          <DialogFooter className="sm:justify-between">
+            <p className="text-[11px] text-muted-foreground/50">Explorer les serveurs publics</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 px-2 text-[11px] text-accent hover:bg-accent/10"
+              onClick={() => { setJoinOpen(false); router.push('/channels/discover-server'); }}
+            >
+              <CompassIcon size={12} />
+              Découvrir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 }

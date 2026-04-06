@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { HomeIcon, MessageCircleIcon } from '@/components/icons';
-import { Button, Link } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function NotFound() {
   return (

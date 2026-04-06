@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Avatar } from '@heroui/react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { resolveMediaUrl } from '@/lib/api';
 
 export interface MentionUser {
@@ -106,11 +106,11 @@ export function MentionPopover({
             onSelect(user);
           }}
         >
-          <Avatar size="sm" className="size-6">
-            <Avatar.Image src={resolveMediaUrl(user.avatarUrl)} alt={user.username} />
-            <Avatar.Fallback className="text-xs">
+          <Avatar className="size-6">
+            <AvatarImage src={resolveMediaUrl(user.avatarUrl)} alt={user.username} />
+            <AvatarFallback className="text-xs">
               {(user.displayName || user.username)[0]?.toUpperCase()}
-            </Avatar.Fallback>
+            </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1 text-left">
             <p className="truncate text-sm font-medium">{user.displayName || user.username}</p>

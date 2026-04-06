@@ -2,20 +2,21 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  MessageCircleIcon, ShieldIcon, LockIcon, UsersIcon,
-  EyeIcon, EyeOffIcon, MailIcon, KeyRoundIcon, UserIcon, AtSignIcon,
-} from '@/components/icons';
+import Link from 'next/link';
+import { EyeIcon, EyeOffIcon } from '@/components/icons';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Alert, Button, Card, Checkbox, Description, Form, InputGroup,
-  Label, Link, Separator, Spinner, TextField,
-} from '@heroui/react';
+  Field, FieldGroup, FieldLabel, FieldDescription, FieldSeparator,
+} from '@/components/ui/field';
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[var(--background)]"><Spinner size="lg" /></div>}>
+    <Suspense fallback={<div className="flex min-h-svh items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>}>
       <RegisterContent />
     </Suspense>
   );
@@ -121,7 +122,6 @@ function RegisterContent() {
       if (result.success) {
         router.push('/channels/gotostart');
       } else if ((result as any).emailNotVerified) {
-        // Compte créé mais email à vérifier → rediriger vers login avec message
         router.push('/login?emailVerification=1&email=' + encodeURIComponent(email));
       } else {
         setError(result.error || "Erreur lors de l'inscription");
@@ -136,240 +136,175 @@ function RegisterContent() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[var(--background)] p-4">
-      <div className="w-full max-w-[900px]">
-        <Card className="overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0 shadow-xl">
-          <div className="grid md:grid-cols-[340px_1fr]">
-            {/* ── Panneau visuel ── */}
-            <div className="relative hidden overflow-hidden border-r border-[var(--border)] bg-[var(--surface-secondary)] md:flex md:flex-col md:items-center md:justify-center md:p-8">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_100%,var(--accent)/8%,transparent_70%)]" />
-              <div className="relative flex flex-col items-center gap-6">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/20">
-                  <MessageCircleIcon size={28} className="text-[var(--accent-foreground)]" />
-                </div>
-                <div className="text-center">
-                  <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">Rejoignez AlfyChat</h2>
-                  <p className="mt-1.5 max-w-56 text-sm leading-relaxed text-[var(--muted)]">
-                    La messagerie chiffrée nouvelle generation
+    <div className="grid min-h-svh lg:grid-cols-2">
+      {/* ── Colonne formulaire ── */}
+      <div className="flex flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center gap-2 md:justify-start">
+          <Link href="/" className="flex items-center gap-2 font-(family-name:--font-krona) font-medium">
+            <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-6" />
+            ALFYCHAT
+          </Link>
+        </div>
+
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-sm">
+
+            <form onSubmit={handleSubmit} className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
+              <FieldGroup>
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">Créer un compte</h1>
+                  <p className="text-sm text-balance text-muted-foreground">
+                    Rejoignez la communauté ALFYCHAT
                   </p>
                 </div>
-                <div className="mt-2 w-full max-w-xs space-y-2.5">
-                  {[
-                    { icon: ShieldIcon, label: 'Chiffrement E2EE', desc: 'AES-256 + ECDH P-256', color: 'text-blue-400' },
-                    { icon: LockIcon, label: 'Vie privee', desc: 'Conforme RGPD', color: 'text-violet-400' },
-                    { icon: UsersIcon, label: 'Communaute', desc: 'Serveurs et groupes', color: 'text-emerald-400' },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-tertiary)] px-4 py-3"
-                    >
-                      <item.icon size={18} className={item.color} />
-                      <div>
-                        <p className="text-sm font-medium text-[var(--foreground)]">{item.label}</p>
-                        <p className="text-xs text-[var(--muted)]">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
 
-            {/* ── Formulaire ── */}
-            <div className="p-8 md:p-10">
-              {/* En-tete */}
-              <div className="mb-6 flex flex-col items-center gap-3 md:items-start">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)] md:hidden">
-                  <MessageCircleIcon size={22} className="text-[var(--accent-foreground)]" />
-                </div>
-                <div className="text-center md:text-left">
-                  <h1 className="text-2xl font-bold text-[var(--foreground)]">Creer un compte</h1>
-                  <p className="mt-1 text-sm text-[var(--muted)]">
-                    Rejoignez la communaute AlfyChat
-                  </p>
-                </div>
-              </div>
-
-              <Form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 {error && (
-                  <Alert status="danger">
-                    <Alert.Indicator />
-                    <Alert.Content>
-                      <Alert.Title>{error}</Alert.Title>
-                    </Alert.Content>
-                  </Alert>
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                    {error}
+                  </div>
                 )}
 
                 {!registrationEnabled && !inviteCode && settingsLoaded && (
-                  <Alert status="warning">
-                    <Alert.Indicator />
-                    <Alert.Content>
-                      <Alert.Title>Inscriptions fermees</Alert.Title>
-                      <Alert.Description>Un lien d&apos;invitation est requis.</Alert.Description>
-                    </Alert.Content>
-                  </Alert>
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
+                    Inscriptions fermées — un lien d&apos;invitation est requis.
+                  </div>
                 )}
 
                 {inviteCode && (
-                  <Alert status="success">
-                    <Alert.Indicator />
-                    <Alert.Content>
-                      <Alert.Title>Invitation detectee</Alert.Title>
-                      <Alert.Description>Utilisez l&apos;email associe a votre invitation.</Alert.Description>
-                    </Alert.Content>
-                  </Alert>
+                  <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+                    Invitation détectée — utilisez l&apos;email associé.
+                  </div>
                 )}
 
-                <div className="flex flex-col gap-4">
-                  {/* Email */}
-                  <TextField fullWidth name="email" isRequired value={email} onChange={setEmail}>
-                    <Label>Adresse email</Label>
-                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
-                      <InputGroup.Prefix>
-                        <MailIcon size={16} className="text-[var(--muted)]" />
-                      </InputGroup.Prefix>
-                      <InputGroup.Input type="email" placeholder="votre@email.com" />
-                    </InputGroup>
-                  </TextField>
+                {/* Email */}
+                <Field>
+                  <FieldLabel htmlFor="email">Adresse email</FieldLabel>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Field>
 
-                  {/* Identifiant + Nom */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <TextField
-                      fullWidth
-                      name="username"
-                      isRequired
+                {/* Identifiant + Nom */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <FieldLabel htmlFor="username">Identifiant</FieldLabel>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="username"
+                      required
                       value={username}
-                      onChange={(v: string) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                    >
-                      <Label>Identifiant</Label>
-                      <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
-                        <InputGroup.Prefix>
-                          <AtSignIcon size={16} className="text-[var(--muted)]" />
-                        </InputGroup.Prefix>
-                        <InputGroup.Input placeholder="username" />
-                      </InputGroup>
-                    </TextField>
-
-                    <TextField fullWidth name="displayName" value={displayName} onChange={setDisplayName}>
-                      <Label>Nom d&apos;affichage</Label>
-                      <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
-                        <InputGroup.Prefix>
-                          <UserIcon size={16} className="text-[var(--muted)]" />
-                        </InputGroup.Prefix>
-                        <InputGroup.Input placeholder="Votre nom" />
-                      </InputGroup>
-                    </TextField>
-                  </div>
-
-                  {/* Mot de passe */}
-                  <TextField fullWidth name="password" isRequired value={password} onChange={setPassword}>
-                    <Label>Mot de passe</Label>
-                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
-                      <InputGroup.Prefix>
-                        <KeyRoundIcon size={16} className="text-[var(--muted)]" />
-                      </InputGroup.Prefix>
-                      <InputGroup.Input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Minimum 8 caracteres"
-                      />
-                      <InputGroup.Suffix className="pr-0">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="ghost"
-                          onPress={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? 'Masquer' : 'Afficher'}
-                        >
-                          {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
-                        </Button>
-                      </InputGroup.Suffix>
-                    </InputGroup>
-                    <Description>Minimum 8 caracteres</Description>
-                  </TextField>
-
-                  {/* Confirmation */}
-                  <TextField fullWidth name="confirmPassword" isRequired value={confirmPassword} onChange={setConfirmPassword}>
-                    <Label>Confirmer le mot de passe</Label>
-                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
-                      <InputGroup.Prefix>
-                        <KeyRoundIcon size={16} className="text-[var(--muted)]" />
-                      </InputGroup.Prefix>
-                      <InputGroup.Input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Retapez votre mot de passe"
-                      />
-                    </InputGroup>
-                  </TextField>
-
-                  {/* CGU */}
-                  <Checkbox
-                    isSelected={acceptTerms}
-                    onChange={setAcceptTerms}
-                    name="terms"
-                  >
-                    <Checkbox.Control className='bg-[var(--surface-secondary)] border-[var(--border)] data-[state=checked]:border-[var(--accent)]'>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                    <Checkbox.Content>
-                      <span className="">
-                        J&apos;accepte les{' '}
-                        <Link href="/terms" className="text-sm font-medium text-[var(--accent)]">
-                          conditions d&apos;utilisation
-                        </Link>{' '}
-                        et la{' '}
-                        <Link href="/privacy" className="text-sm font-medium text-[var(--accent)]">
-                          politique de confidentialite
-                        </Link>
-                      </span>
-                    </Checkbox.Content>
-                  </Checkbox>
-
-                  {/* Turnstile */}
-                  {turnstileEnabled && turnstileSiteKey && (
-                    <div className="flex justify-center">
-                      <div ref={turnstileRef} />
-                    </div>
-                  )}
+                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="displayName">Nom d&apos;affichage</FieldLabel>
+                    <Input
+                      id="displayName"
+                      type="text"
+                      placeholder="Votre nom"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                    />
+                  </Field>
                 </div>
 
-                <div className="mt-2 flex flex-col gap-4">
+                {/* Mot de passe */}
+                <Field>
+                  <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Minimum 8 caractères"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pr-9"
+                    />
+                    <button
+                      type="button"
+                      className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Masquer' : 'Afficher'}
+                    >
+                      {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                    </button>
+                  </div>
+                  <FieldDescription>Minimum 8 caractères</FieldDescription>
+                </Field>
+
+                {/* Confirmation */}
+                <Field>
+                  <FieldLabel htmlFor="confirmPassword">Confirmer le mot de passe</FieldLabel>
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Retapez votre mot de passe"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </Field>
+
+                {/* CGU */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="terms"
+                    checked={acceptTerms}
+                    onCheckedChange={(checked) => setAcceptTerms(checked === true)}
+                    className="shrink-0"
+                  />
+                  <label htmlFor="terms" className="text-sm font-normal leading-normal select-none">
+                    J&apos;accepte les <Link href="/terms" className="underline underline-offset-4 hover:text-primary">conditions d&apos;utilisation</Link> et la <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">politique de confidentialité</Link>
+                  </label>
+                </div>
+
+                {/* Turnstile */}
+                {turnstileEnabled && turnstileSiteKey && (
+                  <div className="flex justify-center">
+                    <div ref={turnstileRef} />
+                  </div>
+                )}
+
+                <Field>
                   <Button
                     type="submit"
-                    fullWidth
-                    isPending={isLoading}
-                    isDisabled={!registrationEnabled && !inviteCode}
+                    className="w-full"
+                    disabled={isLoading || (!registrationEnabled && !inviteCode)}
                   >
-                    {({ isPending }) => (
-                      <>
-                        {isPending ? <Spinner size="sm" color="current" /> : null}
-                        {isPending ? 'Creation...' : 'Creer mon compte'}
-                      </>
-                    )}
+                    {isLoading && <Loader2 className="size-4 animate-spin" />}
+                    {isLoading ? 'Création...' : 'Créer mon compte'}
                   </Button>
+                </Field>
 
-                  <Separator />
+                <FieldSeparator>Ou</FieldSeparator>
 
-                  <p className="text-center text-sm text-[var(--foreground)]">
-                    Deja un compte ?{' '}
-                    <Link href="/login" className="font-semibold text-[var(--accent)]">
-                      Se connecter
-                    </Link>
-                  </p>
+                <FieldDescription className="font-(family-name:--font-geist-sans) text-center">
+                  Déjà un compte ?{' '}
+                  <Link href="/login" className="underline underline-offset-4">
+                    Se connecter
+                  </Link>
+                </FieldDescription>
+              </FieldGroup>
+            </form>
 
-                  <p className="text-center text-xs text-[var(--muted)]">
-                    En creant un compte, vous acceptez nos{' '}
-                    <Link href="/terms" className="text-xs text-[var(--muted)] underline underline-offset-2 hover:text-[var(--foreground)]">
-                      CGU
-                    </Link>{' '}
-                    et notre{' '}
-                    <Link href="/privacy" className="text-xs text-[var(--muted)] underline underline-offset-2 hover:text-[var(--foreground)]">
-                      Politique de confidentialite
-                    </Link>
-                  </p>
-                </div>
-              </Form>
-            </div>
           </div>
-        </Card>
+        </div>
+      </div>
+
+      {/* ── Panneau visuel ── */}
+      <div className="relative hidden bg-muted lg:block">
+        <img
+          src="/backgound/defaut.jpg"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover "
+        />
       </div>
     </div>
   );

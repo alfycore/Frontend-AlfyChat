@@ -34,14 +34,16 @@ import {
   GlobeIcon,
 } from '@/components/icons';
 import { socketService } from '@/lib/socket';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import {
-  Button,
-  Checkbox,
-  InputGroup,
-  Modal,
-  Popover,
-  Spinner,
-} from '@heroui/react';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Popover, PopoverTrigger, PopoverContent,
+} from '@/components/ui/popover';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 interface Role {
@@ -90,19 +92,27 @@ export function getRoleIconComponent(iconName?: string): any | null {
   return ROLE_ICONS.find((i) => i.name === iconName)?.icon || null;
 }
 
+// Values MUST match server-node/src/enums/Permission.ts
 const PERMISSIONS = [
-  { label: 'Lire les salons', value: 0x1 },
+  { label: 'Voir les salons', value: 0x1 },
   { label: 'Envoyer des messages', value: 0x2 },
-  { label: 'Ajouter des réactions', value: 0x4 },
-  { label: 'Gérer les messages', value: 0x8 },
-  { label: 'Expulser des membres', value: 0x10 },
-  { label: 'Bannir des membres', value: 0x20 },
+  { label: 'Lire l\'historique', value: 0x4 },
+  { label: 'Joindre des fichiers', value: 0x8 },
+  { label: 'Se connecter (vocal)', value: 0x10 },
+  { label: 'Parler (vocal)', value: 0x20 },
   { label: 'Gérer les salons', value: 0x80 },
   { label: 'Gérer les rôles', value: 0x100 },
+  { label: 'Gérer les messages', value: 0x200 },
+  { label: 'Expulser des membres', value: 0x400 },
+  { label: 'Bannir des membres', value: 0x800 },
+  { label: 'Gérer le serveur', value: 0x1000 },
+  { label: 'Gérer les invitations', value: 0x2000 },
+  { label: 'Mentionner @everyone', value: 0x4000 },
   { label: 'Administrateur (toutes permissions)', value: 0x40 },
 ];
 
-const DEFAULT_PERMS = 0x1 | 0x2 | 0x4;
+// VIEW_CHANNELS | SEND_MESSAGES | READ_HISTORY | CONNECT_VOICE
+const DEFAULT_PERMS = 0x1 | 0x2 | 0x4 | 0x10;
 
 export { ROLE_ICONS };
 
@@ -271,37 +281,34 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                 <>
                   <Button
                     variant="ghost"
-                    isIconOnly
-                    size="sm"
-                    onPress={() => moveRole(role, 'up')}
-                    isDisabled={isEditorOpen || idx === 0}
+                    size="icon-sm"
+                    onClick={() => moveRole(role, 'up')}
+                    disabled={isEditorOpen || idx === 0}
                     className="text-[var(--muted)]"
                   >
                     <ChevronUpIcon size={14} />
                   </Button>
                   <Button
                     variant="ghost"
-                    isIconOnly
-                    size="sm"
-                    onPress={() => moveRole(role, 'down')}
-                    isDisabled={isEditorOpen || idx === roles.length - 1}
+                    size="icon-sm"
+                    onClick={() => moveRole(role, 'down')}
+                    disabled={isEditorOpen || idx === roles.length - 1}
                     className="text-[var(--muted)]"
                   >
                     <ChevronDownIcon size={14} />
                   </Button>
                 </>
               )}
-              <Button variant="ghost" isIconOnly size="sm" onPress={() => openEdit(role)} isDisabled={isEditorOpen}>
+              <Button variant="ghost" size="icon-sm" onClick={() => openEdit(role)} disabled={isEditorOpen}>
                 <PencilIcon size={14} />
               </Button>
               {!role.isDefault && (
                 <Button
                   variant="ghost"
-                  isIconOnly
-                  size="sm"
+                  size="icon-sm"
                   className="text-red-500"
-                  onPress={() => setDeleteTarget(role)}
-                  isDisabled={isEditorOpen}
+                  onClick={() => setDeleteTarget(role)}
+                  disabled={isEditorOpen}
                 >
                   <Trash2Icon size={14} />
                 </Button>
@@ -312,7 +319,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
       })}
 
       {!isEditorOpen && (
-        <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl border-[var(--border)]/60" onPress={openCreate}>
+        <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl border-[var(--border)]/60" onClick={openCreate}>
           <PlusIcon size={16} />
           Ajouter un rôle
         </Button>
@@ -328,14 +335,13 @@ export function RoleManager({ serverId }: RoleManagerProps) {
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
               Nom du rôle
             </span>
-            <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
-              <InputGroup.Input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Administrateur, Modérateur..."
-                autoFocus
-              />
-            </InputGroup>
+            <Input
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              placeholder="Administrateur, Modérateur..."
+              autoFocus
+              className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60"
+            />
           </div>
 
           <div className="flex gap-3">
@@ -350,14 +356,12 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                   onChange={(e) => setFormColor(e.target.value)}
                   className="size-9 cursor-pointer rounded-lg border border-[var(--border)]/60 bg-transparent"
                 />
-                <InputGroup className="w-28 rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
-                  <InputGroup.Input
-                    value={formColor}
-                    onChange={(e) => setFormColor(e.target.value)}
-                    className="font-mono text-sm"
-                    maxLength={7}
-                  />
-                </InputGroup>
+                <Input
+                  value={formColor}
+                  onChange={(e) => setFormColor(e.target.value)}
+                  className="w-28 rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60 font-mono text-sm"
+                  maxLength={7}
+                />
               </div>
             </div>
 
@@ -365,8 +369,8 @@ export function RoleManager({ serverId }: RoleManagerProps) {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
                 Icône
               </span>
-              <Popover isOpen={iconPickerOpen} onOpenChange={setIconPickerOpen}>
-                <Popover.Trigger>
+              <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
+                <PopoverTrigger asChild>
                   <div
                     role="button"
                     className="flex h-9 w-20 items-center justify-center rounded-xl border border-[var(--border)]/60 transition-colors hover:bg-[var(--surface-secondary)]/30"
@@ -378,10 +382,10 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                       <span className="text-xs text-[var(--muted)]">—</span>
                     )}
                   </div>
-                </Popover.Trigger>
-                <Popover.Content
+                </PopoverTrigger>
+                <PopoverContent
                   className="w-64 rounded-xl border-[var(--border)]/60 bg-popover/95 p-2 shadow-2xl"
-                  placement="bottom start"
+                  align="start"
                 >
                   <div className="grid grid-cols-6 gap-1">
                     <button
@@ -413,7 +417,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                       </button>
                     ))}
                   </div>
-                </Popover.Content>
+                </PopoverContent>
               </Popover>
             </div>
           </div>
@@ -424,23 +428,23 @@ export function RoleManager({ serverId }: RoleManagerProps) {
             </span>
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
               {PERMISSIONS.map((perm) => (
-                <Checkbox
-                  key={perm.value}
-                  isSelected={Boolean(formPerms & perm.value)}
-                  onChange={() => togglePerm(perm.value)}
-                >
+                <label key={perm.value} className="flex items-center gap-2">
+                  <Checkbox
+                    checked={Boolean(formPerms & perm.value)}
+                    onCheckedChange={() => togglePerm(perm.value)}
+                  />
                   <span className="text-xs">{perm.label}</span>
-                </Checkbox>
+                </label>
               ))}
             </div>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onPress={cancelEdit} isDisabled={isSaving} className="rounded-lg">
+            <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving} className="rounded-lg">
               <XIcon size={14} className="mr-1.5" />
               Annuler
             </Button>
-            <Button size="sm" onPress={handleSave} isDisabled={!formName.trim() || isSaving} className="rounded-lg">
+            <Button size="sm" onClick={handleSave} disabled={!formName.trim() || isSaving} className="rounded-lg">
               {isSaving ? (
                 <Loader2Icon size={14} className="mr-1.5 animate-spin" />
               ) : (
@@ -453,30 +457,26 @@ export function RoleManager({ serverId }: RoleManagerProps) {
       )}
 
       {/* Delete confirmation modal */}
-      <Modal isOpen={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <Modal.Backdrop>
-        <Modal.Container size="sm">
-          <Modal.Dialog className="rounded-2xl border border-[var(--border)]/60 p-0">
-            <Modal.Header>
-              <Modal.Heading>Supprimer le rôle</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <p className="text-sm text-[var(--muted)]">
-                Supprimer le rôle <strong>{deleteTarget?.name}</strong> ? Les membres qui ont ce rôle le perdront.
-              </p>
-            </Modal.Body>
-            <Modal.Footer className="gap-2">
-              <Button variant="ghost" onPress={() => setDeleteTarget(null)}>
-                Annuler
-              </Button>
-              <Button variant="danger" onPress={handleDelete}>
-                Supprimer
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent className="rounded-2xl border border-[var(--border)]/60 p-0 sm:max-w-sm">
+          <DialogHeader className="p-5 pb-0">
+            <DialogTitle>Supprimer le rôle</DialogTitle>
+          </DialogHeader>
+          <div className="p-5 pt-3">
+            <p className="text-sm text-[var(--muted)]">
+              Supprimer le rôle <strong>{deleteTarget?.name}</strong> ? Les membres qui ont ce rôle le perdront.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 p-5 pt-0">
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+              Annuler
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

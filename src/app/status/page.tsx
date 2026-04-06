@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -73,7 +73,7 @@ export default function StatusPage() {
 
         {/* ── Hero ── */}
         <div className="text-center space-y-3">
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-extrabold tracking-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
             État des services
           </h1>
           <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">

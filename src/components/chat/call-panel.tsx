@@ -13,7 +13,7 @@ import {
   AlertTriangleIcon,
   WifiIcon,
 } from '@/components/icons';
-import { Avatar } from '@heroui/react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useAudioLevel } from '@/hooks/use-audio-level';
@@ -151,10 +151,10 @@ function ParticipantTile({
             speaking ? 'ring-2 ring-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : '',
           )}>
             <Avatar className="size-10 rounded-full shadow-xl ring-1 ring-white/10 sm:size-12">
-              <Avatar.Image src={resolveMediaUrl(avatarSrc)} />
-              <Avatar.Fallback className="bg-zinc-600 text-white text-xl font-bold">
+              <AvatarImage src={resolveMediaUrl(avatarSrc)} />
+              <AvatarFallback className="bg-zinc-600 text-white text-xl font-bold">
                 {label[0]?.toUpperCase() || '?'}
-              </Avatar.Fallback>
+              </AvatarFallback>
             </Avatar>
           </div>
           {!isConnected && !isLocal && (

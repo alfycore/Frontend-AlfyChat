@@ -1,9 +1,13 @@
 ﻿'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Button, Popover, ScrollShadow, SearchField, Spinner } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { Twemoji, emojiToTwemojiUrl } from '@/lib/twemoji';
-import { SmileIcon } from '@/components/icons';
+import { ChevronDownIcon, ClockIcon, SearchIcon, SmileIcon, StarIcon } from '@/components/icons';
 
 // ==========================================
 // EMOJI DATA
@@ -185,6 +189,73 @@ const EMOJI_CATEGORIES: EmojiCategory[] = [
       '🇳🇴', '🇩🇰', '🇫🇮', '🇵🇱', '🇦🇹', '🇮🇪', '🇹🇷', '🇬🇷', '🇿🇦', '🇪🇬',
       '🇸🇦', '🇦🇪', '🇮🇱', '🇦🇷', '🇨🇴', '🇻🇪', '🇨🇱', '🇵🇪', '🇳🇬', '🇰🇪',
       '🇲🇦', '🇹🇳', '🇩🇿', '🇵🇭', '🇹🇭', '🇻🇳', '🇮🇩', '🇲🇾', '🇸🇬', '🇳🇿',
+      '🇺🇦', '🇵🇰', '🇧🇩', '🇲🇲', '🇱🇰', '🇳🇵', '🇰🇿', '🇺🇿', '🇦🇿', '🇬🇪',
+      '🇦🇲', '🇧🇾', '🇲🇩', '🇷🇴', '🇧🇬', '🇷🇸', '🇭🇷', '🇧🇦', '🇸🇮', '🇸🇰',
+      '🇨🇿', '🇭🇺', '🇱🇹', '🇱🇻', '🇪🇪', '🇮🇸', '🇸🇳', '🇮🇶', '🇾🇪', '🇱🇧',
+    ],
+  },
+  {
+    name: 'Vêtements',
+    icon: '👕',
+    emojis: [
+      '👒', '🎩', '🧢', '⛑️', '👑', '💍', '👗', '👘', '🥻', '🩱',
+      '🩲', '🩳', '👙', '👚', '👛', '👜', '👝', '🎒', '🧳', '👓',
+      '🕶️', '🥽', '🧤', '🧣', '🧦', '🧥', '👔', '👕', '👖', '🩴',
+      '👠', '👡', '👢', '🩰', '👞', '👟', '🥾', '🥿', '🌂', '☂️',
+      '🎀', '🪡', '🧵', '🧶', '🪢',
+    ],
+  },
+  {
+    name: 'Maison',
+    icon: '🏠',
+    emojis: [
+      '🛋️', '🪑', '🛏️', '🛁', '🚿', '🪞', '🪟', '🚪', '🧹', '🧺',
+      '🧻', '🪣', '🧼', '🧽', '🧴', '🪥', '🪒', '🧷', '🍽️', '🥄',
+      '🍴', '🥢', '🧊', '🏺', '🪔', '🪩', '🪜', '🗑️', '🛢️', '🔑',
+      '🗝️', '🔒', '🔓', '🪫', '🪴', '🪱', '🪤', '🧲', '🕯️', '🧯',
+    ],
+  },
+  {
+    name: 'Papeterie',
+    icon: '📚',
+    emojis: [
+      '📚', '📖', '📗', '📘', '📙', '📒', '📔', '📓', '📃', '📄',
+      '📑', '🗒️', '🗓️', '📅', '📆', '📊', '📈', '📉', '📋', '📁',
+      '📂', '🗂️', '🗃️', '📫', '📪', '📬', '📭', '📮', '✉️', '📧',
+      '📨', '📩', '📤', '📥', '📦', '🖇️', '✂️', '📏', '📐', '✒️',
+      '🖋️', '🗳️', '📌', '📍', '🔗', '📎',
+    ],
+  },
+  {
+    name: 'Fêtes',
+    icon: '🎊',
+    emojis: [
+      '🎉', '🎊', '🎈', '🎁', '🎀', '🎟️', '🎫', '🪅', '🪆', '🤹',
+      '🎇', '🎆', '🧨', '🏮', '🧧', '🎐', '🎏', '🎎', '🎑', '🎃',
+      '🍾', '🎂', '🪩', '🎠', '🎡', '🎢', '🧁', '🥳', '🥂', '🍰',
+      '🎋', '🎍', '🪔', '🕯️', '🧸', '🪁', '🛝', '🎪', '🎠', '🎯',
+    ],
+  },
+  {
+    name: 'Sciences',
+    icon: '🔬',
+    emojis: [
+      '⚗️', '🔬', '🔭', '🧪', '🧫', '🧬', '🌡️', '💊', '💉', '🩺',
+      '🩻', '🩹', '🩼', '🦽', '🦼', '🧲', '🌀', '🔮', '🪄', '🧿',
+      '🪬', '🛸', '🚀', '🛰️', '🌌', '☢️', '⚛️', '🌋', '🌊', '🏜️',
+      '🏕️', '🏞️', '🧯', '💡', '🔋', '⚡', '🌐', '🗺️', '🧭', '⚙️',
+    ],
+  },
+  {
+    name: 'Divers',
+    icon: '♾️',
+    emojis: [
+      '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '🟤', '⚫', '⚪', '🔶',
+      '🔷', '🔸', '🔹', '🔺', '🔻', '💠', '🔘', '🔳', '🔲', '▫️',
+      '▪️', '◾', '◽', '◼️', '◻️', '⬛', '⬜', '🟥', '🟧', '🟨',
+      '🟩', '🟦', '🟪', '🟫', '✔️', '❎', '🔏', '🔐', '🔡', '🔢',
+      '🔣', '🔤', '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '⛔', '🚫',
+      '🚳', '🚭', '🚯', '🚱', '🚷', '📵', '🔞', '©️', '®️', '™️',
     ],
   },
 ];
@@ -1111,6 +1182,185 @@ const EMOJI_SEARCH_NAMES: Record<string, string> = {
   '🇲🇾': 'malaisie malaysia drapeau',
   '🇸🇬': 'singapour singapore drapeau',
   '🇳🇿': 'nouvelle-zelande new zealand drapeau',
+  // Drapeaux supplémentaires
+  '🇺🇦': 'ukraine ukrainien drapeau',
+  '🇵🇰': 'pakistan pakistanais drapeau',
+  '🇧🇩': 'bangladesh drapeau',
+  '🇲🇲': 'myanmar birmanie drapeau',
+  '🇱🇰': 'sri lanka drapeau',
+  '🇳🇵': 'nepal drapeau',
+  '🇰🇿': 'kazakhstan drapeau',
+  '🇺🇿': 'ouzbekistan drapeau',
+  '🇦🇿': 'azerbaidjan drapeau',
+  '🇬🇪': 'georgie drapeau',
+  '🇦🇲': 'armenie drapeau',
+  '🇧🇾': 'bielorussie drapeau',
+  '🇲🇩': 'moldavie drapeau',
+  '🇷🇴': 'roumanie drapeau',
+  '🇧🇬': 'bulgarie drapeau',
+  '🇷🇸': 'serbie drapeau',
+  '🇭🇷': 'croatie drapeau',
+  '🇧🇦': 'bosnie herzegovine drapeau',
+  '🇸🇮': 'slovenie drapeau',
+  '🇸🇰': 'slovaquie drapeau',
+  '🇨🇿': 'republique tcheque drapeau',
+  '🇭🇺': 'hongrie drapeau',
+  '🇱🇹': 'lituanie drapeau',
+  '🇱🇻': 'lettonie drapeau',
+  '🇪🇪': 'estonie drapeau',
+  '🇮🇸': 'islande drapeau',
+  '🇸🇳': 'senegal drapeau',
+  '🇮🇶': 'irak drapeau',
+  '🇾🇪': 'yemen drapeau',
+  '🇱🇧': 'liban drapeau',
+  // Vêtements
+  '👒': 'chapeau soleil paille printemps',
+  '🎩': 'chapeau haut forme magicien elegance',
+  '🧢': 'casquette sport baseball cap',
+  '⛑️': 'casque securite construction blanc',
+  '👑': 'couronne roi reine royaute',
+  '💍': 'bague anneau mariage fiancailles diamant',
+  '👗': 'robe dress femme vetement',
+  '👘': 'kimono japonais robe traditionnelle',
+  '🥻': 'sari indien robe traditionnelle',
+  '🩱': 'maillot bain femme une piece',
+  '🩲': 'boxer slip maillot sous-vetement',
+  '🩳': 'short bermuda pantalon court',
+  '👙': 'bikini maillot bain deux pieces',
+  '👚': 'haut top femme vetement',
+  '👛': 'porte-monnaie bourse femme argentee',
+  '👜': 'sac main femme bag',
+  '👝': 'pochette sac petit',
+  '🎒': 'sac dos backpack randonee ecole',
+  '🧳': 'valise bagage voyage',
+  '👓': 'lunettes vue correction',
+  '🕶️': 'lunettes soleil cool stylees',
+  '🥽': 'lunettes protection lab securite',
+  '🧤': 'gants hiver froid',
+  '🧣': 'echarpe hiver froid laine',
+  '🧦': 'chaussettes pieds',
+  '🧥': 'manteau veste hiver pardessus',
+  '👔': 'chemise cravate costume bureau travail',
+  '👕': 'tshirt t-shirt top haut casual',
+  '👖': 'jean pantalon jeans',
+  '🩴': 'tong sandale ete plage',
+  '👠': 'chaussure a talon high heels',
+  '👡': 'sandale femme elegante talon',
+  '👢': 'botte boot',
+  '': 'echelle escabeau monter',
+  // Papeterie
+  '📚': 'livres bibliotheque etude lecture pile',
+  '📖': 'livre ouvert lire lecture',
+  '📗': 'livre vert etude',
+  '📘': 'livre bleu etude',
+  '📙': 'livre orange etude',
+  '📒': 'carnet notes jaune',
+  '📔': 'carnet notes couverture fleur',
+  '📓': 'carnet notebook',
+  '📃': 'page document feuille enroule',
+  '📄': 'document feuille page',
+  '📑': 'marque-page signet onglets',
+  '🗒️': 'bloc notes memo',
+  '🗓️': 'agenda calendrier spirale',
+  '📅': 'calendrier date rendez-vous',
+  '📆': 'calendrier decoupe croix',
+  '📊': 'graphique barres statistiques',
+  '📈': 'graphique hausse progression courbe',
+  '📉': 'graphique baisse diminution courbe',
+  '📋': 'presse-papier clipboard',
+  '📁': 'dossier ferme fichier',
+  '📂': 'dossier ouvert fichier',
+  '🗂️': 'diviseur index onglets dossier',
+  '🗃️': 'tiroir fichiers archive',
+  '📫': 'boite lettres fermee courrier',
+  '📪': 'boite lettres vide fermee',
+  '📬': 'boite lettres courrier pleine ouverte',
+  '📭': 'boite lettres ouverte vide',
+  '📮': 'boite aux lettres postale rouge',
+  '✉️': 'enveloppe lettre courrier',
+  '📧': 'email electronique message',
+  '📨': 'enveloppe entrante recevoir',
+  '📩': 'enveloppe flechee',
+  '📤': 'boite sortante envoyer',
+  '📥': 'boite entrante recevoir',
+  '📦': 'colis paquet boite cadeau',
+  '🖇️': 'trombone attacher papier',
+  '✂️': 'ciseaux couper',
+  '📏': 'regle mesurer centimetre',
+  '📐': 'equerre geometrie angle',
+  '✒️': 'plume stylo calligraphie',
+  '🖋️': 'stylo plume ecrire',
+  '🗳️': 'urne vote election',
+  '🔗': 'lien chaine url maillon',
+  '📎': 'trombone attacher clip',
+  // Fêtes
+  '🎟️': 'billet cinema spectacle ticket entree',
+  '🎫': 'ticket billet entree',
+  '🪅': 'pinata fete mexicain baton',
+  '🪆': 'matriochka poupees russes gigognes',
+  '🤹': 'jongleur cirque acrobate balles',
+  '🎇': 'etincelle sparkler feu artifice',
+  '🎆': 'feu artifice celebration ciel',
+  '🧨': 'petard feu artifice nouvel an bruit',
+  '🏮': 'lanterne rouge chinoise japonaise',
+  '🧧': 'enveloppe rouge hongbao nouvel an chinois',
+  '🎐': 'carpe koinobori vent japonais',
+  '🎏': 'streamer carpe decoration japonaise',
+  '🎎': 'poupees hina matsuri japonais',
+  '🎑': 'lune tsukimi japonais fete',
+  '🎃': 'halloween citrouille jack o lantern',
+  '🍾': 'champagne bouteille celebration bouchon',
+  '🪩': 'boule disco dance fete',
+  '🎠': 'manege carrousel chevaux fete',
+  '🎡': 'grande roue parc attraction',
+  '🎢': 'montagnes russes parc attraction',
+  '🧸': 'peluche nounours ours jouet',
+  // Sciences
+  '⚗️': 'alambic distillation chimie laboratoire',
+  '🔬': 'microscope science laboratoire',
+  '🔭': 'telescope astronomie observation etoiles',
+  '🧪': 'tube essai chimie laboratoire test',
+  '🧫': 'boite petri culture bacterie',
+  '🧬': 'adn genetique biologie hereditaire',
+  '🌡️': 'thermometre temperature degres',
+  '💊': 'pilule medicament comprime',
+  '💉': 'seringue injection vaccin',
+  '🩺': 'stethoscope medecin docteur',
+  '🩻': 'radio radiographie os medical',
+  '🩹': 'pansement bande adhesive blessure',
+  '🩼': 'bequille handicap jambe',
+  '🦽': 'fauteuil roulant manuel handicap',
+  '🦼': 'fauteuil roulant electrique handicap',
+  '🌀': 'spirale cyclone tourbillon swirl',
+  '🔮': 'boule cristal voyance magie',
+  '🪄': 'baguette magique magie tour',
+  '🧿': 'oeil mauvais mal chance nazar',
+  '🌌': 'galaxie nebuleuse cosmos espace voie lactee',
+  // Divers
+  '▫️': 'carre blanc petit',
+  '▪️': 'carre noir petit',
+  '◼️': 'carre noir moyen',
+  '◻️': 'carre blanc moyen',
+  '🔡': 'lettres minuscules abc',
+  '🔢': 'chiffres 123 nombre',
+  '🔣': 'symboles caracteres',
+  '🔤': 'lettres abc alphabet',
+  '🅰️': 'lettre A groupe sanguin',
+  '🅱️': 'lettre B groupe sanguin',
+  '🆎': 'ab groupe sanguin',
+  '🆑': 'cl bouton',
+  '🅾️': 'lettre O groupe sanguin',
+  '🆘': 'sos urgence aide',
+  '⛔': 'interdit passage bloque',
+  '🚫': 'interdit non bloque',
+  '🚳': 'velo interdit',
+  '🚭': 'non fumeur cigarette interdite',
+  '🚯': 'detritus jeter interdit',
+  '🚱': 'eau non potable',
+  '🚷': 'pietons interdits',
+  '📵': 'telephone interdit silence',
+  '🔞': 'mineur interdit adulte',
+  '🪫': 'batterie vide decharge',
 };
 
 // ==========================================
@@ -1362,28 +1612,30 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
     document.getElementById(`emoji-cat-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
+  const previewName = hoveredEmoji?.name ? `:${hoveredEmoji.name}:` : 'Survolez un emoji…';
+
   return (
-    <Popover isOpen={open} onOpenChange={setOpen}>
-      <Popover.Trigger>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         {children || (
-          <Button isIconOnly size="sm" variant="ghost">
+          <Button size="icon-sm" variant="ghost">
             <SmileIcon size={16} />
           </Button>
         )}
-      </Popover.Trigger>
+      </PopoverTrigger>
 
-      <Popover.Content placement="top end" className="w-[340px] overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/98 p-0 shadow-2xl sm:w-[380px]">
+      <PopoverContent align="end" side="top" className="w-90 overflow-hidden rounded-[22px] border border-white/10 bg-[#151618] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:w-100">
         {/* ── Tab bar ── */}
-        <div className="flex shrink-0 items-center border-b border-[var(--border)]/20 px-2">
+        <div className="flex shrink-0 items-center gap-1 border-b border-white/8 px-3 pt-3">
           {(['gif', 'sticker', 'emoji'] as const).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => { setActiveTab(tab); setSearch(''); }}
-              className={`px-3 py-2.5 text-[12px] font-semibold transition-colors ${
+              className={`rounded-t-xl px-3 py-2 text-[13px] font-semibold transition-all ${
                 activeTab === tab
-                  ? 'border-b-2 border-[var(--accent)] text-[var(--accent)]'
-                  : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+                  ? 'bg-white/10 text-white shadow-[inset_0_-1px_0_rgba(255,255,255,0.08)]'
+                  : 'text-white/55 hover:bg-white/5 hover:text-white/85'
               }`}
             >
               {tab === 'gif' ? 'GIF' : tab === 'sticker' ? 'Autocollants' : 'Émoji'}
@@ -1395,88 +1647,119 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
         {activeTab === 'emoji' && (
           <>
             {/* Search */}
-            <div className="px-3 pt-3 pb-2">
-              <SearchField name="emoji-search" className="rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
-                <SearchField.Group>
-                  <SearchField.SearchIcon />
-                  <SearchField.Input
+            <div className="border-b border-white/8 px-3 py-3">
+              <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <SearchIcon size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/45" />
+                  <Input
                     ref={searchInputRef}
-                    placeholder="Rechercher un emoji..."
+                    placeholder=":aoiBot:"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    className="h-10 rounded-xl border-white/10 bg-[#111214] pl-9 pr-3 text-[14px] text-white placeholder:text-white/35"
                   />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
+                </div>
+                <button
+                  type="button"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[22px] transition-colors hover:bg-white/6"
+                  onClick={() => setSearch('')}
+                  title="Effacer la recherche"
+                >
+                  👋
+                </button>
+              </div>
             </div>
 
-            {/* Category navigation */}
-            {!search && (
-              <div className="flex items-center gap-0.5 overflow-x-auto border-b border-[var(--border)]/20 px-2 py-1.5 scrollbar-none">
-                {navTabs.map((tab) => (
-                  <button
-                    key={`nav-${tab.index}`}
-                    type="button"
-                    className={`flex shrink-0 items-center justify-center rounded-lg p-1.5 transition-all duration-150 ${
-                      activeCategory === tab.index
-                        ? 'bg-[var(--accent)]/15 ring-1 ring-[var(--accent)]/20'
-                        : 'opacity-60 hover:opacity-100 hover:bg-[var(--surface-secondary)]/50'
-                    }`}
-                    onClick={() => scrollToCategory(tab.index)}
-                    title={tab.name}
-                  >
-                    <Twemoji emoji={tab.icon} size={18} />
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex h-64 min-h-0">
+              {!search && (
+                <div className="flex w-12 shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-white/8 bg-black/10 px-1.5 py-3 [&::-webkit-scrollbar]:hidden">
+                  {navTabs.map((tab) => (
+                    <button
+                      key={`nav-${tab.index}`}
+                      type="button"
+                      className={`flex size-9 items-center justify-center rounded-xl transition-all duration-150 ${
+                        activeCategory === tab.index
+                          ? 'bg-white/12 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]'
+                          : 'text-white/45 hover:bg-white/6 hover:text-white/80'
+                      }`}
+                      onClick={() => scrollToCategory(tab.index)}
+                      title={tab.name}
+                    >
+                      {tab.index === 0 ? (
+                        <StarIcon size={16} />
+                      ) : tab.name === 'Récents' ? (
+                        <ClockIcon size={16} />
+                      ) : (
+                        <Twemoji emoji={tab.icon} size={18} />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {/* Emoji grid */}
-            <ScrollShadow className="h-[260px] sm:h-[295px]">
-              <div className="px-2.5 py-2">
-                {visibleCategories.length === 0 ? (
-                  <div className="flex h-48 flex-col items-center justify-center gap-2">
-                    <span className="text-3xl">🔍</span>
-                    <p className="text-[13px] text-[var(--muted)]/60">Aucun emoji trouvé</p>
-                  </div>
-                ) : (
-                  visibleCategories.map((category, catIndex) => (
-                    <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2">
-                      <div className="sticky top-0 z-10 mb-1 bg-[var(--surface)]/95 py-1">
-                        <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-semibold text-[var(--muted)]/70">
-                          {category.name}
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-8 gap-px sm:grid-cols-9">
-                        {category.emojis.map((emoji, i) => (
-                          <button
-                            key={`${catIndex}-${i}`}
-                            type="button"
-                            className="group flex aspect-square items-center justify-center rounded-lg transition-all duration-100 hover:scale-[1.15] hover:bg-[var(--accent)]/10 active:scale-95"
-                            onClick={() => handleSelect(emoji)}
-                            onMouseEnter={() => setHoveredEmoji({ emoji, name: EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji })}
-                            onMouseLeave={() => setHoveredEmoji(null)}
-                            title={EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji}
-                          >
-                            <Twemoji emoji={emoji} size={24} className="transition-transform group-hover:drop-shadow-sm" />
-                          </button>
-                        ))}
-                      </div>
+              {/* Emoji grid */}
+              <ScrollArea className="flex-1">
+                <div className="px-2.5 py-2.5">
+                  {visibleCategories.length === 0 ? (
+                    <div className="flex h-48 flex-col items-center justify-center gap-2 text-white/65">
+                      <span className="text-3xl">🔍</span>
+                      <p className="text-[13px]">Aucun emoji trouvé</p>
                     </div>
-                  ))
-                )}
-              </div>
-            </ScrollShadow>
+                  ) : (
+                    visibleCategories.map((category, catIndex) => (
+                      <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-3 last:mb-0">
+                        <div className="sticky top-0 z-10 mb-1.5 bg-[#151618]/96 py-1 backdrop-blur-sm">
+                          <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold text-white/80">
+                            <span className="inline-flex items-center justify-center text-white/70">
+                              <ChevronDownIcon size={12} />
+                            </span>
+                            <span>{category.name}</span>
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-8 gap-1 sm:grid-cols-9">
+                          {category.emojis.map((emoji, i) => (
+                            <button
+                              key={`${catIndex}-${i}`}
+                              type="button"
+                              className="group flex aspect-square items-center justify-center rounded-[10px] border border-transparent bg-transparent transition-all duration-100 hover:scale-[1.08] hover:border-white/6 hover:bg-white/6 active:scale-95"
+                              onClick={() => handleSelect(emoji)}
+                              onMouseEnter={() => setHoveredEmoji({ emoji, name: EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji })}
+                              onMouseLeave={() => setHoveredEmoji(null)}
+                              title={EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji}
+                            >
+                              <Twemoji emoji={emoji} size={24} className="transition-transform group-hover:drop-shadow-[0_2px_8px_rgba(255,255,255,0.18)]" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
 
             {/* Hover preview bar */}
-            <div className="flex h-8 shrink-0 items-center gap-2 border-t border-[var(--border)]/20 px-3">
+            <div className="flex h-11 shrink-0 items-center gap-2 border-t border-white/8 bg-black/15 px-3">
               {hoveredEmoji ? (
                 <>
-                  <Twemoji emoji={hoveredEmoji.emoji} size={16} />
-                  <span className="text-[11px] text-[var(--muted)]">:{hoveredEmoji.name}:</span>
+                  <div className="flex size-7 items-center justify-center rounded-full bg-white/6">
+                    <Twemoji emoji={hoveredEmoji.emoji} size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-[12px] font-semibold text-white">{previewName}</p>
+                    
+                  </div>
                 </>
               ) : (
-                <span className="text-[11px] text-[var(--muted)]/40">Survolez un emoji…</span>
+                <>
+                  <div className="flex size-7 items-center justify-center rounded-full bg-white/6">
+                    <SmileIcon size={15} className="text-white/70" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-[12px] font-semibold text-white/85">Émoji</p>
+                    <p className="truncate text-[10px] text-white/40">{previewName}</p>
+                  </div>
+                </>
               )}
             </div>
           </>
@@ -1485,21 +1768,19 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
         {/* ── GIF tab ── */}
         {activeTab === 'gif' && (
           <>
-            <div className="px-3 pt-3 pb-2">
-              <SearchField name="gif-search" className="rounded-xl border-[var(--border)]/40 bg-[var(--background)]/50 text-sm">
-                <SearchField.Group>
-                  <SearchField.SearchIcon />
-                  <SearchField.Input
-                    placeholder="Rechercher un GIF..."
-                    value={gifSearch}
-                    onChange={(e) => setGifSearch(e.target.value)}
-                  />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
+            <div className="border-b border-white/8 px-3 py-3">
+              <div className="relative">
+                <SearchIcon size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/45" />
+                <Input
+                  placeholder="Rechercher un GIF..."
+                  value={gifSearch}
+                  onChange={(e) => setGifSearch(e.target.value)}
+                  className="h-10 rounded-xl border-white/10 bg-[#111214] pl-9 pr-3 text-[14px] text-white placeholder:text-white/35"
+                />
+              </div>
             </div>
 
-            <ScrollShadow className="h-[308px] sm:h-[343px]">
+            <ScrollArea className="h-52">
               {isLoadingGifs ? (
                 <div className="flex h-60 items-center justify-center">
                   <Spinner size="sm" />
@@ -1507,7 +1788,7 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
               ) : gifs.length === 0 ? (
                 <div className="flex h-60 flex-col items-center justify-center gap-2">
                   <span className="text-3xl">🎞️</span>
-                  <p className="text-[13px] text-[var(--muted)]/60">Aucun GIF trouvé</p>
+                  <p className="text-[13px] text-(--muted)/60">Aucun GIF trouvé</p>
                 </div>
               ) : (
                 <div className="columns-2 gap-1 px-2 pb-2">
@@ -1515,7 +1796,7 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
                     <button
                       key={gif.id}
                       type="button"
-                      className="mb-1 block w-full overflow-hidden rounded-lg transition-all duration-200 hover:opacity-80 hover:scale-[1.02]"
+                      className="mb-1 block w-full overflow-hidden rounded-xl border border-white/6 transition-all duration-200 hover:scale-[1.02] hover:opacity-90"
                       onClick={() => handleGifSelect(gif)}
                     >
                       <img
@@ -1534,21 +1815,21 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
                   )}
                 </div>
               )}
-            </ScrollShadow>
+            </ScrollArea>
 
-            <p className="py-1 text-center text-[10px] text-[var(--muted)]/50">Powered by Tenor</p>
+            <p className="border-t border-white/8 py-2 text-center text-[10px] text-white/35">Powered by Tenor</p>
           </>
         )}
 
         {/* ── Autocollants tab ── */}
         {activeTab === 'sticker' && (
-          <div className="flex h-[355px] sm:h-[393px] flex-col items-center justify-center gap-3">
+          <div className="flex h-67 flex-col items-center justify-center gap-3 text-white/75">
             <span className="text-4xl">🧩</span>
-            <p className="text-[13px] font-medium text-[var(--muted)]">Autocollants</p>
-            <p className="text-[11px] text-[var(--muted)]/60">Bientôt disponible</p>
+            <p className="text-[13px] font-medium">Autocollants</p>
+            <p className="text-[11px] text-white/45">Bientôt disponible</p>
           </div>
         )}
-      </Popover.Content>
+      </PopoverContent>
     </Popover>
   );
 }

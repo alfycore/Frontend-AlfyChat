@@ -18,17 +18,16 @@ import { useAuth } from '@/hooks/use-auth';
 import { socketService } from '@/lib/socket';
 import { sanitizeSvg } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Avatar,
-  Badge,
-  Button,
-  Chip,
-  InputGroup,
-  Popover,
-  Separator,
-  Skeleton,
-  Tooltip,
-} from '@heroui/react';
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider,
+} from '@/components/ui/tooltip';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -272,188 +271,164 @@ export function UserProfilePopover({
   const memberSince  = profile?.createdAt ? formatMemberSince(profile.createdAt) : null;
 
   // ── Render ────────────────────────────────────────────────────────────────
-  return (
-    <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Popover.Trigger>{children}</Popover.Trigger>
+  const STATUS_DOT: Record<string, string> = {
+    success: 'bg-green-500',
+    warning: 'bg-orange-500',
+    danger: 'bg-red-500',
+  };
 
-      <Popover.Content
-        placement="left"
-        shouldFlip
-        offset={8}
-        className="w-[320px] overflow-hidden rounded-2xl border border-(--border)/40 bg-background p-0 shadow-2xl"
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+
+      <PopoverContent
+        side="left"
+        sideOffset={8}
+        className="w-80 overflow-hidden rounded-xl border border-border/50 bg-card p-0 shadow-xl"
       >
         {loading || !profile ? (
-          /* ── Skeleton ── */
           <div className="flex flex-col">
-            <Skeleton className="h-24 w-full rounded-none" />
-            <div className="-mt-8 mb-2 px-4">
-              <Skeleton className="size-16 rounded-full ring-4 ring-background" />
+            <Skeleton className="h-20 w-full rounded-none" />
+            <div className="-mt-6 mb-1.5 px-3.5">
+              <Skeleton className="size-12 rounded-full ring-[3px] ring-card" />
             </div>
-            <div className="space-y-2 px-4 pb-4">
-              <Skeleton className="h-4 w-32 rounded-lg" />
-              <Skeleton className="h-3 w-20 rounded-lg" />
-              <Skeleton className="mt-3 h-3 w-full rounded-lg" />
-              <Skeleton className="h-3 w-3/4 rounded-lg" />
+            <div className="space-y-1.5 px-3.5 pb-4">
+              <Skeleton className="h-3.5 w-28" />
+              <Skeleton className="h-2.5 w-20" />
+              <Skeleton className="mt-2.5 h-2.5 w-full" />
+              <Skeleton className="h-2.5 w-3/4" />
             </div>
           </div>
         ) : (
           <div className="flex flex-col">
 
-            {/* ── Banner + avatar block ── */}
+            {/* ── Banner ── */}
             <div className="relative">
-              {/* Banner */}
-              <div className="h-24 w-full overflow-hidden">
-                {profile.bannerUrl
-                  ? <img src={resolveMediaUrl(profile.bannerUrl)} alt="" className="size-full object-cover" />
-                  : <div
-                      className="size-full"
-                      style={{ background: `linear-gradient(135deg, ${cardColor}dd 0%, ${cardColor}66 60%, ${cardColor}22 100%)` }}
-                    />
-                }
+              <div className="h-20 w-full overflow-hidden">
+                {profile.bannerUrl ? (
+                  <img src={resolveMediaUrl(profile.bannerUrl)} alt="" className="size-full object-cover" />
+                ) : (
+                  <div
+                    className="size-full"
+                    style={{ background: `linear-gradient(135deg, ${cardColor}cc 0%, ${cardColor}55 60%, ${cardColor}18 100%)` }}
+                  />
+                )}
               </div>
 
               {/* Avatar */}
-              <div className="absolute -bottom-7 left-4">
-                <Badge.Anchor>
-                  <Avatar className="size-14.5 ring-[3px] ring-background">
-                    <Avatar.Image src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} />
-                    <Avatar.Fallback
-                      className="text-xl font-bold"
-                      style={{ backgroundColor: cardColor + '30', color: cardColor }}
+              <div className="absolute -bottom-6 left-3.5">
+                <div className="relative">
+                  <Avatar className="size-12 ring-[3px] ring-card">
+                    <AvatarImage src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} />
+                    <AvatarFallback
+                      className="text-base font-bold"
+                      style={{ backgroundColor: cardColor + '25', color: cardColor }}
                     >
                       {(profile.displayName?.[0] ?? '?').toUpperCase()}
-                    </Avatar.Fallback>
+                    </AvatarFallback>
                   </Avatar>
                   {statusInfo.badge && (
-                    <Badge color={statusInfo.badge} placement="bottom-right" size="sm" />
+                    <span
+                      className={cn(
+                        'absolute -bottom-px -right-px size-3 rounded-full ring-2 ring-card',
+                        STATUS_DOT[statusInfo.badge] ?? 'bg-muted-foreground/40',
+                      )}
+                    />
                   )}
-                </Badge.Anchor>
+                </div>
               </div>
 
-              {/* Action buttons — top right */}
-              <div className="absolute right-2.5 top-2.5 flex gap-1">
+              {/* Top-right actions */}
+              <div className="absolute right-2 top-2 flex gap-1">
                 {isMe ? (
-                  <Tooltip delay={0}>
-                    <label className="flex size-7 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60">
-                      <PaletteIcon size={13} />
-                      <input type="color" className="sr-only" value={cardColor} onChange={(e) => handleColorChange(e.target.value)} />
-                    </label>
-                    <Tooltip.Content showArrow placement="left">
-                      <Tooltip.Arrow />
-                      <p className="text-xs">Couleur de la carte</p>
-                    </Tooltip.Content>
-                  </Tooltip>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <label className="flex size-6 cursor-pointer items-center justify-center rounded-md bg-black/30 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/50 hover:text-white">
+                          <PaletteIcon size={12} />
+                          <input type="color" className="sr-only" value={cardColor} onChange={(e) => handleColorChange(e.target.value)} />
+                        </label>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="text-[11px]">Couleur de la carte</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 ) : (
-                  <>
-                    {friendStatus === 'none' && (
-                      <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg bg-black/40 text-white backdrop-blur-sm hover:bg-black/60" onPress={handleAddFriend}>
-                          <UserPlusIcon size={13} />
-                        </Button>
-                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Ajouter en ami</p></Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {friendStatus === 'friend' && (
-                      <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg bg-black/40 text-green-400 backdrop-blur-sm" isDisabled>
-                          <UserCheckIcon size={13} />
-                        </Button>
-                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Ami</p></Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {friendStatus === 'pending_sent' && (
-                      <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg bg-black/40 text-yellow-400 backdrop-blur-sm" isDisabled>
-                          <CheckIcon size={13} />
-                        </Button>
-                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Demande envoyée</p></Tooltip.Content>
-                      </Tooltip>
-                    )}
-                    {friendStatus === 'pending_received' && (
-                      <Tooltip delay={0}>
-                        <Button isIconOnly size="sm" variant="secondary" className="size-7 rounded-lg bg-black/40 text-blue-400 backdrop-blur-sm hover:bg-black/60" onPress={handleAddFriend}>
-                          <UserPlusIcon size={13} />
-                        </Button>
-                        <Tooltip.Content showArrow placement="left"><Tooltip.Arrow /><p className="text-xs">Accepter la demande</p></Tooltip.Content>
-                      </Tooltip>
-                    )}
-                  </>
+                  <FriendActionButton
+                    status={friendStatus}
+                    onAdd={handleAddFriend}
+                  />
                 )}
               </div>
             </div>
 
             {/* ── Identity ── */}
-            <div className="mt-9 px-4 pb-1">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <h3 className="text-[15px] font-bold leading-tight">{profile.displayName}</h3>
+            <div className="mt-7 px-3.5 pb-0.5">
+              <div className="flex items-center gap-1.5">
+                <h3 className="truncate text-sm font-bold leading-tight text-foreground">{profile.displayName}</h3>
                 {profile.isBot && (
-                  <Chip
-                    size="sm"
-                    variant="soft"
-                    color={profile.isVerifiedBot ? 'accent' : 'default'}
-                    className="h-4.5 px-1.5 text-[9px] font-bold uppercase tracking-wide"
+                  <Badge
+                    variant={profile.isVerifiedBot ? 'default' : 'outline'}
+                    className="h-4 shrink-0 px-1 text-[8px] font-bold uppercase tracking-wider"
                   >
                     {profile.isVerifiedBot && (
-                      <svg className="mr-0.5 inline size-2" viewBox="0 0 16 16" fill="currentColor">
+                      <svg className="mr-0.5 inline size-1.5" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 0l2.5 3.5L14.5 2l-1.5 4L16 8l-3.5 2.5L14.5 14l-4-1.5L8 16l-2.5-3.5L1.5 14l1.5-4L0 8l3.5-2.5L1.5 2l4 1.5L8 0z" />
                       </svg>
                     )}
                     BOT
-                  </Chip>
+                  </Badge>
                 )}
               </div>
-              <p className="text-[12px] text-muted">
+              <p className="mt-0.5 text-[11px] text-muted-foreground/60">
                 @{profile.username}
-                <span className="mx-1 opacity-40">·</span>
-                <span className={statusInfo.text}>{statusInfo.label}</span>
+                <span className="mx-1.5 text-border">·</span>
+                <span className={cn('font-medium', statusInfo.text)}>{statusInfo.label}</span>
               </p>
             </div>
 
             {/* ── Badges ── */}
             {visibleBadges.length > 0 && (
-              <div className="px-4 pb-3 pt-2">
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-(--muted)/60">Badges</p>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="px-3.5 pb-2 pt-2.5">
+                <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40">Badges</p>
+                <div className="flex flex-wrap gap-1">
                   {visibleBadges.map((badge) => (
-                    <div
-                      key={badge.id}
-                      className="group relative flex items-center gap-1.5 rounded-xl px-2 py-1 transition-all hover:scale-[1.03]"
-                      style={{
-                        backgroundColor: badge.color + '18',
-                        border: `1px solid ${badge.color}35`,
-                      }}
-                    >
-                      {/* Icon */}
-                      <span className="flex size-4.5 shrink-0 items-center justify-center">
-                        <BadgeIcon badge={badge} />
-                      </span>
-                      {/* Name always visible */}
-                      <span className="text-[11px] font-semibold" style={{ color: badge.color }}>
-                        {badge.name}
-                      </span>
-                      {/* Date on hover */}
-                      <span className="pointer-events-none absolute -top-7 left-0 z-10 whitespace-nowrap rounded-lg bg-surface px-2 py-1 text-[10px] text-muted opacity-0 shadow-lg ring-1 ring-(--border)/30 transition-opacity group-hover:opacity-100">
-                        Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}
-                      </span>
-                    </div>
+                    <TooltipProvider key={badge.id}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:brightness-110"
+                            style={{ backgroundColor: badge.color + '15', border: `1px solid ${badge.color}25` }}
+                          >
+                            <span className="flex size-3.5 shrink-0 items-center justify-center">
+                              <BadgeIcon badge={badge} />
+                            </span>
+                            <span className="text-[10px] font-semibold" style={{ color: badge.color }}>
+                              {badge.name}
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-[10px]">
+                          Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* ── Divider ── */}
-            <div className="mx-4"><Separator /></div>
+            <Separator className="mx-3.5" />
 
             {/* ── Bio ── */}
             {profile.bio && (
-              <div className="px-4 py-2.5">
-                <p className={cn('whitespace-pre-wrap text-[12.5px] leading-relaxed text-(--foreground)/80', !showFullBio && 'line-clamp-3')}>
+              <div className="px-3.5 py-2.5">
+                <p className={cn('whitespace-pre-wrap text-[12px] leading-relaxed text-foreground/75', !showFullBio && 'line-clamp-3')}>
                   {profile.bio}
                 </p>
                 {profile.bio.length > 120 && (
                   <button
                     type="button"
-                    className="mt-1 text-[11px] font-medium text-(--accent) hover:underline"
+                    className="mt-0.5 text-[10px] font-medium text-primary hover:underline"
                     onClick={() => setShowFullBio(v => !v)}
                   >
                     {showFullBio ? 'Réduire' : 'Lire la suite'}
@@ -464,18 +439,16 @@ export function UserProfilePopover({
 
             {/* ── Interests ── */}
             {(profile.interests?.length ?? 0) > 0 && (
-              <div className="px-4 pb-2.5">
+              <div className="px-3.5 pb-2.5">
                 <div className="flex flex-wrap gap-1">
                   {profile.interests!.map((tag) => (
-                    <Chip
+                    <span
                       key={tag}
-                      size="sm"
-                      variant="soft"
-                      className="h-5 rounded-full text-[11px] font-medium"
-                      style={{ backgroundColor: cardColor + '18', color: cardColor, border: `1px solid ${cardColor}30` }}
+                      className="rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                      style={{ backgroundColor: cardColor + '12', color: cardColor, border: `1px solid ${cardColor}20` }}
                     >
                       {tag}
-                    </Chip>
+                    </span>
                   ))}
                 </div>
               </div>
@@ -483,26 +456,26 @@ export function UserProfilePopover({
 
             {/* ── Member since ── */}
             {memberSince && (
-              <div className="flex items-center gap-2 px-4 pb-2.5 text-[11.5px] text-muted">
-                <CalendarIcon size={12} className="shrink-0 opacity-60" />
+              <div className="flex items-center gap-2 px-3.5 pb-2.5 text-[11px] text-muted-foreground/50">
+                <CalendarIcon size={11} className="shrink-0" />
                 <span>Membre depuis</span>
-                <span className="ml-auto font-semibold text-(--foreground)/70">{memberSince}</span>
+                <span className="ml-auto font-medium text-foreground/60">{memberSince}</span>
               </div>
             )}
 
             {/* ── Server roles ── */}
             {serverId && serverRoles.length > 0 && canManageRoles && (
-              <div className="px-4 pb-2.5">
+              <div className="px-3.5 pb-2.5">
                 <button
                   type="button"
                   className="flex w-full items-center justify-between py-0.5"
                   onClick={() => setShowRoles(v => !v)}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-(--muted)/50">Rôles</p>
-                  <ShieldCheckIcon size={12} className={cn('text-muted transition-transform duration-200', showRoles && 'rotate-180')} />
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40">Rôles</p>
+                  <ShieldCheckIcon size={11} className={cn('text-muted-foreground/40 transition-transform duration-200', showRoles && 'rotate-180')} />
                 </button>
                 {showRoles && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-1.5 flex flex-wrap gap-1">
                     {serverRoles.map((role) => {
                       const active = memberRoleIds.includes(role.id);
                       return (
@@ -510,19 +483,19 @@ export function UserProfilePopover({
                           key={role.id}
                           type="button"
                           className={cn(
-                            'flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] transition-all',
-                            active ? 'opacity-100' : 'opacity-40 hover:opacity-70',
+                            'flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] transition-all',
+                            active ? 'opacity-100' : 'opacity-30 hover:opacity-60',
                           )}
                           style={{
-                            borderColor: role.color,
-                            backgroundColor: active ? role.color + '20' : 'transparent',
+                            borderColor: role.color + '40',
+                            backgroundColor: active ? role.color + '18' : 'transparent',
                             color: role.color,
                           }}
                           onClick={() => toggleRole(role.id)}
                         >
                           <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: role.color }} />
                           {role.name}
-                          {active && <CheckIcon size={10} />}
+                          {active && <CheckIcon size={9} />}
                         </button>
                       );
                     })}
@@ -531,72 +504,77 @@ export function UserProfilePopover({
               </div>
             )}
 
-            {/* ── Divider ── */}
-            <div className="mx-4"><Separator /></div>
+            <Separator className="mx-3.5" />
 
             {/* ── DM field ── */}
             {!isMe && (
-              <div className="px-4 pb-3 pt-2.5">
-                <InputGroup variant="secondary" className="h-9 rounded-xl">
-                  <InputGroup.Input
-                    placeholder={`Envoyer un message à @${profile.username}`}
-                    className="cursor-pointer text-[12px]"
-                    readOnly
-                    onClick={handleSendMessage}
-                    onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSendMessage(); }}
-                  />
-                  <div className="flex shrink-0 items-center pr-1">
-                    <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-lg text-muted" onPress={handleSendMessage}>
-                      <SmileIcon size={14} />
-                    </Button>
-                  </div>
-                </InputGroup>
+              <div className="px-3.5 pb-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={handleSendMessage}
+                  className="flex h-8 w-full items-center gap-2 rounded-lg border border-border/50 bg-muted/50 px-2.5 text-[11px] text-muted-foreground/50 transition-colors hover:border-primary/30 hover:bg-muted hover:text-muted-foreground"
+                >
+                  <MessageCircleIcon size={13} className="shrink-0" />
+                  <span className="truncate">Envoyer un message à @{profile.username}</span>
+                </button>
               </div>
             )}
 
             {/* ── Kick / Ban ── */}
             {!isMe && serverId && canKickBan && (
               <>
-                <div className="mx-4"><Separator /></div>
-                <div className="flex flex-col gap-2 px-4 pb-3 pt-2.5">
+                <Separator className="mx-3.5" />
+                <div className="flex flex-col gap-1.5 px-3.5 pb-2.5 pt-2">
                   {!confirmKick && !confirmBan && (
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl border-orange-400/30 text-[11px] text-orange-400 hover:bg-orange-500/10" onPress={() => setConfirmKick(true)}>
-                        <UserXIcon size={13} /> Expulser
+                    <div className="flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 flex-1 gap-1.5 rounded-lg text-[10px] font-medium text-orange-400 hover:bg-orange-500/10 hover:text-orange-500"
+                        onClick={() => setConfirmKick(true)}
+                      >
+                        <UserXIcon size={12} /> Expulser
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1 gap-1.5 rounded-xl border-red-400/30 text-[11px] text-red-400 hover:bg-red-500/10" onPress={() => setConfirmBan(true)}>
-                        <BanIcon size={13} /> Bannir
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 flex-1 gap-1.5 rounded-lg text-[10px] font-medium text-red-400 hover:bg-red-500/10 hover:text-red-500"
+                        onClick={() => setConfirmBan(true)}
+                      >
+                        <BanIcon size={12} /> Bannir
                       </Button>
                     </div>
                   )}
 
                   {confirmKick && (
-                    <div className="space-y-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-2.5">
-                      <p className="text-[11px] text-orange-300">Expulser <span className="font-semibold">{profile.displayName}</span> du serveur ?</p>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost" className="flex-1 rounded-xl text-[11px]" onPress={() => setConfirmKick(false)}>Annuler</Button>
-                        <Button size="sm" className="flex-1 gap-1 rounded-xl bg-orange-600 text-[11px] hover:bg-orange-500" onPress={handleKick}>
-                          <UserXIcon size={11} /> Confirmer
+                    <div className="space-y-1.5 rounded-lg border border-orange-500/15 bg-orange-500/5 p-2">
+                      <p className="text-[10px] text-orange-400/80">
+                        Expulser <span className="font-semibold text-orange-400">{profile.displayName}</span> du serveur ?
+                      </p>
+                      <div className="flex gap-1.5">
+                        <Button size="sm" variant="ghost" className="h-6 flex-1 rounded-md text-[10px]" onClick={() => setConfirmKick(false)}>Annuler</Button>
+                        <Button size="sm" className="h-6 flex-1 gap-1 rounded-md bg-orange-600 text-[10px] hover:bg-orange-500" onClick={handleKick}>
+                          <UserXIcon size={10} /> Confirmer
                         </Button>
                       </div>
                     </div>
                   )}
 
                   {confirmBan && (
-                    <div className="space-y-2 rounded-xl border border-red-500/20 bg-red-500/5 p-2.5">
-                      <p className="text-[11px] text-red-300">Bannir <span className="font-semibold">{profile.displayName}</span> définitivement ?</p>
-                      <InputGroup variant="secondary" className="h-7 rounded-xl border-(--border)/50">
-                        <InputGroup.Input
-                          placeholder="Raison (optionnel)"
-                          value={banReason}
-                          onChange={(e) => setBanReason(e.target.value)}
-                          className="text-[11px]"
-                        />
-                      </InputGroup>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost" className="flex-1 rounded-xl text-[11px]" onPress={() => { setConfirmBan(false); setBanReason(''); }}>Annuler</Button>
-                        <Button size="sm" className="flex-1 gap-1 rounded-xl bg-red-600 text-[11px] hover:bg-red-500" onPress={handleBan}>
-                          <BanIcon size={11} /> Confirmer
+                    <div className="space-y-1.5 rounded-lg border border-red-500/15 bg-red-500/5 p-2">
+                      <p className="text-[10px] text-red-400/80">
+                        Bannir <span className="font-semibold text-red-400">{profile.displayName}</span> définitivement ?
+                      </p>
+                      <Input
+                        placeholder="Raison (optionnel)"
+                        value={banReason}
+                        onChange={(e) => setBanReason(e.target.value)}
+                        className="h-6 rounded-md border-border/40 bg-muted/50 text-[10px]"
+                      />
+                      <div className="flex gap-1.5">
+                        <Button size="sm" variant="ghost" className="h-6 flex-1 rounded-md text-[10px]" onClick={() => { setConfirmBan(false); setBanReason(''); }}>Annuler</Button>
+                        <Button size="sm" className="h-6 flex-1 gap-1 rounded-md bg-red-600 text-[10px] hover:bg-red-500" onClick={handleBan}>
+                          <BanIcon size={10} /> Confirmer
                         </Button>
                       </div>
                     </div>
@@ -605,10 +583,42 @@ export function UserProfilePopover({
               </>
             )}
 
-            <div className="h-1.5" />
+            <div className="h-1" />
           </div>
         )}
-      </Popover.Content>
+      </PopoverContent>
     </Popover>
+  );
+}
+
+/* ── Friend action button (banner overlay) ─────────────────────────────────── */
+
+function FriendActionButton({ status, onAdd }: { status: FriendStatus; onAdd: () => void }) {
+  const config: Record<FriendStatus, { icon: typeof UserPlusIcon; label: string; color: string; disabled: boolean }> = {
+    none:             { icon: UserPlusIcon,  label: 'Ajouter en ami',     color: 'text-white/80 hover:text-white', disabled: false },
+    friend:           { icon: UserCheckIcon, label: 'Ami',                color: 'text-green-400',                 disabled: true },
+    pending_sent:     { icon: CheckIcon,     label: 'Demande envoyée',   color: 'text-yellow-400',                disabled: true },
+    pending_received: { icon: UserPlusIcon,  label: 'Accepter la demande', color: 'text-blue-400 hover:text-blue-300', disabled: false },
+  };
+  const c = config[status];
+  const Icon = c.icon;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="icon-sm"
+            variant="secondary"
+            className={cn('size-6 rounded-md bg-black/30 backdrop-blur-sm hover:bg-black/50', c.color)}
+            disabled={c.disabled}
+            onClick={onAdd}
+          >
+            <Icon size={12} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left" className="text-[11px]">{c.label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

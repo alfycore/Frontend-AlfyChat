@@ -1,7 +1,6 @@
 'use client';
 
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
-import { Toast } from '@heroui/react';
 import {
   createContext,
   useCallback,

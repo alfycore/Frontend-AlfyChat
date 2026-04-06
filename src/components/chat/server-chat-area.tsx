@@ -15,7 +15,11 @@ import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useUIStyle } from '@/hooks/use-ui-style';
-import { Button, Chip, ScrollShadow, Separator, Skeleton } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import {
   MessageItem,
@@ -107,9 +111,9 @@ function DateSeparator({ date }: { date: string }) {
   return (
     <div className="relative mx-4 my-5 flex select-none items-center">
       <Separator className="flex-1 opacity-30" />
-      <Chip variant="soft" size="sm" className={`mx-3 shrink-0 text-[11px] font-medium text-muted ${ui.chip}`}>
-        <Chip.Label>{date}</Chip.Label>
-      </Chip>
+      <Badge variant="secondary" className={`mx-3 shrink-0 text-[11px] font-medium text-muted-foreground ${ui.chip}`}>
+        {date}
+      </Badge>
       <Separator className="flex-1 opacity-30" />
     </div>
   );
@@ -147,11 +151,11 @@ function LoadingSkeleton() {
       {widths.map((w, i) => (
         <div key={i} className={cn('flex gap-3', i % 3 !== 0 && 'pl-11')}>
           {i % 3 === 0 && (
-            <Skeleton className="size-10 shrink-0 rounded-full border border-white/10 bg-white/5" animationType="shimmer" />
+            <Skeleton className="size-10 shrink-0 rounded-full border border-white/10 bg-white/5" />
           )}
           <div className="flex-1 space-y-2">
-            {i % 3 === 0 && <Skeleton className="h-3 w-24 rounded-xl border border-white/10 bg-white/5" animationType="shimmer" />}
-            <Skeleton className="h-4 rounded-xl border border-white/10 bg-white/5" animationType="shimmer" style={{ width: `${w}%` }} />
+            {i % 3 === 0 && <Skeleton className="h-3 w-24 rounded-xl border border-white/10 bg-white/5" />}
+            <Skeleton className="h-4 rounded-xl border border-white/10 bg-white/5" style={{ width: `${w}%` }} />
           </div>
         </div>
       ))}
@@ -191,6 +195,20 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
     }
   }, []);
 
+  /* Normalise sender from any backend format */
+  const normalizeSender = useCallback((m: any): MessageSender | undefined => {
+    if (m.sender && (m.sender.username || m.sender.displayName)) return m.sender;
+    const id = m.senderId || m.sender_id || '';
+    const username = m.senderUsername || m.senderName || m.sender_username || '';
+    if (!id && !username) return undefined;
+    return {
+      id,
+      username: username || 'Utilisateur',
+      displayName: m.senderDisplayName || m.senderName || m.sender_display_name || username || undefined,
+      avatarUrl: m.senderAvatar || m.senderAvatarUrl || m.sender_avatar_url || undefined,
+    };
+  }, []);
+
   /* Load messages on channel change */
   useEffect(() => {
     setMessages([]);
@@ -203,6 +221,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         const msgs = (res.messages as any[]).map((m: any) => ({
           ...m,
           authorId: m.authorId || m.senderId || m.sender_id,
+          sender: normalizeSender(m),
           reactions: m.reactions || [],
           isSystem: m.isSystem || m.is_system || false,
         })) as MessageData[];
@@ -238,7 +257,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         id: msg.id,
         content: msg.content,
         authorId: msg.senderId || msg.sender_id,
-        sender: msg.sender ?? undefined,
+        sender: normalizeSender(msg),
         createdAt: msg.createdAt || msg.created_at || new Date().toISOString(),
         updatedAt: msg.updatedAt || msg.updated_at,
         reactions: msg.reactions || [],
@@ -458,9 +477,9 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
       {/* ── Header ── */}
       <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
         {isMobile && (
-          <Button isIconOnly size="sm" variant="ghost"
-            className="size-8 shrink-0 rounded-xl text-[var(--muted)]"
-            onPress={toggleSidebar}
+          <Button size="icon-sm" variant="ghost"
+            className="size-8 shrink-0 rounded-xl text-muted-foreground"
+            onClick={toggleSidebar}
           >
             <MenuIcon size={16} />
           </Button>
@@ -470,17 +489,17 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         </div>
         <h2 className="truncate text-[14px] font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
         <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Chip variant="soft" size="sm" className="hidden rounded-xl border border-white/15 bg-white/20 text-[10px] font-medium text-[var(--muted)] dark:border-white/10 dark:bg-white/8 md:flex">
-            <Chip.Label>{meta.label}</Chip.Label>
-          </Chip>
+          <Badge variant="secondary" className="hidden rounded-xl border border-white/15 bg-white/20 text-[10px] font-medium text-muted-foreground dark:border-white/10 dark:bg-white/8 md:flex">
+            {meta.label}
+          </Badge>
           <Button
-            isIconOnly size="sm" variant="ghost"
+            size="icon-sm" variant="ghost"
             className={`size-8 rounded-xl transition-colors ${
               !isMobile && memberListDesktopVisible
                 ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
-            onPress={isMobile ? toggleMemberList : toggleMemberListDesktop}
+            onClick={isMobile ? toggleMemberList : toggleMemberListDesktop}
           >
             <UsersIcon size={16} />
           </Button>
@@ -488,7 +507,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
       </div>
 
       {/* ── Messages ── */}
-      <ScrollShadow className="min-h-0 flex-1 overflow-y-auto" ref={scrollRef} onScroll={handleScroll}>
+      <ScrollArea className="min-h-0 flex-1" ref={scrollRef} onScroll={handleScroll}>
         <div ref={messagesContainerRef}>
           {isLoading ? (
             <LoadingSkeleton />
@@ -550,7 +569,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             </div>
           )}
         </div>
-      </ScrollShadow>
+      </ScrollArea>
 
       {/* ── Typing indicator ── */}
       <div className="h-5 shrink-0">
@@ -572,10 +591,9 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             </span>
             <Button
               variant="ghost"
-              isIconOnly
-              size="sm"
-              className="size-5 min-w-0 rounded p-0 text-[var(--muted)]"
-              onPress={() => setReplyId(null)}
+              size="icon-sm"
+              className="size-5 min-w-0 rounded p-0 text-muted-foreground"
+              onClick={() => setReplyId(null)}
             >
               <XIcon size={12} />
             </Button>
@@ -620,7 +638,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
           {/* Emoji */}
           <div className="self-end pb-0.5">
             <EmojiPicker onSelect={(emoji) => setMessageInput((prev) => prev + emoji)}>
-              <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-xl text-[var(--muted)]">
+              <Button size="icon-sm" variant="ghost" className="size-8 rounded-xl text-muted-foreground">
                 <SmileIcon size={16} />
               </Button>
             </EmojiPicker>
@@ -629,16 +647,15 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
           {/* Send */}
           <div className="self-end pb-0.5">
             <Button
-              isIconOnly
-              size="sm"
+              size="icon-sm"
               className={cn(
                 'size-8 rounded-xl transition-all',
                 messageInput.trim()
                   ? 'bg-[var(--accent)] text-[var(--accent-foreground)]'
-                  : 'bg-[var(--surface-secondary)] text-[var(--muted)] opacity-50',
+                  : 'bg-[var(--surface-secondary)] text-muted-foreground opacity-50',
               )}
-              onPress={handleSend}
-              isDisabled={!messageInput.trim()}
+              onClick={handleSend}
+              disabled={!messageInput.trim()}
             >
               <SendIcon size={16} />
             </Button>

@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
-import { Avatar, Badge, ScrollShadow, Skeleton } from '@heroui/react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { cn } from '@/lib/utils';
 
@@ -51,19 +53,17 @@ function MemberRow({ member, serverId, roles }: { member: Member; serverId: stri
         'flex w-full items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-150 hover:bg-[var(--surface-secondary)]/40',
         !isOnline && 'opacity-35',
       )}>
-        <Badge.Anchor>
-          <Avatar size="sm" className="size-7 shadow-sm">
-            <Avatar.Image src={resolveMediaUrl(member.avatarUrl)} />
-            <Avatar.Fallback className="bg-gradient-to-br from-violet-500/80 to-indigo-600/80 text-[10px] font-semibold text-white">
+        <div className="relative">
+          <Avatar className="size-7 shadow-sm">
+            <AvatarImage src={resolveMediaUrl(member.avatarUrl)} />
+            <AvatarFallback className="bg-gradient-to-br from-violet-500/80 to-indigo-600/80 text-[10px] font-semibold text-white">
               {name[0]?.toUpperCase() || '?'}
-            </Avatar.Fallback>
+            </AvatarFallback>
           </Avatar>
-          <Badge
-            size="sm"
-            placement="bottom-right"
-            className={cn('size-2.5 min-w-0 border-[1.5px] border-[var(--background)] p-0', dotClass)}
+          <span
+            className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-[1.5px] border-[var(--background)]', dotClass)}
           />
-        </Badge.Anchor>
+        </div>
         <span
           className="truncate text-[12px] font-medium leading-tight"
           style={topRoleColor && topRoleColor !== '#99AAB5' ? { color: topRoleColor } : undefined}
@@ -212,8 +212,8 @@ export function MemberList({ serverId }: MemberListProps) {
         <div className="space-y-1.5 p-3 pt-4">
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2 px-2">
-              <Skeleton className="size-7 shrink-0 rounded-full" animationType="shimmer" />
-              <Skeleton className="h-3 rounded" animationType="shimmer" style={{ width: `${40 + (i % 4) * 12}%` }} />
+              <Skeleton className="size-7 shrink-0 rounded-full" />
+              <Skeleton className="h-3 rounded" style={{ width: `${40 + (i % 4) * 12}%` }} />
             </div>
           ))}
         </div>
@@ -242,7 +242,7 @@ export function MemberList({ serverId }: MemberListProps) {
 
   return (
     <div className="flex h-full w-full flex-col bg-[var(--surface)]/60">
-      <ScrollShadow className="flex-1">
+      <ScrollArea className="flex-1">
         <div className="p-2 pt-3">
           {/* Role-based sections */}
           {roleSections.map(({ role, members: roleMembers }) => (
@@ -310,7 +310,7 @@ export function MemberList({ serverId }: MemberListProps) {
             </div>
           )}
         </div>
-      </ScrollShadow>
+      </ScrollArea>
     </div>
   );
 }

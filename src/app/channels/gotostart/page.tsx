@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Button, Card } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import {
   MessageCircleIcon,
   UsersIcon,
@@ -172,7 +172,7 @@ export default function GotoStartPage() {
               <Button
                 size="lg"
                 className="w-full rounded-2xl bg-[var(--accent)] px-10 font-semibold text-white shadow-[0_8px_30px_color-mix(in_oklch,var(--accent)_40%,transparent)] transition-opacity hover:opacity-90 sm:w-auto"
-                onPress={() => router.push('/channels/me')}
+                onClick={() => router.push('/channels/me')}
               >
                 Commencer →
               </Button>
@@ -180,7 +180,7 @@ export default function GotoStartPage() {
                 size="lg"
                 variant="outline"
                 className="w-full rounded-2xl px-10 font-semibold sm:w-auto"
-                onPress={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Découvrir les fonctionnalités
               </Button>
@@ -241,9 +241,9 @@ export default function GotoStartPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {FEATURES.map((feat, i) => (
-                <Card
+                <div
                   key={feat.title}
-                  className="group border border-[var(--border)] bg-[var(--surface)] p-0 transition-all hover:-translate-y-1 hover:border-[var(--accent)]/30 hover:shadow-xl"
+                  className="group border border-[var(--border)] bg-[var(--surface)] p-0 rounded-xl transition-all hover:-translate-y-1 hover:border-[var(--accent)]/30 hover:shadow-xl"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
                   <div className="p-6">
@@ -253,7 +253,7 @@ export default function GotoStartPage() {
                     <h3 className="mb-2 font-semibold text-[var(--foreground)]">{feat.title}</h3>
                     <p className="text-sm leading-relaxed text-[var(--muted)]">{feat.desc}</p>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           </div>
@@ -278,7 +278,7 @@ export default function GotoStartPage() {
                 </ul>
               </div>
 
-              <Card className="overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0 shadow-2xl">
+              <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] p-0 shadow-2xl">
                 <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 py-3">
                   <span className="text-[var(--muted)]">#</span>
                   <span className="text-sm font-semibold text-[var(--foreground)]">général</span>
@@ -309,7 +309,7 @@ export default function GotoStartPage() {
                     <SmileIcon size={16} className="text-[var(--muted)]" />
                   </div>
                 </div>
-              </Card>
+              </div>
             </div>
           </div>
         </section>
@@ -318,7 +318,7 @@ export default function GotoStartPage() {
         <section className="px-6 py-24">
           <div className="mx-auto max-w-5xl">
             <div className="grid gap-14 lg:grid-cols-2 lg:items-center">
-              <Card className="order-last overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0 shadow-2xl lg:order-first">
+              <div className="order-last overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] p-0 shadow-2xl lg:order-first">
                 <div className="border-b border-[var(--border)] px-4 py-3">
                   <div className="flex items-center gap-2 rounded-lg bg-[var(--background)] px-3 py-2">
                     <SearchIcon size={14} className="text-[var(--muted)]" />
@@ -344,7 +344,7 @@ export default function GotoStartPage() {
                     </div>
                   ))}
                 </div>
-              </Card>
+              </div>
 
               <div>
                 <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-[var(--accent)]">Serveurs</p>
@@ -383,7 +383,7 @@ export default function GotoStartPage() {
                 </ul>
               </div>
 
-              <Card className="overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0 shadow-2xl">
+              <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] p-0 shadow-2xl">
                 <div className="border-b border-[var(--border)] px-4 py-3">
                   <p className="text-sm font-semibold text-[var(--foreground)]">
                     Amis en ligne — {FAKE_FRIENDS.filter((f) => f.status !== 'offline').length}
@@ -411,7 +411,7 @@ export default function GotoStartPage() {
                     </div>
                   ))}
                 </div>
-              </Card>
+              </div>
             </div>
           </div>
         </section>
@@ -436,7 +436,7 @@ export default function GotoStartPage() {
             <Button
               size="lg"
               className="rounded-2xl bg-[var(--accent)] px-10 font-semibold text-white shadow-[0_8px_30px_color-mix(in_oklch,var(--accent)_40%,transparent)] hover:opacity-90"
-              onPress={() => router.push('/channels/me')}
+              onClick={() => router.push('/channels/me')}
             >
               Ouvrir AlfyChat →
             </Button>

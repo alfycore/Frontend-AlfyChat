@@ -26,7 +26,9 @@ import {
   AlertTriangleIcon,
   UserPlusIcon,
 } from '@/components/icons';
-import { Accordion, Card, Chip, ScrollShadow, Separator } from '@heroui/react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useLang, LANGS, type Lang } from '../lang-context';
 
@@ -54,12 +56,10 @@ function PageHeader({
         <div className="flex items-center gap-2.5">
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
           {badge && (
-            <Chip size="sm" color="success" variant="soft">
-              <Chip.Label className="text-[10px] font-bold">{badge}</Chip.Label>
-            </Chip>
+            <Badge variant="secondary" className="text-[10px] font-bold px-1.5 py-0">{badge}</Badge>
           )}
         </div>
-        <p className="mt-1 text-sm text-muted">{description}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
     </div>
   );
@@ -108,24 +108,24 @@ function CodeBlock({ code, lang = 'js', title }: { code: string; lang?: string; 
     <div className="overflow-hidden rounded-xl border border-border/60">
       {title && (
         <div className="flex items-center justify-between border-b border-border/60 bg-surface/80 px-4 py-2">
-          <span className="font-mono text-[11px] text-muted">{title}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">{title}</span>
           <div className="flex items-center gap-2">
-            <span className="rounded bg-surface px-1.5 py-0.5 font-mono text-[9px] text-muted/60">{lang}</span>
+            <span className="rounded bg-surface px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground/60">{lang}</span>
             <button
               onClick={copy}
               aria-label="Copier"
               className="flex size-6 items-center justify-center rounded hover:bg-surface"
             >
-              {copied ? <CheckIcon size={12} className="text-green-400" /> : <CopyIcon size={12} className="text-muted" />}
+              {copied ? <CheckIcon size={12} className="text-green-400" /> : <CopyIcon size={12} className="text-muted-foreground" />}
             </button>
           </div>
         </div>
       )}
-      <ScrollShadow orientation="horizontal">
+      <div className="overflow-auto">
         <pre className="bg-[#0d1117] p-4 text-[12px] leading-relaxed">
           <code className="whitespace-pre font-mono text-gray-300">{code}</code>
         </pre>
-      </ScrollShadow>
+      </div>
     </div>
   );
 }
@@ -168,7 +168,7 @@ function EndpointRow({ method, path, desc }: { method: 'GET' | 'POST' | 'PATCH' 
       <HttpBadge method={method} />
       <div>
         <code className="text-xs font-semibold text-foreground">{path}</code>
-        <p className="mt-0.5 text-[11px] text-muted">{desc}</p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">{desc}</p>
       </div>
     </div>
   );
@@ -1223,7 +1223,7 @@ function IntroductionSection() {
       </div>
 
       <Card className="border border-border/60 bg-surface/40">
-        <Card.Content className="p-5">
+        <CardContent className="p-5">
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="flex size-8 items-center justify-center rounded-lg bg-accent/10">
@@ -1247,7 +1247,7 @@ function IntroductionSection() {
               <code className="font-mono text-sm font-bold">application/json</code>
             </div>
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
 
       <div className="space-y-2">
@@ -1497,13 +1497,12 @@ function EndpointsSection() {
 
       <div className="space-y-4">
         <SectionTitle>Exemples CRUD</SectionTitle>
-        <Accordion>
-          <Accordion.Item id="create">
-            <Accordion.Heading>
-              <Accordion.Trigger>Créer un bot — POST /api/bots</Accordion.Trigger>
-            </Accordion.Heading>
-            <Accordion.Panel>
-              <Accordion.Body className="space-y-3">
+        <div className="divide-y divide-border/40 rounded-xl border border-border/60">
+          <details className="group">
+            <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium select-none hover:bg-surface/40">
+              Créer un bot — POST /api/bots
+            </summary>
+            <div className="space-y-3 px-4 pb-4 pt-2">
                 <MultiCodeBlock
                   title="Requête"
                   examples={{
@@ -1514,15 +1513,13 @@ function EndpointsSection() {
                   }}
                 />
                 <CodeBlock lang="json" title="Réponse (201)" code={`{\n  "success": true,\n  "bot": {\n    "id": "uuid...",\n    "name": "MonBot",\n    "token": "abc123...",  // ⚠️ UNE seule fois\n    "prefix": "!",\n    "status": "offline",\n    "isPublic": false\n  }\n}`} />
-              </Accordion.Body>
-            </Accordion.Panel>
-          </Accordion.Item>
-          <Accordion.Item id="update">
-            <Accordion.Heading>
-              <Accordion.Trigger>Modifier un bot — PATCH /api/bots/:id</Accordion.Trigger>
-            </Accordion.Heading>
-            <Accordion.Panel>
-              <Accordion.Body>
+            </div>
+          </details>
+          <details className="group">
+            <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium select-none hover:bg-surface/40">
+              Modifier un bot — PATCH /api/bots/:id
+            </summary>
+            <div className="px-4 pb-4 pt-2">
                 <MultiCodeBlock
                   title="Requête"
                   examples={{
@@ -1532,10 +1529,9 @@ function EndpointsSection() {
                     java: `JSONObject body = new JSONObject()\n    .put("name", "NouveauNom")\n    .put("isPublic", true)\n    .put("tags", new JSONArray(List.of("Modération", "Fun")));\n\nHttpRequest req = HttpRequest.newBuilder()\n    .uri(URI.create(BASE + "/api/bots/" + botId))\n    .header("Authorization", "Bot " + TOKEN)\n    .header("Content-Type", "application/json")\n    .method("PATCH", HttpRequest.BodyPublishers.ofString(body.toString()))\n    .build();\nHTTP.send(req, HttpResponse.BodyHandlers.ofString());`,
                   }}
                 />
-              </Accordion.Body>
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
+            </div>
+          </details>
+        </div>
       </div>
     </div>
   );
@@ -1637,10 +1633,10 @@ function CertificationSection() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="border border-border/60 bg-surface/40">
-          <Card.Header>
-            <Card.Title className="text-sm">Critères requis</Card.Title>
-          </Card.Header>
-          <Card.Content>
+          <CardHeader>
+            <CardTitle className="text-sm">Critères requis</CardTitle>
+          </CardHeader>
+          <CardContent>
             <ul className="space-y-1.5 text-[12px] text-muted">
               {['Bot fonctionnel et stable','Description claire','Politique de confidentialité','Contenu conforme aux CGU','Au moins 1 serveur actif','Commandes documentées'].map((c) => (
                 <li key={c} className="flex items-center gap-2">
@@ -1649,13 +1645,13 @@ function CertificationSection() {
                 </li>
               ))}
             </ul>
-          </Card.Content>
+          </CardContent>
         </Card>
         <Card className="border border-accent-soft-hover bg-accent/5">
-          <Card.Header>
-            <Card.Title className="text-sm text-accent">Avantages</Card.Title>
-          </Card.Header>
-          <Card.Content>
+          <CardHeader>
+            <CardTitle className="text-sm text-accent">Avantages</CardTitle>
+          </CardHeader>
+          <CardContent>
             <ul className="space-y-1.5 text-[12px] text-muted">
               {['Badge ✓ visible partout','Priorité dans la recherche','Badge "Verified Dev" sur votre profil','Fonctionnalités avancées','Support prioritaire'].map((a) => (
                 <li key={a} className="flex items-center gap-2">
@@ -1664,7 +1660,7 @@ function CertificationSection() {
                 </li>
               ))}
             </ul>
-          </Card.Content>
+          </CardContent>
         </Card>
       </div>
 
@@ -1725,9 +1721,7 @@ function ErrorsSection() {
           ].map((r, i) => (
             <div key={r.route} className={cn('flex items-center justify-between px-4 py-2.5', i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20')}>
               <code className="font-mono text-xs">{r.route}</code>
-              <Chip size="sm" variant="soft" color="warning">
-                <Chip.Label className="text-[10px]">{r.limit}</Chip.Label>
-              </Chip>
+              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-400">{r.limit}</span>
             </div>
           ))}
         </div>
@@ -1934,7 +1928,7 @@ function GatewayRestSection() {
       />
 
       <Card className="border border-border/60 bg-surface/40">
-        <Card.Content className="p-5">
+        <CardContent className="p-5">
           <div className="flex flex-wrap items-center gap-6">
             <div>
               <p className="text-[11px] font-semibold text-muted mb-1">Base URL</p>
@@ -1956,7 +1950,7 @@ function GatewayRestSection() {
               <code className="font-mono text-sm font-bold">Authorization: Bot &lt;token&gt;</code>
             </div>
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
 
       <div>
@@ -2045,7 +2039,7 @@ const { token, refreshToken, user } = await res.json();`} />
 const { token, refreshToken } = await res.json();`} />
         </div>
         <InfoCard color="amber" title="Durée de vie des tokens">
-          Le <strong>JWT</strong> expire après <strong>15 minutes</strong>. Le <strong>refreshToken</strong> est valable <strong>30 jours</strong>.
+          Le <strong>JWT</strong> expire après <strong>15 minutes</strong>. Le <strong>refreshToken</strong> est valable <strong>1 an (365 jours)</strong>.
           Appelez <code>/api/auth/refresh</code> avant l&apos;expiration du JWT pour éviter de déconnecter l&apos;utilisateur.
         </InfoCard>
       </div>
@@ -2588,7 +2582,7 @@ function GatewayWebSocketSection() {
       />
 
       <Card className="border border-border/60 bg-surface/40">
-        <Card.Content className="p-5">
+        <CardContent className="p-5">
           <div className="flex flex-wrap items-center gap-6">
             <div>
               <p className="text-[11px] font-semibold text-muted mb-1">URL WebSocket</p>
@@ -2605,7 +2599,7 @@ function GatewayWebSocketSection() {
               <code className="font-mono text-sm font-bold">/</code>
             </div>
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
 
       {/* Connexion */}
@@ -2786,7 +2780,7 @@ function GatewayOverviewSection() {
       />
 
       <Card className="border border-border/60 bg-surface/40">
-        <Card.Content className="p-5">
+        <CardContent className="p-5">
           <div className="flex flex-wrap items-center gap-6">
             <div>
               <p className="text-[11px] font-semibold text-muted mb-1">Base URL</p>
@@ -2808,7 +2802,7 @@ function GatewayOverviewSection() {
               <code className="font-mono text-sm font-bold">application/json</code>
             </div>
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
 
       <div className="space-y-2">
@@ -2865,15 +2859,15 @@ function GatewayAuthSection() {
 
       <div className="space-y-2">
         <SectionTitle>Connexion utilisateur</SectionTitle>
-        <EndpointRow method="POST" path="/api/auth/login" desc="Retourne un JWT (7j) et un refresh token (30j)" />
+        <EndpointRow method="POST" path="/api/auth/login" desc="Retourne un JWT (15 min) et un refresh token (1 an)" />
         <MultiCodeBlock title="POST /api/auth/login" examples={EX.gatewayLogin} />
       </div>
 
       <div className="space-y-2">
         <SectionTitle>Réponse</SectionTitle>
         <CodeBlock lang="json" title="200 OK" code={`{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",  // JWT, 7 jours
-  "refreshToken": "a1b2c3d4e5f6...",                     // 30 jours
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",  // JWT, 15 minutes
+  "refreshToken": "a1b2c3d4e5f6...",                     // 1 an (365 jours)
   "user": {
     "id":         "u1a2b3c4-...",
     "username":   "Alice",

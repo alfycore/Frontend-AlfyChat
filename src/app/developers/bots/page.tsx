@@ -20,7 +20,12 @@ import {
 } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { api, resolveMediaUrl } from '@/lib/api';
-import { Button, Card, Modal, Switch, Tooltip, Input, TextArea, Chip } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 /* ── Types ─────────────────────────────────────────────── */
@@ -241,9 +246,9 @@ export default function BotsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Mes Bots</h1>
-            <p className="text-sm text-[var(--muted)]">Gerez vos bots, tokens et commandes</p>
+            <p className="text-sm text-muted-foreground">Gerez vos bots, tokens et commandes</p>
           </div>
-          <Button onPress={openCreate} className="bg-[var(--accent)] text-white">
+          <Button onClick={openCreate} className="bg-accent text-white">
             <PlusIcon size={16} />
             Creer un bot
           </Button>
@@ -253,17 +258,17 @@ export default function BotsPage() {
         {loading ? (
           <div className="grid gap-4 md:grid-cols-2">
             {[1, 2].map(i => (
-              <div key={i} className="h-48 animate-pulse rounded-2xl bg-[var(--surface)]" />
+              <div key={i} className="h-48 animate-pulse rounded-2xl bg-surface" />
             ))}
           </div>
         ) : bots.length === 0 ? (
-          <Card className="rounded-2xl border border-dashed border-[var(--border)]/60 bg-white/40 p-12 text-center dark:bg-white/[0.03]">
-            <BotIcon size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+          <Card className="rounded-2xl border border-dashed border-border/60 bg-card/50">
+            <BotIcon size={48} className="mx-auto mb-4 text-muted-foreground" />
             <h3 className="mb-2 text-lg font-semibold">Aucun bot</h3>
-            <p className="mb-6 text-sm text-[var(--muted)]">
+            <p className="mb-6 text-sm text-muted-foreground">
               Creez votre premier bot pour commencer a developper sur AlfyChat
             </p>
-            <Button className="mx-auto bg-[var(--accent)] text-white" onPress={openCreate}>
+            <Button className="mx-auto bg-accent text-white" onClick={openCreate}>
               <PlusIcon size={16} />
               Creer mon premier bot
             </Button>
@@ -274,7 +279,7 @@ export default function BotsPage() {
               const st = statusConfig[bot.status];
               const cert = certifConfig[bot.certificationStatus] || certifConfig.none;
               return (
-                <Card key={bot.id} className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white/60 p-0 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
+                <Card key={bot.id} className="overflow-hidden rounded-2xl border border-black/6 bg-card">
                   {/* Bot header */}
                   <div className="flex items-start gap-3 p-4 pb-0">
                     <div
@@ -284,33 +289,33 @@ export default function BotsPage() {
                       {bot.avatarUrl ? (
                         <img src={resolveMediaUrl(bot.avatarUrl)} alt={bot.name} className="size-12 rounded-full object-cover" />
                       ) : (
-                        <span className="text-lg font-bold text-[var(--accent)]">{bot.name[0]?.toUpperCase()}</span>
+                        <span className="text-lg font-bold text-accent">{bot.name[0]?.toUpperCase()}</span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="truncate text-base font-bold">{bot.name}</h3>
                         {bot.isVerified && (
-                          <Chip size="sm" className="bg-blue-500/15 text-blue-400 border border-blue-500/30 text-[9px] h-5">
+                          <Badge className="bg-blue-500/15 text-blue-400 border border-blue-500/30 text-[9px] h-5 px-1.5">
                             VERIFIE
-                          </Chip>
+                          </Badge>
                         )}
-                        <Chip size="sm" className="bg-[var(--muted)]/10 text-[var(--muted)] text-[9px] h-5">
+                        <Badge className="bg-(--muted)/10 text-muted-foreground text-[9px] h-5 px-1.5">
                           BOT
-                        </Chip>
+                        </Badge>
                       </div>
                       <div className="mt-0.5 flex items-center gap-2">
                         <span className={cn('flex items-center gap-1 text-xs', st.text)}>
                           <span className={cn('size-1.5 rounded-full', st.color)} />
                           {st.label}
                         </span>
-                        <span className="text-[10px] text-[var(--muted)]">&bull;</span>
-                        <span className="text-xs text-[var(--muted)]">{bot.serverCount} serveur{bot.serverCount !== 1 ? 's' : ''}</span>
-                        <span className="text-[10px] text-[var(--muted)]">&bull;</span>
-                        <span className="text-xs text-[var(--muted)]">Prefixe: {bot.prefix}</span>
+                        <span className="text-[10px] text-muted-foreground">&bull;</span>
+                        <span className="text-xs text-muted-foreground">{bot.serverCount} serveur{bot.serverCount !== 1 ? 's' : ''}</span>
+                        <span className="text-[10px] text-muted-foreground">&bull;</span>
+                        <span className="text-xs text-muted-foreground">Prefixe: {bot.prefix}</span>
                       </div>
                       {bot.description && (
-                        <p className="mt-1.5 line-clamp-2 text-xs text-[var(--muted)]">{bot.description}</p>
+                        <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground">{bot.description}</p>
                       )}
                     </div>
                   </div>
@@ -319,91 +324,100 @@ export default function BotsPage() {
                   {bot.tags && bot.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 px-4 pt-2">
                       {bot.tags.map(tag => (
-                        <Chip key={tag} size="sm" className="bg-[var(--accent)]/10 text-[var(--accent)] text-[10px] h-5">
+                        <Badge key={tag} className="bg-accent/10 text-accent text-[10px] h-5 px-1.5">
                           {tag}
-                        </Chip>
+                        </Badge>
                       ))}
                     </div>
                   )}
 
                   {/* Certification status */}
-                  <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl bg-[var(--background)]/50 px-3 py-2">
+                  <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl bg-background/50 px-3 py-2">
                     <cert.icon size={14} className={cert.color} />
                     <span className={cn('text-xs font-medium', cert.color)}>{cert.label}</span>
                     {bot.certificationNote && (
-                      <span className="ml-auto text-[10px] text-[var(--muted)] italic">{bot.certificationNote}</span>
+                      <span className="ml-auto text-[10px] text-muted-foreground italic">{bot.certificationNote}</span>
                     )}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1.5 border-t border-[var(--border)]/60 p-3 mt-3">
-                    <Tooltip delay={0}>
-                      <Button size="sm" variant="ghost" isIconOnly onPress={() => openEdit(bot)}>
-                        <Edit2Icon size={14} />
-                      </Button>
-                      <Tooltip.Content>Modifier</Tooltip.Content>
+                  <div className="flex items-center gap-1.5 border-t border-border/60 p-3 mt-3">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(bot)}>
+                          <Edit2Icon size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Modifier</TooltipContent>
                     </Tooltip>
-                    <Tooltip delay={0}>
-                      <Button size="sm" variant="ghost" isIconOnly onPress={() => openToken(bot)}>
-                        <KeyIcon size={14} />
-                      </Button>
-                      <Tooltip.Content>Token</Tooltip.Content>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openToken(bot)}>
+                          <KeyIcon size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Token</TooltipContent>
                     </Tooltip>
-                    <Tooltip delay={0}>
-                      <Button
-                        size="sm" variant="ghost" isIconOnly
-                        onPress={() => { setCmdBot(bot); setCmdForm({ name: '', description: '', usage: '', cooldown: 0 }); setShowCmdModal(true); }}
-                      >
-                        <TerminalIcon size={14} />
-                      </Button>
-                      <Tooltip.Content>Commandes</Tooltip.Content>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon" variant="ghost" className="h-8 w-8"
+                          onClick={() => { setCmdBot(bot); setCmdForm({ name: '', description: '', usage: '', cooldown: 0 }); setShowCmdModal(true); }}
+                        >
+                          <TerminalIcon size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Commandes</TooltipContent>
                     </Tooltip>
                     {(bot.certificationStatus === 'none' || bot.certificationStatus === 'rejected') && (
-                      <Tooltip delay={0}>
-                        <Button
-                          size="sm" variant="ghost" isIconOnly
-                          onPress={() => { setCertifBot(bot); setCertifReason(''); setShowCertifModal(true); }}
-                        >
-                          <ShieldCheckIcon size={14} className="text-blue-400" />
-                        </Button>
-                        <Tooltip.Content>Demander la certification</Tooltip.Content>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="icon" variant="ghost" className="h-8 w-8"
+                            onClick={() => { setCertifBot(bot); setCertifReason(''); setShowCertifModal(true); }}
+                          >
+                            <ShieldCheckIcon size={14} className="text-blue-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Demander la certification</TooltipContent>
                       </Tooltip>
                     )}
                     <div className="flex-1" />
-                    <Tooltip delay={0}>
-                      <Button
-                        size="sm" variant="ghost" isIconOnly
-                        className="text-red-400 hover:bg-red-500/10"
-                        onPress={() => setConfirmDelete(bot.id)}
-                      >
-                        <Trash2Icon size={14} />
-                      </Button>
-                      <Tooltip.Content>Supprimer</Tooltip.Content>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:bg-red-500/10"
+                          onClick={() => setConfirmDelete(bot.id)}
+                        >
+                          <Trash2Icon size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Supprimer</TooltipContent>
                     </Tooltip>
                   </div>
 
                   {/* Commands list */}
                   {bot.commands && bot.commands.length > 0 && (
-                    <div className="border-t border-[var(--border)]/60 px-4 py-3">
-                      <p className="mb-2 text-xs font-semibold text-[var(--muted)]">Commandes ({bot.commands.length})</p>
+                    <div className="border-t border-border/60 px-4 py-3">
+                      <p className="mb-2 text-xs font-semibold text-muted-foreground">Commandes ({bot.commands.length})</p>
                       <div className="space-y-1">
                         {bot.commands.slice(0, 5).map(cmd => (
-                          <div key={cmd.id} className="flex items-center justify-between rounded-xl bg-[var(--background)]/50 px-2.5 py-1.5">
+                          <div key={cmd.id} className="flex items-center justify-between rounded-xl bg-background/50 px-2.5 py-1.5">
                             <div>
-                              <span className="text-xs font-mono font-semibold text-[var(--accent)]">{bot.prefix}{cmd.name}</span>
-                              <span className="ml-2 text-[10px] text-[var(--muted)]">{cmd.description}</span>
+                              <span className="text-xs font-mono font-semibold text-accent">{bot.prefix}{cmd.name}</span>
+                              <span className="ml-2 text-[10px] text-muted-foreground">{cmd.description}</span>
                             </div>
                             <Button
-                              size="sm" variant="ghost" isIconOnly
-                              className="text-red-400 size-6 min-w-0"
-                              onPress={() => handleDeleteCommand(bot.id, cmd.id)}
+                              size="icon" variant="ghost"
+                              className="text-red-400 h-6 w-6"
+                              onClick={() => handleDeleteCommand(bot.id, cmd.id)}
                             >
                               <XIcon size={12} />
                             </Button>
                           </div>
                         ))}
                         {bot.commands.length > 5 && (
-                          <p className="text-[10px] text-[var(--muted)] text-center">+{bot.commands.length - 5} commandes supplementaires</p>
+                          <p className="text-[10px] text-muted-foreground text-center">+{bot.commands.length - 5} commandes supplementaires</p>
                         )}
                       </div>
                     </div>
@@ -418,43 +432,40 @@ export default function BotsPage() {
       {/* ══════════════ MODALS ══════════════ */}
 
       {/* ── Create/Edit Bot Modal ── */}
-      <Modal.Backdrop isOpen={showBotModal} onOpenChange={setShowBotModal}>
-        <Modal.Container>
-        <Modal.Dialog className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
-          <Modal.Header>
-            <Modal.Heading>{editingBot ? 'Modifier le bot' : 'Creer un nouveau bot'}</Modal.Heading>
-          </Modal.Header>
-          <Modal.Body className="space-y-4">
+      <Dialog open={showBotModal} onOpenChange={setShowBotModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingBot ? 'Modifier le bot' : 'Creer un nouveau bot'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Nom du bot *</label>
+              <label className="mb-1 block text-xs font-semibold text-muted-foreground">Nom du bot *</label>
               <input
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 value={botForm.name} onChange={e => setBotForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="MonSuperBot" maxLength={32}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Description</label>
+              <label className="mb-1 block text-xs font-semibold text-muted-foreground">Description</label>
               <textarea
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] resize-none focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground resize-none focus:border-accent focus:outline-none"
                 value={botForm.description} onChange={e => setBotForm(f => ({ ...f, description: e.target.value }))}
                 placeholder="Un bot qui fait des trucs geniaux..." maxLength={500} rows={3}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Prefixe</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Prefixe</label>
                 <input
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   value={botForm.prefix} onChange={e => setBotForm(f => ({ ...f, prefix: e.target.value }))}
                   placeholder="!" maxLength={5}
                 />
               </div>
               <div className="flex items-end">
-                <label className="flex items-center gap-2 text-sm text-[var(--foreground)]">
-                  <Switch isSelected={botForm.isPublic} onChange={(v: boolean) => setBotForm(f => ({ ...f, isPublic: v }))}>
-                    <Switch.Control><Switch.Thumb /></Switch.Control>
-                  </Switch>
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <Switch checked={botForm.isPublic} onCheckedChange={(v: boolean) => setBotForm(f => ({ ...f, isPublic: v }))} />
                   Bot public
                 </label>
               </div>
@@ -462,7 +473,7 @@ export default function BotsPage() {
 
             {/* Tags */}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-[var(--muted)]">Tags (max 5)</label>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Tags (max 5)</label>
               <div className="flex flex-wrap gap-1.5">
                 {AVAILABLE_TAGS.map(tag => (
                   <button
@@ -470,8 +481,8 @@ export default function BotsPage() {
                     className={cn(
                       'rounded-full px-2.5 py-1 text-[11px] font-medium transition-all border',
                       botForm.tags.includes(tag)
-                        ? 'bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/30'
-                        : 'bg-[var(--background)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--accent)]/30'
+                        ? 'bg-accent/15 text-accent border-accent/30'
+                        : 'bg-background text-muted-foreground border-border hover:border-accent/30'
                     )}
                     onClick={() => toggleTag(tag)}
                   >
@@ -484,49 +495,47 @@ export default function BotsPage() {
             {/* URLs */}
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Site web</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Site web</label>
                 <input
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   value={botForm.websiteUrl} onChange={e => setBotForm(f => ({ ...f, websiteUrl: e.target.value }))}
                   placeholder="https://monbot.fr"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Serveur support</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Serveur support</label>
                 <input
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   value={botForm.supportServerUrl} onChange={e => setBotForm(f => ({ ...f, supportServerUrl: e.target.value }))}
                   placeholder="https://alfychat.app/invite/abc123"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Politique de confidentialite</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Politique de confidentialite</label>
                 <input
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   value={botForm.privacyPolicyUrl} onChange={e => setBotForm(f => ({ ...f, privacyPolicyUrl: e.target.value }))}
                   placeholder="https://monbot.fr/privacy"
                 />
               </div>
             </div>
-          </Modal.Body>
-          <Modal.Footer className="gap-2">
-            <Button variant="outline" onPress={() => setShowBotModal(false)}>Annuler</Button>
-            <Button className="bg-[var(--accent)] text-white" onPress={handleSaveBot} isDisabled={!botForm.name.trim()}>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowBotModal(false)}>Annuler</Button>
+            <Button className="bg-accent text-white" onClick={handleSaveBot} disabled={!botForm.name.trim()}>
               {editingBot ? 'Enregistrer' : 'Creer le bot'}
             </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Token Modal ── */}
-      <Modal.Backdrop isOpen={showTokenModal} onOpenChange={setShowTokenModal}>
-        <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
-          <Modal.Header>
-            <Modal.Heading>Token du bot</Modal.Heading>
-          </Modal.Header>
-          <Modal.Body className="space-y-4">
+      <Dialog open={showTokenModal} onOpenChange={setShowTokenModal}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Token du bot</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3">
               <p className="text-xs text-red-400 font-semibold">Ne partagez jamais votre token !</p>
               <p className="text-[10px] text-red-400/70 mt-0.5">
@@ -535,40 +544,38 @@ export default function BotsPage() {
             </div>
             {tokenBot && (
               <div className="space-y-3">
-                <label className="block text-xs font-semibold text-[var(--muted)]">Token</label>
+                <label className="block text-xs font-semibold text-muted-foreground">Token</label>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 rounded-xl bg-[var(--background)] border border-[var(--border)] px-3 py-2 font-mono text-xs break-all text-[var(--foreground)]">
+                  <div className="flex-1 rounded-xl bg-background border border-border px-3 py-2 font-mono text-xs break-all text-foreground">
                     {showToken ? tokenBot.token : '\u2022'.repeat(48)}
                   </div>
-                  <Button size="sm" variant="ghost" isIconOnly onPress={() => setShowToken(!showToken)}>
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowToken(!showToken)}>
                     {showToken ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
                   </Button>
-                  <Button size="sm" variant="ghost" isIconOnly onPress={copyToken}>
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={copyToken}>
                     {copiedToken ? <CheckCircle2Icon size={14} className="text-green-400" /> : <CopyIcon size={14} />}
                   </Button>
                 </div>
               </div>
             )}
-          </Modal.Body>
-          <Modal.Footer className="gap-2">
-            <Button variant="outline" onPress={() => setShowTokenModal(false)}>Fermer</Button>
-            <Button variant="danger" onPress={handleRegenToken}>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowTokenModal(false)}>Fermer</Button>
+            <Button variant="destructive" onClick={handleRegenToken}>
               <RefreshCwIcon size={14} />
               Regenerer
             </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Certification Modal ── */}
-      <Modal.Backdrop isOpen={showCertifModal} onOpenChange={setShowCertifModal}>
-        <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
-          <Modal.Header>
-            <Modal.Heading>Demande de certification</Modal.Heading>
-          </Modal.Header>
-          <Modal.Body className="space-y-4">
+      <Dialog open={showCertifModal} onOpenChange={setShowCertifModal}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Demande de certification</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 space-y-1">
               <p className="text-xs text-blue-400 font-semibold">Certification {certifBot?.name}</p>
               <p className="text-[10px] text-blue-400/70">
@@ -577,111 +584,106 @@ export default function BotsPage() {
               </p>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">
+              <label className="mb-1 block text-xs font-semibold text-muted-foreground">
                 Pourquoi votre bot devrait etre certifie ? *
               </label>
               <textarea
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] resize-none focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground resize-none focus:border-accent focus:outline-none"
                 value={certifReason} onChange={e => setCertifReason(e.target.value)}
                 placeholder="Expliquez le but de votre bot, le nombre de serveurs, les fonctionnalites uniques..."
                 rows={5} maxLength={1000}
               />
-              <p className="mt-1 text-right text-[10px] text-[var(--muted)]">{certifReason.length}/1000</p>
+              <p className="mt-1 text-right text-[10px] text-muted-foreground">{certifReason.length}/1000</p>
             </div>
-          </Modal.Body>
-          <Modal.Footer className="gap-2">
-            <Button variant="outline" onPress={() => setShowCertifModal(false)}>Annuler</Button>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCertifModal(false)}>Annuler</Button>
             <Button
               className="bg-blue-500 text-white"
-              onPress={handleRequestCertification}
-              isDisabled={certifReason.length < 10}
+              onClick={handleRequestCertification}
+              disabled={certifReason.length < 10}
             >
               <ShieldCheckIcon size={14} />
               Envoyer la demande
             </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Command Modal ── */}
-      <Modal.Backdrop isOpen={showCmdModal} onOpenChange={setShowCmdModal}>
-        <Modal.Container>
-        <Modal.Dialog className="max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
-          <Modal.Header>
-            <Modal.Heading>Ajouter une commande &mdash; {cmdBot?.name}</Modal.Heading>
-          </Modal.Header>
-          <Modal.Body className="space-y-4">
+      <Dialog open={showCmdModal} onOpenChange={setShowCmdModal}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Ajouter une commande &mdash; {cmdBot?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Nom de la commande *</label>
+              <label className="mb-1 block text-xs font-semibold text-muted-foreground">Nom de la commande *</label>
               <input
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 value={cmdForm.name} onChange={e => setCmdForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="help" maxLength={32}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Description *</label>
+              <label className="mb-1 block text-xs font-semibold text-muted-foreground">Description *</label>
               <input
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 value={cmdForm.description} onChange={e => setCmdForm(f => ({ ...f, description: e.target.value }))}
                 placeholder="Affiche la liste des commandes" maxLength={200}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Usage</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Usage</label>
                 <input
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   value={cmdForm.usage} onChange={e => setCmdForm(f => ({ ...f, usage: e.target.value }))}
                   placeholder="!help [commande]" maxLength={200}
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Cooldown (sec)</label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Cooldown (sec)</label>
                 <input
                   type="number" min={0}
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   value={cmdForm.cooldown} onChange={e => setCmdForm(f => ({ ...f, cooldown: parseInt(e.target.value) || 0 }))}
                 />
               </div>
             </div>
-          </Modal.Body>
-          <Modal.Footer className="gap-2">
-            <Button variant="outline" onPress={() => setShowCmdModal(false)}>Annuler</Button>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCmdModal(false)}>Annuler</Button>
             <Button
-              className="bg-[var(--accent)] text-white"
-              onPress={handleCreateCommand}
-              isDisabled={!cmdForm.name.trim() || !cmdForm.description.trim()}
+              className="bg-accent text-white"
+              onClick={handleCreateCommand}
+              disabled={!cmdForm.name.trim() || !cmdForm.description.trim()}
             >
               Ajouter la commande
             </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Delete Confirmation ── */}
-      <Modal.Backdrop isOpen={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
-        <Modal.Container>
-        <Modal.Dialog className="max-w-sm rounded-2xl border border-black/[0.08] bg-white/80 shadow-2xl dark:border-white/[0.08] dark:bg-[var(--surface)]/90">
-          <Modal.Header>
-            <Modal.Heading>Confirmer la suppression</Modal.Heading>
-          </Modal.Header>
-          <Modal.Body>
-            <p className="text-sm text-[var(--muted)]">
+      <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+          </DialogHeader>
+          <div>
+            <p className="text-sm text-muted-foreground">
               Cette action est irreversible. Le bot sera supprime de tous les serveurs et toutes les donnees associees seront perdues.
             </p>
-          </Modal.Body>
-          <Modal.Footer className="gap-2">
-            <Button variant="outline" onPress={() => setConfirmDelete(null)}>Annuler</Button>
-            <Button variant="danger" onPress={() => confirmDelete && handleDeleteBot(confirmDelete)}>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmDelete(null)}>Annuler</Button>
+            <Button variant="destructive" onClick={() => confirmDelete && handleDeleteBot(confirmDelete)}>
               Supprimer definitivement
             </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

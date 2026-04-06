@@ -2,7 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { MegaphoneIcon, PlusIcon, XIcon, SendIcon, SmileIcon, PencilIcon, Trash2Icon } from '@/components/icons';
-import { Button, ScrollShadow, Skeleton, TextArea } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 import { Twemoji } from '@/lib/twemoji';
@@ -84,7 +87,7 @@ function ReactionBar({
             key={r.emoji}
             size="sm"
             variant="ghost"
-            onPress={() => onToggle(r.emoji)}
+            onClick={() => onToggle(r.emoji)}
             className={cn(
               'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-all h-auto',
               hasReacted
@@ -100,10 +103,9 @@ function ReactionBar({
       {/* Bouton ajout emoji */}
       <EmojiPicker onSelect={onAdd}>
         <Button
-          isIconOnly
-          size="sm"
+          size="icon-sm"
           variant="ghost"
-          className="size-7 rounded-full border border-dashed border-[var(--border)]/40 text-[var(--muted)] hover:border-amber-400/40 hover:text-amber-400"
+          className="size-7 rounded-full border border-dashed border-[var(--border)]/40 text-muted-foreground hover:border-amber-400/40 hover:text-amber-400"
         >
           <SmileIcon size={13} />
         </Button>
@@ -177,11 +179,10 @@ function AnnouncementCard({
         {/* Actions (delete) */}
         {isAuthor && showActions && (
           <Button
-            isIconOnly
-            size="sm"
+            size="icon-sm"
             variant="ghost"
-            onPress={() => onDelete(post.id)}
-            className="size-7 rounded-xl text-[var(--muted)] hover:bg-red-500/10 hover:text-red-400"
+            onClick={() => onDelete(post.id)}
+            className="size-7 rounded-xl text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
           >
             <Trash2Icon size={14} />
           </Button>
@@ -244,7 +245,7 @@ function NewAnnouncementModal({
             <p className="text-sm font-semibold text-[var(--foreground)]">Nouvelle annonce</p>
             <p className="text-[11px] text-[var(--muted)]">#{channelName || 'annonces'}</p>
           </div>
-          <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-xl text-[var(--muted)]" onPress={onClose}>
+          <Button size="icon-sm" variant="ghost" className="size-8 rounded-xl text-muted-foreground" onClick={onClose}>
             <XIcon size={15} />
           </Button>
         </div>
@@ -252,28 +253,27 @@ function NewAnnouncementModal({
         {/* Body */}
         <div className="p-5">
           <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">CONTENU <span className="opacity-50">(Markdown supporté)</span></label>
-          <TextArea
+          <Textarea
             autoFocus
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={"Rédigez votre annonce…\n\nVous pouvez utiliser **gras**, *italique*, # titres, etc."}
             rows={7}
-            fullWidth
-            className="resize-none"
+            className="w-full resize-none"
           />
           <p className="mt-1 text-right text-[10px] text-[var(--muted)]">{content.length} caractères</p>
         </div>
 
         {/* Footer */}
         <div className="flex justify-end gap-2 border-t border-[var(--border)]/30 px-5 py-3">
-          <Button size="sm" variant="ghost" className="rounded-xl text-[var(--muted)]" onPress={onClose}>
+          <Button size="sm" variant="ghost" className="rounded-xl text-muted-foreground" onClick={onClose}>
             Annuler
           </Button>
           <Button
             size="sm"
             className="rounded-xl bg-amber-500 text-white hover:bg-amber-600"
-            onPress={handleSubmit}
-            isDisabled={!content.trim()}
+            onClick={handleSubmit}
+            disabled={!content.trim()}
           >
             <SendIcon size={13} />
             Publier
@@ -459,7 +459,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
           <Button
             size="sm"
             className="gap-1.5 rounded-xl bg-amber-500 text-white hover:bg-amber-600"
-            onPress={() => setShowModal(true)}
+            onClick={() => setShowModal(true)}
           >
             <PlusIcon size={14} />
             Publier
@@ -468,21 +468,21 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
       </div>
 
       {/* ── Content ── */}
-      <ScrollShadow className="min-h-0 flex-1 overflow-y-auto">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="mx-auto max-w-2xl space-y-4 p-5">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/60 p-5 space-y-3">
                 <div className="flex items-center gap-2.5">
-                  <Skeleton className="size-9 rounded-full" animationType="shimmer" />
+                  <Skeleton className="size-9 rounded-full" />
                   <div className="space-y-1.5">
-                    <Skeleton className="h-3 w-28 rounded" animationType="shimmer" />
-                    <Skeleton className="h-2 w-16 rounded" animationType="shimmer" />
+                    <Skeleton className="h-3 w-28 rounded" />
+                    <Skeleton className="h-2 w-16 rounded" />
                   </div>
                 </div>
-                <Skeleton className="h-4 w-full rounded" animationType="shimmer" />
-                <Skeleton className="h-4 w-3/4 rounded" animationType="shimmer" />
-                <Skeleton className="h-4 w-1/2 rounded" animationType="shimmer" />
+                <Skeleton className="h-4 w-full rounded" />
+                <Skeleton className="h-4 w-3/4 rounded" />
+                <Skeleton className="h-4 w-1/2 rounded" />
               </div>
             ))
           ) : posts.length === 0 ? (
@@ -495,7 +495,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
               <p className="mb-5 text-sm text-[var(--muted)]">Publiez la première annonce dans #{channelName || 'annonces'}</p>
               <Button
                 className="gap-1.5 rounded-xl bg-amber-500 text-white hover:bg-amber-600"
-                onPress={() => setShowModal(true)}
+                onClick={() => setShowModal(true)}
               >
                 <PlusIcon size={15} />
                 Publier une annonce
@@ -514,7 +514,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
             ))
           )}
         </div>
-      </ScrollShadow>
+      </ScrollArea>
 
       {/* ── Modal ── */}
       {showModal && (

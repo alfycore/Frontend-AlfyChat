@@ -2,16 +2,21 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  MessageCircleIcon, ShieldIcon, LockIcon, ZapIcon,
-  EyeIcon, EyeOffIcon, MailIcon, KeyRoundIcon,
-} from '@/components/icons';
+import Link from 'next/link';
+import { ShieldIcon, EyeIcon, EyeOffIcon, MailIcon } from '@/components/icons';
+import { Loader2 } from 'lucide-react';
+import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  Alert, Button, Card, Form, TextField, Label, InputGroup,
-  Link, Separator, Spinner, InputOTP,
-} from '@heroui/react';
+  InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot,
+} from '@/components/ui/input-otp';
+import {
+  Field, FieldGroup, FieldLabel, FieldDescription, FieldSeparator,
+} from '@/components/ui/field';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -82,7 +87,7 @@ export default function LoginPage() {
     setError('');
 
     if (turnstileEnabled && !turnstileToken) {
-      setError('Veuillez completer le captcha');
+      setError('Veuillez compléter le captcha');
       return;
     }
 
@@ -151,186 +156,190 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[var(--background)] p-4">
-      <div className="w-full max-w-[900px]">
-        <Card className="overflow-hidden border border-[var(--border)] bg-[var(--surface)] p-0 shadow-xl">
-          <div className="grid md:grid-cols-[1fr_340px]">
-            {/* ── Formulaire ── */}
-            <div className="p-8 md:p-10">
+    <div className="grid min-h-svh lg:grid-cols-2">
+      {/* ── Colonne formulaire ── */}
+      <div className="flex flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center gap-2 md:justify-start">
+          <Link href="/" className="flex items-center gap-2 font-(family-name:--font-krona) font-medium">
+            <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-6" />
+            ALFYCHAT
+          </Link>
+        </div>
 
-              {/* ────── Étape email non vérifié ────── */}
-              {emailNotVerifiedStep ? (
-                <>
-                  <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
-                    <div className="flex size-11 items-center justify-center rounded-xl bg-amber-500/10">
-                      <MailIcon size={22} className="text-amber-400" />
-                    </div>
-                    <div className="text-center md:text-left">
-                      <h1 className="text-2xl font-bold text-[var(--foreground)]">Email non vérifié</h1>
-                      <p className="mt-1 text-sm text-[var(--muted)]">
-                        Vous devez vérifier votre adresse email avant de vous connecter.
-                        Consultez votre boite mail et cliquez sur le lien d&apos;activation.
-                      </p>
-                    </div>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-xs">
+
+            {/* ────── Étape email non vérifié ────── */}
+            {emailNotVerifiedStep ? (
+              <div className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="flex size-10 items-center justify-center rounded-full bg-amber-500/10">
+                    <MailIcon size={20} className="text-amber-400" />
                   </div>
+                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">Email non vérifié</h1>
+                  <p className="font-(family-name:--font-geist-sans) text-sm text-balance text-muted-foreground">
+                    Vous devez vérifier votre adresse email avant de vous connecter.
+                    Consultez votre boîte mail et cliquez sur le lien d&apos;activation.
+                  </p>
+                </div>
 
-                  <div className="flex flex-col gap-4">
-                    {resendSuccess && (
-                      <Alert status="success">
-                        <Alert.Indicator />
-                        <Alert.Content>
-                          <Alert.Title>Email renvoyé ! Vérifiez votre boite mail.</Alert.Title>
-                        </Alert.Content>
-                      </Alert>
-                    )}
+                <FieldGroup>
+                  {resendSuccess && (
+                    <div className="font-(family-name:--font-geist-sans) rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+                      Email renvoyé ! Vérifiez votre boîte mail.
+                    </div>
+                  )}
 
+                  <Field>
                     <Button
-                      fullWidth
-                      isPending={resendLoading}
-                      onPress={handleResendVerification}
-                      isDisabled={resendSuccess}
+                      className="w-full"
+                      disabled={resendLoading || resendSuccess}
+                      onClick={handleResendVerification}
                     >
-                      {({ isPending }) => (
-                        <>
-                          {isPending ? <Spinner size="sm" color="current" /> : null}
-                          {isPending ? 'Envoi...' : resendSuccess ? 'Email envoyé ✓' : 'Renvoyer l\'email de vérification'}
-                        </>
-                      )}
+                      {resendLoading && <Loader2 className="size-4 animate-spin" />}
+                      {resendLoading ? 'Envoi...' : resendSuccess ? 'Email envoyé ✓' : 'Renvoyer l\'email de vérification'}
                     </Button>
-
+                  </Field>
+                  <Field>
                     <Button
                       variant="ghost"
-                      fullWidth
-                      onPress={() => { setEmailNotVerifiedStep(false); setResendSuccess(false); setError(''); }}
+                      className="w-full"
+                      onClick={() => { setEmailNotVerifiedStep(false); setResendSuccess(false); setError(''); }}
                     >
                       Retour
                     </Button>
-                  </div>
-                </>
-              ) : twoFactorStep ? (
-                <>
-                  <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
-                    <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)]">
-                      <ShieldIcon size={22} className="text-[var(--accent-foreground)]" />
-                    </div>
-                    <div className="text-center md:text-left">
-                      <h1 className="text-2xl font-bold text-[var(--foreground)]">Vérification 2FA</h1>
-                      <p className="mt-1 text-sm text-[var(--muted)]">
-                        Entrez le code de votre application d&apos;authentification
-                      </p>
-                    </div>
-                  </div>
-
-                  <Form onSubmit={handle2FASubmit} className="flex flex-col gap-5">
-                    {error && (
-                      <Alert status="danger">
-                        <Alert.Indicator />
-                        <Alert.Content>
-                          <Alert.Title>{error}</Alert.Title>
-                        </Alert.Content>
-                      </Alert>
-                    )}
-
-                    <div className="flex flex-col items-center gap-4">
-                      <InputOTP maxLength={6} value={totpCode} onChange={setTotpCode} autoFocus>
-                        <InputOTP.Group>
-                          <InputOTP.Slot index={0} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
-                          <InputOTP.Slot index={1} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
-                          <InputOTP.Slot index={2} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
-                        </InputOTP.Group>
-                        <InputOTP.Separator />
-                        <InputOTP.Group>
-                          <InputOTP.Slot index={3} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
-                          <InputOTP.Slot index={4} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
-                          <InputOTP.Slot index={5} className="bg-[var(--surface-secondary)] border-[var(--border)]" />
-                        </InputOTP.Group>
-                      </InputOTP>
-                      <p className="text-xs text-[var(--muted)]">
-                        Code de sauvegarde ? Entrez vos 8 caractères dans le champ ci-dessus.
-                      </p>
-                    </div>
-
-                    <div className="mt-1 flex flex-col gap-3">
-                      <Button type="submit" fullWidth isPending={isLoading} isDisabled={totpCode.length < 6}>
-                        {({ isPending }) => (
-                          <>
-                            {isPending ? <Spinner size="sm" color="current" /> : null}
-                            {isPending ? 'Vérification...' : 'Vérifier'}
-                          </>
-                        )}
-                      </Button>
-                      <Button variant="ghost" fullWidth onPress={() => { setTwoFactorStep(false); setError(''); setTotpCode(''); }}>
-                        Retour
-                      </Button>
-                    </div>
-                  </Form>
-                </>
-              ) : (
-                <>
-              {/* En-tete */}
-              <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)]">
-                  <MessageCircleIcon size={22} className="text-[var(--accent-foreground)]" />
-                </div>
-                <div className="text-center md:text-left">
-                  <h1 className="text-2xl font-bold text-[var(--foreground)]">Bon retour !</h1>
-                  <p className="mt-1 text-sm text-[var(--muted)]">
-                    Connectez-vous a votre compte AlfyChat
-                  </p>
-                </div>
+                  </Field>
+                </FieldGroup>
               </div>
 
-              <Form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                {error && (
-                  <Alert status="danger">
-                    <Alert.Indicator />
-                    <Alert.Content>
-                      <Alert.Title>{error}</Alert.Title>
-                    </Alert.Content>
-                  </Alert>
-                )}
+            ) : twoFactorStep ? (
+              /* ────── Étape 2FA ────── */
+              <div className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+                    <ShieldIcon size={20} className="text-primary" />
+                  </div>
+                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">Vérification 2FA</h1>
+                  <p className="text-sm text-balance text-muted-foreground">
+                    Entrez le code de votre application d&apos;authentification
+                  </p>
+                </div>
 
-                <div className="flex flex-col gap-5">
-                  {/* Email */}
-                  <TextField fullWidth name="email" isRequired value={email} onChange={setEmail}>
-                    <Label>Adresse email</Label>
-                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
-                      <InputGroup.Prefix>
-                        <MailIcon size={16} className="text-[var(--muted)]" />
-                      </InputGroup.Prefix>
-                      <InputGroup.Input type="email" placeholder="votre@email.com" />
-                    </InputGroup>
-                  </TextField>
+                <form onSubmit={handle2FASubmit}>
+                  <FieldGroup>
+                    {error && (
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                        {error}
+                      </div>
+                    )}
 
-                  {/* Mot de passe */}
-                  <TextField fullWidth name="password" isRequired value={password} onChange={setPassword}>
-                    <div className="flex w-full items-center justify-between">
-                      <Label>Mot de passe</Label>
-                      <Link href="/forgot-password" className="text-xs font-medium text-[var(--accent)]">
-                        Oublie ?
+                    <Field>
+                      <FieldLabel>Code à 6 chiffres</FieldLabel>
+                      <div className="flex justify-center py-2">
+                        <InputOTP
+                          maxLength={6}
+                          pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+                          value={totpCode}
+                          onChange={(val) => setTotpCode(val)}
+                          autoFocus
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                          </InputOTPGroup>
+                          <InputOTPSeparator />
+                          <InputOTPGroup>
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+                      <p className="text-center text-xs text-muted-foreground">
+                        Code de sauvegarde ? Entrez vos 8 caractères ci-dessus.
+                      </p>
+                    </Field>
+
+                    <Field>
+                      <Button type="submit" className="w-full" disabled={isLoading || totpCode.length < 6}>
+                        {isLoading && <Loader2 className="size-4 animate-spin" />}
+                        {isLoading ? 'Vérification...' : 'Vérifier'}
+                      </Button>
+                    </Field>
+                    <Field>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="w-full"
+                        onClick={() => { setTwoFactorStep(false); setError(''); setTotpCode(''); }}
+                      >
+                        Retour
+                      </Button>
+                    </Field>
+                  </FieldGroup>
+                </form>
+              </div>
+
+            ) : (
+              /* ────── Formulaire principal ────── */
+              <form onSubmit={handleSubmit} className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
+                <FieldGroup>
+                  <div className="flex flex-col items-center gap-1 text-center">
+                    <h1 className="font-(family-name:--font-krona) text-2xl font-bold">Bon retour !</h1>
+                    <p className="text-sm text-balance text-muted-foreground">
+                      Connectez-vous à votre compte ALFYCHAT
+                    </p>
+                  </div>
+
+                  {error && (
+                    <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                      {error}
+                    </div>
+                  )}
+
+                  <Field>
+                    <FieldLabel htmlFor="email">Adresse email</FieldLabel>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="votre@email.com"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </Field>
+
+                  <Field>
+                    <div className="flex items-center">
+                      <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+                      <Link
+                        href="/forgot-password"
+                        className="ml-auto text-sm underline-offset-4 hover:underline"
+                      >
+                        Oublié ?
                       </Link>
                     </div>
-                    <InputGroup fullWidth className="bg-[var(--surface-secondary)] border-[var(--border)]">
-                      <InputGroup.Prefix>
-                        <KeyRoundIcon size={16} className="text-[var(--muted)]" />
-                      </InputGroup.Prefix>
-                      <InputGroup.Input
+                    <div className="relative">
+                      <Input
+                        id="password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Votre mot de passe"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pr-9"
                       />
-                      <InputGroup.Suffix className="pr-0">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="ghost"
-                          onPress={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                        >
-                          {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
-                        </Button>
-                      </InputGroup.Suffix>
-                    </InputGroup>
-                  </TextField>
+                      <button
+                        type="button"
+                        className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      >
+                        {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                      </button>
+                    </div>
+                  </Field>
 
                   {/* Turnstile */}
                   {turnstileEnabled && turnstileSiteKey && (
@@ -338,80 +347,41 @@ export default function LoginPage() {
                       <div ref={turnstileRef} />
                     </div>
                   )}
-                </div>
 
-                <div className="mt-1 flex flex-col gap-5">
-                  <Button
-                    type="submit"
-                    fullWidth
-                    isPending={isLoading}
-                    isDisabled={turnstileEnabled && !turnstileToken}
-                  >
-                    {({ isPending }) => (
-                      <>
-                        {isPending ? <Spinner size="sm" color="current" /> : null}
-                        {isPending ? 'Connexion...' : 'Se connecter'}
-                      </>
-                    )}
-                  </Button>
-
-                  <Separator />
-
-                  <p className="text-center text-sm text-[var(--foreground)]">
-                    Pas encore de compte ?{' '}
-                    <Link href="/register" className="font-semibold text-[var(--accent)]">
-                      Creer un compte
-                    </Link>
-                  </p>
-
-                  <p className="text-center text-xs text-[var(--muted)]">
-                    En continuant, vous acceptez nos{' '}
-                    <Link href="/terms" className="text-xs text-[var(--muted)] underline underline-offset-2 hover:text-[var(--foreground)]">
-                      CGU
-                    </Link>{' '}
-                    et notre{' '}
-                    <Link href="/privacy" className="text-xs text-[var(--muted)] underline underline-offset-2 hover:text-[var(--foreground)]">
-                      Politique de confidentialite
-                    </Link>
-                  </p>
-                </div>
-              </Form>
-                </>
-              )}
-            </div>
-
-            {/* ── Panneau visuel ── */}
-            <div className="relative hidden overflow-hidden border-l border-[var(--border)] bg-[var(--surface-secondary)] md:flex md:flex-col md:items-center md:justify-center md:p-8">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,var(--accent)/8%,transparent_70%)]" />
-              <div className="relative flex flex-col items-center gap-6">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/20">
-                  <MessageCircleIcon size={28} className="text-[var(--accent-foreground)]" />
-                </div>
-                <div className="text-center">
-                  <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">AlfyChat</h2>
-                  <p className="mt-1.5 max-w-56 text-sm leading-relaxed text-[var(--muted)]">
-                    Messagerie securisee et privee
-                  </p>
-                </div>
-                <div className="mt-2 w-full max-w-xs space-y-2.5">
-                  {[
-                    { icon: ShieldIcon, label: 'Chiffrement E2EE', color: 'text-blue-400' },
-                    { icon: LockIcon, label: 'Conforme RGPD', color: 'text-violet-400' },
-                    { icon: ZapIcon, label: 'Temps reel WebSocket', color: 'text-amber-400' },
-                  ].map((feat) => (
-                    <div
-                      key={feat.label}
-                      className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-tertiary)] px-4 py-3"
+                  <Field>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isLoading || (turnstileEnabled && !turnstileToken)}
                     >
-                      <feat.icon size={18} className={feat.color} />
-                      <span className="text-sm font-medium text-[var(--foreground)]">{feat.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                      {isLoading && <Loader2 className="size-4 animate-spin" />}
+                      {isLoading ? 'Connexion...' : 'Se connecter'}
+                    </Button>
+                  </Field>
+
+                  <FieldSeparator>Ou</FieldSeparator>
+
+                  <FieldDescription className="font-(family-name:--font-geist-sans) text-center">
+                    Pas encore de compte ?{' '}
+                    <Link href="/register" className="underline underline-offset-4">
+                      Créer un compte
+                    </Link>
+                  </FieldDescription>
+                </FieldGroup>
+              </form>
+            )}
+
           </div>
-        </Card>
+        </div>
+      </div>
+
+      {/* ── Panneau visuel ── */}
+      <div className="relative hidden bg-muted lg:block">
+        <img
+          src="https://img.freepik.com/photos-gratuite/beau-plan-vertical-long-sommet-montagne-recouvert-herbe-verte-parfait-pour-papier-peint_181624-4986.jpg?t=st=1775414869~exp=1775418469~hmac=3c1ac9a2bc04b3df52ba9a079bd94e6ae694be6fb2be7381a5248d028ca28d87&w=1060"
+          alt=""
+          className="absolute  h-full w-full object-cover"
+        />
       </div>
     </div>
   );

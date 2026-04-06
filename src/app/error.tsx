@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import { RefreshCwIcon, HomeIcon } from '@/components/icons';
-import { Button, Link } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function Error({
   error,
@@ -44,7 +45,7 @@ export default function Error({
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button size="lg" onPress={reset}>
+          <Button size="lg" onClick={reset}>
             <RefreshCwIcon size={16} />
             Réessayer
           </Button>

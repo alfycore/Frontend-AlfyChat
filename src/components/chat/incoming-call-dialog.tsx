@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import { PhoneIcon, PhoneOffIcon, VideoIcon } from '@/components/icons';
-import { Avatar, Button, Modal } from '@heroui/react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { resolveMediaUrl } from '@/lib/api';
 
 interface IncomingCallDialogProps {
@@ -69,10 +71,13 @@ export function IncomingCallDialog({
   }, [open]);
 
   return (
-    <Modal isOpen={open}>
-      <Modal.Backdrop>
-        <Modal.Container size="sm">
-          <Modal.Dialog className="max-w-[320px] overflow-hidden rounded-3xl border-0 bg-zinc-900 shadow-2xl">
+    <Dialog open={open}>
+      <DialogContent showCloseButton={false} className="max-w-[320px] overflow-hidden rounded-3xl border-0 bg-zinc-900 p-0 shadow-2xl">
+            <DialogHeader className="sr-only">
+              <DialogTitle>
+                {callType === 'video' ? 'Appel vidéo entrant' : 'Appel vocal entrant'}
+              </DialogTitle>
+            </DialogHeader>
 
             {/* ── Top section: avatar + info ── */}
             <div className="relative flex flex-col items-center px-8 pb-6 pt-10">
@@ -87,10 +92,10 @@ export function IncomingCallDialog({
                 <span className="absolute size-22 animate-ping rounded-full border border-white/12" style={{ animationDuration: '1.2s', animationDelay: '0.2s' }} />
                 <div className="relative rounded-full p-1 ring-2 ring-white/10 shadow-xl">
                   <Avatar className="size-20 rounded-full">
-                    <Avatar.Image src={resolveMediaUrl(callerAvatar)} />
-                    <Avatar.Fallback className="bg-zinc-700 text-white text-3xl font-bold">
+                    <AvatarImage src={resolveMediaUrl(callerAvatar)} />
+                    <AvatarFallback className="bg-zinc-700 text-white text-3xl font-bold">
                       {callerName[0]?.toUpperCase() || '?'}
-                    </Avatar.Fallback>
+                    </AvatarFallback>
                   </Avatar>
                 </div>
               </div>
@@ -115,8 +120,8 @@ export function IncomingCallDialog({
               {/* Decline */}
               <div className="flex flex-col items-center gap-2">
                 <Button
-                  isIconOnly
-                  onPress={onDecline}
+                  size="icon"
+                  onClick={onDecline}
                   className="size-16 rounded-full bg-red-500 text-white shadow-xl shadow-red-500/30 transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
                 >
                   <PhoneOffIcon size={26} />
@@ -127,8 +132,8 @@ export function IncomingCallDialog({
               {/* Accept */}
               <div className="flex flex-col items-center gap-2">
                 <Button
-                  isIconOnly
-                  onPress={onAccept}
+                  size="icon"
+                  onClick={onAccept}
                   className="size-16 rounded-full bg-green-500 text-white shadow-xl shadow-green-500/30 transition-all duration-200 hover:scale-110 hover:bg-green-400 active:scale-95"
                 >
                   {callType === 'video' ? (
@@ -140,9 +145,7 @@ export function IncomingCallDialog({
                 <span className="text-[11px] font-medium text-white/40">Accepter</span>
               </div>
             </div>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 }

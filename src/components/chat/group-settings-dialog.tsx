@@ -20,12 +20,14 @@ import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import {
   Avatar,
-  Button,
-  Chip,
-  InputGroup,
-  Modal,
-  ScrollShadow,
-} from '@heroui/react';
+  AvatarImage,
+  AvatarFallback,
+} from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Participant {
   userId: string;
@@ -195,10 +197,11 @@ export function GroupSettingsDialog({
   ];
 
   return (
-    <Modal isOpen={open} onOpenChange={onOpenChange}>
-      <Modal.Backdrop>
-      <Modal.Container size="lg">
-        <Modal.Dialog className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl border border-[var(--border)]/60 p-0 shadow-2xl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent showCloseButton={false} className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl p-0 shadow-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Paramètres du groupe</DialogTitle>
+          </DialogHeader>
           <div className="flex h-full">
           {/* ── Sidebar ── */}
           <aside className="flex w-48 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 py-6">
@@ -264,16 +267,15 @@ export function GroupSettingsDialog({
                       Nom du groupe
                     </span>
                     <div className="flex gap-2">
-                      <InputGroup className="flex-1 rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
-                        <InputGroup.Input
+                      <Input
                           value={groupName}
                           onChange={(e) => setGroupName(e.target.value)}
                           placeholder="Nom du groupe"
+                          className="flex-1"
                         />
-                      </InputGroup>
                       <Button
-                        onPress={handleSaveName}
-                        isDisabled={isSaving || groupName === group?.name}
+                        onClick={handleSaveName}
+                        disabled={isSaving || groupName === group?.name}
                         size="sm"
                         className="gap-1.5 rounded-xl"
                       >
@@ -289,7 +291,7 @@ export function GroupSettingsDialog({
                       <Button
                         variant="outline"
                         className="w-full justify-start rounded-xl text-red-500"
-                        onPress={() => {
+                        onClick={() => {
                           onOpenChange(false);
                           onLeave?.();
                         }}
@@ -299,9 +301,9 @@ export function GroupSettingsDialog({
                       </Button>
                       {isOwner && (
                         <Button
-                          variant="danger"
+                          variant="destructive"
                           className="w-full justify-start rounded-xl"
-                          onPress={handleDeleteGroup}
+                          onClick={handleDeleteGroup}
                         >
                           <Trash2Icon size={16} className="mr-2" />
                           Supprimer le groupe
@@ -326,7 +328,7 @@ export function GroupSettingsDialog({
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-2 rounded-xl"
-                      onPress={() => {
+                      onClick={() => {
                         setShowAddMembers(true);
                         loadFriends();
                       }}
@@ -344,9 +346,8 @@ export function GroupSettingsDialog({
                         </p>
                         <Button
                           variant="ghost"
-                          isIconOnly
-                          size="sm"
-                          onPress={() => {
+                          size="icon-sm"
+                          onClick={() => {
                             setShowAddMembers(false);
                             setSelectedFriendIds(new Set());
                           }}
@@ -355,19 +356,20 @@ export function GroupSettingsDialog({
                         </Button>
                       </div>
 
-                      <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
-                        <InputGroup.Prefix><SearchIcon size={16} className="text-[var(--muted)]/60" /></InputGroup.Prefix>
-                        <InputGroup.Input
+                      <div className="relative">
+                        <SearchIcon size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+                        <Input
                           placeholder="Rechercher..."
                           value={friendSearch}
                           onChange={(e) => setFriendSearch(e.target.value)}
+                          className="pl-8"
                         />
-                      </InputGroup>
+                      </div>
 
-                      <ScrollShadow className="max-h-40 overflow-y-auto">
+                      <ScrollArea className="max-h-40">
                         <div className="space-y-0.5">
                           {filteredFriends.length === 0 ? (
-                            <p className="py-4 text-center text-xs text-[var(--muted)]">
+                            <p className="py-4 text-center text-xs text-muted-foreground">
                               {friends.length === 0 ? 'Tous vos amis sont déjà dans le groupe' : 'Aucun résultat'}
                             </p>
                           ) : (
@@ -387,20 +389,20 @@ export function GroupSettingsDialog({
                                   }}
                                   className={cn(
                                     'flex w-full items-center gap-2.5 rounded-xl p-2 transition-colors',
-                                    isSelected ? 'bg-[var(--accent)]/5' : 'hover:bg-[var(--surface-secondary)]/80',
+                                    isSelected ? 'bg-primary/5' : 'hover:bg-muted/80',
                                   )}
                                 >
-                                  <Avatar size="sm" className="size-7">
-                                    <Avatar.Image src={friend.avatarUrl ? resolveMediaUrl(friend.avatarUrl) : undefined} />
-                                    <Avatar.Fallback>{friend.displayName[0]}</Avatar.Fallback>
+                                  <Avatar className="size-7">
+                                    <AvatarImage src={friend.avatarUrl ? resolveMediaUrl(friend.avatarUrl) : undefined} />
+                                    <AvatarFallback>{friend.displayName[0]}</AvatarFallback>
                                   </Avatar>
                                   <span className="flex-1 text-left text-sm">{friend.displayName}</span>
                                   <div
                                     className={cn(
                                       'flex size-4 items-center justify-center rounded border',
                                       isSelected
-                                        ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]'
-                                        : 'border-[var(--muted)]/25',
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-muted-foreground/25',
                                     )}
                                   >
                                     {isSelected && <CheckIcon size={12} />}
@@ -410,10 +412,10 @@ export function GroupSettingsDialog({
                             })
                           )}
                         </div>
-                      </ScrollShadow>
+                      </ScrollArea>
 
                       {selectedFriendIds.size > 0 && (
-                        <Button className="w-full rounded-xl" size="sm" onPress={handleAddMembers}>
+                        <Button className="w-full rounded-xl" size="sm" onClick={handleAddMembers}>
                           <UserPlusIcon size={14} className="mr-1" />
                           Ajouter ({selectedFriendIds.size})
                         </Button>
@@ -425,8 +427,8 @@ export function GroupSettingsDialog({
                     <div className="border-b border-[var(--border)]/60 px-5 py-4">
                       <h3 className="text-base font-semibold">Membres du groupe</h3>
                     </div>
-                    <ScrollShadow className="max-h-64 overflow-y-auto">
-                      <div className="divide-y divide-[var(--border)]/60">
+                    <ScrollArea className="max-h-64">
+                      <div className="divide-y divide-border/60">
                         {group?.participants
                           .sort((a, b) => {
                             const order = { owner: 0, admin: 1, member: 2 };
@@ -435,11 +437,11 @@ export function GroupSettingsDialog({
                           .map((participant) => (
                             <div
                               key={participant.userId}
-                              className="flex items-center gap-2.5 px-5 py-3 transition-colors hover:bg-[var(--surface-secondary)]/40"
+                              className="flex items-center gap-2.5 px-5 py-3 transition-colors hover:bg-muted/40"
                             >
                               <Avatar size="sm">
-                                <Avatar.Image src={participant.avatarUrl ? resolveMediaUrl(participant.avatarUrl) : undefined} />
-                                <Avatar.Fallback>{(participant.displayName || participant.username)?.[0] || '?'}</Avatar.Fallback>
+                                <AvatarImage src={participant.avatarUrl ? resolveMediaUrl(participant.avatarUrl) : undefined} />
+                                <AvatarFallback>{(participant.displayName || participant.username)?.[0] || '?'}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1">
@@ -450,12 +452,10 @@ export function GroupSettingsDialog({
                                     <CrownIcon size={12} className="shrink-0 text-yellow-500" />
                                   )}
                                   {participant.userId === user?.id && (
-                                    <Chip variant="soft" size="sm" className="ml-1 h-4">
-                                      <Chip.Label className="text-[9px] px-1">Vous</Chip.Label>
-                                    </Chip>
+                                    <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">Vous</Badge>
                                   )}
                                 </div>
-                                <p className="truncate text-xs text-[var(--muted)]">@{participant.username}</p>
+                                <p className="truncate text-xs text-muted-foreground">@{participant.username}</p>
                               </div>
 
                               {canManageMembers &&
@@ -463,10 +463,9 @@ export function GroupSettingsDialog({
                                 participant.role !== 'owner' && (
                                   <Button
                                     variant="ghost"
-                                    isIconOnly
-                                    size="sm"
+                                    size="icon-sm"
                                     className="shrink-0 text-red-500"
-                                    onPress={() => handleRemoveMember(participant.userId)}
+                                    onClick={() => handleRemoveMember(participant.userId)}
                                   >
                                     <UserMinusIcon size={16} />
                                   </Button>
@@ -474,16 +473,14 @@ export function GroupSettingsDialog({
                             </div>
                           ))}
                       </div>
-                    </ScrollShadow>
+                    </ScrollArea>
                   </div>
                 </div>
               )}
             </div>
           </div>
           </div>
-        </Modal.Dialog>
-      </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 }

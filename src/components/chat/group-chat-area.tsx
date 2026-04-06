@@ -18,18 +18,17 @@ import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { notify } from '@/hooks/use-notification';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
-import {
-  Avatar,
-  Button,
-  Card,
-  Dropdown,
-  ScrollShadow,
-  Spinner,
-  Tooltip,
-} from '@heroui/react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Spinner } from '@/components/ui/spinner';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
@@ -68,6 +67,8 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const { user } = useAuth();
   const { isMobile, toggleSidebar } = useMobileNav();
   const ui = useUIStyle();
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
   const [messageInput, setMessageInput] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editInput, setEditInput] = useState('');
@@ -421,18 +422,18 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
       {/* ── Zone de chat principale ── */}
       <div data-tour="chat-area" className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* ── Header ── */}
-        <div className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4">
+        <div className={`flex ${d.headerH} shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4`}>
           {isMobile && (
-            <Button isIconOnly size="sm" variant="ghost" onPress={toggleSidebar}>
+            <Button size="icon-sm" variant="ghost" onClick={toggleSidebar}>
               <MenuIcon size={20} />
             </Button>
           )}
 
           <div className="flex size-7 items-center justify-center rounded-xl bg-[var(--accent)]/8">
             {groupInfo?.avatarUrl ? (
-              <Avatar size="sm" className="size-7">
-                <Avatar.Image src={resolveMediaUrl(groupInfo.avatarUrl)} />
-                <Avatar.Fallback className="text-[10px] font-medium">{groupInfo.name?.[0]}</Avatar.Fallback>
+              <Avatar className="size-7">
+                <AvatarImage src={resolveMediaUrl(groupInfo.avatarUrl)} />
+                <AvatarFallback className="text-[10px] font-medium">{groupInfo.name?.[0]}</AvatarFallback>
               </Avatar>
             ) : (
               <UsersRoundIcon size={14} className="text-[var(--accent)]" />
@@ -448,87 +449,95 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
           <div className="flex items-center gap-1">
             {canManageMembers && (
-              <Tooltip delay={0}>
-                <Button
-                  isIconOnly size="sm" variant="ghost"
-                  onPress={handleOpenAddMembers}
-                  className="size-8 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
-                >
-                  <UserPlusIcon size={16} />
-                </Button>
-                <Tooltip.Content>Ajouter un membre</Tooltip.Content>
-              </Tooltip>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon-sm" variant="ghost"
+                      onClick={handleOpenAddMembers}
+                      className="size-8 rounded-xl text-muted-foreground hover:text-foreground"
+                    >
+                      <UserPlusIcon size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Ajouter un membre</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
 
-            <Tooltip delay={0}>
-              <Button
-                isIconOnly size="sm" variant="ghost"
-                onPress={() => handleInitiateCall('voice')}
-                className="size-8 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
-                isDisabled={callStatus !== 'idle'}
-              >
-                <PhoneIcon size={15} />
-              </Button>
-              <Tooltip.Content>Appel vocal</Tooltip.Content>
-            </Tooltip>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon-sm" variant="ghost"
+                    onClick={() => handleInitiateCall('voice')}
+                    className="size-8 rounded-xl text-muted-foreground hover:text-foreground"
+                    disabled={callStatus !== 'idle'}
+                  >
+                    <PhoneIcon size={15} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Appel vocal</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-            <Tooltip delay={0}>
-              <Button
-                isIconOnly size="sm" variant="ghost"
-                onPress={() => handleInitiateCall('video')}
-                className="size-8 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
-                isDisabled={callStatus !== 'idle'}
-              >
-                <VideoIcon size={15} />
-              </Button>
-              <Tooltip.Content>Appel vidéo</Tooltip.Content>
-            </Tooltip>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon-sm" variant="ghost"
+                    onClick={() => handleInitiateCall('video')}
+                    className="size-8 rounded-xl text-muted-foreground hover:text-foreground"
+                    disabled={callStatus !== 'idle'}
+                  >
+                    <VideoIcon size={15} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Appel vidéo</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-            <Tooltip delay={0}>
-              <Button
-                isIconOnly size="sm" variant="ghost"
-                onPress={() => setShowMembers(!showMembers)}
-                className="size-8 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                <UsersRoundIcon size={16} />
-              </Button>
-              <Tooltip.Content>Membres</Tooltip.Content>
-            </Tooltip>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon-sm" variant="ghost"
+                    onClick={() => setShowMembers(!showMembers)}
+                    className="size-8 rounded-xl text-muted-foreground hover:text-foreground"
+                  >
+                    <UsersRoundIcon size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Membres</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-            <Dropdown>
-              <Dropdown.Trigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <div
                   role="button"
                   tabIndex={0}
-                  className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40"
+                  className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-[var(--surface-secondary)]/40"
                 >
                   <MoreHorizontalIcon size={16} />
                 </div>
-              </Dropdown.Trigger>
-              <Dropdown.Popover placement="bottom end">
-                <Dropdown.Menu
-                  aria-label="Options groupe"
-                  onAction={(key) => {
-                    if (key === 'settings') { setSettingsInitialSection('general'); setShowSettings(true); }
-                    if (key === 'leave') handleLeaveGroup();
-                  }}
-                >
-                  <Dropdown.Item id="settings">
-                    <SettingsIcon size={16} />
-                    Paramètres du groupe
-                  </Dropdown.Item>
-                  <Dropdown.Item id="leave" className="text-red-500">
-                    <LogOutIcon size={16} />
-                    Quitter le groupe
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown.Popover>
-            </Dropdown>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { setSettingsInitialSection('general'); setShowSettings(true); }}>
+                  <SettingsIcon size={16} />
+                  Paramètres du groupe
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-500" onClick={handleLeaveGroup}>
+                  <LogOutIcon size={16} />
+                  Quitter le groupe
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         {/* ── Messages ── */}
-        <ScrollShadow ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-2 md:p-4">
+        <ScrollArea ref={scrollRef} className="min-h-0 flex-1 p-2 md:p-4">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
               <div className="flex flex-col items-center gap-3 text-[var(--muted)]">
@@ -593,7 +602,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               <span>{typingUsers.map((u) => u.username).join(', ')} écrit…</span>
             </div>
           )}
-        </ScrollShadow>
+        </ScrollArea>
 
         {/* ── Cooldown notice ── */}
         {cooldownActive && (
@@ -622,7 +631,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 <p className="text-[11px] font-semibold text-[var(--accent)]">Réponse à {replyingTo.authorName}</p>
                 <p className="truncate text-[11px] text-[var(--muted)]/60">{replyingTo.content}</p>
               </div>
-              <Button isIconOnly size="sm" variant="tertiary" className="size-6 rounded-xl" onPress={() => setReplyingTo(null)}>
+              <Button size="icon-sm" variant="ghost" className="size-6 rounded-xl" onClick={() => setReplyingTo(null)}>
                 <XIcon size={14} />
               </Button>
             </div>
@@ -630,17 +639,21 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
           <div className={`flex items-center gap-1 px-1.5 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''}`}>
             {/* File attachment button */}
-            <Tooltip delay={0}>
-              <Button
-                isIconOnly size="sm" variant="ghost"
-                className="size-7 shrink-0 self-end rounded-xl pb-0.5 text-[var(--muted)] hover:text-[var(--foreground)]"
-                isDisabled={isUploading}
-                onPress={() => fileInputRef.current?.click()}
-              >
-                {isUploading ? <Spinner size="sm" /> : <PaperclipIcon size={16} />}
-              </Button>
-              <Tooltip.Content>Joindre un fichier (image, PDF, DOCX… &lt;10 Mo)</Tooltip.Content>
-            </Tooltip>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon-sm" variant="ghost"
+                    className="size-7 shrink-0 self-end rounded-xl pb-0.5 text-muted-foreground hover:text-foreground"
+                    disabled={isUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {isUploading ? <Spinner size="sm" /> : <PaperclipIcon size={16} />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Joindre un fichier (image, PDF, DOCX… &lt;10 Mo)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             {/* Pending attachments + text input */}
             <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -675,15 +688,15 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             {/* Actions */}
             <div className="flex shrink-0 self-end items-center gap-0.5">
               <EmojiPicker onSelect={handleEmojiInsert} onGifSelect={handleGifSelect}>
-                <Button isIconOnly size="sm" variant="ghost" className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]">
+                <Button size="icon-sm" variant="ghost" className="size-7 rounded-xl text-muted-foreground hover:text-foreground">
                   <SmileIcon size={18} />
                 </Button>
               </EmojiPicker>
               <Button
-                isIconOnly size="sm" variant="ghost"
-                className={`size-7 rounded-xl transition-colors ${messageInput.trim() || pendingAttachments.length > 0 ? 'text-[var(--accent)]' : 'text-[var(--muted)]/40'}`}
-                isDisabled={!messageInput.trim() && pendingAttachments.length === 0}
-                onPress={() => {
+                size="icon-sm" variant="ghost"
+                className={`size-7 rounded-xl transition-colors ${messageInput.trim() || pendingAttachments.length > 0 ? 'text-[var(--accent)]' : 'text-muted-foreground/40'}`}
+                disabled={!messageInput.trim() && pendingAttachments.length === 0}
+                onClick={() => {
                   if (messageInput.trim() || pendingAttachments.length > 0) {
                     handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
                   }
@@ -703,11 +716,11 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
               Membres — {groupInfo?.participants.length || 0}
             </p>
-            <Button isIconOnly size="sm" variant="tertiary" className="size-6 rounded-xl" onPress={() => setShowMembers(false)}>
+            <Button size="icon-sm" variant="ghost" className="size-6 rounded-xl" onClick={() => setShowMembers(false)}>
               <XIcon size={12} />
             </Button>
           </div>
-          <ScrollShadow className="flex-1 overflow-y-auto">
+          <ScrollArea className="flex-1">
             <div className="space-y-0.5 p-2">
               {groupInfo?.participants
                 .sort((a, b) => {
@@ -721,9 +734,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                       className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30 ${!participant.isOnline ? 'opacity-40' : ''}`}
                     >
                       <div className="relative shrink-0">
-                        <Avatar size="sm" className="size-7">
-                          <Avatar.Image src={participant.avatarUrl ? resolveMediaUrl(participant.avatarUrl) : undefined} />
-                          <Avatar.Fallback className="text-[10px] font-medium">{(participant.displayName || participant.username)?.[0] || '?'}</Avatar.Fallback>
+                        <Avatar className="size-7">
+                          <AvatarImage src={participant.avatarUrl ? resolveMediaUrl(participant.avatarUrl) : undefined} />
+                          <AvatarFallback className="text-[10px] font-medium">{(participant.displayName || participant.username)?.[0] || '?'}</AvatarFallback>
                         </Avatar>
                         <span
                           className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)] ${
@@ -745,7 +758,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                   </UserProfilePopover>
                 ))}
             </div>
-          </ScrollShadow>
+          </ScrollArea>
         </div>
       )}
 

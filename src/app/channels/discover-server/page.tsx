@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,19 +11,25 @@ import {
   Loader2Icon,
   CompassIcon,
   ArrowRightIcon,
+  XIcon,
+  MenuIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
+import { useUIStyle } from '@/hooks/use-ui-style';
+import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Avatar,
-  Button,
-  Card,
-  Chip,
-  InputGroup,
-  ScrollShadow,
-  Skeleton,
   Tooltip,
-} from '@heroui/react';
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface DiscoverServer {
   id: string;
@@ -39,6 +45,9 @@ interface DiscoverServer {
 export default function DiscoverServerPage() {
   const router = useRouter();
   useAuth();
+  const ui = useUIStyle();
+  const { isMobile, openSidebar } = useMobileNav();
+
   const [servers, setServers] = useState<DiscoverServer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,20 +70,18 @@ export default function DiscoverServerPage() {
     setIsLoading(false);
   };
 
-  const filteredServers = servers.filter((s) =>
-    !searchQuery ||
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredServers = servers.filter(
+    (s) =>
+      !searchQuery ||
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.description?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleJoin = async (serverId: string) => {
     setJoiningId(serverId);
     try {
-      // Rejoindre via l'API (nécessite un invite ou public)
-      // Pour les serveurs découverts, on utilise SERVER_JOIN via socket
       const { socketService } = await import('@/lib/socket');
       socketService.joinServer(serverId);
-      // Attendre un peu puis rediriger
       setTimeout(() => {
         router.push(`/channels/server/${serverId}`);
       }, 500);
@@ -85,225 +92,195 @@ export default function DiscoverServerPage() {
   };
 
   return (
-    <div className="flex h-dvh flex-col bg-[var(--background)]">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)]/40 bg-[var(--background)]/60 px-4">
-        <Button
-          isIconOnly
-          size="sm"
-          variant="ghost"
-          className="rounded-lg"
-          onPress={() => router.push('/channels/me')}
-        >
-          <ArrowLeftIcon size={16} />
-        </Button>
-        <div className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)]/10">
-            <CompassIcon size={14} className="text-[var(--accent)]" />
+    <TooltipProvider>
+      <div className={cn('flex h-dvh flex-col', ui.sidebarBg)}>
+
+        {/*  Header  */}
+        <header className={cn('flex h-12 shrink-0 items-center gap-3 border-b border-border px-3', ui.header)}>
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={openSidebar}
+            >
+              <MenuIcon size={16} />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={() => router.push('/channels/me')}
+          >
+            <ArrowLeftIcon size={15} />
+          </Button>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <CompassIcon size={14} className="shrink-0 text-muted-foreground" />
+            <span className="truncate text-[13px] font-semibold">Découvrir des serveurs</span>
           </div>
-          <h1 className="text-sm font-bold">Découvrir des serveurs</h1>
-        </div>
-      </header>
-
-      {/* ── Hero banner ─────────────────────────────────────── */}
-      <div className="relative shrink-0 overflow-hidden border-b border-[var(--border)]/40 px-8 py-10">
-        {/* Background gradients */}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/15 via-violet-500/8 to-blue-500/8" />
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[48px_48px]" />
-        {/* Glow blobs */}
-        <div className="pointer-events-none absolute -left-12 -top-12 size-48 rounded-full bg-[var(--accent)]/10 " />
-        <div className="pointer-events-none absolute -right-8 bottom-0 size-40 rounded-full bg-violet-500/10 " />
-
-        <div className="relative z-10 max-w-2xl">
-          <div className="mb-1.5 flex items-center gap-2">
-            <CompassIcon size={18} className="text-[var(--accent)]" />
-            <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--accent)]">Exploration</span>
+          <div className="relative w-44 shrink-0">
+            <SearchIcon
+              size={13}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50"
+            />
+            <Input
+              placeholder="Rechercher"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-7 rounded-lg pl-7 pr-7 text-[12px]"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
+              >
+                <XIcon size={12} />
+              </button>
+            )}
           </div>
-          <h2 className="mb-2 text-2xl font-bold tracking-tight">Trouvez votre communauté</h2>
-          <p className="mb-5 max-w-lg text-[13px] text-muted">
-            Explorez les serveurs référencés par AlfyChat — des communautés certifiées et partenaires vous attendent.
-          </p>
+        </header>
 
-          {/* Search */}
-          <div className="max-w-sm">
-            <InputGroup className="rounded-xl" variant="secondary">
-              <InputGroup.Prefix className="pl-3 pr-0">
-                <SearchIcon size={15} className="text-muted/50" />
-              </InputGroup.Prefix>
-              <InputGroup.Input
-                placeholder="Rechercher un serveur…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <InputGroup.Suffix className="pr-2">
-                  <Button
-                    variant="ghost"
-                    isIconOnly
-                    size="sm"
-                    className="size-5 min-w-0 rounded-md p-0 text-muted"
-                    onPress={() => setSearchQuery('')}
-                  >
-                    ✕
-                  </Button>
-                </InputGroup.Suffix>
-              )}
-            </InputGroup>
-          </div>
-        </div>
-      </div>
+        {/*  Content  */}
+        <ScrollArea className="flex-1">
+          <div className="p-4">
 
-      {/* ── Grid ────────────────────────────────────────────── */}
-      <ScrollShadow className="flex-1">
-        <div className="p-5">
-          {isLoading ? (
-            /* Skeleton grid */
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Card key={i} className="overflow-hidden border border-[var(--border)]/40">
-                  <Skeleton className="h-28 w-full" animationType="shimmer" />
-                  <Card.Content className="space-y-3 p-4">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="size-10 rounded-xl" animationType="shimmer" />
-                      <div className="flex-1 space-y-1.5">
-                        <Skeleton className="h-3.5 w-28" animationType="shimmer" />
-                        <Skeleton className="h-3 w-16" animationType="shimmer" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-3 w-full" animationType="shimmer" />
-                    <Skeleton className="h-3 w-3/4" animationType="shimmer" />
-                    <Skeleton className="h-8 w-full rounded-xl" animationType="shimmer" />
-                  </Card.Content>
-                </Card>
-              ))}
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                {isLoading ? 'Chargement' : `${filteredServers.length} serveur${filteredServers.length !== 1 ? 's' : ''}`}
+              </span>
+              <div className="h-px flex-1 bg-border" />
             </div>
-          ) : filteredServers.length === 0 ? (
-            /* Empty state */
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="w-full max-w-xs overflow-hidden rounded-2xl border border-[var(--border)]/40 bg-surface-secondary px-8 py-8 text-center">
-                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/8 via-transparent to-transparent" />
-                <div className="relative flex flex-col items-center gap-3">
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
-                    <CompassIcon size={26} className="text-[var(--accent)]" />
+
+            {isLoading ? (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
+                    <Skeleton className="h-20 w-full rounded-none" />
+                    <div className="space-y-2 px-3 pb-3 pt-6">
+                      <Skeleton className="h-3.5 w-28" />
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-3/4" />
+                      <Skeleton className="mt-1 h-7 w-full rounded-lg" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredServers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
+                    <CompassIcon size={20} className="text-muted-foreground/40" />
                   </div>
                   <div>
-                    <p className="text-[14px] font-bold">Aucun serveur trouvé</p>
-                    <p className="mt-0.5 text-[11px] text-muted">
+                    <p className="text-[13px] font-semibold">Aucun serveur trouvé</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/60">
                       {searchQuery
                         ? "Essayez avec d'autres mots-clés."
-                        : "Aucun serveur n'est référencé pour le moment."}
+                        : "Aucun serveur publié pour l'instant."}
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            /* Server cards */
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredServers.map((server) => (
-                <Card
-                  key={server.id}
-                  className="group overflow-hidden border border-[var(--border)]/40 transition-all duration-200 hover:border-[var(--border)]/70 hover:shadow-lg"
-                >
-                  {/* Banner */}
-                  <div className="relative h-28 overflow-hidden bg-linear-to-br from-primary/20 to-violet-500/20">
-                    {server.banner_url ? (
-                      <img
-                        src={resolveMediaUrl(server.banner_url)}
-                        alt=""
-                        className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="size-full bg-linear-to-br from-primary/25 via-violet-500/15 to-blue-500/20" />
-                    )}
-                    <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
-
-                    {/* Badges */}
-                    <div className="absolute right-2 top-2 flex gap-1">
-                      {server.is_certified && (
-                        <Tooltip delay={0}>
-                          <Chip
-                            size="sm"
-                            className="gap-1 bg-blue-500/85 text-white"
-                          >
-                            <CheckCircle2Icon size={11} />
-                            Certifié
-                          </Chip>
-                          <Tooltip.Content>Serveur certifié par AlfyChat</Tooltip.Content>
-                        </Tooltip>
-                      )}
-                      {server.is_partnered && (
-                        <Tooltip delay={0}>
-                          <Chip
-                            size="sm"
-                            className="gap-1 bg-violet-500/85 text-white"
-                          >
-                            <HandshakeIcon size={11} />
-                            Partenaire
-                          </Chip>
-                          <Tooltip.Content>Serveur partenaire AlfyChat</Tooltip.Content>
-                        </Tooltip>
-                      )}
-                    </div>
-
-                    {/* Icon overlap */}
-                    <div className="absolute -bottom-5 left-4">
-                      <Avatar className="size-11 rounded-xl ring-2 ring-background shadow-md">
-                        <Avatar.Image
-                          src={resolveMediaUrl(server.icon_url)}
-                          className="object-cover"
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredServers.map((server) => (
+                  <div
+                    key={server.id}
+                    className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors duration-150 hover:border-border/80 hover:bg-card/80"
+                  >
+                    {/* Banner */}
+                    <div className="relative h-20 shrink-0 overflow-hidden bg-muted">
+                      {server.banner_url ? (
+                        <img
+                          src={resolveMediaUrl(server.banner_url)}
+                          alt=""
+                          className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                         />
-                        <Avatar.Fallback className="rounded-xl text-xs font-bold">
-                          {server.name.substring(0, 2).toUpperCase()}
-                        </Avatar.Fallback>
-                      </Avatar>
-                    </div>
-                  </div>
+                      ) : (
+                        <div className="size-full bg-linear-to-br from-primary/20 via-purple-500/10 to-blue-500/15" />
+                      )}
+                      <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
 
-                  {/* Info */}
-                  <Card.Content className="flex flex-1 flex-col px-4 pb-4 pt-7">
-                    <div className="mb-1">
-                      <h3 className="truncate text-[14px] font-bold">{server.name}</h3>
-                      <div className="flex items-center gap-1 text-[11px] text-muted">
-                        <UsersIcon size={11} />
-                        {(server.member_count || 0).toLocaleString('fr-FR')} membres
+                      {/* Badges */}
+                      <div className="absolute right-2 top-2 flex gap-1">
+                        {server.is_certified && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="flex items-center gap-0.5 rounded-md bg-blue-500/80 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                                <CheckCircle2Icon size={10} />
+                                Certifié
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>Serveur certifié par AlfyChat</TooltipContent>
+                          </Tooltip>
+                        )}
+                        {server.is_partnered && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="flex items-center gap-0.5 rounded-md bg-violet-500/80 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                                <HandshakeIcon size={10} />
+                                Partenaire
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>Serveur partenaire AlfyChat</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+
+                      {/* Avatar overlay */}
+                      <div className="absolute -bottom-4 left-3">
+                        <Avatar className="size-9 rounded-xl ring-2 ring-card">
+                          <AvatarImage src={resolveMediaUrl(server.icon_url)} className="object-cover" />
+                          <AvatarFallback className="rounded-xl bg-muted text-[11px] font-bold">
+                            {server.name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
                       </div>
                     </div>
 
-                    {server.description && (
-                      <p className="mb-3 mt-2 line-clamp-2 text-[12px] leading-relaxed text-muted/80">
-                        {server.description}
-                      </p>
-                    )}
-
-                    <div className="mt-auto pt-3">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        className="w-full gap-2 rounded-xl font-semibold"
-                        isDisabled={joiningId === server.id}
-                        onPress={() => handleJoin(server.id)}
-                      >
-                        {joiningId === server.id ? (
-                          <>
-                            <Loader2Icon size={13} className="animate-spin" />
-                            Rejoindre…
-                          </>
-                        ) : (
-                          <>
-                            <ArrowRightIcon size={13} />
-                            Rejoindre
-                          </>
-                        )}
-                      </Button>
+                    {/* Info */}
+                    <div className="flex flex-1 flex-col px-3 pb-3 pt-6">
+                      <p className="truncate text-[13px] font-semibold leading-tight">{server.name}</p>
+                      <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground/60">
+                        <UsersIcon size={10} />
+                        {(server.member_count || 0).toLocaleString('fr-FR')} membres
+                      </div>
+                      {server.description && (
+                        <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground/70">
+                          {server.description}
+                        </p>
+                      )}
+                      <div className="mt-auto pt-3">
+                        <Button
+                          size="sm"
+                          className="h-7 w-full gap-1.5 rounded-lg text-[12px] font-semibold"
+                          disabled={joiningId === server.id}
+                          onClick={() => handleJoin(server.id)}
+                        >
+                          {joiningId === server.id ? (
+                            <>
+                              <Loader2Icon size={12} className="animate-spin" />
+                              Rejoindre
+                            </>
+                          ) : (
+                            <>
+                              <ArrowRightIcon size={12} />
+                              Rejoindre
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                  </Card.Content>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </ScrollShadow>
-    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    </TooltipProvider>
   );
 }

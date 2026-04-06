@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { GalleryIcon, PlusIcon, XIcon, DownloadIcon, Maximize2Icon } from '@/components/icons';
-import { Button, ScrollShadow, Skeleton } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { api, resolveMediaUrl } from '@/lib/api';
@@ -165,7 +167,6 @@ function PinCard({
       {!loaded && (
         <Skeleton
           className="w-full rounded-2xl"
-          animationType="shimmer"
           style={{ height: `${120 + Math.random() * 160}px` }}
         />
       )}
@@ -303,7 +304,7 @@ function UploadModal({
           <div className="flex-1">
             <p className="text-sm font-semibold text-[var(--foreground)]">Partager une image</p>
           </div>
-          <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-lg text-[var(--muted)]" onPress={onClose}>
+          <Button size="icon-sm" variant="ghost" className="size-8 rounded-lg text-muted-foreground" onClick={onClose}>
             <XIcon size={15} />
           </Button>
         </div>
@@ -368,14 +369,14 @@ function UploadModal({
 
         {/* Footer */}
         <div className="flex justify-end gap-2 border-t border-[var(--border)]/30 px-5 py-3">
-          <Button size="sm" variant="ghost" className="rounded-lg text-[var(--muted)]" onPress={onClose}>
+          <Button size="sm" variant="ghost" className="rounded-lg text-muted-foreground" onClick={onClose}>
             Annuler
           </Button>
           <Button
             size="sm"
             className="rounded-lg bg-pink-500 text-white hover:bg-pink-600"
-            onPress={handleSubmit}
-            isDisabled={!file}
+            onClick={handleSubmit}
+            disabled={!file}
           >
             Partager
           </Button>
@@ -491,7 +492,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
           <Button
             size="sm"
             className="gap-1.5 rounded-xl bg-pink-500 text-white hover:bg-pink-600"
-            onPress={() => setShowUpload(true)}
+            onClick={() => setShowUpload(true)}
           >
             <PlusIcon size={14} />
             Partager
@@ -500,7 +501,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
       </div>
 
       {/* ── Gallery grid ── */}
-      <ScrollShadow className="min-h-0 flex-1 overflow-y-auto">
+      <ScrollArea className="min-h-0 flex-1">
         <div ref={containerRef} className="p-4">
           {isLoading ? (
             /* Skeleton masonry */
@@ -511,7 +512,6 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
                     <Skeleton
                       key={ri}
                       className="w-full rounded-2xl"
-                      animationType="shimmer"
                       style={{ height: `${100 + ((ci * 3 + ri * 7) % 5) * 40}px` }}
                     />
                   ))}
@@ -529,7 +529,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
               <p className="mb-5 text-sm text-[var(--muted)]">Soyez le premier à partager une image dans #{channelName || 'galerie'}</p>
               <Button
                 className="gap-1.5 rounded-xl bg-pink-500 text-white hover:bg-pink-600"
-                onPress={() => setShowUpload(true)}
+                onClick={() => setShowUpload(true)}
               >
                 <PlusIcon size={15} />
                 Partager une image
@@ -543,7 +543,7 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
             />
           )}
         </div>
-      </ScrollShadow>
+      </ScrollArea>
 
       {/* ── Lightbox ── */}
       {lightboxImage && (

@@ -8,12 +8,14 @@ import { useAuth } from '@/hooks/use-auth';
 import { useNotificationStore, clearUnread } from '@/lib/notification-store';
 import {
   Avatar,
-  Button,
-  Chip,
-  ScrollShadow,
-  Spinner,
-  Tooltip,
-} from '@heroui/react';
+  AvatarImage,
+  AvatarFallback,
+} from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Spinner } from '@/components/ui/spinner';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { UserPanel } from '@/components/chat/user-panel';
 import { CallBar } from '@/components/chat/call-bar';
 import { GroupCreateDialog } from '@/components/chat/group-create-dialog';
@@ -139,26 +141,29 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
       {/* ── Header ── */}
       <div className={cn('flex h-13 shrink-0 items-center justify-between px-3', ui.header)}>
         <span className="text-[13px] font-bold tracking-tight text-(--foreground)">Groupes</span>
-        <Tooltip delay={0}>
-          <Button
-            variant="ghost"
-            isIconOnly
-            size="sm"
-            className="size-7 rounded-xl text-muted hover:text-(--foreground)"
-            onPress={() => setShowCreate(true)}
-          >
-            <PlusIcon size={15} />
-          </Button>
-          <Tooltip.Content>Nouveau groupe</Tooltip.Content>
+        <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="size-7 rounded-xl text-muted-foreground hover:text-foreground"
+              onClick={() => setShowCreate(true)}
+            >
+              <PlusIcon size={15} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Nouveau groupe</TooltipContent>
         </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* ── List ── */}
-      <ScrollShadow className="flex-1 overflow-y-auto">
+      <ScrollArea className="flex-1">
         <div className="space-y-0.5 p-2">
           {loading ? (
             <div className="flex justify-center py-8">
-              <Spinner size="sm" />
+              <Spinner className="size-4" />
             </div>
           ) : groups.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
@@ -172,7 +177,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
               <Button
                 size="sm"
                 variant="secondary"
-                onPress={() => setShowCreate(true)}
+                onClick={() => setShowCreate(true)}
                 className="gap-1.5"
               >
                 <PlusIcon size={13} />
@@ -198,10 +203,10 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                   {/* Avatar */}
                   {group.avatarUrl ? (
                     <Avatar className="size-9 shrink-0 rounded-xl">
-                      <Avatar.Image src={resolveMediaUrl(group.avatarUrl)} alt={group.name} />
-                      <Avatar.Fallback className="rounded-xl bg-indigo-500/20 text-[11px] font-bold text-indigo-400">
+                      <AvatarImage src={resolveMediaUrl(group.avatarUrl)} alt={group.name} />
+                      <AvatarFallback className="rounded-xl bg-indigo-500/20 text-[11px] font-bold text-indigo-400">
                         {group.name.charAt(0).toUpperCase()}
-                      </Avatar.Fallback>
+                      </AvatarFallback>
                     </Avatar>
                   ) : (
                     <div
@@ -226,16 +231,16 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
 
                   {/* Unread badge */}
                   {unread > 0 && (
-                    <Chip color="danger" size="sm" className="ml-auto h-5 min-w-5 shrink-0 text-[10px]">
+                    <Badge variant="destructive" className="ml-auto h-5 min-w-5 shrink-0 text-[10px]">
                       {unread}
-                    </Chip>
+                    </Badge>
                   )}
                 </button>
               );
             })
           )}
         </div>
-      </ScrollShadow>
+      </ScrollArea>
 
       {/* ── Footer ── */}
       <div className="shrink-0">

@@ -7,12 +7,14 @@ import { socketService } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 import {
   Avatar,
-  Button,
-  Chip,
-  InputGroup,
-  Modal,
-  ScrollShadow,
-} from '@heroui/react';
+  AvatarImage,
+  AvatarFallback,
+} from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Friend {
   id: string;
@@ -152,10 +154,11 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
   ];
 
   return (
-    <Modal isOpen={open} onOpenChange={onOpenChange}>
-      <Modal.Backdrop>
-      <Modal.Container size="lg">
-        <Modal.Dialog className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl border border-[var(--border)]/60 p-0 shadow-2xl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent showCloseButton={false} className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl p-0 shadow-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Créer un nouveau groupe</DialogTitle>
+          </DialogHeader>
           <div className="flex h-full">
           {/* ── Left navigation ── */}
           <aside className="flex w-52 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 py-6">
@@ -210,11 +213,10 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                     {selectedFriends.slice(0, 6).map((f) => (
                       <Avatar
                         key={f.id}
-                        size="sm"
-                        className="size-7 ring-2 ring-[var(--background)]"
+                        className="size-7 ring-2 ring-background"
                       >
-                        <Avatar.Image src={f.avatarUrl ? resolveMediaUrl(f.avatarUrl) : undefined} />
-                        <Avatar.Fallback>{f.displayName[0]}</Avatar.Fallback>
+                        <AvatarImage src={f.avatarUrl ? resolveMediaUrl(f.avatarUrl) : undefined} />
+                        <AvatarFallback>{f.displayName[0]}</AvatarFallback>
                       </Avatar>
                     ))}
                     {selectedFriends.length > 6 && (
@@ -261,40 +263,38 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {selectedFriends.map((f) => (
-                          <Chip
+                          <Badge
                             key={f.id}
-                            variant="soft"
-                            size="sm"
+                            variant="secondary"
+                            className="gap-1.5 pr-1"
                           >
-                            <Avatar
-                              size="sm"
-                              className="size-5"
-                            >
-                              <Avatar.Image src={f.avatarUrl ? resolveMediaUrl(f.avatarUrl) : undefined} />
-                              <Avatar.Fallback>{f.displayName[0]}</Avatar.Fallback>
+                            <Avatar className="size-5">
+                              <AvatarImage src={f.avatarUrl ? resolveMediaUrl(f.avatarUrl) : undefined} />
+                              <AvatarFallback>{f.displayName[0]}</AvatarFallback>
                             </Avatar>
-                            <Chip.Label>{f.displayName}</Chip.Label>
-                            <button type="button" className="ml-1 text-[var(--muted)] hover:text-[var(--foreground)]" onClick={() => removeFriend(f.id)}>
+                            {f.displayName}
+                            <button type="button" className="ml-1 text-muted-foreground hover:text-foreground" onClick={() => removeFriend(f.id)}>
                               <XIcon size={12} />
                             </button>
-                          </Chip>
+                          </Badge>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
-                    <InputGroup.Prefix><SearchIcon size={16} className="text-[var(--muted)]/60" /></InputGroup.Prefix>
-                    <InputGroup.Input
+                  <div className="relative">
+                    <SearchIcon size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+                    <Input
                       placeholder="Rechercher des amis..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       autoFocus
+                      className="pl-8"
                     />
-                  </InputGroup>
+                  </div>
 
                   <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/30 p-2">
-                    <ScrollShadow className="h-52 overflow-y-auto">
+                    <ScrollArea className="h-52">
                       <div className="space-y-0.5">
                         {isLoading ? (
                           <div className="flex items-center justify-center py-8">
@@ -318,8 +318,8 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                                 )}
                               >
                                 <Avatar size="sm">
-                                  <Avatar.Image src={friend.avatarUrl ? resolveMediaUrl(friend.avatarUrl) : undefined} />
-                                  <Avatar.Fallback>{friend.displayName?.[0] || '?'}</Avatar.Fallback>
+                                  <AvatarImage src={friend.avatarUrl ? resolveMediaUrl(friend.avatarUrl) : undefined} />
+                                  <AvatarFallback>{friend.displayName?.[0] || '?'}</AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-medium">{friend.displayName}</p>
@@ -340,13 +340,13 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                           })
                         )}
                       </div>
-                    </ScrollShadow>
+                    </ScrollArea>
                   </div>
 
                   <div className="flex justify-end">
                     <Button
-                      onPress={() => setStep('customize')}
-                      isDisabled={selectedIds.size < 1}
+                      onClick={() => setStep('customize')}
+                      disabled={selectedIds.size < 1}
                       className="gap-2 rounded-xl"
                     >
                       Suivant
@@ -372,8 +372,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                     </p>
                     <div className="space-y-1">
                       <span className="text-xs font-medium">Nom du groupe</span>
-                      <InputGroup className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60">
-                        <InputGroup.Input
+                      <Input
                           placeholder={
                             selectedFriends.map((f) => f.displayName).slice(0, 3).join(', ') +
                             (selectedFriends.length > 3 ? '...' : '')
@@ -382,7 +381,6 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                           onChange={(e) => setGroupName(e.target.value)}
                           autoFocus
                         />
-                      </InputGroup>
                       <p className="text-[11px] text-[var(--muted)]/70">Laissez vide pour utiliser les noms des participants</p>
                     </div>
                   </div>
@@ -393,31 +391,28 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedFriends.map((f) => (
-                        <Chip
+                        <Badge
                           key={f.id}
-                          variant="soft"
-                          size="sm"
+                          variant="secondary"
+                          className="gap-1.5"
                         >
-                          <Avatar
-                            size="sm"
-                            className="size-5"
-                          >
-                            <Avatar.Image src={f.avatarUrl ? resolveMediaUrl(f.avatarUrl) : undefined} />
-                            <Avatar.Fallback>{f.displayName[0]}</Avatar.Fallback>
+                          <Avatar className="size-5">
+                            <AvatarImage src={f.avatarUrl ? resolveMediaUrl(f.avatarUrl) : undefined} />
+                            <AvatarFallback>{f.displayName[0]}</AvatarFallback>
                           </Avatar>
-                          <Chip.Label>{f.displayName}</Chip.Label>
-                        </Chip>
+                          {f.displayName}
+                        </Badge>
                       ))}
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <Button variant="ghost" onPress={() => setStep('select')} className="rounded-xl">
+                    <Button variant="ghost" onClick={() => setStep('select')} className="rounded-xl">
                       Retour
                     </Button>
                     <Button
-                      onPress={handleCreate}
-                      isDisabled={isCreating}
+                      onClick={handleCreate}
+                      disabled={isCreating}
                       className="gap-2 rounded-xl"
                     >
                       <UsersRoundIcon size={16} />
@@ -429,9 +424,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
             </div>
             </div>
           </div>
-        </Modal.Dialog>
-      </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 }

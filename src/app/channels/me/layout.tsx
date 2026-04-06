@@ -17,7 +17,6 @@ import { MemberList } from '@/components/chat/member-list';
 import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
 import { GroupChatArea } from '@/components/chat/group-chat-area';
 import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
-import { SettingsDialog } from '@/components/chat/settings-dialog';
 
 /**
  * Layout partagé pour /channels/me et /channels/me/[recipientId].
@@ -29,7 +28,7 @@ function ResizeHandle({ onMouseDown, isResizing }: { onMouseDown: (e: React.Mous
   return (
     <div
       onMouseDown={onMouseDown}
-      className={`group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-transparent transition-colors hover:bg-[var(--accent)]/20 active:bg-[var(--accent)]/30 ${isResizing ? 'bg-[var(--accent)]/30' : ''}`}
+      className={`group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-[var(--surface)] transition-colors hover:bg-[var(--accent)]/20 active:bg-[var(--accent)]/30 ${isResizing ? 'bg-[var(--accent)]/30' : ''}`}
     >
       <div className="h-8 w-0.5 rounded-full bg-[var(--border)] transition-all group-hover:h-12 group-hover:bg-[var(--accent)]/60 group-active:bg-[var(--accent)]" />
     </div>
@@ -333,9 +332,6 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── MOBILE BOTTOM NAV ── */}
       {!recipientId && <MobileBottomNav />}
-
-      {/* ── SETTINGS DIALOG ── */}
-      <SettingsDialog open={showSettings} onOpenChange={(open) => { if (!open) closeSettings(); }} />
     </div>
   );
 }

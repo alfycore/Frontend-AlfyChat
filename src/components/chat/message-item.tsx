@@ -4,15 +4,22 @@ import { memo, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon,
 } from '@/components/icons';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
-  Avatar, Button, Chip, Dropdown, InputGroup, Tooltip,
-} from '@heroui/react';
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider,
+} from '@/components/ui/tooltip';
 import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { InviteEmbed, extractInviteCodes } from '@/components/chat/invite-embed';
 import { Twemoji } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
+import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { cn } from '@/lib/utils';
 
 // ── Attachment parser ────────────────────────────────────────────────────────
@@ -91,8 +98,8 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
             >
               <span className="text-xl leading-none">{icon}</span>
               <div className="min-w-0">
-                <p className="max-w-[180px] truncate text-[12px] font-medium text-[var(--foreground)]/85">{f.name}</p>
-                <p className="text-[10px] uppercase text-[var(--muted)]/60">{ext || 'fichier'}{canPreview ? ' · Aperçu disponible' : ''}</p>
+                <p className="max-w-[180px] truncate text-[12px] font-medium text-foreground/90">{f.name}</p>
+                <p className="text-[10px] uppercase text-muted-foreground">{ext || 'fichier'}{canPreview ? ' · Aperçu disponible' : ''}</p>
               </div>
             </button>
             {/* Download button */}
@@ -262,8 +269,10 @@ export const MessageItem = memo(function MessageItem({
   isGrouped = false,
   onSetEditInput, onReply, onCopy, onReaction, onRemoveReaction,
   onStartEdit, onSaveEdit, onCancelEdit, onDelete,
-  highlight = '',
+  highlight,
 }: MessageItemProps) {
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
   const isMe = !!currentUser && message.authorId === currentUser.id;
   const displayName = isMe
     ? currentUser!.displayName || currentUser!.username
@@ -275,9 +284,9 @@ export const MessageItem = memo(function MessageItem({
     return (
       <div className="flex items-center justify-center gap-3 px-4 py-2">
         <div className="h-px flex-1 bg-[var(--border)]/15" />
-        <span className="flex items-center gap-1.5 rounded-full border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-3 py-1 text-[10px] italic text-[var(--muted)]/60">
+        <span className="flex items-center gap-1.5 rounded-full border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-3 py-1 text-[10px] italic text-muted-foreground">
           <MarkdownRenderer content={message.content} />
-          <span className="text-[9px] tabular-nums text-[var(--muted)]/40">{formatTime(message.createdAt)}</span>
+          <span className="text-[9px] tabular-nums text-muted-foreground/70">{formatTime(message.createdAt)}</span>
         </span>
         <div className="h-px flex-1 bg-[var(--border)]/15" />
       </div>
@@ -291,22 +300,26 @@ export const MessageItem = memo(function MessageItem({
     <div
       data-message-id={message.id}
       className={cn(
-        'group relative px-2 md:px-3',
+        `group relative ${d.msgPx}`,
         isGrouped ? 'py-[1px]' : 'py-[1px]',
         message.pending && 'opacity-60',
       )}>
       {/* ── Toolbar flottant ── */}
       <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/80 px-1 py-0.5 opacity-0 shadow-lg shadow-black/10 transition-all duration-150 group-hover:opacity-100">
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly size="sm" variant="ghost"
-            className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
-            onPress={() => onReply(message.id, message.content, displayName || 'Utilisateur')}
-          >
-            <ReplyIcon size={14} />
-          </Button>
-          <Tooltip.Content>Répondre</Tooltip.Content>
-        </Tooltip>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon-sm" variant="ghost"
+                className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
+                onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}
+              >
+                <ReplyIcon size={14} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Répondre</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         <EmojiPicker onSelect={(emoji) => onReaction(message.id, emoji)}>
           <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
@@ -314,57 +327,46 @@ export const MessageItem = memo(function MessageItem({
           </div>
         </EmojiPicker>
 
-        <Dropdown>
-          <Dropdown.Trigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
               <MoreHorizontalIcon size={14} />
             </div>
-          </Dropdown.Trigger>
-          <Dropdown.Popover className="min-w-44">
-            <Dropdown.Menu
-              onAction={(key) => {
-                switch (key) {
-                  case 'reply': onReply(message.id, message.content, displayName || 'Utilisateur'); break;
-                  case 'copy': onCopy(message.content); break;
-                  case 'edit': onStartEdit(message.id, message.content); break;
-                  case 'delete': onDelete(message.id); break;
-                }
-              }}
-            >
-              <Dropdown.Item id="reply" textValue="Répondre"><ReplyIcon size={14} /><span>Répondre</span></Dropdown.Item>
-              <Dropdown.Item id="copy" textValue="Copier"><CopyIcon size={14} /><span>Copier le texte</span></Dropdown.Item>
-              <Dropdown.Item id="pin" textValue="Épingler"><PinIcon size={14} /><span>Épingler</span></Dropdown.Item>
-              {isMe && <Dropdown.Item id="edit" textValue="Modifier"><PencilIcon size={14} /><span>Modifier</span></Dropdown.Item>}
-              {isMe && <Dropdown.Item id="delete" textValue="Supprimer" variant="danger"><Trash2Icon size={14} /><span>Supprimer</span></Dropdown.Item>}
-            </Dropdown.Menu>
-          </Dropdown.Popover>
-        </Dropdown>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="min-w-44">
+            <DropdownMenuItem onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}><ReplyIcon size={14} /><span>Répondre</span></DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onCopy(message.content)}><CopyIcon size={14} /><span>Copier le texte</span></DropdownMenuItem>
+            <DropdownMenuItem><PinIcon size={14} /><span>Épingler</span></DropdownMenuItem>
+            {isMe && <DropdownMenuItem onClick={() => onStartEdit(message.id, message.content)}><PencilIcon size={14} /><span>Modifier</span></DropdownMenuItem>}
+            {isMe && <DropdownMenuItem className="text-red-500" onClick={() => onDelete(message.id)}><Trash2Icon size={14} /><span>Supprimer</span></DropdownMenuItem>}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* ── Contenu ── */}
-      <div className="rounded-xl px-3 py-1.5 transition-colors duration-100 hover:bg-[var(--surface-secondary)]/20">
-        <div className="flex items-start gap-2.5 md:gap-3">
+      <div className={`rounded-xl ${d.msgPx} ${d.msgPy} transition-colors duration-100 hover:bg-[var(--surface-secondary)]/20`}>
+        <div className={`flex items-start ${d.msgGap}`}>
 
           {/* ── Avatar ou indicateur d'heure (groupé) ── */}
           {isGrouped ? (
-            <div className="flex w-8 shrink-0 items-center justify-end md:w-9">
-              <span className="select-none tabular-nums text-[10px] text-[var(--muted)]/0 transition-colors duration-100 group-hover:text-[var(--muted)]/40">
+            <div className={`flex ${d.msgAvatar} shrink-0 items-center justify-end`}>
+              <span className={`select-none tabular-nums ${d.msgTime} text-transparent transition-colors duration-100 group-hover:text-muted-foreground/70`}>
                 {shortTime}
               </span>
             </div>
           ) : (
             <UserProfilePopover userId={message.authorId}>
               <button type="button" className="mt-0.5 shrink-0">
-                <Avatar className="size-8 cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm transition-all duration-150 hover:scale-105 hover:ring-[var(--accent)]/30 md:size-9">
-                  <Avatar.Image src={resolveMediaUrl(isMe ? currentUser?.avatarUrl : message.sender?.avatarUrl)} alt={displayName} />
-                  <Avatar.Fallback className={cn(
+                <Avatar className={`${d.msgAvatar} cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm transition-all duration-150 hover:scale-105 hover:ring-[var(--accent)]/30`}>
+                  <AvatarImage src={resolveMediaUrl(isMe ? currentUser?.avatarUrl : message.sender?.avatarUrl)} alt={displayName} />
+                  <AvatarFallback className={cn(
                     'font-bold text-sm',
                     isMe
                       ? 'bg-[var(--accent)] text-[var(--accent-foreground)]'
                       : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white',
                   )}>
                     {initial}
-                  </Avatar.Fallback>
+                  </AvatarFallback>
                 </Avatar>
               </button>
             </UserProfilePopover>
@@ -382,7 +384,7 @@ export const MessageItem = memo(function MessageItem({
                 <div className="mb-1.5 flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 bg-[var(--surface-secondary)]/30 px-2.5 py-1 text-[11px]">
                   <ReplyIcon size={11} className="shrink-0 text-[var(--accent)]/60" />
                   <span className="font-semibold text-[var(--accent)]/80">{repliedName}</span>
-                  <span className="max-w-64 truncate text-[var(--muted)]/60">{replyMessage.content}</span>
+                  <span className="max-w-64 truncate text-muted-foreground">{replyMessage.content}</span>
                 </div>
               );
             })()}
@@ -390,13 +392,11 @@ export const MessageItem = memo(function MessageItem({
             {/* Auteur + horodatage — masqué si groupé */}
             {!isGrouped && (
               <div className="mb-0.5 flex items-center gap-2">
-                <span className="text-[13px] font-semibold text-[var(--foreground)]">{displayName}</span>
+                <span className={`${d.msgName} font-semibold text-[var(--foreground)]`}>{displayName}</span>
 
                 {message.sender?.isBot && (
-                  <Chip
-                    size="sm"
-                    variant={message.sender.isVerifiedBot ? 'soft' : 'secondary'}
-                    color={message.sender.isVerifiedBot ? 'accent' : 'default'}
+                  <Badge
+                    variant={message.sender.isVerifiedBot ? 'secondary' : 'outline'}
                     className="h-4 px-1.5 text-[8px] font-bold uppercase"
                   >
                     {message.sender.isVerifiedBot && (
@@ -405,14 +405,14 @@ export const MessageItem = memo(function MessageItem({
                       </svg>
                     )}
                     BOT
-                  </Chip>
+                  </Badge>
                 )}
 
-                <span className="text-[10px] tabular-nums text-[var(--muted)]/45 md:text-[11px]">
+                <span className={`${d.msgTime} tabular-nums text-muted-foreground/70`}>
                   {formatTime(message.createdAt)}
                 </span>
-                {message.pending && <ClockIcon size={11} className="text-[var(--muted)]/30" />}
-                {!!message.isEdited && <span className="text-[10px] italic text-[var(--muted)]/40">(modifié)</span>}
+                {message.pending && <ClockIcon size={11} className="text-muted-foreground/50" />}
+                {!!message.isEdited && <span className="text-[10px] italic text-muted-foreground/70">(modifié)</span>}
               </div>
             )}
 
@@ -436,14 +436,14 @@ export const MessageItem = memo(function MessageItem({
                   rows={1}
                   aria-label="Modifier le message"
                   autoFocus
-                  className="w-full resize-none overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 px-3 py-2 text-sm text-[var(--foreground)] shadow-sm outline-none placeholder:text-[var(--muted)]/50 focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20"
+                  className="w-full resize-none overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground/60 focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20"
                 />
-                <p className="text-[10px] text-[var(--muted)]/40">Entrée pour sauvegarder · Échap pour annuler</p>
+                <p className="text-[10px] text-muted-foreground/70">Entrée pour sauvegarder · Échap pour annuler</p>
               </div>
             ) : (() => {
               const { textContent, images, files } = parseAttachments(message.content ?? '');
               return (
-                <div className="mt-0.5 text-[13px] leading-relaxed text-[var(--foreground)]/90 md:text-sm">
+                <div className="mt-0.5 text-[13px] leading-relaxed text-foreground md:text-sm">
                   {textContent && (
                     highlight
                       ? <HighlightText text={textContent} query={highlight} />
@@ -467,7 +467,7 @@ export const MessageItem = memo(function MessageItem({
                       key={i}
                       size="sm"
                       variant="ghost"
-                      onPress={() => hasReacted ? onRemoveReaction(message.id, reaction.emoji) : onReaction(message.id, reaction.emoji)}
+                      onClick={() => hasReacted ? onRemoveReaction(message.id, reaction.emoji) : onReaction(message.id, reaction.emoji)}
                       className={cn(
                         'inline-flex h-auto items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-all duration-150',
                         hasReacted

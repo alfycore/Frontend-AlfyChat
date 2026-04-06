@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Avatar, Button } from '@heroui/react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { UsersIcon, Loader2Icon, ArrowRightIcon, LogInIcon, ShieldCheckIcon } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -122,10 +123,10 @@ export function InviteEmbed({ code }: InviteEmbedProps) {
         {/* Icon overlapping banner */}
         <div className="-mt-5 mb-2">
           <Avatar className="size-10 rounded-lg ring-2 ring-[var(--surface-secondary)]">
-            <Avatar.Image src={resolveMediaUrl(server?.iconUrl)} className="object-cover" />
-            <Avatar.Fallback className="rounded-lg text-sm font-bold">
+            <AvatarImage src={resolveMediaUrl(server?.iconUrl)} className="object-cover" />
+            <AvatarFallback className="rounded-lg text-sm font-bold">
               {server?.name?.substring(0, 2).toUpperCase() ?? '??'}
-            </Avatar.Fallback>
+            </AvatarFallback>
           </Avatar>
         </div>
 
@@ -156,8 +157,8 @@ export function InviteEmbed({ code }: InviteEmbedProps) {
               'shrink-0 gap-1.5 rounded-lg text-[12px] font-semibold transition-all',
               joined && 'bg-success/20 text-success',
             )}
-            onPress={joined ? undefined : handleJoin}
-            isDisabled={isJoining}
+            onClick={joined ? undefined : handleJoin}
+            disabled={isJoining}
           >
             {joined ? (
               'Rejoint ✓'

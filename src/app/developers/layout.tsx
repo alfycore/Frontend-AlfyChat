@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -9,7 +9,8 @@ import {
   MessageCircleIcon, UserPlusIcon, PlusIcon,
 } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
-import { Button, Separator } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -71,12 +72,12 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
   return (
     <div data-no-wallpaper className="flex min-h-screen text-foreground">
       {/* ── Sidebar ── */}
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border/40 bg-[var(--bg-solid)] md:flex overflow-y-auto">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border/40 bg-background md:flex overflow-y-auto">
         {/* Logo */}
         <div className="flex items-center gap-2 border-b border-border/60 px-4 py-4 shrink-0">
           <Link href="/" className="flex items-center gap-2 no-underline">
             <img src="/logo/Alfychat.svg" alt="AlfyChat" width={20} height={20} />
-            <span className="font-[family-name:var(--font-krona)] text-xs text-foreground">AlfyChat</span>
+            <span className="font-(family-name:--font-krona) text-xs text-foreground">AlfyChat</span>
           </Link>
           <Separator orientation="vertical" className="mx-1 h-4" />
           <span className="text-[11px] font-bold text-accent">Devs</span>
@@ -86,7 +87,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
         <nav className="flex-1 px-2 py-3">
           {NAV_SECTIONS.map((section, si) => (
             <div key={section.label} className={cn('mb-5', si > 0 && 'mt-1')}>
-              <p className="mb-1.5 px-2 text-[9px] font-bold uppercase tracking-widest text-muted/40">
+              <p className="mb-1.5 px-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40">
                 {section.label}
               </p>
               <div className="space-y-0.5">
@@ -100,7 +101,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
                         'flex items-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all no-underline',
                         active
                           ? 'bg-accent/12 text-accent'
-                          : 'text-muted/80 hover:bg-surface hover:text-foreground',
+                          : 'text-muted-foreground/80 hover:bg-surface hover:text-foreground',
                       )}
                     >
                       <item.icon size={14} className="shrink-0" />
@@ -118,8 +119,8 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
           <Button
             size="sm"
             variant="ghost"
-            className="w-full justify-start gap-2 text-xs text-muted"
-            onPress={() => router.push('/channels/me')}
+            className="w-full justify-start gap-2 text-xs text-muted-foreground"
+            onClick={() => router.push('/channels/me')}
           >
             <ArrowLeftIcon size={13} />
             Retour à l&apos;app
@@ -129,7 +130,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
 
       {/* ── Mobile header ── */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border/40 bg-[var(--bg-solid)] px-4 py-3 md:hidden">
+        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border/40 bg-background px-4 py-3 md:hidden">
           <Link href="/" className="flex items-center gap-1.5 no-underline">
             <img src="/logo/Alfychat.svg" alt="AlfyChat" width={18} height={18} />
           </Link>
@@ -142,7 +143,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
                   'flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-medium no-underline',
                   pathname === item.href || pathname.startsWith(item.href)
                     ? 'bg-accent/12 text-accent'
-                    : 'text-muted hover:text-foreground',
+                    : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 <item.icon size={12} />
@@ -150,7 +151,7 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
               </Link>
             ))}
           </div>
-          <Button size="sm" variant="ghost" isIconOnly onPress={() => router.push('/channels/me')}>
+          <Button size="icon-sm" variant="ghost" onClick={() => router.push('/channels/me')}>
             <ArrowLeftIcon size={14} />
           </Button>
         </header>

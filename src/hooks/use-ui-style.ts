@@ -18,7 +18,7 @@ export function useUIStyle() {
     // ── Sidebar / panel background ─────────────────────────────────────────
     sidebarBg: g
       ? 'bg-[var(--background)]/40'
-      : 'bg-[var(--background)]',
+      : 'bg-[var(--surface)]',
 
     // ── Header bars (inside panels) ────────────────────────────────────────
     header: g

@@ -104,6 +104,14 @@ class ApiService {
     options: RequestInit = {},
     _skipRefresh = false
   ): Promise<ApiResponse<T>> {
+    // Si un refresh est en cours, attendre qu'il finisse avant d'envoyer la requête
+    if (this.isRefreshing && this.refreshPromise && !_skipRefresh && !endpoint.includes('/api/auth/')) {
+      const refreshed = await this.refreshPromise;
+      if (refreshed) {
+        return this.request<T>(endpoint, options, true);
+      }
+    }
+
     const token = this.getToken();
     
     const headers: HeadersInit = {
@@ -398,6 +406,15 @@ class ApiService {
     if (before) params.append('before', before);
     
     return this.request(`/api/messages?${params.toString()}`);
+  }
+
+  async searchMessages(conversationId: string, query: string, limit = 30, before?: string) {
+    const params = new URLSearchParams();
+    params.append('conversationId', conversationId);
+    params.append('q', query);
+    params.append('limit', limit.toString());
+    if (before) params.append('before', before);
+    return this.request(`/api/messages/search?${params.toString()}`);
   }
 
   async sendMessage(data: {

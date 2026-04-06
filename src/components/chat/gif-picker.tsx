@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchIcon, Loader2Icon } from '@/components/icons';
-import { InputGroup, Popover, ScrollShadow, Tabs } from '@heroui/react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
 
 // Clés API publiques (rate-limited, usage frontend uniquement)
 const TENOR_API_KEY = 'AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ';
@@ -150,30 +153,24 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
   };
 
   return (
-    <Popover isOpen={open} onOpenChange={setOpen}>
-      <Popover.Trigger>{children}</Popover.Trigger>
-      <Popover.Content placement="top end" className="w-96 overflow-hidden rounded-xl border-[var(--border)]/60 bg-[var(--surface)]/95 p-3 shadow-2xl">
-        <Tabs
-          selectedKey={provider}
-          onSelectionChange={(key) => setProvider(key as 'tenor' | 'giphy')}
-        >
-          <Tabs.List>
-            <Tabs.Tab id="tenor">Tenor</Tabs.Tab>
-            <Tabs.Tab id="giphy">Giphy</Tabs.Tab>
-          </Tabs.List>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent side="top" align="end" className="w-96 overflow-hidden rounded-xl p-3 shadow-2xl">
+        <Tabs value={provider} onValueChange={(val) => setProvider(val as 'tenor' | 'giphy')}>
+          <TabsList>
+            <TabsTrigger value="tenor">Tenor</TabsTrigger>
+            <TabsTrigger value="giphy">Giphy</TabsTrigger>
+          </TabsList>
         </Tabs>
 
         <div className="relative my-2">
-          <InputGroup className="rounded-lg border-[var(--border)]/60 bg-[var(--background)]/60">
-            <InputGroup.Prefix>
-              <SearchIcon size={16} className="text-[var(--muted)]/60" />
-            </InputGroup.Prefix>
-            <InputGroup.Input
-              placeholder="Rechercher un GIF..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </InputGroup>
+          <SearchIcon size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+          <Input
+            placeholder="Rechercher un GIF..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8"
+          />
         </div>
 
         <GifGrid
@@ -187,7 +184,7 @@ export function GifPicker({ onSelect, children }: GifPickerProps) {
         <p className="mt-1 text-center text-[10px] text-[var(--muted)]/50">
           Powered by {provider === 'tenor' ? 'Tenor' : 'GIPHY'}
         </p>
-      </Popover.Content>
+      </PopoverContent>
     </Popover>
   );
 }
@@ -241,7 +238,7 @@ function GifGrid({
   }
 
   return (
-    <ScrollShadow className="h-60">
+    <ScrollArea className="h-60">
       <div className="columns-2 gap-1">
         {gifs.map((gif) => (
           <button
@@ -265,6 +262,6 @@ function GifGrid({
           <Loader2Icon size={18} className="animate-spin text-[var(--muted)]" />
         )}
       </div>
-    </ScrollShadow>
+    </ScrollArea>
   );
 }

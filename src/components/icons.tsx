@@ -45,7 +45,7 @@ export const BubbleChatIcon = fi('comment');
 export const SentIcon = fi('paper-plane');
 export const SendIcon = fi('paper-plane');
 export const ReplyIcon = fi('reply-all');
-export const SmileIcon = fi('smile');
+export const SmileIcon = fi('smile-beam');
 
 // ── Mail ──
 export const MailIcon = fi('envelope');
@@ -260,7 +260,7 @@ export const IntroductionIcon = fi('users');
 export const MediaIcon = fi('photo-video');
 export const DirectoryIcon = fi('compass-alt');
 export const ContentIcon = fi('magic-wand');
-export const LayoutIcon = fi('columns');
+export const LayoutIcon = fi('columns-3');
 
 // ── Zoom ──
 export const ZoomInIcon = fi('zoom-in');

@@ -19,28 +19,40 @@ import {
   ServerIcon,
   SettingsIcon,
 } from '@/components/icons';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import {
-  Avatar,
-  Button,
-  Chip,
-  Dropdown,
-  InputGroup,
-  Popover,
-  ScrollShadow,
-  Separator,
-  Skeleton,
-  Tabs,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
   Tooltip,
-} from '@heroui/react';
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useAuth } from '@/hooks/use-auth';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { notify } from '@/hooks/use-notification';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { useTranslation } from '@/components/locale-provider';
+
+/* --- Types ---------------------------------------------------------------- */
 
 interface Friend {
   id: string;
@@ -70,7 +82,7 @@ interface BlockedUser {
 type DisplayField = 'customStatus' | 'username' | 'status';
 
 const DISPLAY_FIELD_LABELS: Record<DisplayField, string> = {
-  customStatus: 'Statut personnalisé',
+  customStatus: 'Statut personnalis\u00e9',
   username: "Nom d'utilisateur",
   status: 'Statut en ligne',
 };
@@ -79,13 +91,15 @@ interface FriendsPanelProps {
   onOpenDM?: (recipientId: string, recipientName: string) => void;
 }
 
-const statusConfig: Record<string, { color: string }> = {
-  online:    { color: 'bg-green-500' },
-  idle:      { color: 'bg-yellow-500' },
-  dnd:       { color: 'bg-red-500' },
-  invisible: { color: 'bg-gray-500' },
-  offline:   { color: 'bg-gray-500' },
+const STATUS_DOT: Record<string, string> = {
+  online: 'bg-green-500',
+  idle: 'bg-orange-500',
+  dnd: 'bg-red-500',
+  invisible: 'bg-muted-foreground/40',
+  offline: 'bg-muted-foreground/40',
 };
+
+/* --- Main component ------------------------------------------------------- */
 
 export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const { isMobile, openSidebar } = useMobileNav();
@@ -93,8 +107,10 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const prevUserIdRef = useRef<string | null>(null);
   const ui = useUIStyle();
   const { t, tx } = useTranslation();
+
   const tabsListRef = useRef<HTMLDivElement>(null);
   const [compactTabs, setCompactTabs] = useState(false);
+
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<{ received: FriendRequest[]; sent: FriendRequest[] }>({
     received: [],
@@ -105,12 +121,16 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const [addFriendInput, setAddFriendInput] = useState('');
   const [addFriendLoading, setAddFriendLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('friends');
+
   const [displayFields, setDisplayFields] = useState<DisplayField[]>(() => {
     if (typeof window === 'undefined') return ['customStatus'];
     try {
       const stored = localStorage.getItem('alfychat_friend_row_fields');
       return stored ? (JSON.parse(stored) as DisplayField[]) : ['customStatus'];
-    } catch { return ['customStatus']; }
+    } catch {
+      return ['customStatus'];
+    }
   });
 
   const toggleDisplayField = (field: DisplayField) => {
@@ -121,30 +141,35 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       } else if (prev.length < 2) {
         next = [...prev, field];
       } else {
-        return prev; // max 2 atteint
+        return prev;
       }
       localStorage.setItem('alfychat_friend_row_fields', JSON.stringify(next));
       return next;
     });
   };
 
+  /* -- Compact tabs observer -- */
   useEffect(() => {
     const el = tabsListRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) =>
-      setCompactTabs(entry.contentRect.width < 420)
+      setCompactTabs(entry.contentRect.width < 420),
     );
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
+  /* -- Socket listeners -- */
   useEffect(() => {
     loadFriends();
     loadRequests();
     loadBlockedUsers();
 
-    const handleFriendRequest = () => { loadRequests(); };
-    const handleFriendAccepted = () => { loadFriends(); loadRequests(); };
+    const handleFriendRequest = () => loadRequests();
+    const handleFriendAccepted = () => {
+      loadFriends();
+      loadRequests();
+    };
     const handlePresenceUpdate = (data: unknown) => {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
       const p = payload as { userId?: string; status?: string; customStatus?: string | null };
@@ -152,9 +177,14 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         setFriends((prev) =>
           prev.map((f) =>
             f.id === p.userId
-              ? { ...f, status: p.status as Friend['status'], customStatus: p.customStatus ?? f.customStatus, isOnline: p.status !== 'offline' && p.status !== 'invisible' }
-              : f
-          )
+              ? {
+                  ...f,
+                  status: p.status as Friend['status'],
+                  customStatus: p.customStatus ?? f.customStatus,
+                  isOnline: p.status !== 'offline' && p.status !== 'invisible',
+                }
+              : f,
+          ),
         );
       } else {
         loadFriends();
@@ -171,12 +201,18 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       if (!p?.userId) return;
       setFriends((prev) =>
         prev.map((f) =>
-          f.id === p.userId ? { ...f, ...(p.displayName && { displayName: p.displayName }), ...(p.avatarUrl !== undefined && { avatarUrl: p.avatarUrl }) } : f
-        )
+          f.id === p.userId
+            ? {
+                ...f,
+                ...(p.displayName && { displayName: p.displayName }),
+                ...(p.avatarUrl !== undefined && { avatarUrl: p.avatarUrl }),
+              }
+            : f,
+        ),
       );
     };
-
     const handleReconnect = () => loadFriends();
+
     socketService.onFriendRequest(handleFriendRequest);
     socketService.onFriendAccepted(handleFriendAccepted);
     socketService.onPresenceUpdate(handlePresenceUpdate);
@@ -202,6 +238,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     }
   }, [currentUser?.id]);
 
+  /* -- Data loaders -- */
+
   const loadBlockedUsers = async () => {
     try {
       const response = await api.getBlockedUsers();
@@ -216,25 +254,24 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       const response = await api.getFriends();
       if (response.success && response.data) {
         const data = response.data as Friend[];
-
-        // Afficher immédiatement avec les statuts DB (pas de délai)
         setFriends(data);
 
-        // Puis mettre à jour la présence Redis en arrière-plan silencieusement
         const friendIds = data.map((f) => f.id).filter(Boolean);
         if (friendIds.length > 0) {
           socketService.requestBulkPresence(friendIds, (presence) => {
             if (presence.length === 0) return;
-            setFriends((prev) => prev.map((f) => {
-              const p = presence.find((x) => x.userId === f.id);
-              if (!p) return f;
-              return {
-                ...f,
-                status: p.status as Friend['status'],
-                customStatus: p.customStatus ?? f.customStatus,
-                isOnline: p.status !== 'offline' && p.status !== 'invisible',
-              };
-            }));
+            setFriends((prev) =>
+              prev.map((f) => {
+                const p = presence.find((x) => x.userId === f.id);
+                if (!p) return f;
+                return {
+                  ...f,
+                  status: p.status as Friend['status'],
+                  customStatus: p.customStatus ?? f.customStatus,
+                  isOnline: p.status !== 'offline' && p.status !== 'invisible',
+                };
+              }),
+            );
           });
         }
       }
@@ -251,6 +288,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     }
   };
 
+  /* -- Actions -- */
+
   const handleAddFriend = async (e: React.FormEvent) => {
     e.preventDefault();
     const username = addFriendInput.trim();
@@ -261,7 +300,6 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     }
     setAddFriendLoading(true);
     try {
-      // Step 1: look up the user by exact username
       const searchRes = await api.searchUsers(username);
       const list: any[] = Array.isArray((searchRes.data as any)?.users)
         ? (searchRes.data as any).users
@@ -269,13 +307,12 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           ? (searchRes.data as any[])
           : [];
       const found = list.find(
-        (u: any) => (u.username ?? '').toLowerCase() === username.toLowerCase()
+        (u: any) => (u.username ?? '').toLowerCase() === username.toLowerCase(),
       );
       if (!found) {
-        notify.error(t.common.error, `Aucun utilisateur trouvé avec le pseudo « ${username} »`);
+        notify.error(t.common.error, `Aucun utilisateur trouv\u00e9 avec le pseudo \u00ab ${username} \u00bb`);
         return;
       }
-      // Step 2: send request with actual user ID
       const response = await api.sendFriendRequest(found.id);
       if (response.success) {
         setAddFriendInput('');
@@ -294,8 +331,14 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const handleAcceptRequest = async (requestId: string) => {
     try {
       const response = await api.acceptFriendRequest(requestId);
-      if (response.success) { loadFriends(); loadRequests(); notify.success(t.friends.friendAdded, t.friends.friendAccepted); }
-    } catch { notify.error(t.common.error, t.friends.acceptError); }
+      if (response.success) {
+        loadFriends();
+        loadRequests();
+        notify.success(t.friends.friendAdded, t.friends.friendAccepted);
+      }
+    } catch {
+      notify.error(t.common.error, t.friends.acceptError);
+    }
   };
 
   const handleDeclineRequest = async (requestId: string) => {
@@ -311,8 +354,12 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       if (response.success) {
         setFriends((prev) => prev.filter((f) => f.id !== friendId));
         notify.success(t.friends.friendRemoved, t.friends.friendRemoveMsg);
-      } else notify.error(t.common.error, t.friends.removeError);
-    } catch { notify.error(t.common.error, t.friends.removeError); }
+      } else {
+        notify.error(t.common.error, t.friends.removeError);
+      }
+    } catch {
+      notify.error(t.common.error, t.friends.removeError);
+    }
   };
 
   const handleBlockUser = async (userId: string, username: string) => {
@@ -322,8 +369,12 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         setFriends((prev) => prev.filter((f) => f.id !== userId));
         loadBlockedUsers();
         notify.success(t.friends.userBlocked, tx(t.friends.userBlockedMsg, { username }));
-      } else notify.error(t.common.error, t.friends.blockError);
-    } catch { notify.error(t.common.error, t.friends.blockError); }
+      } else {
+        notify.error(t.common.error, t.friends.blockError);
+      }
+    } catch {
+      notify.error(t.common.error, t.friends.blockError);
+    }
   };
 
   const handleUnblockUser = async (userId: string, username: string) => {
@@ -332,56 +383,67 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       if (response.success) {
         setBlockedUsers((prev) => prev.filter((u) => u.id !== userId));
         notify.success(t.friends.unblocked, tx(t.friends.unblockedMsg, { username }));
-      } else notify.error(t.common.error, t.friends.unblockError);
-    } catch { notify.error(t.common.error, t.friends.unblockError); }
+      } else {
+        notify.error(t.common.error, t.friends.unblockError);
+      }
+    } catch {
+      notify.error(t.common.error, t.friends.unblockError);
+    }
   };
+
+  /* -- Derived data -- */
 
   const filteredFriends = friends.filter(
     (f) =>
       f.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.username.toLowerCase().includes(searchQuery.toLowerCase())
+      f.username.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+  const onlineFriends = filteredFriends.filter(
+    (f) => f.status === 'online' || f.status === 'idle' || f.status === 'dnd',
+  );
+  const offlineFriends = filteredFriends.filter(
+    (f) => f.status !== 'online' && f.status !== 'idle' && f.status !== 'dnd',
   );
 
-  const onlineFriends = filteredFriends.filter((f) => f.status === 'online' || f.status === 'idle' || f.status === 'dnd');
-  const offlineFriends = filteredFriends.filter((f) => f.status !== 'online' && f.status !== 'idle' && f.status !== 'dnd');
+  /* -- Loading skeleton -- */
 
-  // ── Loading ──────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex h-full flex-1 flex-row">
         <div className="flex flex-1 flex-col">
-          <div className="flex h-14 items-center gap-3 border-b border-white/10 px-6">
-            <Skeleton className="size-9 rounded-2xl" animationType="shimmer" />
-            <Skeleton className="h-4 w-24" animationType="shimmer" />
+          <div className={`flex h-14 items-center gap-3 px-4 md:px-6 ${ui.header}`}>
+            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="h-4 w-24 rounded-md" />
           </div>
-          <div className="flex gap-2 px-6 pt-4">
+          <div className="flex gap-2 px-4 pt-4 md:px-6">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-8 w-20 rounded-xl" animationType="shimmer" />
+              <Skeleton key={i} className="h-8 w-20 rounded-lg" />
             ))}
           </div>
-          <div className="space-y-2 p-6">
-            <Skeleton className="h-10 w-full rounded-xl" animationType="shimmer" />
+          <div className="space-y-1.5 px-4 pt-4 md:px-6">
+            <Skeleton className="h-9 w-full rounded-lg" />
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
-                <Skeleton className="size-10 rounded-full" animationType="shimmer" />
+              <div key={i} className="flex items-center gap-2.5 rounded-xl px-2 py-2" style={{ opacity: 0.4 + i * 0.12 }}>
+                <Skeleton className="size-9 rounded-full" />
                 <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-3.5 w-28" animationType="shimmer" />
-                  <Skeleton className="h-3 w-20" animationType="shimmer" />
+                  <Skeleton className="h-3.5 w-28 rounded" />
+                  <Skeleton className="h-2.5 w-20 rounded" />
                 </div>
+                <Skeleton className="size-7 rounded-lg" />
               </div>
             ))}
           </div>
         </div>
-        <div className="hidden w-60 flex-col border-l border-white/10 md:flex">
-          <div className="flex h-14 items-center gap-2 border-b border-white/10 px-4">
-            <Skeleton className="size-2 rounded-full" animationType="shimmer" />
-            <Skeleton className="h-3.5 w-24" animationType="shimmer" />
+        <div className="hidden w-56 flex-col border-l border-border md:flex">
+          <div className={`flex h-14 items-center gap-2 px-4 ${ui.header}`}>
+            <Skeleton className="size-2 rounded-full" />
+            <Skeleton className="h-3 w-16 rounded" />
           </div>
-          <div className="space-y-2 p-3">
+          <div className="space-y-1 p-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-2.5 rounded-xl p-2">
-                <Skeleton className="size-8 rounded-full" animationType="shimmer" />
-                <Skeleton className="h-3 w-20" animationType="shimmer" />
+              <div key={i} className="flex items-center gap-2 rounded-xl px-2 py-1.5" style={{ opacity: 0.4 + i * 0.2 }}>
+                <Skeleton className="size-7 rounded-full" />
+                <Skeleton className="h-3 w-20 rounded" />
               </div>
             ))}
           </div>
@@ -390,143 +452,107 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     );
   }
 
-  // ── Main ──────────────────────────────────────────────────
+  /* -- Render -- */
+
   return (
     <div data-tour="friends-panel" className="flex h-full flex-1 flex-row overflow-hidden">
-
-      {/* ══ CENTER ══ */}
+      {/* ===== CENTER ===== */}
       <div ref={tabsListRef} className="flex flex-1 flex-col overflow-hidden">
-
         {/* Header */}
         <div className={`flex h-14 shrink-0 items-center gap-3 px-4 md:px-6 ${ui.header}`}>
           {isMobile && (
-            <Button isIconOnly size="sm" variant="ghost" onPress={openSidebar} className="shrink-0 rounded-xl">
+            <Button size="icon-sm" variant="ghost" onClick={openSidebar} className="shrink-0">
               <MenuIcon size={18} />
             </Button>
           )}
-          <div className="flex size-9 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">
-            <UsersIcon size={16} className="text-[var(--accent-foreground)]" />
+          <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+            <UsersIcon size={14} className="text-primary" />
           </div>
-          <span className="text-[15px] font-bold tracking-tight text-[var(--foreground)]">{t.friends.title}</span>
+          <span className="text-[13px] font-bold tracking-tight text-foreground">
+            {t.friends.title}
+          </span>
           {requests.received.length > 0 && (
-            <Chip color="danger" size="sm" className="ml-auto">
+            <Badge variant="destructive" className="ml-1 px-1.5 text-[10px]">
               {requests.received.length}
-            </Chip>
+            </Badge>
           )}
         </div>
 
         {/* Tabs */}
-        <Tabs className="flex flex-1 flex-col overflow-hidden p-0">
-          <Tabs.ListContainer className="px-4 pt-3 md:px-6">
-            <Tabs.List className="shrink-0">
-              <Tooltip delay={0}>
-                <Tabs.Tab id="friends">
-                  <div className="flex items-center gap-1.5">
-                    <UsersIcon size={14} />
-                    {!compactTabs && <span>{t.friends.tabFriends}</span>}
-                    {!compactTabs && (
-                      <Chip size="sm" variant="soft">{friends.length}</Chip>
-                    )}
-                  </div>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                {compactTabs && <Tooltip.Content>{t.friends.tabFriends}</Tooltip.Content>}
-              </Tooltip>
-              <Tooltip delay={0}>
-                <Tabs.Tab id="requests">
-                  <div className="flex items-center gap-1.5">
-                    <ClockIcon size={14} />
-                    {!compactTabs && <span>{t.friends.tabRequests}</span>}
-                    {!compactTabs && requests.received.length > 0 && (
-                      <Chip color="danger" size="sm">{requests.received.length}</Chip>
-                    )}
-                  </div>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                {compactTabs && <Tooltip.Content>{t.friends.tabRequests}</Tooltip.Content>}
-              </Tooltip>
-              <Tooltip delay={0}>
-                <Tabs.Tab id="blocked">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldOffIcon size={14} />
-                    {!compactTabs && <span>{t.friends.tabBlocked}</span>}
-                    {!compactTabs && blockedUsers.length > 0 && (
-                      <Chip size="sm" variant="soft">{blockedUsers.length}</Chip>
-                    )}
-                  </div>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                {compactTabs && <Tooltip.Content>{t.friends.tabBlocked}</Tooltip.Content>}
-              </Tooltip>
-              <Tooltip delay={0}>
-                <Tabs.Tab id="add">
-                  <div className="flex items-center gap-1.5">
-                    <UserPlusIcon size={14} />
-                    {!compactTabs && <span>{t.friends.tabAdd}</span>}
-                  </div>
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                {compactTabs && <Tooltip.Content>{t.friends.tabAdd}</Tooltip.Content>}
-              </Tooltip>
-            </Tabs.List>
-          </Tabs.ListContainer>
-
-          {/* ── Friends Tab ── */}
-          <Tabs.Panel id="friends" className="flex flex-1 flex-col gap-3 overflow-hidden p-4 md:p-6">
-            {/* Search */}
-            <InputGroup
-              className={`w-full rounded-xl ${ui.isGlass ? 'border-white/15 bg-white/60 dark:bg-white/8' : 'border-[var(--border)] bg-[var(--surface)]'}`}
-              variant="secondary"
-            >
-              <InputGroup.Prefix className="pl-3 pr-0">
-                <SearchIcon size={15} className="text-[var(--muted)]/50" />
-              </InputGroup.Prefix>
-              <InputGroup.Input
-                placeholder={t.friends.searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <InputGroup.Suffix className="pr-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex items-center gap-3 px-4 pt-2 md:px-6">
+            <TabsList className="h-8 shrink-0">
+              <TabsTrigger value="friends" className="gap-1.5 text-xs">
+                <UsersIcon size={13} />
+                {!compactTabs && t.friends.tabFriends}
+                {!compactTabs && (
+                  <span className="ml-0.5 text-[10px] text-muted-foreground">{friends.length}</span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="requests" className="gap-1.5 text-xs">
+                <ClockIcon size={13} />
+                {!compactTabs && t.friends.tabRequests}
+                {!compactTabs && requests.received.length > 0 && (
+                  <span className="ml-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
+                    {requests.received.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="blocked" className="gap-1.5 text-xs">
+                <ShieldOffIcon size={13} />
+                {!compactTabs && t.friends.tabBlocked}
+              </TabsTrigger>
+              <TabsTrigger value="add" className="gap-1.5 text-xs">
+                <UserPlusIcon size={13} />
+                {!compactTabs && t.friends.tabAdd}
+              </TabsTrigger>
+            </TabsList>
+            {activeTab === 'friends' && (
+              <div className="relative min-w-0 flex-1">
+                <SearchIcon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
+                <Input
+                  className="h-8 rounded-lg border-border bg-muted/50 pl-8 pr-7 text-[13px] placeholder:text-muted-foreground/40 focus-visible:border-primary/40 focus-visible:bg-background"
+                  placeholder={t.friends.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="flex size-5 items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"
                   >
                     <XIcon size={12} />
                   </button>
-                </InputGroup.Suffix>
-              )}
-            </InputGroup>
+                )}
+              </div>
+            )}
+          </div>
 
+          {/* --- Friends Tab --- */}
+          <TabsContent value="friends" className="flex flex-1 flex-col gap-2 overflow-hidden px-4 pt-3 md:px-6">
             {filteredFriends.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center">
-                <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent)]/15 via-transparent to-violet-500/10" />
-                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/20 " />
-                  <div className="relative flex flex-col items-center gap-4">
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-xl shadow-[var(--accent)]/30">
-                      <UsersIcon size={26} className="text-[var(--accent-foreground)]" />
-                    </div>
-                    <div>
-                      <p className="text-[15px] font-bold text-[var(--foreground)]">
-                        {searchQuery ? t.friends.noResults : t.friends.noFriends}
-                      </p>
-                      <p className="mt-1 text-[12px] text-[var(--muted)]">
-                        {searchQuery ? t.friends.noResultsHint : t.friends.addFriendsHint}
-                      </p>
-                    </div>
+              <div className="flex flex-1 items-center justify-center">
+                <Card className="flex flex-col items-center gap-4 border-border/30 bg-card px-8 py-6 shadow-none">
+                  <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+                    <UsersIcon size={24} className="text-muted-foreground" />
                   </div>
-                </div>
+                  <CardTitle className="text-sm font-medium">
+                    {searchQuery ? t.friends.noResults : t.friends.noFriends}
+                  </CardTitle>
+                  <CardDescription className="text-center text-xs text-muted-foreground">
+                    {searchQuery ? t.friends.noResultsHint : t.friends.addFriendsHint}
+                  </CardDescription>
+                </Card>
               </div>
             ) : (
-              <ScrollShadow className="flex-1">
+              <ScrollArea className="flex-1 -mx-1 px-1">
                 {onlineFriends.length > 0 && (
-                  <div className="mb-4">
-                    <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+                  <div className="mb-3">
+                    <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                       {tx(t.friends.onlineCount, { n: String(onlineFriends.length) })}
                     </p>
-                    <div className="space-y-1.5">
+                    <div className="space-y-0.5">
                       {onlineFriends.map((friend) => (
                         <FriendRow
                           key={friend.id}
@@ -542,17 +568,15 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                 )}
 
                 {onlineFriends.length > 0 && offlineFriends.length > 0 && (
-                  <div className="px-2 py-2">
-                    <Separator className="opacity-20" />
-                  </div>
+                  <Separator className="mx-2 my-2 opacity-30" />
                 )}
 
                 {offlineFriends.length > 0 && (
-                  <div className="mt-2">
-                    <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+                  <div>
+                    <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                       {tx(t.friends.offlineCount, { n: String(offlineFriends.length) })}
                     </p>
-                    <div className="space-y-1.5">
+                    <div className="space-y-0.5">
                       {offlineFriends.map((friend) => (
                         <FriendRow
                           key={friend.id}
@@ -566,266 +590,242 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                     </div>
                   </div>
                 )}
-              </ScrollShadow>
+              </ScrollArea>
             )}
-          </Tabs.Panel>
+          </TabsContent>
 
-          {/* ── Requests Tab ── */}
-          <Tabs.Panel id="requests" className="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
+          {/* --- Requests Tab --- */}
+          <TabsContent value="requests" className="flex flex-1 flex-col overflow-hidden px-4 pt-3 md:px-6">
             {requests.received.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center">
-                <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-yellow-500/15 via-transparent to-amber-500/10" />
-                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400/20 " />
-                  <div className="relative flex flex-col items-center gap-4">
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-yellow-500 shadow-xl shadow-yellow-500/30">
-                      <ClockIcon size={26} className="text-white" />
-                    </div>
-                    <div>
-                      <p className="text-[15px] font-bold text-[var(--foreground)]">{t.friends.noRequests}</p>
-                      <p className="mt-1 text-[12px] text-[var(--muted)]">{t.friends.upToDate}</p>
-                    </div>
+              <div className="flex flex-1 items-center justify-center">
+                <Card className="flex flex-col items-center gap-4 border-border/30 bg-card px-8 py-6 shadow-none">
+                  <div className="flex size-14 items-center justify-center rounded-full bg-yellow-500/10">
+                    <ClockIcon size={24} className="text-yellow-500" />
                   </div>
-                </div>
+                  <CardTitle className="text-sm font-medium">{t.friends.noRequests}</CardTitle>
+                  <CardDescription className="text-center text-xs text-muted-foreground">
+                    {t.friends.upToDate}
+                  </CardDescription>
+                </Card>
               </div>
             ) : (
-              <ScrollShadow className="flex-1">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+              <ScrollArea className="flex-1">
+                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                   {tx(t.friends.receivedCount, { n: String(requests.received.length) })}
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {requests.received.map((req) => (
                     <div
                       key={req.id}
-                      className={`flex items-center gap-3 px-4 py-3 transition-all ${ui.row}`}
+                      className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-surface-secondary/60"
                     >
                       <div className="relative shrink-0">
-                        <Avatar className="size-10">
-                          <Avatar.Image src={resolveMediaUrl(req.avatarUrl)} />
-                          <Avatar.Fallback className="text-xs">{req.username.charAt(0).toUpperCase()}</Avatar.Fallback>
+                        <Avatar className="size-9">
+                          <AvatarImage src={resolveMediaUrl(req.avatarUrl)} />
+                          <AvatarFallback className="bg-yellow-500/15 text-xs font-semibold text-yellow-600">
+                            {req.username.charAt(0).toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
-                        <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-yellow-500 ring-2 ring-[var(--background)]">
-                          <ClockIcon size={9} className="text-white" />
-                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold">{req.displayName}</p>
-                        <p className="truncate text-[11px] text-[var(--muted)]">@{req.username}</p>
+                        <p className="truncate text-[13px] font-medium leading-tight">{req.displayName}</p>
+                        <p className="truncate text-[10px] leading-tight text-muted-foreground/50">@{req.username}</p>
                         {req.message && (
-                          <p className="mt-0.5 truncate text-[11px] italic text-[var(--muted)]/60">
+                          <p className="mt-0.5 truncate text-[10px] italic text-muted-foreground/40">
                             &ldquo;{req.message}&rdquo;
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-1.5">
-                        <Tooltip delay={0}>
-                          <Button
-                            isIconOnly size="sm"
-                            onPress={() => handleAcceptRequest(req.id)}
-                            className="rounded-xl bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-600/20"
-                          >
-                            <CheckIcon size={15} />
-                          </Button>
-                          <Tooltip.Content>{t.friends.accept}</Tooltip.Content>
-                        </Tooltip>
-                        <Tooltip delay={0}>
-                          <Button
-                            isIconOnly size="sm" variant="danger"
-                            onPress={() => handleDeclineRequest(req.id)}
-                            className="rounded-xl shadow-md shadow-red-600/20"
-                          >
-                            <XIcon size={15} />
-                          </Button>
-                          <Tooltip.Content>{t.friends.decline}</Tooltip.Content>
-                        </Tooltip>
+                      <div className="flex gap-1">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon-sm"
+                                variant="ghost"
+                                onClick={() => handleAcceptRequest(req.id)}
+                                className="size-7 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500/20 hover:text-green-600"
+                              >
+                                <CheckIcon size={14} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t.friends.accept}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon-sm"
+                                variant="ghost"
+                                onClick={() => handleDeclineRequest(req.id)}
+                                className="size-7 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <XIcon size={14} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t.friends.decline}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   ))}
                 </div>
-              </ScrollShadow>
+              </ScrollArea>
             )}
-          </Tabs.Panel>
+          </TabsContent>
 
-          {/* ── Blocked Tab ── */}
-          <Tabs.Panel id="blocked" className="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
+          {/* --- Blocked Tab --- */}
+          <TabsContent value="blocked" className="flex flex-1 flex-col overflow-hidden px-4 pt-3 md:px-6">
             {blockedUsers.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center">
-                <div className={`relative w-full max-w-sm overflow-hidden px-8 py-10 text-center ${ui.emptyCard}`}>
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-500/15 via-transparent to-rose-500/10" />
-                  <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400/20 " />
-                  <div className="relative flex flex-col items-center gap-4">
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-red-500 shadow-xl shadow-red-500/30">
-                      <ShieldOffIcon size={26} className="text-white" />
-                    </div>
-                    <div>
-                      <p className="text-[15px] font-bold text-[var(--foreground)]">{t.friends.noBlocked}</p>
-                      <p className="mt-1 text-[12px] text-[var(--muted)]">{t.friends.blockedListEmpty}</p>
-                    </div>
+              <div className="flex flex-1 items-center justify-center">
+                <Card className="flex flex-col items-center gap-4 border-border/30 bg-card px-8 py-6 shadow-none">
+                  <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+                    <ShieldOffIcon size={24} className="text-muted-foreground" />
                   </div>
-                </div>
+                  <CardTitle className="text-sm font-medium">{t.friends.noBlocked}</CardTitle>
+                  <CardDescription className="text-center text-xs text-muted-foreground">
+                    {t.friends.blockedListEmpty}
+                  </CardDescription>
+                </Card>
               </div>
             ) : (
-              <ScrollShadow className="flex-1">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+              <ScrollArea className="flex-1">
+                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                   {tx(t.friends.blockedCount, { n: String(blockedUsers.length) })}
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {blockedUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/30 px-4 py-3 dark:border-white/10 dark:bg-white/5"
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 opacity-60 transition-opacity hover:opacity-80"
                     >
-                      <div className="relative shrink-0">
-                        <Avatar className="size-10 opacity-50 grayscale">
-                          <Avatar.Image src={resolveMediaUrl(user.avatarUrl)} />
-                          <Avatar.Fallback className="text-xs">{user.username.charAt(0).toUpperCase()}</Avatar.Fallback>
-                        </Avatar>
-                        <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 ring-2 ring-[var(--background)]">
-                          <BanIcon size={9} className="text-white" />
-                        </span>
-                      </div>
+                      <Avatar className="size-9 grayscale">
+                        <AvatarImage src={resolveMediaUrl(user.avatarUrl)} />
+                        <AvatarFallback className="bg-muted text-xs">{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-[var(--muted)]">{user.displayName}</p>
-                        <p className="truncate text-[11px] text-[var(--muted)]/50">@{user.username}</p>
+                        <p className="truncate text-[13px] font-medium leading-tight text-muted-foreground">{user.displayName}</p>
+                        <p className="truncate text-[10px] leading-tight text-muted-foreground/40">@{user.username}</p>
                       </div>
                       <Button
-                        size="sm" variant="outline"
-                        className="shrink-0 gap-1.5 rounded-xl border-white/20 text-[11px] hover:bg-white/10"
-                        onPress={() => handleUnblockUser(user.id, user.displayName)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 gap-1.5 rounded-lg text-[11px] text-muted-foreground hover:text-foreground"
+                        onClick={() => handleUnblockUser(user.id, user.displayName)}
                       >
-                        <ShieldOffIcon size={13} />
+                        <ShieldOffIcon size={12} />
                         {t.friends.unblock}
                       </Button>
                     </div>
                   ))}
                 </div>
-              </ScrollShadow>
+              </ScrollArea>
             )}
-          </Tabs.Panel>
+          </TabsContent>
 
-          {/* ── Add Friend Tab ── */}
-          <Tabs.Panel id="add" className="flex flex-1 flex-col overflow-y-auto p-4 md:p-6">
-            <div className="mx-auto w-full max-w-md space-y-4">
-
-              {/* Hero banner — same style as login visual panel */}
-              <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/30 px-6 py-8 text-center dark:border-white/10 dark:bg-white/5">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent)]/20 via-transparent to-violet-600/15" />
-                <div className="pointer-events-none absolute left-1/2 top-0 h-28 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/25 " />
-                <div className="relative flex flex-col items-center gap-4">
-                  <div className="flex items-center -space-x-2.5">
-                    {[{ l: 'A', bg: '#6366f1' }, { l: 'B', bg: '#8b5cf6' }, { l: 'C', bg: '#a78bfa' }].map(({ l, bg }, i) => (
-                      <div
-                        key={l}
-                        className="flex size-9 items-center justify-center rounded-full border-2 border-white/30 text-[12px] font-bold text-white shadow-md"
-                        style={{ backgroundColor: bg, zIndex: 4 - i }}
-                      >
-                        {l}
-                      </div>
-                    ))}
-                    <div className="flex size-9 items-center justify-center rounded-full border-2 border-white/30 bg-[var(--accent)] shadow-md" style={{ zIndex: 1 }}>
-                      <UserPlusIcon size={15} className="text-white" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-[16px] font-bold text-[var(--foreground)]">{t.friends.findFriends}</h3>
-                    <p className="mt-1 text-[12px] text-[var(--muted)]">{t.friends.findFriendsSubtitle}</p>
-                  </div>
+          {/* --- Add Friend Tab --- */}
+          <TabsContent value="add" className="flex flex-1 flex-col overflow-y-auto px-4 pt-3 md:px-6">
+            <div className="mx-auto w-full max-w-sm space-y-4">
+              <Card className="flex flex-col items-center gap-5 border-border/30 bg-card px-8 py-8 shadow-sm">
+                <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+                  <UserPlusIcon size={28} className="text-primary" />
                 </div>
-              </div>
+                <div className="text-center">
+                  <CardTitle className="text-base font-bold">{t.friends.findFriends}</CardTitle>
+                  <CardDescription className="mt-1 text-xs text-muted-foreground">
+                    {t.friends.findFriendsSubtitle}
+                  </CardDescription>
+                </div>
 
-              {/* Form */}
-              <form onSubmit={handleAddFriend} className="space-y-2.5">
-                <InputGroup
-                  className={`w-full rounded-xl ${ui.isGlass ? 'border-white/15 bg-white/60 dark:bg-white/8' : 'border-[var(--border)] bg-[var(--surface)]'}`}
-                  variant="secondary"
-                >
-                  <InputGroup.Prefix className="pl-3 pr-0">
-                    <SearchIcon size={15} className="text-[var(--muted)]/50" />
-                  </InputGroup.Prefix>
-                  <InputGroup.Input
+                <form onSubmit={handleAddFriend} className="w-full space-y-2.5">
+                  <Input
+                    className="h-9 rounded-lg text-[13px] focus-visible:border-primary/40"
                     placeholder={t.friends.usernamePlaceholder}
                     value={addFriendInput}
                     onChange={(e) => setAddFriendInput(e.target.value)}
-                    required
                   />
-                  {addFriendInput.trim() && (
-                    <InputGroup.Suffix className="pr-2">
-                      <button
-                        type="button"
-                        onClick={() => setAddFriendInput('')}
-                        className="flex size-5 items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-                      >
-                        <XIcon size={12} />
-                      </button>
-                    </InputGroup.Suffix>
-                  )}
-                </InputGroup>
-
-                <Button
-                  type="submit"
-                  fullWidth
-                  className="gap-2 rounded-xl font-semibold shadow-lg shadow-[var(--accent)]/20"
-                  isDisabled={addFriendLoading || !addFriendInput.trim()}
-                >
-                  {addFriendLoading ? (
-                    <><ClockIcon size={15} className="animate-spin" />{t.friends.sendingRequest}</>
-                  ) : (
-                    <><UserPlusIcon size={15} />{t.friends.sendRequest}</>
-                  )}
-                </Button>
-              </form>
+                  <Button
+                    type="submit"
+                    className="w-full gap-2 rounded-lg text-[13px] font-semibold"
+                    disabled={addFriendLoading || !addFriendInput.trim()}
+                  >
+                    {addFriendLoading ? (
+                      <>
+                        <span className="flex gap-0.5">
+                          <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary-foreground [animation-delay:0ms]" />
+                          <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary-foreground [animation-delay:150ms]" />
+                          <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary-foreground [animation-delay:300ms]" />
+                        </span>
+                        {t.friends.sendingRequest}
+                      </>
+                    ) : (
+                      <>
+                        <UserPlusIcon size={14} />
+                        {t.friends.sendRequest}
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Card>
 
               {/* Sent requests */}
               {requests.sent.length > 0 && (
                 <div>
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+                  <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                     {tx(t.friends.sentCount, { n: String(requests.sent.length) })}
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {requests.sent.map((req) => (
                       <div
                         key={req.id}
-                        className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${ui.isGlass ? 'border border-white/15 bg-white/20 dark:border-white/8 dark:bg-white/5' : 'border border-[var(--border)] bg-[var(--surface-secondary)]'}`}
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2"
                       >
-                        <Avatar className="size-8">
-                          <Avatar.Image src={resolveMediaUrl(req.avatarUrl)} />
-                          <Avatar.Fallback className="text-xs">{req.username.charAt(0).toUpperCase()}</Avatar.Fallback>
+                        <Avatar className="size-7">
+                          <AvatarImage src={resolveMediaUrl(req.avatarUrl)} />
+                          <AvatarFallback className="bg-muted text-[10px]">{req.username.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[12px] font-semibold">{req.displayName}</p>
-                          <p className="truncate text-[10px] text-[var(--muted)]">@{req.username}</p>
+                          <p className="truncate text-[12px] font-medium">{req.displayName}</p>
+                          <p className="truncate text-[10px] text-muted-foreground/40">@{req.username}</p>
                         </div>
-                        <Chip size="sm" variant="soft" className="shrink-0 text-[10px]">
+                        <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
                           {t.friends.pending}
-                        </Chip>
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
-          </Tabs.Panel>
+          </TabsContent>
         </Tabs>
       </div>
 
-      {/* ══ RIGHT SIDEBAR ══ */}
-      <div className={`hidden w-56 flex-col border-l md:flex ${ui.isGlass ? 'border-white/10 bg-white/10 dark:bg-white/3' : 'border-[var(--border)] bg-[var(--surface-secondary)]'}`}>
-        {/* Header */}
-        <div className={`flex h-14 shrink-0 items-center gap-2.5 px-4 ${ui.isGlass ? 'border-b border-white/10' : 'border-b border-[var(--border)]'}`}>
-          <span className="size-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/60">
+      {/* ===== RIGHT SIDEBAR ===== */}
+      <div className={`hidden w-56 flex-col border-l border-border md:flex ${ui.sidebarBg}`}>
+        <div className={`flex h-14 shrink-0 items-center gap-2 px-4 ${ui.header}`}>
+          <span className="size-1.5 rounded-full bg-green-500" />
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
             {t.friends.onlineSidebar}
           </span>
-          <Chip size="sm" variant="soft" className="ml-auto">{onlineFriends.length}</Chip>
+          <span className="ml-auto text-[10px] font-medium text-muted-foreground/40">
+            {onlineFriends.length}
+          </span>
+
           <Popover>
-            <Popover.Trigger>
-              <Button isIconOnly size="sm" variant="ghost" className="size-6 rounded-lg shrink-0">
-                <SettingsIcon size={11} className="text-[var(--muted)]/50" />
+            <PopoverTrigger asChild>
+              <Button size="icon-sm" variant="ghost" className="size-6 text-muted-foreground/40 hover:text-foreground">
+                <SettingsIcon size={11} />
               </Button>
-            </Popover.Trigger>
-            <Popover.Content className="w-52 rounded-xl p-3" placement="bottom end">
-              <p className="mb-0.5 text-[11px] font-bold text-[var(--foreground)]">Afficher dans les cartes</p>
-              <p className="mb-2.5 text-[10px] text-[var(--muted)]">Max 2 éléments simultanés</p>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 rounded-lg p-2" align="end">
+              <p className="mb-1.5 px-1.5 text-[10px] font-semibold text-foreground">
+                Afficher dans les cartes
+              </p>
+              <p className="mb-2 px-1.5 text-[9px] text-muted-foreground">
+                Max 2 \u00e9l\u00e9ments
+              </p>
               <div className="flex flex-col gap-0.5">
                 {(Object.keys(DISPLAY_FIELD_LABELS) as DisplayField[]).map((field) => {
                   const active = displayFields.includes(field);
@@ -837,55 +837,64 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                       disabled={atMax}
                       onClick={() => toggleDisplayField(field)}
                       className={cn(
-                        'flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[11px] transition-colors',
+                        'flex w-full items-center justify-between rounded-md px-1.5 py-1 text-[11px] transition-colors',
                         active
-                          ? 'bg-[var(--accent)]/15 text-[var(--foreground)]'
+                          ? 'bg-accent/12 text-accent'
                           : atMax
-                            ? 'opacity-35 cursor-not-allowed text-[var(--muted)]'
-                            : 'hover:bg-[var(--surface-secondary)] text-[var(--muted)]',
+                            ? 'cursor-not-allowed text-muted-foreground/30'
+                            : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
                       )}
                     >
                       {DISPLAY_FIELD_LABELS[field]}
-                      {active && <CheckIcon size={11} className="shrink-0 text-[var(--accent)]" />}
+                      {active && <CheckIcon size={10} className="shrink-0 text-accent" />}
                     </button>
                   );
                 })}
               </div>
-            </Popover.Content>
+            </PopoverContent>
           </Popover>
         </div>
 
-        {/* Online list */}
-        <ScrollShadow className="flex-1 p-2">
+        <ScrollArea className="flex-1 p-2">
           {onlineFriends.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 pt-10 text-center">
-              <div className={`flex size-10 items-center justify-center rounded-2xl ${ui.isGlass ? 'border border-white/15 bg-white/20 dark:border-white/8 dark:bg-white/5' : 'border border-[var(--border)] bg-[var(--surface)]'}`}>
-                <UsersIcon size={18} className="text-[var(--muted)]/30" />
+            <div className="flex flex-col items-center gap-2 pt-12 text-center">
+              <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+                <UsersIcon size={16} className="text-muted-foreground/30" />
               </div>
-              <p className="text-[11px] text-[var(--muted)]/40">{t.friends.noOneOnline}</p>
+              <p className="text-[10px] text-muted-foreground/30">{t.friends.noOneOnline}</p>
             </div>
           ) : (
             <div className="space-y-0.5">
               {onlineFriends.map((friend) => {
-                const st = statusConfig[friend.status] ?? statusConfig.offline;
+                const dot = STATUS_DOT[friend.status] ?? STATUS_DOT.offline;
                 const statusLabel = (t.status as Record<string, string>)[friend.status] ?? t.status.offline;
                 return (
-                  <UserProfilePopover key={friend.id} userId={friend.id} onOpenDM={() => onOpenDM?.(friend.id, friend.displayName)}>
+                  <UserProfilePopover
+                    key={friend.id}
+                    userId={friend.id}
+                    onOpenDM={() => onOpenDM?.(friend.id, friend.displayName)}
+                  >
                     <button
                       type="button"
-                      className={`flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 ${ui.isGlass ? 'hover:bg-white/15 dark:hover:bg-white/5' : 'hover:bg-[var(--surface-secondary)]/70'}`}
+                      className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-surface-secondary/60"
                     >
                       <div className="relative shrink-0">
-                        <Avatar className="size-7">
-                          <Avatar.Image src={resolveMediaUrl(friend.avatarUrl)} />
-                          <Avatar.Fallback className="text-[10px]">{friend.username.charAt(0).toUpperCase()}</Avatar.Fallback>
+                        <Avatar className="size-7 ring-2 ring-transparent">
+                          <AvatarImage src={resolveMediaUrl(friend.avatarUrl)} />
+                          <AvatarFallback className="bg-surface-secondary text-[10px]">
+                            {friend.username.charAt(0).toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
-                        <span className={cn('absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[1.5px] ring-[var(--background)]', st.color)} />
+                        <span className={cn('absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[1.5px] ring-background', dot)} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-medium leading-tight">{friend.displayName}</p>
-                        <p className="truncate text-[9px] text-[var(--muted)]/50">
-                          {displayFields[0] === 'username' ? `@${friend.username}` : displayFields[0] === 'status' ? statusLabel : (friend.customStatus || statusLabel)}
+                        <p className="truncate text-[9px] leading-tight text-muted-foreground/40">
+                          {displayFields[0] === 'username'
+                            ? `@${friend.username}`
+                            : displayFields[0] === 'status'
+                              ? statusLabel
+                              : friend.customStatus || statusLabel}
                         </p>
                       </div>
                     </button>
@@ -894,13 +903,14 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               })}
             </div>
           )}
-        </ScrollShadow>
+        </ScrollArea>
       </div>
     </div>
   );
 }
 
-// ── Friend row ────────────────────────────────────────────────
+/* --- Friend row ----------------------------------------------------------- */
+
 function FriendRow({
   friend,
   onMessage,
@@ -915,8 +925,9 @@ function FriendRow({
   displayFields: DisplayField[];
 }) {
   const { t } = useTranslation();
-  const ui = useUIStyle();
-  const status = statusConfig[friend.status] ?? statusConfig.offline;
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
+  const dot = STATUS_DOT[friend.status] ?? STATUS_DOT.offline;
   const statusLabel = (t.status as Record<string, string>)[friend.status] ?? t.status.offline;
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -925,69 +936,84 @@ function FriendRow({
     username: `@${friend.username}`,
     status: statusLabel,
   };
-  const activeFields = displayFields.length > 0 ? displayFields : ['customStatus' as DisplayField];
+  const activeFields = displayFields.length > 0 ? displayFields : (['customStatus'] as DisplayField[]);
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 transition-all duration-150 ${ui.row}`}>
-      <div className="min-w-0 flex-1">
-      <UserProfilePopover userId={friend.id} onOpenDM={onMessage} open={profileOpen} onOpenChange={setProfileOpen}>
-        <button type="button" className="flex w-full items-center gap-3 text-left">
+    <div className={cn('group flex items-center rounded-xl transition-all duration-150 hover:bg-surface-secondary/60', d.rowGap, d.rowPx, d.rowPy)}>
+      <UserProfilePopover
+        userId={friend.id}
+        onOpenDM={onMessage}
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
+      >
+        <button type="button" className={cn('flex min-w-0 flex-1 items-center text-left', d.rowGap)}>
           <span className="relative shrink-0">
-            <Avatar className="size-9 ring-2 ring-white/20 transition-all hover:ring-[var(--accent)]/30">
-              <Avatar.Image src={resolveMediaUrl(friend.avatarUrl)} />
-              <Avatar.Fallback className="text-xs">{friend.username.charAt(0).toUpperCase()}</Avatar.Fallback>
+            <Avatar className={cn('ring-2 transition-all ring-transparent group-hover:ring-border/30', d.rowAvatar)}>
+              <AvatarImage src={resolveMediaUrl(friend.avatarUrl)} />
+              <AvatarFallback className="bg-surface-secondary text-xs">{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
-            <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)]', status.color)} />
+            <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background', dot)} />
           </span>
           <span className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold leading-tight text-[var(--foreground)]">{friend.displayName}</p>
+            <p className={cn('truncate font-medium leading-tight text-foreground', d.rowName)}>{friend.displayName}</p>
             {activeFields.map((f) => {
               const val = fieldValue[f];
               if (!val) return null;
-              return <p key={f} className="truncate text-[10px] leading-snug text-[var(--muted)]/60">{val}</p>;
+              return (
+                <p key={f} className={cn('truncate leading-tight text-muted-foreground/50', d.rowSub)}>
+                  {val}
+                </p>
+              );
             })}
           </span>
         </button>
       </UserProfilePopover>
-      </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-0.5">
-        <Tooltip delay={0}>
-          <Button isIconOnly size="sm" variant="ghost" onPress={onMessage} className="rounded-xl">
-            <MessageCircleIcon size={15} />
-          </Button>
-          <Tooltip.Content placement="top">{t.friends.message}</Tooltip.Content>
-        </Tooltip>
+      <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon-sm" variant="ghost" onClick={onMessage} className="size-7 rounded-lg text-muted-foreground hover:text-foreground">
+                <MessageCircleIcon size={14} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">{t.friends.message}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
-        <Dropdown>
-          <Dropdown.Trigger aria-label={t.friends.moreActions}>
-            <div className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]">
-              <MoreVerticalIcon size={14} />
-            </div>
-          </Dropdown.Trigger>
-          <Dropdown.Popover placement="bottom end">
-            <Dropdown.Menu aria-label={t.friends.moreActions}>
-              <Dropdown.Item id="profile" onPress={() => setProfileOpen(true)} className="gap-2">
-                <UserIcon size={15} />Voir le profil
-              </Dropdown.Item>
-              <Dropdown.Item id="message" onPress={onMessage} className="gap-2">
-                <MessageCircleIcon size={15} />{t.friends.sendMessage}
-              </Dropdown.Item>
-              <Dropdown.Item id="call" className="gap-2">
-                <PhoneIcon size={15} />Appel vocal
-              </Dropdown.Item>
-              <Dropdown.Item id="invite" className="gap-2">
-                <ServerIcon size={15} />Inviter sur un serveur
-              </Dropdown.Item>
-              <Dropdown.Item id="remove" onPress={onRemove} className="gap-2 text-red-500">
-                <UserMinusIcon size={15} />{t.friends.removeFriend}
-              </Dropdown.Item>
-              <Dropdown.Item id="block" onPress={onBlock} className="gap-2 text-red-500">
-                <BanIcon size={15} />{t.friends.block}
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown.Popover>
-        </Dropdown>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon-sm" variant="ghost" className="size-7 rounded-lg text-muted-foreground hover:text-foreground">
+              <MoreVerticalIcon size={13} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuItem className="gap-2 text-xs" onClick={() => setProfileOpen(true)}>
+              <UserIcon size={14} />
+              Voir le profil
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 text-xs" onClick={onMessage}>
+              <MessageCircleIcon size={14} />
+              {t.friends.sendMessage}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 text-xs">
+              <PhoneIcon size={14} />
+              Appel vocal
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 text-xs">
+              <ServerIcon size={14} />
+              Inviter sur un serveur
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" className="gap-2 text-xs" onClick={onRemove}>
+              <UserMinusIcon size={14} />
+              {t.friends.removeFriend}
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" className="gap-2 text-xs" onClick={onBlock}>
+              <BanIcon size={14} />
+              {t.friends.block}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

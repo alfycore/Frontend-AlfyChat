@@ -1,15 +1,20 @@
 ﻿'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MicIcon, MicOffIcon, HeadphonesIcon, SettingsIcon, CheckIcon, PencilIcon } from '@/components/icons';
+import { MicIcon, MicOffIcon, HeadphonesIcon, SettingsIcon, CheckIcon, PencilIcon, SunIcon, MoonIcon, MonitorIcon } from '@/components/icons';
+import { SettingsDialog } from '@/components/chat/settings-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
-import {
-  Avatar, Button, Dropdown, InputGroup, Modal, Tooltip,
-} from '@heroui/react';
+import { useTheme } from 'next-themes';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Input } from '@/components/ui/input';
 import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
-import { SettingsDialog } from '@/components/chat/settings-dialog';
+import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 
 interface User {
   id: string;
@@ -35,9 +40,12 @@ const statusConfig: Record<string, { color: string }> = {
 export function UserPanel({ user }: UserPanelProps) {
   const { updateUser } = useAuth();
   const { t } = useTranslation();
+  const { theme, setTheme } = useTheme();
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingCustomStatus, setEditingCustomStatus] = useState(false);
   const [customStatusDraft, setCustomStatusDraft] = useState(user.customStatus ?? '');
   const customStatusInputRef = useRef<HTMLInputElement>(null);
@@ -68,20 +76,20 @@ export function UserPanel({ user }: UserPanelProps) {
   };
 
   return (
-    <div data-tour="user-panel" className="flex h-[52px] shrink-0 items-center gap-1 overflow-hidden border-t border-[var(--border)]/30 bg-[var(--background)]/80 px-1.5 md:gap-1 md:px-2">
+    <div data-tour="user-panel" className={`flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t border-[var(--border)]/30 bg-[var(--background)]/80 px-1.5 md:gap-1 md:px-2`}>
       {/* Avatar + user info */}
       <div className="min-w-0 flex-1">
-      <Dropdown>
-        <Dropdown.Trigger>
-          <div className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl px-1.5 py-1 transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl px-1.5 py-1 transition-colors duration-150 hover:bg-muted/30">
             <div className="relative shrink-0">
-              <Avatar size="sm" className="size-8">
-                <Avatar.Image src={resolveMediaUrl(user.avatarUrl)} alt={user.displayName} />
-                <Avatar.Fallback className="bg-[var(--accent)] text-[var(--accent-foreground)] text-[11px] font-semibold">
+              <Avatar className={d.panelAvatar}>
+                <AvatarImage src={resolveMediaUrl(user.avatarUrl)} alt={user.displayName} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-[11px] font-semibold">
                   {user.displayName?.[0]?.toUpperCase()}
-                </Avatar.Fallback>
+                </AvatarFallback>
               </Avatar>
-              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)] ${status.color}`}>
+              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background ${status.color}`}>
                 {user.status === 'dnd' && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="block h-[2px] w-[5px] rounded-full bg-white" />
@@ -90,53 +98,43 @@ export function UserPanel({ user }: UserPanelProps) {
               </span>
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-[12px] font-semibold leading-tight text-[var(--foreground)]">{user.displayName}</p>
-              <p className="truncate text-[10px] text-[var(--muted)]/60">
+              <p className={`truncate ${d.panelName} font-semibold leading-tight text-foreground`}>{user.displayName}</p>
+              <p className={`truncate ${d.panelSub} text-muted-foreground/60`}>
                 {user.customStatus ? user.customStatus : (t.status[user.status] ?? t.status.offline)}
               </p>
             </div>
           </div>
-        </Dropdown.Trigger>
-        <Dropdown.Popover className="min-w-52">
-          <Dropdown.Menu
-            onAction={(key) => {
-              if (['online', 'idle', 'dnd', 'invisible'].includes(key as string)) {
-                handleStatusChange(key as 'online' | 'idle' | 'dnd' | 'invisible');
-              } else if (key === 'edit-custom-status') {
-                // Dropdown closes first (by HeroUI default), then we open the modal
-                setTimeout(() => setEditingCustomStatus(true), 0);
-              } else if (key === 'clear-custom-status') {
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="min-w-52">
+            <DropdownMenuItem disabled className="pointer-events-none">
+              <div>
+                <p className="text-[13px] font-semibold">{user.displayName}</p>
+                <p className="text-[11px] text-muted-foreground">@{user.username}</p>
+              </div>
+            </DropdownMenuItem>
+
+            {/* Statut personnalisé */}
+            <DropdownMenuItem onSelect={() => setTimeout(() => setEditingCustomStatus(true), 0)}>
+              <div className="flex w-full items-center gap-2">
+                <PencilIcon size={13} className="shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate text-[13px] text-muted-foreground">
+                  {user.customStatus || 'Définir un statut...'}
+                </span>
+              </div>
+            </DropdownMenuItem>
+
+            {/* Effacer le statut personnalisé */}
+            {user.customStatus && (
+              <DropdownMenuItem onSelect={() => {
                 socketService.updatePresence(
                   user.status === 'offline' ? 'online' : (user.status as 'online' | 'idle' | 'dnd' | 'invisible'),
                   null,
                 );
                 updateUser({ customStatus: null });
                 setCustomStatusDraft('');
-              }
-            }}
-          >
-            <Dropdown.Item id="user-info" textValue="Info" className="pointer-events-none">
-              <div>
-                <p className="text-[13px] font-semibold">{user.displayName}</p>
-                <p className="text-[11px] text-[var(--muted)]">@{user.username}</p>
-              </div>
-            </Dropdown.Item>
-
-            {/* Statut personnalisé */}
-            <Dropdown.Item id="edit-custom-status" textValue="Statut personnalisé">
-              <div className="flex w-full items-center gap-2">
-                <PencilIcon size={13} className="shrink-0 text-[var(--muted)]" />
-                <span className="flex-1 truncate text-[13px] text-[var(--muted)]">
-                  {user.customStatus || 'Définir un statut...'}
-                </span>
-              </div>
-            </Dropdown.Item>
-
-            {/* Effacer le statut personnalisé */}
-            {user.customStatus && (
-              <Dropdown.Item id="clear-custom-status" textValue="Effacer le statut">
+              }}>
                 <span className="text-[13px] text-red-400">Effacer le statut</span>
-              </Dropdown.Item>
+              </DropdownMenuItem>
             )}
 
             {/* Statuts disponibles */}
@@ -144,85 +142,95 @@ export function UserPanel({ user }: UserPanelProps) {
               const cfg = statusConfig[s];
               const isActive = user.status === s;
               return (
-                <Dropdown.Item key={s} id={s} textValue={t.status[s]}>
+                <DropdownMenuItem key={s} onSelect={() => handleStatusChange(s)}>
                   <div className={`size-2.5 rounded-full ${cfg.color}`} />
                   <span className="flex-1 text-[13px]">{t.status[s]}</span>
-                  {isActive && <CheckIcon size={14} className="text-[var(--accent)]" />}
-                </Dropdown.Item>
+                  {isActive && <CheckIcon size={14} className="text-primary" />}
+                </DropdownMenuItem>
               );
             })}
-          </Dropdown.Menu>
-        </Dropdown.Popover>
-      </Dropdown>
+        </DropdownMenuContent>
+      </DropdownMenu>
       </div>
 
       {/* Modal statut personnalisé — ouvert séparément pour ne pas fermer le dropdown avant validation */}
-      <Modal isOpen={editingCustomStatus} onOpenChange={(open) => { if (!open) setEditingCustomStatus(false); }}>
-        <Modal.Backdrop>
-          <Modal.Container size="sm">
-            <Modal.Dialog>
-              <Modal.Header>Définir un statut personnalisé</Modal.Header>
-              <Modal.Body>
-                <InputGroup>
-                  <InputGroup.Input
-                    ref={customStatusInputRef}
-                    value={customStatusDraft}
-                    onChange={(e) => setCustomStatusDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveCustomStatus();
-                      if (e.key === 'Escape') setEditingCustomStatus(false);
-                    }}
-                    maxLength={100}
-                    placeholder="Définir un statut..."
-                    autoFocus
-                  />
-                </InputGroup>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="ghost" onPress={() => setEditingCustomStatus(false)}>Annuler</Button>
-                <Button onPress={saveCustomStatus}>Enregistrer</Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <Dialog open={editingCustomStatus} onOpenChange={(open) => { if (!open) setEditingCustomStatus(false); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Définir un statut personnalisé</DialogTitle></DialogHeader>
+          <Input
+            ref={customStatusInputRef}
+            value={customStatusDraft}
+            onChange={(e) => setCustomStatusDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveCustomStatus();
+              if (e.key === 'Escape') setEditingCustomStatus(false);
+            }}
+            maxLength={100}
+            placeholder="Définir un statut..."
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingCustomStatus(false)}>Annuler</Button>
+            <Button onClick={saveCustomStatus}>Enregistrer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Audio controls + settings */}
       <div className="flex shrink-0 items-center gap-0.5">
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly size="sm" variant="tertiary"
-            className={`size-7 rounded-xl transition-colors ${isMuted ? 'text-red-400 hover:text-red-300' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
-            onPress={() => setIsMuted(v => !v)}
-          >
-            {isMuted ? <MicOffIcon size={14} /> : <MicIcon size={14} />}
-          </Button>
-          <Tooltip.Content placement="top">{isMuted ? 'Réactiver le micro' : 'Couper le micro'}</Tooltip.Content>
+        <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon-sm" variant="ghost"
+              className={`size-7 rounded-xl transition-colors ${isMuted ? 'text-red-400 hover:text-red-300' : 'text-muted-foreground/60 hover:text-foreground'}`}
+              onClick={() => setIsMuted(v => !v)}
+            >
+              {isMuted ? <MicOffIcon size={14} /> : <MicIcon size={14} />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{isMuted ? 'Réactiver le micro' : 'Couper le micro'}</TooltipContent>
         </Tooltip>
-        <Tooltip delay={0}>
-          <Button
-            isIconOnly size="sm" variant="tertiary"
-            className={`size-7 rounded-xl transition-colors ${isDeafened ? 'text-red-400 hover:text-red-300' : 'text-[var(--muted)]/60 hover:text-[var(--foreground)]'}`}
-            onPress={() => setIsDeafened(v => !v)}
-          >
-            <HeadphonesIcon size={14} />
-          </Button>
-          <Tooltip.Content placement="top">{isDeafened ? 'Réactiver le son' : 'Se mettre en sourdine'}</Tooltip.Content>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon-sm" variant="ghost"
+              className={`size-7 rounded-xl transition-colors ${isDeafened ? 'text-red-400 hover:text-red-300' : 'text-muted-foreground/60 hover:text-foreground'}`}
+              onClick={() => setIsDeafened(v => !v)}
+            >
+              <HeadphonesIcon size={14} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{isDeafened ? 'Réactiver le son' : 'Se mettre en sourdine'}</TooltipContent>
         </Tooltip>
-        <Tooltip delay={0}>
-          <Button
-            data-tour="user-settings"
-            isIconOnly size="sm" variant="tertiary"
-            className="size-7 rounded-xl text-[var(--muted)]/60 hover:text-[var(--foreground)]"
-            onPress={() => setShowSettings(true)}
-          >
-            <SettingsIcon size={15} />
-          </Button>
-          <Tooltip.Content placement="top">{t.userPanel.settings}</Tooltip.Content>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon-sm" variant="ghost"
+              className="size-7 rounded-xl text-muted-foreground/60 hover:text-foreground"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            >
+              {theme === 'dark' ? <SunIcon size={15} /> : <MoonIcon size={15} />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{theme === 'dark' ? 'Mode clair' : 'Mode sombre'}</TooltipContent>
         </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon-sm" variant="ghost"
+              className="size-7 rounded-xl text-muted-foreground/60 hover:text-foreground"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <SettingsIcon size={15} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Paramètres</TooltipContent>
+        </Tooltip>
+        </TooltipProvider>
       </div>
 
-      <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }

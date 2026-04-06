@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { Card } from '@heroui/react';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   HelpCircleIcon,
   MessageCircleIcon,

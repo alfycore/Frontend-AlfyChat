@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { MessageCircleIcon, ArrowLeftIcon } from '@/components/icons';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 
 export default function StaticLayout({
   children,

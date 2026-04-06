@@ -13,7 +13,7 @@ import { ServerList } from '@/components/chat/server-list';
 import { GroupsList } from '@/components/chat/groups-list';
 import { GroupChatArea } from '@/components/chat/group-chat-area';
 import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
-import { Spinner } from '@heroui/react';
+import { Spinner } from '@/components/ui/spinner';
 import { MessageCircleIcon } from '@/components/icons';
 
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
@@ -83,7 +83,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-(--accent)">
             <MessageCircleIcon size={28} className="text-white" />
           </div>
-          <Spinner size="sm" />
+          <Spinner className="size-4" />
         </div>
       </div>
     );

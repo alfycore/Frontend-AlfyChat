@@ -12,7 +12,7 @@ import {
   Maximize2Icon,
   Minimize2Icon,
 } from '@/components/icons';
-import { Avatar } from '@heroui/react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useAudioLevel } from '@/hooks/use-audio-level';
@@ -108,10 +108,10 @@ function Tile({
         <div className="relative z-10 flex flex-col items-center gap-3">
           <div className={cn('rounded-full p-0.5 transition-all duration-200', speaking ? 'ring-2 ring-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : '')}>
             <Avatar className="size-20 rounded-full shadow-2xl ring-1 ring-white/10">
-              <Avatar.Image src={resolveMediaUrl(avatarSrc)} />
-              <Avatar.Fallback className="bg-zinc-600 text-white text-3xl font-bold">
+              <AvatarImage src={resolveMediaUrl(avatarSrc)} />
+              <AvatarFallback className="bg-zinc-600 text-white text-3xl font-bold">
                 {label[0]?.toUpperCase() || '?'}
-              </Avatar.Fallback>
+              </AvatarFallback>
             </Avatar>
           </div>
           {!isConnected && !isLocal && (

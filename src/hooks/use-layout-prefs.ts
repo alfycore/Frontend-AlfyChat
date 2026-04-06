@@ -6,11 +6,14 @@ export type ServerListPosition = 'left' | 'right' | 'top' | 'bottom';
 
 export type UIStyle = 'glass' | 'flat';
 
+export type UIDensity = 'comfortable' | 'default' | 'compact';
+
 export type LayoutPrefs = {
   serverListPosition: ServerListPosition;
   memberListSide: 'left' | 'right';
   compactServerList: boolean;
   uiStyle: UIStyle;
+  density: UIDensity;
 };
 
 const STORAGE_KEY = 'alfychat_layout_prefs';
@@ -20,7 +23,46 @@ const DEFAULT_PREFS: LayoutPrefs = {
   memberListSide: 'right',
   compactServerList: false,
   uiStyle: 'flat',
+  density: 'default',
 };
+
+/**
+ * Density-aware size tokens.
+ * Use `densityCls(prefs.density)` to get consistent spacing across the UI.
+ */
+export function densityCls(d: UIDensity) {
+  if (d === 'compact') return {
+    // server list
+    serverBtn: 'size-9', serverIcon: 16,
+    // channel list
+    channelPx: 'px-1.5', channelPy: 'py-1', channelGap: 'gap-1.5', channelText: 'text-xs', channelIcon: 12,
+    // friend / member row
+    rowPx: 'px-1.5', rowPy: 'py-1', rowGap: 'gap-2', rowAvatar: 'size-7', rowName: 'text-xs', rowSub: 'text-[9px]', rowBtn: 'size-6',
+    // messages
+    msgPx: 'px-2', msgPy: 'py-0.5', msgGap: 'gap-2', msgAvatar: 'size-7', msgName: 'text-xs', msgTime: 'text-[9px]',
+    // user panel
+    panelH: 'h-10', panelAvatar: 'size-6', panelName: 'text-[11px]', panelSub: 'text-[9px]',
+    // header
+    headerH: 'h-10',
+  };
+  if (d === 'comfortable') return {
+    serverBtn: 'size-14', serverIcon: 24,
+    channelPx: 'px-3', channelPy: 'py-2.5', channelGap: 'gap-3', channelText: 'text-sm', channelIcon: 16,
+    rowPx: 'px-3', rowPy: 'py-2.5', rowGap: 'gap-3', rowAvatar: 'size-10', rowName: 'text-sm', rowSub: 'text-[11px]', rowBtn: 'size-8',
+    msgPx: 'px-4', msgPy: 'py-2.5', msgGap: 'gap-3.5', msgAvatar: 'size-10', msgName: 'text-sm', msgTime: 'text-[12px]',
+    panelH: 'h-14', panelAvatar: 'size-9', panelName: 'text-[13px]', panelSub: 'text-[11px]',
+    headerH: 'h-14',
+  };
+  // default
+  return {
+    serverBtn: 'size-12', serverIcon: 22,
+    channelPx: 'px-2', channelPy: 'py-1.5', channelGap: 'gap-2', channelText: 'text-[13px]', channelIcon: 14,
+    rowPx: 'px-2', rowPy: 'py-1.5', rowGap: 'gap-2.5', rowAvatar: 'size-9', rowName: 'text-[13px]', rowSub: 'text-[10px]', rowBtn: 'size-7',
+    msgPx: 'px-3', msgPy: 'py-1.5', msgGap: 'gap-2.5', msgAvatar: 'size-8', msgName: 'text-[13px]', msgTime: 'text-[10px]',
+    panelH: 'h-[52px]', panelAvatar: 'size-8', panelName: 'text-[12px]', panelSub: 'text-[10px]',
+    headerH: 'h-12',
+  };
+}
 
 function loadFromStorage(): LayoutPrefs {
   if (typeof window === 'undefined') return DEFAULT_PREFS;

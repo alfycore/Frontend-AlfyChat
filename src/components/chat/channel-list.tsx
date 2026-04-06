@@ -32,6 +32,7 @@ import {
   PencilIcon,
   Trash2Icon,
   FileTextIcon,
+  XIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -40,26 +41,51 @@ import {
   useNotificationStore,
   clearUnread,
 } from '@/lib/notification-store';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
-  Avatar,
-  Button,
-  Chip,
-  CloseButton,
-  Dropdown,
-  InputGroup,
-  Label,
-  Modal,
-  ScrollShadow,
-  Separator,
-  Spinner,
-  Tooltip,
-} from '@heroui/react';
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogMedia,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+} from '@/components/ui/context-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider,
+} from '@/components/ui/tooltip';
 import { UserPanel } from '@/components/chat/user-panel';
 import { CallBar } from '@/components/chat/call-bar';
 import { useTranslation } from '@/components/locale-provider';
 
 import { useVoice, type VoiceParticipant } from '@/hooks/use-voice';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { cn } from '@/lib/utils';
 
 type ChannelType = 'text' | 'voice' | 'announcement' | 'category' | 'forum' | 'stage' | 'gallery' | 'poll' | 'suggestion' | 'doc' | 'counting' | 'vent' | 'thread' | 'media';
@@ -119,8 +145,8 @@ const PRESENCE_DOT: Record<string, string> = {
   online:    'bg-green-500',
   idle:      'bg-orange-500',
   dnd:       'bg-red-500',
-  offline:   'bg-[var(--muted)]/40',
-  invisible: 'bg-[var(--muted)]/40',
+  offline:   'bg-muted-foreground/40',
+  invisible: 'bg-muted-foreground/40',
 };
 // idle and dnd show as squares, others as circles
 const presenceDotShape = (status?: string) =>
@@ -141,31 +167,53 @@ function ChannelRow({
   isActive,
   onClick,
   canManage,
-  onContextMenu,
+  onRename,
+  onDelete,
 }: {
   channel: Channel;
   isActive: boolean;
   onClick: () => void;
   canManage?: boolean;
-  onContextMenu?: (e: React.MouseEvent, channel: Channel) => void;
+  onRename?: (channel: Channel) => void;
+  onDelete?: (channel: Channel) => void;
 }) {
-  return (
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
+  const btn = (
     <button
       onClick={onClick}
-      onContextMenu={canManage ? (e) => { e.preventDefault(); onContextMenu?.(e, channel); } : undefined}
       className={cn(
-        'group relative flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-[13px] font-medium transition-colors',
+        'group relative flex w-full items-center rounded-xl font-medium transition-colors',
+        d.channelGap, d.channelPx, d.channelPy, d.channelText,
         isActive
-          ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-          : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
+          ? 'bg-accent/10 text-accent'
+          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
       )}
     >
       {isActive && (
-        <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)]" />
+        <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
       )}
-      {(() => { const Icon = CHANNEL_ICON[channel.type] ?? HashIcon; return <Icon size={14} className={cn('shrink-0 transition-colors', isActive ? 'text-[var(--accent)]' : 'text-[var(--muted)]/60 group-hover:text-[var(--muted)]')} />; })()}
+      {(() => { const Icon = CHANNEL_ICON[channel.type] ?? HashIcon; return <Icon size={d.channelIcon} className={cn('shrink-0 transition-colors', isActive ? 'text-accent' : 'text-muted-foreground/60 group-hover:text-muted-foreground')} />; })()}
       <span className="truncate">{channel.name}</span>
     </button>
+  );
+
+  if (!canManage) return btn;
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{btn}</ContextMenuTrigger>
+      <ContextMenuContent className="min-w-40">
+        <ContextMenuItem onClick={() => onRename?.(channel)}>
+          <PencilIcon size={13} className="mr-2 shrink-0 opacity-60" />
+          Renommer
+        </ContextMenuItem>
+        <ContextMenuItem variant="destructive" onClick={() => onDelete?.(channel)}>
+          <Trash2Icon size={13} className="mr-2 shrink-0" />
+          Supprimer
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 
@@ -188,28 +236,32 @@ function VoiceChannelRow({
 }) {
   const isConnected = currentChannelId === channel.id;
 
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
+
   return (
     <div>
       <button
         onClick={() => (isConnected ? onLeave() : onJoin(serverId, channel.id))}
         className={cn(
-          'group relative flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-[13px] font-medium transition-colors',
+          'group relative flex w-full items-center rounded-xl font-medium transition-colors',
+          d.channelGap, d.channelPx, d.channelPy, d.channelText,
           isConnected
             ? 'bg-green-500/10 text-green-400'
-            : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]',
+            : 'text-muted-foreground hover:bg-surface-secondary/70 hover:text-foreground',
         )}
       >
         {isConnected && (
           <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-green-400" />
         )}
-        <Volume2Icon size={14}
+        <Volume2Icon size={d.channelIcon}
           className={cn(
             'shrink-0 transition-colors',
-            isConnected ? 'text-green-400' : 'text-[var(--muted)]/60 group-hover:text-[var(--muted)]',
+            isConnected ? 'text-green-400' : 'text-muted-foreground/60 group-hover:text-muted-foreground',
           )} />
         <span className="truncate">{channel.name}</span>
         {participants.length > 0 && (
-          <span className="ml-auto text-[10px] font-semibold text-[var(--muted)]">{participants.length}</span>
+          <span className="ml-auto text-[10px] font-semibold text-muted-foreground">{participants.length}</span>
         )}
       </button>
       {participants.length > 0 && (
@@ -219,7 +271,7 @@ function VoiceChannelRow({
               <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-[8px] font-bold text-green-400">
                 {p.username?.charAt(0)?.toUpperCase() || '?'}
               </div>
-              <span className="flex-1 truncate text-[11px] text-[var(--muted)]">{p.username}</span>
+              <span className="flex-1 truncate text-[11px] text-muted-foreground">{p.username}</span>
               {p.muted && <MicOffIcon size={10} className="shrink-0 text-red-400" />}
             </div>
           ))}
@@ -249,28 +301,31 @@ function SectionHeader({
     <div className="group flex items-center gap-1 px-1 py-1">
       <button
         onClick={onToggle}
-        className="flex flex-1 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50 transition-colors hover:text-[var(--muted)]"
+        className="flex flex-1 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 transition-colors hover:text-muted-foreground"
       >
         <ChevronRightIcon size={11}
           className={cn('shrink-0 transition-transform', !collapsed && 'rotate-90')} />
         {label}
       </button>
       {canAdd && (
-        <Tooltip delay={0}>
-          <Button
-            variant="ghost"
-            isIconOnly
-            size="sm"
-            className="size-4 min-w-0 rounded p-0 text-[var(--muted)]/40 opacity-0 transition-opacity hover:text-[var(--muted)] group-hover:opacity-100"
-            onPress={(e: any) => {
-              e?.stopPropagation?.();
-              onAdd();
-            }}
-          >
-            <PlusIcon size={13} />
-          </Button>
-          <Tooltip.Content placement="right">{t.channelList.createChannel}</Tooltip.Content>
-        </Tooltip>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-4 min-w-0 rounded p-0 text-muted-foreground/40 opacity-0 transition-opacity hover:text-muted-foreground group-hover:opacity-100"
+                onClick={(e: any) => {
+                  e?.stopPropagation?.();
+                  onAdd();
+                }}
+              >
+                <PlusIcon size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t.channelList.createChannel}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
   );
@@ -290,6 +345,8 @@ export function ChannelList({
   const voice = useVoice();
   const { t } = useTranslation();
   const ui = useUIStyle();
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -321,7 +378,6 @@ export function ChannelList({
   const [dragOverDmId, setDragOverDmId] = useState<string | null>(null);
 
   // ── Context menu (clic droit salon) ──────────────────────────────────────
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; channel: Channel } | null>(null);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [editChannelName, setEditChannelName] = useState('');
   const [confirmDeleteChannel, setConfirmDeleteChannel] = useState<Channel | null>(null);
@@ -684,20 +740,6 @@ export function ChannelList({
     onSelectChannel(null);
   };
 
-  // ── Context menu handlers ─────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!ctxMenu) return;
-    const close = () => setCtxMenu(null);
-    window.addEventListener('click', close);
-    return () => window.removeEventListener('click', close);
-  }, [ctxMenu]);
-
-  const handleOpenCtxMenu = useCallback((e: React.MouseEvent, channel: Channel) => {
-    e.preventDefault();
-    setCtxMenu({ x: e.clientX, y: e.clientY, channel });
-  }, []);
-
   const handleRenameChannel = () => {
     if (!editingChannel || !editChannelName.trim() || !serverId) return;
     socketService.updateChannel(serverId, editingChannel.id, { name: editChannelName.trim() });
@@ -749,11 +791,11 @@ export function ChannelList({
     return (
       <div className={`flex h-full w-full flex-col overflow-hidden ${ui.sidebarBg}`}>
         {/* ── Header ── */}
-        <div className={`flex h-13 shrink-0 items-center px-3 ${ui.header}`}>
-          <span className="text-[13px] font-bold tracking-tight text-[var(--foreground)]">{t.channelList.messagesTitle}</span>
+        <div className={`flex ${d.headerH} shrink-0 items-center px-4 ${ui.header}`}>
+          <span className={`${d.channelText} font-bold tracking-tight text-foreground`}>{t.channelList.messagesTitle}</span>
         </div>
 
-        <ScrollShadow className="flex-1 overflow-y-auto">
+        <ScrollArea className="flex-1 overflow-y-auto">
           <div className="space-y-0.5 p-2">
 
             {/* ── Nav buttons ── */}
@@ -761,17 +803,17 @@ export function ChannelList({
               data-tour="friends"
               onClick={() => onSelectChannel('friends')}
               className={cn(
-                'group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-all duration-150',
+                `group flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
                 selectedChannel === 'friends'
-                  ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
-                  : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/60 hover:text-[var(--foreground)]',
+                  ? 'bg-accent/12 text-accent'
+                  : 'text-muted-foreground hover:bg-surface-secondary/60 hover:text-foreground',
               )}
             >
               <div className={cn(
                 'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
                 selectedChannel === 'friends'
-                  ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
-                  : 'bg-[var(--surface-secondary)]/80 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)]',
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-surface-secondary/80 text-muted-foreground group-hover:bg-surface-secondary',
               )}>
                 <UsersIcon size={14} />
               </div>
@@ -781,17 +823,17 @@ export function ChannelList({
             <button
               onClick={() => router.push('/channels/me/changelogs')}
               className={cn(
-                'group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-all duration-150',
+                `group flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
                 selectedChannel === 'changelogs'
-                  ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
-                  : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/60 hover:text-[var(--foreground)]',
+                  ? 'bg-accent/12 text-accent'
+                  : 'text-muted-foreground hover:bg-surface-secondary/60 hover:text-foreground',
               )}
             >
               <div className={cn(
                 'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
                 selectedChannel === 'changelogs'
-                  ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
-                  : 'bg-[var(--surface-secondary)]/80 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)]',
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-surface-secondary/80 text-muted-foreground group-hover:bg-surface-secondary',
               )}>
                 <FileTextIcon size={14} />
               </div>
@@ -805,12 +847,12 @@ export function ChannelList({
             {/* ── Messages privés ── */}
             <div data-section="dm-list" className="mx-0.5 mt-0.5 rounded-xl  p-1.5 transition-all">
               <div className="mb-1 flex items-center justify-between px-2 pt-1">
-                <p data-tour="conversations" className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+                <p data-tour="conversations" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
                   {t.channelList.directMessages}
                 </p>
               </div>
               {dmConversations.length === 0 ? (
-                <p className="px-3 py-3 text-center text-[11px] text-[var(--muted)]/40">{t.channelList.noConversations}</p>
+                <p className="px-3 py-3 text-center text-[11px] text-muted-foreground/40">{t.channelList.noConversations}</p>
               ) : (
                 <div className="space-y-0.5">
                   {dmConversations.map((conv) => {
@@ -864,44 +906,44 @@ export function ChannelList({
                       <button
                         onClick={() => router.push(`/channels/me/${conv.recipientId}`)}
                         className={cn(
-                          'group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-all duration-150',
+                          `group flex w-full items-center ${d.rowGap} rounded-xl ${d.rowPx} ${d.rowPy} transition-all duration-150`,
                           isActive
-                            ? 'bg-[var(--accent)]/12 text-[var(--accent)]'
-                            : 'text-[var(--foreground)] hover:bg-[var(--surface-secondary)]/60',
-                          dragOverDmId === conv.recipientId && 'ring-1 ring-[var(--accent)]/30',
+                            ? 'bg-accent/12 text-accent'
+                            : 'text-foreground hover:bg-surface-secondary/60',
+                          dragOverDmId === conv.recipientId && 'ring-1 ring-accent/30',
                         )}
                       >
                         <div className="relative shrink-0">
-                          <Avatar className={cn('size-8 ring-2 transition-all', isActive ? 'ring-[var(--accent)]/30' : 'ring-transparent group-hover:ring-[var(--border)]/30')}>
-                            <Avatar.Image src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
-                            <Avatar.Fallback className={cn('text-[11px] font-semibold', isActive ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'bg-[var(--surface-secondary)]')}>
+                          <Avatar className={cn(`${d.rowAvatar} ring-2 transition-all`, isActive ? 'ring-accent/30' : 'ring-transparent group-hover:ring-border/30')}>
+                            <AvatarImage src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
+                            <AvatarFallback className={cn('text-[11px] font-semibold', isActive ? 'bg-accent/20 text-accent' : 'bg-surface-secondary')}>
                               {conv.recipientName?.[0]?.toUpperCase() || '?'}
-                            </Avatar.Fallback>
+                            </AvatarFallback>
                           </Avatar>
                           <span className={cn(
-                            'absolute -bottom-0.5 -right-0.5 size-2.5 ring-[1.5px] ring-[var(--background)]',
+                            'absolute -bottom-0.5 -right-0.5 size-2.5 ring-[1.5px] ring-background',
                             presenceDotShape(presence),
                             presenceDot(presence),
                           )} />
                         </div>
                         <div className="min-w-0 flex-1 text-left">
-                          <p className={cn('truncate text-[13px] font-medium leading-tight', isActive ? 'text-[var(--accent)]' : 'text-[var(--foreground)]')}>
+                          <p className={cn(`truncate ${d.rowName} font-medium leading-tight`, isActive ? 'text-accent' : 'text-foreground')}>
                             {conv.recipientName || t.channelList.user}
                           </p>
                           {customStatusMap.get(conv.recipientId) ? (
-                            <p className="truncate text-[10px] text-[var(--muted)]/50 leading-tight">
+                            <p className={`truncate ${d.rowSub} text-muted-foreground/50 leading-tight`}>
                               {customStatusMap.get(conv.recipientId)}
                             </p>
                           ) : (
-                            <p className="text-[10px] text-[var(--muted)]/40 leading-tight">
+                            <p className={`${d.rowSub} text-muted-foreground/40 leading-tight`}>
                               {presence === 'online' ? 'En ligne' : presence === 'idle' ? 'Absent' : presence === 'dnd' ? 'Ne pas déranger' : presence === 'invisible' ? 'Invisible' : 'Hors ligne'}
                             </p>
                           )}
                         </div>
                         {dmUnread > 0 && (
-                          <Chip color="danger" size="sm" className="ml-auto shrink-0 min-w-5 h-5 text-[10px]">
+                          <Badge variant="destructive" className="ml-auto shrink-0 min-w-5 h-5 text-[10px]">
                             {dmUnread}
-                          </Chip>
+                          </Badge>
                         )}
                       </button>
                       </div>
@@ -911,7 +953,7 @@ export function ChannelList({
               )}
             </div>
           </div>
-        </ScrollShadow>
+        </ScrollArea>
 
         <CallBar />
         {user && <UserPanel user={user} />}
@@ -934,8 +976,8 @@ export function ChannelList({
       ) : null}
 
       {/* Server name header with dropdown */}
-      <Dropdown>
-        <Dropdown.Trigger className={`flex h-11 w-full items-center justify-between px-3 font-semibold transition-colors hover:bg-surface-secondary/60 ${ui.isGlass ? 'border-b border-[var(--border)]/40 bg-[var(--background)]/60' : 'border-b border-[var(--border)] bg-[var(--surface-secondary)]'}`}>
+      <DropdownMenu>
+        <DropdownMenuTrigger className={`flex h-11 w-full items-center justify-between px-3 font-semibold transition-colors hover:bg-surface-secondary/60 ${ui.isGlass ? 'border-b border-border/40 bg-background/60' : 'border-b border-border bg-surface-secondary'}`}>
           <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[13px]">
             <span className="truncate">{serverName}</span>
             {serverBadges.isCertified && (
@@ -945,31 +987,23 @@ export function ChannelList({
               <HandshakeIcon size={14} className="shrink-0 text-violet-400" />
             )}
           </span>
-          <ChevronDownIcon size={14} className="shrink-0 text-muted/50" />
-        </Dropdown.Trigger>
-        <Dropdown.Popover placement="bottom start" className="w-56">
-          <Dropdown.Menu
-            aria-label="Server menu"
-            onAction={(key) => {
-              if (key === 'settings') onOpenSettings?.();
-              else if (key === 'leave') handleLeaveServer();
-            }}
-          >
-            <Dropdown.Item id="settings" className="gap-2">
-              <SettingsIcon size={15} />
-              {t.channelList.serverSettings}
-            </Dropdown.Item>
-            <Dropdown.Item id="invite" className="gap-2">
-              <UserPlusIcon size={15} />
-              {t.channelList.inviteMembers}
-            </Dropdown.Item>
-            <Dropdown.Item id="leave" className="gap-2 text-red-500">
-              <LogOutIcon size={15} />
-              {t.serverList.leaveServer}
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown.Popover>
-      </Dropdown>
+          <ChevronDownIcon size={14} className="shrink-0 text-muted-foreground/50" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuItem className="gap-2" onClick={() => onOpenSettings?.()}>
+            <SettingsIcon size={15} />
+            {t.channelList.serverSettings}
+          </DropdownMenuItem>
+          <DropdownMenuItem className="gap-2">
+            <UserPlusIcon size={15} />
+            {t.channelList.inviteMembers}
+          </DropdownMenuItem>
+          <DropdownMenuItem className="gap-2 text-red-500" onClick={() => handleLeaveServer()}>
+            <LogOutIcon size={15} />
+            {t.serverList.leaveServer}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Node offline banner */}
       {nodeOnline === false && (
@@ -979,7 +1013,7 @@ export function ChannelList({
         </div>
       )}
 
-      <ScrollShadow className="flex-1 overflow-y-auto">
+      <ScrollArea className="flex-1 overflow-y-auto">
         <div className="p-2  ">
           {hasCategories ? (
             <>
@@ -990,7 +1024,8 @@ export function ChannelList({
                   isActive={selectedChannel === channel.id}
                   onClick={() => onSelectChannel(channel.id)}
                   canManage={canManageChannels}
-                  onContextMenu={handleOpenCtxMenu}
+                  onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
+                  onDelete={(ch) => setConfirmDeleteChannel(ch)}
                 />
               ))}
               {uncategorizedVoice.map((channel) => (
@@ -1035,7 +1070,8 @@ export function ChannelList({
                             isActive={selectedChannel === channel.id}
                             onClick={() => onSelectChannel(channel.id)}
                             canManage={canManageChannels}
-                            onContextMenu={handleOpenCtxMenu}
+                            onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
+                            onDelete={(ch) => setConfirmDeleteChannel(ch)}
                           />
                         ))}
                         {catVoice.map((channel) => (
@@ -1050,7 +1086,7 @@ export function ChannelList({
                           />
                         ))}
                         {catChannels.length === 0 && canManageChannels && (
-                          <p className="px-2 py-1 text-xs text-[var(--muted)]/60">Catégorie vide</p>
+                          <p className="px-2 py-1 text-xs text-muted-foreground/60">Catégorie vide</p>
                         )}
                       </>
                     )}
@@ -1062,8 +1098,8 @@ export function ChannelList({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full gap-1 text-[10px] font-bold uppercase tracking-widest text-muted/30 hover:text-muted"
-                  onPress={() => openCreate('category')}
+                  className="mt-3 w-full gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30 hover:text-muted-foreground"
+                  onClick={() => openCreate('category')}
                 >
                   <PlusIcon size={11} />
                   {t.channelList.newCategory}
@@ -1088,7 +1124,8 @@ export function ChannelList({
                       isActive={selectedChannel === channel.id}
                       onClick={() => onSelectChannel(channel.id)}
                       canManage={canManageChannels}
-                      onContextMenu={handleOpenCtxMenu}
+                      onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
+                      onDelete={(ch) => setConfirmDeleteChannel(ch)}
                     />
                   ))}
               </div>
@@ -1121,8 +1158,8 @@ export function ChannelList({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full gap-1 text-[10px] font-bold uppercase tracking-widest text-muted/30 hover:text-muted"
-                  onPress={() => openCreate('category')}
+                  className="mt-3 w-full gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30 hover:text-muted-foreground"
+                  onClick={() => openCreate('category')}
                 >
                   <PlusIcon size={11} />
                   {t.channelList.newCategory}
@@ -1131,55 +1168,53 @@ export function ChannelList({
             </>
           )}
         </div>
-      </ScrollShadow>
+      </ScrollArea>
 
       <CallBar />
       {user && <UserPanel user={user} />}
 
       {/* Modal : Créer un salon / une catégorie */}
-      <Modal.Backdrop
-        isOpen={showCreateChannel}
+      <Dialog
+        open={showCreateChannel}
         onOpenChange={(open) => {
           setShowCreateChannel(open);
           if (!open) setCreateParentId(null);
         }}
-        variant="blur"
       >
-        <Modal.Container size="sm">
-          <Modal.Dialog
-              aria-label={createType === 'category' ? t.channelList.createModal.createCategory : t.channelList.createModal.createChannel}
-              className="overflow-hidden rounded-2xl border border-(--border)/30 p-0 shadow-2xl"
-            >
-
+        <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-sm">
+            <DialogHeader className="sr-only">
+              <DialogTitle>
+                {createType === 'category'
+                  ? t.channelList.createModal.createCategory
+                  : t.channelList.createModal.createChannel}
+              </DialogTitle>
+            </DialogHeader>
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-(--border)/20 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
-                  {(() => { const Icon = CHANNEL_ICON[createType] ?? HashIcon; return <Icon size={18} className="text-accent" />; })()}
-                </div>
-                <div>
-                  <h2 className="text-[15px] font-bold">
-                    {createType === 'category'
-                      ? t.channelList.createModal.createCategory
-                      : t.channelList.createModal.createChannel}
-                  </h2>
-                  <p className="text-[11px] text-(--muted)/60">
-                    {createParentId
-                      ? <>{t.channelList.createModal.inCategory}{' '}<span className="font-medium text-foreground">{categories.find((c) => c.id === createParentId)?.name}</span></>
-                      : createType === 'category'
-                        ? 'Organisez vos salons'
-                        : 'Choisissez un type et un nom'}
-                  </p>
-                </div>
+            <div className="flex items-start gap-3 border-b border-border/20 px-6 py-5 pr-12">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
+                {(() => { const Icon = CHANNEL_ICON[createType] ?? HashIcon; return <Icon size={18} className="text-accent" />; })()}
               </div>
-              <CloseButton onPress={() => setShowCreateChannel(false)} className="shrink-0" />
+              <div>
+                <h2 className="text-[15px] font-bold">
+                  {createType === 'category'
+                    ? t.channelList.createModal.createCategory
+                    : t.channelList.createModal.createChannel}
+                </h2>
+                <p className="text-[11px] text-muted-foreground/60">
+                  {createParentId
+                    ? <>{t.channelList.createModal.inCategory}{' '}<span className="font-medium text-foreground">{categories.find((c) => c.id === createParentId)?.name}</span></>
+                    : createType === 'category'
+                      ? 'Organisez vos salons'
+                      : 'Choisissez un type et un nom'}
+                </p>
+              </div>
             </div>
 
             {/* Body */}
             <div className="space-y-5 px-6 py-5">
               {createType !== 'category' && (
-                <div className="space-y-2.5">
-                  <Label className="text-[13px] font-semibold">{t.channelList.createModal.type}</Label>
+                <div className="space-y-2">
+                <label className="text-[13px] font-semibold">{t.channelList.createModal.type}</label>
                   <div className="grid grid-cols-4 gap-1.5">
                     {CHANNEL_TYPES.map((ct) => {
                       const isSelected = createType === ct.id;
@@ -1192,7 +1227,7 @@ export function ChannelList({
                             'flex flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-[10px] font-semibold transition-all',
                             isSelected
                               ? 'border-accent bg-accent/10 text-accent'
-                              : 'border-(--border)/40 bg-(--surface-secondary)/30 text-muted hover:border-accent/30 hover:bg-accent/5 hover:text-foreground',
+                              : 'border-border/40 bg-surface-secondary/30 text-muted-foreground hover:border-accent/30 hover:bg-accent/5 hover:text-foreground',
                           )}
                         >
                           <ct.icon size={15} />
@@ -1205,28 +1240,26 @@ export function ChannelList({
               )}
 
               <div className="space-y-2">
-                <Label className="text-[13px] font-semibold">
+                <label className="text-[13px] font-semibold">
                   {createType === 'category'
                     ? t.channelList.createModal.categoryName
                     : t.channelList.createModal.channelName}
-                </Label>
-                <InputGroup>
-                  <InputGroup.Input
-                    placeholder={
-                      createType === 'category'
-                        ? t.channelList.createModal.categoryPlaceholder
-                        : createType === 'voice'
-                          ? t.channelList.createModal.voicePlaceholder
-                          : t.channelList.createModal.textPlaceholder
-                    }
-                    value={createName}
-                    onChange={(e) => setCreateName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleCreateChannel();
-                    }}
-                    autoFocus
-                  />
-                </InputGroup>
+                </label>
+                <Input
+                  placeholder={
+                    createType === 'category'
+                      ? t.channelList.createModal.categoryPlaceholder
+                      : createType === 'voice'
+                        ? t.channelList.createModal.voicePlaceholder
+                        : t.channelList.createModal.textPlaceholder
+                  }
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateChannel();
+                  }}
+                  autoFocus
+                />
               </div>
 
               {createError && (
@@ -1235,101 +1268,63 @@ export function ChannelList({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 border-t border-(--border)/20 bg-(--surface-secondary)/30 px-6 py-4">
-              <Button variant="secondary" onPress={() => setShowCreateChannel(false)}>
+            <div className="flex items-center justify-end gap-2 border-t border-border/20 bg-surface-secondary/30 px-6 py-4">
+              <Button variant="secondary" onClick={() => setShowCreateChannel(false)}>
                 {t.common.cancel}
               </Button>
-              <Button onPress={handleCreateChannel} isDisabled={isCreating || !createName.trim()}>
-                {isCreating && <Spinner size="sm" color="current" />}
+              <Button onClick={handleCreateChannel} disabled={isCreating || !createName.trim()}>
+                {isCreating && <Spinner size="sm" />}
                 {isCreating ? t.common.creating : t.common.create}
               </Button>
             </div>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-
-      {/* ── Context menu clic droit ───────────────────────────────────── */}
-      {ctxMenu && (
-        <div
-          style={{ position: 'fixed', top: ctxMenu.y, left: ctxMenu.x, zIndex: 9999 }}
-          className="min-w-[160px] overflow-hidden rounded-xl border border-[var(--border)]/40 bg-[var(--surface-secondary)] py-1 shadow-xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-[var(--foreground)] hover:bg-[var(--accent)]/10"
-            onClick={() => {
-              setEditingChannel(ctxMenu.channel);
-              setEditChannelName(ctxMenu.channel.name);
-              setCtxMenu(null);
-            }}
-          >
-            <PencilIcon size={13} className="shrink-0 text-[var(--muted)]" />
-            Renommer
-          </button>
-          <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-red-400 hover:bg-red-500/10"
-            onClick={() => { setConfirmDeleteChannel(ctxMenu.channel); setCtxMenu(null); }}
-          >
-            <Trash2Icon size={13} className="shrink-0" />
-            Supprimer
-          </button>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
 
       {/* ── Modale : Renommer un salon ────────────────────────────────── */}
-      <Modal.Backdrop
-        isOpen={!!editingChannel}
+      <Dialog
+        open={!!editingChannel}
         onOpenChange={(open) => { if (!open) setEditingChannel(null); }}
-        variant="blur"
       >
-        <Modal.Container size="sm">
-          <Modal.Dialog aria-label="Renommer le salon" className="overflow-hidden rounded-2xl border border-(--border)/30 p-0 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-(--border)/20 px-6 py-5">
-              <h2 className="text-[15px] font-bold">Renommer le salon</h2>
-              <CloseButton onPress={() => setEditingChannel(null)} />
-            </div>
-            <div className="space-y-4 px-6 py-5">
-              <InputGroup>
-                <InputGroup.Input
-                  value={editChannelName}
-                  onChange={(e) => setEditChannelName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleRenameChannel(); }}
-                  autoFocus
-                />
-              </InputGroup>
-              <div className="flex justify-end gap-2">
-                <Button variant="secondary" onPress={() => setEditingChannel(null)}>Annuler</Button>
-                <Button onPress={handleRenameChannel} isDisabled={!editChannelName.trim()}>Renommer</Button>
-              </div>
-            </div>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Renommer le salon</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={editChannelName}
+              onChange={(e) => setEditChannelName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleRenameChannel(); }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setEditingChannel(null)}>Annuler</Button>
+            <Button onClick={handleRenameChannel} disabled={!editChannelName.trim()}>Renommer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Modale : Confirmer suppression ───────────────────────────── */}
-      <Modal.Backdrop
-        isOpen={!!confirmDeleteChannel}
+      <AlertDialog
+        open={!!confirmDeleteChannel}
         onOpenChange={(open) => { if (!open) setConfirmDeleteChannel(null); }}
-        variant="blur"
       >
-        <Modal.Container size="sm">
-          <Modal.Dialog aria-label="Supprimer le salon" className="overflow-hidden rounded-2xl border border-(--border)/30 p-0 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-(--border)/20 px-6 py-5">
-              <h2 className="text-[15px] font-bold text-red-400">Supprimer le salon</h2>
-              <CloseButton onPress={() => setConfirmDeleteChannel(null)} />
-            </div>
-            <div className="space-y-4 px-6 py-5">
-              <p className="text-[13px] text-[var(--muted)]">
-                Êtes-vous sûr de vouloir supprimer <span className="font-semibold text-[var(--foreground)]">#{confirmDeleteChannel?.name}</span> ? Cette action est irréversible.
-              </p>
-              <div className="flex justify-end gap-2">
-                <Button variant="secondary" onPress={() => setConfirmDeleteChannel(null)}>Annuler</Button>
-                <Button className="bg-red-500 text-white hover:bg-red-600" onPress={handleDeleteChannel}>Supprimer</Button>
-              </div>
-            </div>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10">
+              <Trash2Icon size={20} className="text-destructive" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Supprimer le salon</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer <span className="font-semibold text-foreground">#{confirmDeleteChannel?.name}</span> ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleDeleteChannel}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

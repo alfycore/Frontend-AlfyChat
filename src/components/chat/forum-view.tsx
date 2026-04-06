@@ -12,7 +12,13 @@ import {
   SmileIcon,
   PaperclipIcon,
 } from '@/components/icons';
-import { Button, Chip, InputGroup, ScrollShadow, Separator, Skeleton, TextArea, TextField } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { MessageItem, type MessageSender, type MessageData } from '@/components/chat/message-item';
 import { socketService } from '@/lib/socket';
@@ -145,7 +151,7 @@ function NewPostModal({
             <p className="text-sm font-semibold text-[var(--foreground)]">Nouveau post</p>
             <p className="text-[11px] text-[var(--muted)]">#{channelName || 'forum'}</p>
           </div>
-          <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-xl text-[var(--muted)]" onPress={onClose}>
+          <Button size="icon-sm" variant="ghost" className="size-8 rounded-xl text-muted-foreground" onClick={onClose}>
             <XIcon size={15} />
           </Button>
         </div>
@@ -154,26 +160,24 @@ function NewPostModal({
         <div className="space-y-3 p-5">
           <div>
             <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">TITRE</label>
-            <InputGroup fullWidth>
-              <InputGroup.Input
+            <Input
                 autoFocus
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Titre de votre post…"
                 maxLength={120}
+                className="w-full"
               />
-            </InputGroup>
             <p className="mt-1 text-right text-[10px] text-[var(--muted)]">{title.length}/120</p>
           </div>
           <div>
             <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">CONTENU</label>
-            <TextArea
+            <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Décrivez votre sujet en détail…"
               rows={5}
-              fullWidth
-              className="resize-none"
+              className="w-full resize-none"
             />
           </div>
           <div>
@@ -183,25 +187,23 @@ function NewPostModal({
                 <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-medium text-violet-400">
                   #{tag}
                   <Button
-                    isIconOnly size="sm" variant="ghost"
-                    onPress={() => removeTag(tag)}
+                    size="icon-sm" variant="ghost"
+                    onClick={() => removeTag(tag)}
                     className="ml-0.5 size-4 rounded-full text-violet-400/60 hover:text-violet-400 min-w-0"
                   >×</Button>
                 </span>
               ))}
             </div>
             <div className="flex gap-2">
-              <InputGroup className="flex-1">
-                <InputGroup.Input
+              <Input
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); } }}
                   placeholder="bug, feature, aide…"
                   disabled={tags.length >= 5}
-                  className="text-[12px]"
+                  className="flex-1 text-[12px]"
                 />
-              </InputGroup>
-              <Button size="sm" variant="ghost" className="rounded-xl text-violet-400" onPress={addTag} isDisabled={!tagInput.trim() || tags.length >= 5}>
+              <Button size="sm" variant="ghost" className="rounded-xl text-violet-400" onClick={addTag} disabled={!tagInput.trim() || tags.length >= 5}>
                 Ajouter
               </Button>
             </div>
@@ -210,14 +212,14 @@ function NewPostModal({
 
         {/* Footer */}
         <div className="flex justify-end gap-2 border-t border-[var(--border)]/30 px-5 py-3">
-          <Button size="sm" variant="ghost" className="rounded-xl text-[var(--muted)]" onPress={onClose}>
+          <Button size="sm" variant="ghost" className="rounded-xl text-muted-foreground" onClick={onClose}>
             Annuler
           </Button>
           <Button
             size="sm"
             className="rounded-xl bg-violet-500 text-white hover:bg-violet-600"
-            onPress={handleSubmit}
-            isDisabled={!title.trim() || !content.trim()}
+            onClick={handleSubmit}
+            disabled={!title.trim() || !content.trim()}
           >
             Publier
           </Button>
@@ -387,11 +389,10 @@ function PostDiscussion({
       {/* Back header */}
       <div className="flex shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4 py-3">
         <Button
-          isIconOnly
-          size="sm"
+          size="icon-sm"
           variant="ghost"
-          className="size-8 rounded-xl text-[var(--muted)]"
-          onPress={onBack}
+          className="size-8 rounded-xl text-muted-foreground"
+          onClick={onBack}
         >
           <ArrowLeftIcon size={16} />
         </Button>
@@ -422,22 +423,22 @@ function PostDiscussion({
       {/* Separator */}
       <div className="relative mx-4 my-4 flex shrink-0 items-center">
         <Separator className="flex-1" />
-        <Chip variant="soft" size="sm" className="mx-3 shrink-0 rounded-full border border-[var(--border)] bg-[var(--background)] text-[11px] font-medium text-[var(--muted)]">
-          <Chip.Label>Réponses</Chip.Label>
-        </Chip>
+        <Badge variant="secondary" className="mx-3 shrink-0 rounded-full border border-[var(--border)] bg-[var(--background)] text-[11px] font-medium text-muted-foreground">
+          Réponses
+        </Badge>
         <Separator className="flex-1" />
       </div>
 
       {/* Replies */}
-      <ScrollShadow className="min-h-0 flex-1 overflow-y-auto" ref={scrollRef}>
+      <ScrollArea className="min-h-0 flex-1" ref={scrollRef}>
         {isLoading ? (
           <div className="space-y-4 px-4 py-4">
             {[80, 55, 70].map((w, i) => (
               <div key={i} className="flex gap-3">
-                <Skeleton className="size-8 shrink-0 rounded-full" animationType="shimmer" />
+                <Skeleton className="size-8 shrink-0 rounded-full" />
                 <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3 w-20 rounded" animationType="shimmer" />
-                  <Skeleton className="h-4 rounded" animationType="shimmer" style={{ width: `${w}%` }} />
+                  <Skeleton className="h-3 w-20 rounded" />
+                  <Skeleton className="h-4 rounded" style={{ width: `${w}%` }} />
                 </div>
               </div>
             ))}
@@ -482,7 +483,7 @@ function PostDiscussion({
             ))}
           </div>
         )}
-      </ScrollShadow>
+      </ScrollArea>
 
       {/* Reply input */}
       <div className="shrink-0 px-4 pb-4 pt-1">
@@ -501,23 +502,22 @@ function PostDiscussion({
           />
           <div className="self-end pb-0.5">
             <EmojiPicker onSelect={(emoji) => setInput((prev) => prev + emoji)}>
-              <Button isIconOnly size="sm" variant="ghost" className="size-8 rounded-xl text-[var(--muted)]">
+              <Button size="icon-sm" variant="ghost" className="size-8 rounded-xl text-muted-foreground">
                 <SmileIcon size={16} />
               </Button>
             </EmojiPicker>
           </div>
           <div className="self-end pb-0.5">
             <Button
-              isIconOnly
-              size="sm"
+              size="icon-sm"
               className={cn(
                 'size-8 rounded-xl transition-all',
                 input.trim()
                   ? 'bg-violet-500 text-white'
-                  : 'bg-[var(--surface-secondary)] text-[var(--muted)] opacity-50',
+                  : 'bg-[var(--surface-secondary)] text-muted-foreground opacity-50',
               )}
-              onPress={handleSend}
-              isDisabled={!input.trim()}
+              onClick={handleSend}
+              disabled={!input.trim()}
             >
               <SendIcon size={16} />
             </Button>
@@ -536,12 +536,12 @@ function ForumSkeleton() {
       {[1, 2, 3].map((i) => (
         <div key={i} className="rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/40 p-4">
           <div className="flex gap-3">
-            <Skeleton className="size-9 shrink-0 rounded-full" animationType="shimmer" />
+            <Skeleton className="size-9 shrink-0 rounded-full" />
             <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-3/4 rounded" animationType="shimmer" />
-              <Skeleton className="h-3 w-full rounded" animationType="shimmer" />
-              <Skeleton className="h-3 w-2/3 rounded" animationType="shimmer" />
-              <Skeleton className="h-3 w-1/3 rounded" animationType="shimmer" />
+              <Skeleton className="h-4 w-3/4 rounded" />
+              <Skeleton className="h-3 w-full rounded" />
+              <Skeleton className="h-3 w-2/3 rounded" />
+              <Skeleton className="h-3 w-1/3 rounded" />
             </div>
           </div>
         </div>
@@ -695,7 +695,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
           <Button
             size="sm"
             className="h-8 rounded-xl bg-violet-500 px-3 text-[12px] font-medium text-white hover:bg-violet-600"
-            onPress={() => setShowNewPost(true)}
+            onClick={() => setShowNewPost(true)}
           >
             <PlusIcon size={13} className="mr-1" />
             Nouveau post
@@ -704,7 +704,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
       </div>
 
       {/* Post list */}
-      <ScrollShadow className="min-h-0 flex-1 overflow-y-auto">
+      <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
           <ForumSkeleton />
         ) : posts.length === 0 ? (
@@ -718,7 +718,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
             <Button
               size="sm"
               className="rounded-xl bg-violet-500 px-4 text-white hover:bg-violet-600"
-              onPress={() => setShowNewPost(true)}
+              onClick={() => setShowNewPost(true)}
             >
               <PlusIcon size={13} className="mr-1" />
               Créer un post
@@ -731,7 +731,7 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
             ))}
           </div>
         )}
-      </ScrollShadow>
+      </ScrollArea>
 
       {/* New post modal */}
       {showNewPost && (

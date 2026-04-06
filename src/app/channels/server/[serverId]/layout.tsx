@@ -15,7 +15,8 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
   );
 }
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { Skeleton, Spinner } from '@heroui/react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { MessageCircleIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { CallProvider, useCallContext } from '@/hooks/use-call-context';
@@ -174,7 +175,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       <div className="relative flex h-dvh items-center justify-center overflow-hidden bg-[var(--background)]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <Skeleton className="size-16 rounded-2xl" animationType="shimmer" />
+          <Skeleton className="size-16 rounded-2xl" />
           {mounted && <Spinner size="sm" />}
           <p className="text-sm text-[var(--muted)]">Chargement...</p>
         </div>
