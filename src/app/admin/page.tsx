@@ -129,7 +129,7 @@ export default function AdminPage() {
   const [badgeForm, setBadgeForm] = useState({
     name: '',
     description: '',
-    iconType: 'uicons' as 'uicons' | 'svg',
+    iconType: 'bootstrap' as 'bootstrap' | 'svg',
     iconValue: '',
     color: '#5865F2',
     displayOrder: 999,
@@ -551,7 +551,7 @@ export default function AdminPage() {
     setBadgeForm({
       name: '',
       description: '',
-      iconType: 'uicons',
+      iconType: 'bootstrap',
       iconValue: '',
       color: '#5865F2',
       displayOrder: 999,
@@ -573,7 +573,7 @@ export default function AdminPage() {
     color: string,
     size: string = 'text-xl'
   ) => {
-    if (iconType === 'uicons' && iconValue) {
+    if (iconType === 'bootstrap' && iconValue) {
       return <i className={`fi fi-br-${iconValue} ${size}`} style={{ color }} />;
     }
     if (iconType === 'svg' && iconValue) {
@@ -806,8 +806,8 @@ export default function AdminPage() {
                               </td>
                               <td className="px-4 py-3">
                                 <span className="rounded-full bg-[var(--surface-secondary)] px-2 py-0.5 text-xs text-[var(--muted)]">
-                                  {badge.iconType === 'uicons'
-                                    ? 'UIcons'
+                                  {badge.iconType === 'bootstrap'
+                                    ? 'Bootstrap'
                                     : 'SVG'}
                                 </span>
                               </td>
@@ -1152,7 +1152,7 @@ export default function AdminPage() {
                                       title={b.name}
                                     >
                                       {renderBadgeIcon(
-                                        b.iconType || 'uicons',
+                                        b.iconType || 'bootstrap',
                                         b.iconValue || b.icon,
                                         b.color || '#5865F2',
                                         'text-xs'
@@ -2455,15 +2455,15 @@ export default function AdminPage() {
                   className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
                   value={badgeForm.iconType}
                   onChange={(e) =>
-                    setBadgeForm({ ...badgeForm, iconType: e.target.value as 'uicons' | 'svg', iconValue: '' })
+                    setBadgeForm({ ...badgeForm, iconType: e.target.value as 'bootstrap' | 'svg', iconValue: '' })
                   }
                 >
-                  <option value="uicons">Icône UIcons</option>
+                  <option value="bootstrap">Icône Bootstrap</option>
                   <option value="svg">Upload SVG</option>
                 </select>
               </div>
 
-              {badgeForm.iconType === 'uicons' ? (
+              {badgeForm.iconType === 'bootstrap' ? (
                 <div className="grid gap-2">
                   <label className="text-sm font-medium text-[var(--foreground)]">Icône Bootstrap</label>
                   <input
@@ -2668,7 +2668,7 @@ export default function AdminPage() {
                             }}
                           >
                             {renderBadgeIcon(
-                              b.iconType || 'uicons',
+                              b.iconType || 'bootstrap',
                               b.iconValue || b.icon,
                               b.color || '#5865F2',
                               'text-sm'
