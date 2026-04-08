@@ -954,6 +954,20 @@ class ApiService {
     });
   }
 
+  async patchAdminService(id: string, data: { enabled: boolean }) {
+    return this.request(`/api/admin/services/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async rotateAdminServiceKey(id: string) {
+    return this.request<{ success: boolean; serviceKey: string }>(
+      `/api/admin/services/${encodeURIComponent(id)}/rotate-key`,
+      { method: 'POST' },
+    );
+  }
+
   // ============ CHANGELOGS ============
 
   async getMonitoringStats() {
