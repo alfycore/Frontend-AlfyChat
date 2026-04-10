@@ -1016,11 +1016,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   {userBadges.filter((b: any) => !hiddenBadgeIds.includes(b.id)).slice(0, 4).map((badge: any) => (
                                     <div key={badge.id} className="flex size-7 items-center justify-center rounded-lg" style={{ backgroundColor: badge.color + '18', border: `1.5px solid ${badge.color}35` }} title={badge.name}>
                                       {badge.iconType === 'svg' ? (
-                                        <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
+                                        <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} className="flex size-4 items-center justify-center [&>svg]:size-full" />
                                       ) : badge.iconType === 'flaticon' ? (
-                                        <i className={`${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '13px' }} />
+                                        <i className={`${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '14px', lineHeight: 1 }} />
                                       ) : (
-                                        <i className={`fi fi-br-${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '13px' }} />
+                                        <i className={`fi fi-br-${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '14px', lineHeight: 1 }} />
                                       )}
                                     </div>
                                   ))}
@@ -1051,13 +1051,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               const isHidden = hiddenBadgeIds.includes(badge.id);
                               return (
                                 <div key={badge.id} className={cn('flex items-center gap-2.5 rounded-xl border p-3 transition-opacity', isHidden && 'opacity-40')} style={{ backgroundColor: badge.color + '08', borderColor: badge.color + '30' }}>
-                                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg text-xl" style={{ backgroundColor: badge.color + '20', border: `2px solid ${badge.color}40` }}>
+                                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: badge.color + '20', border: `2px solid ${badge.color}40` }}>
                                     {badge.iconType === 'svg' ? (
-                                      <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
+                                      <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} className="flex size-5 items-center justify-center [&>svg]:size-full" />
                                     ) : badge.iconType === 'flaticon' ? (
-                                      <i className={`${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
+                                      <i className={`${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '20px', lineHeight: 1 }} />
                                     ) : (
-                                      <i className={`fi fi-br-${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
+                                      <i className={`fi fi-br-${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '20px', lineHeight: 1 }} />
                                     )}
                                   </div>
                                   <div className="min-w-0 flex-1">

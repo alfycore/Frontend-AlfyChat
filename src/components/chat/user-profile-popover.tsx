@@ -96,9 +96,9 @@ function formatMemberSince(createdAt: string): string {
 
 function BadgeIcon({ badge }: { badge: UserBadge }) {
   const val = badge.iconValue || badge.icon;
-  if (badge.iconType === 'svg') return <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(val) }} />;
-  if (badge.iconType === 'flaticon') return <i className={`${val}`} style={{ color: badge.color, fontSize: 14 }} />;
-  return <i className={`fi fi-br-${val}`} style={{ color: badge.color, fontSize: 14 }} />;
+  if (badge.iconType === 'svg') return <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(val) }} className="flex size-3 items-center justify-center [&>svg]:size-full" />;
+  if (badge.iconType === 'flaticon') return <i className={`${val}`} style={{ color: badge.color, fontSize: 11, lineHeight: 1 }} />;
+  return <i className={`fi fi-br-${val}`} style={{ color: badge.color, fontSize: 11, lineHeight: 1 }} />;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
