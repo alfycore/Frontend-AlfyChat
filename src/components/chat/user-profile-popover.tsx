@@ -35,7 +35,7 @@ interface UserBadge {
   id: string;
   name: string;
   icon: string;
-  iconType?: 'bootstrap' | 'svg';
+  iconType?: 'bootstrap' | 'svg' | 'flaticon';
   iconValue?: string;
   color: string;
   earnedAt: string;
