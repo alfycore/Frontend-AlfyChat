@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { BackgroundProvider } from "@/components/background-provider";
 import { PrefetchDMs } from "@/components/prefetch-dms";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const ralewayHeading = Raleway({subsets:['latin'],variable:'--font-heading'});
 
@@ -70,6 +71,7 @@ export default function RootLayout({
               </BackgroundProvider>
             </AuthProvider>
           </LocaleProvider>
+        <Toaster richColors position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

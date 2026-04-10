@@ -305,16 +305,16 @@ export const MessageItem = memo(function MessageItem({
         message.pending && 'opacity-60',
       )}>
       {/* ── Toolbar flottant ── */}
-      <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)]/30 bg-[var(--surface)]/80 px-1 py-0.5 opacity-0 shadow-lg shadow-black/10 transition-all duration-150 group-hover:opacity-100">
+      <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)] px-1 py-0.5 opacity-0 shadow-lg shadow-black/30 ring-1 ring-black/5 transition-all duration-150 group-hover:opacity-100">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 size="icon-sm" variant="ghost"
-                className="size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)]"
+                className="size-7 rounded-xl text-[var(--foreground)]/60 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]"
                 onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}
               >
-                <ReplyIcon size={14} />
+                <ReplyIcon size={15} />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Répondre</TooltipContent>
@@ -322,15 +322,15 @@ export const MessageItem = memo(function MessageItem({
         </TooltipProvider>
 
         <EmojiPicker onSelect={(emoji) => onReaction(message.id, emoji)}>
-          <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
-            <SmileIcon size={14} />
+          <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/60 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
+            <SmileIcon size={15} />
           </div>
         </EmojiPicker>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
-              <MoreHorizontalIcon size={14} />
+            <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/60 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
+              <MoreHorizontalIcon size={15} />
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="min-w-44">
