@@ -11,6 +11,7 @@
 type Listener = () => void;
 
 const STORAGE_KEY = 'alfychat_unread';
+const LAST_SEEN_KEY = 'alfychat_last_seen';
 
 function loadFromStorage(): Map<string, number> {
   if (typeof window === 'undefined') return new Map();
@@ -21,6 +22,29 @@ function loadFromStorage(): Map<string, number> {
     return new Map(Object.entries(parsed).map(([k, v]) => [k, Number(v)]));
   } catch {
     return new Map();
+  }
+}
+
+function loadLastSeenFromStorage(): Map<string, string> {
+  if (typeof window === 'undefined') return new Map();
+  try {
+    const raw = localStorage.getItem(LAST_SEEN_KEY);
+    if (!raw) return new Map();
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return new Map(Object.entries(parsed));
+  } catch {
+    return new Map();
+  }
+}
+
+function saveLastSeenToStorage(lastSeen: Map<string, string>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const obj: Record<string, string> = {};
+    lastSeen.forEach((v, k) => { obj[k] = v; });
+    localStorage.setItem(LAST_SEEN_KEY, JSON.stringify(obj));
+  } catch {
+    // ignore
   }
 }
 
@@ -40,13 +64,16 @@ interface NotificationState {
   activeRecipientId: string | null;
   /** groupId du groupe actuellement ouvert, ou null */
   activeGroupId: string | null;
-  /** Map<conversationKey, unreadCount> — clé = recipientId ou 'group:groupId' */
+  /** channelId du salon serveur actuellement ouvert, ou null */
+  activeChannelId: string | null;
+  /** Map<conversationKey, unreadCount> — clé = recipientId, 'group:groupId' ou 'channel:channelId' */
   unread: Map<string, number>;
 }
 
 const state: NotificationState = {
   activeRecipientId: null,
   activeGroupId: null,
+  activeChannelId: null,
   unread: loadFromStorage(),
 };
 
@@ -86,8 +113,14 @@ export function getSnapshot(): NotificationState {
  * Efface automatiquement le compteur non-lu pour ce destinataire.
  */
 export function setActiveDM(recipientId: string | null) {
+  // Marquer l'ancienne conversation comme vue
+  if (state.activeRecipientId) markLastSeen(state.activeRecipientId);
+  if (state.activeGroupId) markLastSeen(`group:${state.activeGroupId}`);
+  if (state.activeChannelId) markLastSeen(`channel:${state.activeChannelId}`);
+
   state.activeRecipientId = recipientId;
   state.activeGroupId = null;
+  state.activeChannelId = null;
   if (recipientId) {
     state.unread.delete(recipientId);
   }
@@ -98,10 +131,47 @@ export function setActiveDM(recipientId: string | null) {
  * Appeler quand l'utilisateur entre dans un groupe.
  */
 export function setActiveGroup(groupId: string | null) {
+  // Marquer l'ancienne conversation comme vue
+  if (state.activeRecipientId) markLastSeen(state.activeRecipientId);
+  if (state.activeGroupId) markLastSeen(`group:${state.activeGroupId}`);
+  if (state.activeChannelId) markLastSeen(`channel:${state.activeChannelId}`);
+
   state.activeGroupId = groupId;
   state.activeRecipientId = null;
+  state.activeChannelId = null;
   if (groupId) {
     state.unread.delete(`group:${groupId}`);
+  }
+  notify();
+}
+
+/**
+ * Appeler quand l'utilisateur entre dans un salon de serveur.
+ * Efface automatiquement le compteur non-lu pour ce salon et décrémente le serveur.
+ */
+export function setActiveChannel(channelId: string | null, serverId?: string) {
+  // Marquer l'ancienne conversation comme vue
+  if (state.activeRecipientId) markLastSeen(state.activeRecipientId);
+  if (state.activeGroupId) markLastSeen(`group:${state.activeGroupId}`);
+  if (state.activeChannelId) markLastSeen(`channel:${state.activeChannelId}`);
+
+  state.activeChannelId = channelId;
+  state.activeRecipientId = null;
+  state.activeGroupId = null;
+  if (channelId) {
+    const key = `channel:${channelId}`;
+    const count = state.unread.get(key) ?? 0;
+    state.unread.delete(key);
+    if (serverId && count > 0) {
+      const serverKey = `server:${serverId}`;
+      const serverCount = state.unread.get(serverKey) ?? 0;
+      const newCount = serverCount - count;
+      if (newCount <= 0) {
+        state.unread.delete(serverKey);
+      } else {
+        state.unread.set(serverKey, newCount);
+      }
+    }
   }
   notify();
 }
@@ -114,6 +184,20 @@ export function isDMActive(recipientId: string): boolean {
 /** Retourner vrai si ce groupe est actuellement ouvert. */
 export function isGroupActive(groupId: string): boolean {
   return state.activeGroupId === groupId;
+}
+
+/** Retourner vrai si ce salon de serveur est actuellement ouvert. */
+export function isChannelActive(channelId: string): boolean {
+  return state.activeChannelId === channelId;
+}
+
+/** Calculer le total de non-lus pour un serveur (somme de tous ses channels). */
+export function getServerUnreadTotal(channelIds: string[]): number {
+  let total = 0;
+  for (const chId of channelIds) {
+    total += state.unread.get(`channel:${chId}`) ?? 0;
+  }
+  return total;
 }
 
 // ── Unread counts ─────────────────────────────────────────────────────────────
@@ -133,6 +217,29 @@ export function clearUnread(key: string) {
   }
 }
 
+/**
+ * Remettre à zéro le compteur non-lu d'un salon serveur.
+ * Décrémente aussi le compteur du serveur parent (server:{serverId}).
+ */
+export function clearChannelUnread(channelId: string, serverId?: string) {
+  const key = `channel:${channelId}`;
+  const count = state.unread.get(key) ?? 0;
+  if (count > 0) {
+    state.unread.delete(key);
+    if (serverId) {
+      const serverKey = `server:${serverId}`;
+      const serverCount = state.unread.get(serverKey) ?? 0;
+      const newCount = serverCount - count;
+      if (newCount <= 0) {
+        state.unread.delete(serverKey);
+      } else {
+        state.unread.set(serverKey, newCount);
+      }
+    }
+    notify();
+  }
+}
+
 /** Lire le compteur non-lu pour une conversation. */
 export function getUnread(key: string): number {
   return state.unread.get(key) ?? 0;
@@ -141,6 +248,27 @@ export function getUnread(key: string): number {
 /** Lire tous les compteurs non-lus. */
 export function getAllUnread(): ReadonlyMap<string, number> {
   return state.unread;
+}
+
+// ── Last seen timestamps ──────────────────────────────────────────────────────
+
+const lastSeenMap = loadLastSeenFromStorage();
+
+/**
+ * Enregistrer le timestamp actuel comme dernier moment vu pour une conversation.
+ * Appelé quand l'utilisateur quitte une conversation ou ferme l'app.
+ */
+export function markLastSeen(conversationKey: string) {
+  lastSeenMap.set(conversationKey, new Date().toISOString());
+  saveLastSeenToStorage(lastSeenMap);
+}
+
+/**
+ * Retourner le timestamp ISO de la dernière visite dans une conversation.
+ * Retourne null si la conversation n'a jamais été visitée.
+ */
+export function getLastSeen(conversationKey: string): string | null {
+  return lastSeenMap.get(conversationKey) ?? null;
 }
 
 // ── React hook ────────────────────────────────────────────────────────────────
@@ -155,6 +283,7 @@ import { useSyncExternalStore } from 'react';
 const SERVER_SNAPSHOT: NotificationState = {
   activeRecipientId: null,
   activeGroupId: null,
+  activeChannelId: null,
   unread: new Map(),
 };
 

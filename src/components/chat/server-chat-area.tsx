@@ -15,6 +15,7 @@ import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { getLastSeen } from '@/lib/notification-store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -180,6 +181,9 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
   const [replyContent, setReplyContent] = useState('');
   const [replyAuthor, setReplyAuthor] = useState('');
   const [typingUsers, setTypingUsers] = useState<Record<string, string>>({});
+
+  // Timestamp de la dernière visite — capturé à l'ouverture du salon
+  const [lastSeenAt] = useState<string | null>(() => getLastSeen(`channel:${channelId}`));
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);

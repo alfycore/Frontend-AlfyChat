@@ -35,6 +35,8 @@ import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { notify } from '@/hooks/use-notification';
+import { getLastSeen, markLastSeen } from '@/lib/notification-store';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
@@ -75,6 +77,7 @@ interface MessageListProps {
   recipientName?: string;
   isLoadingMoreMessages: boolean;
   messagesContainerRef: React.RefObject<HTMLDivElement | null>;
+  lastSeenAt?: string | null;
   onSetEditInput: Dispatch<SetStateAction<string>>;
   onReply: (id: string, content: string, authorName: string) => void;
   onCopy: (content: string) => void;
@@ -100,6 +103,7 @@ const MessageList = memo(function MessageList({
   recipientName,
   isLoadingMoreMessages,
   messagesContainerRef,
+  lastSeenAt,
   onSetEditInput,
   onReply,
   onCopy,
@@ -110,6 +114,19 @@ const MessageList = memo(function MessageList({
   onCancelEdit,
   onDelete,
 }: MessageListProps) {
+  // Trouver l'index du premier message non lu (après lastSeenAt)
+  let newMessagesDividerIdx = -1;
+  if (lastSeenAt) {
+    const lastSeenTime = new Date(lastSeenAt).getTime();
+    for (let i = 0; i < dedupedMessages.length; i++) {
+      const msgTime = new Date(dedupedMessages[i].createdAt).getTime();
+      if (msgTime > lastSeenTime && dedupedMessages[i].authorId !== currentUser?.id) {
+        newMessagesDividerIdx = i;
+        break;
+      }
+    }
+  }
+
   return (
     <div className="space-y-0" ref={messagesContainerRef}>
       {isLoadingMoreMessages && (
@@ -123,13 +140,25 @@ const MessageList = memo(function MessageList({
         const isEditing = editingMessageId === message.id;
         const grouped = idx > 0 && shouldGroup(dedupedMessages[idx - 1], message);
         const isHighlighted = highlightedMessageId === message.id;
+        const isUnread = newMessagesDividerIdx >= 0 && idx >= newMessagesDividerIdx && message.authorId !== currentUser?.id;
+        const showDivider = idx === newMessagesDividerIdx;
 
         return (
-          <div
-            key={message.id}
-            className={isHighlighted ? 'animate-pulse rounded-lg bg-primary/10 transition-colors duration-500' : ''}
-          >
-            <MessageItem
+          <div key={message.id}>
+            {showDivider && (
+              <div className="my-2 flex items-center gap-2 px-4">
+                <div className="h-px flex-1 bg-destructive/40" />
+                <span className="shrink-0 text-[11px] font-semibold text-destructive">Nouveaux messages</span>
+                <div className="h-px flex-1 bg-destructive/40" />
+              </div>
+            )}
+            <div
+              className={cn(
+                isHighlighted && 'animate-pulse rounded-lg bg-primary/10 transition-colors duration-500',
+                isUnread && !isHighlighted && 'bg-accent/5 border-l-2 border-accent/30',
+              )}
+            >
+              <MessageItem
               message={message}
               currentUser={currentUser}
               recipientName={recipientName}
@@ -193,6 +222,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
   const [mentionQuery, setMentionQuery] = useState('');
   const [mentionVisible, setMentionVisible] = useState(false);
+
+  // Timestamp de la dernière visite — capturé à l'ouverture de la conversation
+  const [lastSeenAt] = useState<string | null>(() => {
+    if (recipientId) return getLastSeen(recipientId);
+    return null;
+  });
 
   /* ── Refs ── */
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -866,6 +901,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             recipientName={recipientName}
             isLoadingMoreMessages={isLoadingMoreMessages}
             messagesContainerRef={messagesContainerRef}
+            lastSeenAt={lastSeenAt}
             onSetEditInput={handleSetEditInput}
             onReply={handleReply}
             onCopy={handleCopyMessage}

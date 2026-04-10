@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   isDMActive,
   isGroupActive,
+  isChannelActive,
   incrementUnread,
   subscribe as subscribeNotifications,
   getSnapshot,
@@ -247,7 +248,53 @@ export function useNotification() {
       playNotificationSound();
     };
 
+    // ── Nouveau message serveur (salon) ──────────────────────────────────────
+    const handleServerMessageNew = (data: any) => {
+      const payload = data?.payload || data;
+      if (!payload) return;
+
+      const senderId = payload.senderId || payload.authorId;
+      const myId = userIdRef.current;
+
+      // Ne pas notifier pour ses propres messages
+      if (myId && senderId === myId) return;
+
+      const channelId: string | undefined = payload.channelId || payload.channel_id;
+      const serverId: string | undefined = payload.serverId || payload.server_id;
+      if (!channelId) return;
+
+      const currentPath = pathnameRef.current;
+
+      // Vérifier si l'utilisateur est dans ce salon
+      const isViewing =
+        isChannelActive(channelId) ||
+        currentPath.includes(channelId);
+
+      if (isViewing) return;
+
+      // Incrémenter le badge non-lu pour le salon et pour le serveur
+      incrementUnread(`channel:${channelId}`);
+      if (serverId) {
+        incrementUnread(`server:${serverId}`);
+      }
+
+      const senderName =
+        payload.authorName || payload.senderName || payload.sender?.displayName || payload.sender?.username || 'Nouveau message';
+      const rawContent: string = payload.content || '';
+      const truncated =
+        rawContent.length > 80 ? rawContent.substring(0, 80) + '…' : rawContent;
+
+      toast.message(senderName, {
+        description: truncated || undefined,
+        duration: 4000,
+      });
+
+      showOSNotification(senderName, truncated || undefined);
+      playNotificationSound();
+    };
+
     socketService.on('message:new', handleNewMessage);
+    socketService.on('SERVER_MESSAGE_NEW', handleServerMessageNew);
     socketService.on('FRIEND_REQUEST', handleFriendRequest);
     socketService.on('FRIEND_ACCEPT', handleFriendAccepted);
     socketService.on('disconnect', handleDisconnect);
@@ -256,6 +303,7 @@ export function useNotification() {
 
     return () => {
       socketService.off('message:new', handleNewMessage);
+      socketService.off('SERVER_MESSAGE_NEW', handleServerMessageNew);
       socketService.off('FRIEND_REQUEST', handleFriendRequest);
       socketService.off('FRIEND_ACCEPT', handleFriendAccepted);
       socketService.off('disconnect', handleDisconnect);

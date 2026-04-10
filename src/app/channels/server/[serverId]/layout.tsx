@@ -24,6 +24,8 @@ import { MobileNavProvider, useMobileNav } from '@/hooks/use-mobile-nav';
 import { useNotification } from '@/hooks/use-notification';
 import { VoiceProvider } from '@/hooks/use-voice';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { setActiveChannel, clearUnread } from '@/lib/notification-store';
+import { api } from '@/lib/api';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { MemberList } from '@/components/chat/member-list';
@@ -67,6 +69,24 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const channelId = params?.channelId as string | undefined;
 
   const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
+
+  // Synchroniser le channel actif avec le store de notifications
+  useEffect(() => {
+    if (channelId) {
+      setActiveChannel(channelId, serverId);
+      clearUnread(`channel:${channelId}`);
+      api.markNotificationsRead(`channel:${channelId}`);
+    } else {
+      setActiveChannel(null);
+    }
+  }, [channelId, serverId]);
+
+  // Nettoyage quand le layout serveur est démonté
+  useEffect(() => {
+    return () => {
+      setActiveChannel(null);
+    };
+  }, []);
 
   // Vérifier que l'utilisateur est membre du serveur
   useEffect(() => {

@@ -7,6 +7,7 @@ import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { useTranslation } from '@/components/locale-provider';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
+import { useNotificationStore } from '@/lib/notification-store';
 import { cn } from '@/lib/utils';
 import {
   ArrowRightIcon,
@@ -92,6 +93,8 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const btnSize  = d.serverBtn;
   const iconSize = d.serverIcon;
   const side: 'bottom' | 'right' = horizontal ? 'bottom' : 'right';
+
+  const notifStore = useNotificationStore();
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [servers,    setServers   ] = useState<Server[]>([]);
@@ -255,6 +258,18 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
   const handleDragEnd = () => { dragId.current = null; setDragging(null); setDragOver(null); };
 
+  // ── Calcul des totaux non-lus pour DMs et groupes ──────────────────────
+  let totalDmUnread = 0;
+  let totalGroupUnread = 0;
+  notifStore.unread.forEach((count, key) => {
+    if (key.startsWith('group:')) {
+      totalGroupUnread += count;
+    } else if (!key.startsWith('channel:') && !key.startsWith('server:')) {
+      // Les clés sans préfixe sont des DMs (recipientId)
+      totalDmUnread += count;
+    }
+  });
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -275,7 +290,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label={t.serverList?.dms ?? 'Messages directs'}
               className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
+                'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
                 btnSize,
                 selectedServer === null
                   ? 'rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
@@ -284,6 +299,11 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               onClick={() => onSelectServer(null)}
             >
               <MessageCircleIcon size={iconSize} />
+              {totalDmUnread > 0 && selectedServer !== null && (
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground ring-2 ring-background">
+                  {totalDmUnread > 99 ? '99+' : totalDmUnread}
+                </span>
+              )}
             </button>
           </TooltipTrigger>
           <TooltipContent side={side}>
@@ -299,7 +319,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label="Groupes"
               className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
+                'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
                 btnSize,
                 selectedServer === 'groups'
                   ? 'rounded-[14px] bg-indigo-500 text-white shadow-lg shadow-indigo-500/40'
@@ -308,6 +328,11 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               onClick={() => onSelectServer('groups')}
             >
               <UsersRoundIcon size={iconSize} />
+              {totalGroupUnread > 0 && selectedServer !== 'groups' && (
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground ring-2 ring-background">
+                  {totalGroupUnread > 99 ? '99+' : totalGroupUnread}
+                </span>
+              )}
             </button>
           </TooltipTrigger>
           <TooltipContent side={side}>Groupes</TooltipContent>
@@ -337,6 +362,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                   const active    = selectedServer === server.id;
                   const isDragged = dragging === server.id;
                   const isOver    = dragOver  === server.id;
+                  const serverUnread = notifStore.unread.get(`server:${server.id}`) ?? 0;
 
                   return (
                     <div
@@ -396,6 +422,11 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                                     <AvatarBadge className="bg-emerald-500" />
                                   )}
                                 </Avatar>
+                                {serverUnread > 0 && !active && (
+                                  <span className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground ring-2 ring-background">
+                                    {serverUnread > 99 ? '99+' : serverUnread}
+                                  </span>
+                                )}
                               </button>
                             </ContextMenuTrigger>
                           </TooltipTrigger>

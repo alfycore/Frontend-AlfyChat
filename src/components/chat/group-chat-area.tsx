@@ -33,6 +33,8 @@ import { EmojiPicker } from '@/components/chat/emoji-picker';
 
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { GroupSettingsDialog } from '@/components/chat/group-settings-dialog';
+import { getLastSeen } from '@/lib/notification-store';
+import { cn } from '@/lib/utils';
 import {
   MessageItem,
   shouldGroup,
@@ -77,6 +79,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const [showMembers, setShowMembers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState<'general' | 'members'>('general');
+
+  // Timestamp de la dernière visite — capturé à l'ouverture du groupe
+  const [lastSeenAt] = useState<string | null>(() => getLastSeen(`group:${groupId}`));
 
   // ── File attachments ──
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -561,30 +566,56 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             </div>
           ) : (
             <div className="space-y-1" ref={messagesContainerRef}>
-              {enrichedMessages.map((message, idx) => {
-                const isEditing = editingMessageId === message.id;
-                const grouped = idx > 0 && shouldGroup(enrichedMessages[idx - 1], message);
-                return (
-                  <MessageItem
-                    key={message.id}
-                    message={message}
-                    currentUser={currentUser}
-                    isEditing={isEditing}
-                    editInput={isEditing ? editInput : ''}
-                    isGrouped={grouped}
-                    replyMessage={message.replyToId ? (messagesById.get(message.replyToId) ?? null) : null}
-                    onSetEditInput={handleSetEditInput}
-                    onReply={handleReply}
-                    onCopy={handleCopyMessage}
-                    onReaction={handleReaction}
-                    onRemoveReaction={handleRemoveReaction}
-                    onStartEdit={handleStartEdit}
-                    onSaveEdit={handleSaveEdit}
-                    onCancelEdit={handleCancelEdit}
-                    onDelete={deleteMessage}
-                  />
-                );
-              })}
+              {(() => {
+                // Trouver l'index du premier message non lu
+                let newMessagesDividerIdx = -1;
+                if (lastSeenAt) {
+                  const lastSeenTime = new Date(lastSeenAt).getTime();
+                  for (let i = 0; i < enrichedMessages.length; i++) {
+                    const msgTime = new Date(enrichedMessages[i].createdAt).getTime();
+                    if (msgTime > lastSeenTime && enrichedMessages[i].authorId !== currentUser?.id) {
+                      newMessagesDividerIdx = i;
+                      break;
+                    }
+                  }
+                }
+                return enrichedMessages.map((message, idx) => {
+                  const isEditing = editingMessageId === message.id;
+                  const grouped = idx > 0 && shouldGroup(enrichedMessages[idx - 1], message);
+                  const isUnread = newMessagesDividerIdx >= 0 && idx >= newMessagesDividerIdx && message.authorId !== currentUser?.id;
+                  const showDivider = idx === newMessagesDividerIdx;
+                  return (
+                    <div key={message.id}>
+                      {showDivider && (
+                        <div className="my-2 flex items-center gap-2 px-4">
+                          <div className="h-px flex-1 bg-destructive/40" />
+                          <span className="shrink-0 text-[11px] font-semibold text-destructive">Nouveaux messages</span>
+                          <div className="h-px flex-1 bg-destructive/40" />
+                        </div>
+                      )}
+                      <div className={cn(isUnread && 'bg-accent/5 border-l-2 border-accent/30')}>
+                        <MessageItem
+                          message={message}
+                          currentUser={currentUser}
+                          isEditing={isEditing}
+                          editInput={isEditing ? editInput : ''}
+                          isGrouped={grouped}
+                          replyMessage={message.replyToId ? (messagesById.get(message.replyToId) ?? null) : null}
+                          onSetEditInput={handleSetEditInput}
+                          onReply={handleReply}
+                          onCopy={handleCopyMessage}
+                          onReaction={handleReaction}
+                          onRemoveReaction={handleRemoveReaction}
+                          onStartEdit={handleStartEdit}
+                          onSaveEdit={handleSaveEdit}
+                          onCancelEdit={handleCancelEdit}
+                          onDelete={deleteMessage}
+                        />
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           )}
 

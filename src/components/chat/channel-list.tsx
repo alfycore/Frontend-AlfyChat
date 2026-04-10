@@ -40,6 +40,7 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   useNotificationStore,
   clearUnread,
+  clearChannelUnread,
 } from '@/lib/notification-store';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -169,6 +170,7 @@ function ChannelRow({
   canManage,
   onRename,
   onDelete,
+  unreadCount,
 }: {
   channel: Channel;
   isActive: boolean;
@@ -176,9 +178,11 @@ function ChannelRow({
   canManage?: boolean;
   onRename?: (channel: Channel) => void;
   onDelete?: (channel: Channel) => void;
+  unreadCount?: number;
 }) {
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
+  const hasUnread = (unreadCount ?? 0) > 0;
   const btn = (
     <button
       onClick={onClick}
@@ -187,14 +191,21 @@ function ChannelRow({
         d.channelGap, d.channelPx, d.channelPy, d.channelText,
         isActive
           ? 'bg-accent/10 text-accent'
-          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+          : hasUnread
+            ? 'text-foreground hover:bg-muted/70'
+            : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
       )}
     >
       {isActive && (
         <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
       )}
       {(() => { const Icon = CHANNEL_ICON[channel.type] ?? HashIcon; return <Icon size={d.channelIcon} className={cn('shrink-0 transition-colors', isActive ? 'text-accent' : 'text-muted-foreground/60 group-hover:text-muted-foreground')} />; })()}
-      <span className="truncate">{channel.name}</span>
+      <span className={cn("truncate", hasUnread && !isActive && "font-bold")}>{channel.name}</span>
+      {hasUnread && !isActive && (
+        <Badge variant="destructive" className="ml-auto shrink-0 min-w-5 h-5 text-[10px]">
+          {unreadCount! > 99 ? '99+' : unreadCount}
+        </Badge>
+      )}
     </button>
   );
 
@@ -599,6 +610,12 @@ export function ChannelList({
       // Cas où selectedChannel = recipientId directement
       clearUnread(selectedChannel);
     }
+  }, [selectedChannel, serverId]);
+
+  // Quand l'utilisateur sélectionne un salon serveur → vider son compteur non-lu
+  useEffect(() => {
+    if (!selectedChannel || !serverId) return;
+    clearChannelUnread(selectedChannel, serverId);
   }, [selectedChannel, serverId]);
 
   // Socket: DM events
@@ -1026,6 +1043,7 @@ export function ChannelList({
                   canManage={canManageChannels}
                   onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
                   onDelete={(ch) => setConfirmDeleteChannel(ch)}
+                  unreadCount={notifStore.unread.get(`channel:${channel.id}`) ?? 0}
                 />
               ))}
               {uncategorizedVoice.map((channel) => (
@@ -1072,6 +1090,7 @@ export function ChannelList({
                             canManage={canManageChannels}
                             onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
                             onDelete={(ch) => setConfirmDeleteChannel(ch)}
+                            unreadCount={notifStore.unread.get(`channel:${channel.id}`) ?? 0}
                           />
                         ))}
                         {catVoice.map((channel) => (
@@ -1126,6 +1145,7 @@ export function ChannelList({
                       canManage={canManageChannels}
                       onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
                       onDelete={(ch) => setConfirmDeleteChannel(ch)}
+                      unreadCount={notifStore.unread.get(`channel:${channel.id}`) ?? 0}
                     />
                   ))}
               </div>

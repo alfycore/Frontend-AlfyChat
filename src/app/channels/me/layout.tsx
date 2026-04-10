@@ -11,6 +11,7 @@ import { MobileNavProvider, useMobileNav } from '@/hooks/use-mobile-nav';
 import { useNotification } from '@/hooks/use-notification';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { setActiveDM, setActiveGroup } from '@/lib/notification-store';
+import { api } from '@/lib/api';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { MemberList } from '@/components/chat/member-list';
@@ -129,10 +130,12 @@ function LayoutInner({ children }: { children: ReactNode }) {
       setSelectedChannel(`group:${groupId}`);
       setActiveGroup(groupId);
       setActiveDM(null);
+      api.markNotificationsRead(`group:${groupId}`);
     } else if (recipientId) {
       setSelectedChannel(`dm:${recipientId}`);
       setActiveDM(recipientId);
       setActiveGroup(null);
+      api.markNotificationsRead(recipientId);
     } else if (pathname === '/channels/me' || pathname === '/channels/me/') {
       setSelectedChannel('friends');
       setActiveDM(null);
