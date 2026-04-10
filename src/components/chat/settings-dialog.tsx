@@ -8,7 +8,7 @@ import {
   GlobeIcon, SearchIcon, HelpCircleIcon, LockIcon,
   Trash2Icon, KeyRoundIcon, ZapIcon, CalendarIcon, ClockIcon,
   AlertTriangleIcon, ChevronRightIcon, ArrowLeftIcon,
-  XIcon, LayoutIcon,
+  XIcon, LayoutIcon, CheckIcon, Loader2Icon, PencilIcon,
 } from '@/components/icons';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/components/locale-provider';
@@ -194,6 +194,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [newInterest, setNewInterest] = useState('');
   const [timezone, setTimezone] = useState('europe-paris');
   const [birthday, setBirthday] = useState('');
+
+  /* -- Username change state -- */
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [usernamePassword, setUsernamePassword] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameChanging, setUsernameChanging] = useState(false);
+  const usernameCheckTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* -- Voice state -- */
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
@@ -485,6 +494,46 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     setIsChangingPassword(false);
   };
 
+  const handleUsernameInput = (value: string) => {
+    const sanitized = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    setNewUsername(sanitized);
+    setUsernameAvailable(null);
+    if (usernameCheckTimeout.current) clearTimeout(usernameCheckTimeout.current);
+    if (sanitized.length >= 3 && sanitized !== user?.username) {
+      setUsernameChecking(true);
+      usernameCheckTimeout.current = setTimeout(async () => {
+        try {
+          const res = await api.checkUsernameAvailable(sanitized);
+          setUsernameAvailable(res.data?.available ?? (res as any).available ?? false);
+        } catch { setUsernameAvailable(null); }
+        setUsernameChecking(false);
+      }, 400);
+    } else {
+      setUsernameChecking(false);
+    }
+  };
+
+  const handleChangeUsername = async () => {
+    if (!user || !newUsername.trim() || !usernamePassword.trim()) { toast.error('Veuillez remplir tous les champs'); return; }
+    if (newUsername.length < 3) { toast.error('Le nom d\'utilisateur doit faire au moins 3 caractères'); return; }
+    if (!usernameAvailable) { toast.error('Ce nom d\'utilisateur n\'est pas disponible'); return; }
+    setUsernameChanging(true);
+    try {
+      const result = await api.changeUsername(user.id, { newUsername, password: usernamePassword });
+      if (result.success) {
+        toast.success('Nom d\'utilisateur modifié avec succès');
+        updateUser({ username: newUsername } as any);
+        setEditingUsername(false);
+        setNewUsername('');
+        setUsernamePassword('');
+        setUsernameAvailable(null);
+      } else {
+        toast.error((result as any).error || 'Erreur lors du changement');
+      }
+    } catch { toast.error('Erreur lors du changement de nom d\'utilisateur'); }
+    setUsernameChanging(false);
+  };
+
   const handleRevokeAllSessions = async () => {
     setIsRevokingAll(true);
     try {
@@ -727,7 +776,59 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                             </div>
                             <div className="space-y-2">
                               <Label>{t.settings.username}</Label>
-                              <Input value={user.username} readOnly disabled />
+                              {!editingUsername ? (
+                                <div className="flex gap-2">
+                                  <Input value={user.username} readOnly disabled className="flex-1" />
+                                  <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => { setEditingUsername(true); setNewUsername(user.username); }}>
+                                    <PencilIcon size={14} />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="space-y-2 rounded-lg border p-3">
+                                  <div className="relative">
+                                    <Input
+                                      value={newUsername}
+                                      onChange={(e) => handleUsernameInput(e.target.value)}
+                                      maxLength={32}
+                                      placeholder="nouveau_pseudo"
+                                      className="pr-8"
+                                    />
+                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                      {usernameChecking ? (
+                                        <Loader2Icon size={14} className="animate-spin text-muted-foreground" />
+                                      ) : usernameAvailable === true ? (
+                                        <CheckIcon size={14} className="text-green-500" />
+                                      ) : usernameAvailable === false ? (
+                                        <XIcon size={14} className="text-red-500" />
+                                      ) : null}
+                                    </span>
+                                  </div>
+                                  {usernameAvailable === false && (
+                                    <p className="text-xs text-red-500">Ce pseudo est déjà pris</p>
+                                  )}
+                                  {usernameAvailable === true && (
+                                    <p className="text-xs text-green-500">Pseudo disponible !</p>
+                                  )}
+                                  <Input
+                                    type="password"
+                                    value={usernamePassword}
+                                    onChange={(e) => setUsernamePassword(e.target.value)}
+                                    placeholder="Mot de passe actuel"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      type="button" size="sm"
+                                      disabled={!usernameAvailable || !usernamePassword.trim() || usernameChanging}
+                                      onClick={handleChangeUsername}
+                                    >
+                                      {usernameChanging ? 'Changement...' : 'Confirmer'}
+                                    </Button>
+                                    <Button type="button" size="sm" variant="ghost" onClick={() => { setEditingUsername(false); setNewUsername(''); setUsernamePassword(''); setUsernameAvailable(null); }}>
+                                      Annuler
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             <div className="space-y-2 lg:col-span-2">
                               <Label>{t.settings.bio}</Label>

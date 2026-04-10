@@ -34,6 +34,13 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content }
       role="dialog"
       aria-modal
     >
+      <button
+        className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+        onClick={(e) => { e.stopPropagation(); setLightboxSrc(null); }}
+        aria-label="Fermer"
+      >
+        <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
       <img
         src={lightboxSrc}
         alt=""

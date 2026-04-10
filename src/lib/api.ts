@@ -320,6 +320,17 @@ class ApiService {
     });
   }
 
+  async checkUsernameAvailable(username: string) {
+    return this.request(`/api/users/check-username/${encodeURIComponent(username)}`);
+  }
+
+  async changeUsername(userId: string, data: { newUsername: string; password: string }) {
+    return this.request(`/api/users/${userId}/change-username`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // ============ RGPD ============
   async exportMyData() {
     return this.request('/api/rgpd/export', { method: 'POST' });
