@@ -97,6 +97,7 @@ function formatMemberSince(createdAt: string): string {
 function BadgeIcon({ badge }: { badge: UserBadge }) {
   const val = badge.iconValue || badge.icon;
   if (badge.iconType === 'svg') return <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(val) }} />;
+  if (badge.iconType === 'flaticon') return <i className={`${val}`} style={{ color: badge.color, fontSize: 14 }} />;
   return <i className={`bi ${val}`} style={{ color: badge.color, fontSize: 14 }} />;
 }
 

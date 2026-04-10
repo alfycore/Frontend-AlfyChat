@@ -1017,6 +1017,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                     <div key={badge.id} className="flex size-7 items-center justify-center rounded-lg" style={{ backgroundColor: badge.color + '18', border: `1.5px solid ${badge.color}35` }} title={badge.name}>
                                       {badge.iconType === 'svg' ? (
                                         <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
+                                      ) : badge.iconType === 'flaticon' ? (
+                                        <i className={`${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '13px' }} />
                                       ) : (
                                         <i className={`bi ${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '13px' }} />
                                       )}
@@ -1052,6 +1054,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg text-xl" style={{ backgroundColor: badge.color + '20', border: `2px solid ${badge.color}40` }}>
                                     {badge.iconType === 'svg' ? (
                                       <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
+                                    ) : badge.iconType === 'flaticon' ? (
+                                      <i className={`${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
                                     ) : (
                                       <i className={`bi ${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
                                     )}

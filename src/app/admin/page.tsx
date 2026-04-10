@@ -131,8 +131,9 @@ export default function AdminPage() {
   const [showBadgeDialog, setShowBadgeDialog] = useState(false);
   const [editingBadge, setEditingBadge] = useState<any>(null);
   const [iconSearch, setIconSearch]     = useState('');
+  const [flaticonSearch, setFlaticonSearch] = useState('');
   const [badgeForm, setBadgeForm] = useState({
-    name: '', description: '', iconType: 'bootstrap' as 'bootstrap' | 'svg',
+    name: '', description: '', iconType: 'bootstrap' as 'bootstrap' | 'svg' | 'flaticon',
     iconValue: '', color: '#5865F2', displayOrder: 999,
   });
   // Users
@@ -276,12 +277,14 @@ export default function AdminPage() {
 
   const resetBadgeForm = () => {
     setBadgeForm({ name: '', description: '', iconType: 'bootstrap', iconValue: '', color: '#5865F2', displayOrder: 999 });
-    setEditingBadge(null); setIconSearch('');
+    setEditingBadge(null); setIconSearch(''); setFlaticonSearch('');
   };
 
   const renderBadgeIcon = (iconType: string, iconValue: string, color: string, size = 'text-xl') => {
     if (iconType === 'bootstrap' && iconValue)
       return <i className={`fi fi-br-${iconValue} ${size}`} style={{ color }} />;
+    if (iconType === 'flaticon' && iconValue)
+      return <i className={`${iconValue} ${size}`} style={{ color }} />;
     if (iconType === 'svg' && iconValue)
       return <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(iconValue) }} className="inline-block h-5 w-5" />;
     return <i className="fi fi-br-question text-xl text-muted-foreground" />;
@@ -464,7 +467,7 @@ export default function AdminPage() {
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Badge variant="secondary">{b.iconType === 'bootstrap' ? 'Bootstrap' : 'SVG'}</Badge>
+                                <Badge variant="secondary">{b.iconType === 'bootstrap' ? 'Bootstrap' : b.iconType === 'flaticon' ? 'Flaticon' : 'SVG'}</Badge>
                               </TableCell>
                               <TableCell>{b.displayOrder}</TableCell>
                               <TableCell>
@@ -1461,13 +1464,14 @@ export default function AdminPage() {
               <label className="text-sm font-medium">Type d&apos;icône</label>
               <select className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm"
                 value={badgeForm.iconType} onChange={e => setBadgeForm(p => ({ ...p, iconType: e.target.value as any, iconValue: '' }))}>
-                <option value="bootstrap">Icône Bootstrap</option>
+                <option value="bootstrap">Icône Bootstrap (uicons)</option>
+                <option value="flaticon">Icône Flaticon (classe CSS)</option>
                 <option value="svg">SVG personnalisé</option>
               </select>
             </div>
             {badgeForm.iconType === 'bootstrap' ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Icône</label>
+                <label className="text-sm font-medium">Icône (uicons)</label>
                 <Input placeholder="Rechercher..." value={iconSearch} onChange={e => setIconSearch(e.target.value)} />
                 <div className="h-56 overflow-y-auto rounded-lg border border-border p-2">
                   <div className="grid grid-cols-6 gap-2">
@@ -1481,6 +1485,20 @@ export default function AdminPage() {
                     ))}
                   </div>
                 </div>
+              </div>
+            ) : badgeForm.iconType === 'flaticon' ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Classe CSS Flaticon</label>
+                <p className="text-xs text-muted-foreground">
+                  Entrez la classe CSS complète depuis <a href="https://www.flaticon.com/uicons" target="_blank" rel="noopener noreferrer" className="text-primary underline">flaticon.com/uicons</a> (ex: <code className="rounded bg-muted px-1">fi fi-rr-heart</code>, <code className="rounded bg-muted px-1">fi fi-ss-star</code>, <code className="rounded bg-muted px-1">fi fi-bs-crown</code>)
+                </p>
+                <Input placeholder="fi fi-rr-heart" value={badgeForm.iconValue} onChange={e => setBadgeForm(p => ({ ...p, iconValue: e.target.value }))} />
+                {badgeForm.iconValue && (
+                  <div className="rounded-lg border border-border p-4 text-center">
+                    <i className={`${badgeForm.iconValue} text-4xl`} style={{ color: badgeForm.color }} />
+                    <p className="mt-2 text-xs text-muted-foreground">Aperçu</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-2">
