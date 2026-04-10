@@ -816,7 +816,7 @@ class ApiService {
   async createBadge(data: {
     name: string;
     description?: string;
-    iconType: 'bootstrap' | 'svg';
+    iconType: 'bootstrap' | 'svg' | 'flaticon';
     iconValue: string;
     color: string;
     displayOrder?: number;
@@ -830,7 +830,7 @@ class ApiService {
   async updateBadge(badgeId: string, data: Partial<{
     name: string;
     description: string;
-    iconType: 'bootstrap' | 'svg';
+    iconType: 'bootstrap' | 'svg' | 'flaticon';
     iconValue: string;
     color: string;
     displayOrder: number;
