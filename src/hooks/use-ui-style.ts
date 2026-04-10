@@ -56,6 +56,6 @@ export function useUIStyle() {
       : 'rounded-xl border border-amber-500/20 bg-amber-500/8',
 
     // ── Accent icon badge (same in both styles) ────────────────────────────
-    iconBadge: 'rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25',
+    iconBadge: 'rounded-2xl bg-[var(--accent)] shadow-lg',
   };
 }

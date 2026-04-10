@@ -49,6 +49,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { notify } from '@/hooks/use-notification';
+import { useNotificationStore } from '@/lib/notification-store';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { useTranslation } from '@/components/locale-provider';
 
@@ -107,6 +108,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const prevUserIdRef = useRef<string | null>(null);
   const ui = useUIStyle();
   const { t, tx } = useTranslation();
+  const notifStore = useNotificationStore();
 
   const tabsListRef = useRef<HTMLDivElement>(null);
   const [compactTabs, setCompactTabs] = useState(false);
@@ -558,6 +560,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                           key={friend.id}
                           friend={friend}
                           displayFields={displayFields}
+                          unreadCount={notifStore.unread.get(friend.id) ?? 0}
                           onMessage={() => onOpenDM?.(friend.id, friend.displayName)}
                           onRemove={() => handleRemoveFriend(friend.id)}
                           onBlock={() => handleBlockUser(friend.id, friend.displayName)}
@@ -582,6 +585,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                           key={friend.id}
                           friend={friend}
                           displayFields={displayFields}
+                          unreadCount={notifStore.unread.get(friend.id) ?? 0}
                           onMessage={() => onOpenDM?.(friend.id, friend.displayName)}
                           onRemove={() => handleRemoveFriend(friend.id)}
                           onBlock={() => handleBlockUser(friend.id, friend.displayName)}
@@ -917,12 +921,14 @@ function FriendRow({
   onRemove,
   onBlock,
   displayFields,
+  unreadCount,
 }: {
   friend: Friend;
   onMessage: () => void;
   onRemove: () => void;
   onBlock: () => void;
   displayFields: DisplayField[];
+  unreadCount?: number;
 }) {
   const { t } = useTranslation();
   const { prefs } = useLayoutPrefs();
@@ -937,9 +943,14 @@ function FriendRow({
     status: statusLabel,
   };
   const activeFields = displayFields.length > 0 ? displayFields : (['customStatus'] as DisplayField[]);
+  const hasUnread = (unreadCount ?? 0) > 0;
 
   return (
-    <div className={cn('group flex items-center rounded-xl transition-all duration-150 hover:bg-surface-secondary/60', d.rowGap, d.rowPx, d.rowPy)}>
+    <div className={cn(
+      'group flex items-center rounded-xl transition-all duration-150 hover:bg-surface-secondary/60',
+      hasUnread && 'bg-accent/5',
+      d.rowGap, d.rowPx, d.rowPy,
+    )}>
       <UserProfilePopover
         userId={friend.id}
         onOpenDM={onMessage}
@@ -955,7 +966,7 @@ function FriendRow({
             <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background', dot)} />
           </span>
           <span className="min-w-0 flex-1">
-            <p className={cn('truncate font-medium leading-tight text-foreground', d.rowName)}>{friend.displayName}</p>
+            <p className={cn('truncate font-medium leading-tight', hasUnread ? 'text-foreground font-bold' : 'text-foreground', d.rowName)}>{friend.displayName}</p>
             {activeFields.map((f) => {
               const val = fieldValue[f];
               if (!val) return null;
@@ -968,6 +979,12 @@ function FriendRow({
           </span>
         </button>
       </UserProfilePopover>
+
+      {hasUnread && (
+        <Badge variant="destructive" className="shrink-0 min-w-5 h-5 text-[10px]">
+          {unreadCount! > 99 ? '99+' : unreadCount}
+        </Badge>
+      )}
 
       <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         <TooltipProvider>

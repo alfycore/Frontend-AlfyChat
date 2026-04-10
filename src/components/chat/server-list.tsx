@@ -293,7 +293,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
                 btnSize,
                 selectedServer === null
-                  ? 'rounded-[14px] bg-accent text-white shadow-lg shadow-accent/40'
+                  ? 'rounded-[14px] bg-accent text-white shadow-lg'
                   : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-accent/15 hover:text-accent',
               )}
               onClick={() => onSelectServer(null)}
@@ -322,7 +322,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
                 btnSize,
                 selectedServer === 'groups'
-                  ? 'rounded-[14px] bg-indigo-500 text-white shadow-lg shadow-indigo-500/40'
+                  ? 'rounded-[14px] bg-indigo-500 text-white shadow-lg'
                   : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-indigo-500/15 hover:text-indigo-400',
               )}
               onClick={() => onSelectServer('groups')}

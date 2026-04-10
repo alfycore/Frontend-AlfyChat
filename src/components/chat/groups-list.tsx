@@ -213,7 +213,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                       className={cn(
                         'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
                         isActive
-                          ? 'bg-indigo-500/20 text-indigo-400 shadow-sm shadow-indigo-500/20'
+                          ? 'bg-indigo-500/20 text-indigo-400 shadow-sm'
                           : 'bg-indigo-500/10 text-indigo-400/70 group-hover:bg-indigo-500/15 group-hover:text-indigo-400',
                       )}
                     >

@@ -122,7 +122,7 @@ export default function GotoStartPage() {
 
           {/* Logo */}
           <div
-            className={`flex size-24 items-center justify-center rounded-[32px] bg-[var(--accent)] shadow-[0_24px_80px_color-mix(in_oklch,var(--accent)_50%,transparent)] transition-all duration-700 ${
+            className={`flex size-24 items-center justify-center rounded-[32px] bg-[var(--accent)] shadow-xl transition-all duration-700 ${
               heroVisible ? 'scale-100 opacity-100' : 'scale-75 opacity-0'
             }`}
           >
@@ -171,7 +171,7 @@ export default function GotoStartPage() {
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Button
                 size="lg"
-                className="w-full rounded-2xl bg-[var(--accent)] px-10 font-semibold text-white shadow-[0_8px_30px_color-mix(in_oklch,var(--accent)_40%,transparent)] transition-opacity hover:opacity-90 sm:w-auto"
+                className="w-full rounded-2xl bg-[var(--accent)] px-10 font-semibold text-white shadow-lg transition-opacity hover:opacity-90 sm:w-auto"
                 onClick={() => router.push('/channels/me')}
               >
                 Commencer →
@@ -423,7 +423,7 @@ export default function GotoStartPage() {
           </div>
           <div className="relative z-10 mx-auto max-w-md">
             <div className="mb-6 flex justify-center">
-              <div className="flex size-16 items-center justify-center rounded-[22px] bg-[var(--accent)] shadow-[0_16px_50px_color-mix(in_oklch,var(--accent)_50%,transparent)]">
+              <div className="flex size-16 items-center justify-center rounded-[22px] bg-[var(--accent)] shadow-xl">
                 <span className="text-3xl font-black text-white">A</span>
               </div>
             </div>
@@ -435,7 +435,7 @@ export default function GotoStartPage() {
             </p>
             <Button
               size="lg"
-              className="rounded-2xl bg-[var(--accent)] px-10 font-semibold text-white shadow-[0_8px_30px_color-mix(in_oklch,var(--accent)_40%,transparent)] hover:opacity-90"
+              className="rounded-2xl bg-[var(--accent)] px-10 font-semibold text-white shadow-lg hover:opacity-90"
               onClick={() => router.push('/channels/me')}
             >
               Ouvrir AlfyChat →

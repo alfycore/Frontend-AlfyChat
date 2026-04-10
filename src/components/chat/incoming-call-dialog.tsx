@@ -122,7 +122,7 @@ export function IncomingCallDialog({
                 <Button
                   size="icon"
                   onClick={onDecline}
-                  className="size-16 rounded-full bg-red-500 text-white shadow-xl shadow-red-500/30 transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
+                  className="size-16 rounded-full bg-red-500 text-white shadow-xl transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
                 >
                   <PhoneOffIcon size={26} />
                 </Button>
@@ -134,7 +134,7 @@ export function IncomingCallDialog({
                 <Button
                   size="icon"
                   onClick={onAccept}
-                  className="size-16 rounded-full bg-green-500 text-white shadow-xl shadow-green-500/30 transition-all duration-200 hover:scale-110 hover:bg-green-400 active:scale-95"
+                  className="size-16 rounded-full bg-green-500 text-white shadow-xl transition-all duration-200 hover:scale-110 hover:bg-green-400 active:scale-95"
                 >
                   {callType === 'video' ? (
                     <VideoIcon size={26} />

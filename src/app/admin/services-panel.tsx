@@ -223,7 +223,7 @@ function ServiceCard({
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: online ? '#22c55e' : '#4b5563', boxShadow: online ? '0 0 5px #22c55e80' : 'none', flexShrink: 0, display: 'inline-block' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: online ? '#22c55e' : '#4b5563', flexShrink: 0, display: 'inline-block' }} />
               <span style={{ fontSize: 11, color: online ? '#86efac' : 'rgba(255,255,255,0.22)' }}>
                 {online ? 'Service en ligne' : stale ? 'Inactif' : 'Hors ligne'}
               </span>
@@ -262,7 +262,7 @@ function Port({ style, active, accent, onMouseDown }: { style: React.CSSProperti
         background: active || hov ? accent : '#1a1a1e',
         border: `2px solid ${active || hov ? accent : 'rgba(255,255,255,0.2)'}`,
         cursor: 'crosshair', zIndex: 20, transition: 'all 0.12s',
-        boxShadow: active || hov ? `0 0 8px ${accent}80` : 'none',
+        boxShadow: 'none',
         ...style,
       }}
       onMouseDown={onMouseDown}
@@ -343,7 +343,7 @@ function StaticNodeCard({ id, pos, onDragStart, onPortClick, isSource, canLink, 
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: n.accent, boxShadow: `0 0 5px ${n.accent}80`, flexShrink: 0, display: 'inline-block' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: n.accent, flexShrink: 0, display: 'inline-block' }} />
               <span style={{ fontSize: 11, color: n.text }}>En ligne</span>
             </div>
             <span style={{ fontSize: 10, color: n.accent, background: `${n.accent}10`, padding: '1px 6px', borderRadius: 4, border: `1px solid ${n.border}` }}>

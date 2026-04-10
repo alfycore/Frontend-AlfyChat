@@ -183,7 +183,16 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
   const [typingUsers, setTypingUsers] = useState<Record<string, string>>({});
 
   // Timestamp de la dernière visite — capturé à l'ouverture du salon
-  const [lastSeenAt] = useState<string | null>(() => getLastSeen(`channel:${channelId}`));
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(() => getLastSeen(`channel:${channelId}`));
+
+  // Effacer le surlignage des messages non lus après 5 secondes de lecture
+  useEffect(() => {
+    if (!lastSeenAt) return;
+    const timer = setTimeout(() => {
+      setLastSeenAt(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [lastSeenAt]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -488,7 +497,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <MenuIcon size={16} />
           </Button>
         )}
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg">
           <meta.icon size={14} className="text-[var(--accent-foreground)]" />
         </div>
         <h2 className="truncate text-[14px] font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
@@ -523,7 +532,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
                 <div className="relative flex size-20 items-center justify-center rounded-3xl border border-white/20 bg-white/30 shadow-xl dark:border-white/10 dark:bg-white/5">
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent dark:from-white/10" />
-                  <div className="relative flex size-10 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/25">
+                  <div className="relative flex size-10 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg">
                     <meta.icon size={20} className="text-[var(--accent-foreground)]" />
                   </div>
                 </div>
@@ -536,40 +545,71 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
           ) : (
             <div className="pb-1 pt-4">
               {channelType === 'announcement' && <AnnouncementBanner channelName={channelName} />}
-              {dateGroups.map((group, gi) => (
-                <div key={gi}>
-                  <DateSeparator date={group.date} />
-                  {group.messages.map((message, midx) => {
-                    const replyMsg = message.replyToId
-                      ? (messagesById.get(message.replyToId) ?? null)
-                      : null;
-                    const grouped =
-                      midx > 0
-                        ? shouldGroup(group.messages[midx - 1], message)
-                        : false;
-                    return (
-                      <MessageItem
-                        key={message.id}
-                        message={message}
-                        currentUser={currentUser}
-                        isEditing={editingMessageId === message.id}
-                        editInput={editInput}
-                        isGrouped={grouped}
-                        replyMessage={replyMsg}
-                        onSetEditInput={handleSetEditInput}
-                        onReply={handleReply}
-                        onCopy={handleCopy}
-                        onReaction={() => {}}
-                        onRemoveReaction={() => {}}
-                        onStartEdit={handleStartEdit}
-                        onSaveEdit={handleSaveEdit}
-                        onCancelEdit={handleCancelEdit}
-                        onDelete={handleDeleteMessage}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+              {(() => {
+                // Trouver le premier message non lu (après lastSeenAt)
+                let firstUnreadId: string | null = null;
+                if (lastSeenAt) {
+                  const lastSeenTime = new Date(lastSeenAt).getTime();
+                  for (const g of dateGroups) {
+                    for (const m of g.messages) {
+                      const msgTime = new Date(m.createdAt).getTime();
+                      if (msgTime > lastSeenTime && m.authorId !== user?.id) {
+                        firstUnreadId = m.id;
+                        break;
+                      }
+                    }
+                    if (firstUnreadId) break;
+                  }
+                }
+                let foundFirst = false;
+                return dateGroups.map((group, gi) => (
+                  <div key={gi}>
+                    <DateSeparator date={group.date} />
+                    {group.messages.map((message, midx) => {
+                      const replyMsg = message.replyToId
+                        ? (messagesById.get(message.replyToId) ?? null)
+                        : null;
+                      const grouped =
+                        midx > 0
+                          ? shouldGroup(group.messages[midx - 1], message)
+                          : false;
+                      const showDivider = firstUnreadId === message.id && !foundFirst;
+                      if (showDivider) foundFirst = true;
+                      const isUnread = foundFirst && message.authorId !== user?.id;
+                      return (
+                        <div key={message.id}>
+                          {showDivider && (
+                            <div className="my-2 flex items-center gap-2 px-4">
+                              <div className="h-px flex-1 bg-destructive/40" />
+                              <span className="shrink-0 text-[11px] font-semibold text-destructive">Nouveaux messages</span>
+                              <div className="h-px flex-1 bg-destructive/40" />
+                            </div>
+                          )}
+                          <div className={cn(isUnread && 'bg-accent/5 border-l-2 border-accent/30')}>
+                            <MessageItem
+                              message={message}
+                              currentUser={currentUser}
+                              isEditing={editingMessageId === message.id}
+                              editInput={editInput}
+                              isGrouped={grouped}
+                              replyMessage={replyMsg}
+                              onSetEditInput={handleSetEditInput}
+                              onReply={handleReply}
+                              onCopy={handleCopy}
+                              onReaction={() => {}}
+                              onRemoveReaction={() => {}}
+                              onStartEdit={handleStartEdit}
+                              onSaveEdit={handleSaveEdit}
+                              onCancelEdit={handleCancelEdit}
+                              onDelete={handleDeleteMessage}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ));
+              })()}
             </div>
           )}
         </div>

@@ -1727,7 +1727,7 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
                               onMouseLeave={() => setHoveredEmoji(null)}
                               title={EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji}
                             >
-                              <Twemoji emoji={emoji} size={24} className="transition-transform group-hover:drop-shadow-[0_2px_8px_rgba(255,255,255,0.18)]" />
+                              <Twemoji emoji={emoji} size={24} className="transition-transform" />
                             </button>
                           ))}
                         </div>

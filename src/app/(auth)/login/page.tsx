@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldIcon, EyeIcon, EyeOffIcon, MailIcon } from '@/components/icons';
+import { ShieldIcon, EyeIcon, EyeOffIcon, MailIcon, LockIcon, ZapIcon, GlobeIcon } from '@/components/icons';
 import { Loader2 } from 'lucide-react';
+import { InteractiveGridPattern } from '@/components/ui/interactive-grid-pattern';
+import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
@@ -376,12 +378,40 @@ export default function LoginPage() {
       </div>
 
       {/* ── Panneau visuel ── */}
-      <div className="relative hidden bg-muted lg:block">
-        <img
-          src="https://img.freepik.com/photos-gratuite/beau-plan-vertical-long-sommet-montagne-recouvert-herbe-verte-parfait-pour-papier-peint_181624-4986.jpg?t=st=1775414869~exp=1775418469~hmac=3c1ac9a2bc04b3df52ba9a079bd94e6ae694be6fb2be7381a5248d028ca28d87&w=1060"
-          alt=""
-          className="absolute  h-full w-full object-cover"
+      <div className="relative hidden overflow-hidden bg-background lg:flex lg:flex-col lg:items-center lg:justify-center">
+        <InteractiveGridPattern
+          className="mask-[radial-gradient(700px_circle_at_center,white,transparent)] inset-x-0 inset-y-[-30%] h-[200%] skew-y-12"
+          squaresClassName="stroke-primary/20 hover:fill-primary/10"
+          width={40}
+          height={40}
+          squares={[40, 40]}
         />
+        <div className="relative z-10 flex flex-col items-center gap-6 px-12 text-center">
+          <div className="flex size-20 items-center justify-center rounded-[28px] bg-primary p-4">
+            <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-full" />
+          </div>
+          <div>
+            <h2 className="font-(family-name:--font-krona) text-2xl font-bold tracking-tight">ALFYCHAT</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              <AnimatedGradientText colorFrom="#7c3aed" colorTo="#9E7AFF" speed={0.6}>
+                La messagerie privée open source
+              </AnimatedGradientText>
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 text-left">
+            {[
+              { icon: LockIcon, text: 'Chiffrement E2EE par design' },
+              { icon: ZapIcon, text: 'Temps réel avec Socket.IO' },
+              { icon: GlobeIcon, text: 'Hébergé en France · RGPD' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-3 rounded-lg border border-border/40 bg-background/60 px-4 py-2.5 backdrop-blur-sm">
+                <item.icon size={14} className="shrink-0 text-primary" />
+                <span className="text-sm text-muted-foreground">{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-background to-transparent" />
       </div>
     </div>
   );

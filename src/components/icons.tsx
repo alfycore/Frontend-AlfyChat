@@ -156,6 +156,7 @@ export const CalendarIcon = fi('calendar');
 // ── Server / Database ──
 export const ServerIcon = fi('network');
 export const DatabaseIcon = fi('database');
+export const Share2Icon = fi('share');
 
 // ── Misc ──
 export const HashIcon = fi('hastag');

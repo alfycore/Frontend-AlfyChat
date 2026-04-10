@@ -119,7 +119,7 @@ function ParticipantTile({
     <div className={cn(
       'group relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 transition-all duration-200',
       speaking
-        ? 'ring-2 ring-green-400 shadow-[0_0_12px_2px_rgba(74,222,128,0.35)]'
+        ? 'ring-2 ring-green-400'
         : 'ring-1 ring-white/8',
     )}>
 
@@ -148,7 +148,7 @@ function ParticipantTile({
         <div className="relative z-10 flex flex-col items-center gap-2">
           <div className={cn(
             'rounded-full p-0.5 transition-all duration-200',
-            speaking ? 'ring-2 ring-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : '',
+            speaking ? 'ring-2 ring-green-400' : '',
           )}>
             <Avatar className="size-10 rounded-full shadow-xl ring-1 ring-white/10 sm:size-12">
               <AvatarImage src={resolveMediaUrl(avatarSrc)} />
@@ -217,9 +217,9 @@ function CtrlBtn({
         className={cn(
           'flex size-11 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95',
           danger
-            ? 'bg-red-500 text-white shadow-lg shadow-red-500/40 hover:bg-red-400'
+            ? 'bg-red-500 text-white shadow-lg hover:bg-red-400'
             : active
-              ? 'bg-(--accent) text-accent-foreground shadow-lg shadow-(--accent)/30 hover:brightness-110'
+              ? 'bg-(--accent) text-accent-foreground shadow-lg hover:brightness-110'
               : 'bg-white/10 text-white hover:bg-white/20',
         )}
       >
@@ -398,7 +398,7 @@ export function CallPanel({
             type="button"
             onClick={onEndCall}
             aria-label="Raccrocher"
-            className="flex size-13 items-center justify-center rounded-full bg-red-500 text-white shadow-xl shadow-red-500/40 transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
+            className="flex size-13 items-center justify-center rounded-full bg-red-500 text-white shadow-xl transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
           >
             <PhoneOffIcon size={22} />
           </button>

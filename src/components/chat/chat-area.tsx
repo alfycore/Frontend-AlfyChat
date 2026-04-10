@@ -225,10 +225,19 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   const [mentionVisible, setMentionVisible] = useState(false);
 
   // Timestamp de la dernière visite — capturé à l'ouverture de la conversation
-  const [lastSeenAt] = useState<string | null>(() => {
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(() => {
     if (recipientId) return getLastSeen(recipientId);
     return null;
   });
+
+  // Effacer le surlignage des messages non lus après 5 secondes de lecture
+  useEffect(() => {
+    if (!lastSeenAt) return;
+    const timer = setTimeout(() => {
+      setLastSeenAt(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [lastSeenAt]);
 
   /* ── Refs ── */
   const textareaRef = useRef<HTMLTextAreaElement>(null);

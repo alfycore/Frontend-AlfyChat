@@ -479,7 +479,7 @@ export const MessageItem = memo(function MessageItem({
                       className={cn(
                         'inline-flex h-auto items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-all duration-150',
                         hasReacted
-                          ? 'border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm shadow-[var(--accent)]/10'
+                          ? 'border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
                           : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 hover:border-[var(--accent)]/30 hover:bg-[var(--surface-secondary)]/40',
                       )}
                     >

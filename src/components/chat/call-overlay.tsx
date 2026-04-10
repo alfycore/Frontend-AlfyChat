@@ -89,7 +89,7 @@ function Tile({
     <div className={cn(
       'relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 transition-all duration-200',
       speaking
-        ? 'ring-2 ring-green-400 shadow-[0_0_14px_2px_rgba(74,222,128,0.35)]'
+        ? 'ring-2 ring-green-400'
         : 'ring-1 ring-white/8',
     )}>
       {/* Un seul <video> toujours monté */}
@@ -106,7 +106,7 @@ function Tile({
 
       {!hasVideo && (
         <div className="relative z-10 flex flex-col items-center gap-3">
-          <div className={cn('rounded-full p-0.5 transition-all duration-200', speaking ? 'ring-2 ring-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : '')}>
+          <div className={cn('rounded-full p-0.5 transition-all duration-200', speaking ? 'ring-2 ring-green-400' : '')}>
             <Avatar className="size-20 rounded-full shadow-2xl ring-1 ring-white/10">
               <AvatarImage src={resolveMediaUrl(avatarSrc)} />
               <AvatarFallback className="bg-zinc-600 text-white text-3xl font-bold">
@@ -305,7 +305,7 @@ export function CallOverlay({
             type="button"
             onClick={onEndCall}
             aria-label="Raccrocher"
-            className="flex size-14 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl shadow-red-500/40 transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
+            className="flex size-14 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
           >
             <PhoneOffIcon size={24} />
           </button>
@@ -333,9 +333,9 @@ function CtrlBtn({
         className={cn(
           'flex size-12 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95',
           danger
-            ? 'bg-red-500 text-white shadow-lg shadow-red-500/40 hover:bg-red-400'
+            ? 'bg-red-500 text-white shadow-lg hover:bg-red-400'
             : active
-              ? 'bg-(--accent) text-accent-foreground shadow-lg shadow-(--accent)/30'
+              ? 'bg-(--accent) text-accent-foreground shadow-lg'
               : 'bg-white/10 text-white hover:bg-white/20',
         )}
       >

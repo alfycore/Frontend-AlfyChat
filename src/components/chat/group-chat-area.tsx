@@ -81,7 +81,16 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const [settingsInitialSection, setSettingsInitialSection] = useState<'general' | 'members'>('general');
 
   // Timestamp de la dernière visite — capturé à l'ouverture du groupe
-  const [lastSeenAt] = useState<string | null>(() => getLastSeen(`group:${groupId}`));
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(() => getLastSeen(`group:${groupId}`));
+
+  // Effacer le surlignage des messages non lus après 5 secondes de lecture
+  useEffect(() => {
+    if (!lastSeenAt) return;
+    const timer = setTimeout(() => {
+      setLastSeenAt(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [lastSeenAt]);
 
   // ── File attachments ──
   const fileInputRef = useRef<HTMLInputElement>(null);
