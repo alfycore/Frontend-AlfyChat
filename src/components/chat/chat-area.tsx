@@ -181,6 +181,7 @@ const MessageList = memo(function MessageList({
               onDelete={onDelete}
             />
           </div>
+          </div>
         );
       })}
     </div>
