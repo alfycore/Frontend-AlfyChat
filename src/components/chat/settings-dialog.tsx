@@ -504,7 +504,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       usernameCheckTimeout.current = setTimeout(async () => {
         try {
           const res = await api.checkUsernameAvailable(sanitized);
-          setUsernameAvailable(res.data?.available ?? (res as any).available ?? false);
+          setUsernameAvailable((res as any).data?.available ?? (res as any).available ?? false);
         } catch { setUsernameAvailable(null); }
         setUsernameChecking(false);
       }, 400);
