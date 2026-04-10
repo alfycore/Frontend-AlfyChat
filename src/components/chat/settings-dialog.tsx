@@ -1020,7 +1020,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                       ) : badge.iconType === 'flaticon' ? (
                                         <i className={`${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '13px' }} />
                                       ) : (
-                                        <i className={`bi ${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '13px' }} />
+                                        <i className={`fi fi-br-${badge.iconValue || badge.icon}`} style={{ color: badge.color, fontSize: '13px' }} />
                                       )}
                                     </div>
                                   ))}
@@ -1057,7 +1057,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                     ) : badge.iconType === 'flaticon' ? (
                                       <i className={`${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
                                     ) : (
-                                      <i className={`bi ${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
+                                      <i className={`fi fi-br-${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
                                     )}
                                   </div>
                                   <div className="min-w-0 flex-1">
