@@ -206,7 +206,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
     // Vérifier si l'utilisateur est authentifié avant d'utiliser le socket
     const token = typeof window !== 'undefined' ? localStorage.getItem('alfychat_token') : null;
     if (!token) {
-      console.log('⚠️ Pas de token - WebSocket non initialisé');
+      console.log('[Messages] Pas de token - WebSocket non initialisé');
       setIsLoading(false);
       return;
     }
@@ -226,7 +226,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
 
     // Écouter les nouveaux messages (événement message:new)
     const handleNewMessage = async (message: any) => {
-      console.log('📨 Nouveau message reçu:', message);
+      console.log('[Messages] Nouveau message reçu:', message);
 
       // Invalider le cache pour cette conversation (données potentiellement périmées)
       const convCacheKey = recipientId ?? channelId;
@@ -330,7 +330,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
     socketService.on('message:new', handleNewMessage);
 
     const handleMessageSent = (data: any) => {
-      console.log('✅ Confirmation message envoyé:', data);
+      console.log('[Messages] Confirmation message envoyé:', data);
       if (data.success && data.message) {
         const rawReactions: Array<{ emoji: string; userId: string }> = data.message.reactions || [];
         const groupedReactions = groupReactions(rawReactions);
@@ -377,7 +377,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
 
     // Écouter les erreurs de message (rate-limit, etc.)
     const handleMessageError = (data: any) => {
-      console.warn('⚠️ Erreur message:', data);
+      console.warn('[Messages] Erreur message:', data);
       // Retirer les messages pending (optimistes) car le serveur les a rejetés
       setMessages((prev) => prev.filter(m => !m.pending));
     };
@@ -385,7 +385,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
 
     // Écouter les échecs d'écriture DB (fire-and-forget)
     const handleMessageFailed = (data: { messageId: string; error?: string }) => {
-      console.warn('⚠️ Échec sauvegarde message:', data);
+      console.warn('[Messages] Echec sauvegarde message:', data);
       setMessages((prev) =>
         prev.map((m) => (m.id === data.messageId ? { ...m, failed: true } : m))
       );

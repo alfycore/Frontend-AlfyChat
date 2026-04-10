@@ -66,12 +66,12 @@ export function useDMArchive(options: UseDMArchiveOptions = {}) {
     if (conversationId && payload.conversationId !== conversationId) return;
 
     setIsArchiving(true);
-    console.log(`📦 Réception archive DM: ${payload.totalArchived} MP (${payload.reason})`);
+    console.log(`[Archive] Réception archive DM: ${payload.totalArchived} MP (${payload.reason})`);
 
     try {
       // Stocker dans IndexedDB
       const stored = await localStore.current.storeMessages(payload.messages);
-      console.log(`💾 ${stored} MP stockés localement dans IndexedDB`);
+      console.log(`[Archive] ${stored} MP stockés localement dans IndexedDB`);
 
       // Mettre à jour les métadonnées locales
       if (conversationId) {
@@ -97,7 +97,7 @@ export function useDMArchive(options: UseDMArchiveOptions = {}) {
     const payload: PeerRequestPayload = event?.payload || event;
     if (!payload || !localStore.current) return;
 
-    console.log(`🔍 Demande peer: ${payload.requesterId} cherche dans ${payload.conversationId}`);
+    console.log(`[Archive] Demande peer: ${payload.requesterId} cherche dans ${payload.conversationId}`);
 
     try {
       let messages: LocalArchivedMessage[] = [];
@@ -118,7 +118,7 @@ export function useDMArchive(options: UseDMArchiveOptions = {}) {
       }
 
       if (messages.length > 0) {
-        console.log(`📨 Envoi de ${messages.length} MP archivés au peer ${payload.requesterId}`);
+        console.log(`[Archive] Envoi de ${messages.length} MP archivés au peer ${payload.requesterId}`);
         socketService.respondToPeerArchiveRequest({
           requestId: payload.requestId,
           conversationId: payload.conversationId,
@@ -141,7 +141,7 @@ export function useDMArchive(options: UseDMArchiveOptions = {}) {
     if (payload.messages?.length > 0) {
       // Stocker les messages récupérés localement aussi
       await localStore.current.storeMessages(payload.messages);
-      console.log(`💾 ${payload.messages.length} MP récupérés du peer ${payload.fromPeerId}`);
+      console.log(`[Archive] ${payload.messages.length} MP récupérés du peer ${payload.fromPeerId}`);
     }
 
     // Résoudre la promesse en attente

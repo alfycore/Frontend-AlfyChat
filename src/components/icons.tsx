@@ -191,6 +191,7 @@ export const ZapIcon = fi('bolt');
 // ── Alert ──
 export const AlertTriangleIcon = fi('triangle-warning');
 export const AlertIcon = fi('exclamation');
+export const AlertCircleIcon = fi('circle-exclamation');
 
 // ── Social / Engagement ──
 export const StarIcon = fi('star');

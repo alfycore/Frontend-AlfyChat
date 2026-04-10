@@ -33,8 +33,8 @@ let _purify: PurifyInstance | null = null;
 
 if (typeof window !== 'undefined') {
   import('dompurify').then((m) => {
-    // DOMPurify ESM exports the purify object itself as the module
-    _purify = m as unknown as PurifyInstance;
+    // DOMPurify ESM: the sanitize instance is on .default, with a direct-call fallback
+    _purify = ((m as any).default ?? m) as unknown as PurifyInstance;
   });
 }
 

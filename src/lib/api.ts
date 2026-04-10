@@ -51,14 +51,14 @@ class ApiService {
 
     const refreshTokenValue = this.getRefreshToken();
     if (!refreshTokenValue) {
-      console.log('🔄 Pas de refresh token disponible');
+      console.log('[API] Pas de refresh token disponible');
       return false;
     }
 
     this.isRefreshing = true;
     this.refreshPromise = (async () => {
       try {
-        console.log('🔄 Tentative de refresh du token...');
+        console.log('[API] Tentative de refresh du token...');
         const response = await fetch(`${this.baseUrl}/api/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -66,7 +66,7 @@ class ApiService {
         });
 
         if (!response.ok) {
-          console.log('❌ Refresh token échoué (HTTP', response.status, ')');
+          console.log('[API] Refresh token échoué (HTTP', response.status, ')');
           return false;
         }
 
@@ -76,7 +76,7 @@ class ApiService {
 
         if (newAccessToken) {
           localStorage.setItem('alfychat_token', newAccessToken);
-          console.log('✅ Token rafraîchi avec succès');
+          console.log('[API] Token rafraîchi avec succès');
           // Notifier le service socket pour qu'il se reconnecte avec le nouveau token
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('alfychat:token:refreshed', { detail: { token: newAccessToken } }));
@@ -88,7 +88,7 @@ class ApiService {
 
         return !!newAccessToken;
       } catch (error) {
-        console.error('❌ Erreur lors du refresh token:', error);
+        console.error('[API] Erreur lors du refresh token:', error);
         return false;
       } finally {
         this.isRefreshing = false;
@@ -130,7 +130,7 @@ class ApiService {
 
       // Si 401 et pas déjà en refresh → tenter le refresh et réessayer
       if (response.status === 401 && !_skipRefresh && !endpoint.includes('/api/auth/')) {
-        console.log('🔄 Réponse 401 sur', endpoint, '→ tentative de refresh token');
+        console.log('[API] Réponse 401 sur', endpoint, '→ tentative de refresh token');
         const refreshed = await this.tryRefreshToken();
         if (refreshed) {
           // Réessayer la requête avec le nouveau token

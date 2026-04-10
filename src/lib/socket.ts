@@ -73,27 +73,27 @@ class SocketService {
   private bus = new InternalEventBus();
 
   connect(token: string): Socket | null {
-    console.log('🔌 SocketService.connect appelé');
+    console.log('[Socket] connect appelé');
 
     if (!token) {
-      console.warn('⚠️ Tentative de connexion WebSocket sans token - ignoré');
+      console.warn('[Socket] Tentative de connexion sans token - ignoré');
       return null;
     }
 
     if (this.socket?.connected) {
-      console.log('✅ Socket déjà connecté, id:', this.socket.id);
+      console.log('[Socket] Déjà connecté, id:', this.socket.id);
       return this.socket;
     }
 
     // Fermer l'ancien socket s'il existe mais n'est pas connecté
     if (this.socket) {
-      console.log('🔌 Nettoyage ancien socket (connected=' + this.socket.connected + ')');
+      console.log('[Socket] Nettoyage ancien socket (connected=' + this.socket.connected + ')');
       this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
     }
 
-    console.log('🔌 Création nouvelle connexion Socket.IO vers', SOCKET_URL);
+    console.log('[Socket] Nouvelle connexion vers', SOCKET_URL);
     this.socket = io(SOCKET_URL, {
       auth: (cb) => {
         const freshToken =
@@ -108,18 +108,18 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('✅ Connecté au serveur WebSocket, id:', this.socket?.id);
+      console.log('[Socket] Connecté, id:', this.socket?.id);
       this.reconnectAttempts = 0;
       // Notifier le bus de la reconnexion pour que les hooks puissent re-rejoindre les rooms
       this.bus.emit('socket:reconnected', {});
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ Déconnecté:', reason);
+      console.log('[Socket] Déconnecté:', reason);
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('❌ Erreur de connexion WebSocket:', error.message);
+      console.error('[Socket] Erreur de connexion:', error.message);
       this.reconnectAttempts++;
       // Si le token est invalide, stopper les tentatives automatiques et
       // attendre que le token soit rafraîchi par l'API avant de réessayer
@@ -138,13 +138,13 @@ class SocketService {
     this.socket.onAny((eventName: string, ...args: any[]) => {
       // Debug log (filtrer les événements bruyants)
       if (!eventName.startsWith('typing') && !eventName.startsWith('presence')) {
-        console.log('📩 [Socket→Bus]', eventName, JSON.stringify(args).substring(0, 300));
+        console.log('[Socket→Bus]', eventName, JSON.stringify(args).substring(0, 300));
       }
       // Dispatch vers le bus interne avec le premier argument
       this.bus.emit(eventName, args[0]);
     });
 
-    console.log('✅ Socket initialisé');
+    console.log('[Socket] Initialisé');
 
     // Écouter les rafraîchissements de token depuis l'API
     if (typeof window !== 'undefined') {
@@ -164,7 +164,7 @@ class SocketService {
       ? localStorage.getItem('alfychat_token')
       : null;
     if (!freshToken) return;
-    console.log('🔄 Token rafraîchi → reconnexion WebSocket');
+    console.log('[Socket] Token rafraîchi → reconnexion');
     // Réactiver la reconnexion automatique et forcer un nouveau connect
     if (this.socket) {
       this.socket.io.opts.reconnection = true;
@@ -224,7 +224,7 @@ class SocketService {
     replyToId?: string;
     attachments?: string[];
   }): void {
-    console.log('🔌 Émission WebSocket message:send:', data);
+    console.log('[Socket] Emission message:send:', data);
     this.socket?.emit('message:send', data);
   }
 
@@ -880,13 +880,13 @@ function getOrCreateSingleton(): SocketService {
   if (!existing || existing._version !== SOCKET_VERSION) {
     if (existing) {
       try { existing.disconnect(); } catch {}
-      console.log('🔌 Singleton SocketService obsolète (version mismatch) — recréation');
+      console.log('[Socket] Singleton obsolète (version mismatch) — recréation');
     } else {
-      console.log('🔌 Nouvelle instance SocketService créée (singleton)');
+      console.log('[Socket] Nouvelle instance créée (singleton)');
     }
     g[SINGLETON_KEY] = new SocketService();
   } else {
-    console.log('🔌 Réutilisation du singleton SocketService existant');
+    console.log('[Socket] Réutilisation du singleton existant');
   }
   return g[SINGLETON_KEY];
 }
