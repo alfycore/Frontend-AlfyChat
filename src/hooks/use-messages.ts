@@ -34,6 +34,8 @@ interface Message {
     avatarUrl?: string;
   };
   pending?: boolean;
+  /** true si l'écriture DB a échoué après confirmation optimiste */
+  failed?: boolean;
   /** true si le message a été déchiffré avec succès via Signal Protocol */
   e2ee?: boolean;
   /** Message système local (non envoyé au serveur) */
@@ -381,6 +383,15 @@ export function useMessages(channelId?: string, recipientId?: string) {
     };
     socketService.on('message:error', handleMessageError);
 
+    // Écouter les échecs d'écriture DB (fire-and-forget)
+    const handleMessageFailed = (data: { messageId: string; error?: string }) => {
+      console.warn('⚠️ Échec sauvegarde message:', data);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === data.messageId ? { ...m, failed: true } : m))
+      );
+    };
+    socketService.on('message:failed', handleMessageFailed);
+
     // Écouter les modifications
     const handleMessageEdit = (data: any) => {
       const { messageId, content, updatedAt } = data as { messageId: string; content: string; updatedAt: string };
@@ -458,6 +469,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
       socketService.off('message:new', handleNewMessage);
       socketService.off('message:sent', handleMessageSent);
       socketService.off('message:error', handleMessageError);
+      socketService.off('message:failed', handleMessageFailed);
       socketService.off('message:edited', handleMessageEdit);
       socketService.off('message:deleted', handleMessageDelete);
       socketService.off('typing:update', handleTyping);

@@ -2,7 +2,7 @@
 
 import { memo, useState, type Dispatch, type SetStateAction } from 'react';
 import {
-  ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon,
+  ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon, AlertCircleIcon,
 } from '@/components/icons';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -189,6 +189,7 @@ export type MessageData = {
   isSystem?: boolean;
   ephemeral?: boolean;
   pending?: boolean;
+  failed?: boolean;
 };
 
 export const formatTime = (dateString: string): string => {
@@ -302,7 +303,8 @@ export const MessageItem = memo(function MessageItem({
       className={cn(
         `group relative ${d.msgPx}`,
         isGrouped ? 'py-[1px]' : 'py-[1px]',
-        message.pending && 'opacity-60',
+        message.pending && !message.failed && 'opacity-60',
+        message.failed && 'opacity-70',
       )}>
       {/* ── Toolbar flottant ── */}
       <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)] px-1 py-0.5 opacity-0 shadow-lg shadow-black/30 ring-1 ring-black/5 transition-all duration-150 group-hover:opacity-100">
@@ -344,7 +346,7 @@ export const MessageItem = memo(function MessageItem({
       </div>
 
       {/* ── Contenu ── */}
-      <div className={`rounded-xl ${d.msgPx} ${d.msgPy} transition-colors duration-100 hover:bg-[var(--surface-secondary)]/20`}>
+      <div className={`rounded-xl ${d.msgPx} ${isGrouped ? 'py-0.5' : d.msgPy} transition-colors duration-100 hover:bg-[var(--surface-secondary)]/20`}>
         <div className={`flex items-start ${d.msgGap}`}>
 
           {/* ── Avatar ou indicateur d'heure (groupé) ── */}
@@ -411,7 +413,13 @@ export const MessageItem = memo(function MessageItem({
                 <span className={`${d.msgTime} tabular-nums text-muted-foreground/70`}>
                   {formatTime(message.createdAt)}
                 </span>
-                {message.pending && <ClockIcon size={11} className="text-muted-foreground/50" />}
+                {message.pending && !message.failed && <ClockIcon size={11} className="text-muted-foreground/50" />}
+                {message.failed && (
+                  <span className="flex items-center gap-1 text-[10px] text-red-400" title="Échec de l'envoi — ce message n'a pas été sauvegardé">
+                    <AlertCircleIcon size={11} />
+                    Échec de l&apos;envoi
+                  </span>
+                )}
                 {!!message.isEdited && <span className="text-[10px] italic text-muted-foreground/70">(modifié)</span>}
               </div>
             )}
