@@ -127,6 +127,13 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
           role="dialog"
           aria-modal
         >
+          <button
+            className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            aria-label="Fermer"
+          >
+            <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
           <img src={lightbox} alt="" className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
@@ -307,13 +314,13 @@ export const MessageItem = memo(function MessageItem({
         message.failed && 'opacity-70',
       )}>
       {/* ── Toolbar flottant ── */}
-      <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)] px-1 py-0.5 opacity-0 shadow-lg shadow-black/30 ring-1 ring-black/5 transition-all duration-150 group-hover:opacity-100">
+      <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 ring-1 ring-black/10 transition-all duration-150 group-hover:opacity-100">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 size="icon-sm" variant="ghost"
-                className="size-7 rounded-xl text-[var(--foreground)]/60 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]"
+                className="size-7 rounded-xl text-[var(--foreground)]/80 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]"
                 onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}
               >
                 <ReplyIcon size={15} />
@@ -324,14 +331,14 @@ export const MessageItem = memo(function MessageItem({
         </TooltipProvider>
 
         <EmojiPicker onSelect={(emoji) => onReaction(message.id, emoji)}>
-          <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/60 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
+          <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/80 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
             <SmileIcon size={15} />
           </div>
         </EmojiPicker>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/60 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
+            <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/80 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
               <MoreHorizontalIcon size={15} />
             </div>
           </DropdownMenuTrigger>

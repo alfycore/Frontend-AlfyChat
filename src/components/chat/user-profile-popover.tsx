@@ -53,6 +53,7 @@ interface UserProfileData {
   cardColor?: string;
   badges?: UserBadge[];
   showBadges?: boolean;
+  hiddenBadgeIds?: string[];
   isBot?: boolean;
   isVerifiedBot?: boolean;
   createdAt?: string;
@@ -267,7 +268,7 @@ export function UserProfilePopover({
   // ── Derived values ────────────────────────────────────────────────────────
   const cardColor    = localColor ?? profile?.cardColor ?? '#5865F2';
   const statusInfo   = getStatus(profile?.status ?? 'offline');
-  const visibleBadges = profile?.showBadges !== false ? (profile?.badges ?? []).slice(0, 6) : [];
+  const visibleBadges = profile?.showBadges !== false ? (profile?.badges ?? []).filter((b: any) => !(profile?.hiddenBadgeIds ?? []).includes(b.id)).slice(0, 6) : [];
   const memberSince  = profile?.createdAt ? formatMemberSince(profile.createdAt) : null;
 
   // ── Render ────────────────────────────────────────────────────────────────

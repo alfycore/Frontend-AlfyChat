@@ -946,39 +946,43 @@ function FriendRow({
   const hasUnread = (unreadCount ?? 0) > 0;
 
   return (
-    <div className={cn(
-      'group flex items-center rounded-xl transition-all duration-150 hover:bg-surface-secondary/60',
-      hasUnread && 'bg-accent/5',
-      d.rowGap, d.rowPx, d.rowPy,
-    )}>
+    <div
+      className={cn(
+        'group flex items-center rounded-xl transition-all duration-150 hover:bg-surface-secondary/60',
+        hasUnread && 'bg-accent/5',
+        d.rowGap, d.rowPx, d.rowPy,
+      )}
+      onDoubleClick={onMessage}
+    >
       <UserProfilePopover
         userId={friend.id}
         onOpenDM={onMessage}
         open={profileOpen}
         onOpenChange={setProfileOpen}
       >
-        <button type="button" className={cn('flex min-w-0 flex-1 items-center text-left', d.rowGap)}>
-          <span className="relative shrink-0">
-            <Avatar className={cn('ring-2 transition-all ring-transparent group-hover:ring-border/30', d.rowAvatar)}>
-              <AvatarImage src={resolveMediaUrl(friend.avatarUrl)} />
-              <AvatarFallback className="bg-surface-secondary text-xs">{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background', dot)} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <p className={cn('truncate font-medium leading-tight', hasUnread ? 'text-foreground font-bold' : 'text-foreground', d.rowName)}>{friend.displayName}</p>
-            {activeFields.map((f) => {
-              const val = fieldValue[f];
-              if (!val) return null;
-              return (
-                <p key={f} className={cn('truncate leading-tight text-muted-foreground/50', d.rowSub)}>
-                  {val}
-                </p>
-              );
-            })}
-          </span>
+        <button type="button" className="relative shrink-0">
+          <Avatar className={cn('ring-2 transition-all ring-transparent group-hover:ring-border/30', d.rowAvatar)}>
+            <AvatarImage src={resolveMediaUrl(friend.avatarUrl)} />
+            <AvatarFallback className="bg-surface-secondary text-xs">{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background', dot)} />
         </button>
       </UserProfilePopover>
+
+      <button type="button" className={cn('flex min-w-0 flex-1 items-center text-left', d.rowGap)} onClick={onMessage}>
+        <span className="min-w-0 flex-1">
+          <p className={cn('truncate font-medium leading-tight', hasUnread ? 'text-foreground font-bold' : 'text-foreground', d.rowName)}>{friend.displayName}</p>
+          {activeFields.map((f) => {
+            const val = fieldValue[f];
+            if (!val) return null;
+            return (
+              <p key={f} className={cn('truncate leading-tight text-muted-foreground/50', d.rowSub)}>
+                {val}
+              </p>
+            );
+          })}
+        </span>
+      </button>
 
       {hasUnread && (
         <Badge variant="destructive" className="shrink-0 min-w-5 h-5 text-[10px]">

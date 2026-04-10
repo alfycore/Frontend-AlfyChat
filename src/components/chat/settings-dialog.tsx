@@ -182,6 +182,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [cardColor, setCardColor] = useState('#6366f1');
   const [showBadges, setShowBadges] = useState(true);
   const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [hiddenBadgeIds, setHiddenBadgeIds] = useState<string[]>([]);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -295,6 +296,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       setCardColor((user as any).cardColor || '#6366f1');
       setShowBadges((user as any).showBadges !== false);
       setUserBadges((user as any).badges || []);
+      setHiddenBadgeIds((user as any).hiddenBadgeIds || []);
       setAvatarPreview(resolveMediaUrl(user.avatarUrl) || null);
       setBannerPreview(resolveMediaUrl((user as any).bannerUrl) || null);
     }
@@ -402,7 +404,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     if (!displayName.trim()) { toast.error(t.settings.displayNameRequired); return; }
     setIsSaving(true);
     try {
-      const data: Record<string, any> = { displayName: displayName.trim(), bio: bio.trim(), cardColor, showBadges };
+      const data: Record<string, any> = { displayName: displayName.trim(), bio: bio.trim(), cardColor, showBadges, hiddenBadgeIds };
       if (deleteAvatarFlag) {
         if (user?.avatarUrl) await api.deleteImage(user.avatarUrl).catch(() => {});
         data.avatarUrl = null;
@@ -910,7 +912,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               </div>
                               {showBadges && userBadges.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
-                                  {userBadges.slice(0, 4).map((badge: any) => (
+                                  {userBadges.filter((b: any) => !hiddenBadgeIds.includes(b.id)).slice(0, 4).map((badge: any) => (
                                     <div key={badge.id} className="flex size-7 items-center justify-center rounded-lg" style={{ backgroundColor: badge.color + '18', border: `1.5px solid ${badge.color}35` }} title={badge.name}>
                                       {badge.iconType === 'svg' ? (
                                         <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
@@ -942,23 +944,34 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                            {userBadges.map((badge: any) => (
-                              <div key={badge.id} className="flex items-center gap-2.5 rounded-xl border p-3" style={{ backgroundColor: badge.color + '08', borderColor: badge.color + '30' }}>
-                                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg text-xl" style={{ backgroundColor: badge.color + '20', border: `2px solid ${badge.color}40` }}>
-                                  {badge.iconType === 'svg' ? (
-                                    <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
-                                  ) : (
-                                    <i className={`bi ${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
-                                  )}
+                            {userBadges.map((badge: any) => {
+                              const isHidden = hiddenBadgeIds.includes(badge.id);
+                              return (
+                                <div key={badge.id} className={cn('flex items-center gap-2.5 rounded-xl border p-3 transition-opacity', isHidden && 'opacity-40')} style={{ backgroundColor: badge.color + '08', borderColor: badge.color + '30' }}>
+                                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg text-xl" style={{ backgroundColor: badge.color + '20', border: `2px solid ${badge.color}40` }}>
+                                    {badge.iconType === 'svg' ? (
+                                      <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(badge.iconValue || badge.icon) }} />
+                                    ) : (
+                                      <i className={`bi ${badge.iconValue || badge.icon}`} style={{ color: badge.color }} />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold">{badge.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {new Date(badge.earnedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </p>
+                                  </div>
+                                  <Switch
+                                    checked={!isHidden}
+                                    onCheckedChange={(checked) => {
+                                      setHiddenBadgeIds((prev) =>
+                                        checked ? prev.filter((id) => id !== badge.id) : [...prev, badge.id]
+                                      );
+                                    }}
+                                  />
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate text-sm font-semibold">{badge.name}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {new Date(badge.earnedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </CardContent>
                       </Card>
