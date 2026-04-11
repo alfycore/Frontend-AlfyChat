@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useUIStyle } from '@/hooks/use-ui-style';
 
 export interface ServerOverviewInfo {
   name: string;
@@ -56,8 +57,9 @@ function StatusDot({ status }: { status?: string }) {
 }
 
 export function ServerOverviewHero({ server }: { server: ServerOverviewInfo | null }) {
+  const ui = useUIStyle();
   return (
-    <div className="relative shrink-0 overflow-hidden border-b border-border/40">
+    <div className={cn('relative shrink-0 overflow-hidden border-b', ui.isGlass ? 'border-white/15' : 'border-border/40')}>
       {server?.bannerUrl ? (
         <div className="h-48 w-full overflow-hidden">
           <img
@@ -138,10 +140,11 @@ export function ServerOverviewStats({
 }
 
 export function ServerOverviewDescription({ description }: { description?: string }) {
+  const ui = useUIStyle();
   if (!description) return null;
 
   return (
-    <section className="rounded-3xl border border-border/40 bg-card/40 p-6">
+    <section className={cn('rounded-3xl p-6', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
         À propos
       </p>
@@ -159,10 +162,11 @@ export function ServerChannelPreviewList({
   channels: ServerOverviewChannel[];
   onOpenChannel: (channelId: string) => void;
 }) {
+  const ui = useUIStyle();
   const firstTextChannel = channels.find((channel) => channel.type !== 'voice');
 
   return (
-    <section className="rounded-3xl border border-border/40 bg-card/40 p-4 sm:p-5">
+    <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
@@ -234,8 +238,9 @@ export function ServerChannelPreviewList({
 }
 
 export function ServerMembersPreview({ members }: { members: ServerOverviewMember[] }) {
+  const ui = useUIStyle();
   return (
-    <section className="rounded-3xl border border-border/40 bg-card/40 p-4 sm:p-5">
+    <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
       <div className="mb-4">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
           Membres

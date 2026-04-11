@@ -236,6 +236,18 @@ class SocketService {
     this.socket?.emit('message:delete', { messageId, conversationId });
   }
 
+  // ── E2EE history recovery ──
+
+  /** Demande à l'autre participant de renvoyer l'historique ré-chiffré. */
+  requestE2EEHistory(recipientId: string, conversationId: string): void {
+    this.socket?.emit('e2ee:history-request', { recipientId, conversationId });
+  }
+
+  /** Envoie l'historique ré-chiffré au demandeur. */
+  sendE2EEHistoryResponse(requesterId: string, conversationId: string, messages: Array<{ id: string; content: string; senderId: string; createdAt: string }>): void {
+    this.socket?.emit('e2ee:history-response', { requesterId, conversationId, messages });
+  }
+
   addReaction(messageId: string, emoji: string, conversationId: string): void {
     this.socket?.emit('REACTION_ADD', { messageId, emoji, conversationId });
   }

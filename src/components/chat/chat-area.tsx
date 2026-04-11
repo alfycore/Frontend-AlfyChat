@@ -295,6 +295,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     hasMoreMessages,
     isLoadingMoreMessages,
     loadMoreMessages,
+    hasEncryptedPlaceholders,
+    e2eeRecoveryStatus,
+    requestE2EEHistory,
   } = useMessages(channelId || undefined, recipientId);
 
   /* ── Derived data ── */
@@ -516,6 +519,40 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     [],
   );
 
+  /* ── Paste image from clipboard ── */
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = Array.from(e.clipboardData?.items || []);
+      const imageItems = items.filter(item => item.kind === 'file' && item.type.startsWith('image/'));
+      if (!imageItems.length) return;
+      e.preventDefault();
+
+      for (const item of imageItems) {
+        const file = item.getAsFile();
+        if (!file) continue;
+        if (file.size > 10 * 1024 * 1024) {
+          notify.error('Fichier trop volumineux', 'L\'image dépasse 10 Mo');
+          continue;
+        }
+        setIsUploading(true);
+        try {
+          const res = await api.uploadDocument(file);
+          if (res.success && res.data) {
+            setPendingAttachments((prev) => [
+              ...prev,
+              { name: file.name || 'image.png', url: res.data!.url, isImage: res.data!.isImage },
+            ]);
+          } else {
+            notify.error('Erreur upload', res.error || 'Impossible d\'uploader l\'image');
+          }
+        } finally {
+          setIsUploading(false);
+        }
+      }
+    },
+    [],
+  );
+
   /* ── Send message ── */
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -724,7 +761,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
   return (
     <div data-tour="chat-area" className="flex h-full flex-1 overflow-hidden">
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className={`flex ${d.headerH} shrink-0 items-center justify-between px-3 md:px-4 ${ui.header}`}>
         <div className="flex min-w-0 items-center gap-2.5">
@@ -858,6 +895,29 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             onEndCall={endCall}
           />
         )}
+
+      {/* ── E2EE History Recovery Banner ──────────────────────────────────── */}
+      {recipientId && hasEncryptedPlaceholders && e2eeRecoveryStatus !== 'done' && (
+        <div className="mx-3 mb-1 mt-2 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 md:mx-4">
+          <ShieldCheckIcon size={16} className="shrink-0 text-amber-500" />
+          <span className="flex-1 text-xs text-amber-700 dark:text-amber-300">
+            Certains messages n&apos;ont pas pu être déchiffrés. Vous pouvez demander à votre correspondant de partager l&apos;historique.
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 border-amber-500/40 text-xs hover:bg-amber-500/20"
+            disabled={e2eeRecoveryStatus === 'requesting'}
+            onClick={requestE2EEHistory}
+          >
+            {e2eeRecoveryStatus === 'requesting' ? (
+              <><Spinner size="sm" className="mr-1.5" />En attente…</>
+            ) : (
+              'Récupérer l\u2019historique'
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* ── Messages area ──────────────────────────────────────────────────── */}
       <ScrollArea className="min-h-0 flex-1 px-1 py-2 md:px-2 md:py-4" ref={scrollAreaRef}>
@@ -1079,6 +1139,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               value={messageInput}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={`Message ${recipientId ? recipientName || '' : '#général'}`}
               className="w-full resize-none border-0 bg-transparent py-1 text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground/50"
               style={{ minHeight: '22px', maxHeight: '110px', overflowY: 'auto' }}

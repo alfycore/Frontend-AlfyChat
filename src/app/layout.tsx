@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Krona_One, Raleway } from "next/font/google";
+import { Geist, Geist_Mono, Krona_One, Raleway, Inter } from "next/font/google";
 
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
@@ -12,6 +12,11 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 
 const ralewayHeading = Raleway({subsets:['latin'],variable:'--font-heading'});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" suppressHydrationWarning className={cn(geistSans.variable, geistMono.variable, kronaOne.variable, ralewayHeading.variable)}>
+    <html lang="fr" suppressHydrationWarning className={cn(geistSans.variable, geistMono.variable, kronaOne.variable, ralewayHeading.variable, inter.variable)}>
       <head>
         <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/4.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css" />
         <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/4.0.0/uicons-brands/css/uicons-brands.css" />

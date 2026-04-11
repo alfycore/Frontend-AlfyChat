@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { cn } from '@/lib/utils';
+import { useUIStyle } from '@/hooks/use-ui-style';
 
 interface Role {
   id: string;
@@ -106,6 +107,7 @@ export function MemberList({ serverId }: MemberListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const ui = useUIStyle();
 
   useEffect(() => {
     setIsLoading(true);
@@ -208,7 +210,7 @@ export function MemberList({ serverId }: MemberListProps) {
 
   if (isLoading) {
     return (
-      <div className="w-full bg-[var(--surface)]/60">
+      <div className={cn('w-full', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-surface/60')}>
         <div className="space-y-1.5 p-3 pt-4">
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2 px-2">
@@ -241,7 +243,7 @@ export function MemberList({ serverId }: MemberListProps) {
   const remainingOnline = onlineMembers.filter((m) => !assignedIds.has(m.id));
 
   return (
-    <div className="flex h-full w-full flex-col bg-[var(--surface)]/60">
+    <div className={cn('flex h-full w-full flex-col', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-surface/60')}>
       <ScrollArea className="flex-1">
         <div className="p-2 pt-3">
           {/* Role-based sections */}

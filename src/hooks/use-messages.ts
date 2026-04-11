@@ -163,6 +163,8 @@ export function useMessages(channelId?: string, recipientId?: string) {
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
   const [hasOlderArchived, setHasOlderArchived] = useState(false);
   const [isLoadingArchived, setIsLoadingArchived] = useState(false);
+  const [hasEncryptedPlaceholders, setHasEncryptedPlaceholders] = useState(false);
+  const [e2eeRecoveryStatus, setE2eeRecoveryStatus] = useState<'idle' | 'requesting' | 'done'>('idle');
 
   // Ref pour éviter les closures périmées dans les handlers WebSocket
   const userIdRef = useRef<string>('');
@@ -197,6 +199,13 @@ export function useMessages(channelId?: string, recipientId?: string) {
     conversationId: convId || undefined,
     enabled: isDM,
   });
+
+  // Détecter s'il y a des messages « session non établie » dans la liste
+  useEffect(() => {
+    if (!isDM) { setHasEncryptedPlaceholders(false); return; }
+    const has = messages.some(m => m.content === '🔒 Message chiffré (session non établie)');
+    setHasEncryptedPlaceholders(has);
+  }, [messages, isDM]);
 
   useEffect(() => {
     if (!channelId && !recipientId) return;
@@ -465,6 +474,114 @@ export function useMessages(channelId?: string, recipientId?: string) {
     socketService.onReactionAdd(handleReactionAdd);
     socketService.onReactionRemove(handleReactionRemove);
 
+    // ── E2EE History Recovery ──────────────────────────────────────────────
+    // Auto-répondeur : quand l'autre utilisateur demande l'historique,
+    // on déchiffre nos messages et on les rechiffre avec SA clé ECDH publique.
+    const handleE2EEHistoryRequest = async (data: { requesterId: string; conversationId: string }) => {
+      const currentUserId = userIdRef.current;
+      if (!recipientId || !currentUserId) return;
+      // Vérifier que la demande concerne cette conversation
+      const expectedConvId = (() => {
+        const sorted = [currentUserId, recipientId].sort();
+        return `dm_${sorted[0]}_${sorted[1]}`;
+      })();
+      if (data.conversationId !== expectedConvId) return;
+
+      console.log('[E2EE Recovery] Demande reçue de', data.requesterId, 'pour', data.conversationId);
+
+      try {
+        // 1. Récupérer la clé ECDH publique du demandeur
+        const bundleRes = await api.getSignalKeyBundle(data.requesterId) as any;
+        if (!bundleRes?.success || !bundleRes?.data?.ecdhKey) {
+          console.error('[E2EE Recovery] Impossible de récupérer la clé ECDH du demandeur');
+          return;
+        }
+        const requesterECDHKey: string = bundleRes.data.ecdhKey;
+
+        // 2. Charger tous les messages de la conversation via API
+        const response = await api.getMessages(undefined, recipientId);
+        if (!response.success || !response.data) return;
+        const rawMessages = response.data as any[];
+
+        // 3. Déchiffrer chaque message, puis rechiffrer avec la clé du demandeur
+        const reEncrypted: Array<{ id: string; content: string; senderId: string; createdAt: string }> = [];
+        for (const m of rawMessages) {
+          if (!m.e2eeType) continue;
+          try {
+            const senderId = m.senderId || m.authorId;
+            const { content } = await decryptMessage(
+              { content: m.content, senderContent: m.senderContent, e2eeType: m.e2eeType, senderId },
+              currentUserId,
+            );
+            // Ne pas renvoyer les messages qu'on n'a pas pu déchiffrer
+            if (content === '🔒 Message chiffré (session non établie)') continue;
+            // Rechiffrer avec la clé ECDH du demandeur
+            const encrypted = await signalService.encryptECDH(content, requesterECDHKey);
+            reEncrypted.push({ id: m.id, content: encrypted, senderId, createdAt: m.createdAt });
+          } catch {
+            // Ignorer les messages individuels qu'on ne peut pas traiter
+          }
+        }
+
+        console.log('[E2EE Recovery] Envoi de', reEncrypted.length, 'messages rechiffrés');
+        socketService.sendE2EEHistoryResponse(data.requesterId, data.conversationId, reEncrypted);
+      } catch (err) {
+        console.error('[E2EE Recovery] Erreur pendant le traitement de la demande:', err);
+      }
+    };
+
+    // Récepteur : quand on reçoit l'historique rechiffré, déchiffrer et mettre à jour
+    const handleE2EEHistoryResponse = async (data: {
+      responderId: string;
+      conversationId: string;
+      messages: Array<{ id: string; content: string; senderId: string; createdAt: string }>;
+    }) => {
+      const currentUserId = userIdRef.current;
+      if (!recipientId || !currentUserId) return;
+      const expectedConvId = (() => {
+        const sorted = [currentUserId, recipientId].sort();
+        return `dm_${sorted[0]}_${sorted[1]}`;
+      })();
+      if (data.conversationId !== expectedConvId) return;
+
+      console.log('[E2EE Recovery] Réception de', data.messages.length, 'messages de', data.responderId);
+
+      try {
+        // Déchiffrer chaque message (chiffré avec notre clé ECDH publique)
+        const decrypted = new Map<string, string>();
+        for (const m of data.messages) {
+          try {
+            const plaintext = await signalService.decryptECDH(m.content);
+            decrypted.set(m.id, plaintext);
+          } catch {
+            // Ignorer les messages qu'on ne peut pas déchiffrer
+          }
+        }
+
+        // Remplacer les placeholders dans la liste de messages
+        if (decrypted.size > 0) {
+          setMessages((prev) =>
+            prev.map((msg) => {
+              if (msg.content === '🔒 Message chiffré (session non établie)' && decrypted.has(msg.id)) {
+                return { ...msg, content: decrypted.get(msg.id)! };
+              }
+              return msg;
+            })
+          );
+        }
+
+        setE2eeRecoveryStatus('done');
+        console.log('[E2EE Recovery] Récupération terminée:', decrypted.size, 'messages déchiffrés');
+      } catch (err) {
+        console.error('[E2EE Recovery] Erreur pendant la réception:', err);
+        setE2eeRecoveryStatus('idle');
+      }
+    };
+
+    socketService.on('e2ee:history-request', handleE2EEHistoryRequest);
+    socketService.on('e2ee:history-response', handleE2EEHistoryResponse);
+    // ───────────────────────────────────────────────────────────────────────
+
     return () => {
       socketService.off('message:new', handleNewMessage);
       socketService.off('message:sent', handleMessageSent);
@@ -475,6 +592,8 @@ export function useMessages(channelId?: string, recipientId?: string) {
       socketService.off('typing:update', handleTyping);
       socketService.off('REACTION_ADD', handleReactionAdd);
       socketService.off('REACTION_REMOVE', handleReactionRemove);
+      socketService.off('e2ee:history-request', handleE2EEHistoryRequest);
+      socketService.off('e2ee:history-response', handleE2EEHistoryResponse);
     };
     // Inclure user?.id pour recharger les messages si l'utilisateur change (ex: reload complet)
   }, [channelId, recipientId, user?.id]);
@@ -817,6 +936,13 @@ export function useMessages(channelId?: string, recipientId?: string) {
     }
   }, [isDM, localMeta, messages]);
 
+  /** Demander à l'autre participant de renvoyer l'historique E2EE rechiffré */
+  const requestE2EEHistory = useCallback(() => {
+    if (!recipientId || !user || !convId) return;
+    setE2eeRecoveryStatus('requesting');
+    socketService.requestE2EEHistory(recipientId, convId);
+  }, [recipientId, user, convId]);
+
   return {
     messages,
     typingUsers,
@@ -839,5 +965,9 @@ export function useMessages(channelId?: string, recipientId?: string) {
     isArchiving,
     loadOlderArchived,
     archiveStatus,
+    // E2EE history recovery
+    hasEncryptedPlaceholders,
+    e2eeRecoveryStatus,
+    requestE2EEHistory,
   };
 }

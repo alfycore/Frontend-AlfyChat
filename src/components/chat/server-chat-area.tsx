@@ -443,6 +443,20 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
     [serverId, channelId],
   );
 
+  /* ── Paste image from clipboard ── */
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = Array.from(e.clipboardData?.items || []);
+      const imageItems = items.filter(item => item.kind === 'file' && item.type.startsWith('image/'));
+      if (!imageItems.length) return;
+      e.preventDefault();
+
+      const file = imageItems[0].getAsFile();
+      if (file) handleImageUpload(file);
+    },
+    [handleImageUpload],
+  );
+
   const currentUser: MessageSender | null = user
     ? {
         id: user.id,
@@ -486,7 +500,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
       {/* ── Header ── */}
       <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
         {isMobile && (
@@ -674,6 +688,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             value={messageInput}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={`Message #${channelName || 'salon'}`}
             className="min-h-9 max-h-48 flex-1 resize-none border-0 bg-transparent py-1.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none"
             rows={1}

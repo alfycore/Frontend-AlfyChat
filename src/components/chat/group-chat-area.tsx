@@ -300,6 +300,40 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
     }
   }, []);
 
+  /* ── Paste image from clipboard ── */
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = Array.from(e.clipboardData?.items || []);
+      const imageItems = items.filter(item => item.kind === 'file' && item.type.startsWith('image/'));
+      if (!imageItems.length) return;
+      e.preventDefault();
+
+      for (const item of imageItems) {
+        const file = item.getAsFile();
+        if (!file) continue;
+        if (file.size > 10 * 1024 * 1024) {
+          notify.error('Fichier trop volumineux', 'L\'image dépasse 10 Mo');
+          continue;
+        }
+        setIsUploading(true);
+        try {
+          const res = await api.uploadDocument(file);
+          if (res.success && res.data) {
+            setPendingAttachments((prev) => [
+              ...prev,
+              { name: file.name || 'image.png', url: res.data!.url, isImage: res.data!.isImage },
+            ]);
+          } else {
+            notify.error('Erreur upload', res.error || 'Impossible d\'uploader l\'image');
+          }
+        } finally {
+          setIsUploading(false);
+        }
+      }
+    },
+    [],
+  );
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     const hasText = messageInput.trim();
@@ -434,9 +468,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   return (
     <div className="flex h-full flex-1">
       {/* ── Zone de chat principale ── */}
-      <div data-tour="chat-area" className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div data-tour="chat-area" className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
         {/* ── Header ── */}
-        <div className={`flex ${d.headerH} shrink-0 items-center gap-3 border-b border-[var(--border)]/30 bg-[var(--surface)]/60 px-4`}>
+        <div className={`flex ${d.headerH} shrink-0 items-center gap-3 px-4 ${ui.isGlass ? 'border-b border-white/15 bg-white/10 dark:border-white/8' : 'border-b border-border/30 bg-surface/60'}`}>
           {isMobile && (
             <Button size="icon-sm" variant="ghost" onClick={toggleSidebar}>
               <MenuIcon size={20} />
@@ -718,6 +752,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 value={messageInput}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 placeholder={`Écrire dans ${groupInfo?.name || 'le groupe'}…`}
                 className="w-full resize-none border-0 bg-transparent py-0.5 text-[13px] leading-5 text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/50"
                 style={{ minHeight: '20px', maxHeight: '110px', overflowY: 'auto' }}

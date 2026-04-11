@@ -387,9 +387,7 @@ export default function LoginPage() {
           squares={[40, 40]}
         />
         <div className="relative z-10 flex flex-col items-center gap-6 px-12 text-center">
-          <div className="flex size-20 items-center justify-center rounded-[28px] bg-primary p-4">
-            <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-full" />
-          </div>
+
           <div>
             <h2 className="font-(family-name:--font-krona) text-2xl font-bold tracking-tight">ALFYCHAT</h2>
             <p className="mt-1 text-sm text-muted-foreground">

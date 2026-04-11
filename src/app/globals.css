@@ -287,3 +287,24 @@
     @apply font-sans;
   }
 }
+
+/* ── Glass panels need stacking context ─────────────────────────────────── */
+[data-ui-style="glass"] {
+  isolation: isolate;
+}
+
+/* ── Glass mode: adaptive text over light wallpapers ────────────────────── */
+/* When brightness detected as "light", switch glass panel text to dark      */
+[data-wallpaper-brightness="light"] [data-ui-style="glass"] {
+  --foreground: oklch(0.141 0.005 285.823);
+  --surface-foreground: oklch(0.141 0.005 285.823);
+  --muted-foreground: oklch(0.45 0.016 285.938);
+  --border: oklch(0.0 0 0 / 12%);
+}
+
+[data-wallpaper-brightness="dark"] [data-ui-style="glass"] {
+  --foreground: oklch(0.985 0 0);
+  --surface-foreground: oklch(0.985 0 0);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --border: oklch(1 0 0 / 12%);
+}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useResizablePanel } from '@/hooks/use-resizable-panel';
-import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
+import { useLayoutPrefs, useLayoutPrefsSync } from '@/hooks/use-layout-prefs';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { MessageCircleIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
@@ -10,6 +10,7 @@ import { CallProvider, useCallContext } from '@/hooks/use-call-context';
 import { MobileNavProvider, useMobileNav } from '@/hooks/use-mobile-nav';
 import { useNotification } from '@/hooks/use-notification';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { useBackground } from '@/hooks/use-background';
 import { setActiveDM, setActiveGroup } from '@/lib/notification-store';
 import { api } from '@/lib/api';
 import { ServerList } from '@/components/chat/server-list';
@@ -44,7 +45,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const { isMobile, showSidebar, showMemberList, showSettings, closeSettings, closeAll } = useMobileNav();
 
   const { prefs: layoutPrefs } = useLayoutPrefs();
+  useLayoutPrefsSync();
   const ui = useUIStyle();
+  const { wallpaper } = useBackground();
 
   const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
     storageKey: 'alfychat_me_sidebar_width',
@@ -239,7 +242,18 @@ function LayoutInner({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div data-layout="root" data-ui-style={layoutPrefs.uiStyle} className={`flex h-dvh overflow-hidden bg-[var(--background)] ${ui.rootPadding} ${isTopBottom ? 'flex-col' : 'flex-row'}`}>
+    <div
+      data-layout="root"
+      data-ui-style={layoutPrefs.uiStyle}
+      className={`flex h-dvh overflow-hidden ${ui.isGlass ? '' : 'bg-background'} ${ui.rootPadding} ${isTopBottom ? 'flex-col' : 'flex-row'}`}
+      style={ui.isGlass ? {
+        backgroundImage: wallpaper
+          ? (wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient') ? wallpaper : `url(${wallpaper})`)
+          : 'radial-gradient(ellipse 90% 70% at 15% 5%, oklch(0.80 0.14 290 / 55%) 0%, transparent 55%), radial-gradient(ellipse 70% 55% at 85% 85%, oklch(0.75 0.16 230 / 45%) 0%, transparent 55%), radial-gradient(ellipse 55% 45% at 55% 45%, oklch(0.82 0.11 320 / 30%) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 30% 75%, oklch(0.78 0.13 180 / 25%) 0%, transparent 50%)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      } : undefined}
+    >
       {/* Audio persistant */}
       <audio ref={persistentAudioRef} autoPlay playsInline className="sr-only" />
       <IncomingCallDialog

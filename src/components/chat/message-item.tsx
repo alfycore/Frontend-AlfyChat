@@ -20,6 +20,7 @@ import { InviteEmbed, extractInviteCodes } from '@/components/chat/invite-embed'
 import { Twemoji } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { cn } from '@/lib/utils';
 
 // ── Attachment parser ────────────────────────────────────────────────────────
@@ -281,6 +282,7 @@ export const MessageItem = memo(function MessageItem({
 }: MessageItemProps) {
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
+  const ui = useUIStyle();
   const isMe = !!currentUser && message.authorId === currentUser.id;
   const displayName = isMe
     ? currentUser!.displayName || currentUser!.username
@@ -314,7 +316,7 @@ export const MessageItem = memo(function MessageItem({
         message.failed && 'opacity-70',
       )}>
       {/* ── Toolbar flottant ── */}
-      <div className="absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 ring-1 ring-black/10 transition-all duration-150 group-hover:opacity-100">
+      <div className={cn('absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 transition-all duration-150 group-hover:opacity-100', ui.isGlass ? 'border border-white/20 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-black/40' : 'border border-[var(--border)] bg-[var(--surface)] ring-1 ring-black/10')}>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -390,7 +392,7 @@ export const MessageItem = memo(function MessageItem({
                 ? currentUser?.displayName || currentUser?.username
                 : replyMessage.sender?.displayName || replyMessage.sender?.username || recipientName || 'Utilisateur';
               return (
-                <div className="mb-1.5 flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 bg-[var(--surface-secondary)]/30 px-2.5 py-1 text-[11px]">
+                <div className={cn('mb-1.5 flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 px-2.5 py-1 text-[11px]', ui.isGlass ? 'bg-white/20 backdrop-blur-sm dark:bg-black/20' : 'bg-[var(--surface-secondary)]/30')}>
                   <ReplyIcon size={11} className="shrink-0 text-[var(--accent)]/60" />
                   <span className="font-semibold text-[var(--accent)]/80">{repliedName}</span>
                   <span className="max-w-64 truncate text-muted-foreground">{replyMessage.content}</span>

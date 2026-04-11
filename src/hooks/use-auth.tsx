@@ -98,57 +98,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('📥 Réponse getMe:', response);
     
     if (response.success && response.data) {
-      // Vérifier que les clés Signal locales sont intactes (IndexedDB)
+      console.log('✅ Utilisateur chargé:', response.data);
+      setUser(response.data as User);
+
+      // Vérification des clés Signal (best-effort, ne bloque jamais l'auth)
       try {
         const { signalStore } = await import('../lib/signal-store');
         const localIdentity = await signalStore.getIdentityKeyPair();
         const localECDH     = await signalStore.getECDHKeyPair();
 
         if (!localIdentity || !localECDH) {
-          // Clés locales absentes (IndexedDB vidé, nouveau navigateur, etc.)
-          // → forcer un vrai login pour avoir le mot de passe et restaurer le backup
-          console.warn('[Signal] Clés locales absentes — login requis pour restaurer le backup chiffré');
-          localStorage.removeItem('alfychat_token');
-          localStorage.removeItem('alfychat_refresh_token');
-          setIsLoading(false);
-          return;
-        }
+          // Clés locales absentes — E2EE dégradé mais la session reste active.
+          // L'utilisateur devra se re-connecter (login) pour restaurer ses clés.
+          console.warn('[Signal] Clés locales absentes — E2EE dégradé, re-login recommandé pour restaurer');
+        } else {
+          // Synchroniser l'état en mémoire (initialized flag)
+          await signalService.isInitialized();
 
-        // Synchroniser l'état en mémoire (initialized flag)
-        await signalService.isInitialized();
-
-        // Vérifier si le serveur a encore notre bundle public (ex : après restart DB)
-        const keyStatus = await api.getSignalKeyStatus();
-        if (keyStatus && !keyStatus.hasBundle) {
-          console.warn('[Signal] Bundle serveur absent — tentative de re-publication depuis IndexedDB...');
-          const rebuilt = await signalService.rebuildPublicBundle();
-          if (rebuilt) {
-            const publishRes = await api.publishSignalKeyBundle(rebuilt);
-            if (publishRes.success) {
-              console.log('[Signal] Bundle public re-publié depuis IndexedDB ✓');
+          // Vérifier si le serveur a encore notre bundle public (ex : après restart DB)
+          const keyStatus = await api.getSignalKeyStatus();
+          if (keyStatus && !keyStatus.hasBundle) {
+            console.warn('[Signal] Bundle serveur absent — tentative de re-publication depuis IndexedDB...');
+            const rebuilt = await signalService.rebuildPublicBundle();
+            if (rebuilt) {
+              const publishRes = await api.publishSignalKeyBundle(rebuilt);
+              if (publishRes.success) {
+                console.log('[Signal] Bundle public re-publié depuis IndexedDB ✓');
+              } else {
+                console.warn('[Signal] Échec re-publication — E2EE dégradé');
+              }
             } else {
-              console.error('[Signal] Échec re-publication, re-login requis');
-              localStorage.removeItem('alfychat_token');
-              localStorage.removeItem('alfychat_refresh_token');
-              setIsLoading(false);
-              return;
+              console.warn('[Signal] Impossible de re-publier (signature manquante) — E2EE dégradé');
             }
-          } else {
-            // Signature manquante → impossible de re-publier sans mot de passe
-            console.warn('[Signal] Impossible de re-publier (signature manquante) — re-login requis');
-            localStorage.removeItem('alfychat_token');
-            localStorage.removeItem('alfychat_refresh_token');
-            setIsLoading(false);
-            return;
           }
         }
       } catch (idbErr) {
-        // L'IndexedDB a eu un problème — laisser passer mais E2EE sera dégradé
         console.error('[Signal] Erreur lecture IndexedDB lors du checkAuth:', idbErr);
       }
-
-      console.log('✅ Utilisateur chargé:', response.data);
-      setUser(response.data as User);
 
       // Restaurer la clé privée E2EE depuis sessionStorage
       try {
@@ -214,10 +200,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Décrypter la clé privée existante ou générer un nouveau keypair
       try {
         if (data.keySalt && data.encryptedPrivateKey) {
-          const aesKey = await deriveKey(password, data.keySalt);
-          const decryptedPrivKey = await decryptPrivateKey(data.encryptedPrivateKey, aesKey);
-          setPrivateKey(decryptedPrivKey);
-          sessionStorage.setItem(E2EE_SESSION_KEY, decryptedPrivKey);
+          try {
+            const aesKey = await deriveKey(password, data.keySalt);
+            const decryptedPrivKey = await decryptPrivateKey(data.encryptedPrivateKey, aesKey);
+            setPrivateKey(decryptedPrivKey);
+            sessionStorage.setItem(E2EE_SESSION_KEY, decryptedPrivKey);
+          } catch (decryptErr) {
+            // OperationError: clés chiffrées avec un ancien mot de passe
+            // Régénérer un nouveau keypair chiffré avec le mot de passe actuel
+            console.warn('[E2EE] Déchiffrement échoué (clés obsolètes) — régénération...', decryptErr);
+            const keypair = await generateKeypair();
+            const salt = generateSalt();
+            const aesKey = await deriveKey(password, salt);
+            const encPrivKey = await encryptPrivateKey(keypair.privateKey, aesKey);
+            await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt });
+            setPrivateKey(keypair.privateKey);
+            sessionStorage.setItem(E2EE_SESSION_KEY, keypair.privateKey);
+            console.log('[E2EE] Nouvelles clés générées après échec déchiffrement ✓');
+          }
         } else if (data.keyMissing) {
           // Utilisateur existant sans clé → générer et sauvegarder silencieusement
           console.log('[E2EE] Génération des clés pour utilisateur existant...');
@@ -268,10 +268,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Décrypter la clé privée existante ou générer un nouveau keypair
       try {
         if (data.keySalt && data.encryptedPrivateKey) {
-          const aesKey = await deriveKey(password, data.keySalt);
-          const decryptedPrivKey = await decryptPrivateKey(data.encryptedPrivateKey, aesKey);
-          setPrivateKey(decryptedPrivKey);
-          sessionStorage.setItem(E2EE_SESSION_KEY, decryptedPrivKey);
+          try {
+            const aesKey = await deriveKey(password, data.keySalt);
+            const decryptedPrivKey = await decryptPrivateKey(data.encryptedPrivateKey, aesKey);
+            setPrivateKey(decryptedPrivKey);
+            sessionStorage.setItem(E2EE_SESSION_KEY, decryptedPrivKey);
+          } catch (decryptErr) {
+            console.warn('[E2EE] Déchiffrement échoué (clés obsolètes, 2FA) — régénération...', decryptErr);
+            const keypair = await generateKeypair();
+            const salt = generateSalt();
+            const aesKey = await deriveKey(password, salt);
+            const encPrivKey = await encryptPrivateKey(keypair.privateKey, aesKey);
+            await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt });
+            setPrivateKey(keypair.privateKey);
+            sessionStorage.setItem(E2EE_SESSION_KEY, keypair.privateKey);
+            console.log('[E2EE] Nouvelles clés générées après échec déchiffrement (2FA) ✓');
+          }
         } else if (data.keyMissing) {
           console.log('[E2EE] Génération des clés pour utilisateur existant (2FA)...');
           const keypair = await generateKeypair();

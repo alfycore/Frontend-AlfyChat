@@ -190,6 +190,10 @@ class ApiService {
     return this.request<{ publicKey: string }>(`/api/users/${userId}/public-key`);
   }
 
+  async getMyE2EEKeys() {
+    return this.request<{ keySalt: string | null; encryptedPrivateKey: string | null; publicKey: string | null }>('/api/auth/keys');
+  }
+
   async saveMyKeys(data: { publicKey: string; encryptedPrivateKey: string; keySalt: string }) {
     return this.request('/api/auth/keys', {
       method: 'PATCH',
@@ -212,7 +216,7 @@ class ApiService {
   }
 
   // ============ MÉDIA (upload d'images) ============
-  async uploadImage(file: File, type: 'avatar' | 'banner' | 'attachment' | 'icon'): Promise<ApiResponse<{ url: string; width: number; height: number; size: number }>> {
+  async uploadImage(file: File, type: 'avatar' | 'banner' | 'attachment' | 'icon' | 'wallpaper'): Promise<ApiResponse<{ url: string; width: number; height: number; size: number }>> {
     const token = this.getToken();
     const formData = new FormData();
     formData.append('file', file);
@@ -313,7 +317,7 @@ class ApiService {
     return this.request(`/api/users/search?q=${encodeURIComponent(query)}`);
   }
 
-  async changePassword(userId: string, data: { currentPassword: string; newPassword: string }) {
+  async changePassword(userId: string, data: { currentPassword: string; newPassword: string; encryptedPrivateKey?: string; keySalt?: string }) {
     return this.request(`/api/users/${userId}/change-password`, {
       method: 'POST',
       body: JSON.stringify(data),

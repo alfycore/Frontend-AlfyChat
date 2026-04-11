@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/use-auth';
 
 export type ServerListPosition = 'left' | 'right' | 'top' | 'bottom';
 
@@ -92,6 +94,9 @@ function _notify() {
   _listeners.forEach(fn => fn());
 }
 
+// ── DB save listeners (called by useLayoutPrefsSync) ──────────────────────
+const _dbSaveListeners = new Set<(prefs: LayoutPrefs) => void>();
+
 // ── Hook ──────────────────────────────────────────────────────────────────
 
 export function useLayoutPrefs() {
@@ -112,8 +117,71 @@ export function useLayoutPrefs() {
   const updatePrefs = useCallback((updates: Partial<LayoutPrefs>) => {
     _prefs = { ..._prefs, ...updates };
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_prefs)); } catch {}
-    _notify(); // instantly re-renders every component using this hook
+    _notify();
+    // notify DB save listeners
+    _dbSaveListeners.forEach(fn => fn(_prefs));
   }, []);
 
   return { prefs: _prefs, updatePrefs };
+}
+
+// ── DB sync hook — mount once in the root layout ───────────────────────────
+// Loads layout_prefs from the DB on login, saves back (debounced) on change.
+
+export function useLayoutPrefsSync() {
+  const { user, isAuthenticated } = useAuth();
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initializedRef = useRef(false);
+
+  // Load from DB once the user is authenticated
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id || initializedRef.current) return;
+    initializedRef.current = true;
+
+    api.getPreferences(user.id).then((result: any) => {
+      if (result?.data?.layoutPrefs) {
+        const dbPrefs: Partial<LayoutPrefs> = result.data.layoutPrefs;
+        // DB wins over localStorage — merge and persist locally
+        _prefs = { ...DEFAULT_PREFS, ...dbPrefs };
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_prefs)); } catch {}
+        _notify();
+      }
+      // Also restore wallpaper if one is stored
+      if (result?.data?.wallpaper) {
+        _notifyWallpaper(result.data.wallpaper);
+      }
+    }).catch(() => { /* ignore — fall back to localStorage */ });
+  }, [isAuthenticated, user?.id]);
+
+  // Subscribe to prefs changes and debounce-save to DB
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+
+    const saveToDb = (prefs: LayoutPrefs) => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        api.updatePreferences(user.id, { layoutPrefs: prefs }).catch(() => {});
+      }, 800);
+    };
+
+    _dbSaveListeners.add(saveToDb);
+    return () => {
+      _dbSaveListeners.delete(saveToDb);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [isAuthenticated, user?.id]);
+}
+
+// ── Wallpaper DB sync helpers ─────────────────────────────────────────────
+// Used by use-background.ts to persist wallpaper to DB.
+
+const _wallpaperListeners = new Set<(url: string | null) => void>();
+
+export function _notifyWallpaper(url: string | null) {
+  _wallpaperListeners.forEach(fn => fn(url));
+}
+
+export function _subscribeWallpaper(fn: (url: string | null) => void) {
+  _wallpaperListeners.add(fn);
+  return () => _wallpaperListeners.delete(fn);
 }

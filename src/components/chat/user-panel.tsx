@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
+import { useUIStyle } from '@/hooks/use-ui-style';
 
 interface User {
   id: string;
@@ -43,6 +44,7 @@ export function UserPanel({ user }: UserPanelProps) {
   const { theme, setTheme } = useTheme();
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
+  const ui = useUIStyle();
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -76,7 +78,7 @@ export function UserPanel({ user }: UserPanelProps) {
   };
 
   return (
-    <div data-tour="user-panel" className={`flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t border-[var(--border)]/30 bg-[var(--background)]/80 px-1.5 md:gap-1 md:px-2`}>
+    <div data-tour="user-panel" className={`flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t px-1.5 md:gap-1 md:px-2 ${ui.isGlass ? 'border-white/15 bg-white/20 backdrop-blur-2xl dark:border-white/8 dark:bg-black/20' : 'border-border/30 bg-background/80'}`}>
       {/* Avatar + user info */}
       <div className="min-w-0 flex-1">
       <DropdownMenu>

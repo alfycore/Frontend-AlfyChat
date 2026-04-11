@@ -8,7 +8,7 @@ import {
   GlobeIcon, SearchIcon, HelpCircleIcon, LockIcon,
   Trash2Icon, KeyRoundIcon, ZapIcon, CalendarIcon, ClockIcon,
   AlertTriangleIcon, ChevronRightIcon, ArrowLeftIcon,
-  XIcon, LayoutIcon, CheckIcon, Loader2Icon, PencilIcon,
+  XIcon, LayoutIcon, CheckIcon, Loader2Icon, PencilIcon, UploadIcon,
 } from '@/components/icons';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/components/locale-provider';
@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useBackground } from '@/hooks/use-background';
 import { socketService } from '@/lib/socket';
 import { api, resolveMediaUrl } from '@/lib/api';
+import { deriveKey, decryptPrivateKey, encryptPrivateKey, generateSalt } from '@/lib/e2ee';
 import { toast } from 'sonner';
 import {
   getAudioPreferences,
@@ -253,8 +254,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   /* -- Appearance -- */
   const [fontFamily, setFontFamily] = useState('geist');
 
-  /* -- Layout -- */
+  /* -- Layout & wallpaper -- */
   const { prefs: layoutPrefs, updatePrefs: updateLayoutPrefs } = useLayoutPrefs();
+  const { wallpaper, setWallpaper } = useBackground();
+  const wallpaperInputRef = useRef<HTMLInputElement>(null);
 
   /* -- Language -- */
   const [langSearch, setLangSearch] = useState('');
@@ -328,11 +331,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         if (prefs.micMode) setMicMode(prefs.micMode);
         if (prefs.fontFamily) {
           setFontFamily(prefs.fontFamily);
-          const fontMap: Record<string, string> = { inter: 'Inter, sans-serif', system: 'system-ui, sans-serif', mono: 'ui-monospace, monospace' };
+          const fontMap: Record<string, string> = {
+            inter: 'var(--font-inter), sans-serif',
+            system: 'system-ui, sans-serif',
+            mono: 'var(--font-geist-mono), ui-monospace, monospace',
+          };
           if (prefs.fontFamily !== 'geist' && fontMap[prefs.fontFamily]) {
-            document.documentElement.style.setProperty('--font-family', fontMap[prefs.fontFamily]);
+            document.documentElement.style.setProperty('--font-sans', fontMap[prefs.fontFamily]);
           } else {
-            document.documentElement.style.removeProperty('--font-family');
+            document.documentElement.style.removeProperty('--font-sans');
           }
         }
         if (prefs.dndEnabled !== undefined) setDndEnabled(prefs.dndEnabled);
@@ -468,11 +475,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const applyFont = (fontId: string) => {
     setFontFamily(fontId);
     if (user) api.updatePreferences(user.id, { fontFamily: fontId }).catch(() => {});
-    const fontMap: Record<string, string> = { inter: 'Inter, sans-serif', system: 'system-ui, sans-serif', mono: 'ui-monospace, monospace' };
+    const fontMap: Record<string, string> = {
+      inter: 'var(--font-inter), sans-serif',
+      system: 'system-ui, sans-serif',
+      mono: 'var(--font-geist-mono), ui-monospace, monospace',
+    };
     if (fontId === 'geist' || !fontMap[fontId]) {
-      document.documentElement.style.removeProperty('--font-family');
+      document.documentElement.style.removeProperty('--font-sans');
     } else {
-      document.documentElement.style.setProperty('--font-family', fontMap[fontId]);
+      document.documentElement.style.setProperty('--font-sans', fontMap[fontId]);
     }
   };
 
@@ -483,7 +494,28 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     if (newPassword.length < 8) { toast.error('Le nouveau mot de passe doit faire au moins 8 caractères'); return; }
     setIsChangingPassword(true);
     try {
-      const result = await api.changePassword(user.id, { currentPassword, newPassword });
+      // Re-encrypt E2EE private key with the new password
+      let e2eeFields: { encryptedPrivateKey?: string; keySalt?: string } = {};
+      try {
+        const keysRes = await api.getMyE2EEKeys();
+        const keySalt = keysRes.data?.keySalt;
+        const encPrivKey = keysRes.data?.encryptedPrivateKey;
+        if (keySalt && encPrivKey) {
+          const oldAesKey = await deriveKey(currentPassword, keySalt);
+          const rawPrivateKey = await decryptPrivateKey(encPrivKey, oldAesKey);
+          const newSalt = generateSalt();
+          const newAesKey = await deriveKey(newPassword, newSalt);
+          const newEncPrivKey = await encryptPrivateKey(rawPrivateKey, newAesKey);
+          e2eeFields = { encryptedPrivateKey: newEncPrivKey, keySalt: newSalt };
+        }
+      } catch (e2eeErr) {
+        console.error('[E2EE] Impossible de ré-encrypter la clé privée:', e2eeErr);
+        toast.error('Impossible de ré-encrypter la clé de chiffrement. Vérifiez votre mot de passe actuel.');
+        setIsChangingPassword(false);
+        return;
+      }
+
+      const result = await api.changePassword(user.id, { currentPassword, newPassword, ...e2eeFields });
       if (result.success) {
         toast.success('Mot de passe modifié avec succès');
         setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
@@ -1910,6 +1942,218 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* UI Style */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Style de l&apos;interface</CardTitle>
+                        <CardDescription>Choisissez entre un style épuré ou un style vitré inspiré d&apos;Apple</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-3">
+                          {([
+                            {
+                              id: 'flat' as const,
+                              label: 'Flat',
+                              desc: 'Épuré · actuel',
+                              preview: (
+                                <div className="flex w-full gap-1 rounded-lg border border-border/20 bg-background/50 p-1.5">
+                                  <div className="w-5 rounded bg-muted/60" />
+                                  <div className="flex flex-1 flex-col gap-0.5">
+                                    <div className="h-1.5 rounded bg-muted/50" />
+                                    <div className="h-1.5 w-3/4 rounded bg-muted/40" />
+                                    <div className="mt-1 h-2.5 w-full rounded bg-muted/30" />
+                                  </div>
+                                </div>
+                              ),
+                            },
+                            {
+                              id: 'glass' as const,
+                              label: 'Glass',
+                              desc: 'Apple · vitré',
+                              preview: (
+                                <div className="relative flex w-full gap-1 overflow-hidden rounded-lg border border-white/20 p-1.5"
+                                  style={{ background: 'linear-gradient(135deg, oklch(0.78 0.10 280 / 30%), oklch(0.72 0.12 230 / 20%))' }}>
+                                  <div className="absolute inset-0 rounded-lg" style={{ backdropFilter: 'blur(8px)' }} />
+                                  <div className="relative w-5 rounded border border-white/20 bg-white/30" />
+                                  <div className="relative flex flex-1 flex-col gap-0.5">
+                                    <div className="h-1.5 rounded border border-white/15 bg-white/40" />
+                                    <div className="h-1.5 w-3/4 rounded border border-white/10 bg-white/30" />
+                                    <div className="mt-1 h-2.5 w-full rounded border border-white/15 bg-white/25" />
+                                  </div>
+                                </div>
+                              ),
+                            },
+                          ]).map(({ id, label, desc, preview }) => (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => updateLayoutPrefs({ uiStyle: id })}
+                              className={cn(
+                                'flex flex-col items-center gap-2 rounded-xl border-2 p-2.5 text-xs font-medium transition-all duration-150',
+                                layoutPrefs.uiStyle === id
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border/30 bg-muted/20 text-muted-foreground hover:border-border/60',
+                              )}
+                            >
+                              {preview}
+                              <div className="text-center">
+                                <span className="block">{label}</span>
+                                <span className="block text-[10px] font-normal text-muted-foreground">{desc}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Wallpaper — visible only in glass mode */}
+                    {layoutPrefs.uiStyle === 'glass' && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Fond d&apos;écran</CardTitle>
+                          <CardDescription>
+                            Une image ou un dégradé affiché derrière les panneaux vitrés
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {/* Preset gradients */}
+                          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                            {([
+                              {
+                                label: 'Aurore',
+                                value: 'linear-gradient(135deg, #667eea 0%, #764ba2 40%, #f093fb 100%)',
+                              },
+                              {
+                                label: 'Océan',
+                                value: 'linear-gradient(135deg, #0f2027 0%, #203a43 40%, #2c5364 100%)',
+                              },
+                              {
+                                label: 'Coucher',
+                                value: 'linear-gradient(135deg, #f7971e 0%, #ffd200 50%, #f7971e 100%)',
+                              },
+                              {
+                                label: 'Rose',
+                                value: 'linear-gradient(135deg, #fc5c7d 0%, #6a3093 100%)',
+                              },
+                              {
+                                label: 'Forêt',
+                                value: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)',
+                              },
+                              {
+                                label: 'Nuit',
+                                value: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 100%)',
+                              },
+                              {
+                                label: 'Pêche',
+                                value: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                              },
+                              {
+                                label: 'Minuit',
+                                value: 'linear-gradient(135deg, #2d3561 0%, #c05c7e 50%, #f3826f 100%)',
+                              },
+                              {
+                                label: 'Jade',
+                                value: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                              },
+                              {
+                                label: 'Braise',
+                                value: 'linear-gradient(135deg, #c31432 0%, #240b36 100%)',
+                              },
+                              {
+                                label: 'Azur',
+                                value: 'linear-gradient(135deg, #1a6dff 0%, #c822ff 100%)',
+                              },
+                              {
+                                label: 'Nacre',
+                                value: 'linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 40%, #e8e8e8 100%)',
+                              },
+                            ] as const).map(({ label, value }) => (
+                              <button
+                                key={label}
+                                type="button"
+                                title={label}
+                                onClick={() => setWallpaper(value)}
+                                className={cn(
+                                  'relative h-12 w-full overflow-hidden rounded-xl border-2 transition-all',
+                                  wallpaper === value
+                                    ? 'border-primary shadow-md scale-105'
+                                    : 'border-transparent hover:border-border/50 hover:scale-105',
+                                )}
+                                style={{ background: value }}
+                              >
+                                {wallpaper === value && (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <CheckIcon size={14} className="text-white drop-shadow" />
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Custom upload */}
+                          <div className="flex items-center gap-2">
+                            <input
+                              ref={wallpaperInputRef}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                e.target.value = '';
+                                try {
+                                  const res = await api.uploadImage(file, 'wallpaper');
+                                  if (res.success && res.data?.url) {
+                                    // Resolve to absolute URL so CSS url() works across origins
+                                    const absUrl = resolveMediaUrl(res.data.url) || res.data.url;
+                                    setWallpaper(absUrl);
+                                  } else {
+                                    toast.error(res.error || 'Erreur lors de l\'upload');
+                                  }
+                                } catch {
+                                  toast.error('Erreur lors de l\'upload de l\'image.');
+                                }
+                              }}}
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => wallpaperInputRef.current?.click()}
+                            >
+                              <UploadIcon size={13} />
+                              Image personnalisée
+                            </Button>
+                            {wallpaper && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2 text-muted-foreground hover:text-destructive"
+                                onClick={() => setWallpaper(null)}
+                              >
+                                <XIcon size={13} />
+                                Supprimer
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* Preview strip */}
+                          {wallpaper && (
+                            <div
+                              className="h-16 w-full overflow-hidden rounded-xl border border-border/30"
+                              style={{
+                                backgroundImage: wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient')
+                                  ? wallpaper
+                                  : `url(${wallpaper})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                              }}
+                            />
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
 
                     {/* UI Density */}
                     <Card>

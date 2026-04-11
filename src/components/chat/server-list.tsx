@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { useTranslation } from '@/components/locale-provider';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -89,6 +90,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const { t } = useTranslation();
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
+  const ui = useUIStyle();
 
   const btnSize  = d.serverBtn;
   const iconSize = d.serverIcon;
@@ -277,7 +279,9 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       <nav
         aria-label="Serveurs"
         className={cn(
-          'flex shrink-0 items-center gap-1.5 bg-background',
+          cn('flex shrink-0 items-center gap-1.5', ui.isGlass
+            ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20 border-white/15 dark:border-white/8'
+            : 'bg-background'),
           horizontal
             ? 'h-14 w-full flex-row border-b border-border/30 px-3'
             : cn('h-full flex-col border-r border-border/30 py-3', prefs.density === 'compact' ? 'w-14' : prefs.density === 'comfortable' ? 'w-20' : 'w-18'),

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { socketService } from '@/lib/socket';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { ServerPageSkeleton } from '@/components/chat/server-page-skeleton';
 import {
   ServerChannelPreviewList,
@@ -19,6 +20,7 @@ export default function ServerWelcomePage() {
   const params = useParams();
   const router = useRouter();
   const serverId = params?.serverId as string;
+  const ui = useUIStyle();
 
   const [serverInfo, setServerInfo] = useState<ServerOverviewInfo | null>(null);
   const [channels, setChannels] = useState<ServerOverviewChannel[]>([]);
@@ -63,7 +65,7 @@ export default function ServerWelcomePage() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
+    <div className={`flex h-full flex-col overflow-y-auto ${ui.isGlass ? 'bg-white/15 backdrop-blur-2xl dark:bg-black/20' : ''}`}>
       <ServerOverviewHero server={serverInfo} />
 
       <div className="flex-1 space-y-6 px-6 py-6 sm:px-8">
