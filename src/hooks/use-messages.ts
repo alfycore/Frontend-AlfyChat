@@ -167,7 +167,18 @@ export function useMessages(channelId?: string, recipientId?: string) {
   const [e2eeRecoveryStatus, setE2eeRecoveryStatus] = useState<'idle' | 'requesting' | 'done'>('idle');
 
   // Cache des plaintexts récupérés via E2EE recovery → permet de déchiffrer les msgs lors du scroll
+  // Persisté en sessionStorage (survit au refresh, effacé à la fermeture de l'onglet)
+  const E2EE_CACHE_KEY = `e2ee_recovered_${recipientId ?? channelId ?? 'global'}`;
   const e2eeRecoveredRef = useRef<Map<string, string>>(new Map());
+  // Hydratation depuis sessionStorage au montage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = sessionStorage.getItem(E2EE_CACHE_KEY);
+      if (raw) e2eeRecoveredRef.current = new Map(JSON.parse(raw) as [string, string][]);
+    } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [E2EE_CACHE_KEY]);
 
   // Ref pour éviter les closures périmées dans les handlers WebSocket
   const userIdRef = useRef<string>('');
@@ -605,6 +616,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
         for (const [id, text] of decrypted) {
           e2eeRecoveredRef.current.set(id, text);
         }
+        // Persister en sessionStorage
+        try {
+          sessionStorage.setItem(E2EE_CACHE_KEY, JSON.stringify(Array.from(e2eeRecoveredRef.current.entries())));
+        } catch { /* quota dépassé ou SSR */ }
 
         // Remplacer les placeholders dans la liste de messages actuellement affichés
         if (decrypted.size > 0) {
