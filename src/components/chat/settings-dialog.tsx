@@ -2114,7 +2114,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 } catch {
                                   toast.error('Erreur lors de l\'upload de l\'image.');
                                 }
-                              }}}
+                              }}
                             />
                             <Button
                               variant="outline"
