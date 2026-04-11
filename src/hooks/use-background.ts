@@ -101,7 +101,7 @@ export function useBackground(): BackgroundState {
 
   // Subscribe to wallpaper pushed from DB (via use-layout-prefs sync)
   useEffect(() => {
-    return _subscribeWallpaper((url) => {
+    const unsub = _subscribeWallpaper((url) => {
       _wallpaperState = url;
       setWallpaperState(url);
       if (url) {
@@ -111,6 +111,7 @@ export function useBackground(): BackgroundState {
       }
       notifyAll();
     });
+    return () => { unsub(); };
   }, []);
 
   // Detect brightness whenever wallpaper changes
