@@ -2117,9 +2117,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 try {
                                   const res = await api.uploadImage(file, 'wallpaper');
                                   if (res.success && res.data?.url) {
-                                    // Resolve to absolute URL so CSS url() works across origins
-                                    const absUrl = resolveMediaUrl(res.data.url) || res.data.url;
-                                    setWallpaper(absUrl);
+                                    // Stocker l'URL relative — resolveMediaUrl est pour l'affichage uniquement
+                                    setWallpaper(res.data.url);
                                   } else {
                                     toast.error(res.error || 'Erreur lors de l\'upload');
                                   }

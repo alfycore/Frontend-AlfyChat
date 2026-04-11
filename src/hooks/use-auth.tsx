@@ -429,6 +429,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const hasLocalBundleBefore = !!localIdentityBefore;
 
       // Une fois par session, ou si le store local est incomplet, restaurer le backup privé.
+      let bundleImportFailed = false;  // Déclaré ici pour être accessible après le bloc
       if (!alreadySynced || !hasLocalBundleBefore) {
         const backupRes = await api.downloadPrivateBundle();
         const encryptedBundle = backupRes?.encryptedBundle ?? null;
@@ -445,6 +446,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // OperationError = mauvais mot de passe (ex : mot de passe changé mais bundle
             // non re-chiffré, ou bundle d'un autre compte). Ne pas faire planter initSignalKeys.
             // Si des clés locales existent déjà, elles seront conservées et utilisées.
+            bundleImportFailed = true;
             if ((decErr as Error)?.name === 'OperationError' || (decErr as Error)?.message?.includes('OperationError')) {
               console.warn('[Signal] Déchiffrement du backup échoué (mauvais mot de passe ?) — conservation des clés locales.');
             } else {
@@ -494,7 +496,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await generateAndPublishBundle(password);
           sessionStorage.setItem('signal_synced_this_session', '1');
         } else if (statusKnown && serverHasBundle) {
-          console.warn('[Signal] Bundle serveur présent mais backup/local absents — aucune régénération automatique pour préserver le multi-appareil');
+          if (bundleImportFailed) {
+            // Le bundle serveur existe mais est indéchiffrable (mot de passe changé sans re-chiffrement)
+            // et il n'y a aucune clé locale — l'utilisateur est définitivement bloqué.
+            // On régénère pour débloquer l'E2EE. Les anciens senderContent ne seront plus déchiffrables
+            // depuis cet appareil mais les nouvelles sessions fonctionneront.
+            console.warn('[Signal] Bundle serveur indéchiffrable et aucune clé locale — régénération pour débloquer...');
+            await signalService.reset();
+            await generateAndPublishBundle(password);
+            sessionStorage.setItem('signal_synced_this_session', '1');
+          } else {
+            console.warn('[Signal] Bundle serveur présent mais backup/local absents — aucune régénération automatique pour préserver le multi-appareil');
+          }
         } else {
           console.warn('[Signal] Statut serveur indisponible — aucune régénération automatique');
         }

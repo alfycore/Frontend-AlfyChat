@@ -9,6 +9,27 @@ const STORAGE_KEY = 'alfychat_wallpaper';
 const BLUR_KEY = 'alfychat_wallpaper_blur';
 const OPACITY_KEY = 'alfychat_wallpaper_opacity';
 
+/**
+ * Normalise une URL de wallpaper pour la rendre relative.
+ * Supprime tout préfixe d'origine (localhost:3000, gateway, etc.) des URLs /api/media/ ou /uploads/
+ * afin qu'elles fonctionnent correctement quelle que soit l'origine du frontend.
+ */
+function normalizeWallpaperUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith('/')) return url; // Déjà relative
+  if (url.startsWith('linear-gradient') || url.startsWith('radial-gradient')) return url;
+  if (url.startsWith('data:')) return url;
+  try {
+    const parsed = new URL(url);
+    if (parsed.pathname.startsWith('/api/media/') || parsed.pathname.startsWith('/uploads/')) {
+      return parsed.pathname;
+    }
+  } catch {
+    // URL invalide — laisser passer
+  }
+  return url;
+}
+
 export interface BackgroundState {
   wallpaper: string | null;
   blur: number;
@@ -79,10 +100,13 @@ export function useBackground(): BackgroundState {
 
   // Hydrate from localStorage once mounted
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const stored = normalizeWallpaperUrl(raw);
     const storedBlur = localStorage.getItem(BLUR_KEY);
     const storedOpacity = localStorage.getItem(OPACITY_KEY);
     if (stored) {
+      // Mettre à jour localStorage si l'URL normalisée diffère (ancienne URL absolue)
+      if (stored !== raw) { try { localStorage.setItem(STORAGE_KEY, stored); } catch {} }
       _wallpaperState = stored;
       setWallpaperState(stored);
     }
@@ -101,7 +125,8 @@ export function useBackground(): BackgroundState {
 
   // Subscribe to wallpaper pushed from DB (via use-layout-prefs sync)
   useEffect(() => {
-    const unsub = _subscribeWallpaper((url) => {
+    const unsub = _subscribeWallpaper((rawUrl) => {
+      const url = normalizeWallpaperUrl(rawUrl);
       _wallpaperState = url;
       setWallpaperState(url);
       if (url) {
