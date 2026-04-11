@@ -901,7 +901,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         <div className="mx-3 mb-1 mt-2 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 md:mx-4">
           <ShieldCheckIcon size={16} className="shrink-0 text-amber-500" />
           <span className="flex-1 text-xs text-amber-700 dark:text-amber-300">
-            Certains messages n&apos;ont pas pu être déchiffrés. Vous pouvez demander à votre correspondant de partager l&apos;historique.
+            {e2eeRecoveryStatus === 'offline'
+              ? 'Votre correspondant est hors ligne. Réessayez quand il sera connecté.'
+              : 'Certains messages n\u2019ont pas pu être déchiffrés. Demandez à votre correspondant de partager l\u2019historique.'}
           </span>
           <Button
             size="sm"

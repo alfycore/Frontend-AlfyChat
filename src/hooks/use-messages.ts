@@ -164,7 +164,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
   const [hasOlderArchived, setHasOlderArchived] = useState(false);
   const [isLoadingArchived, setIsLoadingArchived] = useState(false);
   const [hasEncryptedPlaceholders, setHasEncryptedPlaceholders] = useState(false);
-  const [e2eeRecoveryStatus, setE2eeRecoveryStatus] = useState<'idle' | 'requesting' | 'done'>('idle');
+  const [e2eeRecoveryStatus, setE2eeRecoveryStatus] = useState<'idle' | 'requesting' | 'done' | 'offline'>('idle');
 
   // Cache des plaintexts récupérés via E2EE recovery → permet de déchiffrer les msgs lors du scroll
   // Persisté en sessionStorage (survit au refresh, effacé à la fermeture de l'onglet)
@@ -1018,7 +1018,21 @@ export function useMessages(channelId?: string, recipientId?: string) {
     if (!recipientId || !user || !convId) return;
     setE2eeRecoveryStatus('requesting');
     socketService.requestE2EEHistory(recipientId, convId);
+    // Timeout : si aucune réponse dans 30s (autre utilisateur hors ligne), remettre idle
+    const timer = setTimeout(() => {
+      setE2eeRecoveryStatus((prev) => prev === 'requesting' ? 'offline' : prev);
+    }, 30_000);
+    return () => clearTimeout(timer);
   }, [recipientId, user, convId]);
+
+  // Récupérer le statut d'erreur émis par le gateway (destinataire hors ligne)
+  useEffect(() => {
+    const handleRecoveryError = () => {
+      setE2eeRecoveryStatus('offline');
+    };
+    socketService.on('e2ee:history-error', handleRecoveryError);
+    return () => socketService.off('e2ee:history-error', handleRecoveryError);
+  }, []);
 
   return {
     messages,
