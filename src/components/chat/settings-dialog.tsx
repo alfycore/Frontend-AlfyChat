@@ -19,6 +19,7 @@ import { useBackground } from '@/hooks/use-background';
 import { socketService } from '@/lib/socket';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { deriveKey, decryptPrivateKey, encryptPrivateKey, generateSalt } from '@/lib/e2ee';
+import { signalService } from '@/lib/signal-service';
 import { toast } from 'sonner';
 import {
   getAudioPreferences,
@@ -517,6 +518,17 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
       const result = await api.changePassword(user.id, { currentPassword, newPassword, ...e2eeFields });
       if (result.success) {
+        // Re-chiffrer le backup Signal avec le nouveau mot de passe
+        // (doit se faire APRÈS la confirmation côté serveur pour éviter une incohérence)
+        try {
+          const newSignalBundle = await signalService.encryptPrivateBundle(newPassword);
+          await api.uploadPrivateBundle(newSignalBundle);
+          console.log('[Signal] Backup re-chiffré avec le nouveau mot de passe ✓');
+        } catch (signalErr) {
+          // Non bloquant : l'utilisateur peut continuer, il devra juste re-entrer son mdp au
+          // prochain login sur un autre appareil pour régénérer le backup.
+          console.warn('[Signal] Impossible de re-chiffrer le backup Signal:', signalErr);
+        }
         toast.success('Mot de passe modifié avec succès');
         setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
       } else {

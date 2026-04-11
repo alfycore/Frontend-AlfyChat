@@ -435,33 +435,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (encryptedBundle) {
           console.log('[Signal] Synchronisation des clés multi-appareil...');
-          await signalService.decryptAndImportPrivateBundle(encryptedBundle, password);
-          sessionStorage.setItem('signal_synced_this_session', '1');
-          console.log('[Signal] Clés synchronisées ✓');
-
-          const ecdhAfterRestore = await signalStore.getECDHKeyPair();
-          if (!ecdhAfterRestore) {
-            // Ne générer une nouvelle clé ECDH QUE si le serveur n'en a pas.
-            // Si le serveur a déjà une clé ECDH, c'est que l'ancien backup ne la contenait pas :
-            // générer une nouvelle clé invaliderait tous les senderContent chiffrés avec l'ancienne
-            // sur tous les autres appareils. On passe en mode ECDH dégradé (fallback AES-GCM).
-            if (!status?.hasEcdhKey) {
-              console.log('[Signal] Clé ECDH absente du backup et du serveur, initialisation...');
-              await signalService.addMissingECDHKey(password);
+          let bundleImported = false;
+          try {
+            await signalService.decryptAndImportPrivateBundle(encryptedBundle, password);
+            bundleImported = true;
+            sessionStorage.setItem('signal_synced_this_session', '1');
+            console.log('[Signal] Clés synchronisées ✓');
+          } catch (decErr) {
+            // OperationError = mauvais mot de passe (ex : mot de passe changé mais bundle
+            // non re-chiffré, ou bundle d'un autre compte). Ne pas faire planter initSignalKeys.
+            // Si des clés locales existent déjà, elles seront conservées et utilisées.
+            if ((decErr as Error)?.name === 'OperationError' || (decErr as Error)?.message?.includes('OperationError')) {
+              console.warn('[Signal] Déchiffrement du backup échoué (mauvais mot de passe ?) — conservation des clés locales.');
             } else {
-              console.warn('[Signal] Clé ECDH absente du backup mais présente sur le serveur — mode dégradé (senderContent ECDH non déchiffrable cette session). Reconnectez-vous depuis l\'appareil d\'origine pour resynchroniser.');
+              console.warn('[Signal] Erreur inattendue lors du déchiffrement du backup:', decErr);
             }
           }
 
-          // Republier le bundle public reconstruit depuis le backup restauré
-          // afin que tous les appareils convergent vers la même clé ECDH.
-          const rebuilt = await signalService.rebuildPublicBundle();
-          if (rebuilt) {
-            const publishRes = await api.publishSignalKeyBundle(rebuilt);
-            if (publishRes.success) {
-              console.log('[Signal] Bundle public réaligné depuis le backup ✓');
-            } else {
-              console.warn('[Signal] Échec réalignement bundle public:', publishRes.error);
+          if (bundleImported) {
+            const ecdhAfterRestore = await signalStore.getECDHKeyPair();
+            if (!ecdhAfterRestore) {
+              // Ne générer une nouvelle clé ECDH QUE si le serveur n'en a pas.
+              // Si le serveur a déjà une clé ECDH, c'est que l'ancien backup ne la contenait pas :
+              // générer une nouvelle clé invaliderait tous les senderContent chiffrés avec l'ancienne
+              // sur tous les autres appareils. On passe en mode ECDH dégradé (fallback AES-GCM).
+              if (!status?.hasEcdhKey) {
+                console.log('[Signal] Clé ECDH absente du backup et du serveur, initialisation...');
+                await signalService.addMissingECDHKey(password);
+              } else {
+                console.warn('[Signal] Clé ECDH absente du backup mais présente sur le serveur — mode dégradé (senderContent ECDH non déchiffrable cette session). Reconnectez-vous depuis l\'appareil d\'origine pour resynchroniser.');
+              }
+            }
+
+            // Republier le bundle public reconstruit depuis le backup restauré
+            // afin que tous les appareils convergent vers la même clé ECDH.
+            const rebuilt = await signalService.rebuildPublicBundle();
+            if (rebuilt) {
+              const publishRes = await api.publishSignalKeyBundle(rebuilt);
+              if (publishRes.success) {
+                console.log('[Signal] Bundle public réaligné depuis le backup ✓');
+              } else {
+                console.warn('[Signal] Échec réalignement bundle public:', publishRes.error);
+              }
             }
           }
         }
