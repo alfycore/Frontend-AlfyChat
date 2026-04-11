@@ -1192,9 +1192,9 @@ class ApiService {
   /**
    * Vérifie le statut des clés Signal de l'utilisateur courant.
    */
-  async getSignalKeyStatus(): Promise<{ hasBundle: boolean; prekeyCount: number } | null> {
-    const res = await this.request<{ hasBundle: boolean; prekeyCount: number }>('/api/users/keys/status');
-    return res.success && res.data ? (res.data as { hasBundle: boolean; prekeyCount: number }) : null;
+  async getSignalKeyStatus(): Promise<{ hasBundle: boolean; prekeyCount: number; hasEcdhKey?: boolean } | null> {
+    const res = await this.request<{ hasBundle: boolean; prekeyCount: number; hasEcdhKey?: boolean }>('/api/users/keys/status');
+    return res.success && res.data ? (res.data as { hasBundle: boolean; prekeyCount: number; hasEcdhKey?: boolean }) : null;
   }
 
   /**

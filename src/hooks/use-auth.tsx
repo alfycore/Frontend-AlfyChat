@@ -388,63 +388,112 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   async function initSignalKeys(password: string) {
     try {
-      // Vérifier si le serveur a déjà un bundle pour cet utilisateur
+      // IMPORTANT: un échec réseau ne doit jamais être interprété comme
+      // « aucun bundle serveur », sinon on régénère des clés et on casse le multi-appareil.
+      const { signalStore } = await import('../lib/signal-store');
       const status = await api.getSignalKeyStatus();
+      const statusKnown = status !== null;
       const serverHasBundle = status?.hasBundle === true;
+      const alreadySynced = sessionStorage.getItem('signal_synced_this_session') === '1';
 
-      if (serverHasBundle) {
-        // ── Synchronisation multi-appareil ──────────────────────────────────
-        // Une fois par session (sessionStorage), télécharger le backup serveur
-        // et le ré-importer pour s'assurer que tous les appareils partagent
-        // les mêmes clés (ECDH P-256, selfEncryptionKey, etc.)
-        const alreadySynced = sessionStorage.getItem('signal_synced_this_session') === '1';
-        const alreadyInit   = await signalService.isInitialized();
+      const localIdentityBefore = await signalStore.getIdentityKeyPair();
+      const localECDHBefore = await signalStore.getECDHKeyPair();
+      // L'ECDH est optionnel — l'identité seule suffit pour détecter un store complet
+      const hasLocalBundleBefore = !!localIdentityBefore;
 
-        if (!alreadyInit || !alreadySynced) {
-          // Télécharger le backup chiffré depuis le serveur
-          const backupRes = await api.downloadPrivateBundle();
-          const encryptedBundle = backupRes?.encryptedBundle ?? null;
+      // Une fois par session, ou si le store local est incomplet, restaurer le backup privé.
+      if (!alreadySynced || !hasLocalBundleBefore) {
+        const backupRes = await api.downloadPrivateBundle();
+        const encryptedBundle = backupRes?.encryptedBundle ?? null;
 
-          if (encryptedBundle) {
-            console.log('[Signal] Synchronisation des clés multi-appareil...');
-            await signalService.decryptAndImportPrivateBundle(encryptedBundle, password);
-            sessionStorage.setItem('signal_synced_this_session', '1');
-            console.log('[Signal] Clés synchronisées ✓');
+        if (encryptedBundle) {
+          console.log('[Signal] Synchronisation des clés multi-appareil...');
+          await signalService.decryptAndImportPrivateBundle(encryptedBundle, password);
+          sessionStorage.setItem('signal_synced_this_session', '1');
+          console.log('[Signal] Clés synchronisées ✓');
 
-            // Vérifier que la clé ECDH P-256 existe après restauration
-            const { signalStore } = await import('../lib/signal-store');
-            const ecdhAfterRestore = await signalStore.getECDHKeyPair();
-            if (!ecdhAfterRestore) {
-              console.log('[Signal] Clé ECDH absente du backup, ajout...');
+          const ecdhAfterRestore = await signalStore.getECDHKeyPair();
+          if (!ecdhAfterRestore) {
+            // Ne générer une nouvelle clé ECDH QUE si le serveur n'en a pas.
+            // Si le serveur a déjà une clé ECDH, c'est que l'ancien backup ne la contenait pas :
+            // générer une nouvelle clé invaliderait tous les senderContent chiffrés avec l'ancienne
+            // sur tous les autres appareils. On passe en mode ECDH dégradé (fallback AES-GCM).
+            if (!status?.hasEcdhKey) {
+              console.log('[Signal] Clé ECDH absente du backup et du serveur, initialisation...');
               await signalService.addMissingECDHKey(password);
+            } else {
+              console.warn('[Signal] Clé ECDH absente du backup mais présente sur le serveur — mode dégradé (senderContent ECDH non déchiffrable cette session). Reconnectez-vous depuis l\'appareil d\'origine pour resynchroniser.');
             }
-          } else if (!alreadyInit) {
-            // Backup absent et pas de clés locales → regénérer tout
-            console.log('[Signal] Pas de backup, regénération complète...');
-            await signalService.reset();
-            await generateAndPublishBundle(password);
-            sessionStorage.setItem('signal_synced_this_session', '1');
+          }
+
+          // Republier le bundle public reconstruit depuis le backup restauré
+          // afin que tous les appareils convergent vers la même clé ECDH.
+          const rebuilt = await signalService.rebuildPublicBundle();
+          if (rebuilt) {
+            const publishRes = await api.publishSignalKeyBundle(rebuilt);
+            if (publishRes.success) {
+              console.log('[Signal] Bundle public réaligné depuis le backup ✓');
+            } else {
+              console.warn('[Signal] Échec réalignement bundle public:', publishRes.error);
+            }
           }
         }
+      }
 
-        // Vérifier le stock de prekeys
-        if ((status!.prekeyCount ?? 0) < signalService.lowPrekeyThreshold) {
-          const startId = await signalService.getNextPreKeyId();
-          const newPrekeys = await signalService.generateOneTimePrekeys(
-            startId,
-            signalService.prekeyBatchSize
-          );
-          await api.replenishSignalPrekeys(newPrekeys);
-          const encryptedBlob = await signalService.encryptPrivateBundle(password);
-          await api.uploadPrivateBundle(encryptedBlob);
-          console.log(`[Signal] ${newPrekeys.length} prekeys rechargées ✓`);
+      const localIdentity = await signalStore.getIdentityKeyPair();
+      // L'ECDH est optionnel : en son absence on fonctionne en mode dégradé (fallback AES-GCM)
+      // mais on ne bloque pas l'utilisateur — l'identité Signal suffit pour la messagerie.
+      const hasLocalBundle = !!localIdentity;
+
+      if (!hasLocalBundle) {
+        if (statusKnown && !serverHasBundle) {
+          console.log('[Signal] Aucun bundle confirmé et aucune clé locale, génération complète...');
+          await signalService.reset();
+          await generateAndPublishBundle(password);
+          sessionStorage.setItem('signal_synced_this_session', '1');
+        } else if (statusKnown && serverHasBundle) {
+          console.warn('[Signal] Bundle serveur présent mais backup/local absents — aucune régénération automatique pour préserver le multi-appareil');
+        } else {
+          console.warn('[Signal] Statut serveur indisponible — aucune régénération automatique');
         }
-      } else {
-        // Pas de bundle côté serveur → reset local et générer tout
-        console.log('[Signal] Aucun bundle serveur, génération complète...');
-        await signalService.reset();
-        await generateAndPublishBundle(password);
-        sessionStorage.setItem('signal_synced_this_session', '1');
+        return;
+      }
+
+      if (!statusKnown) {
+        console.warn('[Signal] Statut bundle indisponible — conservation des clés locales');
+        return;
+      }
+
+      if (!serverHasBundle) {
+        console.warn('[Signal] Bundle serveur absent — re-publication depuis le store local/backup');
+        const rebuilt = await signalService.rebuildPublicBundle();
+        if (rebuilt) {
+          const publishRes = await api.publishSignalKeyBundle(rebuilt);
+          if (publishRes.success) {
+            console.log('[Signal] Bundle public re-publié ✓');
+            const encryptedBlob = await signalService.encryptPrivateBundle(password);
+            await api.uploadPrivateBundle(encryptedBlob);
+            sessionStorage.setItem('signal_synced_this_session', '1');
+          } else {
+            console.warn('[Signal] Échec re-publication bundle public:', publishRes.error);
+          }
+        } else {
+          console.warn('[Signal] Bundle local incomplet — re-publication impossible');
+        }
+        return;
+      }
+
+      // Vérifier le stock de prekeys
+      if ((status.prekeyCount ?? 0) < signalService.lowPrekeyThreshold) {
+        const startId = await signalService.getNextPreKeyId();
+        const newPrekeys = await signalService.generateOneTimePrekeys(
+          startId,
+          signalService.prekeyBatchSize
+        );
+        await api.replenishSignalPrekeys(newPrekeys);
+        const encryptedBlob = await signalService.encryptPrivateBundle(password);
+        await api.uploadPrivateBundle(encryptedBlob);
+        console.log(`[Signal] ${newPrekeys.length} prekeys rechargées ✓`);
       }
     } catch (err) {
       console.error('[Signal] Erreur initialisation clés:', err);

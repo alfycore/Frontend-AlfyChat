@@ -323,7 +323,8 @@ class SignalService {
     if (this.initialized) return true;
     const kp = await signalStore.getIdentityKeyPair();
     const rid = await signalStore.getLocalRegistrationId();
-    this.initialized = !!(kp && rid !== undefined);
+    const ecdh = await signalStore.getECDHKeyPair();
+    this.initialized = !!(kp && rid !== undefined && ecdh);
     return this.initialized;
   }
 
@@ -414,7 +415,12 @@ class SignalService {
     if (isSender && senderContent) {
       // Nouveau format ECDH P-256 (multi-device) : chiffré avec la propre clé ECDH de l'expéditeur
       if (senderContent.startsWith('ecdh:')) {
-        return this.decryptECDH(senderContent);
+        try {
+          return await this.decryptECDH(senderContent);
+        } catch {
+          // Clé ECDH absente du store local (backup incomplet, mode dégradé)
+          return '[Message non disponible — clé ECDH introuvable]';
+        }
       }
       // Format AES-GCM local (ancien format single-device)
       if (senderContent.startsWith('aes:')) {
@@ -426,7 +432,12 @@ class SignalService {
 
     // Destinataire : nouveau format ECDH
     if (content.startsWith('ecdh:')) {
-      return this.decryptECDH(content);
+      try {
+        return await this.decryptECDH(content);
+      } catch {
+        // Clé ECDH absente du store local
+        return '[Message non disponible — clé ECDH introuvable]';
+      }
     }
 
     // Ancien format Signal (messages reçus avant la migration)
