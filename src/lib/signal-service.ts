@@ -424,10 +424,19 @@ class SignalService {
       }
       // Format AES-GCM local (ancien format single-device)
       if (senderContent.startsWith('aes:')) {
-        return this.decryptForSelf(senderContent);
+        try {
+          return await this.decryptForSelf(senderContent);
+        } catch {
+          // Clé AES indisponible (backup incomplet ou session différente)
+          return '[Message non disponible — clé de session manquante]';
+        }
       }
       // Très ancien format Signal Double Ratchet
-      return this.decryptSenderCopy(currentUserId, senderContent, e2eeType);
+      try {
+        return await this.decryptSenderCopy(currentUserId, senderContent, e2eeType);
+      } catch {
+        return '[Message non disponible — session Signal expirée]';
+      }
     }
 
     // Destinataire : nouveau format ECDH
@@ -654,6 +663,9 @@ class SignalService {
 
     const bundleData: PrivateBundleData = JSON.parse(new TextDecoder().decode(plaintext));
     await signalStore.importPrivateBundle(bundleData);
+    // Invalider le cache AES en mémoire : la clé sauvegardée dans le backup
+    // peut différer de celle qui était en cache avant l'import.
+    this.selfKey = null;
     this.initialized = true;
 
     // Stocker le blob en sessionStorage pour éviter un déchiffrement à chaque rechargement

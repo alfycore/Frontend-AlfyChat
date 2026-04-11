@@ -276,15 +276,20 @@ export function useMessages(channelId?: string, recipientId?: string) {
       // Pour nos propres messages DM : ne pas re-décrypter si déjà confirmé
       // (message:sent a déjà remplacé le pending avec le plaintext)
       if (isSelf && message.e2eeType) {
-        // Vérifier si le message est déjà confirmé dans la liste
+        // Lire l'état courant dans le updater pour éviter la closure périmée
+        let handled = false;
         setMessages((prev) => {
-          // Si déjà confirmé avec cet ID (non-pending) → ignorer le doublon
-          if (prev.some(m => m.id === message.id && !m.pending)) return prev;
-          // Si un pending existe encore, laisser message:sent le gérer
-          if (prev.some(m => m.pending && m.authorId === senderId)) return prev;
+          // Déjà confirmé avec cet ID (non-pending) → ignorer le doublon
+          if (prev.some(m => m.id === message.id && !m.pending)) { handled = true; return prev; }
+          // Un pending existe → laisser message:sent le gérer
+          if (prev.some(m => m.pending && m.authorId === senderId)) { handled = true; return prev; }
           return prev;
         });
-        return;
+        // Batch React : setTimeout(0) permet à l'updater de s'exécuter avant la vérification
+        await new Promise<void>(resolve => setTimeout(resolve, 0));
+        if (handled) return;
+        // Aucun pending et aucun confirmé : message:sent n'a pas encore géré ce message
+        // → traiter normalement (déchiffrer et ajouter à la liste)
       }
 
       // Déchiffrer le message Signal si nécessaire
