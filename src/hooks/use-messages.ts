@@ -149,7 +149,7 @@ interface TypingUser {
 }
 
 export function useMessages(channelId?: string, recipientId?: string) {
-  const { user } = useAuth();
+  const { user, signalKeysReady } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   // Pas de spinner si le cache de prefetch a déjà des messages
@@ -206,6 +206,22 @@ export function useMessages(channelId?: string, recipientId?: string) {
     const has = messages.some(m => m.content === '🔒 Message chiffré (session non établie)');
     setHasEncryptedPlaceholders(has);
   }, [messages, isDM]);
+
+  // Quand les clés Signal deviennent disponibles (après login ou restauration sessionStorage)
+  // et que des messages ont été chargés avec du texte de fallback, recharger la liste.
+  const loadMessagesRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (!signalKeysReady || !isDM) return;
+    const hasFallback = messages.some(m =>
+      m.content === '🔒 Message chiffré (session non établie)' ||
+      m.content?.startsWith('[Message non disponible')
+    );
+    if (hasFallback && loadMessagesRef.current) {
+      console.log('[Signal] Clés disponibles — rechargement et re-déchiffrement des messages...');
+      loadMessagesRef.current();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signalKeysReady]);
 
   useEffect(() => {
     if (!channelId && !recipientId) return;
@@ -604,6 +620,8 @@ export function useMessages(channelId?: string, recipientId?: string) {
   }, [channelId, recipientId, user?.id]);
 
   const loadMessages = async () => {
+    // Mettre à jour la ref pour l'effet signalKeysReady
+    loadMessagesRef.current = loadMessages;
     setIsLoading(true);
     let servedFromCache = false;
     try {

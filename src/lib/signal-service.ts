@@ -668,8 +668,17 @@ class SignalService {
     this.selfKey = null;
     this.initialized = true;
 
-    // Stocker le blob en sessionStorage pour éviter un déchiffrement à chaque rechargement
+    // Stocker le blob chiffré pour éviter un déchiffrement à chaque rechargement
     sessionStorage.setItem('alfychat_signal_bundle', encryptedBlob);
+
+    // Stocker également le bundle DÉCHIFFRÉ en sessionStorage
+    // → permet à checkAuth de restaurer les clés sur refresh sans mot de passe
+    try {
+      const exported = await signalStore.exportPrivateBundle();
+      sessionStorage.setItem('alfychat_signal_private_bundle', JSON.stringify(exported));
+    } catch {
+      // Non bloquant : juste une optimisation de session
+    }
   }
 
   /**
@@ -692,6 +701,16 @@ class SignalService {
    */
   get prekeyBatchSize(): number {
     return ONE_TIME_PREKEY_COUNT;
+  }
+
+  /**
+   * Invalide le cache de clé AES en mémoire.
+   * À appeler après une restauration de bundle depuis sessionStorage
+   * afin que `ensureSelfKey` recharge la bonne clé depuis IndexedDB.
+   */
+  invalidateSelfKeyCache(): void {
+    this.selfKey = null;
+    this.initialized = true;
   }
 }
 

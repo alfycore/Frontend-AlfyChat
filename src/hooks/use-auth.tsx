@@ -32,6 +32,7 @@ interface AuthContextType {
   privateKey: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  signalKeysReady: boolean;
   login: (email: string, password: string, turnstileToken?: string) => Promise<{ success: boolean; error?: string; twoFactorRequired?: boolean; twoFactorToken?: string; emailNotVerified?: boolean }>;
   loginWith2FA: (twoFactorToken: string, code: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: { email: string; username: string; password: string; displayName?: string; inviteCode?: string; turnstileToken?: string }) => Promise<{ success: boolean; error?: string }>;
@@ -45,6 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [privateKey, setPrivateKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // true après que les clés Signal sont disponibles dans IndexedDB
+  // → déclenche le re-déchiffrement des messages dans use-messages
+  const [signalKeysReady, setSignalKeysReady] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -105,15 +109,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { signalStore } = await import('../lib/signal-store');
         const localIdentity = await signalStore.getIdentityKeyPair();
-        const localECDH     = await signalStore.getECDHKeyPair();
 
-        if (!localIdentity || !localECDH) {
-          // Clés locales absentes — E2EE dégradé mais la session reste active.
-          // L'utilisateur devra se re-connecter (login) pour restaurer ses clés.
-          console.warn('[Signal] Clés locales absentes — E2EE dégradé, re-login recommandé pour restaurer');
+        if (!localIdentity) {
+          // IndexedDB vide (refresh après nettoyage navigateur ?)
+          // Tenter de restaurer depuis sessionStorage (même tab = même session)
+          let restored = false;
+          try {
+            const sessionBundle = sessionStorage.getItem('alfychat_signal_private_bundle');
+            if (sessionBundle) {
+              const bundleData = JSON.parse(sessionBundle);
+              await signalStore.importPrivateBundle(bundleData);
+              signalService.invalidateSelfKeyCache();
+              console.log('[Signal] Clés restaurées depuis sessionStorage ✓');
+              restored = true;
+              setSignalKeysReady(prev => { void prev; return true; });
+            }
+          } catch (sErr) {
+            console.warn('[Signal] Échec restauration sessionStorage:', sErr);
+          }
+          if (!restored) {
+            console.warn('[Signal] Clés locales absentes — E2EE dégradé, re-login recommandé pour restaurer');
+          }
         } else {
           // Synchroniser l'état en mémoire (initialized flag)
           await signalService.isInitialized();
+          setSignalKeysReady(true);
 
           // Vérifier si le serveur a encore notre bundle public (ex : après restart DB)
           const keyStatus = await api.getSignalKeyStatus();
@@ -237,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Initialiser le bundle Signal E2EE (si pas encore fait pour cet appareil)
       try {
         await initSignalKeys(password);
+        setSignalKeysReady(true);
       } catch (err) {
         console.error('[Signal] Erreur initialisation clés:', err);
       }
@@ -301,6 +322,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         await initSignalKeys(password);
+        setSignalKeysReady(true);
       } catch (err) {
         console.error('[Signal] Erreur init clés après 2FA:', err);
       }
@@ -356,6 +378,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         await initSignalKeys(data.password);
+        setSignalKeysReady(true);
       } catch (err) {
         console.error('[Signal] Erreur init clés après inscription:', err);
       }
@@ -373,11 +396,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('alfychat_refresh_token');
     localStorage.removeItem('alfychat_session_id');
     sessionStorage.removeItem(E2EE_SESSION_KEY);
+    sessionStorage.removeItem('alfychat_signal_private_bundle');
+    sessionStorage.removeItem('alfychat_signal_bundle');
+    sessionStorage.removeItem('signal_synced_this_session');
     socketService.disconnect();
     // Effacer les clés Signal de cet appareil
     await signalService.reset().catch(() => {});
     setUser(null);
     setPrivateKey(null);
+    setSignalKeysReady(false);
   };
 
   /**
@@ -526,6 +553,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         privateKey,
         isLoading,
         isAuthenticated: !!user,
+        signalKeysReady,
         login,
         loginWith2FA,
         register,
