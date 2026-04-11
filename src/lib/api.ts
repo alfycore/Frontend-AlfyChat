@@ -208,6 +208,20 @@ class ApiService {
     });
   }
 
+  async requestPasswordReset(email: string) {
+    return this.request('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token: string, password: string) {
+    return this.request('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    });
+  }
+
   async updateProfile(data: { displayName?: string; bio?: string; avatarUrl?: string; bannerUrl?: string; cardColor?: string; showBadges?: boolean }) {
     return this.request('/api/users/me', {
       method: 'PATCH',

@@ -200,10 +200,14 @@ export function useMessages(channelId?: string, recipientId?: string) {
     enabled: isDM,
   });
 
-  // Détecter s'il y a des messages « session non établie » dans la liste
+  // Détecter s'il y a des messages qu'on n'a pas pu déchiffrer dans la liste
   useEffect(() => {
     if (!isDM) { setHasEncryptedPlaceholders(false); return; }
-    const has = messages.some(m => m.content === '🔒 Message chiffré (session non établie)');
+    const has = messages.some(m =>
+      m.content === '🔒 Message chiffré (session non établie)' ||
+      m.content?.startsWith('[Message non disponible') ||
+      m.content === '[Message chiffré — relecture non disponible]'
+    );
     setHasEncryptedPlaceholders(has);
   }, [messages, isDM]);
 
@@ -535,7 +539,11 @@ export function useMessages(channelId?: string, recipientId?: string) {
               currentUserId,
             );
             // Ne pas renvoyer les messages qu'on n'a pas pu déchiffrer
-            if (content === '🔒 Message chiffré (session non établie)') continue;
+            if (
+              content === '🔒 Message chiffré (session non établie)' ||
+              content?.startsWith('[Message non disponible') ||
+              content === '[Message chiffré — relecture non disponible]'
+            ) continue;
             // Rechiffrer avec la clé ECDH du demandeur
             const encrypted = await signalService.encryptECDH(content, requesterECDHKey);
             reEncrypted.push({ id: m.id, content: encrypted, senderId, createdAt: m.createdAt });
@@ -583,7 +591,11 @@ export function useMessages(channelId?: string, recipientId?: string) {
         if (decrypted.size > 0) {
           setMessages((prev) =>
             prev.map((msg) => {
-              if (msg.content === '🔒 Message chiffré (session non établie)' && decrypted.has(msg.id)) {
+              const isPlaceholder =
+                msg.content === '🔒 Message chiffré (session non établie)' ||
+                msg.content?.startsWith('[Message non disponible') ||
+                msg.content === '[Message chiffré — relecture non disponible]';
+              if (isPlaceholder && decrypted.has(msg.id)) {
                 return { ...msg, content: decrypted.get(msg.id)! };
               }
               return msg;
