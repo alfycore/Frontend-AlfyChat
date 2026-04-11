@@ -166,6 +166,9 @@ export function useMessages(channelId?: string, recipientId?: string) {
   const [hasEncryptedPlaceholders, setHasEncryptedPlaceholders] = useState(false);
   const [e2eeRecoveryStatus, setE2eeRecoveryStatus] = useState<'idle' | 'requesting' | 'done'>('idle');
 
+  // Cache des plaintexts récupérés via E2EE recovery → permet de déchiffrer les msgs lors du scroll
+  const e2eeRecoveredRef = useRef<Map<string, string>>(new Map());
+
   // Ref pour éviter les closures périmées dans les handlers WebSocket
   const userIdRef = useRef<string>('');
   useEffect(() => {
@@ -523,10 +526,21 @@ export function useMessages(channelId?: string, recipientId?: string) {
         }
         const requesterECDHKey: string = bundleRes.data.ecdhKey;
 
-        // 2. Charger tous les messages de la conversation via API
-        const response = await api.getMessages(undefined, recipientId);
-        if (!response.success || !response.data) return;
-        const rawMessages = response.data as any[];
+        // 2. Charger TOUS les messages de la conversation via API (pagination)
+        const rawMessages: any[] = [];
+        let before: string | undefined;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const response = await api.getMessages(undefined, recipientId, 100, before);
+          if (!response.success || !response.data) break;
+          const batch = response.data as any[];
+          if (batch.length === 0) break;
+          rawMessages.push(...batch);
+          if (batch.length < 100) break;
+          // Le prochain batch commence avant le plus ancien message de ce batch
+          before = batch[batch.length - 1]?.createdAt;
+        }
+        if (rawMessages.length === 0) return;
 
         // 3. Déchiffrer chaque message, puis rechiffrer avec la clé du demandeur
         const reEncrypted: Array<{ id: string; content: string; senderId: string; createdAt: string }> = [];
@@ -587,7 +601,12 @@ export function useMessages(channelId?: string, recipientId?: string) {
           }
         }
 
-        // Remplacer les placeholders dans la liste de messages
+        // Stocker dans le cache persistant pour les chargements futurs (scroll)
+        for (const [id, text] of decrypted) {
+          e2eeRecoveredRef.current.set(id, text);
+        }
+
+        // Remplacer les placeholders dans la liste de messages actuellement affichés
         if (decrypted.size > 0) {
           setMessages((prev) =>
             prev.map((msg) => {
@@ -660,6 +679,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
         Promise.all(
           msgs.map(async (m: any) => {
             if (!m.e2eeType) return { ...buildBase(m), content: m.content, e2ee: false };
+            // Vérifier le cache de recovery avant de déchiffrer
+            if (e2eeRecoveredRef.current.has(m.id)) {
+              return { ...buildBase(m), content: e2eeRecoveredRef.current.get(m.id)!, e2ee: true };
+            }
             const { content, e2ee } = await decryptMessage(
               {
                 content: m.content,
@@ -780,6 +803,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
               sender: m.sender,
             };
             if (!m.e2eeType) return { ...base, content: m.content, e2ee: false };
+            // Vérifier le cache de recovery avant de déchiffrer
+            if (e2eeRecoveredRef.current.has(m.id)) {
+              return { ...base, content: e2eeRecoveredRef.current.get(m.id)!, e2ee: true };
+            }
             const { content, e2ee } = await decryptMessage(
               {
                 content: m.content,
