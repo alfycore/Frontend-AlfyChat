@@ -513,77 +513,6 @@ export function useMessages(channelId?: string, recipientId?: string) {
     socketService.onReactionAdd(handleReactionAdd);
     socketService.onReactionRemove(handleReactionRemove);
 
-    // ── E2EE History Recovery ──────────────────────────────────────────────
-    // Auto-répondeur : quand l'autre utilisateur demande l'historique,
-    // on déchiffre nos messages et on les rechiffre avec SA clé ECDH publique.
-    const handleE2EEHistoryRequest = async (data: { requesterId: string; conversationId: string }) => {
-      const currentUserId = userIdRef.current;
-      if (!recipientId || !currentUserId) return;
-      // Vérifier que la demande concerne cette conversation
-      const expectedConvId = (() => {
-        const sorted = [currentUserId, recipientId].sort();
-        return `dm_${sorted[0]}_${sorted[1]}`;
-      })();
-      if (data.conversationId !== expectedConvId) return;
-
-      console.log('[E2EE Recovery] Demande reçue de', data.requesterId, 'pour', data.conversationId);
-
-      try {
-        // 1. Récupérer la clé ECDH publique du demandeur
-        const bundleRes = await api.getSignalKeyBundle(data.requesterId) as any;
-        if (!bundleRes?.success || !bundleRes?.data?.ecdhKey) {
-          console.error('[E2EE Recovery] Impossible de récupérer la clé ECDH du demandeur');
-          return;
-        }
-        const requesterECDHKey: string = bundleRes.data.ecdhKey;
-
-        // 2. Charger TOUS les messages de la conversation via API (pagination)
-        const rawMessages: any[] = [];
-        let before: string | undefined;
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const response = await api.getMessages(undefined, recipientId, 100, before);
-          if (!response.success || !response.data) break;
-          const batch = response.data as any[];
-          if (batch.length === 0) break;
-          rawMessages.push(...batch);
-          if (batch.length < 100) break;
-          // Le prochain batch commence avant le plus ancien message de ce batch
-          before = batch[batch.length - 1]?.createdAt;
-        }
-        if (rawMessages.length === 0) return;
-
-        // 3. Déchiffrer chaque message, puis rechiffrer avec la clé du demandeur
-        const reEncrypted: Array<{ id: string; content: string; senderId: string; createdAt: string }> = [];
-        for (const m of rawMessages) {
-          if (!m.e2eeType) continue;
-          try {
-            const senderId = m.senderId || m.authorId;
-            const { content } = await decryptMessage(
-              { content: m.content, senderContent: m.senderContent, e2eeType: m.e2eeType, senderId },
-              currentUserId,
-            );
-            // Ne pas renvoyer les messages qu'on n'a pas pu déchiffrer
-            if (
-              content === '🔒 Message chiffré (session non établie)' ||
-              content?.startsWith('[Message non disponible') ||
-              content === '[Message chiffré — relecture non disponible]'
-            ) continue;
-            // Rechiffrer avec la clé ECDH du demandeur
-            const encrypted = await signalService.encryptECDH(content, requesterECDHKey);
-            reEncrypted.push({ id: m.id, content: encrypted, senderId, createdAt: m.createdAt });
-          } catch {
-            // Ignorer les messages individuels qu'on ne peut pas traiter
-          }
-        }
-
-        console.log('[E2EE Recovery] Envoi de', reEncrypted.length, 'messages rechiffrés');
-        socketService.sendE2EEHistoryResponse(data.requesterId, data.conversationId, reEncrypted);
-      } catch (err) {
-        console.error('[E2EE Recovery] Erreur pendant le traitement de la demande:', err);
-      }
-    };
-
     // Récepteur : quand on reçoit l'historique rechiffré, déchiffrer et mettre à jour
     const handleE2EEHistoryResponse = async (data: {
       responderId: string;
@@ -645,7 +574,6 @@ export function useMessages(channelId?: string, recipientId?: string) {
       }
     };
 
-    socketService.on('e2ee:history-request', handleE2EEHistoryRequest);
     socketService.on('e2ee:history-response', handleE2EEHistoryResponse);
     // ───────────────────────────────────────────────────────────────────────
 
@@ -659,7 +587,6 @@ export function useMessages(channelId?: string, recipientId?: string) {
       socketService.off('typing:update', handleTyping);
       socketService.off('REACTION_ADD', handleReactionAdd);
       socketService.off('REACTION_REMOVE', handleReactionRemove);
-      socketService.off('e2ee:history-request', handleE2EEHistoryRequest);
       socketService.off('e2ee:history-response', handleE2EEHistoryResponse);
     };
     // Inclure user?.id pour recharger les messages si l'utilisateur change (ex: reload complet)

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { socketService } from '@/lib/socket';
 import { signalService } from '@/lib/signal-service';
+import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import {
   isDMActive,
@@ -348,6 +349,83 @@ export function useNotification() {
       window.removeEventListener('focus', handleFocus);
       document.title = originalTitle;
     };
+  }, []);
+
+  // ── E2EE History Recovery : répondeur global (actif même si la conv n'est pas ouverte) ──
+  useEffect(() => {
+    const handleE2EEHistoryRequest = async (data: { requesterId: string; conversationId: string }) => {
+      const currentUserId = userIdRef.current;
+      if (!currentUserId || !data.conversationId?.startsWith('dm_')) return;
+      // Vérifier que cette conversation concerne bien l'utilisateur courant
+      if (!data.conversationId.includes(currentUserId)) return;
+
+      console.log('[E2EE Recovery] Demande globale reçue de', data.requesterId, 'pour', data.conversationId);
+
+      try {
+        // 1. Récupérer la clé ECDH publique du demandeur
+        const bundleRes = await api.getSignalKeyBundle(data.requesterId) as any;
+        if (!bundleRes?.success || !bundleRes?.data?.ecdhKey) {
+          console.error('[E2EE Recovery] Impossible de récupérer la clé ECDH du demandeur');
+          return;
+        }
+        const requesterECDHKey: string = bundleRes.data.ecdhKey;
+
+        // 2. Extraire l'id de l'autre participant depuis le conversationId (dm_A_B)
+        const parts = data.conversationId.replace('dm_', '').split('_');
+        const otherUserId = parts.find((p) => p !== currentUserId);
+        if (!otherUserId) return;
+
+        // 3. Charger TOUS les messages via API (pagination par 100)
+        const rawMessages: any[] = [];
+        let before: string | undefined;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const response = await api.getMessages(undefined, otherUserId, 100, before) as any;
+          if (!response?.success || !response?.data) break;
+          const batch = response.data as any[];
+          if (batch.length === 0) break;
+          rawMessages.push(...batch);
+          if (batch.length < 100) break;
+          before = batch[batch.length - 1]?.createdAt;
+        }
+        if (rawMessages.length === 0) return;
+
+        // 4. Déchiffrer puis rechiffrer avec la clé du demandeur
+        const reEncrypted: Array<{ id: string; content: string; senderId: string; createdAt: string }> = [];
+        for (const m of rawMessages) {
+          if (!m.e2eeType) continue;
+          try {
+            const senderId = m.senderId || m.authorId;
+            const isSender = senderId === currentUserId;
+            let plaintext: string | null = null;
+            if (isSender && m.senderContent) {
+              try { plaintext = await signalService.decryptECDH(m.senderContent.startsWith('ecdh:') ? m.senderContent : `ecdh:${m.senderContent}`); } catch {}
+              if (!plaintext) {
+                try { plaintext = await (signalService as any).decryptForSelf?.(m.senderContent); } catch {}
+              }
+            } else {
+              try { plaintext = await signalService.decryptECDH(m.content); } catch {}
+            }
+            if (!plaintext ||
+              plaintext.startsWith('[Message non disponible') ||
+              plaintext === '[Message chiffré — relecture non disponible]' ||
+              plaintext === '🔒 Message chiffré (session non établie)'
+            ) continue;
+            const encrypted = await signalService.encryptECDH(plaintext, requesterECDHKey);
+            reEncrypted.push({ id: m.id, content: encrypted, senderId, createdAt: m.createdAt });
+          } catch { /* ignorer */ }
+        }
+
+        console.log('[E2EE Recovery] Envoi de', reEncrypted.length, 'messages rechiffrés');
+        socketService.sendE2EEHistoryResponse(data.requesterId, data.conversationId, reEncrypted);
+      } catch (err) {
+        console.error('[E2EE Recovery] Erreur traitement demande globale:', err);
+      }
+    };
+
+    socketService.on('e2ee:history-request', handleE2EEHistoryRequest);
+    return () => socketService.off('e2ee:history-request', handleE2EEHistoryRequest);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
 
