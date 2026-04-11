@@ -170,6 +170,8 @@ export function useMessages(channelId?: string, recipientId?: string) {
   // Persisté en sessionStorage (survit au refresh, effacé à la fermeture de l'onglet)
   const E2EE_CACHE_KEY = `e2ee_recovered_${recipientId ?? channelId ?? 'global'}`;
   const e2eeRecoveredRef = useRef<Map<string, string>>(new Map());
+  // Ref du convId en cours de recovery (pour matcher la réponse même si recipientId change)
+  const pendingRecoveryConvIdRef = useRef<string | null>(null);
   // Hydratation depuis sessionStorage au montage
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -519,18 +521,19 @@ export function useMessages(channelId?: string, recipientId?: string) {
       conversationId: string;
       messages: Array<{ id: string; content: string; senderId: string; createdAt: string }>;
     }) => {
+      console.log('[E2EE Recovery] Réponse reçue', {
+        conv: data.conversationId,
+        pending: pendingRecoveryConvIdRef.current,
+        count: data.messages.length,
+      });
+      // Comparer avec le convId stocké au moment de la demande
+      if (!pendingRecoveryConvIdRef.current || data.conversationId !== pendingRecoveryConvIdRef.current) {
+        console.warn('[E2EE Recovery] ConvId non correspondant, ignoré');
+        return;
+      }
       const currentUserId = userIdRef.current;
-      if (!recipientId || !currentUserId) return;
-      const expectedConvId = (() => {
-        const sorted = [currentUserId, recipientId].sort();
-        return `dm_${sorted[0]}_${sorted[1]}`;
-      })();
-      if (data.conversationId !== expectedConvId) return;
-
-      console.log('[E2EE Recovery] Réception de', data.messages.length, 'messages de', data.responderId);
 
       try {
-        // Déchiffrer chaque message (chiffré avec notre clé ECDH publique)
         const decrypted = new Map<string, string>();
         for (const m of data.messages) {
           try {
@@ -541,16 +544,16 @@ export function useMessages(channelId?: string, recipientId?: string) {
           }
         }
 
+        console.log('[E2EE Recovery] Déchiffré', decrypted.size, '/', data.messages.length, 'messages');
+
         // Stocker dans le cache persistant pour les chargements futurs (scroll)
         for (const [id, text] of decrypted) {
           e2eeRecoveredRef.current.set(id, text);
         }
-        // Persister en sessionStorage
         try {
           sessionStorage.setItem(E2EE_CACHE_KEY, JSON.stringify(Array.from(e2eeRecoveredRef.current.entries())));
         } catch { /* quota dépassé ou SSR */ }
 
-        // Remplacer les placeholders dans la liste de messages actuellement affichés
         if (decrypted.size > 0) {
           setMessages((prev) =>
             prev.map((msg) => {
@@ -565,12 +568,12 @@ export function useMessages(channelId?: string, recipientId?: string) {
             })
           );
         }
-
-        setE2eeRecoveryStatus('done');
-        console.log('[E2EE Recovery] Récupération terminée:', decrypted.size, 'messages déchiffrés');
       } catch (err) {
         console.error('[E2EE Recovery] Erreur pendant la réception:', err);
-        setE2eeRecoveryStatus('idle');
+      } finally {
+        // Toujours arrêter le spinner, même en cas d'erreur
+        pendingRecoveryConvIdRef.current = null;
+        setE2eeRecoveryStatus('done');
       }
     };
 
@@ -943,7 +946,9 @@ export function useMessages(channelId?: string, recipientId?: string) {
   /** Demander à l'autre participant de renvoyer l'historique E2EE rechiffré */
   const requestE2EEHistory = useCallback(() => {
     if (!recipientId || !user || !convId) return;
+    pendingRecoveryConvIdRef.current = convId;
     setE2eeRecoveryStatus('requesting');
+    console.log('[E2EE Recovery] Demande envoyée pour', convId);
     socketService.requestE2EEHistory(recipientId, convId);
     // Timeout : si aucune réponse dans 30s (autre utilisateur hors ligne), remettre idle
     const timer = setTimeout(() => {
