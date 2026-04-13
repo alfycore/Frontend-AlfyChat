@@ -907,7 +907,56 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               </Select>
                             </div>
                           </div>
-                          <div className="flex gap-3">
+                          <div className="space-y-2 lg:col-span-2">
+                            <Label>Centres d&apos;intérêt</Label>
+                            <p className="text-xs text-muted-foreground">Tags visibles sur votre profil</p>
+                            <div className="flex flex-wrap gap-2">
+                              {interests.map((interest) => (
+                                <Badge key={interest} variant="secondary" className="gap-1.5">
+                                  {interest}
+                                  <button
+                                    type="button"
+                                    className="ml-0.5 rounded-full hover:text-foreground"
+                                    onClick={() => {
+                                      const updated = interests.filter((i) => i !== interest);
+                                      setInterests(updated);
+                                    }}
+                                  >
+                                    <XIcon size={12} />
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Ajouter un intérêt..."
+                                value={newInterest}
+                                onChange={(e) => setNewInterest(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && newInterest.trim()) {
+                                    e.preventDefault();
+                                    setInterests((prev) => [...prev, newInterest.trim()]);
+                                    setNewInterest('');
+                                  }
+                                }}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                disabled={!newInterest.trim()}
+                                onClick={() => {
+                                  if (newInterest.trim()) {
+                                    setInterests((prev) => [...prev, newInterest.trim()]);
+                                    setNewInterest('');
+                                  }
+                                }}
+                              >
+                                Ajouter
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex gap-3 lg:col-span-2">
                             <Button type="submit" disabled={isSaving} className="gap-2">
                               <SaveIcon size={14} />
                               {isSaving ? t.common.saving : t.common.save}
@@ -920,65 +969,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                             </Button>
                           </div>
                         </form>
-                      </CardContent>
-                    </Card>
-
-                    {/* Interests */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Centres d&apos;intérêt</CardTitle>
-                        <CardDescription>Tags visibles sur votre profil</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex flex-wrap gap-2">
-                          {interests.map((interest) => (
-                            <Badge key={interest} variant="secondary" className="gap-1.5">
-                              {interest}
-                              <button
-                                type="button"
-                                className="ml-0.5 rounded-full hover:text-foreground"
-                                onClick={() => {
-                                  const updated = interests.filter((i) => i !== interest);
-                                  setInterests(updated);
-                                  api.updatePreferences(user.id, { interests: updated }).catch(() => {});
-                                }}
-                              >
-                                <XIcon size={12} />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Ajouter un intérêt..."
-                            value={newInterest}
-                            onChange={(e) => setNewInterest(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && newInterest.trim()) {
-                                e.preventDefault();
-                                const updated = [...interests, newInterest.trim()];
-                                setInterests(updated);
-                                api.updatePreferences(user.id, { interests: updated }).catch(() => {});
-                                setNewInterest('');
-                              }
-                            }}
-                            className="flex-1"
-                          />
-                          <Button
-                            variant="secondary"
-                            disabled={!newInterest.trim()}
-                            onClick={() => {
-                              if (newInterest.trim()) {
-                                const updated = [...interests, newInterest.trim()];
-                                setInterests(updated);
-                                api.updatePreferences(user.id, { interests: updated }).catch(() => {});
-                                setNewInterest('');
-                              }
-                            }}
-                          >
-                            Ajouter
-                          </Button>
-                        </div>
                       </CardContent>
                     </Card>
 
@@ -1125,6 +1115,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </CardContent>
                       </Card>
                     )}
+
+                    {/* Save appearance button */}
+                    <div className="flex gap-3">
+                      <Button type="button" disabled={isSaving} className="gap-2" onClick={handleSaveProfile}>
+                        <SaveIcon size={14} />
+                        {isSaving ? t.common.saving : t.common.save}
+                      </Button>
+                    </div>
                   </div>
                 )}
 

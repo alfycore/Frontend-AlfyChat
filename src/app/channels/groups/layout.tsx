@@ -169,7 +169,7 @@ function GroupsEmptyState() {
       </div>
       <div>
         <p className="text-[15px] font-semibold text-(--foreground)">Vos groupes</p>
-        <p className="mt-1 text-[13px] text-muted">Sélectionnez un groupe ou créez-en un nouveau.</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">Sélectionnez un groupe ou créez-en un nouveau.</p>
       </div>
     </div>
   );

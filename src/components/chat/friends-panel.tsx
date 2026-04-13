@@ -969,7 +969,7 @@ function FriendRow({
         </button>
       </UserProfilePopover>
 
-      <button type="button" className={cn('flex min-w-0 flex-1 items-center text-left', d.rowGap)} onClick={onMessage}>
+      <button type="button" className={cn('flex min-w-0 flex-1 items-center text-left', d.rowGap)}>
         <span className="min-w-0 flex-1">
           <p className={cn('truncate font-medium leading-tight', hasUnread ? 'text-foreground font-bold' : 'text-foreground', d.rowName)}>{friend.displayName}</p>
           {activeFields.map((f) => {

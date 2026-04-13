@@ -303,7 +303,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               onClick={() => onSelectServer(null)}
             >
               <MessageCircleIcon size={iconSize} />
-              {totalDmUnread > 0 && selectedServer !== null && (
+              {totalDmUnread > 0 && (
                 <span className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground ring-2 ring-background">
                   {totalDmUnread > 99 ? '99+' : totalDmUnread}
                 </span>

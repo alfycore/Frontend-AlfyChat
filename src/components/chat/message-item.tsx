@@ -355,7 +355,7 @@ export const MessageItem = memo(function MessageItem({
       </div>
 
       {/* ── Contenu ── */}
-      <div className={`rounded-xl ${d.msgPx} ${isGrouped ? 'py-0.5' : d.msgPy} transition-colors duration-100 hover:bg-[var(--surface-secondary)]/20`}>
+      <div className={`rounded-xl ${d.msgPx} ${isGrouped ? 'py-0.5' : `${d.msgPt} pb-0.5`} transition-colors duration-100 hover:bg-[var(--surface-secondary)]/20`}>
         <div className={`flex items-start ${d.msgGap}`}>
 
           {/* ── Avatar ou indicateur d'heure (groupé) ── */}
