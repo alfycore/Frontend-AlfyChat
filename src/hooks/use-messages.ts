@@ -104,11 +104,11 @@ async function ensureSignalSession(recipientId: string): Promise<boolean> {
     try {
       const res = await api.getSignalKeyBundle(recipientId) as any;
       if (!res?.success || !res?.data) {
-        console.error('[Signal] Bundle introuvable pour', recipientId);
+        console.warn('[Signal] Bundle introuvable pour', recipientId);
         return false;
       }
       if (!res.data.ecdhKey) {
-        console.error('[Signal] Le destinataire n\'a pas de clé ECDH P-256', recipientId);
+        console.warn('[Signal] Le destinataire n\'a pas de clé ECDH P-256', recipientId);
         return false;
       }
       signalService.setCachedBundle(recipientId, res.data);

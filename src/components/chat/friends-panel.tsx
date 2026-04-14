@@ -52,6 +52,7 @@ import { notify } from '@/hooks/use-notification';
 import { useNotificationStore } from '@/lib/notification-store';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { useTranslation } from '@/components/locale-provider';
+import { statusColor, statusLabel, isVisibleOnline } from '@/lib/status';
 
 /* --- Types ---------------------------------------------------------------- */
 
@@ -92,13 +93,6 @@ interface FriendsPanelProps {
   onOpenDM?: (recipientId: string, recipientName: string) => void;
 }
 
-const STATUS_DOT: Record<string, string> = {
-  online: 'bg-green-500',
-  idle: 'bg-orange-500',
-  dnd: 'bg-red-500',
-  invisible: 'bg-muted-foreground/40',
-  offline: 'bg-muted-foreground/40',
-};
 
 /* --- Main component ------------------------------------------------------- */
 
@@ -183,7 +177,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   ...f,
                   status: p.status as Friend['status'],
                   customStatus: p.customStatus ?? f.customStatus,
-                  isOnline: p.status !== 'offline' && p.status !== 'invisible',
+                  isOnline: isVisibleOnline(p.status),
                 }
               : f,
           ),
@@ -270,7 +264,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   ...f,
                   status: p.status as Friend['status'],
                   customStatus: p.customStatus ?? f.customStatus,
-                  isOnline: p.status !== 'offline' && p.status !== 'invisible',
+                  isOnline: isVisibleOnline(p.status),
                 };
               }),
             );
@@ -400,12 +394,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       f.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       f.username.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-  const onlineFriends = filteredFriends.filter(
-    (f) => f.status === 'online' || f.status === 'idle' || f.status === 'dnd',
-  );
-  const offlineFriends = filteredFriends.filter(
-    (f) => f.status !== 'online' && f.status !== 'idle' && f.status !== 'dnd',
-  );
+  const onlineFriends = filteredFriends.filter((f) => isVisibleOnline(f.status));
+  const offlineFriends = filteredFriends.filter((f) => !isVisibleOnline(f.status));
 
   /* -- Loading skeleton -- */
 
@@ -870,8 +860,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           ) : (
             <div className="space-y-0.5">
               {onlineFriends.map((friend) => {
-                const dot = STATUS_DOT[friend.status] ?? STATUS_DOT.offline;
-                const statusLabel = (t.status as Record<string, string>)[friend.status] ?? t.status.offline;
+                const dotCls = statusColor(friend.status);
+                const sLabel = statusLabel(friend.status);
                 return (
                   <UserProfilePopover
                     key={friend.id}
@@ -889,7 +879,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                             {friend.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className={cn('absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[1.5px] ring-background', dot)} />
+                        <span className={cn('absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[1.5px] ring-background', dotCls)} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-medium leading-tight">{friend.displayName}</p>
@@ -897,8 +887,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                           {displayFields[0] === 'username'
                             ? `@${friend.username}`
                             : displayFields[0] === 'status'
-                              ? statusLabel
-                              : friend.customStatus || statusLabel}
+                              ? sLabel
+                              : friend.customStatus || sLabel}
                         </p>
                       </div>
                     </button>
@@ -933,14 +923,14 @@ function FriendRow({
   const { t } = useTranslation();
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
-  const dot = STATUS_DOT[friend.status] ?? STATUS_DOT.offline;
-  const statusLabel = (t.status as Record<string, string>)[friend.status] ?? t.status.offline;
+  const dot = statusColor(friend.status);
+  const sLabel = statusLabel(friend.status);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const fieldValue: Record<DisplayField, string | null> = {
     customStatus: friend.customStatus || null,
     username: `@${friend.username}`,
-    status: statusLabel,
+    status: sLabel,
   };
   const activeFields = displayFields.length > 0 ? displayFields : (['customStatus'] as DisplayField[]);
   const hasUnread = (unreadCount ?? 0) > 0;

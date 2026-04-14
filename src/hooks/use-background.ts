@@ -167,7 +167,7 @@ export function useBackground(): BackgroundState {
   const saveToDb = useCallback((url: string | null) => {
     if (!isAuthenticated || !user?.id) return;
     // Save CSS gradients and media URLs to DB. Skip raw data-URLs (base64) — too large.
-    if (url && !url.startsWith('linear-gradient') && !url.startsWith('radial-gradient') && !url.startsWith('/api/media/') && !url.startsWith('http')) return;
+    if (url && !url.startsWith('linear-gradient') && !url.startsWith('radial-gradient') && !url.startsWith('/api/media/') && !url.startsWith('/uploads/') && !url.startsWith('http')) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       api.updatePreferences(user.id, { wallpaper: url }).catch(() => {});

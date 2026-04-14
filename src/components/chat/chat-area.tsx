@@ -220,6 +220,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [e2eeBannerDismissed, setE2eeBannerDismissed] = useState(false);
 
   const [mentionQuery, setMentionQuery] = useState('');
   const [mentionVisible, setMentionVisible] = useState(false);
@@ -439,6 +440,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   useEffect(() => {
     setSearchOpen(false);
     setPendingAttachments([]);
+    setE2eeBannerDismissed(false);
   }, [channelId, recipientId]);
 
   /* ── Block status (DM) ── */
@@ -897,7 +899,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         )}
 
       {/* ── E2EE History Recovery Banner ──────────────────────────────────── */}
-      {recipientId && hasEncryptedPlaceholders && e2eeRecoveryStatus !== 'done' && (
+      {recipientId && hasEncryptedPlaceholders && e2eeRecoveryStatus !== 'done' && !e2eeBannerDismissed && (
         <div className="mx-3 mb-1 mt-2 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 md:mx-4">
           <ShieldCheckIcon size={16} className="shrink-0 text-amber-500" />
           <span className="flex-1 text-xs text-amber-700 dark:text-amber-300">
@@ -917,6 +919,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             ) : (
               'Récupérer l\u2019historique'
             )}
+          </Button>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="size-6 shrink-0 text-amber-600/60 hover:bg-amber-500/20 hover:text-amber-600 dark:text-amber-400/60 dark:hover:text-amber-400"
+            onClick={() => setE2eeBannerDismissed(true)}
+          >
+            <XIcon size={12} />
           </Button>
         </div>
       )}

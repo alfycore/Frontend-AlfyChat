@@ -16,27 +16,20 @@ import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { statusColor, statusLabel, SELECTABLE_STATUSES, type UserStatus } from '@/lib/status';
 
 interface User {
   id: string;
   username: string;
   displayName: string;
   avatarUrl?: string;
-  status: 'online' | 'offline' | 'idle' | 'dnd' | 'invisible';
+  status: UserStatus;
   customStatus?: string | null;
 }
 
 interface UserPanelProps {
   user: User;
 }
-
-const statusConfig: Record<string, { color: string }> = {
-  online: { color: 'bg-green-500' },
-  idle: { color: 'bg-yellow-500' },
-  dnd: { color: 'bg-red-500' },
-  offline: { color: 'bg-[var(--muted)]/40' },
-  invisible: { color: 'bg-[var(--muted)]/40' },
-};
 
 export function UserPanel({ user }: UserPanelProps) {
   const { updateUser } = useAuth();
@@ -60,19 +53,17 @@ export function UserPanel({ user }: UserPanelProps) {
     if (editingCustomStatus) customStatusInputRef.current?.focus();
   }, [editingCustomStatus]);
 
-  const status = statusConfig[user.status] ?? statusConfig.offline;
+  const dotColor = statusColor(user.status);
 
-  const handleStatusChange = (s: 'online' | 'idle' | 'dnd' | 'invisible') => {
+  const handleStatusChange = (s: typeof SELECTABLE_STATUSES[number]) => {
     socketService.updatePresence(s, user.customStatus ?? null);
     updateUser({ status: s });
   };
 
   const saveCustomStatus = () => {
     const trimmed = customStatusDraft.trim().slice(0, 100);
-    socketService.updatePresence(
-      user.status === 'offline' ? 'online' : (user.status as 'online' | 'idle' | 'dnd' | 'invisible'),
-      trimmed || null,
-    );
+    const activeStatus = user.status === 'offline' ? 'online' : user.status as typeof SELECTABLE_STATUSES[number];
+    socketService.updatePresence(activeStatus, trimmed || null);
     updateUser({ customStatus: trimmed || null });
     setEditingCustomStatus(false);
   };
@@ -91,7 +82,7 @@ export function UserPanel({ user }: UserPanelProps) {
                   {user.displayName?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background ${status.color}`}>
+              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background ${dotColor}`}>
                 {user.status === 'dnd' && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="block h-[2px] w-[5px] rounded-full bg-white" />
@@ -102,7 +93,7 @@ export function UserPanel({ user }: UserPanelProps) {
             <div className="min-w-0 flex-1 text-left">
               <p className={`truncate ${d.panelName} font-semibold leading-tight text-foreground`}>{user.displayName}</p>
               <p className={`truncate ${d.panelSub} text-muted-foreground/60`}>
-                {user.customStatus ? user.customStatus : (t.status[user.status] ?? t.status.offline)}
+                {user.customStatus ? user.customStatus : statusLabel(user.status)}
               </p>
             </div>
           </div>
@@ -128,10 +119,8 @@ export function UserPanel({ user }: UserPanelProps) {
             {/* Effacer le statut personnalisé */}
             {user.customStatus && (
               <DropdownMenuItem onSelect={() => {
-                socketService.updatePresence(
-                  user.status === 'offline' ? 'online' : (user.status as 'online' | 'idle' | 'dnd' | 'invisible'),
-                  null,
-                );
+                const activeStatus = user.status === 'offline' ? 'online' : user.status as typeof SELECTABLE_STATUSES[number];
+                socketService.updatePresence(activeStatus, null);
                 updateUser({ customStatus: null });
                 setCustomStatusDraft('');
               }}>
@@ -140,13 +129,18 @@ export function UserPanel({ user }: UserPanelProps) {
             )}
 
             {/* Statuts disponibles */}
-            {(['online', 'idle', 'dnd', 'invisible'] as const).map((s) => {
-              const cfg = statusConfig[s];
+            {SELECTABLE_STATUSES.map((s) => {
               const isActive = user.status === s;
               return (
                 <DropdownMenuItem key={s} onSelect={() => handleStatusChange(s)}>
-                  <div className={`size-2.5 rounded-full ${cfg.color}`} />
-                  <span className="flex-1 text-[13px]">{t.status[s]}</span>
+                  <div className={`relative size-2.5 rounded-full ${statusColor(s)}`}>
+                    {s === 'dnd' && (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="block h-[2px] w-[5px] rounded-full bg-white" />
+                      </span>
+                    )}
+                  </div>
+                  <span className="flex-1 text-[13px]">{statusLabel(s)}</span>
                   {isActive && <CheckIcon size={14} className="text-primary" />}
                 </DropdownMenuItem>
               );

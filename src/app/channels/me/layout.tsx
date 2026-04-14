@@ -12,7 +12,7 @@ import { useNotification } from '@/hooks/use-notification';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { useBackground } from '@/hooks/use-background';
 import { setActiveDM, setActiveGroup } from '@/lib/notification-store';
-import { api } from '@/lib/api';
+import { api, resolveMediaUrl } from '@/lib/api';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { MemberList } from '@/components/chat/member-list';
@@ -248,7 +248,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       className={`flex h-dvh overflow-hidden ${ui.isGlass ? '' : 'bg-background'} ${ui.rootPadding} ${isTopBottom ? 'flex-col' : 'flex-row'}`}
       style={ui.isGlass ? {
         backgroundImage: wallpaper
-          ? (wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient') ? wallpaper : `url(${wallpaper})`)
+          ? (wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient') ? wallpaper : `url(${resolveMediaUrl(wallpaper) ?? wallpaper})`)
           : 'radial-gradient(ellipse 90% 70% at 15% 5%, oklch(0.80 0.14 290 / 55%) 0%, transparent 55%), radial-gradient(ellipse 70% 55% at 85% 85%, oklch(0.75 0.16 230 / 45%) 0%, transparent 55%), radial-gradient(ellipse 55% 45% at 55% 45%, oklch(0.82 0.11 320 / 30%) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 30% 75%, oklch(0.78 0.13 180 / 25%) 0%, transparent 50%)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',

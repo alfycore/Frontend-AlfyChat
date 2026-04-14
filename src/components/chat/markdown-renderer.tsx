@@ -275,6 +275,29 @@ function renderOrderedList(
 function formatInline(text: string, keyPrefix: string): React.ReactNode[] {
   let keyCounter = 0;
   const patterns: [RegExp, (match: RegExpMatchArray, key: string) => React.ReactNode][] = [
+    // Timestamps: @time:1713100000
+    [
+      /@time:(\d+)/g,
+      (m, k) => {
+        const ts = parseInt(m[1], 10);
+        const date = new Date(ts * 1000);
+        const local = date.toLocaleString(undefined, {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        });
+        const utc = date.toUTCString();
+        return (
+          <time
+            key={k}
+            dateTime={date.toISOString()}
+            title={utc}
+            className="cursor-help rounded bg-[var(--surface-secondary)]/40 px-1.5 py-0.5 font-medium text-[var(--foreground)] underline decoration-dotted"
+          >
+            {local}
+          </time>
+        );
+      },
+    ],
     // Mentions: @username
     [
       /@([a-z0-9_]{2,32})/gi,

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { cn } from '@/lib/utils';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { statusColor, isVisibleOnline, type UserStatus } from '@/lib/status';
 
 interface Role {
   id: string;
@@ -22,7 +23,7 @@ interface Member {
   username: string;
   displayName?: string | null;
   avatarUrl?: string;
-  status: 'online' | 'offline' | 'idle' | 'dnd' | 'invisible';
+  status: UserStatus;
   roles: string[];
 }
 
@@ -30,18 +31,10 @@ interface MemberListProps {
   serverId: string;
 }
 
-const STATUS_DOT: Record<string, string> = {
-  online:    'bg-green-500',
-  idle:      'bg-orange-500 !rounded-sm',
-  dnd:       'bg-red-500 !rounded-sm',
-  offline:   'bg-[var(--muted)]/30',
-  invisible: 'bg-[var(--muted)]/30',
-};
-
 function MemberRow({ member, serverId, roles }: { member: Member; serverId: string; roles: Role[] }) {
-  const isOnline = member.status !== 'offline' && member.status !== 'invisible';
+  const isOnline = isVisibleOnline(member.status);
   const name = member.displayName || member.username;
-  const dotClass = STATUS_DOT[member.status] ?? STATUS_DOT.offline;
+  const dotClass = statusColor(member.status);
 
   const memberRoles = roles
     .filter((r) => member.roles.includes(r.id) && !r.name.startsWith('@'))

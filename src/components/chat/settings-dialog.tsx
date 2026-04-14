@@ -2154,7 +2154,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               style={{
                                 backgroundImage: wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient')
                                   ? wallpaper
-                                  : `url(${wallpaper})`,
+                                  : `url(${resolveMediaUrl(wallpaper) ?? wallpaper})`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
                               }}

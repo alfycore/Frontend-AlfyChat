@@ -16,6 +16,7 @@ import {
 import { api, resolveMediaUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { socketService } from '@/lib/socket';
+import { statusLabel, statusTextColor, statusColor, isVisibleOnline } from '@/lib/status';
 import { sanitizeSvg } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -72,18 +73,6 @@ interface UserProfilePopoverProps {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const STATUS = {
-  online:    { label: 'En ligne',          badge: 'success' as const, text: 'text-green-500'  },
-  idle:      { label: 'Absent',            badge: 'warning' as const, text: 'text-yellow-500' },
-  dnd:       { label: 'Ne pas déranger',   badge: 'danger'  as const, text: 'text-red-500'    },
-  invisible: { label: 'Invisible',         badge: undefined,          text: 'text-gray-400'   },
-  offline:   { label: 'Hors ligne',        badge: undefined,          text: 'text-gray-400'   },
-} as const;
-
-function getStatus(s: string) {
-  return STATUS[s as keyof typeof STATUS] ?? STATUS.offline;
-}
 
 function formatMemberSince(createdAt: string): string {
   const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000);
@@ -268,16 +257,8 @@ export function UserProfilePopover({
 
   // ── Derived values ────────────────────────────────────────────────────────
   const cardColor    = localColor ?? profile?.cardColor ?? '#5865F2';
-  const statusInfo   = getStatus(profile?.status ?? 'offline');
   const visibleBadges = profile?.showBadges !== false ? (profile?.badges ?? []).filter((b: any) => !(profile?.hiddenBadgeIds ?? []).includes(b.id)).slice(0, 6) : [];
   const memberSince  = profile?.createdAt ? formatMemberSince(profile.createdAt) : null;
-
-  // ── Render ────────────────────────────────────────────────────────────────
-  const STATUS_DOT: Record<string, string> = {
-    success: 'bg-green-500',
-    warning: 'bg-orange-500',
-    danger: 'bg-red-500',
-  };
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -329,11 +310,11 @@ export function UserProfilePopover({
                       {(profile.displayName?.[0] ?? '?').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  {statusInfo.badge && (
+                  {isVisibleOnline(profile?.status) && (
                     <span
                       className={cn(
                         'absolute -bottom-px -right-px size-3 rounded-full ring-2 ring-card',
-                        STATUS_DOT[statusInfo.badge] ?? 'bg-muted-foreground/40',
+                        statusColor(profile?.status),
                       )}
                     />
                   )}
@@ -384,7 +365,7 @@ export function UserProfilePopover({
               <p className="mt-0.5 text-[11px] text-muted-foreground/60">
                 @{profile.username}
                 <span className="mx-1.5 text-border">·</span>
-                <span className={cn('font-medium', statusInfo.text)}>{statusInfo.label}</span>
+                <span className={cn('font-medium', statusTextColor(profile.status))}>{statusLabel(profile.status)}</span>
               </p>
             </div>
 

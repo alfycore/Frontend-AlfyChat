@@ -88,6 +88,7 @@ import { useVoice, type VoiceParticipant } from '@/hooks/use-voice';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { cn } from '@/lib/utils';
+import { statusColor, isVisibleOnline } from '@/lib/status';
 
 type ChannelType = 'text' | 'voice' | 'announcement' | 'category' | 'forum' | 'stage' | 'gallery' | 'poll' | 'suggestion' | 'doc' | 'counting' | 'vent' | 'thread' | 'media';
 
@@ -142,17 +143,9 @@ interface Conversation {
   participants?: string[];
 }
 
-const PRESENCE_DOT: Record<string, string> = {
-  online:    'bg-green-500',
-  idle:      'bg-orange-500',
-  dnd:       'bg-red-500',
-  offline:   'bg-muted-foreground/40',
-  invisible: 'bg-muted-foreground/40',
-};
-// idle and dnd show as squares, others as circles
-const presenceDotShape = (status?: string) =>
-  status === 'dnd' || status === 'idle' ? 'rounded-sm' : 'rounded-full';
-const presenceDot = (status?: string) => PRESENCE_DOT[status ?? 'offline'] ?? PRESENCE_DOT.offline;
+// Toujours rounded-full — forme cohérente avec les autres composants
+const presenceDotShape = (_status?: string) => 'rounded-full';
+const presenceDot = (status?: string) => statusColor(status);
 
 interface ChannelListProps {
   serverId: string | null;
