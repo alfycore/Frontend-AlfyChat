@@ -35,7 +35,8 @@ import {
 import { useAuth }      from '@/hooks/use-auth';
 import { api }          from '@/lib/api';
 import { sanitizeSvg }  from '@/lib/sanitize';
-import { ServicesPanel } from './services-panel';
+import { ServicesPanel }    from './services-panel';
+import { ChangelogsPanel }  from './changelogs-panel';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -792,92 +793,7 @@ export default function AdminPage() {
               )}
 
               {/* ── Changelogs ── */}
-              {tab === 'changelogs' && (
-                <div className="space-y-6">
-                  <h2 className="text-lg font-semibold">Changelogs</h2>
-
-                  <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><PlusIcon className="size-4 text-primary" /> Publier un changelog</CardTitle></CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-xs text-muted-foreground">Version</label>
-                          <Input placeholder="v1.2.0" value={changelogForm.version} onChange={e => setChangelogForm(p => ({ ...p, version: e.target.value }))} />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs text-muted-foreground">Type</label>
-                          <select className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm"
-                            value={changelogForm.type} onChange={e => setChangelogForm(p => ({ ...p, type: e.target.value as any }))}>
-                            <option value="feature">✨ Nouveauté</option>
-                            <option value="improvement">⚡ Amélioration</option>
-                            <option value="fix">🐛 Correctif</option>
-                            <option value="security">🔒 Sécurité</option>
-                            <option value="breaking">💥 Changement majeur</option>
-                          </select>
-                        </div>
-                      </div>
-                      <Input placeholder="Titre" value={changelogForm.title} onChange={e => setChangelogForm(p => ({ ...p, title: e.target.value }))} />
-                      <textarea
-                        className="w-full resize-none rounded-lg border border-input bg-background p-2.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                        rows={4} placeholder="Contenu (Markdown supporté)"
-                        value={changelogForm.content} onChange={e => setChangelogForm(p => ({ ...p, content: e.target.value }))}
-                      />
-                      <Input placeholder="URL bannière (optionnel)" value={changelogForm.bannerUrl} onChange={e => setChangelogForm(p => ({ ...p, bannerUrl: e.target.value }))} />
-                      <div className="flex justify-end">
-                        <Button disabled={!changelogForm.version || !changelogForm.title || !changelogForm.content || changelogSubmitting}
-                          onClick={async () => {
-                            setChangelogSubmitting(true);
-                            try {
-                              await api.createChangelog(changelogForm);
-                              setChangelogForm({ version: '', title: '', content: '', type: 'feature', bannerUrl: '' });
-                              const r = await api.getChangelogs();
-                              if (r.success && r.data) setChangelogs(r.data as any[]);
-                            } finally { setChangelogSubmitting(false); }
-                          }}>
-                          <PlusIcon className="size-4" /> Publier
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {changelogs.length === 0 ? (
-                    <Card><CardContent className="py-12 text-center text-muted-foreground">Aucun changelog publié.</CardContent></Card>
-                  ) : (
-                    <div className="space-y-3">
-                      {changelogs.map((cl) => {
-                        const typeMap: Record<string, { label: string; cls: string }> = {
-                          feature: { label: '✨ Nouveauté', cls: 'bg-blue-500/15 text-blue-400' },
-                          improvement: { label: '⚡ Amélioration', cls: 'bg-purple-500/15 text-purple-400' },
-                          fix: { label: '🐛 Correctif', cls: 'bg-orange-500/15 text-orange-400' },
-                          security: { label: '🔒 Sécurité', cls: 'bg-red-500/15 text-red-400' },
-                          breaking: { label: '💥 Majeur', cls: 'bg-red-700/15 text-red-500' },
-                        };
-                        const t = typeMap[cl.type] || typeMap.feature;
-                        return (
-                          <Card key={cl.id}>
-                            <CardContent className="flex items-start justify-between gap-4 py-4">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                  <code className="text-xs font-bold text-primary">{cl.version}</code>
-                                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${t.cls}`}>{t.label}</span>
-                                  <span className="text-xs text-muted-foreground">{new Date(cl.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-                                  {cl.author_username && <span className="text-xs text-muted-foreground">· @{cl.author_username}</span>}
-                                </div>
-                                <p className="font-semibold">{cl.title}</p>
-                                <p className="mt-1 line-clamp-3 text-sm text-muted-foreground whitespace-pre-line">{cl.content}</p>
-                              </div>
-                              <Button variant="ghost" size="icon-sm"
-                                onClick={() => confirm('Supprimer ce changelog ?') && api.deleteChangelog(cl.id).then(() => setChangelogs(p => p.filter(c => c.id !== cl.id)))}>
-                                <Trash2Icon className="size-4 text-destructive" />
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+              {tab === 'changelogs' && <ChangelogsPanel />}
 
               {/* ── Monitoring ── */}
               {tab === 'monitoring' && (

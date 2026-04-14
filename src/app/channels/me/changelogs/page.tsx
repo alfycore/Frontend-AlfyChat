@@ -1,18 +1,20 @@
 ﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { SparklesIcon, ZapIcon, ShieldIcon, FlameIcon, MenuIcon, ArrowLeftIcon } from '@/components/icons';
+import { SparklesIcon, ZapIcon, ShieldIcon, FlameIcon, MenuIcon, ArrowLeftIcon, SearchIcon, XIcon } from '@/components/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { useUIStyle } from '@/hooks/use-ui-style';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
-// redesigned — DM message row style
 
 interface Changelog {
   id: string;
@@ -25,13 +27,24 @@ interface Changelog {
   created_at: string;
 }
 
-const TYPE: Record<string, { label: string; iconBg: string; iconColor: string; nameColor: string; icon: React.ElementType }> = {
-  feature:     { label: 'Nouveaut\u00e9',        iconBg: 'bg-blue-500/15',   iconColor: 'text-blue-400',   nameColor: 'text-blue-400',   icon: SparklesIcon },
-  improvement: { label: 'Am\u00e9lioration',     iconBg: 'bg-violet-500/15', iconColor: 'text-violet-400', nameColor: 'text-violet-400', icon: ZapIcon },
-  fix:         { label: 'Correctif',              iconBg: 'bg-orange-500/15', iconColor: 'text-orange-400', nameColor: 'text-orange-400', icon: FlameIcon },
-  security:    { label: 'S\u00e9curit\u00e9',    iconBg: 'bg-red-500/15',    iconColor: 'text-red-400',    nameColor: 'text-red-400',    icon: ShieldIcon },
-  breaking:    { label: 'Changement majeur',      iconBg: 'bg-red-700/15',    iconColor: 'text-red-400',    nameColor: 'text-red-400',    icon: FlameIcon },
+type FilterType = 'all' | Changelog['type'];
+
+const TYPE_CONFIG: Record<string, { label: string; iconBg: string; iconColor: string; icon: React.ElementType }> = {
+  feature:     { label: 'Nouveauté',        iconBg: 'bg-blue-500/10',   iconColor: 'text-blue-500',   icon: SparklesIcon },
+  improvement: { label: 'Amélioration',     iconBg: 'bg-violet-500/10', iconColor: 'text-violet-500', icon: ZapIcon },
+  fix:         { label: 'Correctif',         iconBg: 'bg-orange-500/10', iconColor: 'text-orange-500', icon: FlameIcon },
+  security:    { label: 'Sécurité',          iconBg: 'bg-red-500/10',    iconColor: 'text-red-500',    icon: ShieldIcon },
+  breaking:    { label: 'Changement majeur', iconBg: 'bg-red-700/10',    iconColor: 'text-red-600',    icon: FlameIcon },
 };
+
+const FILTERS: { value: FilterType; label: string }[] = [
+  { value: 'all',         label: 'Tout' },
+  { value: 'feature',     label: 'Nouveauté' },
+  { value: 'improvement', label: 'Amélioration' },
+  { value: 'fix',         label: 'Correctif' },
+  { value: 'security',    label: 'Sécurité' },
+  { value: 'breaking',    label: 'Majeur' },
+];
 
 export default function ChangelogsPage() {
   const router = useRouter();
@@ -39,184 +52,237 @@ export default function ChangelogsPage() {
 
   const [changelogs, setChangelogs] = useState<Changelog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<FilterType>('all');
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     api
       .getChangelogs(100, 0)
-      .then((res) => setChangelogs((res.data ?? []) as Changelog[]))
+      .then((res) => {
+        const raw = res.data;
+        const list: Changelog[] = Array.isArray(raw)
+          ? (raw as Changelog[])
+          : Array.isArray((raw as any)?.changelogs)
+          ? ((raw as any).changelogs as Changelog[])
+          : Array.isArray((raw as any)?.data)
+          ? ((raw as any).data as Changelog[])
+          : [];
+        setChangelogs(list);
+      })
       .catch(() => setChangelogs([]))
       .finally(() => setLoading(false));
   }, []);
 
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return changelogs.filter((cl) => {
+      const matchType = typeFilter === 'all' || cl.type === typeFilter;
+      const matchSearch = !q || cl.title.toLowerCase().includes(q) || cl.version.toLowerCase().includes(q);
+      return matchType && matchSearch;
+    });
+  }, [changelogs, search, typeFilter]);
+
   return (
     <div className="flex h-dvh flex-col bg-background">
 
-      {/* Header ─ identique discover-server */}
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-background px-3">
+      {/* Header */}
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-3">
         {isMobile && (
-          <Button
-            variant="ghost" size="icon"
-            className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-            onClick={openSidebar}
-          >
+          <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground" onClick={openSidebar}>
             <MenuIcon size={16} />
           </Button>
         )}
-        <Button
-          variant="ghost" size="icon"
-          className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={() => router.back()}
-        >
+        <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground" onClick={() => router.back()}>
           <ArrowLeftIcon size={15} />
         </Button>
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <SparklesIcon size={14} className="shrink-0 text-muted-foreground" />
-          <span className="truncate text-[13px] font-semibold">Changelogs</span>
+          <span className="truncate text-sm font-semibold">Changelogs</span>
         </div>
         {!loading && changelogs.length > 0 && (
-          <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            {changelogs.length} mises à jour
-          </span>
+          <Badge variant="secondary" className="shrink-0 text-[11px]">
+            {changelogs.length}
+          </Badge>
         )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0 text-muted-foreground"
+          onClick={() => { setShowSearch((v) => !v); if (showSearch) setSearch(''); }}
+        >
+          {showSearch ? <XIcon size={14} /> : <SearchIcon size={14} />}
+        </Button>
       </header>
 
-      {/* ── Loading ── */}
+      {/* Search bar */}
+      {showSearch && (
+        <div className="shrink-0 border-b border-border bg-background px-3 py-2">
+          <div className="relative">
+            <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              autoFocus
+              placeholder="Rechercher…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 pl-8 text-sm"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Filter tabs */}
+      {!loading && changelogs.length > 0 && (
+        <div className="shrink-0 border-b border-border bg-background">
+          <div className="flex gap-1 overflow-x-auto px-3 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {FILTERS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setTypeFilter(f.value)}
+                className={cn(
+                  'shrink-0 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                  typeFilter === f.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Loading */}
       {loading ? (
-        <div className="space-y-px px-2 py-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex gap-3 rounded-xl px-3 py-2.5">
-              <Skeleton className="mt-0.5 size-8 shrink-0 rounded-xl" />
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-3 w-14" />
-                  <Skeleton className="h-3 w-10" />
-                  <Skeleton className="ml-auto h-3 w-16" />
+        <div className="space-y-3 p-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-9 shrink-0 rounded-md" />
+                  <div className="flex flex-1 flex-wrap items-center gap-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-14 rounded-full" />
+                    <Skeleton className="ml-auto h-4 w-24" />
+                  </div>
                 </div>
-                <Skeleton className="h-3.5 w-2/3" />
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-4/5" />
-              </div>
-            </div>
+                <Skeleton className="mt-1 h-4 w-3/5" />
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0">
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-5/6" />
+                <Skeleton className="h-3.5 w-4/6" />
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-      ) : changelogs.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center p-6">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-            <SparklesIcon size={20} className="text-muted-foreground/40" />
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+          <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+            <SparklesIcon size={22} className="text-muted-foreground/50" />
           </div>
-          <p className="mt-3 text-[13px] font-semibold">Aucun changelog</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground/60">
-            Revenez bientôt pour les mises à jour.
-          </p>
+          <div>
+            <p className="text-sm font-semibold">
+              {search || typeFilter !== 'all' ? 'Aucun résultat' : 'Aucun changelog'}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {search || typeFilter !== 'all'
+                ? "Essayez avec d'autres filtres."
+                : 'Revenez bientôt pour les mises à jour.'}
+            </p>
+          </div>
+          {(search || typeFilter !== 'all') && (
+            <Button variant="outline" size="sm" onClick={() => { setSearch(''); setTypeFilter('all'); }}>
+              Effacer les filtres
+            </Button>
+          )}
         </div>
 
       ) : (
         <ScrollArea className="min-h-0 flex-1">
-          <div className="px-2 py-2">
-            {changelogs.map((log, idx) => {
-              const cfg = TYPE[log.type] ?? {
+          <div className="space-y-3 p-4">
+            {filtered.map((log, idx) => {
+              const cfg = TYPE_CONFIG[log.type] ?? {
                 label: log.type,
                 iconBg: 'bg-muted',
                 iconColor: 'text-muted-foreground',
-                nameColor: 'text-muted-foreground',
                 icon: SparklesIcon,
               };
               const Icon = cfg.icon;
 
               return (
-                <div
-                  key={log.id}
-                  className="group relative rounded-xl px-3 py-2.5 transition-colors duration-100 hover:bg-(--surface-secondary)/20"
-                >
-                  <div className="flex items-start gap-3">
-
-                    {/* Icône type ─ remplace l'avatar DM */}
-                    <div className={cn(
-                      'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl',
-                      cfg.iconBg, cfg.iconColor,
-                    )}>
-                      <Icon size={14} />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-
-                      {/* Ligne 1 : type · version · badge latest · date  (= nom + horodatage DM) */}
-                      <div className="mb-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                        <span className={cn('text-[13px] font-semibold', cfg.nameColor)}>
-                          {cfg.label}
-                        </span>
-                        <span className="font-mono text-[11px] tabular-nums text-muted-foreground/60">
-                          v{log.version}
-                        </span>
-                        {idx === 0 && (
-                          <span className="rounded-md bg-(--accent)/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
-                            Dernière version
-                          </span>
-                        )}
-                        <span className="ml-auto shrink-0 text-[11px] tabular-nums text-muted-foreground/50">
-                          {new Date(log.created_at).toLocaleDateString('fr-FR', {
-                            year: 'numeric', month: 'short', day: 'numeric',
-                          })}
-                        </span>
+                <Card key={log.id} className="overflow-hidden transition-shadow duration-150 hover:shadow-md">
+                  <CardHeader>
+                    <div className="flex items-start gap-3">
+                      <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', cfg.iconBg, cfg.iconColor)}>
+                        <Icon size={16} />
                       </div>
-
-                      {/* Titre  (= corps de message DM) */}
-                      <p className="mb-1.5 text-[13px] font-bold leading-snug text-foreground">
-                        {log.title}
-                      </p>
-
-                      {/* Bannière optionnelle */}
-                      {log.banner_url && (
-                        <div className="mb-2 overflow-hidden rounded-xl">
-                          <img
-                            src={log.banner_url}
-                            alt=""
-                            className="max-h-28 w-full object-cover"
-                          />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge variant="secondary" className={cn('text-xs', cfg.iconColor)}>
+                            {cfg.label}
+                          </Badge>
+                          <Badge variant="outline" className="font-mono text-xs text-muted-foreground">
+                            v{log.version}
+                          </Badge>
+                          {idx === 0 && typeFilter === 'all' && !search && (
+                            <Badge>Dernière version</Badge>
+                          )}
+                          <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {new Date(log.created_at).toLocaleDateString('fr-FR', {
+                              year: 'numeric', month: 'short', day: 'numeric',
+                            })}
+                          </span>
                         </div>
-                      )}
-
-                      {/* Contenu markdown ─ même typo que le corps des messages */}
-                      <div className={cn(
-                        'prose prose-sm max-w-none text-muted-foreground/80',
-                        '[&_a]:text-accent [&_a]:underline [&_a]:underline-offset-2',
-                        '[&_blockquote]:border-l-2 [&_blockquote]:border-(--accent)/30 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground/70',
-                        '[&_code]:rounded-md [&_code]:bg-surface-secondary [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[11px] [&_code]:text-foreground',
-                        '[&_h1]:text-[13px] [&_h1]:font-bold [&_h1]:text-foreground',
-                        '[&_h2]:text-[13px] [&_h2]:font-bold [&_h2]:text-foreground',
-                        '[&_h3]:text-[12px] [&_h3]:font-bold [&_h3]:text-foreground',
-                        '[&_hr]:border-(--border)/30',
-                        '[&_li]:text-[13px] [&_li]:leading-relaxed',
-                        '[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-0.5',
-                        '[&_p]:text-[13px] [&_p]:leading-relaxed',
-                        '[&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-(--border)/30 [&_pre]:bg-surface-secondary [&_pre]:p-3',
-                        '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
-                        '[&_strong]:font-semibold [&_strong]:text-foreground',
-                        '[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-0.5',
-                      )}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {log.content}
-                        </ReactMarkdown>
-                      </div>
-
-                      {/* Auteur */}
-                      {log.author_username && (
-                        <p className="mt-1.5 text-[11px] text-muted-foreground/50">
-                          par{' '}
-                          <span className="text-muted-foreground/70">
-                            @{log.author_username}
-                          </span>
+                        <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground">
+                          {log.title}
                         </p>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  </CardHeader>
 
-                  {/* Séparateur léger entre entrées ─ comme dans la liste DM */}
-                  {idx < changelogs.length - 1 && (
-                    <div className="absolute bottom-0 left-14 right-3 h-px bg-(--border)/15" />
-                  )}
-                </div>
+                  <CardContent className="pt-0">
+                    {log.banner_url && (
+                      <div className="mb-3 overflow-hidden rounded-md">
+                        <img src={log.banner_url} alt="" className="max-h-36 w-full object-cover" />
+                      </div>
+                    )}
+
+                    <div className={cn(
+                      'prose prose-sm max-w-none text-muted-foreground',
+                      '[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2',
+                      '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:italic',
+                      '[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-foreground',
+                      '[&_h1]:text-sm [&_h1]:font-bold [&_h1]:text-foreground',
+                      '[&_h2]:text-sm [&_h2]:font-bold [&_h2]:text-foreground',
+                      '[&_h3]:text-xs [&_h3]:font-bold [&_h3]:text-foreground',
+                      '[&_hr]:border-border',
+                      '[&_li]:text-xs [&_li]:leading-relaxed',
+                      '[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1',
+                      '[&_p]:text-xs [&_p]:leading-relaxed',
+                      '[&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:border-border [&_pre]:bg-muted [&_pre]:p-3',
+                      '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
+                      '[&_strong]:font-semibold [&_strong]:text-foreground',
+                      '[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1',
+                    )}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {log.content}
+                      </ReactMarkdown>
+                    </div>
+
+                    {log.author_username && (
+                      <>
+                        <Separator className="my-3" />
+                        <p className="text-xs text-muted-foreground">
+                          par{' '}
+                          <span className="font-medium text-foreground">@{log.author_username}</span>
+                        </p>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
@@ -225,3 +291,4 @@ export default function ChangelogsPage() {
     </div>
   );
 }
+

@@ -1070,6 +1070,19 @@ class ApiService {
     });
   }
 
+  async updateChangelog(changelogId: string, data: {
+    version?: string;
+    title?: string;
+    content?: string;
+    type?: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking';
+    bannerUrl?: string;
+  }) {
+    return this.request(`/api/admin/changelogs/${changelogId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   async deleteChangelog(changelogId: string) {
     return this.request(`/api/admin/changelogs/${changelogId}`, {
       method: 'DELETE',
