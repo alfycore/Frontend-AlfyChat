@@ -123,6 +123,33 @@ function parsePayload(data: unknown): Record<string, unknown> {
   return (d?.payload || data) as Record<string, unknown>;
 }
 
+async function unlockAudioPlayback(): Promise<void> {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+
+    // Prime a tiny silent buffer to satisfy autoplay policies after a user gesture.
+    const source = ctx.createBufferSource();
+    source.buffer = ctx.createBuffer(1, 1, 22050);
+    source.connect(ctx.destination);
+    source.start(0);
+    source.stop(0);
+
+    queueMicrotask(() => {
+      ctx.close().catch(() => {});
+    });
+  } catch {
+    // Best-effort only
+  }
+}
+
 // ==========================================
 // HOOK
 // ==========================================
@@ -460,6 +487,16 @@ export function useCall(options: UseCallOptions = {}) {
       if (newPeerId === userId) return;
       console.log('[CALL] New participant joined, creating PC for:', newPeerId);
 
+      // Prefer the callId from the event payload — the ref may not yet be
+      // synced if React hasn't re-rendered after the initiateCall callback.
+      const eventCallId = (p.callId as string | undefined) || callIdRef.current;
+      if (!eventCallId) {
+        console.error('[CALL] handleParticipantJoined: no callId available, offer aborted');
+        return;
+      }
+      // Keep the ref in sync for downstream use (ICE, renegotiation…).
+      if (!callIdRef.current) callIdRef.current = eventCallId;
+
       setState((prev) => ({
         ...prev,
         status: 'connecting',
@@ -473,9 +510,7 @@ export function useCall(options: UseCallOptions = {}) {
         makingOfferMapRef.current.set(newPeerId, true);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        if (callIdRef.current) {
-          socketService.sendWebRTCOffer(callIdRef.current, offer, newPeerId);
-        }
+        socketService.sendWebRTCOffer(eventCallId, offer, newPeerId);
       } catch (err) {
         console.error('[CALL] Error creating offer for new participant:', err);
       } finally {
@@ -535,15 +570,32 @@ export function useCall(options: UseCallOptions = {}) {
         }));
       }
 
+      // Perfect negotiation: polite peer (lexicographically lower userId) always rolls back on collision.
+      // Impolite peer ignores incoming offers when already making one — remote will re-offer.
+      const polite = !!userId && userId < fromUserId;
+      const offerCollision =
+        makingOfferMapRef.current.get(fromUserId) || pc.signalingState !== 'stable';
+
+      if (offerCollision && !polite) {
+        console.warn(`[CALL] Impolite — ignoring offer collision from ${fromUserId} (state: ${pc.signalingState})`);
+        return;
+      }
+
       settingRemoteMapRef.current.set(fromUserId, true);
       try {
-        if (pc.signalingState === 'have-local-offer') {
-          console.warn('[CALL] Glare — rolling back local offer');
+        if (pc.signalingState !== 'stable') {
+          // Polite peer: rollback our local offer before accepting the remote one
+          console.warn(`[CALL] Polite rollback for ${fromUserId} (state: ${pc.signalingState})`);
           await pc.setLocalDescription({ type: 'rollback' });
         }
         await pc.setRemoteDescription(new RTCSessionDescription(p.offer as RTCSessionDescriptionInit));
         remoteDescSetMapRef.current.set(fromUserId, true);
         await flushIceCandidates(fromUserId);
+        // Safety guard — state must be have-remote-offer or have-local-pranswer
+        if (pc.signalingState !== 'have-remote-offer' && pc.signalingState !== 'have-local-pranswer') {
+          console.warn(`[CALL] Cannot createAnswer in state: ${pc.signalingState} — skipping`);
+          return;
+        }
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         if (callIdRef.current) {
@@ -686,6 +738,9 @@ export function useCall(options: UseCallOptions = {}) {
     async (recipientId: string, type: 'voice' | 'video', conversationId?: string, recipientName?: string) => {
       console.log('[CALL] Initiating:', recipientId, type, recipientName);
 
+      // Must run in direct click context to unlock media playback reliably.
+      await unlockAudioPlayback();
+
       // Build conversationId for DM
       let convId = conversationId;
       if (!convId && recipientId && userId) {
@@ -720,10 +775,12 @@ export function useCall(options: UseCallOptions = {}) {
         (response: Record<string, unknown>) => {
           console.log('[CALL] Initiate response:', response);
           if (response?.callId || response?.id) {
-            setState((prev) => ({
-              ...prev,
-              callId: (response.callId || response.id) as string,
-            }));
+            // Sync the ref immediately — BEFORE the next React render so that
+            // handleParticipantJoined (which may fire synchronously after the
+            // server round-trip) can read the callId from the ref right away.
+            const cid = (response.callId || response.id) as string;
+            callIdRef.current = cid;
+            setState((prev) => ({ ...prev, callId: cid }));
           } else if (response?.error) {
             console.error('[CALL] Initiate error:', response.error);
             setState((prev) => ({
@@ -743,6 +800,9 @@ export function useCall(options: UseCallOptions = {}) {
       console.warn('[CALL] Cannot accept: no callId or type');
       return;
     }
+
+    // Must run in direct click context to unlock media playback reliably.
+    await unlockAudioPlayback();
 
     // Set connecting state immediately so UI updates
     setState((prev) => ({
@@ -941,6 +1001,9 @@ export function useCall(options: UseCallOptions = {}) {
   const initiateGroupCall = useCallback(
     async (conversationId: string, type: 'voice' | 'video', groupName?: string) => {
       console.log('[CALL] Initiating group call:', conversationId, type);
+
+      // Must run in direct click context to unlock media playback reliably.
+      await unlockAudioPlayback();
 
       setState((prev) => ({
         ...prev,

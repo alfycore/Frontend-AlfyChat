@@ -20,6 +20,7 @@ import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
 import { GroupChatArea } from '@/components/chat/group-chat-area';
 import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
 import { useSwipeDrawer } from '@/hooks/use-swipe-drawer';
+import { getAudioPreferences } from '@/hooks/use-call';
 
 /**
  * Layout partagé pour /channels/me et /channels/me/[recipientId].
@@ -95,42 +96,10 @@ function LayoutInner({ children }: { children: ReactNode }) {
     callStatus,
     callerName,
     callerAvatar,
-    callConversationId,
-    callRecipientId,
     remoteStreams,
     acceptCall,
     declineCall,
   } = useCallContext();
-
-  // Audio persistant : joue l'audio remote UNIQUEMENT quand le CallPanel n'est pas visible
-  // (quand l'utilisateur est dans une autre conversation et que le CallBar s'affiche à la place)
-  // Si le CallPanel est visible, c'est lui qui gère l'audio via son <video> hidden → évite le double-play
-  const persistentAudioRef = useRef<HTMLAudioElement>(null);
-
-  const isInCallConversation = !!(recipientId && (
-    recipientId === callRecipientId ||
-    callConversationId === `dm_${[recipientId, user?.id || ''].sort().join('_')}`
-  ));
-
-  useEffect(() => {
-    const el = persistentAudioRef.current;
-    if (!el) return;
-
-    // Jouer seulement si l'utilisateur est sur une autre page (CallPanel absent)
-    if (!isInCallConversation && remoteStreams.size > 0) {
-      const firstStream = remoteStreams.values().next().value as MediaStream | undefined;
-      if (firstStream) {
-        el.srcObject = firstStream;
-        el.volume = 1.0;
-        el.play().catch((err) => {
-          console.warn('[AUDIO] Autoplay bloqué:', err.message);
-        });
-      }
-    } else {
-      // CallPanel visible → il gère l'audio lui-même, on coupe ici
-      el.srcObject = null;
-    }
-  }, [remoteStreams, isInCallConversation]);
 
   const [incomingCall, setIncomingCall] = useState<{
     callerName: string;
@@ -265,8 +234,6 @@ function LayoutInner({ children }: { children: ReactNode }) {
         backgroundPosition: 'center',
       } : undefined}
     >
-      {/* Audio persistant */}
-      <audio ref={persistentAudioRef} autoPlay playsInline className="sr-only" />
       <IncomingCallDialog
         open={!!incomingCall}
         callerName={incomingCall?.callerName || ''}

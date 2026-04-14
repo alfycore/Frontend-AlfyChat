@@ -30,9 +30,22 @@ export function IncomingCallDialog({
   useEffect(() => {
     if (!open) return;
 
+    const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
+    if (ua && !ua.hasBeenActive) {
+      // Without prior user interaction, browser policies block WebAudio.
+      return;
+    }
+
     try {
-      const ctx = new AudioContext();
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const ctx = new AudioCtx();
       ctxRef.current = ctx;
+
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
 
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();

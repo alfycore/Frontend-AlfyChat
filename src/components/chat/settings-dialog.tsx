@@ -21,6 +21,21 @@ import { api, resolveMediaUrl } from '@/lib/api';
 import { deriveKey, decryptPrivateKey, encryptPrivateKey, generateSalt } from '@/lib/e2ee';
 import { signalService } from '@/lib/signal-service';
 import { toast } from 'sonner';
+import { containsProfanity, sanitizeText } from '@/lib/moderation';
+
+const MAX_INTERESTS = 10;
+const MAX_INTEREST_LENGTH = 24;
+
+function addInterestSafely(current: string[], raw: string): { next: string[]; error?: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) return { next: current, error: 'empty' };
+  if (current.length >= MAX_INTERESTS) return { next: current, error: `Maximum ${MAX_INTERESTS} centres d'intérêt` };
+  if (trimmed.length > MAX_INTEREST_LENGTH) return { next: current, error: `Trop long (max ${MAX_INTEREST_LENGTH} caractères)` };
+  if (containsProfanity(trimmed)) return { next: current, error: 'Contenu inapproprié détecté' };
+  const clean = sanitizeText(trimmed);
+  if (current.some((i) => i.toLowerCase() === clean.toLowerCase())) return { next: current, error: 'Déjà ajouté' };
+  return { next: [...current, clean] };
+}
 import {
   getAudioPreferences,
   setAudioPreferences,
@@ -328,7 +343,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         if (prefs.privacyAllowDm !== undefined) setDmMode(prefs.privacyAllowDm ? 'everyone' : 'friends');
         if (prefs.birthday) setBirthday(prefs.birthday);
         if (prefs.timezone) setTimezone(prefs.timezone);
-        if (Array.isArray(prefs.interests)) setInterests(prefs.interests);
+        if (Array.isArray(prefs.interests)) setInterests(prefs.interests.slice(0, MAX_INTERESTS).map(sanitizeText));
         if (prefs.micMode) setMicMode(prefs.micMode);
         if (prefs.fontFamily) {
           setFontFamily(prefs.fontFamily);
@@ -439,7 +454,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       socketService.updateProfile(data);
       updateUser(data);
       if (user) {
-        api.updatePreferences(user.id, { birthday: birthday || undefined, timezone: timezone || undefined, interests }).catch(() => {});
+        const safeInterests = interests.slice(0, MAX_INTERESTS).map(sanitizeText).filter((i) => !containsProfanity(i));
+        api.updatePreferences(user.id, { birthday: birthday || undefined, timezone: timezone || undefined, interests: safeInterests }).catch(() => {});
       }
       setAvatarFile(null); setBannerFile(null); setDeleteAvatarFlag(false); setDeleteBannerFlag(false);
       toast.success(t.settings.profileSavedToast);
@@ -910,6 +926,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           <div className="space-y-2 lg:col-span-2">
                             <Label>Centres d&apos;intérêt</Label>
                             <p className="text-xs text-muted-foreground">Tags visibles sur votre profil</p>
+                            <p className="text-xs text-muted-foreground">{interests.length}/{MAX_INTERESTS}</p>
                             <div className="flex flex-wrap gap-2">
                               {interests.map((interest) => (
                                 <Badge key={interest} variant="secondary" className="gap-1.5">
@@ -931,25 +948,29 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               <Input
                                 placeholder="Ajouter un intérêt..."
                                 value={newInterest}
+                                maxLength={MAX_INTEREST_LENGTH}
                                 onChange={(e) => setNewInterest(e.target.value)}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' && newInterest.trim()) {
                                     e.preventDefault();
-                                    setInterests((prev) => [...prev, newInterest.trim()]);
-                                    setNewInterest('');
+                                    const { next, error } = addInterestSafely(interests, newInterest);
+                                    if (error && error !== 'empty') toast.error(error);
+                                    setInterests(next);
+                                    if (!error) setNewInterest('');
                                   }
                                 }}
+                                disabled={interests.length >= MAX_INTERESTS}
                                 className="flex-1"
                               />
                               <Button
                                 type="button"
                                 variant="secondary"
-                                disabled={!newInterest.trim()}
+                                disabled={!newInterest.trim() || interests.length >= MAX_INTERESTS}
                                 onClick={() => {
-                                  if (newInterest.trim()) {
-                                    setInterests((prev) => [...prev, newInterest.trim()]);
-                                    setNewInterest('');
-                                  }
+                                  const { next, error } = addInterestSafely(interests, newInterest);
+                                  if (error && error !== 'empty') toast.error(error);
+                                  setInterests(next);
+                                  if (!error) setNewInterest('');
                                 }}
                               >
                                 Ajouter

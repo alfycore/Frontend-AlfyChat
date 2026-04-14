@@ -16,6 +16,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useAudioLevel } from '@/hooks/use-audio-level';
+import { getAudioPreferences } from '@/hooks/use-call';
 
 interface CallOverlayProps {
   type: 'voice' | 'video';
@@ -61,22 +62,63 @@ function SpeakingBars({ active }: { active: boolean }) {
 }
 
 function Tile({
-  label, avatarSrc, stream, micMuted, muteVideo, isLocal, isConnected, isScreenShare,
+  label, avatarSrc, stream, micMuted, muteVideo, muteAudio, isLocal, isConnected, isScreenShare,
 }: {
   label: string; avatarSrc?: string; stream: MediaStream | null;
-  micMuted?: boolean; muteVideo?: boolean; isLocal?: boolean;
+  micMuted?: boolean; muteVideo?: boolean; muteAudio?: boolean; isLocal?: boolean;
   isConnected?: boolean; isScreenShare?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const speaking = useAudioLevel(micMuted ? null : stream);
 
+  const [isPlayBlocked, setIsPlayBlocked] = useState(false);
+
   // Toujours re-attacher après chaque render — évite le bug srcObject perdu
-  // quand hasVideo change (replaceTrack/addTrack sans changement de référence stream)
+  // quand hasVideo change (replaceTrack/addTrack sans changement de référence stream).
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     if (el.srcObject !== stream) el.srcObject = stream ?? null;
-  });
+    
+    const applyOutputSettings = async () => {
+      const prefs = getAudioPreferences();
+      const clampedVolume = Math.max(0, Math.min(1, (prefs.outputVolume ?? 100) / 100));
+      el.volume = clampedVolume;
+
+      const sinkId = prefs.outputDeviceId;
+      const audioWithSink = el as HTMLVideoElement & { setSinkId?: (id: string) => Promise<void> };
+      if (sinkId && sinkId !== 'default' && typeof audioWithSink.setSinkId === 'function') {
+        try {
+          await audioWithSink.setSinkId(sinkId);
+        } catch (err: any) {
+          console.warn('[AUDIO] setSinkId impossible:', err?.name ?? 'Error', err?.message ?? String(err));
+        }
+      }
+    };
+    void applyOutputSettings();
+
+    const tryPlay = () => {
+      if (stream && el.paused) {
+        el.play()
+          .then(() => setIsPlayBlocked(false))
+          .catch((err) => {
+            if (err.name !== 'AbortError') {
+              setIsPlayBlocked(true);
+              console.warn('[AUDIO] play() bloqué sur la tuile:', err);
+            }
+          });
+      }
+    };
+
+    tryPlay();
+    
+    window.addEventListener('pointerdown', tryPlay);
+    window.addEventListener('keydown', tryPlay);
+    return () => {
+      window.removeEventListener('pointerdown', tryPlay);
+      window.removeEventListener('keydown', tryPlay);
+    };
+  }, [stream]);
 
   const hasVideo = !!(
     stream &&
@@ -97,7 +139,7 @@ function Tile({
         ref={videoRef}
         autoPlay
         playsInline
-        muted={!!isLocal}
+        muted={!!isLocal || !!muteAudio}
         className={cn(
           'absolute inset-0 size-full object-cover transition-opacity duration-200',
           !hasVideo && 'opacity-0 pointer-events-none',
@@ -141,6 +183,22 @@ function Tile({
         <div className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-red-500/90">
           <MicOffIcon size={13} className="text-white" />
         </div>
+      )}
+
+      {/* Forcer le bouton Play si bloqué par Autoplay */}
+      {isPlayBlocked && !isLocal && (
+        <button
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+          onClick={(e) => {
+            e.stopPropagation();
+            videoRef.current?.play().then(() => setIsPlayBlocked(false)).catch(console.error);
+          }}
+        >
+          <div className="flex size-14 items-center justify-center rounded-full bg-white/20">
+            <MicIcon size={24} className="text-white" />
+          </div>
+          <span className="text-xs font-bold uppercase tracking-wider">Activer le son</span>
+        </button>
       )}
     </div>
   );

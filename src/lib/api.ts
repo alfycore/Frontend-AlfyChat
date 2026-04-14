@@ -126,7 +126,25 @@ class ApiService {
         headers,
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      let data: unknown;
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        // Service indisponible ou gateway retourne du HTML
+        if (!response.ok) {
+          return {
+            success: false,
+            error: `Service indisponible (HTTP ${response.status})`,
+          };
+        }
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { message: text };
+        }
+      }
 
       // Si 401 et pas déjà en refresh → tenter le refresh et réessayer
       if (response.status === 401 && !_skipRefresh && !endpoint.includes('/api/auth/')) {
@@ -1262,6 +1280,36 @@ class ApiService {
   async downloadPrivateBundle(): Promise<{ encryptedBundle: string | null } | null> {
     const res = await this.request<{ encryptedBundle: string | null }>('/api/users/keys/private-bundle');
     return res.success ? (res.data as { encryptedBundle: string | null }) : null;
+  }
+
+  // ============ MÉTHODES GÉNÉRIQUES ============
+  async get<T = unknown>(endpoint: string) {
+    return this.request<T>(endpoint, { method: 'GET' });
+  }
+
+  async post<T = unknown>(endpoint: string, body?: unknown) {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  async put<T = unknown>(endpoint: string, body?: unknown) {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  async patch<T = unknown>(endpoint: string, body?: unknown) {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  async delete<T = unknown>(endpoint: string) {
+    return this.request<T>(endpoint, { method: 'DELETE' });
   }
 }
 

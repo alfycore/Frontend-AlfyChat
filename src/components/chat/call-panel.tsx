@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   MicIcon,
   MicOffIcon,
@@ -17,6 +17,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useAudioLevel } from '@/hooks/use-audio-level';
+import { getAudioPreferences } from '@/hooks/use-call';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -83,6 +84,8 @@ interface TileProps {
   micMuted?: boolean;
   /** Video track is disabled — show avatar instead */
   muteVideo?: boolean;
+  /** Mute the audio output of this element (audio handled externally) */
+  muteAudio?: boolean;
   /** Local tile — mute the <video> element to avoid echo */
   isLocal?: boolean;
   isConnected?: boolean;
@@ -90,13 +93,15 @@ interface TileProps {
 }
 
 function ParticipantTile({
-  label, avatarSrc, stream, micMuted, muteVideo, isLocal,
+  label, avatarSrc, stream, micMuted, muteVideo, muteAudio, isLocal,
   isConnected, isScreenShare,
 }: TileProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Real-time audio level detection (never routes audio to speakers)
   const speaking = useAudioLevel(micMuted ? null : stream);
+
+  const [isPlayBlocked, setIsPlayBlocked] = useState(false);
 
   // Toujours attacher le stream — runs after every render pour gérer les
   // changements de track (replaceTrack / addTrack) sans re-monter le DOM.
@@ -106,7 +111,47 @@ function ParticipantTile({
     if (el.srcObject !== stream) {
       el.srcObject = stream ?? null;
     }
-  });
+
+    const applyOutputSettings = async () => {
+      const prefs = getAudioPreferences();
+      const clampedVolume = Math.max(0, Math.min(1, (prefs.outputVolume ?? 100) / 100));
+      el.volume = clampedVolume;
+
+      const sinkId = prefs.outputDeviceId;
+      const audioWithSink = el as HTMLVideoElement & { setSinkId?: (id: string) => Promise<void> };
+      if (sinkId && sinkId !== 'default' && typeof audioWithSink.setSinkId === 'function') {
+        try {
+          await audioWithSink.setSinkId(sinkId);
+        } catch (err: any) {
+          console.warn('[AUDIO] setSinkId impossible:', err?.name ?? 'Error', err?.message ?? String(err));
+        }
+      }
+    };
+    void applyOutputSettings();
+
+    const tryPlay = () => {
+      if (stream && el.paused) {
+        el.play()
+          .then(() => setIsPlayBlocked(false))
+          .catch((err) => {
+            if (err.name !== 'AbortError') {
+              setIsPlayBlocked(true);
+              console.warn('[AUDIO] play() bloqué sur la tuile:', err);
+            }
+          });
+      }
+    };
+
+    tryPlay();
+    
+    // Retry on user gestures
+    window.addEventListener('pointerdown', tryPlay);
+    window.addEventListener('keydown', tryPlay);
+    return () => {
+      window.removeEventListener('pointerdown', tryPlay);
+      window.removeEventListener('keydown', tryPlay);
+    };
+  }, [stream]);
 
   const hasVideo = !!(
     stream &&
@@ -133,7 +178,7 @@ function ParticipantTile({
         ref={videoRef}
         autoPlay
         playsInline
-        muted={!!isLocal}
+        muted={!!isLocal || !!muteAudio}
         className={cn(
           'absolute inset-0 size-full transition-opacity duration-200',
           // Screen share → object-contain pour voir tout l'écran sans crop
@@ -190,11 +235,27 @@ function ParticipantTile({
         </div>
       )}
 
-      {/* Connected badge (voice only, remote) */}
-      {isConnected && !hasVideo && !isLocal && !micMuted && (
+      {/* Connecté badge (voice only, remote) */}
+      {isConnected && !hasVideo && !isLocal && !micMuted && !isPlayBlocked && (
         <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-zinc-700/90 shadow-md">
           <WifiIcon size={11} className="text-white/60" />
         </div>
+      )}
+
+      {/* Bouton pour forcer le son si le navigateur le bloque */}
+      {isPlayBlocked && !isLocal && (
+        <button
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+          onClick={(e) => {
+            e.stopPropagation();
+            videoRef.current?.play().then(() => setIsPlayBlocked(false)).catch(console.error);
+          }}
+        >
+          <div className="flex size-12 items-center justify-center rounded-full bg-white/20">
+            <MicIcon size={24} className="text-white" />
+          </div>
+          <span className="text-xs font-bold uppercase tracking-wider">Cliquez pour activer le son</span>
+        </button>
       )}
     </div>
   );
