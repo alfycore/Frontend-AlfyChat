@@ -159,7 +159,7 @@ class ApiService {
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || 'Une erreur est survenue',
+          error: (data as any)?.error || 'Une erreur est survenue',
           data: data as T,
         };
       }
