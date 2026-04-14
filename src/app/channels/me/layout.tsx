@@ -19,6 +19,7 @@ import { MemberList } from '@/components/chat/member-list';
 import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
 import { GroupChatArea } from '@/components/chat/group-chat-area';
 import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
+import { useSwipeDrawer } from '@/hooks/use-swipe-drawer';
 
 /**
  * Layout partagé pour /channels/me et /channels/me/[recipientId].
@@ -42,7 +43,17 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { isMobile, showSidebar, showMemberList, showSettings, closeSettings, closeAll } = useMobileNav();
+  const { isMobile, showSidebar, showMemberList, showSettings, closeSettings, closeAll, openSidebar, closeSidebar } = useMobileNav();
+
+  // Discord-style swipe drawer (mobile only)
+  const SIDEBAR_WIDTH = 308; // ServerList (~72px) + ChannelList (240px) — approximate
+  const { sidebarRef, backdropRef } = useSwipeDrawer({
+    open: showSidebar,
+    onOpen: openSidebar,
+    onClose: closeSidebar,
+    width: SIDEBAR_WIDTH,
+    enabled: isMobile,
+  });
 
   const { prefs: layoutPrefs } = useLayoutPrefs();
   useLayoutPrefsSync();
@@ -234,7 +245,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
   // ── Content area (shared between top/bottom and left/right layouts) ──
   const mainContent = (
-    <div data-layout="content" className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.isGlass ? 'rounded-2xl' : ''} ${recipientId ? '' : 'pb-16'} md:pb-0`}>
+    <div data-layout="content" className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.isGlass ? 'rounded-2xl' : ''} pb-16 md:pb-0`}>
       {selectedChannel?.startsWith('group:') ? (
         <GroupChatArea groupId={selectedChannel.replace('group:', '')} onLeave={() => router.push('/channels/me')} />
       ) : children}
@@ -265,9 +276,19 @@ function LayoutInner({ children }: { children: ReactNode }) {
         onDecline={declineCall}
       />
 
-      {/* ── MOBILE overlay backdrop ── */}
-      {isMobile && (showSidebar || showMemberList) && (
+      {/* ── MOBILE: member list backdrop ── */}
+      {isMobile && showMemberList && (
         <div className="fixed inset-0 z-40 bg-black/60" onClick={closeAll} />
+      )}
+
+      {/* ── MOBILE: swipe-drawer backdrop (opacity controlled by gesture) ── */}
+      {isMobile && (
+        <div
+          ref={backdropRef}
+          onClick={closeSidebar}
+          className="fixed inset-0 z-40 bg-black will-change-[opacity]"
+          style={{ opacity: 0, pointerEvents: 'none' }}
+        />
       )}
 
       {/* ── DESKTOP: Server list TOP ── */}
@@ -337,18 +358,22 @@ function LayoutInner({ children }: { children: ReactNode }) {
       {/* ── MOBILE: render content directly (full width, no rounded) ── */}
       {isMobile && mainContent}
 
-      {/* ── MOBILE: Sidebar overlay ── */}
+      {/* ── MOBILE: swipe-driven sidebar (ServerList + ChannelList) ── */}
       {isMobile && (
-        <div className={`fixed inset-y-2 left-2 z-50 flex overflow-hidden rounded-2xl shadow-2xl transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-[110%]'}`}>
+        <aside
+          ref={sidebarRef}
+          className="fixed inset-y-0 left-0 z-50 flex h-dvh shadow-2xl will-change-transform"
+          style={{ width: SIDEBAR_WIDTH, transform: `translateX(-${SIDEBAR_WIDTH}px)` }}
+        >
           <ServerList selectedServer={selectedServer} onSelectServer={handleSelectServer} />
           <div className="h-full w-60 shrink-0">
             <ChannelList serverId={selectedServer} selectedChannel={selectedChannel} onSelectChannel={handleSelectChannel} />
           </div>
-        </div>
+        </aside>
       )}
 
-      {/* ── MOBILE BOTTOM NAV ── */}
-      {!recipientId && <MobileBottomNav />}
+      {/* ── MOBILE BOTTOM NAV (always visible on mobile) ── */}
+      {isMobile && <MobileBottomNav />}
     </div>
   );
 }

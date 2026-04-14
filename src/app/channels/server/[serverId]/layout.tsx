@@ -33,6 +33,8 @@ import { MemberList } from '@/components/chat/member-list';
 import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
 import { ServerSettingsDialog } from '@/components/chat/server-settings-dialog';
 import { VoiceControlBar } from '@/components/chat/voice-control-bar';
+import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
+import { useSwipeDrawer } from '@/hooks/use-swipe-drawer';
 
 function LayoutInner({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -41,7 +43,17 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { isMobile, showSidebar, showMemberList, closeAll, memberListDesktopVisible } = useMobileNav();
+  const { isMobile, showSidebar, showMemberList, closeAll, memberListDesktopVisible, openSidebar, closeSidebar } = useMobileNav();
+
+  // Discord-style swipe drawer (mobile only)
+  const SIDEBAR_WIDTH = 308;
+  const { sidebarRef, backdropRef } = useSwipeDrawer({
+    open: showSidebar,
+    onOpen: openSidebar,
+    onClose: closeSidebar,
+    width: SIDEBAR_WIDTH,
+    enabled: isMobile,
+  });
 
   const { prefs: layoutPrefs } = useLayoutPrefs();
   useLayoutPrefsSync();
@@ -257,9 +269,19 @@ function LayoutInner({ children }: { children: ReactNode }) {
         onDecline={declineCall}
       />
 
-      {/* Mobile overlay */}
-      {isMobile && (showSidebar || showMemberList) && (
+      {/* Mobile member list backdrop */}
+      {isMobile && showMemberList && (
         <div className="fixed inset-0 z-40 bg-black/60" onClick={closeAll} />
+      )}
+
+      {/* Mobile swipe-drawer backdrop */}
+      {isMobile && (
+        <div
+          ref={backdropRef}
+          onClick={closeSidebar}
+          className="fixed inset-0 z-40 bg-black will-change-[opacity]"
+          style={{ opacity: 0, pointerEvents: 'none' }}
+        />
       )}
 
       {/* ── DESKTOP: Server list TOP ── */}
@@ -342,14 +364,18 @@ function LayoutInner({ children }: { children: ReactNode }) {
       )}
 
       {/* ── MOBILE: content ── */}
-      {isMobile && <div data-layout="content" className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</div>}
+      {isMobile && <div data-layout="content" className="flex min-w-0 flex-1 flex-col overflow-hidden pb-16">{children}</div>}
 
-      {/* ── MOBILE: Sidebar overlay ── */}
+      {/* ── MOBILE: swipe-driven sidebar (ServerList + ChannelList) ── */}
       {isMobile && (
-        <div className={`fixed inset-y-2 left-2 z-50 flex overflow-hidden rounded-2xl shadow-2xl transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-[110%]'}`}>
+        <aside
+          ref={sidebarRef}
+          className="fixed inset-y-0 left-0 z-50 flex h-dvh shadow-2xl will-change-transform"
+          style={{ width: SIDEBAR_WIDTH, transform: `translateX(-${SIDEBAR_WIDTH}px)` }}
+        >
           <ServerList selectedServer={serverId} onSelectServer={handleSelectServer} />
           <div className="flex h-full w-60 shrink-0 flex-col">{sidebarContent}</div>
-        </div>
+        </aside>
       )}
 
       {/* ── MOBILE: Member list overlay ── */}
@@ -358,6 +384,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
           <MemberList serverId={serverId} />
         </div>
       )}
+
+      {/* ── MOBILE BOTTOM NAV (always visible on mobile) ── */}
+      {isMobile && <MobileBottomNav />}
 
       {/* Server settings dialog */}
       {serverSettingsOpen && (
