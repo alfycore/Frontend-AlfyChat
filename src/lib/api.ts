@@ -164,7 +164,7 @@ class ApiService {
         };
       }
 
-      return { success: true, data };
+      return { success: true, data: data as T };
     } catch (error) {
       return {
         success: false,
