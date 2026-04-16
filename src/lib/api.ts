@@ -578,6 +578,10 @@ class ApiService {
     });
   }
 
+  async joinServerById(serverId: string) {
+    return this.request(`/api/servers/${serverId}/join`, { method: 'POST' });
+  }
+
   async leaveServer(serverId: string) {
     return this.request(`/api/servers/${serverId}/leave`, { method: 'POST' });
   }

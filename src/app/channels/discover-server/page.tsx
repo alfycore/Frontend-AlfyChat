@@ -80,11 +80,18 @@ export default function DiscoverServerPage() {
   const handleJoin = async (serverId: string) => {
     setJoiningId(serverId);
     try {
+      // 1. Enregistrer le membre via HTTP (authentifié avec le JWT)
+      const res = await api.joinServerById(serverId);
+      if (!res.success) {
+        console.error('Erreur join serveur:', (res as any).error);
+        setJoiningId(null);
+        return;
+      }
+      // 2. Rejoindre les rooms socket du serveur
       const { socketService } = await import('@/lib/socket');
       socketService.joinServer(serverId);
-      setTimeout(() => {
-        router.push(`/channels/server/${serverId}`);
-      }, 500);
+      // 3. Naviguer vers le serveur
+      router.push(`/channels/server/${serverId}`);
     } catch (e) {
       console.error('Erreur join:', e);
     }
