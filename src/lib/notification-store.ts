@@ -250,6 +250,25 @@ export function getAllUnread(): ReadonlyMap<string, number> {
   return state.unread;
 }
 
+/**
+ * Purger les clés inconnues du store (supprime les notifications fantômes en localStorage).
+ * À appeler après loadConversations / loadChannels avec les clés valides connues.
+ * Les clés de type "server:xxx" sont toujours conservées (gérées séparément).
+ */
+export function pruneUnread(knownKeys: string[]) {
+  const known = new Set(knownKeys);
+  let changed = false;
+  state.unread.forEach((_, key) => {
+    // Conserver les clés server:xxx et channel:xxx (gérées par le layout serveur)
+    if (key.startsWith('server:') || key.startsWith('channel:')) return;
+    if (!known.has(key)) {
+      state.unread.delete(key);
+      changed = true;
+    }
+  });
+  if (changed) notify();
+}
+
 // ── Last seen timestamps ──────────────────────────────────────────────────────
 
 const lastSeenMap = loadLastSeenFromStorage();

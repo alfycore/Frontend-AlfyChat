@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
+import { getAudioPreferences } from '@/hooks/use-call';
 
 // ── Types ──
 
@@ -213,12 +214,17 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
 
     try {
       // Get microphone access
+      const audioPrefs = getAudioPreferences();
+      const audioConstraints: MediaTrackConstraints = {
+        echoCancellation: audioPrefs.echoCancellation,
+        noiseSuppression: audioPrefs.noiseSuppression,
+        autoGainControl: audioPrefs.autoGainControl,
+      };
+      if (audioPrefs.inputDeviceId && audioPrefs.inputDeviceId !== 'default') {
+        audioConstraints.deviceId = { exact: audioPrefs.inputDeviceId };
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+        audio: audioConstraints,
         video: false,
       });
       localStreamRef.current = stream;

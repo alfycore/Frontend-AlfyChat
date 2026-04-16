@@ -275,7 +275,7 @@ export function SearchPanel({
                   key={msg.id}
                   type="button"
                   className={cn(
-                    'flex w-full gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors',
+                    'flex w-full gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors',
                     'hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none',
                   )}
                   onClick={() => onJumpToMessage(msg.id)}

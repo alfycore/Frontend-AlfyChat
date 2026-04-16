@@ -41,7 +41,9 @@ import {
   useNotificationStore,
   clearUnread,
   clearChannelUnread,
+  pruneUnread,
 } from '@/lib/notification-store';
+import { conversationsStore } from '@/lib/conversations-store';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -251,17 +253,17 @@ function VoiceChannelRow({
           'group relative flex w-full items-center rounded-xl font-medium transition-colors',
           d.channelGap, d.channelPx, d.channelPy, d.channelText,
           isConnected
-            ? 'bg-green-500/10 text-green-400'
+            ? 'bg-success/10 text-success'
             : 'text-muted-foreground hover:bg-surface-secondary/70 hover:text-foreground',
         )}
       >
         {isConnected && (
-          <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-green-400" />
+          <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-success" />
         )}
         <Volume2Icon size={d.channelIcon}
           className={cn(
             'shrink-0 transition-colors',
-            isConnected ? 'text-green-400' : 'text-muted-foreground/60 group-hover:text-muted-foreground',
+            isConnected ? 'text-success' : 'text-muted-foreground/60 group-hover:text-muted-foreground',
           )} />
         <span className="truncate">{channel.name}</span>
         {participants.length > 0 && (
@@ -272,7 +274,7 @@ function VoiceChannelRow({
         <div className="ml-6 mt-0.5 space-y-0.5 pb-1">
           {participants.map((p) => (
             <div key={p.userId} className="flex items-center gap-1.5 px-1.5 py-0.5">
-              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-[8px] font-bold text-green-400">
+              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-success/15 text-[8px] font-bold text-success">
                 {p.username?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <span className="flex-1 truncate text-[11px] text-muted-foreground">{p.username}</span>
@@ -470,12 +472,26 @@ export function ChannelList({
             finalPresence.set(userId, status);
             if (customStatus !== undefined) finalCustomStatus.set(userId, customStatus);
           });
+          // Purger les notifications fantômes (clés inconnues du localStorage)
+          const validKeys = [
+            ...sorted.filter(c => c.type === 'dm').map(c => c.recipientId),
+            ...sorted.filter(c => c.type === 'group').map(c => `group:${c.id}`),
+          ];
+          pruneUnread(validKeys);
           // Single batched render: conversations + correct presence at once
+          conversationsStore.set(sorted, finalPresence, finalCustomStatus);
           setConversations(sorted);
           setPresenceMap((prev) => { const next = new Map(prev); finalPresence.forEach((v, k) => next.set(k, v)); return next; });
           setCustomStatusMap((prev) => { const next = new Map(prev); finalCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
         });
       } else {
+        // Purger les notifications fantômes même sans présence
+        const validKeys = [
+          ...sorted.filter(c => c.type === 'dm').map(c => c.recipientId),
+          ...sorted.filter(c => c.type === 'group').map(c => `group:${c.id}`),
+        ];
+        pruneUnread(validKeys);
+        conversationsStore.set(sorted, initialPresence, initialCustomStatus);
         setConversations(sorted);
         if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
         if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
@@ -574,7 +590,16 @@ export function ChannelList({
     if (serverId) {
       loadChannels();
     } else {
-      loadConversations();
+      // Utiliser le cache global si disponible — pas de re-fetch à la navigation
+      if (conversationsStore.isLoaded()) {
+        setConversations(conversationsStore.get());
+        const cached = conversationsStore.getPresence();
+        const cachedCustom = conversationsStore.getCustomStatus();
+        if (cached.size > 0) setPresenceMap(new Map(cached));
+        if (cachedCustom.size > 0) setCustomStatusMap(new Map(cachedCustom));
+      } else {
+        loadConversations();
+      }
     }
   }, [serverId, loadChannels, loadConversations]);
 
@@ -636,6 +661,8 @@ export function ChannelList({
         const updated = [...prev];
         updated[idx] = { ...conv, lastMessage: content, lastMessageAt: createdAt };
         const [moved] = updated.splice(idx, 1);
+        // Mettre à jour le store global
+        conversationsStore.updateLastMessage(moved.id, content, createdAt);
         return [moved, ...updated];
       });
     };
@@ -646,6 +673,7 @@ export function ChannelList({
       const status = payload?.status;
       const customStatus = payload?.customStatus;
       if (!userId) return;
+      conversationsStore.setPresence(userId, status, customStatus);
       setPresenceMap((prev) => { const next = new Map(prev); next.set(userId, status); return next; });
       if (customStatus !== undefined) setCustomStatusMap((prev) => { const next = new Map(prev); next.set(userId, customStatus); return next; });
     };

@@ -8,7 +8,9 @@ import { useUIStyle } from '@/hooks/use-ui-style';
 import { useTranslation } from '@/components/locale-provider';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
+import { useAuth } from '@/hooks/use-auth';
 import { useNotificationStore } from '@/lib/notification-store';
+import { serverListStore } from '@/lib/server-list-store';
 import { cn } from '@/lib/utils';
 import {
   ArrowRightIcon,
@@ -21,6 +23,7 @@ import {
   MessageCircleIcon,
   PlusIcon,
   SettingsIcon,
+  Trash2Icon,
   UsersRoundIcon,
   XIcon,
 } from '@/components/icons';
@@ -75,6 +78,7 @@ interface Server {
   id: string;
   name: string;
   iconUrl?: string;
+  ownerId?: string;
 }
 
 interface ServerListProps {
@@ -91,6 +95,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
   const ui = useUIStyle();
+  const { user: currentUser } = useAuth();
 
   const btnSize  = d.serverBtn;
   const iconSize = d.serverIcon;
@@ -104,6 +109,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const [onlineIds,  setOnlineIds ] = useState<Set<string>>(new Set());
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [leaveId,    setLeaveId   ] = useState<string | null>(null);
+  const [deleteId,   setDeleteId  ] = useState<string | null>(null);
   const [joinOpen,   setJoinOpen  ] = useState(false);
   const [invite,     setInvite    ] = useState('');
   const [joining,    setJoining   ] = useState(false);
@@ -124,6 +130,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         id: s.id,
         name: s.name,
         iconUrl: s.iconUrl ?? s.icon_url ?? undefined,
+        ownerId: s.ownerId ?? s.owner_id ?? undefined,
       }));
       try {
         const order = JSON.parse(localStorage.getItem('alfychat_server_order') ?? '[]') as string[];
@@ -132,12 +139,22 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           list = list.sort((a, b) => (rank.get(a.id) ?? list.length) - (rank.get(b.id) ?? list.length));
         }
       } catch { /* ignore */ }
+      serverListStore.set(list);
       setServers(list);
     }
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadServers(); }, [loadServers]);
+  // Au montage : utiliser le cache si disponible, sinon fetcher
+  useEffect(() => {
+    if (serverListStore.isLoaded()) {
+      setServers(serverListStore.get());
+      setLoading(false);
+    } else {
+      loadServers();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Socket events ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -150,16 +167,18 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       const p = d?.payload ?? d?.updates ?? d;
       const id = p?.id ?? p?.serverId;
       if (!id) return;
-      setServers(prev => prev.map(sv =>
-        sv.id === id
-          ? { ...sv, ...(p.name != null ? { name: p.name } : {}), ...(p.iconUrl !== undefined ? { iconUrl: p.iconUrl || undefined } : {}) }
-          : sv,
-      ));
+      const updates = {
+        ...(p.name != null ? { name: p.name } : {}),
+        ...(p.iconUrl !== undefined ? { iconUrl: p.iconUrl || undefined } : {}),
+      };
+      serverListStore.update(id, updates);
+      setServers(prev => prev.map(sv => sv.id === id ? { ...sv, ...updates } : sv));
     };
 
     const onGone = (d: any, warn?: string) => {
       const id = getId(d);
       if (!id) return;
+      serverListStore.remove(id);
       setServers(p => p.filter(sv => sv.id !== id));
       if (selectedServer === id) onSelectServer(null);
       if (warn) toast.warning(warn);
@@ -195,6 +214,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     if (res.success && res.data) {
       const s = res.data as any;
       const newServer: Server = { id: s.id ?? s.serverId, name: s.name, iconUrl: s.iconUrl };
+      serverListStore.add(newServer);
       setServers(p => [...p, newServer]);
       setJoinOk(`Bienvenue sur ${newServer.name} !`);
       setTimeout(() => { setJoinOpen(false); resetJoin(); onSelectServer(newServer.id); }, 1200);
@@ -207,6 +227,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const handleLeave = async (id: string) => {
     const res = await api.leaveServer(id);
     if (res.success) {
+      serverListStore.remove(id);
       setServers(p => p.filter(s => s.id !== id));
       if (selectedServer === id) onSelectServer(null);
       toast.success('Serveur quitté.');
@@ -214,6 +235,20 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       toast.warning((res as any).error ?? (res as any).message ?? 'Impossible de quitter le serveur.');
     }
     setLeaveId(null);
+  };
+
+  // ── Delete (owner only) ───────────────────────────────────────────────────
+  const handleDelete = async (id: string) => {
+    const res = await api.deleteServer(id);
+    if (res.success) {
+      serverListStore.remove(id);
+      setServers(p => p.filter(s => s.id !== id));
+      if (selectedServer === id) onSelectServer(null);
+      toast.success('Serveur supprimé.');
+    } else {
+      toast.warning((res as any).error ?? (res as any).message ?? 'Impossible de supprimer le serveur.');
+    }
+    setDeleteId(null);
   };
 
   // ── Context menu actions ──────────────────────────────────────────────────
@@ -224,6 +259,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       toast.success("Lien d'invitation copié !");
     }
     if (action === 'leave') setLeaveId(serverId);
+    if (action === 'delete') setDeleteId(serverId);
   };
 
   // ── Drag & drop ───────────────────────────────────────────────────────────
@@ -297,14 +333,14 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
                 btnSize,
                 selectedServer === null
-                  ? 'rounded-[14px] bg-accent text-white shadow-lg'
-                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-accent/15 hover:text-accent',
+                  ? 'rounded-[14px] bg-primary text-primary-foreground shadow-sm shadow-primary/25'
+                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
               )}
               onClick={() => onSelectServer(null)}
             >
               <MessageCircleIcon size={iconSize} />
               {totalDmUnread > 0 && (
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground ring-2 ring-background">
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[8px] font-semibold text-primary-foreground ring-1 ring-background">
                   {totalDmUnread > 99 ? '99+' : totalDmUnread}
                 </span>
               )}
@@ -326,20 +362,41 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
                 btnSize,
                 selectedServer === 'groups'
-                  ? 'rounded-[14px] bg-indigo-500 text-white shadow-lg'
-                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-indigo-500/15 hover:text-indigo-400',
+                  ? 'rounded-[14px] bg-primary text-primary-foreground shadow-sm shadow-primary/25'
+                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
               )}
               onClick={() => onSelectServer('groups')}
             >
               <UsersRoundIcon size={iconSize} />
               {totalGroupUnread > 0 && selectedServer !== 'groups' && (
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground ring-2 ring-background">
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[8px] font-semibold text-primary-foreground ring-1 ring-background">
                   {totalGroupUnread > 99 ? '99+' : totalGroupUnread}
                 </span>
               )}
             </button>
           </TooltipTrigger>
           <TooltipContent side={side}>Groupes</TooltipContent>
+        </Tooltip>
+
+        {/* ── Hosting ── */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="Hébergement"
+              className={cn(
+                'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
+                btnSize,
+                selectedServer === 'hosting'
+                  ? 'rounded-[14px] bg-primary text-primary-foreground shadow-sm shadow-primary/25'
+                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
+              )}
+              onClick={() => onSelectServer('../hosting')}
+            >
+              <i className="bi bi-server" style={{ fontSize: iconSize }} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side={side}>Hébergement</TooltipContent>
         </Tooltip>
 
         <div className={cn('shrink-0 rounded-full bg-border', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
@@ -396,7 +453,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                                 className={cn(
                                   'group relative flex shrink-0 cursor-pointer select-none items-center justify-center transition-all duration-200',
                                   btnSize,
-                                  active ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]',
+                                  active ? 'rounded-[14px]' : 'rounded-2xl hover:rounded-full',
                                 )}
                               >
                                 <Avatar
@@ -404,30 +461,32 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                                     'transition-all duration-200',
                                     btnSize,
                                     active
-                                      ? 'rounded-[14px] shadow-lg shadow-black/40 ring-2 ring-foreground/15 ring-offset-1 ring-offset-background'
-                                      : 'rounded-full group-hover:rounded-[14px]',
-                                    isOver && 'ring-2 ring-accent ring-offset-1 ring-offset-background',
+                                      ? 'rounded-[14px] ring-2 ring-primary/30 ring-offset-1 ring-offset-background'
+                                      : 'rounded-2xl group-hover:rounded-full',
+                                    isOver && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
                                   )}
                                 >
                                   <AvatarImage
                                     src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
                                     alt={server.name}
-                                    className={cn(active ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]')}
+                                    className={cn(active ? 'rounded-[14px]' : 'rounded-2xl group-hover:rounded-full')}
                                   />
                                   <AvatarFallback
                                     className={cn(
-                                      'bg-surface-secondary text-sm font-bold transition-all duration-200',
-                                      active ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]',
+                                      'text-sm font-bold transition-all duration-200',
+                                      active
+                                        ? 'rounded-[14px] bg-primary text-primary-foreground'
+                                        : 'rounded-2xl bg-surface-secondary group-hover:rounded-full group-hover:bg-primary group-hover:text-primary-foreground',
                                     )}
                                   >
                                     {server.name.charAt(0).toUpperCase()}
                                   </AvatarFallback>
                                   {onlineIds.has(server.id) && (
-                                    <AvatarBadge className="bg-emerald-500" />
+                                    <AvatarBadge className="bg-success" />
                                   )}
                                 </Avatar>
                                 {serverUnread > 0 && !active && (
-                                  <span className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground ring-2 ring-background">
+                                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[8px] font-semibold text-primary-foreground ring-1 ring-background">
                                     {serverUnread > 99 ? '99+' : serverUnread}
                                   </span>
                                 )}
@@ -437,7 +496,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                           <TooltipContent side={side}>
                             <span className="font-semibold">{server.name}</span>
                             {onlineIds.has(server.id) && (
-                              <Badge variant="secondary" className="ml-1.5 bg-emerald-500/15 text-[10px] text-emerald-400">
+                              <Badge variant="secondary" className="ml-1.5 bg-success/15 text-[10px] text-success">
                                 Node en ligne
                               </Badge>
                             )}
@@ -453,13 +512,23 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                             <CopyIcon size={14} className="mr-2 shrink-0 opacity-60" />
                             Copier l&apos;invitation
                           </ContextMenuItem>
-                          <ContextMenuItem
-                            variant="destructive"
-                            onClick={() => handleContextAction(server.id, 'leave')}
-                          >
-                            <LogOutIcon size={14} className="mr-2 shrink-0" />
-                            {t.serverList?.leaveServer ?? 'Quitter'}
-                          </ContextMenuItem>
+                          {server.ownerId === currentUser?.id ? (
+                            <ContextMenuItem
+                              variant="destructive"
+                              onClick={() => handleContextAction(server.id, 'delete')}
+                            >
+                              <Trash2Icon size={14} className="mr-2 shrink-0" />
+                              Supprimer le serveur
+                            </ContextMenuItem>
+                          ) : (
+                            <ContextMenuItem
+                              variant="destructive"
+                              onClick={() => handleContextAction(server.id, 'leave')}
+                            >
+                              <LogOutIcon size={14} className="mr-2 shrink-0" />
+                              {t.serverList?.leaveServer ?? 'Quitter'}
+                            </ContextMenuItem>
+                          )}
                         </ContextMenuContent>
                       </ContextMenu>
                     </div>
@@ -478,7 +547,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label={t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}
               className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-emerald-500/15 hover:text-emerald-400',
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-border text-muted-foreground transition-colors duration-200 hover:border-primary hover:text-primary',
                 btnSize,
               )}
               onClick={() => setJoinOpen(true)}
@@ -499,7 +568,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label={t.serverList?.discoverServers ?? 'Découvrir des serveurs'}
               className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-accent/15 hover:text-accent',
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
                 btnSize,
               )}
               onClick={() => router.push('/channels/discover-server')}
@@ -517,7 +586,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label="Bienvenue"
               className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-accent/15 hover:text-accent',
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
                 btnSize,
               )}
               onClick={() => router.push('/channels/gotostart')}
@@ -564,13 +633,38 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* ── Delete confirmation (owner only) ── */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10">
+              <Trash2Icon size={20} className="text-destructive" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Supprimer ce serveur&nbsp;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Tous les canaux, messages et membres seront supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => deleteId && handleDelete(deleteId)}
+            >
+              <Trash2Icon size={14} />
+              Supprimer définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* ── Join server ── */}
       <Dialog open={joinOpen} onOpenChange={(open) => { setJoinOpen(open); if (!open) resetJoin(); }}>
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
-                <Link2Icon size={18} className="text-accent" />
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                <Link2Icon size={18} className="text-primary" />
               </div>
               <div>
                 <DialogTitle>{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</DialogTitle>
@@ -649,7 +743,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1.5 px-2 text-[11px] text-accent hover:bg-accent/10"
+              className="h-7 gap-1.5 px-2 text-[11px] text-primary hover:bg-primary/10"
               onClick={() => { setJoinOpen(false); router.push('/channels/discover-server'); }}
             >
               <CompassIcon size={12} />

@@ -66,6 +66,12 @@ class SocketService {
   readonly _version = SOCKET_VERSION;
 
   /**
+   * File d'attente des émissions lorsque le socket n'est pas connecté.
+   * Rejoué automatiquement dès la prochaine connexion réussie.
+   */
+  private pendingEmits: Array<{ event: string; data: any }> = [];
+
+  /**
    * Bus d'événements interne. Socket.IO `onAny` → dispatch ici.
    * Les hooks écoutent ce bus, PAS le socket directement.
    * Cela garantit que les listeners NE SONT JAMAIS PERDUS.
@@ -110,6 +116,14 @@ class SocketService {
     this.socket.on('connect', () => {
       console.log('[Socket] Connecté, id:', this.socket?.id);
       this.reconnectAttempts = 0;
+      // Rejouer les émissions en attente
+      if (this.pendingEmits.length > 0) {
+        console.log(`[Socket] Reprise de ${this.pendingEmits.length} émission(s) en attente`);
+        const queue = this.pendingEmits.splice(0);
+        for (const item of queue) {
+          this.socket?.emit(item.event, item.data);
+        }
+      }
       // Notifier le bus de la reconnexion pour que les hooks puissent re-rejoindre les rooms
       this.bus.emit('socket:reconnected', {});
     });
@@ -121,12 +135,32 @@ class SocketService {
     this.socket.on('connect_error', (error) => {
       console.error('[Socket] Erreur de connexion:', error.message);
       this.reconnectAttempts++;
-      // Si le token est invalide, stopper les tentatives automatiques et
-      // attendre que le token soit rafraîchi par l'API avant de réessayer
+      // Si le token est invalide ou expiré → tenter un refresh automatique puis reconnecter
       if (error.message === 'Token invalide' || error.message === 'jwt expired') {
         if (this.socket) {
           this.socket.io.opts.reconnection = false;
         }
+        // Refresh asynchrone via l'API — import dynamique pour éviter la dépendance circulaire
+        import('./api').then(({ api }) => {
+          console.log('[Socket] Token invalide → tentative de refresh…');
+          return api.tryRefreshToken();
+        }).then((refreshed) => {
+          if (refreshed && this.socket) {
+            const newToken = typeof localStorage !== 'undefined'
+              ? localStorage.getItem('alfychat_token')
+              : null;
+            if (newToken) {
+              console.log('[Socket] Token rafraîchi → reconnexion socket');
+              this.socket.io.opts.reconnection = true;
+              this.socket.connect();
+            }
+          } else {
+            console.warn('[Socket] Refresh échoué — session expirée');
+            this.bus.emit('socket:session_expired', {});
+          }
+        }).catch(() => {
+          this.bus.emit('socket:session_expired', {});
+        });
       }
     });
 
@@ -214,6 +248,24 @@ class SocketService {
   // ÉMISSION (vers le serveur via socket)
   // =====================================
 
+  /**
+   * Émet un événement socket, ou met en file d'attente si le socket est déconnecté.
+   * La queue est rejouée automatiquement à la prochaine connexion.
+   */
+  private emitOrQueue(event: string, data: any): void {
+    if (this.socket?.connected) {
+      this.socket.emit(event, data);
+    } else {
+      console.log(`[Socket] Non connecté — mise en file d'attente: ${event}`);
+      this.pendingEmits.push({ event, data });
+    }
+  }
+
+  /** Émet directement un événement arbitraire vers le serveur (sans mise en file). */
+  emit(event: string, data?: any): void {
+    this.socket?.emit(event, data);
+  }
+
   // Messages
   sendMessage(data: {
     channelId?: string;
@@ -225,7 +277,7 @@ class SocketService {
     attachments?: string[];
   }): void {
     console.log('[Socket] Emission message:send:', data);
-    this.socket?.emit('message:send', data);
+    this.emitOrQueue('message:send', data);
   }
 
   editMessage(messageId: string, content: string, conversationId?: string): void {
@@ -550,7 +602,7 @@ class SocketService {
     replyToId?: string;
     tags?: string[];
   }): void {
-    this.socket?.emit('SERVER_MESSAGE_SEND', data);
+    this.emitOrQueue('SERVER_MESSAGE_SEND', data);
   }
 
   editServerMessage(serverId: string, messageId: string, content: string, channelId: string): void {

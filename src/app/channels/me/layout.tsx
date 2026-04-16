@@ -13,6 +13,7 @@ import { useUIStyle } from '@/hooks/use-ui-style';
 import { useBackground } from '@/hooks/use-background';
 import { setActiveDM, setActiveGroup } from '@/lib/notification-store';
 import { api, resolveMediaUrl } from '@/lib/api';
+import { socketService } from '@/lib/socket';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { MemberList } from '@/components/chat/member-list';
@@ -80,6 +81,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const handleSelectServer = useCallback((id: string | null) => {
     if (id === 'groups') {
       router.push('/channels/groups');
+    } else if (id === 'hosting') {
+      router.push('/channels/hosting');
     } else if (id) {
       router.push(`/channels/server/${id}`);
     }
@@ -114,11 +117,13 @@ function LayoutInner({ children }: { children: ReactNode }) {
       setActiveGroup(groupId);
       setActiveDM(null);
       api.markNotificationsRead(`group:${groupId}`);
+      socketService.emit('MARK_READ', { key: `group:${groupId}` });
     } else if (recipientId) {
       setSelectedChannel(`dm:${recipientId}`);
       setActiveDM(recipientId);
       setActiveGroup(null);
       api.markNotificationsRead(recipientId);
+      socketService.emit('MARK_READ', { key: recipientId });
     } else if (pathname === '/channels/me' || pathname === '/channels/me/') {
       setSelectedChannel('friends');
       setActiveDM(null);

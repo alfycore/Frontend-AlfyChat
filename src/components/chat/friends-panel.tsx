@@ -50,6 +50,7 @@ import { useUIStyle } from '@/hooks/use-ui-style';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { notify } from '@/hooks/use-notification';
 import { useNotificationStore } from '@/lib/notification-store';
+import { friendsStore } from '@/lib/friends-store';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { useTranslation } from '@/components/locale-provider';
 import { statusColor, statusLabel, isVisibleOnline } from '@/lib/status';
@@ -157,9 +158,17 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
 
   /* -- Socket listeners -- */
   useEffect(() => {
-    loadFriends();
-    loadRequests();
-    loadBlockedUsers();
+    // Utiliser le cache si disponible
+    if (friendsStore.isLoaded()) {
+      setFriends(friendsStore.getFriends() as Friend[]);
+      setRequests(friendsStore.getRequests() as { received: FriendRequest[]; sent: FriendRequest[] });
+      setBlockedUsers(friendsStore.getBlocked() as BlockedUser[]);
+      setIsLoading(false);
+    } else {
+      loadFriends();
+      loadRequests();
+      loadBlockedUsers();
+    }
 
     const handleFriendRequest = () => loadRequests();
     const handleFriendAccepted = () => {
@@ -170,6 +179,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
       const p = payload as { userId?: string; status?: string; customStatus?: string | null };
       if (p?.userId && p?.status) {
+        friendsStore.updateFriendPresence(p.userId, p.status, p.customStatus);
         setFriends((prev) =>
           prev.map((f) =>
             f.id === p.userId
@@ -189,21 +199,23 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     const handleFriendRemove = (data: unknown) => {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
       const p = payload as { friendId?: string };
-      if (p?.friendId) setFriends((prev) => prev.filter((f) => f.id !== p.friendId));
+      if (p?.friendId) {
+        friendsStore.removeFriend(p.friendId);
+        setFriends((prev) => prev.filter((f) => f.id !== p.friendId));
+      }
     };
     const handleProfileUpdate = (data: unknown) => {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
       const p = payload as { userId?: string; displayName?: string; avatarUrl?: string };
       if (!p?.userId) return;
+      const updates = {
+        ...(p.displayName && { displayName: p.displayName }),
+        ...(p.avatarUrl !== undefined && { avatarUrl: p.avatarUrl }),
+      };
+      friendsStore.updateFriendProfile(p.userId, updates);
       setFriends((prev) =>
         prev.map((f) =>
-          f.id === p.userId
-            ? {
-                ...f,
-                ...(p.displayName && { displayName: p.displayName }),
-                ...(p.avatarUrl !== undefined && { avatarUrl: p.avatarUrl }),
-              }
-            : f,
+          f.id === p.userId ? { ...f, ...updates } : f,
         ),
       );
     };
@@ -239,7 +251,11 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const loadBlockedUsers = async () => {
     try {
       const response = await api.getBlockedUsers();
-      if (response.success && response.data) setBlockedUsers(response.data as BlockedUser[]);
+      if (response.success && response.data) {
+        const list = response.data as BlockedUser[];
+        friendsStore.setBlocked(list);
+        setBlockedUsers(list);
+      }
     } catch {}
   };
 
@@ -250,6 +266,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       const response = await api.getFriends();
       if (response.success && response.data) {
         const data = response.data as Friend[];
+        friendsStore.setFriends(data);
         setFriends(data);
 
         const friendIds = data.map((f) => f.id).filter(Boolean);
@@ -277,8 +294,11 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   const loadRequests = async () => {
     try {
       const response = await api.getFriendRequests();
-      if (response.success && response.data)
-        setRequests(response.data as { received: FriendRequest[]; sent: FriendRequest[] });
+      if (response.success && response.data) {
+        const r = response.data as { received: FriendRequest[]; sent: FriendRequest[] };
+        friendsStore.setRequests(r);
+        setRequests(r);
+      }
     } catch {} finally {
       setIsLoading(false);
     }

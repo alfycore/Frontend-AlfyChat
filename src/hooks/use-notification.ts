@@ -12,6 +12,7 @@ import {
   isGroupActive,
   isChannelActive,
   incrementUnread,
+  clearUnread,
   subscribe as subscribeNotifications,
   getSnapshot,
 } from '@/lib/notification-store';
@@ -119,7 +120,8 @@ export function useNotification() {
       if (myId && senderId === myId) return;
 
       // Déterminer de quelle conversation vient ce message
-      const recipientId: string | undefined = payload.recipientId;
+      // Pour les DM : la clé du badge = senderId (l'ami qui écrit), pas recipientId (soi-même)
+      const dmSenderId: string | undefined = senderId ?? undefined;
       const groupId: string | undefined = payload.groupId || payload.channelId;
       const currentPath = pathnameRef.current;
 
@@ -128,10 +130,11 @@ export function useNotification() {
       // Critère 2 : fallback URL (si le store n'a pas encore été alimenté)
       let isViewing = false;
 
-      if (recipientId) {
+      if (!groupId && dmSenderId) {
+        // DM : la conversation est identifiée par l'ID de l'expéditeur
         isViewing =
-          isDMActive(recipientId) ||
-          currentPath.includes(`/channels/me/${recipientId}`);
+          isDMActive(dmSenderId) ||
+          currentPath.includes(`/channels/me/${dmSenderId}`);
       } else if (groupId) {
         isViewing =
           isGroupActive(groupId) ||
@@ -141,8 +144,8 @@ export function useNotification() {
       if (isViewing) return;
 
       // ── Incrémenter le badge non-lu ──────────────────────────────────────
-      if (recipientId) {
-        incrementUnread(recipientId);
+      if (!groupId && dmSenderId) {
+        incrementUnread(dmSenderId);
       } else if (groupId) {
         incrementUnread(`group:${groupId}`);
       }
@@ -294,6 +297,14 @@ export function useNotification() {
       playNotificationSound();
     };
 
+    // ── Sync multi-appareils : un autre appareil a lu une conversation ────────
+    const handleNotificationSync = (data: any) => {
+      const payload = data?.payload || data;
+      const key: string | undefined = payload?.key;
+      if (!key) return;
+      clearUnread(key);
+    };
+
     socketService.on('message:new', handleNewMessage);
     socketService.on('SERVER_MESSAGE_NEW', handleServerMessageNew);
     socketService.on('FRIEND_REQUEST', handleFriendRequest);
@@ -301,6 +312,7 @@ export function useNotification() {
     socketService.on('disconnect', handleDisconnect);
     socketService.on('connect', handleReconnect);
     socketService.on('PENDING_PINGS', handlePendingPings);
+    socketService.on('NOTIFICATION_SYNC', handleNotificationSync);
 
     return () => {
       socketService.off('message:new', handleNewMessage);
@@ -310,6 +322,7 @@ export function useNotification() {
       socketService.off('disconnect', handleDisconnect);
       socketService.off('connect', handleReconnect);
       socketService.off('PENDING_PINGS', handlePendingPings);
+      socketService.off('NOTIFICATION_SYNC', handleNotificationSync);
     };
   }, [playNotificationSound, showOSNotification]);
 

@@ -22,9 +22,9 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
   return (
     <div
       onMouseDown={onMouseDown}
-      className="group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-transparent transition-colors hover:bg-accent-soft-hover active:bg-(--accent)/30"
+      className="group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-transparent transition-colors hover:bg-primary/5 active:bg-primary/10"
     >
-      <div className="h-8 w-0.5 rounded-full bg-border transition-all group-hover:h-12 group-hover:bg-(--accent)/60 group-active:bg-(--accent)" />
+      <div className="h-8 w-0.5 rounded-full bg-border transition-all group-hover:h-12 group-hover:bg-primary/40 group-active:bg-primary/70" />
     </div>
   );
 }
@@ -97,8 +97,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
     return (
       <div className="flex h-dvh items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-(--accent)">
-            <MessageCircleIcon size={28} className="text-white" />
+          <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-primary/10">
+            <MessageCircleIcon size={28} className="text-primary" />
           </div>
           <Spinner className="size-4" />
         </div>
@@ -109,6 +109,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const serverList = <ServerList selectedServer="groups" onSelectServer={(id) => {
     if (id === null) router.push('/channels/me');
     else if (id === 'groups') router.push('/channels/groups');
+    else if (id === 'hosting') router.push('/channels/hosting');
     else router.push(`/channels/server/${id}`);
   }} />;
 
@@ -209,11 +210,11 @@ function LayoutInner({ children }: { children: ReactNode }) {
 function GroupsEmptyState() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-      <div className="flex size-16 items-center justify-center rounded-2xl bg-(--accent)/10">
-        <MessageCircleIcon size={28} className="text-(--accent)" />
+      <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+        <MessageCircleIcon size={28} className="text-primary" />
       </div>
       <div>
-        <p className="text-[15px] font-semibold text-(--foreground)">Vos groupes</p>
+        <p className="text-[15px] font-semibold text-foreground">Vos groupes</p>
         <p className="mt-1 text-[13px] text-muted-foreground">Sélectionnez un groupe ou créez-en un nouveau.</p>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import {
   ShieldIcon, LockIcon, UsersIcon, ArrowRightIcon, HeartIcon, CheckIcon,
   GlobeIcon, ZapIcon, PhoneIcon, BotIcon, CodeIcon, ServerIcon, DatabaseIcon,
@@ -439,7 +439,7 @@ export default function Home() {
       {/* ── Footer ── */}
       <footer className="border-t bg-muted/20">
         <div className="mx-auto max-w-5xl px-6 py-12">
-          <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
+          <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-5">
             {/* Brand */}
             <div className="sm:col-span-2 md:col-span-1">
               <Link href="/" className="flex items-center gap-2 font-(family-name:--font-krona) text-sm font-medium">
@@ -485,6 +485,22 @@ export default function Home() {
               </ul>
             </div>
             {/* Légal */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Légal</p>
+              <ul className="space-y-2 text-sm">
+                {[
+                  { label: 'CGU', href: '/legal/cgu' },
+                  { label: 'Confidentialité', href: '/legal/privacy' },
+                  { label: 'Cookies', href: '/legal/cookies' },
+                  { label: 'Mentions légales', href: '/legal/mentions' },
+                  { label: 'Contact', href: 'mailto:contact@alfycore.org' },
+                ].map((l) => (
+                  <li key={l.label}>
+                    <Link href={l.href} className="text-muted-foreground transition-colors hover:text-foreground">{l.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div>
               <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Légal</p>
               <ul className="space-y-2 text-sm">

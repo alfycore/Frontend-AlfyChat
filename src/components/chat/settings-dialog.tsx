@@ -2185,6 +2185,79 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       </Card>
                     )}
 
+                    {/* Style des messages */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Style des messages</CardTitle>
+                        <CardDescription>Choisissez l&apos;apparence des messages dans les conversations</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-3">
+                          {([
+                            {
+                              id: 'bubble' as const,
+                              label: 'Bulles',
+                              desc: 'iMessage · WhatsApp',
+                              preview: (
+                                <div className="flex w-full flex-col gap-1 rounded-lg border border-border/20 bg-background/50 p-2">
+                                  <div className="flex justify-start">
+                                    <div className="h-5 w-16 rounded-2xl rounded-bl-sm bg-muted/60" />
+                                  </div>
+                                  <div className="flex justify-end">
+                                    <div className="h-5 w-20 rounded-2xl rounded-br-sm bg-primary/60" />
+                                  </div>
+                                  <div className="flex justify-start">
+                                    <div className="h-5 w-12 rounded-2xl rounded-bl-sm bg-muted/60" />
+                                  </div>
+                                </div>
+                              ),
+                            },
+                            {
+                              id: 'discord' as const,
+                              label: 'Plat',
+                              desc: 'Discord · Slack',
+                              preview: (
+                                <div className="flex w-full flex-col gap-1.5 rounded-lg border border-border/20 bg-background/50 p-2">
+                                  <div className="flex items-start gap-1.5">
+                                    <div className="size-4 shrink-0 rounded-full bg-muted/60" />
+                                    <div className="flex flex-1 flex-col gap-0.5">
+                                      <div className="h-1.5 w-10 rounded bg-primary/40" />
+                                      <div className="h-2 w-full rounded bg-muted/50" />
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start gap-1.5">
+                                    <div className="size-4 shrink-0 rounded-full bg-muted/60" />
+                                    <div className="flex flex-1 flex-col gap-0.5">
+                                      <div className="h-1.5 w-8 rounded bg-primary/40" />
+                                      <div className="h-2 w-3/4 rounded bg-muted/50" />
+                                    </div>
+                                  </div>
+                                </div>
+                              ),
+                            },
+                          ]).map(({ id, label, desc, preview }) => (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => updateLayoutPrefs({ msgStyle: id })}
+                              className={cn(
+                                'flex flex-col items-center gap-2 rounded-xl border-2 p-2.5 text-xs font-medium transition-all duration-150',
+                                layoutPrefs.msgStyle === id
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border/30 bg-muted/20 text-muted-foreground hover:border-border/60',
+                              )}
+                            >
+                              {preview}
+                              <div className="text-center">
+                                <span className="block">{label}</span>
+                                <span className="block text-[10px] font-normal text-muted-foreground">{desc}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
                     {/* UI Density */}
                     <Card>
                       <CardHeader>

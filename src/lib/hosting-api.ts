@@ -140,6 +140,21 @@ export const hostingApi = {
     api.get(`/api/hosting/offers${hosterId ? `?hoster_id=${hosterId}` : ''}`),
   deleteOffer: (offerId: string) => api.delete(`/api/hosting/offers/${offerId}`),
 
+  // Configs paiement
+  listPaymentConfigs: () => api.get('/api/hosting/payment-configs'),
+  setPaymentConfig: (data: { provider: string; secret_key: string; public_key?: string }) =>
+    api.post('/api/hosting/payment-configs', data),
+  deletePaymentConfig: (provider: string) => api.delete(`/api/hosting/payment-configs/${provider}`),
+
+  // Techniciens
+  listTechnicians: () => api.get('/api/hosting/technicians'),
+  addTechnician: (username: string, role?: string) =>
+    api.post('/api/hosting/technicians', { username, role }),
+  removeTechnician: (userId: string) => api.delete(`/api/hosting/technicians/${userId}`),
+
+  // Serveurs heberges
+  getHostedServers: (page = 1) => api.get(`/api/hosting/providers/servers?page=${page}`),
+
   // Boosts
   getBoosts: (serverId: string) => api.get(`/api/hosting/boosts/${serverId}`),
   boostServer: (serverId: string, data: { boost_type: string; boost_slots?: number }) =>

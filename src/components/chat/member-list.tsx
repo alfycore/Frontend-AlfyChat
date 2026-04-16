@@ -50,7 +50,7 @@ function MemberRow({ member, serverId, roles }: { member: Member; serverId: stri
         <div className="relative">
           <Avatar className="size-7 shadow-sm">
             <AvatarImage src={resolveMediaUrl(member.avatarUrl)} />
-            <AvatarFallback className="bg-gradient-to-br from-violet-500/80 to-indigo-600/80 text-[10px] font-semibold text-white">
+            <AvatarFallback className="bg-primary/20 text-[10px] font-semibold text-primary">
               {name[0]?.toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>

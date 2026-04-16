@@ -17,6 +17,8 @@ import { resolveMediaUrl } from '@/lib/api';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { statusColor, statusLabel, SELECTABLE_STATUSES, type UserStatus } from '@/lib/status';
+import { useCallContext } from '@/hooks/use-call-context';
+import { useVoice } from '@/hooks/use-voice';
 
 interface User {
   id: string;
@@ -38,12 +40,38 @@ export function UserPanel({ user }: UserPanelProps) {
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
   const ui = useUIStyle();
-  const [isMuted, setIsMuted] = useState(false);
-  const [isDeafened, setIsDeafened] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingCustomStatus, setEditingCustomStatus] = useState(false);
   const [customStatusDraft, setCustomStatusDraft] = useState(user.customStatus ?? '');
   const customStatusInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Hooks voix/appel ─────────────────────────────────────────────────────
+  // useCallContext est toujours disponible (CallProvider enveloppe tous les layouts)
+  const { isMuted: callMuted, toggleMute: callToggleMute, status: callStatus } = useCallContext();
+  // useVoice retourne null si hors VoiceProvider (layouts DM / friends)
+  const voiceCtx = useVoice();
+
+  // L'état effectif de mute/sourdine : serveur vocal > appel DM > aucun
+  const inVoiceChannel = !!voiceCtx?.currentChannelId;
+  const inCall = callStatus !== 'idle';
+  const isMuted = inVoiceChannel ? voiceCtx!.isMuted : inCall ? callMuted : false;
+  const isDeafened = inVoiceChannel ? voiceCtx!.isDeafened : false;
+
+  const handleToggleMute = () => {
+    if (inVoiceChannel) {
+      voiceCtx!.toggleMute();
+    } else if (inCall) {
+      callToggleMute();
+    }
+    // Hors appel : pas d'effet (pas de stream actif)
+  };
+
+  const handleToggleDeafen = () => {
+    if (inVoiceChannel) {
+      voiceCtx!.toggleDeafen();
+    }
+    // Le déafening n'existe que dans les salons vocaux serveur
+  };
 
   useEffect(() => {
     setCustomStatusDraft(user.customStatus ?? '');
@@ -180,7 +208,8 @@ export function UserPanel({ user }: UserPanelProps) {
             <Button
               size="icon-sm" variant="ghost"
               className={`size-7 rounded-xl transition-colors ${isMuted ? 'text-red-400 hover:text-red-300' : 'text-muted-foreground/60 hover:text-foreground'}`}
-              onClick={() => setIsMuted(v => !v)}
+              onClick={handleToggleMute}
+              disabled={!inVoiceChannel && !inCall}
             >
               {isMuted ? <MicOffIcon size={14} /> : <MicIcon size={14} />}
             </Button>
@@ -192,7 +221,8 @@ export function UserPanel({ user }: UserPanelProps) {
             <Button
               size="icon-sm" variant="ghost"
               className={`size-7 rounded-xl transition-colors ${isDeafened ? 'text-red-400 hover:text-red-300' : 'text-muted-foreground/60 hover:text-foreground'}`}
-              onClick={() => setIsDeafened(v => !v)}
+              onClick={handleToggleDeafen}
+              disabled={!inVoiceChannel}
             >
               <HeadphonesIcon size={14} />
             </Button>

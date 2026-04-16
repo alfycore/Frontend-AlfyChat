@@ -6,6 +6,7 @@ import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotificationStore, clearUnread } from '@/lib/notification-store';
+import { groupsStore } from '@/lib/groups-store';
 import {
   Avatar,
   AvatarImage,
@@ -67,6 +68,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
           const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
           return bTime - aTime;
         });
+      groupsStore.set(groupConvs);
       setGroups(groupConvs);
     } catch (e) {
       console.error('Erreur chargement groupes:', e);
@@ -81,8 +83,14 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
   }, [loadGroups]);
 
   useEffect(() => {
-    loadGroups();
-  }, [loadGroups]);
+    if (groupsStore.isLoaded()) {
+      setGroups(groupsStore.get() as Group[]);
+      setLoading(false);
+    } else {
+      loadGroups();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Clear unread when a group is selected
   useEffect(() => {
@@ -113,6 +121,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
         const updated = [...prev];
         updated[idx] = { ...updated[idx], lastMessage: content, lastMessageAt: createdAt };
         const [moved] = updated.splice(idx, 1);
+        groupsStore.updateLastMessage(convId, content, createdAt);
         return [moved, ...updated];
       });
     };
@@ -140,7 +149,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
     <div className={cn('flex h-full w-full flex-col overflow-hidden', ui.sidebarBg)}>
       {/* ── Header ── */}
       <div className={cn('flex h-13 shrink-0 items-center justify-between px-3', ui.header)}>
-        <span className="text-[13px] font-bold tracking-tight text-(--foreground)">Groupes</span>
+        <span className="text-[13px] font-bold tracking-tight text-foreground">Groupes</span>
         <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -167,12 +176,12 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
             </div>
           ) : groups.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-500/10">
-                <UsersRoundIcon size={20} className="text-indigo-400" />
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10">
+                <UsersRoundIcon size={20} className="text-primary" />
               </div>
               <div>
-                <p className="text-[13px] font-medium text-(--foreground)">Aucun groupe</p>
-                <p className="mt-0.5 text-[11px] text-muted">Créez votre premier groupe</p>
+                <p className="text-[13px] font-medium text-foreground">Aucun groupe</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">Créez votre premier groupe</p>
               </div>
               <Button
                 size="sm"
@@ -196,15 +205,15 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                   className={cn(
                     'group flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-150',
                     isActive
-                      ? 'bg-(--accent)/12 text-(--accent)'
-                      : 'text-muted hover:bg-(--surface-secondary)/60 hover:text-(--foreground)',
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-surface-secondary/60 hover:text-foreground',
                   )}
                 >
                   {/* Avatar */}
                   {group.avatarUrl ? (
                     <Avatar className="size-9 shrink-0 rounded-xl">
                       <AvatarImage src={resolveMediaUrl(group.avatarUrl)} alt={group.name} />
-                      <AvatarFallback className="rounded-xl bg-indigo-500/20 text-[11px] font-bold text-indigo-400">
+                      <AvatarFallback className="rounded-xl bg-primary/20 text-[11px] font-bold text-primary">
                         {group.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -213,8 +222,8 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                       className={cn(
                         'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
                         isActive
-                          ? 'bg-indigo-500/20 text-indigo-400 shadow-sm'
-                          : 'bg-indigo-500/10 text-indigo-400/70 group-hover:bg-indigo-500/15 group-hover:text-indigo-400',
+                          ? 'bg-primary/15 text-primary'
+                          : 'bg-primary/8 text-primary/60 group-hover:bg-primary/15 group-hover:text-primary',
                       )}
                     >
                       <UsersRoundIcon size={15} />
@@ -224,16 +233,16 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                   {/* Name + member count */}
                   <div className="min-w-0 flex-1 text-left">
                     <p className="truncate text-[13px] font-medium leading-tight">{group.name}</p>
-                    <p className="text-[10px] leading-tight text-(--muted)/50">
+                    <p className="text-[10px] leading-tight text-muted-foreground/50">
                       {group.participantCount} membre{group.participantCount !== 1 ? 's' : ''}
                     </p>
                   </div>
 
                   {/* Unread badge */}
                   {unread > 0 && (
-                    <Badge variant="destructive" className="ml-auto h-5 min-w-5 shrink-0 text-[10px]">
-                      {unread}
-                    </Badge>
+                    <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground ring-1 ring-background">
+                      {unread > 99 ? '99+' : unread}
+                    </span>
                   )}
                 </button>
               );

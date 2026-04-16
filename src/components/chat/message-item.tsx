@@ -262,7 +262,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         part.toLowerCase() === query.toLowerCase() ? (
-          <mark key={i} className="rounded bg-yellow-400/40 text-[var(--foreground)] px-0.5 not-italic">{part}</mark>
+          <mark key={i} className="rounded bg-primary/25 text-foreground px-0.5 not-italic">{part}</mark>
         ) : (
           <span key={i}>{part}</span>
         )

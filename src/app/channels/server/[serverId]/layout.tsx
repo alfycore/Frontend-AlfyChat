@@ -27,6 +27,7 @@ import { useUIStyle } from '@/hooks/use-ui-style';
 import { useBackground } from '@/hooks/use-background';
 import { setActiveChannel, clearUnread } from '@/lib/notification-store';
 import { api, resolveMediaUrl } from '@/lib/api';
+import { socketService } from '@/lib/socket';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { MemberList } from '@/components/chat/member-list';
@@ -91,6 +92,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       setActiveChannel(channelId, serverId);
       clearUnread(`channel:${channelId}`);
       api.markNotificationsRead(`channel:${channelId}`);
+      socketService.emit('MARK_READ', { key: `channel:${channelId}` });
     } else {
       setActiveChannel(null);
     }
@@ -106,7 +108,6 @@ function LayoutInner({ children }: { children: ReactNode }) {
   // Vérifier que l'utilisateur est membre du serveur
   useEffect(() => {
     if (!serverId || !user) return;
-    const { socketService } = require('@/lib/socket');
     socketService.requestServerInfo(serverId, (data: any) => {
       if (data?.error === 'NOT_MEMBER') {
         // Retry once after 1.5s to handle race condition (e.g. just joined via discover)
@@ -188,6 +189,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const handleSelectServer = useCallback((id: string | null) => {
     if (!id) {
       router.push('/channels/me');
+    } else if (id === 'hosting') {
+      router.push('/channels/hosting');
     } else {
       router.push(`/channels/server/${id}`);
     }

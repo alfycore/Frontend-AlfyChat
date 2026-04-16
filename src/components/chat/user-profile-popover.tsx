@@ -129,9 +129,14 @@ export function UserProfilePopover({
   const [colorTimer, setColorTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Load on open ──────────────────────────────────────────────────────────
+  // Toujours re-fetcher à chaque ouverture : le profil de l'ami peut avoir changé
   useEffect(() => {
-    if (!isOpen) return;
-    if (!profile) loadProfile();
+    if (!isOpen) {
+      // Réinitialiser à la fermeture pour éviter un flash de données périmées
+      setProfile(null);
+      return;
+    }
+    loadProfile();
     if (!isMe) checkFriendship();
     if (serverId) loadServerRoles();
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps

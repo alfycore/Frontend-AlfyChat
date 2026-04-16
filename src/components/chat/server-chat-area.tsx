@@ -130,12 +130,12 @@ function TypingIndicator({ users }: { users: string[] }) {
         : `${users.length} personnes sont en train d'écrire`;
 
   return (
-    <div className="flex h-5 items-center gap-1.5 px-4 text-xs text-[var(--muted)]">
+      <div className="flex h-5 items-center gap-1.5 px-4 text-xs text-muted">
       <span className="flex items-center gap-1">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="inline-block size-1 animate-bounce rounded-full bg-[var(--muted)]"
+            className="inline-block size-1 animate-bounce rounded-full bg-muted"
             style={{ animationDelay: `${i * 0.18}s`, animationDuration: '0.9s' }}
           />
         ))}
@@ -511,21 +511,19 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <MenuIcon size={16} />
           </Button>
         )}
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg">
-          <meta.icon size={14} className="text-[var(--accent-foreground)]" />
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <meta.icon size={14} className="text-primary" />
         </div>
-        <h2 className="truncate text-[14px] font-semibold text-[var(--foreground)]">{channelName || 'salon'}</h2>
+        <h2 className="truncate text-[14px] font-semibold text-foreground">{channelName || 'salon'}</h2>
         <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Badge variant="secondary" className="hidden rounded-xl border border-white/15 bg-white/20 text-[10px] font-medium text-muted-foreground dark:border-white/10 dark:bg-white/8 md:flex">
-            {meta.label}
-          </Badge>
           <Button
             size="icon-sm" variant="ghost"
-            className={`size-8 rounded-xl transition-colors ${
+            className={cn(
+              'size-8 rounded-xl transition-colors',
               !isMobile && memberListDesktopVisible
-                ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
             onClick={isMobile ? toggleMemberList : toggleMemberListDesktop}
           >
             <UsersIcon size={16} />
@@ -540,21 +538,13 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <LoadingSkeleton />
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-              <div className="relative mb-6">
-                {/* Glow blob */}
-                <div className="absolute inset-0 -m-4 rounded-full bg-[var(--accent)]/20 " />
-                <div className="relative flex size-20 items-center justify-center rounded-3xl border border-white/20 bg-white/30 shadow-xl dark:border-white/10 dark:bg-white/5">
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent dark:from-white/10" />
-                  <div className="relative flex size-10 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-lg">
-                    <meta.icon size={20} className="text-[var(--accent-foreground)]" />
-                  </div>
-                </div>
+              <div className="mb-5 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+                <meta.icon size={28} className="text-primary" />
               </div>
-              <h3 className="mb-1.5 text-xl font-bold text-[var(--foreground)]">
+              <h3 className="mb-1.5 text-lg font-semibold text-foreground">
                 Bienvenue dans #{channelName || 'salon'}
               </h3>
-              <p className="text-sm text-[var(--muted)]">{meta.description}.</p>
+              <p className="text-sm text-muted">{meta.description}.</p>
             </div>
           ) : (
             <div className="pb-1 pt-4">
@@ -639,10 +629,10 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         {/* Reply bar */}
         {replyId && (
           <div className={`flex items-center gap-2 px-3 py-1.5 text-xs ${ui.replyBar}`}>
-            <span className="flex-1 truncate text-[var(--muted)]">
+            <span className="flex-1 truncate text-muted">
               Répondre à{' '}
-              <span className="font-medium text-[var(--foreground)]/80">{replyAuthor}</span>
-              <span className="ml-1 text-[var(--muted)]/60">
+              <span className="font-medium text-foreground/80">{replyAuthor}</span>
+              <span className="ml-1 text-muted/60">
                 : {replyContent.slice(0, 90)}
                 {replyContent.length > 90 ? '…' : ''}
               </span>
@@ -661,7 +651,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
         {/* Input bar */}
         <div
           className={cn(
-            `flex items-end gap-1 px-2 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 ${ui.inputBar}`,
+            `flex items-end gap-1 px-2 py-1.5 transition-colors focus-within:border-primary/30 ${ui.inputBar}`,
             replyId && 'rounded-tl-none rounded-tr-none border-t-0',
           )}
         >
@@ -677,7 +667,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
                 e.target.value = '';
               }}
             />
-            <span className="inline-flex size-8 items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]">
+            <span className="inline-flex size-8 items-center justify-center rounded-xl text-muted transition-colors hover:bg-surface-secondary/40 hover:text-foreground">
               <PaperclipIcon size={16} />
             </span>
           </label>
@@ -690,7 +680,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder={`Message #${channelName || 'salon'}`}
-            className="min-h-9 max-h-48 flex-1 resize-none border-0 bg-transparent py-1.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none"
+            className="min-h-9 max-h-48 flex-1 resize-none border-0 bg-transparent py-1.5 text-sm text-foreground placeholder:text-muted focus:outline-none"
             rows={1}
           />
 
@@ -710,8 +700,8 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
               className={cn(
                 'size-8 rounded-xl transition-all',
                 messageInput.trim()
-                  ? 'bg-[var(--accent)] text-[var(--accent-foreground)]'
-                  : 'bg-[var(--surface-secondary)] text-muted-foreground opacity-50',
+                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30'
+                  : 'bg-primary/15 text-primary/60 hover:bg-primary/25 hover:text-primary',
               )}
               onClick={handleSend}
               disabled={!messageInput.trim()}
