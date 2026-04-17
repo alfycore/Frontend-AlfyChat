@@ -392,15 +392,23 @@ export function ChannelList({
 
   // ── Conversations (DM mode) ──────────────────────────────────────────────
 
-  const loadConversations = useCallback(async () => {
+  const loadConversations = useCallback(async (attempt = 0) => {
     // Ne pas charger si pas encore authentifié
     const token = typeof window !== 'undefined' ? localStorage.getItem('alfychat_token') : null;
     if (!token) return;
-    setConversationsLoading(true);
-    setConversationsError(false);
+    if (attempt === 0) {
+      setConversationsLoading(true);
+      setConversationsError(false);
+    }
     try {
       const response = await api.getConversations();
       if (!response.success || !response.data) {
+        // Auto-retry jusqu'à 3 fois en cas d'erreur transitoire (502, 503…)
+        if (attempt < 3) {
+          const delay = attempt === 0 ? 1500 : attempt === 1 ? 3000 : 5000;
+          setTimeout(() => loadConversationsRef.current(attempt + 1), delay);
+          return;
+        }
         setConversationsError(true);
         setConversationsLoading(false);
         return;
@@ -505,6 +513,11 @@ export function ChannelList({
       setConversationsLoading(false);
     } catch (e) {
       console.error('Erreur chargement conversations:', e);
+      if (attempt < 3) {
+        const delay = attempt === 0 ? 1500 : attempt === 1 ? 3000 : 5000;
+        setTimeout(() => loadConversationsRef.current(attempt + 1), delay);
+        return;
+      }
       setConversationsError(true);
       setConversationsLoading(false);
     }
