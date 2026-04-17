@@ -6,6 +6,7 @@ import {
   Maximize2Icon as MaximizeIcon, LayoutGridIcon, Link2Icon,
   Trash2Icon, MoreHorizontalIcon, CloudIcon, GitBranchIcon,
   Layers3Icon, RotateCcwIcon, RadioIcon, MonitorIcon, ServerIcon,
+  PencilIcon,
 } from '@/components/icons';
 import { api } from '@/lib/api';
 
@@ -142,12 +143,13 @@ function ConnPath({ from, to, onDelete }: { from: Pos; to: Pos; onDelete?: () =>
 // ── Service card ───────────────────────────────────────────────────────────────
 
 function ServiceCard({
-  inst, pos, onDragStart, onPortClick, onDelete, isSource, canLink, selected, onSelect,
+  inst, pos, onDragStart, onPortClick, onDelete, onEditEndpoint, isSource, canLink, selected, onSelect,
 }: {
   inst: ServiceInstance; pos: Pos;
   onDragStart: (e: React.MouseEvent) => void;
   onPortClick: (e: React.MouseEvent, side: 'left' | 'right') => void;
   onDelete: () => void;
+  onEditEndpoint: () => void;
   isSource: boolean; canLink: boolean; selected: boolean; onSelect: () => void;
 }) {
   const c = COLORS[inst.serviceType];
@@ -200,6 +202,14 @@ function ServiceCard({
                 style={{ position: 'absolute', right: 0, top: '100%', zIndex: 100, background: '#1d1d21', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 4, minWidth: 130, boxShadow: '0 6px 20px rgba(0,0,0,0.6)' }}
                 onMouseDown={e => e.stopPropagation()}
               >
+                <button
+                  style={{ width: '100%', padding: '6px 10px', textAlign: 'left', fontSize: 12, color: 'rgba(255,255,255,0.65)', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 5, display: 'flex', alignItems: 'center', gap: 7 }}
+                  onClick={e => { e.stopPropagation(); setMenu(false); onEditEndpoint(); }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                >
+                  <PencilIcon size={11} /> Modifier le lien
+                </button>
                 <button
                   style={{ width: '100%', padding: '6px 10px', textAlign: 'left', fontSize: 12, color: '#f87171', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 5, display: 'flex', alignItems: 'center', gap: 7 }}
                   onClick={e => { e.stopPropagation(); setMenu(false); onDelete(); }}
@@ -361,6 +371,59 @@ function StaticNodeCard({ id, pos, onDragStart, onPortClick, isSource, canLink, 
   );
 }
 
+// ── Edit Endpoint Modal ───────────────────────────────────────────────────────
+
+function EditEndpointModal({ inst, onClose, onDone }: { inst: ServiceInstance; onClose: () => void; onDone: (newEndpoint: string) => void }) {
+  const [endpoint, setEndpoint] = useState(inst.endpoint);
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const c = COLORS[inst.serviceType];
+
+  const submit = async () => {
+    const trimmed = endpoint.trim();
+    if (!trimmed || !/^https?:\/\/.+/.test(trimmed)) { setErr('URL HTTP(S) valide requise.'); return; }
+    setBusy(true);
+    try {
+      const res = await api.updateAdminServiceEndpoint(inst.id, trimmed);
+      if ((res as any).success) { onDone(trimmed); onClose(); }
+      else setErr((res as any).error ?? 'Erreur');
+    } catch { setErr('Erreur réseau'); }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
+      <div style={{ position: 'relative', width: 420, background: '#0e0e10', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.7)' }} onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} style={{ position: 'absolute', right: 16, top: 16, background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', lineHeight: 0 }}>
+          <XIcon size={16} />
+        </button>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.88)', marginBottom: 4 }}>Modifier le lien</div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginBottom: 20 }}>{inst.id}</div>
+
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 6 }}>Endpoint</div>
+        <input
+          autoFocus
+          style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${c.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'white', outline: 'none', boxSizing: 'border-box' }}
+          value={endpoint}
+          onChange={e => { setEndpoint(e.target.value); setErr(''); }}
+          onKeyDown={e => e.key === 'Enter' && submit()}
+          placeholder="https://service.example.com"
+        />
+
+        {err && <div style={{ marginTop: 10, fontSize: 12, color: '#f87171' }}>{err}</div>}
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, color: 'rgba(255,255,255,0.35)', background: 'none', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>Annuler</button>
+          <button onClick={submit} disabled={busy}
+            style={{ flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.15s', background: c.bg, border: `1px solid ${c.border}`, color: c.text, opacity: busy ? 0.5 : 1 }}>
+            {busy ? 'Mise à jour…' : 'Mettre à jour'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Add Modal ─────────────────────────────────────────────────────────────────
 
 function AddModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
@@ -455,6 +518,7 @@ export function ServicesPanel() {
   const [linking, setLinking] = useState<string | null>(null);
   const [mousePosWorld, setMousePosWorld] = useState<Pos>({ x: 0, y: 0 });
   const [showAdd, setShowAdd] = useState(false);
+  const [editEndpointInst, setEditEndpointInst] = useState<ServiceInstance | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [showConns, setShowConns] = useState(true);
   const [pan, setPan] = useState({ x: 60, y: 40 });
@@ -754,6 +818,7 @@ export function ServicesPanel() {
                 onDragStart={e => onDragStart(e, inst.id)}
                 onPortClick={(e, _side) => onPortClick(e, inst.id)}
                 onDelete={() => onDelete(inst.id)}
+                onEditEndpoint={() => setEditEndpointInst(inst)}
                 isSource={linking === inst.id}
                 canLink={linking !== null && linking !== inst.id}
                 selected={selected === inst.id}
@@ -855,6 +920,15 @@ export function ServicesPanel() {
       )}
 
       {showAdd && <AddModal onClose={() => setShowAdd(false)} onDone={fetch_} />}
+      {editEndpointInst && (
+        <EditEndpointModal
+          inst={editEndpointInst}
+          onClose={() => setEditEndpointInst(null)}
+          onDone={newEndpoint => {
+            setInstances(prev => prev.map(i => i.id === editEndpointInst.id ? { ...i, endpoint: newEndpoint } : i));
+          }}
+        />
+      )}
     </div>
   );
 }

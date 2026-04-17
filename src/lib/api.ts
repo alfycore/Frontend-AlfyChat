@@ -1012,6 +1012,13 @@ class ApiService {
     });
   }
 
+  async updateAdminServiceEndpoint(id: string, endpoint: string) {
+    return this.request(`/api/admin/services/${encodeURIComponent(id)}/endpoint`, {
+      method: 'PUT',
+      body: JSON.stringify({ endpoint }),
+    });
+  }
+
   async rotateAdminServiceKey(id: string) {
     return this.request<{ success: boolean; serviceKey: string }>(
       `/api/admin/services/${encodeURIComponent(id)}/rotate-key`,
