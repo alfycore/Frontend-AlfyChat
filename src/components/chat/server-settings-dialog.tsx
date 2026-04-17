@@ -363,7 +363,7 @@ export function ServerSettingsDialog({
     socketService.updateServerViaNode(serverId, {
       name: name.trim(),
       description,
-      isPublic: isPublic && !requireInvite,
+      isPublic: isPublic,
       iconUrl: nextIconUrl,
       bannerUrl: nextBannerUrl,
     });
@@ -563,7 +563,7 @@ export function ServerSettingsDialog({
             <p className="text-sm font-semibold text-foreground">{ss.general.publicServer}</p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{ss.general.publicServerDesc}</p>
           </div>
-          <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+          <Switch checked={isPublic} onCheckedChange={(v) => { setIsPublic(v); setRequireInvite(!v); }} />
         </CardSurface>
       </div>
     );
@@ -658,7 +658,7 @@ export function ServerSettingsDialog({
             <p className="text-sm font-semibold text-foreground">{ss.permissions.requireInvite}</p>
             <p className="mt-1 text-sm text-muted-foreground">{ss.permissions.requireInviteDesc}</p>
           </div>
-          <Switch checked={requireInvite} onCheckedChange={canManageServer ? setRequireInvite : undefined} disabled={!canManageServer} />
+          <Switch checked={requireInvite} onCheckedChange={canManageServer ? (v) => { setRequireInvite(v); setIsPublic(!v); } : undefined} disabled={!canManageServer} />
         </CardSurface>
 
         {canManageServer ? (

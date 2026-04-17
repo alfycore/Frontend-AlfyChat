@@ -163,16 +163,17 @@ export default function DiscoverServerPage() {
             </div>
 
             {isLoading ? (
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
-                    <Skeleton className="h-20 w-full rounded-none" />
-                    <div className="space-y-2 px-3 pb-3 pt-6">
+                  <div key={i} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+                    <Skeleton className="h-24 w-full rounded-none" />
+                    <div className="px-4 pb-4">
+                      <Skeleton className="-mt-6 mb-3 size-12 rounded-2xl ring-[3px] ring-card" />
                       <Skeleton className="h-3.5 w-28" />
-                      <Skeleton className="h-3 w-16" />
-                      <Skeleton className="h-3 w-full" />
-                      <Skeleton className="h-3 w-3/4" />
-                      <Skeleton className="mt-1 h-7 w-full rounded-lg" />
+                      <Skeleton className="mt-1.5 h-3 w-20" />
+                      <Skeleton className="mt-2 h-3 w-full" />
+                      <Skeleton className="mt-1 h-3 w-3/4" />
+                      <Skeleton className="mt-3 h-8 w-full rounded-xl" />
                     </div>
                   </div>
                 ))}
@@ -194,32 +195,32 @@ export default function DiscoverServerPage() {
                 </div>
               </div>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredServers.map((server) => (
                   <div
                     key={server.id}
-                    className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors duration-150 hover:border-border/80 hover:bg-card/80"
+                    className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md"
                   >
                     {/* Banner */}
-                    <div className="relative h-20 shrink-0 overflow-hidden bg-muted">
+                    <div className="relative h-24 shrink-0 overflow-hidden">
                       {server.banner_url ? (
                         <img
                           src={resolveMediaUrl(server.banner_url)}
                           alt=""
-                          className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                          className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="size-full bg-linear-to-br from-primary/20 via-purple-500/10 to-blue-500/15" />
+                        <div className="size-full bg-linear-to-br from-primary/30 via-purple-500/20 to-blue-500/25" />
                       )}
-                      <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+                      <div className="absolute inset-0 bg-linear-to-t from-card via-card/10 to-transparent" />
 
                       {/* Badges */}
-                      <div className="absolute right-2 top-2 flex gap-1">
+                      <div className="absolute right-2.5 top-2.5 flex gap-1">
                         {server.is_certified && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="flex items-center gap-0.5 rounded-md bg-blue-500/80 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-                                <CheckCircle2Icon size={10} />
+                              <span className="flex items-center gap-1 rounded-full bg-blue-500/85 px-2 py-0.5 text-[10px] font-bold text-white shadow backdrop-blur-sm">
+                                <CheckCircle2Icon size={9} />
                                 Certifié
                               </span>
                             </TooltipTrigger>
@@ -229,8 +230,8 @@ export default function DiscoverServerPage() {
                         {server.is_partnered && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="flex items-center gap-0.5 rounded-md bg-violet-500/80 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-                                <HandshakeIcon size={10} />
+                              <span className="flex items-center gap-1 rounded-full bg-violet-500/85 px-2 py-0.5 text-[10px] font-bold text-white shadow backdrop-blur-sm">
+                                <HandshakeIcon size={9} />
                                 Partenaire
                               </span>
                             </TooltipTrigger>
@@ -238,50 +239,48 @@ export default function DiscoverServerPage() {
                           </Tooltip>
                         )}
                       </div>
+                    </div>
 
-                      {/* Avatar overlay */}
-                      <div className="absolute -bottom-4 left-3">
-                        <Avatar className="size-9 rounded-xl ring-2 ring-card">
+                    {/* Avatar + info */}
+                    <div className="flex flex-1 flex-col px-4 pb-4">
+                      {/* Avatar overlapping banner */}
+                      <div className="-mt-6 mb-3">
+                        <Avatar className="size-12 rounded-2xl ring-[3px] ring-card shadow-md">
                           <AvatarImage src={resolveMediaUrl(server.icon_url)} className="object-cover" />
-                          <AvatarFallback className="rounded-xl bg-muted text-[11px] font-bold">
+                          <AvatarFallback className="rounded-2xl bg-muted text-[12px] font-extrabold tracking-tight">
                             {server.name.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       </div>
-                    </div>
 
-                    {/* Info */}
-                    <div className="flex flex-1 flex-col px-3 pb-3 pt-6">
-                      <p className="truncate text-[13px] font-semibold leading-tight">{server.name}</p>
-                      <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground/60">
-                        <UsersIcon size={10} />
+                      <p className="truncate text-[13px] font-bold leading-tight tracking-tight">{server.name}</p>
+                      <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
+                        <span className="inline-block size-1.5 rounded-full bg-green-400" />
+                        <UsersIcon size={9} />
                         {(server.member_count || 0).toLocaleString(locale)} membres
                       </div>
-                      {server.description && (
-                        <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground/70">
+
+                      {server.description ? (
+                        <p className="mt-2 line-clamp-2 flex-1 text-[11px] leading-relaxed text-muted-foreground/60">
                           {server.description}
                         </p>
+                      ) : (
+                        <div className="flex-1" />
                       )}
-                      <div className="mt-auto pt-3">
-                        <Button
-                          size="sm"
-                          className="h-7 w-full gap-1.5 rounded-lg text-[12px] font-semibold"
-                          disabled={joiningId === server.id}
-                          onClick={() => handleJoin(server.id)}
-                        >
-                          {joiningId === server.id ? (
-                            <>
-                              <Loader2Icon size={12} className="animate-spin" />
-                              Rejoindre
-                            </>
-                          ) : (
-                            <>
-                              <ArrowRightIcon size={12} />
-                              Rejoindre
-                            </>
-                          )}
-                        </Button>
-                      </div>
+
+                      <Button
+                        size="sm"
+                        className="mt-3 h-8 w-full gap-1.5 rounded-xl text-[12px] font-semibold transition-all duration-150"
+                        disabled={joiningId === server.id}
+                        onClick={() => handleJoin(server.id)}
+                      >
+                        {joiningId === server.id ? (
+                          <Loader2Icon size={12} className="animate-spin" />
+                        ) : (
+                          <ArrowRightIcon size={12} className="transition-transform duration-150 group-hover:translate-x-0.5" />
+                        )}
+                        Rejoindre
+                      </Button>
                     </div>
                   </div>
                 ))}
