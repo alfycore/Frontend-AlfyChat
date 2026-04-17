@@ -199,7 +199,7 @@ export function GroupSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl p-0 shadow-2xl">
+      <DialogContent showCloseButton={false} className="h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Paramètres du groupe</DialogTitle>
           </DialogHeader>
@@ -207,8 +207,8 @@ export function GroupSettingsDialog({
           {/* ── Sidebar ── */}
           <aside className="flex w-48 shrink-0 flex-col border-r border-border/40 bg-background/80 py-6">
             <div className="mb-4 px-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Groupe</p>
-              <p className="mt-0.5 truncate text-sm font-medium text-foreground">{group?.name || 'Groupe'}</p>
+              <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">Groupe</p>
+              <p className="mt-1 truncate font-heading text-sm tracking-tight text-foreground">{group?.name || 'Groupe'}</p>
             </div>
 
             <nav className="flex flex-col gap-0.5 px-2">
@@ -259,12 +259,12 @@ export function GroupSettingsDialog({
               {section === 'general' && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-foreground">Paramètres généraux</h2>
+                    <h2 className="font-heading text-xl tracking-tight text-foreground">Paramètres généraux</h2>
                     <p className="mt-1 text-sm text-muted-foreground">Gérez les paramètres de votre groupe.</p>
                   </div>
 
                   <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
                       Nom du groupe
                     </span>
                     <div className="flex gap-2">
@@ -286,12 +286,12 @@ export function GroupSettingsDialog({
                     </div>
                   </div>
 
-                  <div className="space-y-3 rounded-2xl border border-red-500/30 bg-red-500/5 p-5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-red-500/70">Zone dangereuse</p>
+                  <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
+                    <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-destructive/70">Zone dangereuse</p>
                     <div className="space-y-2">
                       <Button
                         variant="outline"
-                        className="w-full justify-start rounded-xl text-red-500"
+                        className="w-full justify-start rounded-xl text-destructive"
                         onClick={() => {
                           onOpenChange(false);
                           onLeave?.();
@@ -319,7 +319,7 @@ export function GroupSettingsDialog({
               {section === 'members' && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-foreground">Membres</h2>
+                    <h2 className="font-heading text-xl tracking-tight text-foreground">Membres</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Gérez les membres du groupe ({group?.participants.length || 0}).
                     </p>
@@ -342,7 +342,7 @@ export function GroupSettingsDialog({
                   {showAddMembers && (
                     <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                        <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
                           Ajouter des amis
                         </p>
                         <Button
@@ -393,9 +393,9 @@ export function GroupSettingsDialog({
                                     isSelected ? 'bg-primary/5' : 'hover:bg-muted/80',
                                   )}
                                 >
-                                  <Avatar className="size-7">
-                                    <AvatarImage src={friend.avatarUrl ? resolveMediaUrl(friend.avatarUrl) : undefined} />
-                                    <AvatarFallback>{friend.displayName[0]}</AvatarFallback>
+                                  <Avatar className="size-7 rounded-lg">
+                                    <AvatarImage src={friend.avatarUrl ? resolveMediaUrl(friend.avatarUrl) : undefined} className="rounded-lg" />
+                                    <AvatarFallback className="rounded-lg bg-linear-to-br from-primary to-[#7c3aed] text-[11px] font-semibold text-primary-foreground">{friend.displayName[0]}</AvatarFallback>
                                   </Avatar>
                                   <span className="flex-1 text-left text-sm">{friend.displayName}</span>
                                   <div
@@ -426,7 +426,7 @@ export function GroupSettingsDialog({
 
                   <div className="rounded-2xl border border-border/60 bg-surface-secondary/30">
                     <div className="border-b border-border/60 px-5 py-4">
-                      <h3 className="text-base font-semibold">Membres du groupe</h3>
+                      <h3 className="font-heading text-base tracking-tight">Membres du groupe</h3>
                     </div>
                     <ScrollArea className="max-h-64 overflow-hidden">
                       <div className="divide-y divide-border/60">
@@ -440,9 +440,9 @@ export function GroupSettingsDialog({
                               key={participant.userId}
                               className="flex items-center gap-2.5 px-5 py-3 transition-colors hover:bg-muted/40"
                             >
-                              <Avatar size="sm">
-                                <AvatarImage src={participant.avatarUrl ? resolveMediaUrl(participant.avatarUrl) : undefined} />
-                                <AvatarFallback>{(participant.displayName || participant.username)?.[0] || '?'}</AvatarFallback>
+                              <Avatar size="sm" className="rounded-lg">
+                                <AvatarImage src={participant.avatarUrl ? resolveMediaUrl(participant.avatarUrl) : undefined} className="rounded-lg" />
+                                <AvatarFallback className="rounded-lg bg-linear-to-br from-primary to-[#7c3aed] text-[11px] font-semibold text-primary-foreground">{(participant.displayName || participant.username)?.[0] || '?'}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1">
@@ -450,7 +450,7 @@ export function GroupSettingsDialog({
                                     {participant.displayName || participant.username}
                                   </p>
                                   {participant.role === 'owner' && (
-                                    <CrownIcon size={12} className="shrink-0 text-yellow-500" />
+                                    <CrownIcon size={12} className="shrink-0 text-amber-500" />
                                   )}
                                   {participant.userId === user?.id && (
                                     <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">Vous</Badge>
@@ -465,7 +465,7 @@ export function GroupSettingsDialog({
                                   <Button
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 text-red-500"
+                                    className="shrink-0 text-destructive"
                                     onClick={() => handleRemoveMember(participant.userId)}
                                   >
                                     <UserMinusIcon size={16} />

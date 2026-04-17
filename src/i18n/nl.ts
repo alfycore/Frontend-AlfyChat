@@ -57,8 +57,6 @@
     friends:        'Vrienden',
     changelogs:     'Changelogs',
     hosting:        'Hosting',
-    changelogs:     'Changelogs',
-    hosting:        'Hosting',
     groups:         'Groepen',
     directMessages: 'Directe berichten',
     noConversations:'Geen gesprekken',

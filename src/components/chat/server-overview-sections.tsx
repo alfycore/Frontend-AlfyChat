@@ -65,7 +65,7 @@ export function ServerOverviewHero({ server }: { server: ServerOverviewInfo | nu
           <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/35 to-background" />
         </div>
       ) : (
-        <div className="h-40 w-full bg-linear-to-br from-sky-500/20 via-cyan-500/10 to-indigo-500/20">
+        <div className="h-40 w-full bg-linear-to-br from-primary/25 via-[#7c3aed]/15 to-primary/10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_32%)]" />
           <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/20 to-background" />
         </div>
@@ -77,19 +77,19 @@ export function ServerOverviewHero({ server }: { server: ServerOverviewInfo | nu
             src={server?.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
             alt={server?.name}
           />
-          <AvatarFallback className="rounded-3xl bg-accent text-2xl font-bold text-accent-foreground">
+          <AvatarFallback className="rounded-3xl bg-linear-to-br from-primary to-[#7c3aed] font-heading text-2xl tracking-tight text-primary-foreground">
             {server?.name?.charAt(0)?.toUpperCase() || 'S'}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 pb-1">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <Badge variant={server?.isPublic ? 'default' : 'secondary'} className="gap-1.5 text-[10px] font-semibold uppercase tracking-wider">
+            <Badge variant={server?.isPublic ? 'default' : 'secondary'} className="gap-1.5 font-heading text-[10px] font-semibold uppercase tracking-[0.15em]">
               {server?.isPublic ? <GlobeIcon size={11} /> : <LockIcon size={11} />}
               {server?.isPublic ? 'Serveur public' : 'Serveur privé'}
             </Badge>
           </div>
-          <h1 className="truncate text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <h1 className="truncate font-heading text-2xl tracking-tight text-foreground sm:text-3xl">
             {server?.name || 'Serveur'}
           </h1>
         </div>
@@ -117,7 +117,7 @@ export function ServerOverviewStats({
       </Badge>
 
       <Badge variant="secondary" className="gap-2 px-3 py-1.5 text-[12px]">
-        <span className="size-2 rounded-full bg-green-500" />
+        <span className="size-2 rounded-full bg-success" />
         <strong className="text-foreground">{onlineCount}</strong> en ligne
       </Badge>
 
@@ -140,7 +140,7 @@ export function ServerOverviewDescription({ description }: { description?: strin
 
   return (
     <section className={cn('rounded-3xl p-6', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+      <p className="mb-2 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
         À propos
       </p>
       <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
@@ -164,10 +164,10 @@ export function ServerChannelPreviewList({
     <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+          <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
             Salons
           </p>
-          <h2 className="mt-1 text-lg font-semibold text-foreground">
+          <h2 className="mt-1 font-heading text-lg tracking-tight text-foreground">
             Explorer le serveur
           </h2>
         </div>
@@ -237,10 +237,10 @@ export function ServerMembersPreview({ members }: { members: ServerOverviewMembe
   return (
     <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
       <div className="mb-4">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+        <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
           Membres
         </p>
-        <h2 className="mt-1 text-lg font-semibold text-foreground">
+        <h2 className="mt-1 font-heading text-lg tracking-tight text-foreground">
           Actifs récemment
         </h2>
       </div>
@@ -249,9 +249,9 @@ export function ServerMembersPreview({ members }: { members: ServerOverviewMembe
         {members.slice(0, 8).map((member) => (
           <div key={member.userId} className="flex items-center gap-3 rounded-2xl px-2 py-2 hover:bg-muted/30">
             <div className="relative shrink-0">
-              <Avatar className="size-10 border border-border/40">
-                <AvatarImage src={member.avatarUrl ? resolveMediaUrl(member.avatarUrl) : undefined} alt={member.username} />
-                <AvatarFallback>
+              <Avatar className="size-10 rounded-xl border border-border/40">
+                <AvatarImage src={member.avatarUrl ? resolveMediaUrl(member.avatarUrl) : undefined} alt={member.username} className="rounded-xl" />
+                <AvatarFallback className="rounded-xl bg-linear-to-br from-primary to-[#7c3aed] text-[12px] font-semibold text-primary-foreground">
                   {(member.displayName || member.username || '?').slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>

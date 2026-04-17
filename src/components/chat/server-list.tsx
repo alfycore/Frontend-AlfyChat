@@ -627,11 +627,11 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-sm shadow-primary/10">
                 <Link2Icon size={18} className="text-primary" />
               </div>
               <div>
-                <DialogTitle>{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</DialogTitle>
+                <DialogTitle className="font-heading tracking-tight">{t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}</DialogTitle>
                 <DialogDescription>Entrez un code ou un lien d&apos;invitation</DialogDescription>
               </div>
             </div>

@@ -75,16 +75,16 @@ export function RGPDClient() {
                 </div>
                 <div className="space-y-3 px-5 pb-5 text-sm leading-relaxed text-[var(--muted)]">
                   <p>
-                    {section.settingsPart
+                    {('settingsPart' in section && section.settingsPart)
                       ? renderWithNodes(section.body, {
                           settings: <strong className="text-[var(--foreground)]">{section.settingsPart}</strong>,
                         })
                       : section.body}
                   </p>
 
-                  {section.bullets && (
+                  {('bullets' in section && section.bullets) && (
                     <ul className="mt-2 list-inside list-disc space-y-1">
-                      {section.bullets.map((b) => (
+                      {(section.bullets as unknown as string[]).map((b) => (
                         <li key={b}>{b}</li>
                       ))}
                     </ul>

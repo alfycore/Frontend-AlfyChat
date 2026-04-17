@@ -42,10 +42,10 @@ export function CallBar() {
 
   return (
     <div className={cn(
-      'shrink-0 border-t px-2 py-2',
+      'shrink-0 border-t px-2 py-2 backdrop-blur-sm',
       isConnected
-        ? 'border-green-500/20 bg-green-500/6'
-        : 'border-[var(--border)]/30 bg-[var(--background)]/60',
+        ? 'border-success/25 bg-success/[0.06]'
+        : 'border-border/40 bg-card/60',
     )}>
       {/* Status row */}
       <div
@@ -53,7 +53,7 @@ export function CallBar() {
         tabIndex={0}
         onClick={handleNavigate}
         onKeyDown={(e) => e.key === 'Enter' && handleNavigate()}
-        className="mb-1.5 flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-white/5"
+        className="mb-1.5 flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-foreground/6"
       >
         {/* Animated signal dot */}
         <span className="relative flex size-2 shrink-0">
@@ -63,13 +63,13 @@ export function CallBar() {
               <span className="relative inline-flex size-2 rounded-full bg-success" />
             </>
           ) : (
-            <span className="relative inline-flex size-2 rounded-full bg-[var(--accent)]" />
+            <span className="relative inline-flex size-2 rounded-full bg-primary" />
           )}
         </span>
 
         <span className={cn(
-          'flex-1 truncate text-[11px] font-semibold',
-          isConnected ? 'text-success' : 'text-[var(--muted)]',
+          'flex-1 truncate font-heading text-[11px] font-semibold tracking-tight',
+          isConnected ? 'text-success' : 'text-muted-foreground',
         )}>
           {statusLabel[callStatus] ?? 'Appel…'}
         </span>
@@ -85,21 +85,21 @@ export function CallBar() {
       <div className="flex items-center gap-1 px-1">
         {/* Call type icon */}
         <div className={cn(
-          'mr-1 flex size-6 shrink-0 items-center justify-center rounded-md',
-          isConnected ? 'bg-green-500/15' : 'bg-white/6',
+          'mr-1 flex size-6 shrink-0 items-center justify-center rounded-lg ring-1',
+          isConnected ? 'bg-success/15 ring-success/25' : 'bg-foreground/[0.04] ring-border/30',
         )}>
           {callType === 'video'
-            ? <VideoIcon size={12} className={isConnected ? 'text-success' : 'text-white/50'} />
-            : <PhoneIcon size={12} className={isConnected ? 'text-success' : 'text-white/50'} />
+            ? <VideoIcon size={12} className={isConnected ? 'text-success' : 'text-muted-foreground/60'} />
+            : <PhoneIcon size={12} className={isConnected ? 'text-success' : 'text-muted-foreground/60'} />
           }
         </div>
 
-        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-[var(--foreground)]/70">
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground/70">
           {callerName || 'Appel en cours'}
         </span>
 
         {isScreenSharing && (
-          <MonitorUpIcon size={12} className="shrink-0 text-[var(--accent)]" aria-label="Partage d'écran" />
+          <MonitorUpIcon size={12} className="shrink-0 text-primary" aria-label="Partage d'écran" />
         )}
 
         {/* Mute toggle */}
@@ -111,8 +111,8 @@ export function CallBar() {
           className={cn(
             'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-150 hover:scale-110 active:scale-95',
             isMuted
-              ? 'bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'
-              : 'bg-white/6 text-[var(--muted)] hover:bg-white/12 hover:text-[var(--foreground)]',
+              ? 'bg-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground'
+              : 'bg-foreground/[0.05] text-muted-foreground hover:bg-foreground/10 hover:text-foreground',
           )}
         >
           {isMuted ? <MicOffIcon size={13} /> : <MicIcon size={13} />}
@@ -124,7 +124,7 @@ export function CallBar() {
           onClick={endCall}
           aria-label="Raccrocher"
           title="Raccrocher"
-          className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-red-500/15 text-red-400 transition-all duration-150 hover:scale-110 hover:bg-red-500 hover:text-white active:scale-95"
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-destructive/15 text-destructive transition-all duration-150 hover:scale-110 hover:bg-destructive hover:text-destructive-foreground active:scale-95"
         >
           <PhoneOffIcon size={13} />
         </button>

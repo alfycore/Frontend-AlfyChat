@@ -85,28 +85,6 @@ export function AboutClient() {
 
       <Separator />
 
-      {/* Timeline */}
-      <div className="space-y-6">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{s.historyLabel}</p>
-        <MotionStagger stagger={0.08} className="relative space-y-0 border-l border-border pl-6">
-          {s.milestones.map((m) => (
-            <MotionStaggerItem key={m.year} direction="left" distance={16}>
-              <div className="relative pb-8 last:pb-0">
-                <div className="absolute -left-[25px] flex size-3 items-center justify-center rounded-full border-2 border-primary bg-background" />
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-primary">{m.year}</span>
-                    <span className="font-heading text-sm">{m.label}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{m.desc}</p>
-                </div>
-              </div>
-            </MotionStaggerItem>
-          ))}
-        </MotionStagger>
-      </div>
-
-      <Separator />
 
       {/* Stats */}
       <div className="space-y-4">

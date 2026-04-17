@@ -19,6 +19,7 @@ import { useUIStyle } from '@/hooks/use-ui-style';
 import { statusColor, statusLabel, SELECTABLE_STATUSES, type UserStatus } from '@/lib/status';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useVoice } from '@/hooks/use-voice';
+import { NetworkQualityIndicator } from '@/components/chat/network-quality-indicator';
 
 interface User {
   id: string;
@@ -152,7 +153,7 @@ export function UserPanel({ user }: UserPanelProps) {
                 updateUser({ customStatus: null });
                 setCustomStatusDraft('');
               }}>
-                <span className="text-[13px] text-red-400">Effacer le statut</span>
+                <span className="text-[13px] text-destructive">Effacer le statut</span>
               </DropdownMenuItem>
             )}
 
@@ -229,6 +230,9 @@ export function UserPanel({ user }: UserPanelProps) {
           </TooltipTrigger>
           <TooltipContent side="top">{isDeafened ? 'Réactiver le son' : 'Se mettre en sourdine'}</TooltipContent>
         </Tooltip>
+        {inVoiceChannel && voiceCtx && (
+          <NetworkQualityIndicator stats={voiceCtx.networkStats} />
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

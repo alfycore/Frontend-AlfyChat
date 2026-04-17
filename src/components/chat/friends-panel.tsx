@@ -636,7 +636,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                       <div className="relative shrink-0">
                         <Avatar className="size-9">
                           <AvatarImage src={resolveMediaUrl(req.avatarUrl)} />
-                          <AvatarFallback className="bg-yellow-500/15 text-xs font-semibold text-yellow-600">
+                          <AvatarFallback className="bg-amber-500/15 text-xs font-semibold text-amber-600">
                             {req.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>

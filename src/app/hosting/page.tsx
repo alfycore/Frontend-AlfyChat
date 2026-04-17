@@ -89,7 +89,7 @@ export default function HostingMarketplacePage() {
                     : 'bg-white/5 text-muted-foreground hover:bg-white/10'
                 }`}
               >
-                {tier === 'all' ? h.filterAll : h[TIER_KEY_MAP[tier] as keyof typeof h]}
+                {tier === 'all' ? h.filterAll : h[TIER_KEY_MAP[tier] as keyof typeof h] as string}
               </button>
             ))}
           </div>

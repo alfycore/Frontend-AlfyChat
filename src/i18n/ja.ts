@@ -57,8 +57,6 @@
     friends:        'フレンド',
     changelogs:     'Changelogs',
     hosting:        'Hosting',
-    changelogs:     'Changelogs',
-    hosting:        'Hosting',
     groups:         'グループ',
     directMessages: 'ダイレクトメッセージ',
     noConversations:'会話がありません',

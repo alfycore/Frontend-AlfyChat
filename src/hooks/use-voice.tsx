@@ -23,6 +23,15 @@ export interface VoiceParticipant {
   deafened: boolean;
 }
 
+export type NetworkQuality = 'excellent' | 'good' | 'fair' | 'poor' | 'unknown';
+
+export interface NetworkStats {
+  quality: NetworkQuality;
+  rtt: number | null;       // round-trip time in ms
+  packetLoss: number | null; // percentage 0-100
+  jitter: number | null;    // seconds
+}
+
 interface VoiceState {
   /** The channel the current user is connected to */
   currentChannelId: string | null;
@@ -37,6 +46,8 @@ interface VoiceState {
   isConnecting: boolean;
   /** Audio streams from other users */
   remoteStreams: Map<string, MediaStream>;
+  /** Aggregated network quality across all active peer connections */
+  networkStats: NetworkStats;
 }
 
 interface VoiceContextType extends VoiceState {
@@ -90,6 +101,12 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   const [isDeafened, setIsDeafened] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [networkStats, setNetworkStats] = useState<NetworkStats>({
+    quality: 'unknown',
+    rtt: null,
+    packetLoss: null,
+    jitter: null,
+  });
 
   // Refs for WebRTC
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -292,6 +309,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     setParticipants([]);
     setCurrentChannelId(null);
     setCurrentServerId(null);
+    setNetworkStats({ quality: 'unknown', rtt: null, packetLoss: null, jitter: null });
 
     if (chId && sId) {
       socketService.leaveVoiceChannel(sId, chId);
@@ -497,6 +515,90 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     };
   }, [leaveChannelInternal]);
 
+  // ── Network quality polling (every 3s while in a voice channel) ──
+  useEffect(() => {
+    if (!currentChannelId) {
+      setNetworkStats({ quality: 'unknown', rtt: null, packetLoss: null, jitter: null });
+      return;
+    }
+
+    let cancelled = false;
+
+    const computeQuality = (rttMs: number | null, lossPct: number | null): NetworkQuality => {
+      if (rttMs === null && lossPct === null) return 'unknown';
+      const rtt = rttMs ?? 0;
+      const loss = lossPct ?? 0;
+      if (rtt < 100 && loss < 2) return 'excellent';
+      if (rtt < 200 && loss < 5) return 'good';
+      if (rtt < 350 && loss < 10) return 'fair';
+      return 'poor';
+    };
+
+    const pollStats = async () => {
+      const pcs = Array.from(peerConnectionsRef.current.values());
+      if (pcs.length === 0) {
+        if (!cancelled) {
+          setNetworkStats({ quality: 'unknown', rtt: null, packetLoss: null, jitter: null });
+        }
+        return;
+      }
+
+      let worstRtt: number | null = null;
+      let worstLoss: number | null = null;
+      let worstJitter: number | null = null;
+
+      for (const pc of pcs) {
+        try {
+          const report = await pc.getStats();
+          let rttSec: number | null = null;
+          let packetsLost = 0;
+          let packetsReceived = 0;
+          let jitter: number | null = null;
+
+          report.forEach((stat: any) => {
+            if (stat.type === 'candidate-pair' && stat.state === 'succeeded' && stat.nominated) {
+              if (typeof stat.currentRoundTripTime === 'number') {
+                rttSec = stat.currentRoundTripTime;
+              }
+            }
+            if (stat.type === 'inbound-rtp' && stat.kind === 'audio') {
+              if (typeof stat.packetsLost === 'number') packetsLost += stat.packetsLost;
+              if (typeof stat.packetsReceived === 'number') packetsReceived += stat.packetsReceived;
+              if (typeof stat.jitter === 'number' && (jitter === null || stat.jitter > jitter)) {
+                jitter = stat.jitter;
+              }
+            }
+          });
+
+          const rttMs = rttSec !== null ? Math.round((rttSec as number) * 1000) : null;
+          const totalPackets = packetsLost + packetsReceived;
+          const lossPct = totalPackets > 0 ? (packetsLost / totalPackets) * 100 : null;
+
+          if (rttMs !== null && (worstRtt === null || rttMs > worstRtt)) worstRtt = rttMs;
+          if (lossPct !== null && (worstLoss === null || lossPct > worstLoss)) worstLoss = lossPct;
+          if (jitter !== null && (worstJitter === null || jitter > worstJitter)) worstJitter = jitter;
+        } catch {
+          // ignore stats errors for this peer
+        }
+      }
+
+      if (cancelled) return;
+      setNetworkStats({
+        quality: computeQuality(worstRtt, worstLoss),
+        rtt: worstRtt,
+        packetLoss: worstLoss,
+        jitter: worstJitter,
+      });
+    };
+
+    pollStats();
+    const interval = setInterval(pollStats, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [currentChannelId]);
+
   const value: VoiceContextType = {
     currentChannelId,
     currentServerId,
@@ -506,6 +608,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     isDeafened,
     isConnecting,
     remoteStreams,
+    networkStats,
     joinChannel,
     leaveChannel,
     toggleMute,

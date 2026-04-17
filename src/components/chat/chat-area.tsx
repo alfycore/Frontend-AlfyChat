@@ -1128,7 +1128,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                     {att.isImage ? (
                       <ImageIcon size={11} className="shrink-0 text-blue-500" />
                     ) : (
-                      <FileTextIcon size={11} className="shrink-0 text-orange-500" />
+                      <FileTextIcon size={11} className="shrink-0 text-amber-500" />
                     )}
                     <span className="max-w-30 truncate">{att.name}</span>
                     <button
@@ -1202,6 +1202,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           isLoadingMore={isLoadingMoreMessages}
           onClose={() => setSearchOpen(false)}
           onJumpToMessage={(messageId) => {
+            // Sanitize: n'accepter que des UUID valides pour éviter l'injection CSS selector
+            if (!/^[a-f0-9-]{36}$/i.test(messageId)) return;
             setHighlightedMessageId(messageId);
             setTimeout(() => setHighlightedMessageId(null), 2000);
             const el = document.querySelector(`[data-message-id="${messageId}"]`);

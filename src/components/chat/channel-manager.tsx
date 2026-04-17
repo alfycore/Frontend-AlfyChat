@@ -282,8 +282,8 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
   };
 
   const DeleteConfirm = ({ target, indent = false }: { target: Channel; indent?: boolean }) => (
-    <div className={cn('rounded-2xl border border-red-500/30 bg-red-500/5 p-4 space-y-3', indent && 'ml-4')}>
-      <p className="text-[13px] font-semibold text-red-400">
+    <div className={cn('rounded-2xl border border-destructive/30 bg-destructive/5 p-4 space-y-3', indent && 'ml-4')}>
+      <p className="text-[13px] font-semibold text-destructive">
         {target.type === 'category' ? 'Supprimer la catégorie' : 'Supprimer le salon'}
       </p>
       <p className="text-[13px] text-[var(--muted)]">
@@ -295,7 +295,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
       </p>
       <div className="flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>Annuler</Button>
-        <Button size="sm" className="bg-red-500 text-white hover:bg-red-600" onClick={handleDelete}>Supprimer</Button>
+        <Button size="sm" className="bg-destructive text-white hover:bg-destructive/90" onClick={handleDelete}>Supprimer</Button>
       </div>
     </div>
   );
@@ -330,7 +330,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           <Button
             variant="ghost"
             size="icon-sm"
-            className="text-red-500"
+            className="text-destructive"
             onClick={() => setDeleteTarget(deleteTarget?.id === channel.id ? null : channel)}
             disabled={isEditorOpen}
           >
@@ -377,7 +377,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-red-500"
+                  className="text-destructive"
                   onClick={() => setDeleteTarget(deleteTarget?.id === cat.id ? null : cat)}
                   disabled={isEditorOpen}>
                   <Trash2Icon size={14} />
@@ -687,8 +687,8 @@ function ChannelPermissionsEditor({
                           <span
                             className={cn(
                               'flex size-5 shrink-0 items-center justify-center rounded-lg border text-xs transition-colors',
-                              state === 'allow' && 'border-green-500 bg-green-500/10 text-green-500',
-                              state === 'deny' && 'border-red-500 bg-red-500/10 text-red-500',
+                              state === 'allow' && 'border-success bg-success/10 text-success',
+                              state === 'deny' && 'border-destructive bg-destructive/10 text-destructive',
                               state === 'inherit' && 'border-[var(--border)] text-[var(--muted)]',
                             )}
                           >
@@ -705,8 +705,8 @@ function ChannelPermissionsEditor({
                           <span
                             className={cn(
                               'shrink-0 rounded-lg px-1.5 py-0.5 text-[10px] font-semibold uppercase',
-                              state === 'allow' && 'bg-green-500/10 text-green-500',
-                              state === 'deny' && 'bg-red-500/10 text-red-500',
+                              state === 'allow' && 'bg-success/10 text-success',
+                              state === 'deny' && 'bg-destructive/10 text-destructive',
                               state === 'inherit' && 'bg-[var(--surface-secondary)]/50 text-[var(--muted)]',
                             )}
                           >

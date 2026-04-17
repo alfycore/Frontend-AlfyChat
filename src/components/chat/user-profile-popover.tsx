@@ -593,9 +593,9 @@ export function UserProfilePopover({
 function FriendActionButton({ status, onAdd }: { status: FriendStatus; onAdd: () => void }) {
   const config: Record<FriendStatus, { icon: typeof UserPlusIcon; label: string; color: string; disabled: boolean }> = {
     none:             { icon: UserPlusIcon,  label: 'Ajouter en ami',     color: 'text-white/80 hover:text-white', disabled: false },
-    friend:           { icon: UserCheckIcon, label: 'Ami',                color: 'text-green-400',                 disabled: true },
-    pending_sent:     { icon: CheckIcon,     label: 'Demande envoyée',   color: 'text-yellow-400',                disabled: true },
-    pending_received: { icon: UserPlusIcon,  label: 'Accepter la demande', color: 'text-blue-400 hover:text-blue-300', disabled: false },
+    friend:           { icon: UserCheckIcon, label: 'Ami',                color: 'text-success',                   disabled: true },
+    pending_sent:     { icon: CheckIcon,     label: 'Demande envoyée',   color: 'text-amber-400',                 disabled: true },
+    pending_received: { icon: UserPlusIcon,  label: 'Accepter la demande', color: 'text-primary hover:text-primary/80', disabled: false },
   };
   const c = config[status];
   const Icon = c.icon;

@@ -451,6 +451,12 @@ export function useMessages(channelId?: string, recipientId?: string) {
     };
     socketService.on('message:edited', handleMessageEdit);
 
+    // Écouter les erreurs d'édition — rollback optimiste
+    const handleEditError = (data: any) => {
+      console.warn('[Messages] Échec édition:', data);
+    };
+    socketService.on('message:edit-error', handleEditError);
+
     // Écouter les suppressions
     const handleMessageDelete = (data: any) => {
       const { messageId } = data as { messageId: string };
@@ -586,6 +592,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
       socketService.off('message:error', handleMessageError);
       socketService.off('message:failed', handleMessageFailed);
       socketService.off('message:edited', handleMessageEdit);
+      socketService.off('message:edit-error', handleEditError);
       socketService.off('message:deleted', handleMessageDelete);
       socketService.off('typing:update', handleTyping);
       socketService.off('REACTION_ADD', handleReactionAdd);
@@ -861,6 +868,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
   );
 
   const editMessage = useCallback((messageId: string, content: string) => {
+    // Mise à jour optimiste — afficher le nouveau contenu immédiatement
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, content, isEdited: true } : m))
+    );
     socketService.editMessage(messageId, content, getConversationId() || undefined);
   }, [getConversationId]);
 

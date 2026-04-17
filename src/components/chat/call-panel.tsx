@@ -61,7 +61,7 @@ function SpeakingBars({ active }: { active: boolean }) {
           key={i}
           className={cn(
             'w-0.75 rounded-full transition-all duration-100',
-            active ? 'bg-green-400 animate-pulse' : 'bg-white/25',
+            active ? 'bg-success animate-pulse' : 'bg-white/25',
           )}
           style={{
             height: active ? `${h * 2}px` : '4px',
@@ -162,10 +162,10 @@ function ParticipantTile({
 
   return (
     <div className={cn(
-      'group relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 transition-all duration-200',
+      'group relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-zinc-900/90 shadow-inner shadow-black/40 transition-all duration-200',
       speaking
-        ? 'ring-2 ring-green-400'
-        : 'ring-1 ring-white/8',
+        ? 'ring-2 ring-success shadow-lg shadow-success/20'
+        : 'ring-1 ring-white/10',
     )}>
 
       {/*
@@ -192,12 +192,12 @@ function ParticipantTile({
       {!hasVideo && (
         <div className="relative z-10 flex flex-col items-center gap-2">
           <div className={cn(
-            'rounded-full p-0.5 transition-all duration-200',
-            speaking ? 'ring-2 ring-green-400' : '',
+            'rounded-2xl p-0.5 transition-all duration-200',
+            speaking ? 'ring-2 ring-success shadow-lg shadow-success/30' : '',
           )}>
-            <Avatar className="size-10 rounded-full shadow-xl ring-1 ring-white/10 sm:size-12">
+            <Avatar className="size-10 rounded-2xl shadow-xl ring-1 ring-white/10 sm:size-12">
               <AvatarImage src={resolveMediaUrl(avatarSrc)} />
-              <AvatarFallback className="bg-zinc-600 text-white text-xl font-bold">
+              <AvatarFallback className="rounded-2xl bg-linear-to-br from-primary to-[#7c3aed] text-white font-heading text-xl">
                 {label[0]?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
@@ -218,11 +218,11 @@ function ParticipantTile({
       {/* Name + speaking bars */}
       <div className="absolute bottom-2 left-2.5 flex items-center gap-1.5">
         <SpeakingBars active={speaking} />
-        <span className="rounded-md bg-black/40 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
+        <span className="rounded-lg bg-black/50 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md ring-1 ring-white/10">
           {label}
         </span>
         {isScreenShare && (
-          <span className="rounded-md bg-red-500/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+          <span className="rounded-lg bg-linear-to-br from-destructive to-destructive/80 px-1.5 py-0.5 font-heading text-[9px] font-bold uppercase tracking-[0.15em] text-white shadow-md shadow-destructive/40">
             EN DIRECT
           </span>
         )}
@@ -230,14 +230,14 @@ function ParticipantTile({
 
       {/* Mic muted badge */}
       {micMuted && (
-        <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-red-500/90 shadow-md">
-          <MicOffIcon size={11} className="text-white" />
+        <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-lg bg-destructive shadow-md shadow-destructive/40">
+          <MicOffIcon size={11} className="text-destructive-foreground" />
         </div>
       )}
 
       {/* Connecté badge (voice only, remote) */}
       {isConnected && !hasVideo && !isLocal && !micMuted && !isPlayBlocked && (
-        <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-zinc-700/90 shadow-md">
+        <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-lg bg-black/50 ring-1 ring-white/10 shadow-md backdrop-blur-md">
           <WifiIcon size={11} className="text-white/60" />
         </div>
       )}
@@ -245,16 +245,16 @@ function ParticipantTile({
       {/* Bouton pour forcer le son si le navigateur le bloque */}
       {isPlayBlocked && !isLocal && (
         <button
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-black/70 text-white backdrop-blur-md transition-colors hover:bg-black/80"
           onClick={(e) => {
             e.stopPropagation();
             videoRef.current?.play().then(() => setIsPlayBlocked(false)).catch(console.error);
           }}
         >
-          <div className="flex size-12 items-center justify-center rounded-full bg-white/20">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-primary/30 to-[#7c3aed]/20 ring-1 ring-primary/40">
             <MicIcon size={24} className="text-white" />
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider">Cliquez pour activer le son</span>
+          <span className="font-heading text-xs font-bold uppercase tracking-[0.15em]">Cliquez pour activer le son</span>
         </button>
       )}
     </div>
@@ -276,11 +276,11 @@ function CtrlBtn({
         onClick={onClick}
         aria-label={label}
         className={cn(
-          'flex size-11 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95',
+          'flex size-11 items-center justify-center rounded-2xl transition-all duration-200 hover:scale-110 active:scale-95',
           danger
-            ? 'bg-red-500 text-white shadow-lg hover:bg-red-400'
+            ? 'bg-destructive text-destructive-foreground shadow-lg shadow-destructive/40 hover:shadow-xl hover:shadow-destructive/50'
             : active
-              ? 'bg-(--accent) text-accent-foreground shadow-lg hover:brightness-110'
+              ? 'bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40'
               : 'bg-white/10 text-white hover:bg-white/20',
         )}
       >
@@ -353,8 +353,8 @@ export function CallPanel({
       {/* ── STATUS BAR ── */}
       <div className="flex items-center justify-between border-b border-white/5 px-4 py-2">
         <div className={cn(
-          'flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider',
-          isConnected ? 'text-green-400' : 'text-white/50',
+          'flex items-center gap-1.5 font-heading text-[11px] font-semibold uppercase tracking-[0.15em]',
+          isConnected ? 'text-success' : 'text-white/50',
         )}>
           {isConnected ? (
             <PhoneIcon size={11} />
@@ -426,9 +426,9 @@ export function CallPanel({
 
         {/* Media error */}
         {mediaError && (
-          <div className="mt-2 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2">
-            <AlertTriangleIcon size={14} className="shrink-0 text-red-400" />
-            <p className="text-xs leading-relaxed text-red-400">{mediaError}</p>
+          <div className="mt-2 flex items-center gap-2 rounded-xl border border-destructive/30 bg-linear-to-r from-destructive/15 to-destructive/5 px-3 py-2 shadow-sm shadow-destructive/10">
+            <AlertTriangleIcon size={14} className="shrink-0 text-destructive" />
+            <p className="text-xs leading-relaxed text-destructive">{mediaError}</p>
           </div>
         )}
       </div>
@@ -459,7 +459,7 @@ export function CallPanel({
             type="button"
             onClick={onEndCall}
             aria-label="Raccrocher"
-            className="flex size-13 items-center justify-center rounded-full bg-red-500 text-white shadow-xl transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
+            className="flex size-13 items-center justify-center rounded-2xl bg-destructive text-destructive-foreground shadow-xl shadow-destructive/40 transition-all duration-200 hover:scale-110 hover:shadow-2xl hover:shadow-destructive/60 active:scale-95"
           >
             <PhoneOffIcon size={22} />
           </button>

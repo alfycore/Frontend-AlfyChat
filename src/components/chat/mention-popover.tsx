@@ -84,20 +84,20 @@ export function MentionPopover({
   return (
     <div
       ref={listRef}
-      className="absolute z-50 max-h-56 w-64 overflow-y-auto rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/95 p-1.5 shadow-2xl"
+      className="absolute z-50 max-h-56 w-64 overflow-y-auto rounded-2xl border border-border/50 bg-card/95 p-1.5 shadow-2xl shadow-black/20 backdrop-blur-xl"
       style={{ bottom: position.top, left: position.left }}
     >
-      <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+      <div className="font-heading px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
         Membres — {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
       </div>
       {filtered.map((user, idx) => (
         <button
           key={user.id}
           data-mention-item
-          className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm transition-all duration-200 ${
+          className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm transition-all duration-150 ${
             idx === selectedIndex
-              ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
-              : 'hover:bg-[var(--surface-secondary)]/40'
+              ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+              : 'hover:bg-foreground/6'
           }`}
           onMouseEnter={() => setSelectedIndex(idx)}
           onClick={(e) => {
@@ -106,15 +106,15 @@ export function MentionPopover({
             onSelect(user);
           }}
         >
-          <Avatar className="size-6">
+          <Avatar className="size-7 rounded-lg">
             <AvatarImage src={resolveMediaUrl(user.avatarUrl)} alt={user.username} />
-            <AvatarFallback className="text-xs">
+            <AvatarFallback className="rounded-lg bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-[10px] font-bold text-primary">
               {(user.displayName || user.username)[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-sm font-medium">{user.displayName || user.username}</p>
-            <p className="truncate text-xs text-[var(--muted)]">@{user.username}</p>
+            <p className="truncate text-[13px] font-medium leading-tight">{user.displayName || user.username}</p>
+            <p className="truncate font-mono text-[10px] text-muted-foreground/70 leading-tight">@{user.username}</p>
           </div>
         </button>
       ))}

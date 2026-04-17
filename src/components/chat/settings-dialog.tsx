@@ -627,16 +627,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   /* ================================================================== */
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="flex h-[85vh] max-w-5xl sm:max-w-5xl gap-0 overflow-hidden rounded-xl border-border/50 bg-card p-0 shadow-2xl">
+      <DialogContent showCloseButton={false} className="flex h-[85vh] max-w-5xl sm:max-w-5xl gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl">
           <VisuallyHidden.Root><DialogTitle>{t.settings.sectionHeader}</DialogTitle></VisuallyHidden.Root>
 
           {/* ─── Sidebar (desktop) ─── */}
           <aside className="hidden w-56 shrink-0 flex-col border-r border-border/40 bg-muted/30 sm:flex">
             <div className="px-4 pt-5 pb-3">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
                 {t.settings.sectionHeader}
               </p>
-              <p className="mt-0.5 truncate text-sm font-medium text-foreground">
+              <p className="mt-1 truncate font-heading text-sm tracking-tight text-foreground">
                 {user.displayName || user.username}
               </p>
             </div>
@@ -649,9 +649,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-colors',
+                      'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium outline-none transition-all duration-200',
                       activeTab === tab.id
-                        ? 'bg-primary/10 text-primary'
+                        ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary ring-1 ring-primary/25 shadow-sm shadow-primary/10'
                         : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
                     )}
                   >
@@ -667,7 +667,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10"
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
               >
                 <LogOutIcon size={14} />
                 {t.settings.logout}
@@ -682,12 +682,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             {mobileShowMenu && (
               <div className="flex flex-1 flex-col overflow-y-auto pb-8 sm:hidden">
                 <div className="flex items-center gap-3 border-b border-border/40 bg-muted/30 px-4 py-4">
-                  <Avatar className="size-12 shrink-0">
-                    <AvatarImage src={avatarPreview || undefined} alt={displayName} />
-                    <AvatarFallback>{displayName?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+                  <Avatar className="size-12 shrink-0 rounded-xl">
+                    <AvatarImage src={avatarPreview || undefined} alt={displayName} className="rounded-xl" />
+                    <AvatarFallback className="rounded-xl bg-linear-to-br from-primary to-[#7c3aed] font-heading text-sm tracking-tight text-primary-foreground">{displayName?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">{displayName || user.username}</p>
+                    <p className="truncate font-heading text-sm tracking-tight text-foreground">{displayName || user.username}</p>
                     <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
                   </div>
                   <Button variant="ghost" size="icon" className="ml-auto size-8" onClick={() => onOpenChange(false)}>
@@ -714,12 +714,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-red-500/10"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-destructive/10"
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
-                      <LogOutIcon size={18} className="text-red-500" />
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
+                      <LogOutIcon size={18} className="text-destructive" />
                     </span>
-                    <span className="flex-1 text-left text-sm font-medium text-red-500">{t.settings.logout}</span>
+                    <span className="flex-1 text-left text-sm font-medium text-destructive">{t.settings.logout}</span>
                   </button>
                 </div>
               </div>
@@ -781,9 +781,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       <CardContent className="relative px-4 pb-5 sm:px-6">
                         <div className="-mt-8 mb-4 flex items-end justify-between sm:-mt-10">
                           <div className="relative cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                            <Avatar className="size-16 ring-[3px] ring-card sm:size-20">
-                              <AvatarImage src={avatarPreview || undefined} alt="Avatar" />
-                              <AvatarFallback className="text-lg font-bold">{displayName?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+                            <Avatar className="size-16 rounded-2xl ring-[3px] ring-card sm:size-20">
+                              <AvatarImage src={avatarPreview || undefined} alt="Avatar" className="rounded-2xl" />
+                              <AvatarFallback className="rounded-2xl bg-linear-to-br from-primary to-[#7c3aed] font-heading text-lg tracking-tight text-primary-foreground">{displayName?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                             </Avatar>
                             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity hover:opacity-100">
                               <CameraIcon size={20} className="text-white" />
@@ -804,7 +804,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   {t.settings.changeAvatar}
                                 </DropdownMenuItem>
                                 {avatarPreview && (
-                                  <DropdownMenuItem onSelect={handleDeleteAvatar} className="text-red-500">
+                                  <DropdownMenuItem onSelect={handleDeleteAvatar} className="text-destructive">
                                     Supprimer l&apos;avatar
                                   </DropdownMenuItem>
                                 )}
@@ -812,7 +812,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   {t.settings.changeBanner}
                                 </DropdownMenuItem>
                                 {bannerPreview && (
-                                  <DropdownMenuItem onSelect={handleDeleteBanner} className="text-red-500">
+                                  <DropdownMenuItem onSelect={handleDeleteBanner} className="text-destructive">
                                     Supprimer la bannière
                                   </DropdownMenuItem>
                                 )}
@@ -857,17 +857,17 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                       {usernameChecking ? (
                                         <Loader2Icon size={14} className="animate-spin text-muted-foreground" />
                                       ) : usernameAvailable === true ? (
-                                        <CheckIcon size={14} className="text-green-500" />
+                                        <CheckIcon size={14} className="text-success" />
                                       ) : usernameAvailable === false ? (
-                                        <XIcon size={14} className="text-red-500" />
+                                        <XIcon size={14} className="text-destructive" />
                                       ) : null}
                                     </span>
                                   </div>
                                   {usernameAvailable === false && (
-                                    <p className="text-xs text-red-500">Ce pseudo est déjà pris</p>
+                                    <p className="text-xs text-destructive">Ce pseudo est déjà pris</p>
                                   )}
                                   {usernameAvailable === true && (
-                                    <p className="text-xs text-green-500">Pseudo disponible !</p>
+                                    <p className="text-xs text-success">Pseudo disponible !</p>
                                   )}
                                   <Input
                                     type="password"
@@ -1713,7 +1713,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                     <Button
                                       size="icon"
                                       variant="ghost"
-                                      className="size-8 text-red-500 hover:text-red-400"
+                                      className="size-8 text-destructive hover:text-destructive/80"
                                       onClick={async () => {
                                         const res = await api.revokeSession(session.id);
                                         if (res.success) {
@@ -1742,9 +1742,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     </div>
 
                     {/* Danger zone */}
-                    <Card className="border-red-500/30">
+                    <Card className="border-destructive/30">
                       <CardHeader>
-                        <CardTitle className="text-red-500">{t.settings.dangerZone}</CardTitle>
+                        <CardTitle className="text-destructive">{t.settings.dangerZone}</CardTitle>
                         <CardDescription>{t.settings.dangerZoneDesc}</CardDescription>
                       </CardHeader>
                       <CardContent>

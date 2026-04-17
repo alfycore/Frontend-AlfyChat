@@ -85,7 +85,7 @@ export function IncomingCallDialog({
 
   return (
     <Dialog open={open}>
-      <DialogContent showCloseButton={false} className="max-w-[320px] overflow-hidden rounded-3xl border-0 bg-zinc-900 p-0 shadow-2xl">
+      <DialogContent showCloseButton={false} className="max-w-[320px] overflow-hidden rounded-3xl border border-border/40 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl">
             <DialogHeader className="sr-only">
               <DialogTitle>
                 {callType === 'video' ? 'Appel vidéo entrant' : 'Appel vocal entrant'}
@@ -96,17 +96,17 @@ export function IncomingCallDialog({
             <div className="relative flex flex-col items-center px-8 pb-6 pt-10">
               {/* Ambient glow behind avatar */}
               <div className="pointer-events-none absolute inset-0 flex items-start justify-center overflow-hidden">
-                <div className="mt-4 size-48 animate-pulse rounded-full bg-(--accent)/10 blur-3xl" />
+                <div className="mt-4 size-48 animate-pulse rounded-full bg-linear-to-br from-primary/25 to-[#7c3aed]/15 blur-3xl" />
               </div>
 
               {/* Avatar with animated rings */}
               <div className="relative mb-5 flex items-center justify-center">
-                <span className="absolute size-28 animate-ping rounded-full border border-white/8" style={{ animationDuration: '1.6s' }} />
-                <span className="absolute size-22 animate-ping rounded-full border border-white/12" style={{ animationDuration: '1.2s', animationDelay: '0.2s' }} />
-                <div className="relative rounded-full p-1 ring-2 ring-white/10 shadow-xl">
-                  <Avatar className="size-20 rounded-full">
+                <span className="absolute size-28 animate-ping rounded-full border border-primary/20" style={{ animationDuration: '1.6s' }} />
+                <span className="absolute size-22 animate-ping rounded-full border border-primary/30" style={{ animationDuration: '1.2s', animationDelay: '0.2s' }} />
+                <div className="relative rounded-2xl p-1 ring-2 ring-primary/20 shadow-xl shadow-primary/15">
+                  <Avatar className="size-20 rounded-2xl">
                     <AvatarImage src={resolveMediaUrl(callerAvatar)} />
-                    <AvatarFallback className="bg-zinc-700 text-white text-3xl font-bold">
+                    <AvatarFallback className="rounded-2xl bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground font-heading text-3xl">
                       {callerName[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
@@ -115,13 +115,13 @@ export function IncomingCallDialog({
 
               {/* Caller name + badge */}
               <div className="flex flex-col items-center gap-2 text-center">
-                <h2 className="text-xl font-bold tracking-tight text-white">{callerName}</h2>
-                <div className="flex items-center gap-1.5 rounded-full bg-white/8 px-3 py-1">
+                <h2 className="font-heading text-xl tracking-tight text-foreground">{callerName}</h2>
+                <div className="flex items-center gap-1.5 rounded-full bg-foreground/6 px-3 py-1 ring-1 ring-border/40">
                   <span className="relative flex size-1.5">
-                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-(--accent) opacity-60" />
-                    <span className="relative inline-flex size-1.5 rounded-full bg-(--accent)" />
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
+                    <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
                   </span>
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-white/60">
+                  <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                     {callType === 'video' ? 'Appel vidéo' : 'Appel vocal'}
                   </span>
                 </div>
@@ -129,17 +129,17 @@ export function IncomingCallDialog({
             </div>
 
             {/* ── Bottom section: action buttons ── */}
-            <div className="flex items-center justify-center gap-12 border-t border-white/6 bg-zinc-950/50 px-8 py-6">
+            <div className="flex items-center justify-center gap-12 border-t border-border/30 bg-foreground/2 px-8 py-6">
               {/* Decline */}
               <div className="flex flex-col items-center gap-2">
                 <Button
                   size="icon"
                   onClick={onDecline}
-                  className="size-16 rounded-full bg-red-500 text-white shadow-xl transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
+                  className="size-16 rounded-2xl bg-destructive text-destructive-foreground shadow-xl shadow-destructive/30 transition-all duration-200 hover:scale-110 hover:shadow-2xl hover:shadow-destructive/50 active:scale-95"
                 >
                   <PhoneOffIcon size={26} />
                 </Button>
-                <span className="text-[11px] font-medium text-white/40">Refuser</span>
+                <span className="text-[11px] font-medium text-muted-foreground">Refuser</span>
               </div>
 
               {/* Accept */}
@@ -147,7 +147,7 @@ export function IncomingCallDialog({
                 <Button
                   size="icon"
                   onClick={onAccept}
-                  className="size-16 rounded-full bg-green-500 text-white shadow-xl transition-all duration-200 hover:scale-110 hover:bg-green-400 active:scale-95"
+                  className="size-16 rounded-2xl bg-linear-to-br from-success to-success/80 text-white shadow-xl shadow-success/30 transition-all duration-200 hover:scale-110 hover:shadow-2xl hover:shadow-success/50 active:scale-95"
                 >
                   {callType === 'video' ? (
                     <VideoIcon size={26} />
@@ -155,7 +155,7 @@ export function IncomingCallDialog({
                     <PhoneIcon size={26} />
                   )}
                 </Button>
-                <span className="text-[11px] font-medium text-white/40">Accepter</span>
+                <span className="text-[11px] font-medium text-muted-foreground">Accepter</span>
               </div>
             </div>
       </DialogContent>

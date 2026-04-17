@@ -53,7 +53,7 @@ function SpeakingBars({ active }: { active: boolean }) {
       {[3, 5, 4].map((h, i) => (
         <span
           key={i}
-          className={cn('w-[3px] rounded-full transition-all duration-100', active ? 'bg-green-400 animate-pulse' : 'bg-white/25')}
+          className={cn('w-[3px] rounded-full transition-all duration-100', active ? 'bg-success animate-pulse' : 'bg-white/25')}
           style={{ height: active ? `${h * 2}px` : '4px', animationDelay: `${i * 80}ms` }}
         />
       ))}
@@ -129,10 +129,10 @@ function Tile({
 
   return (
     <div className={cn(
-      'relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-zinc-800 transition-all duration-200',
+      'relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-zinc-900/90 shadow-inner shadow-black/40 transition-all duration-200',
       speaking
-        ? 'ring-2 ring-green-400'
-        : 'ring-1 ring-white/8',
+        ? 'ring-2 ring-success shadow-lg shadow-success/20'
+        : 'ring-1 ring-white/10',
     )}>
       {/* Un seul <video> toujours monté */}
       <video
@@ -148,10 +148,10 @@ function Tile({
 
       {!hasVideo && (
         <div className="relative z-10 flex flex-col items-center gap-3">
-          <div className={cn('rounded-full p-0.5 transition-all duration-200', speaking ? 'ring-2 ring-green-400' : '')}>
-            <Avatar className="size-20 rounded-full shadow-2xl ring-1 ring-white/10">
+          <div className={cn('rounded-2xl p-0.5 transition-all duration-200', speaking ? 'ring-2 ring-success shadow-lg shadow-success/30' : '')}>
+            <Avatar className="size-20 rounded-2xl shadow-2xl ring-1 ring-white/10">
               <AvatarImage src={resolveMediaUrl(avatarSrc)} />
-              <AvatarFallback className="bg-zinc-600 text-white text-3xl font-bold">
+              <AvatarFallback className="rounded-2xl bg-linear-to-br from-primary to-[#7c3aed] text-white font-heading text-3xl">
                 {label[0]?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
@@ -174,30 +174,30 @@ function Tile({
         <SpeakingBars active={speaking} />
         <span className="rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">{label}</span>
         {isScreenShare && (
-          <span className="rounded-lg bg-red-500/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">EN DIRECT</span>
+          <span className="rounded-lg bg-linear-to-br from-destructive to-destructive/80 px-2 py-0.5 font-heading text-[10px] font-bold uppercase tracking-[0.15em] text-white shadow-md shadow-destructive/40">EN DIRECT</span>
         )}
       </div>
 
       {/* Muted */}
       {micMuted && (
-        <div className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-red-500/90">
-          <MicOffIcon size={13} className="text-white" />
+        <div className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-lg bg-destructive shadow-md shadow-destructive/40">
+          <MicOffIcon size={13} className="text-destructive-foreground" />
         </div>
       )}
 
       {/* Forcer le bouton Play si bloqué par Autoplay */}
       {isPlayBlocked && !isLocal && (
         <button
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-black/70 text-white backdrop-blur-md transition-colors hover:bg-black/80"
           onClick={(e) => {
             e.stopPropagation();
             videoRef.current?.play().then(() => setIsPlayBlocked(false)).catch(console.error);
           }}
         >
-          <div className="flex size-14 items-center justify-center rounded-full bg-white/20">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/30 to-[#7c3aed]/20 ring-1 ring-primary/40">
             <MicIcon size={24} className="text-white" />
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider">Activer le son</span>
+          <span className="font-heading text-xs font-bold uppercase tracking-[0.15em]">Activer le son</span>
         </button>
       )}
     </div>
@@ -272,8 +272,8 @@ export function CallOverlay({
       <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
         <div className="flex items-center gap-2">
           <span className={cn(
-            'text-xs font-semibold uppercase tracking-wider',
-            isConnected ? 'text-green-400' : 'text-white/50',
+            'font-heading text-xs font-semibold uppercase tracking-[0.15em]',
+            isConnected ? 'text-success' : 'text-white/50',
           )}>
             {isConnected ? `⬤ ${statusLabel}` : statusLabel}
           </span>
@@ -332,8 +332,8 @@ export function CallOverlay({
 
         {/* Media error */}
         {mediaError && (
-          <div className="absolute inset-x-4 bottom-24 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 backdrop-blur-sm">
-            <span className="text-xs text-red-400">{mediaError}</span>
+          <div className="absolute inset-x-4 bottom-24 flex items-center gap-2 rounded-xl border border-destructive/30 bg-linear-to-r from-destructive/15 to-destructive/5 px-3 py-2 shadow-sm shadow-destructive/10 backdrop-blur-md">
+            <span className="text-xs text-destructive">{mediaError}</span>
           </div>
         )}
       </div>
@@ -363,7 +363,7 @@ export function CallOverlay({
             type="button"
             onClick={onEndCall}
             aria-label="Raccrocher"
-            className="flex size-14 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all duration-200 hover:scale-110 hover:bg-red-400 active:scale-95"
+            className="flex size-14 items-center justify-center rounded-2xl bg-destructive text-destructive-foreground shadow-2xl shadow-destructive/40 transition-all duration-200 hover:scale-110 hover:shadow-2xl hover:shadow-destructive/60 active:scale-95"
           >
             <PhoneOffIcon size={24} />
           </button>
@@ -389,11 +389,11 @@ function CtrlBtn({
         onClick={onClick}
         aria-label={label}
         className={cn(
-          'flex size-12 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95',
+          'flex size-12 items-center justify-center rounded-2xl transition-all duration-200 hover:scale-110 active:scale-95',
           danger
-            ? 'bg-red-500 text-white shadow-lg hover:bg-red-400'
+            ? 'bg-destructive text-destructive-foreground shadow-lg shadow-destructive/40 hover:shadow-xl hover:shadow-destructive/60'
             : active
-              ? 'bg-(--accent) text-accent-foreground shadow-lg'
+              ? 'bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40'
               : 'bg-white/10 text-white hover:bg-white/20',
         )}
       >

@@ -140,7 +140,7 @@ function AnnouncementCard({
 
   return (
     <article
-      className="group relative rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/60 p-5 transition-colors hover:border-amber-500/20 hover:bg-[var(--surface)]"
+      className="group relative rounded-2xl border border-border/40 bg-card/60 p-5 shadow-sm transition-all duration-200 hover:border-amber-500/30 hover:bg-card hover:shadow-md"
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -157,18 +157,18 @@ function AnnouncementCard({
           <img
             src={resolveMediaUrl(post.author.avatarUrl) || ''}
             alt=""
-            className="size-9 rounded-full object-cover ring-2 ring-amber-500/20"
+            className="size-9 rounded-xl object-cover ring-1 ring-amber-500/25 shadow-sm"
           />
         ) : (
-          <div className="flex size-9 items-center justify-center rounded-full bg-amber-500/20 ring-2 ring-amber-500/20">
-            <span className="text-[13px] font-bold text-amber-400">{initials}</span>
+          <div className="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-amber-500/30 to-amber-500/15 ring-1 ring-amber-500/25 shadow-sm">
+            <span className="font-heading text-[13px] tracking-tight text-amber-400">{initials}</span>
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-[var(--foreground)]">
+          <p className="font-heading text-[13px] tracking-tight text-foreground">
             {post.author?.displayName || post.author?.username || 'Inconnu'}
           </p>
-          <p className="text-[11px] text-[var(--muted)]" title={formatDate(post.createdAt)}>
+          <p className="text-[11px] text-muted-foreground" title={formatDate(post.createdAt)}>
             {timeAgo(post.createdAt)}
             {post.updatedAt && post.updatedAt !== post.createdAt && (
               <span className="ml-1 opacity-60">(modifié)</span>
@@ -182,7 +182,7 @@ function AnnouncementCard({
             size="icon-sm"
             variant="ghost"
             onClick={() => onDelete(post.id)}
-            className="size-7 rounded-xl text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
+            className="size-7 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash2Icon size={14} />
           </Button>
@@ -445,20 +445,20 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
   return (
     <div className="flex h-full min-h-0 flex-col bg-[var(--background)]">
       {/* ── Header ── */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500/10">
+      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-border/40 bg-background/60 px-4 backdrop-blur-md">
+        <div className="flex size-7 items-center justify-center rounded-lg bg-linear-to-br from-amber-500/20 to-amber-500/8 ring-1 ring-amber-500/25 shadow-sm shadow-amber-500/10">
           <MegaphoneIcon size={14} className="text-amber-400" />
         </div>
-        <h2 className="font-semibold text-[var(--foreground)]">{channelName || 'annonces'}</h2>
+        <h2 className="font-heading tracking-tight text-foreground">{channelName || 'annonces'}</h2>
         {posts.length > 0 && (
-          <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 text-[11px] font-medium text-[var(--muted)]">
+          <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
             {posts.length} annonce{posts.length > 1 ? 's' : ''}
           </span>
         )}
         <div className="ml-auto">
           <Button
             size="sm"
-            className="gap-1.5 rounded-xl bg-amber-500 text-white hover:bg-amber-600"
+            className="gap-1.5 rounded-xl bg-linear-to-br from-amber-500 to-amber-600 text-white shadow-sm shadow-amber-500/20 hover:from-amber-500 hover:to-amber-500"
             onClick={() => setShowModal(true)}
           >
             <PlusIcon size={14} />
@@ -487,14 +487,13 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
             ))
           ) : posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="relative mb-5 flex size-20 items-center justify-center rounded-3xl bg-amber-500/10">
-                <div className="absolute inset-0 rounded-3xl bg-amber-500/8 " />
+              <div className="relative mb-5 flex size-20 items-center justify-center rounded-3xl bg-linear-to-br from-amber-500/25 to-amber-500/10 ring-1 ring-amber-500/25 shadow-lg shadow-amber-500/15">
                 <MegaphoneIcon size={36} className="relative text-amber-400" />
               </div>
-              <h3 className="mb-1.5 text-xl font-bold text-[var(--foreground)]">Aucune annonce</h3>
-              <p className="mb-5 text-sm text-[var(--muted)]">Publiez la première annonce dans #{channelName || 'annonces'}</p>
+              <h3 className="mb-1.5 font-heading text-xl tracking-tight text-foreground">Aucune annonce</h3>
+              <p className="mb-5 text-sm text-muted-foreground">Publiez la première annonce dans #{channelName || 'annonces'}</p>
               <Button
-                className="gap-1.5 rounded-xl bg-amber-500 text-white hover:bg-amber-600"
+                className="gap-1.5 rounded-xl bg-linear-to-br from-amber-500 to-amber-600 text-white shadow-sm shadow-amber-500/20 hover:from-amber-500 hover:to-amber-500"
                 onClick={() => setShowModal(true)}
               >
                 <PlusIcon size={15} />

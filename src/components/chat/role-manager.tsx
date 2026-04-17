@@ -306,7 +306,7 @@ export function RoleManager({ serverId }: RoleManagerProps) {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-red-500"
+                  className="text-destructive"
                   onClick={() => setDeleteTarget(role)}
                   disabled={isEditorOpen}
                 >

@@ -98,7 +98,7 @@ function SectionIntro({
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
+        <h2 className="font-heading text-xl tracking-tight text-foreground">{title}</h2>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
       </div>
       {actions && <div className="shrink-0">{actions}</div>}
@@ -107,7 +107,7 @@ function SectionIntro({
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-2 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">{children}</label>;
+  return <label className="mb-2 block font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">{children}</label>;
 }
 
 function InfoNote({
@@ -122,7 +122,7 @@ function InfoNote({
   const tones = {
     amber: 'border-amber-500/20 bg-amber-500/8 text-amber-200',
     blue: 'border-sky-500/20 bg-sky-500/8 text-sky-200',
-    green: 'border-green-500/20 bg-green-500/8 text-green-200',
+    green: 'border-success/20 bg-success/8 text-success',
   } as const;
 
   return (
@@ -633,9 +633,9 @@ export function ServerSettingsDialog({
 
                   <div className="flex items-center gap-1.5">
                     <Button variant="ghost" size="icon-sm" className="size-8" onClick={() => copyInviteLink(code)}>
-                      {copiedCode === code ? <CheckIcon size={14} className="text-green-400" /> : <CopyIcon size={14} />}
+                      {copiedCode === code ? <CheckIcon size={14} className="text-success" /> : <CopyIcon size={14} />}
                     </Button>
-                    <Button variant="ghost" size="icon-sm" className="size-8 text-muted-foreground hover:text-red-400" onClick={() => handleDeleteInvite(invite.id)}>
+                    <Button variant="ghost" size="icon-sm" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteInvite(invite.id)}>
                       <Trash2Icon size={14} />
                     </Button>
                   </div>
@@ -705,8 +705,8 @@ export function ServerSettingsDialog({
             <div className={cn(
               'mt-3 flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm',
               claimResult.ok
-                ? 'border border-green-500/20 bg-green-500/10 text-green-300'
-                : 'border border-red-500/20 bg-red-500/10 text-red-300',
+                ? 'border border-success/20 bg-success/10 text-success'
+                : 'border border-destructive/20 bg-destructive/10 text-destructive',
             )}>
               {claimResult.ok ? <CheckIcon size={14} /> : <XIcon size={14} />}
               {claimResult.msg}
@@ -757,7 +757,7 @@ export function ServerSettingsDialog({
           </div>
 
           {server?.domainVerified && (
-            <div className="mt-3 flex items-center gap-2 rounded-2xl border border-green-500/20 bg-green-500/10 px-3 py-2.5 text-sm text-green-300">
+            <div className="mt-3 flex items-center gap-2 rounded-2xl border border-success/20 bg-success/10 px-3 py-2.5 text-sm text-success">
               <CheckIcon size={14} />
               {ss.domain.verified}
             </div>
@@ -813,7 +813,7 @@ export function ServerSettingsDialog({
               {showToken ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
             </Button>
             <Button variant="ghost" size="icon-sm" className="size-8" onClick={copyToken}>
-              {copiedToken ? <CheckIcon size={14} className="text-green-400" /> : <CopyIcon size={14} />}
+              {copiedToken ? <CheckIcon size={14} className="text-success" /> : <CopyIcon size={14} />}
             </Button>
           </div>
         </CardSurface>
@@ -860,7 +860,7 @@ export function ServerSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[88vh] max-w-5xl overflow-hidden p-0 sm:max-w-5xl">
+      <DialogContent className="h-[88vh] max-w-5xl overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl sm:max-w-5xl">
         <DialogHeader className="sr-only">
           <DialogTitle>Paramètres du serveur</DialogTitle>
         </DialogHeader>
@@ -868,7 +868,7 @@ export function ServerSettingsDialog({
         <div className="grid h-full min-h-0 md:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="flex min-h-0 flex-col border-r border-border/50 bg-card/40 p-4">
             <div className="overflow-hidden rounded-3xl border border-border/40 bg-card/50">
-              <div className="h-24 bg-linear-to-br from-sky-500/20 via-cyan-500/10 to-accent/20">
+              <div className="h-24 bg-linear-to-br from-primary/20 via-[#7c3aed]/15 to-accent/20">
                 {(bannerPreview || server?.bannerUrl) && (
                   <img src={bannerPreview || resolveMediaUrl(server?.bannerUrl)} alt="" className="h-full w-full object-cover" />
                 )}
@@ -876,12 +876,12 @@ export function ServerSettingsDialog({
               <div className="flex items-end gap-3 px-4 pb-4">
                 <Avatar className="-mt-8 size-16 rounded-3xl border-4 border-card shadow-lg">
                   <AvatarImage src={iconPreview || resolveMediaUrl(server?.iconUrl) || undefined} alt={server?.name} />
-                  <AvatarFallback className="rounded-3xl bg-accent text-lg font-bold text-accent-foreground">
+                  <AvatarFallback className="rounded-3xl bg-linear-to-br from-primary to-[#7c3aed] font-heading text-lg tracking-tight text-primary-foreground">
                     {(server?.name || 'SV').slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 pb-1">
-                  <p className="truncate text-sm font-semibold text-foreground">{server?.name || 'Serveur'}</p>
+                  <p className="truncate font-heading text-sm tracking-tight text-foreground">{server?.name || 'Serveur'}</p>
                   <p className="truncate text-[12px] text-muted-foreground">
                     {canManageServer ? 'Administration complète' : 'Accès limité'}
                   </p>
@@ -890,7 +890,7 @@ export function ServerSettingsDialog({
             </div>
 
             <div className="mt-4 mb-2 px-2">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+              <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50">
                 {ss.sectionHeader}
               </p>
             </div>
@@ -907,13 +907,13 @@ export function ServerSettingsDialog({
                     className={cn(
                       'flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition-colors',
                       active
-                        ? 'bg-accent/10 text-accent'
+                        ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary ring-1 ring-primary/25 shadow-sm shadow-primary/10'
                         : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
                     )}
                   >
                     <span className={cn(
                       'flex size-8 shrink-0 items-center justify-center rounded-xl',
-                      active ? 'bg-accent/15 text-accent' : 'bg-muted/50 text-muted-foreground',
+                      active ? 'bg-primary/15 text-primary' : 'bg-muted/50 text-muted-foreground',
                     )}>
                       <Icon size={15} />
                     </span>

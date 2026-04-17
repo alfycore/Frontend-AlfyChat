@@ -575,7 +575,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                   <SettingsIcon size={16} />
                   Paramètres du groupe
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-500" onClick={handleLeaveGroup}>
+                <DropdownMenuItem className="text-destructive" onClick={handleLeaveGroup}>
                   <LogOutIcon size={16} />
                   Quitter le groupe
                 </DropdownMenuItem>
@@ -680,7 +680,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
         {/* ── Cooldown notice ── */}
         {cooldownActive && (
-          <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/8 px-3 py-2 text-[12px] font-medium text-orange-400 md:mx-4">
+          <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/8 px-3 py-2 text-[12px] font-medium text-amber-400 md:mx-4">
             Calme-toi ! Tu envoies trop de messages.
           </div>
         )}
@@ -737,9 +737,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                     <div key={i} className="flex items-center gap-1 rounded-lg border border-border/40 bg-surface-secondary px-2 py-0.5 text-[11px]">
                       {att.isImage
                         ? <ImageIcn size={11} className="shrink-0 text-blue-400" />
-                        : <FileTextIcon size={11} className="shrink-0 text-orange-400" />}
+                        : <FileTextIcon size={11} className="shrink-0 text-amber-400" />}
                       <span className="max-w-30 truncate text-foreground/70">{att.name}</span>
-                      <button type="button" className="ml-0.5 text-muted-foreground hover:text-red-400" onClick={() => setPendingAttachments((p) => p.filter((_, j) => j !== i))}>
+                      <button type="button" className="ml-0.5 text-muted-foreground hover:text-destructive" onClick={() => setPendingAttachments((p) => p.filter((_, j) => j !== i))}>
                         <XIcon size={10} />
                       </button>
                     </div>
@@ -815,7 +815,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                         </Avatar>
                         <span
                           className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background ${
-                            participant.isOnline ? 'bg-green-500' : 'bg-muted-foreground/30'
+                            participant.isOnline ? 'bg-success' : 'bg-muted-foreground/30'
                           }`}
                         />
                       </div>
@@ -825,7 +825,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                             {participant.displayName || participant.username || 'Utilisateur'}
                           </p>
                           {participant.role === 'owner' && (
-                            <CrownIcon size={10} className="shrink-0 text-yellow-500" />
+                            <CrownIcon size={10} className="shrink-0 text-amber-500" />
                           )}
                         </div>
                       </div>

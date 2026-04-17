@@ -95,7 +95,14 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
             <button
               type="button"
               className="flex flex-1 items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-secondary)]/70"
-              onClick={() => canPreview ? setFilePreview({ name: f.name, src }) : window.open(src, '_blank')}
+              onClick={() => {
+                if (canPreview) { setFilePreview({ name: f.name, src }); return; }
+                // Sécurité : n'autoriser que les URLs relatives ou du même domaine
+                try {
+                  const u = new URL(src, window.location.origin);
+                  if (u.origin === window.location.origin) window.open(u.href, '_blank', 'noopener,noreferrer');
+                } catch { /* URL invalide ignorée */ }
+              }}
             >
               <span className="text-xl leading-none">{icon}</span>
               <div className="min-w-0">

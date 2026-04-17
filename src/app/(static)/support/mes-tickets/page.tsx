@@ -186,7 +186,7 @@ export default function MesTicketsPage() {
 
                 <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/40">
                   <span className="text-xs text-muted-foreground">
-                    {s.categoryLabels[ticket.category] ?? ticket.category}
+                    {(s.categoryLabels as Record<string, string>)[ticket.category] ?? ticket.category}
                   </span>
                   {ticket.messageCount > 0 && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">

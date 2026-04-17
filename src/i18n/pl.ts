@@ -57,8 +57,6 @@
     friends:        'Znajomi',
     changelogs:     'Changelogs',
     hosting:        'Hosting',
-    changelogs:     'Changelogs',
-    hosting:        'Hosting',
     groups:         'Grupy',
     directMessages: 'Wiadomości prywatne',
     noConversations:'Brak rozmów',

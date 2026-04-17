@@ -57,8 +57,6 @@
     friends:        'Vänner',
     changelogs:     'Changelogs',
     hosting:        'Hosting',
-    changelogs:     'Changelogs',
-    hosting:        'Hosting',
     groups:         'Grupper',
     directMessages: 'Direktmeddelanden',
     noConversations:'Inga konversationer',

@@ -253,7 +253,7 @@ export function MemberList({ serverId }: MemberListProps) {
                 >
                   {role.name}
                 </p>
-                <span className="ml-auto text-[10px] font-medium tabular-nums text-[var(--muted)]/40">
+                <span className="ml-auto text-[10px] font-medium tabular-nums text-muted-foreground/40">
                   {roleMembers.length}
                 </span>
               </div>
@@ -273,7 +273,7 @@ export function MemberList({ serverId }: MemberListProps) {
                 <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
                   En ligne
                 </p>
-                <span className="ml-auto text-[10px] font-medium tabular-nums text-[var(--muted)]/40">
+                <span className="ml-auto text-[10px] font-medium tabular-nums text-muted-foreground/40">
                   {remainingOnline.length}
                 </span>
               </div>
@@ -293,7 +293,7 @@ export function MemberList({ serverId }: MemberListProps) {
                 <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40">
                   Hors ligne
                 </p>
-                <span className="ml-auto text-[10px] font-medium tabular-nums text-[var(--muted)]/25">
+                <span className="ml-auto text-[10px] font-medium tabular-nums text-muted-foreground/25">
                   {offlineMembers.length}
                 </span>
               </div>

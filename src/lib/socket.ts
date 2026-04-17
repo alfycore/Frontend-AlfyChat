@@ -281,11 +281,11 @@ class SocketService {
   }
 
   editMessage(messageId: string, content: string, conversationId?: string): void {
-    this.socket?.emit('message:edit', { messageId, content, conversationId });
+    this.emitOrQueue('message:edit', { messageId, content, conversationId });
   }
 
   deleteMessage(messageId: string, conversationId?: string): void {
-    this.socket?.emit('message:delete', { messageId, conversationId });
+    this.emitOrQueue('message:delete', { messageId, conversationId });
   }
 
   // ── E2EE history recovery ──
@@ -606,11 +606,11 @@ class SocketService {
   }
 
   editServerMessage(serverId: string, messageId: string, content: string, channelId: string): void {
-    this.socket?.emit('SERVER_MESSAGE_EDIT', { serverId, messageId, content, channelId });
+    this.emitOrQueue('SERVER_MESSAGE_EDIT', { serverId, messageId, content, channelId });
   }
 
   deleteServerMessage(serverId: string, messageId: string, channelId: string): void {
-    this.socket?.emit('SERVER_MESSAGE_DELETE', { serverId, messageId, channelId });
+    this.emitOrQueue('SERVER_MESSAGE_DELETE', { serverId, messageId, channelId });
   }
 
   toggleServerReaction(serverId: string, channelId: string, messageId: string, emoji: string, hasReacted: boolean): void {
