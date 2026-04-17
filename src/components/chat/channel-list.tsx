@@ -356,6 +356,8 @@ export function ChannelList({
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationsError, setConversationsError] = useState(false);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
   const conversationsRef = useRef<Conversation[]>([]);
   const [presenceMap, setPresenceMap] = useState<Map<string, string>>(new Map());
   const [customStatusMap, setCustomStatusMap] = useState<Map<string, string | null>>(new Map());
@@ -394,9 +396,15 @@ export function ChannelList({
     // Ne pas charger si pas encore authentifié
     const token = typeof window !== 'undefined' ? localStorage.getItem('alfychat_token') : null;
     if (!token) return;
+    setConversationsLoading(true);
+    setConversationsError(false);
     try {
       const response = await api.getConversations();
-      if (!response.success || !response.data) return;
+      if (!response.success || !response.data) {
+        setConversationsError(true);
+        setConversationsLoading(false);
+        return;
+      }
       const raw = response.data as any[];
       const initialPresence = new Map<string, string>();
       const initialCustomStatus = new Map<string, string | null>();
@@ -494,8 +502,11 @@ export function ChannelList({
         if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
         if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
       }
+      setConversationsLoading(false);
     } catch (e) {
       console.error('Erreur chargement conversations:', e);
+      setConversationsError(true);
+      setConversationsLoading(false);
     }
   }, []);
 
@@ -905,7 +916,19 @@ export function ChannelList({
                   {t.channelList.directMessages}
                 </p>
               </div>
-              {dmConversations.length === 0 ? (
+              {conversationsLoading ? (
+                <p className="px-3 py-3 text-center text-[11px] text-muted-foreground/40">Chargement…</p>
+              ) : conversationsError ? (
+                <div className="flex flex-col items-center gap-1.5 px-3 py-3">
+                  <p className="text-center text-[11px] text-destructive/70">Impossible de charger les conversations.</p>
+                  <button
+                    onClick={() => loadConversationsRef.current()}
+                    className="rounded-lg bg-foreground/8 px-3 py-1 text-[11px] font-medium text-muted-foreground hover:bg-foreground/12 hover:text-foreground transition-colors"
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              ) : dmConversations.length === 0 ? (
                 <p className="px-3 py-3 text-center text-[11px] text-muted-foreground/40">{t.channelList.noConversations}</p>
               ) : (
                 <div className="space-y-0.5">
