@@ -37,6 +37,8 @@ import { api }          from '@/lib/api';
 import { sanitizeSvg }  from '@/lib/sanitize';
 import { ServicesPanel }    from './services-panel';
 import { ChangelogsPanel }  from './changelogs-panel';
+import { HelpDeskPanel }    from './helpdesk-panel';
+import { SupportContentPanel } from './support-content-panel';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -59,7 +61,7 @@ const UICONS_LIST = [
 ];
 
 type Tab = 'overview' | 'users' | 'badges' | 'server-badges' | 'discovery' |
-           'monitoring' | 'status' | 'security' | 'changelogs' | 'services' | 'settings';
+           'monitoring' | 'status' | 'security' | 'changelogs' | 'services' | 'settings' | 'helpdesk' | 'support-content';
 type ServiceType = 'users' | 'messages' | 'friends' | 'calls' | 'servers' | 'bots' | 'media';
 type ServiceInstance = {
   id: string; serviceType: ServiceType; endpoint: string; domain: string;
@@ -79,6 +81,8 @@ const NAV: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'security',      label: 'Sécurité',          icon: ShieldAlertIcon },
   { id: 'changelogs',    label: 'Changelogs',        icon: FileTextIcon },
   { id: 'services',      label: 'Services',          icon: ServerIcon },
+  { id: 'helpdesk',       label: 'Helpdesk',          icon: ShieldIcon },
+  { id: 'support-content', label: 'Centre d\'aide',    icon: FileTextIcon },
   { id: 'settings',      label: 'Paramètres',        icon: SettingsIcon },
 ];
 
@@ -562,6 +566,9 @@ export default function AdminPage() {
                               >
                                 <option value="user">Utilisateur</option>
                                 <option value="moderator">Modérateur</option>
+                                <option value="support_l1">Support N1</option>
+                                <option value="support_l2">Support N2</option>
+                                <option value="technician">Technicien</option>
                                 <option value="admin">Admin</option>
                               </select>
                             </TableCell>
@@ -1205,6 +1212,22 @@ export default function AdminPage() {
 
                   {/* Graphe réseau */}
                   <ServicesPanel />
+                </div>
+              )}
+
+                {/* ── Helpdesk ── */}
+              {tab === 'helpdesk' && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold">Helpdesk — Support client</h2>
+                  <HelpDeskPanel />
+                </div>
+              )}
+
+              {/* ── Support content ── */}
+              {tab === 'support-content' && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold">Centre d'aide — Contenu éditorial</h2>
+                  <SupportContentPanel />
                 </div>
               )}
 

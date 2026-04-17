@@ -8,11 +8,14 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { ChatArea } from '@/components/chat/chat-area';
 import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
+import { useTranslation } from '@/components/locale-provider';
 
 export default function DMPage() {
   const { user, isLoading: authLoading } = useAuth();
   const params = useParams();
   const recipientId = params.recipientId as string;
+  const { t } = useTranslation();
+  const c = t.chat;
 
   // Initialiser depuis le cache si disponible → affichage instantané
   const cached = recipientId ? dmPrefetchCache.getUser(recipientId) : null;
@@ -55,9 +58,9 @@ export default function DMPage() {
               <UserXIcon size={28} className="text-red-500/70" />
             </div>
           <div className="flex flex-col items-center gap-1.5">
-            <p className="text-sm font-semibold text-[var(--foreground)]/80">Utilisateur introuvable</p>
+            <p className="text-sm font-semibold text-[var(--foreground)]/80">{c.userNotFound}</p>
             <p className="max-w-xs text-center text-[12px] leading-relaxed text-[var(--muted)]/60">
-              Impossible de charger cette conversation. L&apos;utilisateur n&apos;existe peut-être plus.
+              {c.userLoadError}
             </p>
           </div>
           <Link
@@ -65,7 +68,7 @@ export default function DMPage() {
             className="mt-2 flex items-center gap-2 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/60 px-5 py-2.5 text-sm font-medium text-[var(--foreground)]/80 shadow-lg transition-all duration-200 hover:bg-[var(--surface)]/80 hover:shadow-xl"
           >
             <ArrowLeftIcon size={16} />
-            Retour aux messages
+            {c.backToMessages}
           </Link>
         </div>
       </div>

@@ -16,6 +16,7 @@ export type LayoutPrefs = {
   compactServerList: boolean;
   uiStyle: UIStyle;
   density: UIDensity;
+  msgStyle: 'bubble' | 'discord';
 };
 
 const STORAGE_KEY = 'alfychat_layout_prefs';
@@ -26,6 +27,7 @@ const DEFAULT_PREFS: LayoutPrefs = {
   compactServerList: false,
   uiStyle: 'flat',
   density: 'default',
+  msgStyle: 'discord',
 };
 
 /**

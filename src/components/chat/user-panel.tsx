@@ -47,7 +47,7 @@ export function UserPanel({ user }: UserPanelProps) {
 
   // ── Hooks voix/appel ─────────────────────────────────────────────────────
   // useCallContext est toujours disponible (CallProvider enveloppe tous les layouts)
-  const { isMuted: callMuted, toggleMute: callToggleMute, status: callStatus } = useCallContext();
+  const { isMuted: callMuted, toggleMute: callToggleMute, callStatus } = useCallContext();
   // useVoice retourne null si hors VoiceProvider (layouts DM / friends)
   const voiceCtx = useVoice();
 
@@ -97,20 +97,20 @@ export function UserPanel({ user }: UserPanelProps) {
   };
 
   return (
-    <div data-tour="user-panel" className={`flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t px-1.5 md:gap-1 md:px-2 ${ui.isGlass ? 'border-white/15 bg-white/20 backdrop-blur-2xl dark:border-white/8 dark:bg-black/20' : 'border-border/30 bg-background/80'}`}>
+    <div data-tour="user-panel" className={`flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t px-1.5 md:gap-1 md:px-2 ${ui.isGlass ? 'border-white/15 bg-white/20 backdrop-blur-2xl dark:border-white/8 dark:bg-black/20' : 'border-border/40 bg-sidebar/80 backdrop-blur-md'}`}>
       {/* Avatar + user info */}
       <div className="min-w-0 flex-1">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl px-1.5 py-1 transition-colors duration-150 hover:bg-muted/30">
+          <div className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xl px-1.5 py-1 transition-all duration-150 hover:bg-foreground/6">
             <div className="relative shrink-0">
               <Avatar className={d.panelAvatar}>
                 <AvatarImage src={resolveMediaUrl(user.avatarUrl)} alt={user.displayName} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-[11px] font-semibold">
+                <AvatarFallback className="bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground text-[11px] font-semibold">
                   {user.displayName?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background ${dotColor}`}>
+              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-sidebar ${dotColor}`}>
                 {user.status === 'dnd' && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="block h-[2px] w-[5px] rounded-full bg-white" />
@@ -119,8 +119,8 @@ export function UserPanel({ user }: UserPanelProps) {
               </span>
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className={`truncate ${d.panelName} font-semibold leading-tight text-foreground`}>{user.displayName}</p>
-              <p className={`truncate ${d.panelSub} text-muted-foreground/60`}>
+              <p className={`truncate ${d.panelName} font-heading tracking-tight leading-tight text-foreground`}>{user.displayName}</p>
+              <p className={`truncate ${d.panelSub} text-muted-foreground/70`}>
                 {user.customStatus ? user.customStatus : statusLabel(user.status)}
               </p>
             </div>
@@ -207,7 +207,7 @@ export function UserPanel({ user }: UserPanelProps) {
           <TooltipTrigger asChild>
             <Button
               size="icon-sm" variant="ghost"
-              className={`size-7 rounded-xl transition-colors ${isMuted ? 'text-red-400 hover:text-red-300' : 'text-muted-foreground/60 hover:text-foreground'}`}
+              className={`size-7 rounded-lg transition-all ${isMuted ? 'bg-destructive/10 text-destructive hover:bg-destructive/15' : 'text-muted-foreground/70 hover:bg-foreground/6 hover:text-foreground'}`}
               onClick={handleToggleMute}
               disabled={!inVoiceChannel && !inCall}
             >
@@ -220,7 +220,7 @@ export function UserPanel({ user }: UserPanelProps) {
           <TooltipTrigger asChild>
             <Button
               size="icon-sm" variant="ghost"
-              className={`size-7 rounded-xl transition-colors ${isDeafened ? 'text-red-400 hover:text-red-300' : 'text-muted-foreground/60 hover:text-foreground'}`}
+              className={`size-7 rounded-lg transition-all ${isDeafened ? 'bg-destructive/10 text-destructive hover:bg-destructive/15' : 'text-muted-foreground/70 hover:bg-foreground/6 hover:text-foreground'}`}
               onClick={handleToggleDeafen}
               disabled={!inVoiceChannel}
             >
@@ -233,7 +233,7 @@ export function UserPanel({ user }: UserPanelProps) {
           <TooltipTrigger asChild>
             <Button
               size="icon-sm" variant="ghost"
-              className="size-7 rounded-xl text-muted-foreground/60 hover:text-foreground"
+              className="size-7 rounded-lg text-muted-foreground/70 hover:bg-foreground/6 hover:text-foreground"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
               {theme === 'dark' ? <SunIcon size={15} /> : <MoonIcon size={15} />}
@@ -245,7 +245,7 @@ export function UserPanel({ user }: UserPanelProps) {
           <TooltipTrigger asChild>
             <Button
               size="icon-sm" variant="ghost"
-              className="size-7 rounded-xl text-muted-foreground/60 hover:text-foreground"
+              className="size-7 rounded-lg text-muted-foreground/70 hover:bg-foreground/6 hover:text-foreground"
               onClick={() => setSettingsOpen(true)}
             >
               <SettingsIcon size={15} />

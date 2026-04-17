@@ -349,7 +349,7 @@ export const MessageItem = memo(function MessageItem({
             <DropdownMenuItem onClick={() => onCopy(message.content)}><CopyIcon size={14} /><span>Copier le texte</span></DropdownMenuItem>
             <DropdownMenuItem><PinIcon size={14} /><span>Épingler</span></DropdownMenuItem>
             {isMe && <DropdownMenuItem onClick={() => onStartEdit(message.id, message.content)}><PencilIcon size={14} /><span>Modifier</span></DropdownMenuItem>}
-            {isMe && <DropdownMenuItem className="text-red-500" onClick={() => onDelete(message.id)}><Trash2Icon size={14} /><span>Supprimer</span></DropdownMenuItem>}
+            {isMe && <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(message.id)}><Trash2Icon size={14} /><span>Supprimer</span></DropdownMenuItem>}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -424,7 +424,7 @@ export const MessageItem = memo(function MessageItem({
                 </span>
                 {message.pending && !message.failed && <ClockIcon size={11} className="text-muted-foreground/50" />}
                 {message.failed && (
-                  <span className="flex items-center gap-1 text-[10px] text-red-400" title="Échec de l'envoi — ce message n'a pas été sauvegardé">
+                  <span className="flex items-center gap-1 text-[10px] text-destructive" title="Échec de l'envoi — ce message n'a pas été sauvegardé">
                     <AlertCircleIcon size={11} />
                     Échec de l&apos;envoi
                   </span>

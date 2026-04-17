@@ -315,12 +315,12 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       <nav
         aria-label="Serveurs"
         className={cn(
-          cn('flex shrink-0 items-center gap-1.5', ui.isGlass
+          cn('relative flex shrink-0 items-center gap-1.5', ui.isGlass
             ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20 border-white/15 dark:border-white/8'
-            : 'bg-background'),
+            : 'bg-sidebar'),
           horizontal
-            ? 'h-14 w-full flex-row border-b border-border/30 px-3'
-            : cn('h-full flex-col border-r border-border/30 py-3', prefs.density === 'compact' ? 'w-14' : prefs.density === 'comfortable' ? 'w-20' : 'w-18'),
+            ? 'h-14 w-full flex-row border-b border-border/40 px-3'
+            : cn('h-full flex-col border-r border-border/40 py-3', prefs.density === 'compact' ? 'w-14' : prefs.density === 'comfortable' ? 'w-20' : 'w-18'),
         )}
       >
         {/* ── DMs ── */}
@@ -333,14 +333,14 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
                 btnSize,
                 selectedServer === null
-                  ? 'rounded-[14px] bg-primary text-primary-foreground shadow-sm shadow-primary/25'
-                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
+                  ? 'rounded-[14px] bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-primary/50'
+                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary hover:shadow-md hover:shadow-primary/10',
               )}
               onClick={() => onSelectServer(null)}
             >
               <MessageCircleIcon size={iconSize} />
               {totalDmUnread > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[8px] font-semibold text-primary-foreground ring-1 ring-background">
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-linear-to-br from-primary to-[#7c3aed] px-1 text-[8px] font-semibold text-primary-foreground shadow-md shadow-primary/40 ring-2 ring-sidebar">
                   {totalDmUnread > 99 ? '99+' : totalDmUnread}
                 </span>
               )}
@@ -362,14 +362,14 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
                 btnSize,
                 selectedServer === 'groups'
-                  ? 'rounded-[14px] bg-primary text-primary-foreground shadow-sm shadow-primary/25'
-                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
+                  ? 'rounded-[14px] bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-primary/50'
+                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary hover:shadow-md hover:shadow-primary/10',
               )}
               onClick={() => onSelectServer('groups')}
             >
               <UsersRoundIcon size={iconSize} />
               {totalGroupUnread > 0 && selectedServer !== 'groups' && (
-                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[8px] font-semibold text-primary-foreground ring-1 ring-background">
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-linear-to-br from-primary to-[#7c3aed] px-1 text-[8px] font-semibold text-primary-foreground shadow-md shadow-primary/40 ring-2 ring-sidebar">
                   {totalGroupUnread > 99 ? '99+' : totalGroupUnread}
                 </span>
               )}
@@ -378,28 +378,8 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           <TooltipContent side={side}>Groupes</TooltipContent>
         </Tooltip>
 
-        {/* ── Hosting ── */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label="Hébergement"
-              className={cn(
-                'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
-                btnSize,
-                selectedServer === 'hosting'
-                  ? 'rounded-[14px] bg-primary text-primary-foreground shadow-sm shadow-primary/25'
-                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
-              )}
-              onClick={() => onSelectServer('../hosting')}
-            >
-              <i className="bi bi-server" style={{ fontSize: iconSize }} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side={side}>Hébergement</TooltipContent>
-        </Tooltip>
 
-        <div className={cn('shrink-0 rounded-full bg-border', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
+        <div className={cn('shrink-0 rounded-full bg-border/60', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
         {/* ── Server list ── */}
         <ScrollArea
@@ -461,9 +441,9 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                                     'transition-all duration-200',
                                     btnSize,
                                     active
-                                      ? 'rounded-[14px] ring-2 ring-primary/30 ring-offset-1 ring-offset-background'
-                                      : 'rounded-2xl group-hover:rounded-full',
-                                    isOver && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
+                                      ? 'rounded-[14px] shadow-lg shadow-primary/25 ring-2 ring-primary/50 ring-offset-1 ring-offset-sidebar'
+                                      : 'rounded-2xl group-hover:rounded-full group-hover:shadow-md group-hover:shadow-primary/15',
+                                    isOver && 'ring-2 ring-primary ring-offset-1 ring-offset-sidebar',
                                   )}
                                 >
                                   <AvatarImage
@@ -475,8 +455,8 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                                     className={cn(
                                       'text-sm font-bold transition-all duration-200',
                                       active
-                                        ? 'rounded-[14px] bg-primary text-primary-foreground'
-                                        : 'rounded-2xl bg-surface-secondary group-hover:rounded-full group-hover:bg-primary group-hover:text-primary-foreground',
+                                        ? 'rounded-[14px] bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground'
+                                        : 'rounded-2xl bg-surface-secondary group-hover:rounded-full group-hover:bg-linear-to-br group-hover:from-primary group-hover:to-[#7c3aed] group-hover:text-primary-foreground',
                                     )}
                                   >
                                     {server.name.charAt(0).toUpperCase()}
@@ -486,7 +466,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                                   )}
                                 </Avatar>
                                 {serverUnread > 0 && !active && (
-                                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[8px] font-semibold text-primary-foreground ring-1 ring-background">
+                                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-linear-to-br from-primary to-[#7c3aed] px-1 text-[8px] font-semibold text-primary-foreground shadow-md shadow-primary/40 ring-2 ring-sidebar">
                                     {serverUnread > 99 ? '99+' : serverUnread}
                                   </span>
                                 )}
@@ -538,7 +518,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           <ScrollBar orientation={horizontal ? 'horizontal' : 'vertical'} className="hidden" />
         </ScrollArea>
 
-        <div className={cn('shrink-0 rounded-full bg-border', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
+        <div className={cn('shrink-0 rounded-full bg-border/60', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
 
         {/* ── Join ── */}
         <Tooltip>
@@ -547,12 +527,12 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label={t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}
               className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-border text-muted-foreground transition-colors duration-200 hover:border-primary hover:text-primary',
+                'group/join mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-border/80 text-muted-foreground transition-all duration-200 hover:rounded-full hover:border-solid hover:border-success hover:bg-success/10 hover:text-success hover:shadow-md hover:shadow-success/20',
                 btnSize,
               )}
               onClick={() => setJoinOpen(true)}
             >
-              <PlusIcon size={iconSize} />
+              <PlusIcon size={iconSize} className="transition-transform duration-200 group-hover/join:rotate-90" />
             </button>
           </TooltipTrigger>
           <TooltipContent side={side}>
@@ -568,7 +548,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label={t.serverList?.discoverServers ?? 'Découvrir des serveurs'}
               className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
+                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-primary/15 hover:text-primary hover:shadow-md hover:shadow-primary/10',
                 btnSize,
               )}
               onClick={() => router.push('/channels/discover-server')}
@@ -579,23 +559,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           <TooltipContent side={side}>{t.serverList?.discoverServers ?? 'Découvrir'}</TooltipContent>
         </Tooltip>
 
-        {/* ── Home ── */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label="Bienvenue"
-              className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-primary/15 hover:text-primary',
-                btnSize,
-              )}
-              onClick={() => router.push('/channels/gotostart')}
-            >
-              <HomeIcon size={iconSize} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side={side}>Bienvenue</TooltipContent>
-        </Tooltip>
+
       </nav>
 
       {/* ── Server settings ── */}

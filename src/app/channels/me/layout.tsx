@@ -33,9 +33,9 @@ function ResizeHandle({ onMouseDown, isResizing }: { onMouseDown: (e: React.Mous
   return (
     <div
       onMouseDown={onMouseDown}
-      className={`group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-[var(--surface)] transition-colors hover:bg-[var(--accent)]/20 active:bg-[var(--accent)]/30 ${isResizing ? 'bg-[var(--accent)]/30' : ''}`}
+      className={`group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-surface transition-colors hover:bg-primary/5 active:bg-primary/10 ${isResizing ? 'bg-primary/10' : ''}`}
     >
-      <div className="h-8 w-0.5 rounded-full bg-[var(--border)] transition-all group-hover:h-12 group-hover:bg-[var(--accent)]/60 group-active:bg-[var(--accent)]" />
+      <div className="h-8 w-0.5 rounded-full bg-border transition-all group-hover:h-12 group-hover:bg-primary/40 group-active:bg-primary" />
     </div>
   );
 }
@@ -132,6 +132,10 @@ function LayoutInner({ children }: { children: ReactNode }) {
       setSelectedChannel('changelogs');
       setActiveDM(null);
       setActiveGroup(null);
+    } else if (pathname.startsWith('/channels/hosting')) {
+      setSelectedChannel('hosting');
+      setActiveDM(null);
+      setActiveGroup(null);
     }
   }, [groupId, recipientId, pathname]);
 
@@ -186,13 +190,13 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="relative flex h-dvh items-center justify-center overflow-hidden bg-[var(--background)]">
+      <div className="relative flex h-dvh items-center justify-center overflow-hidden bg-background">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-[var(--accent)]">
-            <MessageCircleIcon size={32} className="text-[var(--accent-foreground)]" />
+          <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-primary/10">
+            <MessageCircleIcon size={32} className="text-primary" />
           </div>
-          <p className="text-sm text-[var(--muted)]">Chargement...</p>
+          <p className="text-sm text-muted-foreground">Chargement...</p>
         </div>
       </div>
     );
@@ -202,13 +206,13 @@ function LayoutInner({ children }: { children: ReactNode }) {
   // Ne jamais retourner null — cela peut déclencher un 404 Next.js App Router
   if (!user) {
     return (
-      <div className="relative flex h-dvh items-center justify-center overflow-hidden bg-[var(--background)]">
+      <div className="relative flex h-dvh items-center justify-center overflow-hidden bg-background">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-[var(--accent)]">
-            <MessageCircleIcon size={32} className="text-[var(--accent-foreground)]" />
+          <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-primary/10">
+            <MessageCircleIcon size={32} className="text-primary" />
           </div>
-          <p className="text-sm text-[var(--muted)]">Redirection...</p>
+          <p className="text-sm text-muted-foreground">Redirection...</p>
         </div>
       </div>
     );

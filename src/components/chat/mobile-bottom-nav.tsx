@@ -41,7 +41,7 @@ export function MobileBottomNav() {
   };
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch border-t border-border/40 bg-background/95 backdrop-blur-md md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch border-t border-border/40 bg-sidebar/95 backdrop-blur-xl md:hidden">
       {TABS.map((tab) => {
         const active = isActive(tab.id);
         return (
@@ -50,18 +50,28 @@ export function MobileBottomNav() {
             variant="ghost"
             onClick={() => handlePress(tab.id)}
             className={cn(
-              'flex flex-1 flex-col items-center justify-center gap-0.5 rounded-none h-full transition-colors',
+              'relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-none h-full transition-colors hover:bg-transparent',
               active ? 'text-primary' : 'text-muted-foreground',
             )}
           >
+            {/* Top indicator pill */}
+            <span
+              aria-hidden
+              className={cn(
+                'absolute left-1/2 top-0 h-[3px] -translate-x-1/2 rounded-b-full bg-linear-to-r from-primary to-[#7c3aed] transition-all duration-300 ease-out',
+                active ? 'w-8 opacity-100' : 'w-0 opacity-0',
+              )}
+            />
             <div className={cn(
-              'flex size-9 items-center justify-center rounded-xl transition-all',
-              active ? 'bg-primary/10 scale-105' : 'scale-100',
+              'flex size-9 items-center justify-center rounded-xl transition-all duration-300',
+              active
+                ? 'scale-105 bg-linear-to-br from-primary/15 to-[#7c3aed]/10 ring-1 ring-primary/20'
+                : 'scale-100',
             )}>
               <tab.icon size={20} />
             </div>
             <span className={cn(
-              'text-[10px] font-semibold',
+              'text-[10px] font-heading tracking-tight transition-opacity',
               active ? 'opacity-100' : 'opacity-70',
             )}>
               {tab.label}

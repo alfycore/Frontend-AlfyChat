@@ -8,21 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useTranslation } from '@/components/locale-provider';
 
-const PROVIDERS = [
-  { id: 'stripe', label: 'Carte bancaire', icon: 'credit-card', sub: 'Visa, Mastercard, AMEX via Stripe' },
-  { id: 'paypal', label: 'PayPal', icon: 'paypal', sub: 'Compte PayPal ou carte via PayPal' },
-  { id: 'mollie', label: 'Mollie', icon: 'wallet2', sub: 'iDEAL, Bancontact, Klarna, SEPA...' },
-  { id: 'tebex', label: 'Tebex', icon: 'bag-check', sub: 'Gaming marketplace, crypto, wallets' },
+const PROVIDERS_DATA = [
+  { id: 'stripe',  icon: 'credit-card' },
+  { id: 'paypal',  icon: 'paypal' },
+  { id: 'mollie',  icon: 'wallet2' },
+  { id: 'tebex',   icon: 'bag-check' },
 ] as const;
 
-type Provider = typeof PROVIDERS[number]['id'];
+type Provider = typeof PROVIDERS_DATA[number]['id'];
 
-const BILLING: { id: 'monthly' | 'quarterly' | 'yearly'; label: string; badge?: string }[] = [
-  { id: 'monthly', label: 'Mensuel' },
-  { id: 'quarterly', label: 'Trimestriel', badge: '-10%' },
-  { id: 'yearly', label: 'Annuel', badge: '-20%' },
-];
+const BILLING_IDS = ['monthly', 'quarterly', 'yearly'] as const;
+type BillingId = typeof BILLING_IDS[number];
 
 function CheckoutContent() {
   const params = useSearchParams();
@@ -31,10 +29,12 @@ function CheckoutContent() {
   const planId = params.get('plan');
   const serverId = params.get('server_id');
   const targetType = (params.get('target') as 'user' | 'server') || 'server';
+  const { t } = useTranslation();
+  const h = t.hosting;
 
   const [offer, setOffer] = useState<HostingOffer | null>(null);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
-  const [billing, setBilling] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [billing, setBilling] = useState<BillingId>('monthly');
   const [provider, setProvider] = useState<Provider>('stripe');
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -59,7 +59,7 @@ function CheckoutContent() {
         if (found) setOffer(found);
       }
     } catch {
-      toast.error('Offre introuvable');
+      toast.error(h.offerNotFound);
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ function CheckoutContent() {
   async function handleCheckout() {
     if (!plan && !offer) return;
     if (targetType === 'server' && !serverId) {
-      toast.error('Identifiant du serveur manquant');
+      toast.error(h.missingServerId);
       return;
     }
     setPaying(true);
@@ -102,10 +102,10 @@ function CheckoutContent() {
       if (url) {
         window.location.href = url;
       } else {
-        toast.error('Impossible d\'obtenir l\'URL de paiement');
+        toast.error(h.paymentUrlError);
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Erreur lors du paiement');
+      toast.error(err?.message || h.paymentError);
     } finally {
       setPaying(false);
     }
@@ -128,10 +128,10 @@ function CheckoutContent() {
       <div className="min-h-screen bg-background flex items-center justify-center text-center p-4">
         <div>
           <i className="bi bi-exclamation-circle text-5xl text-muted-foreground block mb-4" />
-          <h2 className="text-xl font-bold mb-2">Offre introuvable</h2>
-          <p className="text-muted-foreground text-sm mb-4">Vérifiez le lien ou retournez au marketplace.</p>
+          <h2 className="text-xl font-bold mb-2">{h.offerNotFound}</h2>
+          <p className="text-muted-foreground text-sm mb-4">{h.offerNotFoundDesc}</p>
           <Link href="/hosting">
-            <Button variant="outline">Voir les offres</Button>
+            <Button variant="outline">{h.filterAll !== 'All' ? h.filterAll : 'Voir les offres'}</Button>
           </Link>
         </div>
       </div>
@@ -149,10 +149,8 @@ function CheckoutContent() {
       <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
         {/* Titre */}
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-1">Finaliser votre abonnement</h1>
-          <p className="text-muted-foreground text-sm">
-            Aucune commission AlfyChat — paiement direct à l'hébergeur.
-          </p>
+          <h1 className="text-2xl font-bold mb-1">{h.checkoutTitle}</h1>
+          <p className="text-muted-foreground text-sm">{h.checkoutSub}</p>
         </div>
 
         {/* Résumé offre */}
@@ -174,38 +172,40 @@ function CheckoutContent() {
             </div>
             <div className="text-right shrink-0">
               <div className="text-3xl font-bold">{price.toFixed(2)} {currency}</div>
-              <div className="text-xs text-muted-foreground">/
-                {billing === 'monthly' ? 'mois' : billing === 'quarterly' ? '3 mois' : 'an'}
-              </div>
+              <div className="text-xs text-muted-foreground">{
+                billing === 'monthly' ? h.perMonth : billing === 'quarterly' ? h.per3Months : h.perYear
+              }</div>
             </div>
           </CardContent>
         </Card>
 
         {/* Cycle de facturation */}
         <div>
-          <Label className="text-sm font-medium block mb-2">Cycle de facturation</Label>
+          <Label className="text-sm font-medium block mb-2">{h.billingCycle}</Label>
           <div className="grid grid-cols-3 gap-2">
-            {BILLING.map(b => {
-              const hasOption = b.id === 'monthly' ||
-                (b.id === 'quarterly' && plan?.price_quarterly) ||
-                (b.id === 'yearly' && (plan?.price_yearly || offer?.price_yearly));
+            {BILLING_IDS.map(bid => {
+              const badge = bid === 'quarterly' ? '-10%' : bid === 'yearly' ? '-20%' : undefined;
+              const label = bid === 'monthly' ? h.billingMonthly : bid === 'quarterly' ? h.billingQuarterly : h.billingYearly;
+              const hasOption = bid === 'monthly' ||
+                (bid === 'quarterly' && plan?.price_quarterly) ||
+                (bid === 'yearly' && (plan?.price_yearly || offer?.price_yearly));
               if (!hasOption) return null;
               return (
                 <button
-                  key={b.id}
-                  onClick={() => setBilling(b.id)}
+                  key={bid}
+                  onClick={() => setBilling(bid)}
                   className={`relative rounded-xl border p-3 text-left transition-colors ${
-                    billing === b.id
+                    billing === bid
                       ? 'border-indigo-500 bg-indigo-500/10'
                       : 'border-white/10 bg-white/5 hover:bg-white/10'
                   }`}
                 >
-                  {b.badge && (
+                  {badge && (
                     <span className="absolute -top-2 -right-1 text-xs bg-emerald-600 text-white px-1.5 rounded-full">
-                      {b.badge}
+                      {badge}
                     </span>
                   )}
-                  <p className="text-sm font-medium">{b.label}</p>
+                  <p className="text-sm font-medium">{label}</p>
                 </button>
               );
             })}
@@ -214,45 +214,49 @@ function CheckoutContent() {
 
         {/* Moyen de paiement */}
         <div>
-          <Label className="text-sm font-medium block mb-2">Moyen de paiement</Label>
+          <Label className="text-sm font-medium block mb-2">{h.paymentMethod}</Label>
           <div className="space-y-2">
-            {PROVIDERS.map(p => (
-              <button
-                key={p.id}
-                onClick={() => setProvider(p.id)}
-                className={`w-full flex items-center gap-4 rounded-xl border p-4 text-left transition-colors ${
-                  provider === p.id
-                    ? 'border-indigo-500 bg-indigo-500/10'
-                    : 'border-white/10 bg-white/5 hover:bg-white/10'
-                }`}
-              >
-                <i className={`bi bi-${p.icon} text-2xl`} />
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{p.label}</p>
-                  <p className="text-xs text-muted-foreground">{p.sub}</p>
-                </div>
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                  provider === p.id ? 'border-indigo-500' : 'border-white/30'
-                }`}>
-                  {provider === p.id && <div className="w-2 h-2 bg-indigo-500 rounded-full" />}
-                </div>
-              </button>
-            ))}
+            {PROVIDERS_DATA.map(p => {
+              const label = p.id === 'stripe' ? h.providerCard : p.id === 'paypal' ? h.providerPayPal : p.id === 'mollie' ? h.providerMollie : h.providerTebex;
+              const sub = p.id === 'stripe' ? h.providerCardSub : p.id === 'paypal' ? h.providerPayPalSub : p.id === 'mollie' ? h.providerMollieSub : h.providerTebexSub;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setProvider(p.id)}
+                  className={`w-full flex items-center gap-4 rounded-xl border p-4 text-left transition-colors ${
+                    provider === p.id
+                      ? 'border-indigo-500 bg-indigo-500/10'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <i className={`bi bi-${p.icon} text-2xl`} />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{label}</p>
+                    <p className="text-xs text-muted-foreground">{sub}</p>
+                  </div>
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    provider === p.id ? 'border-indigo-500' : 'border-white/30'
+                  }`}>
+                    {provider === p.id && <div className="w-2 h-2 bg-indigo-500 rounded-full" />}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Récap + CTA */}
         <div className="rounded-xl bg-white/5 border border-white/10 p-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Sous-total</span>
+            <span className="text-muted-foreground">{h.subtotal}</span>
             <span>{price.toFixed(2)} {currency}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Commission AlfyChat</span>
+            <span className="text-muted-foreground">{h.alfychatFee}</span>
             <span className="text-emerald-400">0,00 {currency}</span>
           </div>
           <div className="border-t border-white/10 pt-2 flex justify-between font-bold">
-            <span>Total</span>
+            <span>{h.total}</span>
             <span>{price.toFixed(2)} {currency}</span>
           </div>
         </div>
@@ -263,15 +267,13 @@ function CheckoutContent() {
           className="w-full h-12 text-base bg-indigo-600 hover:bg-indigo-700"
         >
           {paying ? (
-            <><i className="bi bi-arrow-repeat animate-spin mr-2" />Redirection en cours...</>
+            <><i className="bi bi-arrow-repeat animate-spin mr-2" />{h.redirecting}</>
           ) : (
-            <><i className="bi bi-lock-fill mr-2" />Payer {price.toFixed(2)} {currency}</>
+            <><i className="bi bi-lock-fill mr-2" />{h.pay.replace('{amount}', price.toFixed(2)).replace('{currency}', currency)}</>
           )}
         </Button>
 
-        <p className="text-center text-xs text-muted-foreground">
-          En validant, vous acceptez les CGU hébergeur. Paiement sécurisé — AlfyChat ne stocke aucune donnée bancaire.
-        </p>
+        <p className="text-center text-xs text-muted-foreground">{h.checkoutDisclaimer}</p>
       </div>
     </div>
   );

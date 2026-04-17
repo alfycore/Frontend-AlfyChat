@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   type Locale,
   type Translations,
@@ -9,6 +9,25 @@ import {
   LOCALE_STORAGE_KEY,
   resolveSystemLocale,
 } from '@/i18n';
+
+// ─────────────────────────────────────────────────────────────
+// Deep-merge locale with English so any missing key falls back.
+// Keeps types happy (`as Translations`) AND avoids `undefined` in UI
+// when a locale hasn't been fully translated yet.
+// ─────────────────────────────────────────────────────────────
+function mergeWithFallback<T>(base: T, override: any): T {
+  if (base === null || typeof base !== 'object') return (override ?? base) as T;
+  if (Array.isArray(base)) return (override ?? base) as T;
+  const out: any = {};
+  for (const key in base) {
+    out[key] = mergeWithFallback((base as any)[key], override?.[key]);
+  }
+  // Preserve keys that exist only in override (shouldn't happen in practice)
+  if (override && typeof override === 'object') {
+    for (const key in override) if (!(key in out)) out[key] = override[key];
+  }
+  return out as T;
+}
 
 // ─── Context ──────────────────────────────────────────────────
 interface LocaleContextValue {
@@ -50,8 +69,13 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = resolved;
   };
 
+  const t = useMemo<Translations>(
+    () => mergeWithFallback<Translations>(translations.en as Translations, translations[locale]),
+    [locale],
+  );
+
   return (
-    <LocaleContext.Provider value={{ locale, localePreference, setLocale, t: translations[locale] as Translations }}>
+    <LocaleContext.Provider value={{ locale, localePreference, setLocale, t }}>
       {children}
     </LocaleContext.Provider>
   );

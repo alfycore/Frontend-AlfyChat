@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 import { SparklesIcon, ZapIcon, ShieldIcon, FlameIcon, ArrowLeftIcon, SearchIcon, XIcon } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,22 +28,13 @@ interface Changelog {
 
 type FilterType = 'all' | Changelog['type'];
 
-const TYPE_CONFIG: Record<string, { label: string; iconBg: string; iconColor: string; dot: string; icon: React.ElementType }> = {
-  feature:     { label: 'Nouveauté',        iconBg: 'bg-blue-500/10',   iconColor: 'text-blue-500',   dot: 'bg-blue-500',   icon: SparklesIcon },
-  improvement: { label: 'Amélioration',     iconBg: 'bg-violet-500/10', iconColor: 'text-violet-500', dot: 'bg-violet-500', icon: ZapIcon },
-  fix:         { label: 'Correctif',         iconBg: 'bg-orange-500/10', iconColor: 'text-orange-500', dot: 'bg-orange-500', icon: FlameIcon },
-  security:    { label: 'Sécurité',          iconBg: 'bg-red-500/10',    iconColor: 'text-red-500',    dot: 'bg-red-500',    icon: ShieldIcon },
-  breaking:    { label: 'Changement majeur', iconBg: 'bg-red-700/10',    iconColor: 'text-red-600',    dot: 'bg-red-700',    icon: FlameIcon },
+const TYPE_CONFIG: Record<string, { iconBg: string; iconColor: string; dot: string; icon: React.ElementType }> = {
+  feature:     { iconBg: 'bg-blue-500/10',   iconColor: 'text-blue-500',   dot: 'bg-blue-500',   icon: SparklesIcon },
+  improvement: { iconBg: 'bg-violet-500/10', iconColor: 'text-violet-500', dot: 'bg-violet-500', icon: ZapIcon },
+  fix:         { iconBg: 'bg-orange-500/10', iconColor: 'text-orange-500', dot: 'bg-orange-500', icon: FlameIcon },
+  security:    { iconBg: 'bg-red-500/10',    iconColor: 'text-red-500',    dot: 'bg-red-500',    icon: ShieldIcon },
+  breaking:    { iconBg: 'bg-red-700/10',    iconColor: 'text-red-600',    dot: 'bg-red-700',    icon: FlameIcon },
 };
-
-const FILTERS: { value: FilterType; label: string }[] = [
-  { value: 'all',         label: 'Toutes les mises à jour' },
-  { value: 'feature',     label: 'Nouveautés' },
-  { value: 'improvement', label: 'Améliorations' },
-  { value: 'fix',         label: 'Correctifs' },
-  { value: 'security',    label: 'Sécurité' },
-  { value: 'breaking',    label: 'Changements majeurs' },
-];
 
 const PROSE = cn(
   'prose prose-sm max-w-none text-muted-foreground',
@@ -62,6 +54,8 @@ const PROSE = cn(
 );
 
 export default function ChangelogsPublicPage() {
+  const { t, locale } = useTranslation();
+  const cl18n = t.changelogs;
   const router = useRouter();
   const [changelogs, setChangelogs] = useState<Changelog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,12 +84,12 @@ export default function ChangelogsPublicPage() {
     const map = new Map<string, Changelog[]>();
     for (const cl of filtered) {
       const d = new Date(cl.created_at);
-      const key = d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' });
+      const key = d.toLocaleDateString(locale, { year: 'numeric', month: 'long' });
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(cl);
     }
     return Array.from(map.entries());
-  }, [filtered]);
+  }, [filtered, locale]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -104,7 +98,7 @@ export default function ChangelogsPublicPage() {
         {/* Back */}
         <Button variant="ghost" size="sm" className="mb-6 -ml-1 h-8 gap-1.5 text-xs text-muted-foreground" onClick={() => router.back()}>
           <ArrowLeftIcon size={13} />
-          Retour
+          {cl18n.back}
         </Button>
 
         {/* Hero */}
@@ -113,14 +107,12 @@ export default function ChangelogsPublicPage() {
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
               <SparklesIcon size={15} className="text-primary" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Changelogs</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{cl18n.title}</h1>
             {!loading && changelogs.length > 0 && (
-              <Badge variant="secondary" className="ml-1">{changelogs.length} entrées</Badge>
+              <Badge variant="secondary" className="ml-1">{cl18n.entriesCount.replace('{n}', String(changelogs.length))}</Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">
-            Suivez toutes les nouveautés, corrections et améliorations d&apos;AlfyChat.
-          </p>
+          <p className="text-sm text-muted-foreground">{cl18n.subtitle}</p>
         </div>
 
         {/* Search + filters */}
@@ -128,7 +120,7 @@ export default function ChangelogsPublicPage() {
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Rechercher une mise à jour…"
+              placeholder={cl18n.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -140,7 +132,14 @@ export default function ChangelogsPublicPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {FILTERS.map((f) => (
+            {([
+              { value: 'all',         label: cl18n.filterAll },
+              { value: 'feature',     label: cl18n.filterNew },
+              { value: 'improvement', label: cl18n.filterImprovement },
+              { value: 'fix',         label: cl18n.filterFix },
+              { value: 'security',    label: cl18n.filterSecurity },
+              { value: 'breaking',    label: cl18n.filterBreaking },
+            ] as { value: FilterType; label: string }[]).map((f) => (
               <button
                 key={f.value}
                 onClick={() => setTypeFilter(f.value)}
@@ -185,14 +184,14 @@ export default function ChangelogsPublicPage() {
               <SparklesIcon size={24} className="text-muted-foreground/40" />
             </div>
             <div>
-              <p className="font-semibold">Aucune mise à jour trouvée</p>
+              <p className="font-semibold">{cl18n.noResults}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {search || typeFilter !== 'all' ? 'Essayez avec d\'autres filtres.' : 'Revenez bientôt.'}
+                {search || typeFilter !== 'all' ? cl18n.noResultsHint : cl18n.comingSoon}
               </p>
             </div>
             {(search || typeFilter !== 'all') && (
               <Button variant="outline" size="sm" onClick={() => { setSearch(''); setTypeFilter('all'); }}>
-                Effacer les filtres
+                {cl18n.clearFilters}
               </Button>
             )}
           </div>
@@ -212,9 +211,13 @@ export default function ChangelogsPublicPage() {
                 <div className="space-y-4 border-l-2 border-border pl-6">
                   {entries.map((log, idx) => {
                     const cfg = TYPE_CONFIG[log.type] ?? {
-                      label: log.type, iconBg: 'bg-muted', iconColor: 'text-muted-foreground',
+                      iconBg: 'bg-muted', iconColor: 'text-muted-foreground',
                       dot: 'bg-muted-foreground', icon: SparklesIcon,
                     };
+                    const typeLabel = ({
+                      feature: cl18n.typeNew, improvement: cl18n.typeImprovement,
+                      fix: cl18n.typeFix, security: cl18n.typeSecurity, breaking: cl18n.typeBreaking,
+                    } as Record<string, string>)[log.type] ?? log.type;
                     const Icon = cfg.icon;
                     const isFirst = idx === 0 && changelogs[0]?.id === log.id && typeFilter === 'all' && !search;
 
@@ -234,14 +237,14 @@ export default function ChangelogsPublicPage() {
                                 <Icon size={13} />
                               </div>
                               <Badge variant="secondary" className={cn('text-xs', cfg.iconColor)}>
-                                {cfg.label}
+                                {typeLabel}
                               </Badge>
                               <Badge variant="outline" className="font-mono text-xs text-muted-foreground">
                                 v{log.version}
                               </Badge>
-                              {isFirst && <Badge>Dernière version</Badge>}
+                              {isFirst && <Badge>{cl18n.latestVersion}</Badge>}
                               <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
-                                {new Date(log.created_at).toLocaleDateString('fr-FR', {
+                                {new Date(log.created_at).toLocaleDateString(locale, {
                                   day: 'numeric', month: 'short', year: 'numeric',
                                 })}
                               </span>
@@ -271,7 +274,7 @@ export default function ChangelogsPublicPage() {
                               <>
                                 <Separator className="mt-4 mb-3" />
                                 <p className="text-xs text-muted-foreground">
-                                  Publié par{' '}
+                                  {cl18n.publishedBy}{' '}
                                   <span className="font-medium text-foreground">@{log.author_username}</span>
                                 </p>
                               </>

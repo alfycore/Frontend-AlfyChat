@@ -18,6 +18,7 @@ import { api, resolveMediaUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { useTranslation } from '@/components/locale-provider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ export default function DiscoverServerPage() {
   useAuth();
   const ui = useUIStyle();
   const { isMobile, openSidebar } = useMobileNav();
+  const { locale } = useTranslation();
 
   const [servers, setServers] = useState<DiscoverServer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -253,7 +255,7 @@ export default function DiscoverServerPage() {
                       <p className="truncate text-[13px] font-semibold leading-tight">{server.name}</p>
                       <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground/60">
                         <UsersIcon size={10} />
-                        {(server.member_count || 0).toLocaleString('fr-FR')} membres
+                        {(server.member_count || 0).toLocaleString(locale)} membres
                       </div>
                       {server.description && (
                         <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground/70">

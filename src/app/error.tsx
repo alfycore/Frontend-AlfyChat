@@ -2,8 +2,9 @@
 
 import { useEffect } from 'react';
 import Image from 'next/image';
-import { RefreshCwIcon, HomeIcon } from '@/components/icons';
+import { RefreshCwIcon, HomeIcon, MessageCircleIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 
 export default function Error({
@@ -19,54 +20,60 @@ export default function Error({
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background text-foreground">
-      {/* Background grid */}
+      {/* Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-red-500/[0.06] blur-[120px]" />
+      {/* Destructive glow */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-105 w-150 -translate-x-1/2 rounded-full bg-destructive/[0.07] blur-[100px]" />
       <div className="absolute inset-x-0 bottom-0 h-48 bg-linear-to-b from-transparent to-background" />
 
-      <div className="relative z-10 flex flex-col items-center px-8 text-center">
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center px-6 text-center">
         {/* Logo */}
-        <Link href="/" className="mb-12 flex items-center gap-2.5 no-underline">
-          <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={28} height={28} />
-          <span className="font-[family-name:var(--font-krona)] text-lg text-foreground">AlfyChat</span>
+        <Link href="/" className="mb-10 flex items-center gap-2.5 opacity-80 transition-opacity hover:opacity-100">
+          <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={24} height={24} />
+          <span className="font-heading text-base text-foreground">AlfyChat</span>
         </Link>
 
-        {/* 500 */}
-        <h1 className="mb-3 font-[family-name:var(--font-krona)] bg-[linear-gradient(135deg,oklch(0.65_0.2_25),oklch(0.6_0.2_50),oklch(0.7_0.15_60))] bg-clip-text text-[6rem] leading-none text-transparent md:text-[9rem]">
-          500
-        </h1>
+        {/* Badge */}
+        <div className="mb-5 flex items-center justify-center rounded-full border border-destructive/20 bg-destructive/8 px-3 py-1">
+          <span className="font-mono text-[11px] font-semibold text-destructive">500</span>
+        </div>
 
-        <h2 className="mb-3 font-[family-name:var(--font-krona)] text-xl tracking-tight">
+        {/* Heading */}
+        <h1 className="mb-3 font-heading text-3xl tracking-tight text-foreground md:text-4xl">
           Erreur inattendue
-        </h2>
-
-        <p className="mb-10 max-w-sm text-muted">
+        </h1>
+        <p className="mb-8 text-sm leading-relaxed text-muted-foreground">
           Une erreur est survenue. Vous pouvez réessayer ou retourner à l&apos;accueil.
         </p>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button size="lg" onClick={reset}>
-            <RefreshCwIcon size={16} />
+        <Separator className="mb-8 opacity-30" />
+
+        {/* Actions */}
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button size="lg" variant="destructive" onClick={reset} className="w-full sm:w-auto">
+            <RefreshCwIcon size={15} />
             Réessayer
           </Button>
           <Link href="/">
-            <Button size="lg" variant="outline">
-              <HomeIcon size={16} />
+            <Button size="lg" variant="outline" className="w-full sm:w-auto">
+              <HomeIcon size={15} />
               Accueil
             </Button>
           </Link>
         </div>
 
+        {/* Digest */}
         {error.digest && (
-          <p className="mt-8 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2 font-mono text-[11px] text-muted">
+          <p className="mt-8 rounded-xl border border-border/40 bg-surface/30 px-4 py-2 font-mono text-[11px] text-muted-foreground/60">
             Réf : {error.digest}
           </p>
         )}
       </div>
 
-      <p className="absolute bottom-6 text-[10px] text-muted/40">
+      <p className="absolute bottom-5 font-mono text-[10px] text-muted-foreground/30">
         © 2026 AlfyChat · AlfyCore
       </p>
     </div>
   );
 }
+

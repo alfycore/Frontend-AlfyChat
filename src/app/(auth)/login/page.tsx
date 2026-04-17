@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -7,10 +7,11 @@ import { ShieldIcon, EyeIcon, EyeOffIcon, MailIcon, LockIcon, ZapIcon, GlobeIcon
 import { Loader2 } from 'lucide-react';
 import { InteractiveGridPattern } from '@/components/ui/interactive-grid-pattern';
 import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
+import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/field';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -89,7 +91,7 @@ export default function LoginPage() {
     setError('');
 
     if (turnstileEnabled && !turnstileToken) {
-      setError('Veuillez compléter le captcha');
+      setError(t.auth.login.captchaRequired);
       return;
     }
 
@@ -112,7 +114,7 @@ export default function LoginPage() {
       if (result.success) {
         router.push('/channels/me');
       } else {
-        setError(result.error || 'Erreur de connexion');
+        setError(result.error || t.auth.login.loginError);
         if (turnstileWidgetId.current && (window as any).turnstile) {
           (window as any).turnstile.reset(turnstileWidgetId.current);
           setTurnstileToken(null);
@@ -128,7 +130,7 @@ export default function LoginPage() {
     setError('');
 
     if (totpCode.length < 6) {
-      setError('Veuillez entrer un code à 6 chiffres');
+      setError(t.auth.login.needCode6Digits);
       return;
     }
 
@@ -138,7 +140,7 @@ export default function LoginPage() {
       if (result.success) {
         router.push('/channels/me');
       } else {
-        setError(result.error || 'Code invalide');
+        setError(result.error || t.auth.login.invalidCode);
         setTotpCode('');
       }
     } finally {
@@ -161,215 +163,234 @@ export default function LoginPage() {
     <div className="grid min-h-svh lg:grid-cols-2">
       {/* ── Colonne formulaire ── */}
       <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
+        <MotionFade direction="down" distance={8} duration={0.35} className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-(family-name:--font-krona) font-medium">
             <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-6" />
             ALFYCHAT
           </Link>
-        </div>
+        </MotionFade>
 
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
 
             {/* ────── Étape email non vérifié ────── */}
             {emailNotVerifiedStep ? (
-              <div className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
-                <div className="flex flex-col items-center gap-2 text-center">
+              <MotionStagger className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
+                <MotionStaggerItem className="flex flex-col items-center gap-2 text-center">
                   <div className="flex size-10 items-center justify-center rounded-full bg-amber-500/10">
                     <MailIcon size={20} className="text-amber-400" />
                   </div>
-                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">Email non vérifié</h1>
+                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">{t.auth.login.emailUnverified}</h1>
                   <p className="font-(family-name:--font-geist-sans) text-sm text-balance text-muted-foreground">
-                    Vous devez vérifier votre adresse email avant de vous connecter.
-                    Consultez votre boîte mail et cliquez sur le lien d&apos;activation.
+                    {t.auth.login.emailUnverifiedDesc}
                   </p>
-                </div>
+                </MotionStaggerItem>
 
-                <FieldGroup>
-                  {resendSuccess && (
-                    <div className="font-(family-name:--font-geist-sans) rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
-                      Email renvoyé ! Vérifiez votre boîte mail.
-                    </div>
-                  )}
-
-                  <Field>
-                    <Button
-                      className="w-full"
-                      disabled={resendLoading || resendSuccess}
-                      onClick={handleResendVerification}
-                    >
-                      {resendLoading && <Loader2 className="size-4 animate-spin" />}
-                      {resendLoading ? 'Envoi...' : resendSuccess ? 'Email envoyé ✓' : 'Renvoyer l\'email de vérification'}
-                    </Button>
-                  </Field>
-                  <Field>
-                    <Button
-                      variant="ghost"
-                      className="w-full"
-                      onClick={() => { setEmailNotVerifiedStep(false); setResendSuccess(false); setError(''); }}
-                    >
-                      Retour
-                    </Button>
-                  </Field>
-                </FieldGroup>
-              </div>
-
-            ) : twoFactorStep ? (
-              /* ────── Étape 2FA ────── */
-              <div className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-                    <ShieldIcon size={20} className="text-primary" />
-                  </div>
-                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">Vérification 2FA</h1>
-                  <p className="text-sm text-balance text-muted-foreground">
-                    Entrez le code de votre application d&apos;authentification
-                  </p>
-                </div>
-
-                <form onSubmit={handle2FASubmit}>
+                <MotionStaggerItem>
                   <FieldGroup>
-                    {error && (
-                      <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                        {error}
+                    {resendSuccess && (
+                      <div className="font-(family-name:--font-geist-sans) rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+                        {t.auth.login.emailResent}
                       </div>
                     )}
 
                     <Field>
-                      <FieldLabel>Code à 6 chiffres</FieldLabel>
-                      <div className="flex justify-center py-2">
-                        <InputOTP
-                          maxLength={6}
-                          pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
-                          value={totpCode}
-                          onChange={(val) => setTotpCode(val)}
-                          autoFocus
-                        >
-                          <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                          </InputOTPGroup>
-                          <InputOTPSeparator />
-                          <InputOTPGroup>
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
-                      </div>
-                      <p className="text-center text-xs text-muted-foreground">
-                        Code de sauvegarde ? Entrez vos 8 caractères ci-dessus.
-                      </p>
-                    </Field>
-
-                    <Field>
-                      <Button type="submit" className="w-full" disabled={isLoading || totpCode.length < 6}>
-                        {isLoading && <Loader2 className="size-4 animate-spin" />}
-                        {isLoading ? 'Vérification...' : 'Vérifier'}
+                      <Button
+                        className="w-full"
+                        disabled={resendLoading || resendSuccess}
+                        onClick={handleResendVerification}
+                      >
+                        {resendLoading && <Loader2 className="size-4 animate-spin" />}
+                        {resendLoading ? t.common.sending : resendSuccess ? `${t.common.send} ✓` : t.auth.login.resendVerification}
                       </Button>
                     </Field>
                     <Field>
                       <Button
-                        type="button"
                         variant="ghost"
                         className="w-full"
-                        onClick={() => { setTwoFactorStep(false); setError(''); setTotpCode(''); }}
+                        onClick={() => { setEmailNotVerifiedStep(false); setResendSuccess(false); setError(''); }}
                       >
-                        Retour
+                        {t.common.back}
                       </Button>
                     </Field>
                   </FieldGroup>
-                </form>
-              </div>
+                </MotionStaggerItem>
+              </MotionStagger>
+
+            ) : twoFactorStep ? (
+              /* ────── Étape 2FA ────── */
+              <MotionStagger className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
+                <MotionStaggerItem className="flex flex-col items-center gap-2 text-center">
+                  <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+                    <ShieldIcon size={20} className="text-primary" />
+                  </div>
+                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">{t.auth.login.twoFAHeading}</h1>
+                  <p className="text-sm text-balance text-muted-foreground">
+                    {t.auth.login.twoFASubtitle}
+                  </p>
+                </MotionStaggerItem>
+
+                <MotionStaggerItem>
+                  <form onSubmit={handle2FASubmit}>
+                    <FieldGroup>
+                      {error && (
+                        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                          {error}
+                        </div>
+                      )}
+
+                      <Field>
+                        <FieldLabel>{t.auth.login.twoFACodeLabel}</FieldLabel>
+                        <div className="flex justify-center py-2">
+                          <InputOTP
+                            maxLength={6}
+                            pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+                            value={totpCode}
+                            onChange={(val) => setTotpCode(val)}
+                            autoFocus
+                          >
+                            <InputOTPGroup>
+                              <InputOTPSlot index={0} />
+                              <InputOTPSlot index={1} />
+                              <InputOTPSlot index={2} />
+                            </InputOTPGroup>
+                            <InputOTPSeparator />
+                            <InputOTPGroup>
+                              <InputOTPSlot index={3} />
+                              <InputOTPSlot index={4} />
+                              <InputOTPSlot index={5} />
+                            </InputOTPGroup>
+                          </InputOTP>
+                        </div>
+                        <p className="text-center text-xs text-muted-foreground">
+                          {t.auth.login.twoFABackupHint}
+                        </p>
+                      </Field>
+
+                      <Field>
+                        <Button type="submit" className="w-full" disabled={isLoading || totpCode.length < 6}>
+                          {isLoading && <Loader2 className="size-4 animate-spin" />}
+                          {isLoading ? t.auth.login.twoFAVerifying : t.auth.login.twoFAVerify}
+                        </Button>
+                      </Field>
+                      <Field>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="w-full"
+                          onClick={() => { setTwoFactorStep(false); setError(''); setTotpCode(''); }}
+                        >
+                          {t.common.back}
+                        </Button>
+                      </Field>
+                    </FieldGroup>
+                  </form>
+                </MotionStaggerItem>
+              </MotionStagger>
 
             ) : (
               /* ────── Formulaire principal ────── */
               <form onSubmit={handleSubmit} className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
-                <FieldGroup>
-                  <div className="flex flex-col items-center gap-1 text-center">
-                    <h1 className="font-(family-name:--font-krona) text-2xl font-bold">Bon retour !</h1>
-                    <p className="text-sm text-balance text-muted-foreground">
-                      Connectez-vous à votre compte ALFYCHAT
-                    </p>
-                  </div>
+                <MotionStagger>
+                  <FieldGroup>
+                    <MotionStaggerItem className="flex flex-col items-center gap-1 text-center">
+                      <h1 className="font-(family-name:--font-krona) text-2xl font-bold">{t.auth.login.heading}</h1>
+                      <p className="text-sm text-balance text-muted-foreground">
+                        {t.auth.login.subtitle}
+                      </p>
+                    </MotionStaggerItem>
 
-                  {error && (
-                    <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                      {error}
-                    </div>
-                  )}
+                    {error && (
+                      <MotionStaggerItem>
+                        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                          {error}
+                        </div>
+                      </MotionStaggerItem>
+                    )}
 
-                  <Field>
-                    <FieldLabel htmlFor="email">Adresse email</FieldLabel>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="votre@email.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </Field>
+                    <MotionStaggerItem>
+                      <Field>
+                        <FieldLabel htmlFor="email">{t.auth.login.email}</FieldLabel>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder={t.auth.login.emailPlaceholder}
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                      </Field>
+                    </MotionStaggerItem>
 
-                  <Field>
-                    <div className="flex items-center">
-                      <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
-                      <Link
-                        href="/forgot-password"
-                        className="ml-auto text-sm underline-offset-4 hover:underline"
-                      >
-                        Oublié ?
-                      </Link>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Votre mot de passe"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pr-9"
-                      />
-                      <button
-                        type="button"
-                        className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                      >
-                        {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
-                      </button>
-                    </div>
-                  </Field>
+                    <MotionStaggerItem>
+                      <Field>
+                        <div className="flex items-center">
+                          <FieldLabel htmlFor="password">{t.auth.login.password}</FieldLabel>
+                          <Link
+                            href="/forgot-password"
+                            className="ml-auto text-sm underline-offset-4 hover:underline"
+                          >
+                            {t.auth.login.forgotPassword}
+                          </Link>
+                        </div>
+                        <div className="relative">
+                          <Input
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder={t.auth.login.passwordPlaceholder}
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="pr-9"
+                          />
+                          <button
+                            type="button"
+                            className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? t.auth.login.hidePassword : t.auth.login.showPassword}
+                          >
+                            {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                          </button>
+                        </div>
+                      </Field>
+                    </MotionStaggerItem>
 
-                  {/* Turnstile */}
-                  {turnstileEnabled && turnstileSiteKey && (
-                    <div className="flex justify-center">
-                      <div ref={turnstileRef} />
-                    </div>
-                  )}
+                    {/* Turnstile */}
+                    {turnstileEnabled && turnstileSiteKey && (
+                      <MotionStaggerItem>
+                        <div className="flex justify-center">
+                          <div ref={turnstileRef} />
+                        </div>
+                      </MotionStaggerItem>
+                    )}
 
-                  <Field>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isLoading || (turnstileEnabled && !turnstileToken)}
-                    >
-                      {isLoading && <Loader2 className="size-4 animate-spin" />}
-                      {isLoading ? 'Connexion...' : 'Se connecter'}
-                    </Button>
-                  </Field>
+                    <MotionStaggerItem>
+                      <Field>
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={isLoading || (turnstileEnabled && !turnstileToken)}
+                        >
+                          {isLoading && <Loader2 className="size-4 animate-spin" />}
+                          {isLoading ? t.auth.login.logging : t.auth.login.login}
+                        </Button>
+                      </Field>
+                    </MotionStaggerItem>
 
-                  <FieldSeparator>Ou</FieldSeparator>
+                    <MotionStaggerItem>
+                      <FieldSeparator>{t.auth.login.or}</FieldSeparator>
+                    </MotionStaggerItem>
 
-                  <FieldDescription className="font-(family-name:--font-geist-sans) text-center">
-                    Pas encore de compte ?{' '}
-                    <Link href="/register" className="underline underline-offset-4">
-                      Créer un compte
-                    </Link>
-                  </FieldDescription>
-                </FieldGroup>
+                    <MotionStaggerItem>
+                      <FieldDescription className="font-(family-name:--font-geist-sans) text-center">
+                        {t.auth.login.noAccount}{' '}
+                        <Link href="/register" className="underline underline-offset-4">
+                          {t.auth.login.createAccount}
+                        </Link>
+                      </FieldDescription>
+                    </MotionStaggerItem>
+                  </FieldGroup>
+                </MotionStagger>
               </form>
             )}
 
@@ -388,26 +409,28 @@ export default function LoginPage() {
         />
         <div className="relative z-10 flex flex-col items-center gap-6 px-12 text-center">
 
-          <div>
+          <MotionFade delay={0.1} direction="down" distance={16} duration={0.6}>
             <h2 className="font-(family-name:--font-krona) text-2xl font-bold tracking-tight">ALFYCHAT</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               <AnimatedGradientText colorFrom="#7c3aed" colorTo="#9E7AFF" speed={0.6}>
-                La messagerie privée open source
+                {t.auth.login.panelTagline}
               </AnimatedGradientText>
             </p>
-          </div>
-          <div className="flex flex-col gap-3 text-left">
+          </MotionFade>
+          <MotionStagger delay={0.25} stagger={0.1} className="flex flex-col gap-3 text-left">
             {[
-              { icon: LockIcon, text: 'Chiffrement E2EE par design' },
-              { icon: ZapIcon, text: 'Temps réel avec Socket.IO' },
-              { icon: GlobeIcon, text: 'Hébergé en France · RGPD' },
+              { icon: LockIcon, text: t.auth.login.panelFeature1 },
+              { icon: ZapIcon, text: t.auth.login.panelFeature2 },
+              { icon: GlobeIcon, text: t.auth.login.panelFeature3 },
             ].map((item) => (
-              <div key={item.text} className="flex items-center gap-3 rounded-lg border border-border/40 bg-background/60 px-4 py-2.5 backdrop-blur-sm">
-                <item.icon size={14} className="shrink-0 text-primary" />
-                <span className="text-sm text-muted-foreground">{item.text}</span>
-              </div>
+              <MotionStaggerItem key={item.text} direction="left" distance={20}>
+                <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-background/60 px-4 py-2.5 backdrop-blur-sm transition-colors hover:border-primary/40">
+                  <item.icon size={14} className="shrink-0 text-primary" />
+                  <span className="text-sm text-muted-foreground">{item.text}</span>
+                </div>
+              </MotionStaggerItem>
             ))}
-          </div>
+          </MotionStagger>
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-background to-transparent" />
       </div>

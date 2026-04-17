@@ -271,19 +271,19 @@ export function UserProfilePopover({
 
       <PopoverContent
         side="left"
-        sideOffset={8}
-        className="w-80 overflow-hidden rounded-xl border border-border/50 bg-card p-0 shadow-xl"
+        sideOffset={10}
+        className="w-[340px] overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/20 backdrop-blur-xl"
       >
         {loading || !profile ? (
           <div className="flex flex-col">
-            <Skeleton className="h-20 w-full rounded-none" />
-            <div className="-mt-6 mb-1.5 px-3.5">
-              <Skeleton className="size-12 rounded-full ring-[3px] ring-card" />
+            <Skeleton className="h-24 w-full rounded-none" />
+            <div className="-mt-8 mb-1.5 px-4">
+              <Skeleton className="size-16 rounded-2xl ring-[3px] ring-card" />
             </div>
-            <div className="space-y-1.5 px-3.5 pb-4">
-              <Skeleton className="h-3.5 w-28" />
-              <Skeleton className="h-2.5 w-20" />
-              <Skeleton className="mt-2.5 h-2.5 w-full" />
+            <div className="space-y-1.5 px-4 pb-4">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="mt-3 h-2.5 w-full" />
               <Skeleton className="h-2.5 w-3/4" />
             </div>
           </div>
@@ -292,25 +292,33 @@ export function UserProfilePopover({
 
             {/* ── Banner ── */}
             <div className="relative">
-              <div className="h-20 w-full overflow-hidden">
+              <div className="h-24 w-full overflow-hidden">
                 {profile.bannerUrl ? (
                   <img src={resolveMediaUrl(profile.bannerUrl)} alt="" className="size-full object-cover" />
                 ) : (
                   <div
-                    className="size-full"
-                    style={{ background: `linear-gradient(135deg, ${cardColor}cc 0%, ${cardColor}55 60%, ${cardColor}18 100%)` }}
-                  />
+                    className="relative size-full"
+                    style={{ background: `linear-gradient(135deg, ${cardColor}e6 0%, ${cardColor}66 55%, ${cardColor}14 100%)` }}
+                  >
+                    <div
+                      className="absolute inset-0 opacity-30"
+                      style={{
+                        backgroundImage: `radial-gradient(circle at 20% 30%, ${cardColor}55 0%, transparent 45%), radial-gradient(circle at 80% 70%, #7c3aed33 0%, transparent 50%)`,
+                      }}
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card/60 to-transparent" />
+                  </div>
                 )}
               </div>
 
               {/* Avatar */}
-              <div className="absolute -bottom-6 left-3.5">
+              <div className="absolute -bottom-7 left-4">
                 <div className="relative">
-                  <Avatar className="size-12 ring-[3px] ring-card">
-                    <AvatarImage src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} />
+                  <Avatar className="size-16 rounded-2xl ring-[3px] ring-card shadow-lg">
+                    <AvatarImage src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} className="rounded-2xl" />
                     <AvatarFallback
-                      className="text-base font-bold"
-                      style={{ backgroundColor: cardColor + '25', color: cardColor }}
+                      className="rounded-2xl font-heading text-xl"
+                      style={{ backgroundColor: cardColor + '20', color: cardColor }}
                     >
                       {(profile.displayName?.[0] ?? '?').toUpperCase()}
                     </AvatarFallback>
@@ -318,7 +326,7 @@ export function UserProfilePopover({
                   {isVisibleOnline(profile?.status) && (
                     <span
                       className={cn(
-                        'absolute -bottom-px -right-px size-3 rounded-full ring-2 ring-card',
+                        'absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-[2.5px] ring-card shadow-sm',
                         statusColor(profile?.status),
                       )}
                     />
@@ -327,13 +335,13 @@ export function UserProfilePopover({
               </div>
 
               {/* Top-right actions */}
-              <div className="absolute right-2 top-2 flex gap-1">
+              <div className="absolute right-2.5 top-2.5 flex gap-1">
                 {isMe ? (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <label className="flex size-6 cursor-pointer items-center justify-center rounded-md bg-black/30 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/50 hover:text-white">
-                          <PaletteIcon size={12} />
+                        <label className="flex size-7 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white/85 shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-black/60 hover:text-white">
+                          <PaletteIcon size={13} />
                           <input type="color" className="sr-only" value={cardColor} onChange={(e) => handleColorChange(e.target.value)} />
                         </label>
                       </TooltipTrigger>
@@ -350,9 +358,9 @@ export function UserProfilePopover({
             </div>
 
             {/* ── Identity ── */}
-            <div className="mt-7 px-3.5 pb-0.5">
+            <div className="mt-9 px-4 pb-1">
               <div className="flex items-center gap-1.5">
-                <h3 className="truncate text-sm font-bold leading-tight text-foreground">{profile.displayName}</h3>
+                <h3 className="truncate font-heading text-base tracking-tight leading-tight text-foreground">{profile.displayName}</h3>
                 {profile.isBot && (
                   <Badge
                     variant={profile.isVerifiedBot ? 'default' : 'outline'}
@@ -367,25 +375,28 @@ export function UserProfilePopover({
                   </Badge>
                 )}
               </div>
-              <p className="mt-0.5 text-[11px] text-muted-foreground/60">
-                @{profile.username}
-                <span className="mx-1.5 text-border">·</span>
-                <span className={cn('font-medium', statusTextColor(profile.status))}>{statusLabel(profile.status)}</span>
+              <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
+                <span className="font-mono">@{profile.username}</span>
+                <span className="text-border/60">·</span>
+                <span className={cn('flex items-center gap-1 font-medium', statusTextColor(profile.status))}>
+                  <span className={cn('size-1.5 rounded-full', statusColor(profile.status))} />
+                  {statusLabel(profile.status)}
+                </span>
               </p>
             </div>
 
             {/* ── Badges ── */}
             {visibleBadges.length > 0 && (
-              <div className="px-3.5 pb-2 pt-2.5">
-                <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40">Badges</p>
+              <div className="px-4 pb-2 pt-3">
+                <p className="mb-1.5 font-heading text-[9px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50">Badges</p>
                 <div className="flex flex-wrap gap-1">
                   {visibleBadges.map((badge) => (
                     <TooltipProvider key={badge.id}>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div
-                            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:brightness-110"
-                            style={{ backgroundColor: badge.color + '15', border: `1px solid ${badge.color}25` }}
+                            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-all hover:scale-105 hover:brightness-110"
+                            style={{ backgroundColor: badge.color + '15', border: `1px solid ${badge.color}30`, boxShadow: `0 1px 3px ${badge.color}15` }}
                           >
                             <span className="flex size-3.5 shrink-0 items-center justify-center">
                               <BadgeIcon badge={badge} />
@@ -405,21 +416,21 @@ export function UserProfilePopover({
               </div>
             )}
 
-            <Separator className="mx-3.5" />
+            <div className="mx-4 my-1 h-px bg-linear-to-r from-transparent via-border/60 to-transparent" />
 
             {/* ── Bio ── */}
             {profile.bio && (
-              <div className="px-3.5 py-2.5">
-                <p className={cn('whitespace-pre-wrap text-[12px] leading-relaxed text-foreground/75', !showFullBio && 'line-clamp-3')}>
+              <div className="px-4 py-2.5">
+                <p className={cn('whitespace-pre-wrap text-[12px] leading-relaxed text-foreground/80', !showFullBio && 'line-clamp-3')}>
                   {profile.bio}
                 </p>
                 {profile.bio.length > 120 && (
                   <button
                     type="button"
-                    className="mt-0.5 text-[10px] font-medium text-primary hover:underline"
+                    className="mt-1 text-[10px] font-semibold text-primary transition-colors hover:text-primary/80"
                     onClick={() => setShowFullBio(v => !v)}
                   >
-                    {showFullBio ? 'Réduire' : 'Lire la suite'}
+                    {showFullBio ? 'Réduire' : 'Lire la suite →'}
                   </button>
                 )}
               </div>
@@ -427,13 +438,13 @@ export function UserProfilePopover({
 
             {/* ── Interests ── */}
             {(profile.interests?.length ?? 0) > 0 && (
-              <div className="px-3.5 pb-2.5">
+              <div className="px-4 pb-2.5">
                 <div className="flex flex-wrap gap-1">
                   {profile.interests!.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-md px-1.5 py-0.5 text-[10px] font-medium"
-                      style={{ backgroundColor: cardColor + '12', color: cardColor, border: `1px solid ${cardColor}20` }}
+                      className="rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-all hover:scale-105"
+                      style={{ backgroundColor: cardColor + '12', color: cardColor, border: `1px solid ${cardColor}25` }}
                     >
                       {tag}
                     </span>
@@ -444,22 +455,22 @@ export function UserProfilePopover({
 
             {/* ── Member since ── */}
             {memberSince && (
-              <div className="flex items-center gap-2 px-3.5 pb-2.5 text-[11px] text-muted-foreground/50">
-                <CalendarIcon size={11} className="shrink-0" />
+              <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg bg-foreground/[0.03] px-2.5 py-1.5 text-[11px] text-muted-foreground/70">
+                <CalendarIcon size={12} className="shrink-0 text-muted-foreground/50" />
                 <span>Membre depuis</span>
-                <span className="ml-auto font-medium text-foreground/60">{memberSince}</span>
+                <span className="ml-auto font-semibold text-foreground/80">{memberSince}</span>
               </div>
             )}
 
             {/* ── Server roles ── */}
             {serverId && serverRoles.length > 0 && canManageRoles && (
-              <div className="px-3.5 pb-2.5">
+              <div className="px-4 pb-2.5">
                 <button
                   type="button"
                   className="flex w-full items-center justify-between py-0.5"
                   onClick={() => setShowRoles(v => !v)}
                 >
-                  <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40">Rôles</p>
+                  <p className="font-heading text-[9px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50">Rôles</p>
                   <ShieldCheckIcon size={11} className={cn('text-muted-foreground/40 transition-transform duration-200', showRoles && 'rotate-180')} />
                 </button>
                 {showRoles && (
@@ -492,18 +503,16 @@ export function UserProfilePopover({
               </div>
             )}
 
-            <Separator className="mx-3.5" />
-
             {/* ── DM field ── */}
             {!isMe && (
-              <div className="px-3.5 pb-2.5 pt-2">
+              <div className="px-4 pb-3 pt-1">
                 <button
                   type="button"
                   onClick={handleSendMessage}
-                  className="flex h-8 w-full items-center gap-2 rounded-lg border border-border/50 bg-muted/50 px-2.5 text-[11px] text-muted-foreground/50 transition-colors hover:border-primary/30 hover:bg-muted hover:text-muted-foreground"
+                  className="group/dm flex h-9 w-full items-center gap-2 rounded-xl border border-border/40 bg-foreground/[0.03] px-3 text-[12px] text-muted-foreground transition-all duration-150 hover:border-primary/40 hover:bg-primary/8 hover:text-foreground hover:shadow-sm hover:shadow-primary/10"
                 >
-                  <MessageCircleIcon size={13} className="shrink-0" />
-                  <span className="truncate">Envoyer un message à @{profile.username}</span>
+                  <MessageCircleIcon size={14} className="shrink-0 transition-colors group-hover/dm:text-primary" />
+                  <span className="truncate">Envoyer un message à <span className="font-semibold text-foreground/80">@{profile.username}</span></span>
                 </button>
               </div>
             )}
@@ -511,58 +520,58 @@ export function UserProfilePopover({
             {/* ── Kick / Ban ── */}
             {!isMe && serverId && canKickBan && (
               <>
-                <Separator className="mx-3.5" />
-                <div className="flex flex-col gap-1.5 px-3.5 pb-2.5 pt-2">
+                <div className="mx-4 h-px bg-linear-to-r from-transparent via-border/60 to-transparent" />
+                <div className="flex flex-col gap-1.5 px-4 pb-3 pt-2.5">
                   {!confirmKick && !confirmBan && (
                     <div className="flex gap-1.5">
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 flex-1 gap-1.5 rounded-lg text-[10px] font-medium text-orange-400 hover:bg-orange-500/10 hover:text-orange-500"
+                        className="h-8 flex-1 gap-1.5 rounded-lg text-[11px] font-semibold text-amber-500 hover:bg-amber-500/10 hover:text-amber-500"
                         onClick={() => setConfirmKick(true)}
                       >
-                        <UserXIcon size={12} /> Expulser
+                        <UserXIcon size={13} /> Expulser
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 flex-1 gap-1.5 rounded-lg text-[10px] font-medium text-red-400 hover:bg-red-500/10 hover:text-red-500"
+                        className="h-8 flex-1 gap-1.5 rounded-lg text-[11px] font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => setConfirmBan(true)}
                       >
-                        <BanIcon size={12} /> Bannir
+                        <BanIcon size={13} /> Bannir
                       </Button>
                     </div>
                   )}
 
                   {confirmKick && (
-                    <div className="space-y-1.5 rounded-lg border border-orange-500/15 bg-orange-500/5 p-2">
-                      <p className="text-[10px] text-orange-400/80">
-                        Expulser <span className="font-semibold text-orange-400">{profile.displayName}</span> du serveur ?
+                    <div className="space-y-1.5 rounded-xl border border-amber-500/25 bg-linear-to-br from-amber-500/10 to-amber-500/5 p-2.5 shadow-sm shadow-amber-500/5">
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                        Expulser <span className="font-semibold text-foreground">{profile.displayName}</span> du serveur ?
                       </p>
                       <div className="flex gap-1.5">
-                        <Button size="sm" variant="ghost" className="h-6 flex-1 rounded-md text-[10px]" onClick={() => setConfirmKick(false)}>Annuler</Button>
-                        <Button size="sm" className="h-6 flex-1 gap-1 rounded-md bg-orange-600 text-[10px] hover:bg-orange-500" onClick={handleKick}>
-                          <UserXIcon size={10} /> Confirmer
+                        <Button size="sm" variant="ghost" className="h-7 flex-1 rounded-md text-[11px]" onClick={() => setConfirmKick(false)}>Annuler</Button>
+                        <Button size="sm" className="h-7 flex-1 gap-1 rounded-md bg-amber-500 text-[11px] text-white hover:bg-amber-600" onClick={handleKick}>
+                          <UserXIcon size={11} /> Confirmer
                         </Button>
                       </div>
                     </div>
                   )}
 
                   {confirmBan && (
-                    <div className="space-y-1.5 rounded-lg border border-red-500/15 bg-red-500/5 p-2">
-                      <p className="text-[10px] text-red-400/80">
-                        Bannir <span className="font-semibold text-red-400">{profile.displayName}</span> définitivement ?
+                    <div className="space-y-1.5 rounded-xl border border-destructive/25 bg-linear-to-br from-destructive/10 to-destructive/5 p-2.5 shadow-sm shadow-destructive/5">
+                      <p className="text-[11px] text-destructive">
+                        Bannir <span className="font-semibold text-foreground">{profile.displayName}</span> définitivement ?
                       </p>
                       <Input
                         placeholder="Raison (optionnel)"
                         value={banReason}
                         onChange={(e) => setBanReason(e.target.value)}
-                        className="h-6 rounded-md border-border/40 bg-muted/50 text-[10px]"
+                        className="h-7 rounded-md border-border/40 bg-background/60 text-[11px]"
                       />
                       <div className="flex gap-1.5">
-                        <Button size="sm" variant="ghost" className="h-6 flex-1 rounded-md text-[10px]" onClick={() => { setConfirmBan(false); setBanReason(''); }}>Annuler</Button>
-                        <Button size="sm" className="h-6 flex-1 gap-1 rounded-md bg-red-600 text-[10px] hover:bg-red-500" onClick={handleBan}>
-                          <BanIcon size={10} /> Confirmer
+                        <Button size="sm" variant="ghost" className="h-7 flex-1 rounded-md text-[11px]" onClick={() => { setConfirmBan(false); setBanReason(''); }}>Annuler</Button>
+                        <Button size="sm" className="h-7 flex-1 gap-1 rounded-md bg-destructive text-[11px] text-destructive-foreground hover:bg-destructive/90" onClick={handleBan}>
+                          <BanIcon size={11} /> Confirmer
                         </Button>
                       </div>
                     </div>
@@ -598,11 +607,11 @@ function FriendActionButton({ status, onAdd }: { status: FriendStatus; onAdd: ()
           <Button
             size="icon-sm"
             variant="secondary"
-            className={cn('size-6 rounded-md bg-black/30 backdrop-blur-sm hover:bg-black/50', c.color)}
+            className={cn('size-7 rounded-lg bg-black/40 shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-black/60', c.color)}
             disabled={c.disabled}
             onClick={onAdd}
           >
-            <Icon size={12} />
+            <Icon size={13} />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="left" className="text-[11px]">{c.label}</TooltipContent>

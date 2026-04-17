@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -33,18 +33,30 @@ type PreviewId = 'chat' | 'layout' | null;
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 function Section({
-  id, title, children, previewId, onPreview,
+  id, title, number, description, children, previewId, onPreview,
 }: {
   id?: string;
   title: string;
+  number?: string;
+  description?: string;
   previewId?: 'chat' | 'layout';
   onPreview?: (id: 'chat' | 'layout') => void;
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="group/section space-y-4 scroll-mt-20">
-      <div className="flex items-center gap-3">
-        <h2 className="font-heading text-xl text-foreground">{title}</h2>
+    <section id={id} className="group/section space-y-5 scroll-mt-20">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border/60 pb-3">
+        <div className="flex items-baseline gap-3">
+          {number && (
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary/80">
+              {number}
+            </span>
+          )}
+          <div className="space-y-1">
+            <h2 className="font-heading text-2xl tracking-tight text-foreground">{title}</h2>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          </div>
+        </div>
         {previewId && onPreview && (
           <button
             onClick={() => onPreview(previewId)}
@@ -61,15 +73,34 @@ function Section({
 }
 
 function ColorSwatch({ label, cssVar }: { label: string; cssVar: string }) {
+  const [copied, setCopied] = useState(false);
   return (
-    <div className="flex flex-col gap-1.5">
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard?.writeText(cssVar);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1200);
+      }}
+      className="group/swatch flex flex-col gap-1.5 text-left transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-xl"
+      aria-label={`Copier ${cssVar}`}
+    >
       <div
-        className="h-14 w-full rounded-xl border border-border ring-1 ring-inset ring-foreground/5"
+        className="relative h-16 w-full overflow-hidden rounded-xl border border-border ring-1 ring-inset ring-foreground/5 transition-shadow group-hover/swatch:shadow-lg group-hover/swatch:ring-primary/30"
         style={{ background: `var(${cssVar})` }}
-      />
+      >
+        <span
+          className={cn(
+            'absolute inset-0 flex items-center justify-center rounded-xl bg-background/85 text-[10px] font-semibold text-primary backdrop-blur-sm transition-opacity',
+            copied ? 'opacity-100' : 'opacity-0',
+          )}
+        >
+          <CheckIcon size={12} className="mr-1" />Copié
+        </span>
+      </div>
       <p className="text-xs font-medium text-foreground">{label}</p>
-      <p className="font-mono text-[10px] text-muted-foreground">{cssVar}</p>
-    </div>
+      <p className="font-mono text-[10px] text-muted-foreground transition-colors group-hover/swatch:text-primary">{cssVar}</p>
+    </button>
   );
 }
 
@@ -286,6 +317,112 @@ function AppLayoutPreview({ fullscreen = false }: { fullscreen?: boolean }) {
   );
 }
 
+// ─── Scroll progress bar ────────────────────────────────────────────────────
+
+function ScrollProgress() {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement;
+      const total = h.scrollHeight - h.clientHeight;
+      setProgress(total > 0 ? (h.scrollTop / total) * 100 : 0);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+  return (
+    <div className="absolute inset-x-0 bottom-0 h-px bg-border/40">
+      <div
+        className="h-full bg-linear-to-r from-primary via-[#7c3aed] to-[#9E7AFF] transition-[width] duration-150 ease-out"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  );
+}
+
+// ─── Hero ───────────────────────────────────────────────────────────────────
+
+const HERO_STATS = [
+  { value: '06', label: 'Sections' },
+  { value: '40+', label: 'Composants' },
+  { value: '12', label: 'Couleurs clés' },
+  { value: 'v2.0', label: 'Guidelines' },
+];
+
+function BrandHero() {
+  return (
+    <section className="relative overflow-hidden rounded-3xl border border-border bg-card">
+      {/* Halos */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 size-[500px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
+      <div className="pointer-events-none absolute -bottom-24 right-0 size-[320px] rounded-full bg-primary/10 blur-[100px]" />
+      {/* Grid pattern */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.18] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
+        style={{
+          backgroundImage:
+            'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+        }}
+      />
+
+      <div className="relative px-8 py-14 md:px-12 md:py-20">
+        <div className="flex flex-col items-start gap-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] backdrop-blur">
+            <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+            <span className="font-mono tracking-wider text-muted-foreground">BRAND&nbsp;·&nbsp;GUIDELINES&nbsp;·&nbsp;v2.0</span>
+          </div>
+
+          <h1 className="font-heading text-4xl leading-[1.05] tracking-tight md:text-6xl">
+            Le langage visuel<br />
+            <span className="bg-linear-to-br from-primary via-[#7c3aed] to-[#9E7AFF] bg-clip-text text-transparent">
+              d&apos;AlfyChat.
+            </span>
+          </h1>
+
+          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+            Le système de design complet : logo, typographies, palette de couleurs, composants et
+            aperçus d&apos;interface. Une référence unique pour garder une marque cohérente, partout.
+          </p>
+
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              { href: '#logo',         label: 'Logo' },
+              { href: '#typographie',  label: 'Typographie' },
+              { href: '#couleurs',     label: 'Couleurs' },
+              { href: '#composants',   label: 'Composants' },
+              { href: '#chat',         label: 'Chat' },
+              { href: '#contextes',    label: 'Contextes' },
+            ].map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                className="rounded-lg border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-md transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+              >
+                {l.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats strip */}
+        <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border/50 sm:grid-cols-4">
+          {HERO_STATS.map((s) => (
+            <div key={s.label} className="bg-card/80 px-5 py-4 text-center backdrop-blur">
+              <p className="font-heading text-2xl tracking-tight text-foreground">{s.value}</p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Fullscreen overlay ─────────────────────────────────────────────────────
 
 function FullscreenOverlay({ id, onClose }: { id: PreviewId; onClose: () => void }) {
@@ -332,6 +469,7 @@ export default function BrandPage() {
 
         {/* Header */}
         <header className="sticky top-0 z-50 flex items-center gap-3 border-b border-border/50 bg-background/80 px-8 py-3 backdrop-blur">
+          <ScrollProgress />
           <Image src="/logo/Alfychatlogotitleupblack.svg" alt="AlfyChat" width={120} height={28} className="dark:hidden" />
           <Image src="/logo/Alfychatlogotitleupwihte.svg" alt="AlfyChat" width={120} height={28} className="hidden dark:block" />
           <Badge variant="secondary" className="text-[10px]">Brand Guidelines</Badge>
@@ -361,8 +499,15 @@ export default function BrandPage() {
 
         <main className="mx-auto max-w-5xl space-y-16 px-8 py-12">
 
+          <BrandHero />
+
           {/* ── LOGO ──────────────────────────────────────────────────────── */}
-          <Section id="logo" title="Logo">
+          <Section
+            id="logo"
+            title="Logo"
+            number="01 / 06"
+            description="Marque, icône et règles d'usage sur tous les supports."
+          >
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div className="flex flex-col items-center gap-3 rounded-xl bg-[oklch(0.141_0.005_285.823)] p-6">
                 <Image src="/logo/Alfychat.svg" alt="Logo icône" width={48} height={48} />
@@ -406,7 +551,12 @@ export default function BrandPage() {
           <Separator />
 
           {/* ── TYPOGRAPHIE ───────────────────────────────────────────────── */}
-          <Section id="typographie" title="Typographie">
+          <Section
+            id="typographie"
+            title="Typographie"
+            number="02 / 06"
+            description="Les familles qui portent la voix d'AlfyChat."
+          >
             <div className="space-y-5">
 
               {/* Krona One */}
@@ -482,7 +632,12 @@ export default function BrandPage() {
           <Separator />
 
           {/* ── COULEURS ──────────────────────────────────────────────────── */}
-          <Section id="couleurs" title="Couleurs">
+          <Section
+            id="couleurs"
+            title="Couleurs"
+            number="03 / 06"
+            description="Cliquez sur une couleur pour copier sa variable CSS."
+          >
             <div className="space-y-6">
               <div>
                 <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Palette principale</p>
@@ -513,7 +668,12 @@ export default function BrandPage() {
           <Separator />
 
           {/* ── COMPOSANTS ────────────────────────────────────────────────── */}
-          <Section id="composants" title="Composants">
+          <Section
+            id="composants"
+            title="Composants"
+            number="04 / 06"
+            description="Boutons, formulaires, cartes, et tous les primitives shadcn/ui."
+          >
             <div className="space-y-6">
 
               {/* Boutons */}
@@ -858,7 +1018,12 @@ export default function BrandPage() {
           <Separator />
 
           {/* ── COMPOSANTS CHAT ───────────────────────────────────────────── */}
-          <Section id="chat" title="Composants Chat">
+          <Section
+            id="chat"
+            title="Composants Chat"
+            number="05 / 06"
+            description="Briques spécifiques à la messagerie : messages, entrées, listes."
+          >
             <div className="space-y-6">
 
               {/* Messages */}
@@ -1601,7 +1766,12 @@ export default function BrandPage() {
           <Separator />
 
           {/* ── CONTEXTES ─────────────────────────────────────────────────── */}
-          <Section id="contextes" title="Contextes — Aperçus réels">
+          <Section
+            id="contextes"
+            title="Contextes — Aperçus réels"
+            number="06 / 06"
+            description="Les composants assemblés dans leurs vraies conditions d'usage."
+          >
             <div className="space-y-6">
 
               {/* Chat */}

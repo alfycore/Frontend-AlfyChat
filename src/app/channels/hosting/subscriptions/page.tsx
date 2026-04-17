@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useTranslation } from '@/components/locale-provider';
 
 const STATUS_COLOR: Record<string, string> = {
   active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -30,6 +31,8 @@ export default function SubscriptionsPage() {
   const [loading, setLoading] = useState(true);
   const [txPage, setTxPage] = useState(1);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const { t, locale } = useTranslation();
+  const h = t.hosting;
 
   useEffect(() => {
     loadData();
@@ -59,19 +62,19 @@ export default function SubscriptionsPage() {
       setTransactions(prev => [...prev, ...(Array.isArray(data) ? data : [])]);
       setTxPage(next);
     } catch {
-      toast.error('Impossible de charger plus de transactions');
+      toast.error(h.subsTxLoadError);
     }
   }
 
   async function handleCancel(id: string) {
-    if (!confirm('Annuler cet abonnement ? Il restera actif jusqu\'Ã  la fin de la pÃ©riode en cours.')) return;
+    if (!confirm(h.subsCancelConfirm)) return;
     setCancelingId(id);
     try {
       await subscriptionsApi.cancelSubscription(id);
-      toast.success('Abonnement annulÃ© â€” actif jusqu\'Ã  la fin de la pÃ©riode');
+      toast.success(h.subsCancelSuccess);
       loadData();
     } catch (err: any) {
-      toast.error(err?.message || 'Erreur annulation');
+      toast.error(err?.message || h.subsCancelError);
     } finally {
       setCancelingId(null);
     }
@@ -90,9 +93,9 @@ export default function SubscriptionsPage() {
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <h1 className="font-bold text-xl">Mes abonnements</h1>
+          <h1 className="font-bold text-xl">{h.subsTitle}</h1>
           <Link href="/hosting">
-            <Button size="sm" variant="outline"><i className="bi bi-plus-lg mr-2" />Souscrire</Button>
+            <Button size="sm" variant="outline"><i className="bi bi-plus-lg mr-2" />{h.subsNew}</Button>
           </Link>
         </div>
       </div>
@@ -100,15 +103,15 @@ export default function SubscriptionsPage() {
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
         {/* Onglets */}
         <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-fit">
-          {(['subs', 'history'] as const).map(t => (
+          {(['subs', 'history'] as const).map(tabId => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabId}
+              onClick={() => setTab(tabId)}
               className={`px-4 py-1.5 rounded-lg text-sm transition-colors ${
-                tab === t ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground'
+                tab === tabId ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {t === 'subs' ? 'Abonnements actifs' : 'Historique'}
+              {tabId === 'subs' ? h.subsTabActive : h.subsTabHistory}
             </button>
           ))}
         </div>
@@ -119,13 +122,13 @@ export default function SubscriptionsPage() {
             {subs.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <i className="bi bi-journals text-5xl block mb-3 opacity-30" />
-                <p className="mb-4">Aucun abonnement actif</p>
+                <p className="mb-4">{h.subsNone}</p>
                 <Link href="/hosting">
-                  <Button className="bg-indigo-600 hover:bg-indigo-700">Explorer les offres</Button>
+                  <Button className="bg-indigo-600 hover:bg-indigo-700">{h.subsExplore}</Button>
                 </Link>
               </div>
             ) : (
-              subs.map(sub => <SubCard key={sub.id} sub={sub} onCancel={handleCancel} cancelingId={cancelingId} />)
+              subs.map(sub => <SubCard key={sub.id} sub={sub} onCancel={handleCancel} cancelingId={cancelingId} h={h} locale={locale} />)
             )}
           </div>
         )}
@@ -136,7 +139,7 @@ export default function SubscriptionsPage() {
             {transactions.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <i className="bi bi-clock-history text-4xl block mb-2 opacity-30" />
-                <p className="text-sm">Aucune transaction</p>
+                <p className="text-sm">{h.subsTxNone}</p>
               </div>
             ) : (
               <>
@@ -152,7 +155,7 @@ export default function SubscriptionsPage() {
                         <p className="text-sm font-medium">{tx.plan_name ?? tx.description ?? 'Transaction'}</p>
                         <p className="text-xs text-muted-foreground">
                           <i className={`bi bi-${PROVIDER_ICON[tx.provider] || 'credit-card'} mr-1`} />
-                          {tx.provider} Â· {new Date(tx.created_at).toLocaleDateString('fr-FR')}
+                          {tx.provider} · {new Date(tx.created_at).toLocaleDateString(locale)}
                         </p>
                       </div>
                       <span className={`text-sm font-bold ${tx.status === 'completed' ? 'text-foreground' : 'text-red-400'}`}>
@@ -162,7 +165,7 @@ export default function SubscriptionsPage() {
                   </Card>
                 ))}
                 <Button variant="ghost" size="sm" onClick={loadMoreTx} className="w-full text-muted-foreground">
-                  Charger plus
+                  {h.subsTxLoadMore}
                 </Button>
               </>
             )}
@@ -173,13 +176,17 @@ export default function SubscriptionsPage() {
   );
 }
 
-function SubCard({ sub, onCancel, cancelingId }: {
+function SubCard({ sub, onCancel, cancelingId, h, locale }: {
   sub: Subscription;
   onCancel: (id: string) => void;
   cancelingId: string | null;
+  h: ReturnType<typeof useTranslation>['t']['hosting'];
+  locale: string;
 }) {
   const periodEnd = new Date(sub.current_period_end);
   const daysLeft = Math.max(0, Math.ceil((periodEnd.getTime() - Date.now()) / 86_400_000));
+  const statusLabel = (h.subsStatus as Record<string, string>)[sub.status] ?? sub.status;
+  const billingLabel = sub.billing_cycle === 'monthly' ? h.perMonth : sub.billing_cycle === 'yearly' ? h.perYear : h.per3Months;
 
   return (
     <Card className="bg-white/5 border-white/10">
@@ -189,24 +196,22 @@ function SubCard({ sub, onCancel, cancelingId }: {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold">{sub.plan_name}</span>
               <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLOR[sub.status] || STATUS_COLOR.expired}`}>
-                {sub.status}
+                {statusLabel}
               </span>
               {sub.cancel_at_period_end && (
                 <span className="text-xs px-2 py-0.5 rounded-full border bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                  Annulation programmÃ©e
+                  {h.subsScheduledCancel}
                 </span>
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
               <i className={`bi bi-${PROVIDER_ICON[sub.provider] || 'credit-card'} mr-1`} />
-              {sub.provider} Â· {sub.billing_cycle}
+              {sub.provider} · {sub.billing_cycle}
             </p>
           </div>
           <div className="text-right shrink-0">
             <p className="font-bold">{sub.amount.toFixed(2)} {sub.currency}</p>
-            <p className="text-xs text-muted-foreground">
-              {sub.billing_cycle === 'monthly' ? '/mois' : sub.billing_cycle === 'yearly' ? '/an' : '/trimestre'}
-            </p>
+            <p className="text-xs text-muted-foreground">{billingLabel}</p>
           </div>
         </div>
 
@@ -220,7 +225,7 @@ function SubCard({ sub, onCancel, cancelingId }: {
 
         <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-white/10 pt-2">
           <span>
-            Expire le {periodEnd.toLocaleDateString('fr-FR')} Â· {daysLeft} jour{daysLeft > 1 ? 's' : ''} restant{daysLeft > 1 ? 's' : ''}
+            {periodEnd.toLocaleDateString(locale)} · {h.subsDaysLeft.replace('{n}', String(daysLeft))}
           </span>
           {sub.status === 'active' && !sub.cancel_at_period_end && (
             <Button
@@ -230,7 +235,7 @@ function SubCard({ sub, onCancel, cancelingId }: {
               disabled={cancelingId === sub.id}
               onClick={() => onCancel(sub.id)}
             >
-              {cancelingId === sub.id ? 'Annulation...' : 'Annuler'}
+              {cancelingId === sub.id ? h.redirecting : h.subsCancelBtn}
             </Button>
           )}
         </div>

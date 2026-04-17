@@ -5,11 +5,14 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { ShieldIcon, MailIcon, CheckIcon, AlertTriangleIcon } from '@/components/icons';
 import { api } from '@/lib/api';
 import { Button, Card, Spinner } from '@heroui/react';
+import { useTranslation } from '@/components/locale-provider';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
+  const { t } = useTranslation();
+  const s = t.static.verifyEmail;
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
@@ -17,20 +20,20 @@ function VerifyEmailContent() {
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage('Lien de vérification invalide.');
+      setMessage(s.invalidLink);
       return;
     }
 
     api.verifyEmail(token).then((res) => {
       if (res.success) {
         setStatus('success');
-        setMessage('Votre adresse email a été vérifiée avec succès !');
+        setMessage(res.message as string || '');
       } else {
         setStatus('error');
-        setMessage((res.error as string) || 'Lien invalide ou expiré.');
+        setMessage((res.error as string) || s.invalidOrExpired);
       }
     });
-  }, [token]);
+  }, [token, s]);
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-[var(--background)] p-4">
@@ -42,8 +45,8 @@ function VerifyEmailContent() {
                 <Spinner size="lg" color="accent" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[var(--foreground)]">Vérification en cours…</h1>
-                <p className="mt-1 text-sm text-[var(--muted)]">Veuillez patienter</p>
+                <h1 className="text-xl font-bold text-[var(--foreground)]">{s.verifying}</h1>
+                <p className="mt-1 text-sm text-[var(--muted)]">{s.verifyingDesc}</p>
               </div>
             </>
           )}
@@ -54,11 +57,11 @@ function VerifyEmailContent() {
                 <CheckIcon size={32} className="text-green-400" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[var(--foreground)]">Email vérifié !</h1>
+                <h1 className="text-xl font-bold text-[var(--foreground)]">{s.verifiedTitle}</h1>
                 <p className="mt-2 text-sm text-[var(--muted)]">{message}</p>
               </div>
               <Button onPress={() => router.push('/channels/me')}>
-                Accéder à AlfyChat
+                {s.goToApp}
               </Button>
             </>
           )}
@@ -69,12 +72,12 @@ function VerifyEmailContent() {
                 <AlertTriangleIcon size={32} className="text-red-400" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[var(--foreground)]">Vérification échouée</h1>
+                <h1 className="text-xl font-bold text-[var(--foreground)]">{s.failedTitle}</h1>
                 <p className="mt-2 text-sm text-[var(--muted)]">{message}</p>
               </div>
               <div className="flex flex-col gap-2 w-full">
                 <Button onPress={() => router.push('/login')}>
-                  Retour à la connexion
+                  {s.backToLogin}
                 </Button>
               </div>
             </>

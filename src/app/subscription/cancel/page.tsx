@@ -4,10 +4,13 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/components/locale-provider';
 
 function CancelContent() {
   const params = useSearchParams();
   const offerId = params.get('offer');
+  const { t } = useTranslation();
+  const s = t.static.subscription;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
@@ -18,33 +21,31 @@ function CancelContent() {
         </div>
 
         <div>
-          <h1 className="text-2xl font-bold">Paiement annulé</h1>
-          <p className="text-muted-foreground text-sm mt-2">
-            Votre paiement n'a pas été finalisé. Aucun montant n'a été débité.
-          </p>
+          <h1 className="text-2xl font-bold">{s.cancelTitle}</h1>
+          <p className="text-muted-foreground text-sm mt-2">{s.cancelDesc}</p>
         </div>
 
         <div className="rounded-xl bg-white/5 border border-white/10 p-4 text-left text-sm text-muted-foreground">
-          Vous pouvez réessayer à tout moment. Si vous rencontrez un problème, contactez le support AlfyChat.
+          {s.cancelHint}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
           {offerId ? (
             <Link href={`/hosting/checkout?offer=${offerId}`} className="flex-1">
               <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-                <i className="bi bi-arrow-repeat mr-2" />Réessayer
+                <i className="bi bi-arrow-repeat mr-2" />{s.retry}
               </Button>
             </Link>
           ) : (
             <Link href="/hosting" className="flex-1">
               <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-                <i className="bi bi-grid mr-2" />Voir les offres
+                <i className="bi bi-grid mr-2" />{s.seeOffers}
               </Button>
             </Link>
           )}
           <Link href="/" className="flex-1">
             <Button variant="outline" className="w-full">
-              <i className="bi bi-house mr-2" />Accueil
+              <i className="bi bi-house mr-2" />{s.home}
             </Button>
           </Link>
         </div>

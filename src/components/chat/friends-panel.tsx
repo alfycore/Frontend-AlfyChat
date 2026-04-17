@@ -477,10 +477,10 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <MenuIcon size={18} />
             </Button>
           )}
-          <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+          <div className="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25">
             <UsersIcon size={14} className="text-primary" />
           </div>
-          <span className="text-[13px] font-bold tracking-tight text-foreground">
+          <span className="font-heading text-[13px] tracking-tight text-foreground">
             {t.friends.title}
           </span>
           {requests.received.length > 0 && (
@@ -523,7 +523,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <div className="relative min-w-0 flex-1">
                 <SearchIcon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
                 <Input
-                  className="h-8 rounded-lg border-border bg-muted/50 pl-8 pr-7 text-[13px] placeholder:text-muted-foreground/40 focus-visible:border-primary/40 focus-visible:bg-background"
+                  className="h-8 rounded-lg border-border/40 bg-foreground/5 pl-8 pr-7 text-[13px] placeholder:text-muted-foreground/40 focus-visible:border-primary/40 focus-visible:bg-background/80"
                   placeholder={t.friends.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -545,8 +545,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           <TabsContent value="friends" className="flex flex-1 flex-col gap-2 overflow-hidden px-4 pt-3 md:px-6">
             {filteredFriends.length === 0 ? (
               <div className="flex flex-1 items-center justify-center">
-                <Card className="flex flex-col items-center gap-4 border-border/30 bg-card px-8 py-6 shadow-none">
-                  <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+                <Card className="flex flex-col items-center gap-4 border-border/40 bg-card/60 px-8 py-6 shadow-none backdrop-blur-sm">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/15 to-[#7c3aed]/10 ring-1 ring-primary/20">
                     <UsersIcon size={24} className="text-muted-foreground" />
                   </div>
                   <CardTitle className="text-sm font-medium">
@@ -561,7 +561,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               <ScrollArea className="flex-1 -mx-1 px-1">
                 {onlineFriends.length > 0 && (
                   <div className="mb-3">
-                    <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                    <p className="mb-1.5 px-2 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
                       {tx(t.friends.onlineCount, { n: String(onlineFriends.length) })}
                     </p>
                     <div className="space-y-0.5">
@@ -586,7 +586,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
 
                 {offlineFriends.length > 0 && (
                   <div>
-                    <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                    <p className="mb-1.5 px-2 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
                       {tx(t.friends.offlineCount, { n: String(offlineFriends.length) })}
                     </p>
                     <div className="space-y-0.5">
@@ -612,9 +612,9 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           <TabsContent value="requests" className="flex flex-1 flex-col overflow-hidden px-4 pt-3 md:px-6">
             {requests.received.length === 0 ? (
               <div className="flex flex-1 items-center justify-center">
-                <Card className="flex flex-col items-center gap-4 border-border/30 bg-card px-8 py-6 shadow-none">
-                  <div className="flex size-14 items-center justify-center rounded-full bg-yellow-500/10">
-                    <ClockIcon size={24} className="text-yellow-500" />
+                <Card className="flex flex-col items-center gap-4 border-border/40 bg-card/60 px-8 py-6 shadow-none backdrop-blur-sm">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-amber-500/20 to-yellow-500/10 ring-1 ring-amber-500/25">
+                    <ClockIcon size={24} className="text-amber-500" />
                   </div>
                   <CardTitle className="text-sm font-medium">{t.friends.noRequests}</CardTitle>
                   <CardDescription className="text-center text-xs text-muted-foreground">
@@ -624,14 +624,14 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               </div>
             ) : (
               <ScrollArea className="flex-1">
-                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                <p className="mb-2 px-2 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
                   {tx(t.friends.receivedCount, { n: String(requests.received.length) })}
                 </p>
                 <div className="space-y-1.5">
                   {requests.received.map((req) => (
                     <div
                       key={req.id}
-                      className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-surface-secondary/60"
+                      className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-150 hover:bg-foreground/6"
                     >
                       <div className="relative shrink-0">
                         <Avatar className="size-9">
@@ -658,7 +658,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                                 size="icon-sm"
                                 variant="ghost"
                                 onClick={() => handleAcceptRequest(req.id)}
-                                className="size-7 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500/20 hover:text-green-600"
+                                className="size-7 rounded-lg bg-success/15 text-success hover:bg-success/25 hover:text-success"
                               >
                                 <CheckIcon size={14} />
                               </Button>
@@ -693,8 +693,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           <TabsContent value="blocked" className="flex flex-1 flex-col overflow-hidden px-4 pt-3 md:px-6">
             {blockedUsers.length === 0 ? (
               <div className="flex flex-1 items-center justify-center">
-                <Card className="flex flex-col items-center gap-4 border-border/30 bg-card px-8 py-6 shadow-none">
-                  <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+                <Card className="flex flex-col items-center gap-4 border-border/40 bg-card/60 px-8 py-6 shadow-none backdrop-blur-sm">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/15 to-[#7c3aed]/10 ring-1 ring-primary/20">
                     <ShieldOffIcon size={24} className="text-muted-foreground" />
                   </div>
                   <CardTitle className="text-sm font-medium">{t.friends.noBlocked}</CardTitle>
@@ -705,7 +705,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               </div>
             ) : (
               <ScrollArea className="flex-1">
-                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                <p className="mb-2 px-2 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
                   {tx(t.friends.blockedCount, { n: String(blockedUsers.length) })}
                 </p>
                 <div className="space-y-1">
@@ -741,12 +741,12 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           {/* --- Add Friend Tab --- */}
           <TabsContent value="add" className="flex flex-1 flex-col overflow-y-auto px-4 pt-3 md:px-6">
             <div className="mx-auto w-full max-w-sm space-y-4">
-              <Card className="flex flex-col items-center gap-5 border-border/30 bg-card px-8 py-8 shadow-sm">
-                <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+              <Card className="flex flex-col items-center gap-5 border-border/40 bg-card/80 px-8 py-8 shadow-lg shadow-primary/5 backdrop-blur-sm">
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-md shadow-primary/10">
                   <UserPlusIcon size={28} className="text-primary" />
                 </div>
                 <div className="text-center">
-                  <CardTitle className="text-base font-bold">{t.friends.findFriends}</CardTitle>
+                  <CardTitle className="font-heading text-base tracking-tight">{t.friends.findFriends}</CardTitle>
                   <CardDescription className="mt-1 text-xs text-muted-foreground">
                     {t.friends.findFriendsSubtitle}
                   </CardDescription>
@@ -786,7 +786,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
               {/* Sent requests */}
               {requests.sent.length > 0 && (
                 <div>
-                  <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                  <p className="mb-1.5 px-1 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
                     {tx(t.friends.sentCount, { n: String(requests.sent.length) })}
                   </p>
                   <div className="space-y-1">
@@ -819,8 +819,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       {/* ===== RIGHT SIDEBAR ===== */}
       <div className={`hidden w-56 flex-col border-l border-border md:flex ${ui.sidebarBg}`}>
         <div className={`flex h-14 shrink-0 items-center gap-2 px-4 ${ui.header}`}>
-          <span className="size-1.5 rounded-full bg-green-500" />
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+          <span className="size-1.5 rounded-full bg-success shadow-sm shadow-success/50" />
+          <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
             {t.friends.onlineSidebar}
           </span>
           <span className="ml-auto text-[10px] font-medium text-muted-foreground/40">
@@ -872,8 +872,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         <ScrollArea className="flex-1 p-2">
           {onlineFriends.length === 0 ? (
             <div className="flex flex-col items-center gap-2 pt-12 text-center">
-              <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-                <UsersIcon size={16} className="text-muted-foreground/30" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-foreground/5 ring-1 ring-border/40">
+                <UsersIcon size={16} className="text-muted-foreground/40" />
               </div>
               <p className="text-[10px] text-muted-foreground/30">{t.friends.noOneOnline}</p>
             </div>
@@ -890,16 +890,16 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   >
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-surface-secondary/60"
+                      className="group/side flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-all duration-150 hover:bg-foreground/6"
                     >
                       <div className="relative shrink-0">
-                        <Avatar className="size-7 ring-2 ring-transparent">
+                        <Avatar className="size-7 ring-1 ring-border/40 transition-all group-hover/side:ring-primary/30">
                           <AvatarImage src={resolveMediaUrl(friend.avatarUrl)} />
-                          <AvatarFallback className="bg-surface-secondary text-[10px]">
+                          <AvatarFallback className="bg-linear-to-br from-primary/20 to-[#7c3aed]/15 text-[10px] font-semibold text-primary">
                             {friend.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className={cn('absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[1.5px] ring-background', dotCls)} />
+                        <span className={cn('absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[1.5px] ring-sidebar', dotCls)} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-medium leading-tight">{friend.displayName}</p>
@@ -958,8 +958,8 @@ function FriendRow({
   return (
     <div
       className={cn(
-        'group flex items-center rounded-xl transition-all duration-150 hover:bg-surface-secondary/60',
-        hasUnread && 'bg-accent/5',
+        'group/fr flex items-center rounded-xl transition-all duration-150 hover:bg-foreground/6',
+        hasUnread && 'bg-primary/5',
         d.rowGap, d.rowPx, d.rowPy,
       )}
       onDoubleClick={onMessage}
@@ -971,9 +971,9 @@ function FriendRow({
         onOpenChange={setProfileOpen}
       >
         <button type="button" className="relative shrink-0">
-          <Avatar className={cn('ring-2 transition-all ring-transparent group-hover:ring-border/30', d.rowAvatar)}>
+          <Avatar className={cn('ring-2 transition-all ring-transparent group-hover/fr:ring-primary/30', d.rowAvatar)}>
             <AvatarImage src={resolveMediaUrl(friend.avatarUrl)} />
-            <AvatarFallback className="bg-surface-secondary text-xs">{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="bg-linear-to-br from-primary/20 to-[#7c3aed]/15 text-xs font-semibold text-primary">{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background', dot)} />
         </button>
@@ -995,12 +995,12 @@ function FriendRow({
       </button>
 
       {hasUnread && (
-        <Badge variant="destructive" className="shrink-0 min-w-5 h-5 text-[10px]">
+        <Badge variant="destructive" className="shrink-0 min-w-5 h-5 text-[10px] shadow-sm shadow-destructive/30 ring-2 ring-sidebar">
           {unreadCount! > 99 ? '99+' : unreadCount}
         </Badge>
       )}
 
-      <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/fr:opacity-100">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

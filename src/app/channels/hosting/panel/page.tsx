@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useTranslation } from '@/components/locale-provider';
 
 type Tab = 'overview' | 'nodes-db' | 'nodes-media' | 'offers' | 'apikeys' | 'payment' | 'technicians' | 'servers';
 
@@ -144,6 +145,7 @@ export default function HosterPanelPage() {
 }
 
 function OverviewTab({ provider, dbNodes, mediaNodes, offers }: any) {
+  const { locale } = useTranslation();
   const onlineDb = dbNodes.filter((n: any) => n.status === 'online').length;
   const onlineMedia = mediaNodes.filter((n: any) => n.status === 'online').length;
   const totalCapDb = dbNodes.reduce((s: number, n: any) => s + (n.capacity_gb || 0), 0);
@@ -169,8 +171,8 @@ function OverviewTab({ provider, dbNodes, mediaNodes, offers }: any) {
           <InfoRow label="Email" value={provider.email} />
           <InfoRow label="Pays" value={provider.country_code || 'Non defini'} />
           <InfoRow label="Site web" value={provider.website_url || 'Non defini'} />
-          <InfoRow label="Inscrit le" value={new Date(provider.created_at).toLocaleDateString('fr-FR')} />
-          {provider.verified_at && <InfoRow label="Verifie le" value={new Date(provider.verified_at).toLocaleDateString('fr-FR')} />}
+          <InfoRow label="Inscrit le" value={new Date(provider.created_at).toLocaleDateString(locale)} />
+          {provider.verified_at && <InfoRow label="Verifie le" value={new Date(provider.verified_at).toLocaleDateString(locale)} />}
         </dl>
       </div>
     </div>
@@ -432,6 +434,7 @@ function OffersTab({ offers, onRefresh }: { offers: HostingOffer[]; onRefresh: (
 const ALL_PERMS = ['nodes:read', 'nodes:write', 'nodes:delete', 'offers:read', 'offers:write', 'stats:read', 'servers:read'];
 
 function ApiKeysTab({ keys, onRefresh }: { keys: ApiKey[]; onRefresh: () => void }) {
+  const { locale } = useTranslation();
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newKey, setNewKey] = useState('');
@@ -488,7 +491,7 @@ function ApiKeysTab({ keys, onRefresh }: { keys: ApiKey[]; onRefresh: () => void
               <div>
                 <p className="font-medium text-sm">{k.name}</p>
                 <p className="text-xs text-muted-foreground">{k.permissions?.join(', ')}</p>
-                <p className="text-xs text-muted-foreground">{k.usage_count} utilisations{k.expires_at && `  Expire le ${new Date(k.expires_at).toLocaleDateString('fr-FR')}`}</p>
+                <p className="text-xs text-muted-foreground">{k.usage_count} utilisations{k.expires_at && `  Expire le ${new Date(k.expires_at).toLocaleDateString(locale)}`}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${k.is_active ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>{k.is_active ? 'Active' : 'Revoquee'}</span>
@@ -643,6 +646,7 @@ function TechniciansTab() {
 }
 
 function ServersTab() {
+  const { locale } = useTranslation();
   const [servers, setServers] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -676,7 +680,7 @@ function ServersTab() {
                   <div className="text-right text-xs shrink-0">
                     <p className="text-muted-foreground">DB: {s.used_db_mb?.toFixed(1) ?? 0} Mo</p>
                     <p className="text-muted-foreground">Media: {s.used_media_mb?.toFixed(1) ?? 0} Mo</p>
-                    <p className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString('fr-FR')}</p>
+                    <p className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString(locale)}</p>
                   </div>
                 </div>
               </CardContent></Card>

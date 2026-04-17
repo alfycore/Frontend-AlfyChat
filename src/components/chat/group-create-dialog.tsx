@@ -155,18 +155,18 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl p-0 shadow-2xl">
+      <DialogContent showCloseButton={false} className="h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl p-0 shadow-2xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Créer un nouveau groupe</DialogTitle>
           </DialogHeader>
           <div className="flex h-full">
           {/* ── Left navigation ── */}
-          <aside className="flex w-52 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 py-6">
+          <aside className="flex w-52 shrink-0 flex-col border-r border-border/40 bg-background/80 py-6">
             <div className="mb-4 px-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                 Nouveau groupe
               </p>
-              <p className="mt-0.5 text-sm font-medium text-[var(--foreground)]">
+              <p className="mt-0.5 text-sm font-medium text-foreground">
                 {selectedIds.size} membre{selectedIds.size !== 1 ? 's' : ''} sélectionné{selectedIds.size !== 1 ? 's' : ''}
               </p>
             </div>
@@ -182,8 +182,8 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                   className={cn(
                     'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     step === id
-                      ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
-                      : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/80 hover:text-[var(--foreground)]',
+                      ? 'bg-primary/10 text-primary shadow-sm'
+                      : 'text-muted-foreground hover:bg-surface-secondary/80 hover:text-foreground',
                     id === 'customize' && selectedIds.size < 1 && 'pointer-events-none opacity-40',
                   )}
                 >
@@ -191,8 +191,8 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                     className={cn(
                       'flex size-7 items-center justify-center rounded-lg transition-colors',
                       step === id
-                        ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                        : 'bg-[var(--surface-secondary)]/60 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)] group-hover:text-[var(--foreground)]',
+                        ? 'bg-primary/15 text-primary'
+                        : 'bg-surface-secondary/60 text-muted-foreground group-hover:bg-surface-secondary group-hover:text-foreground',
                     )}
                   >
                     <Icon size={14} />
@@ -204,9 +204,9 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
 
             {selectedIds.size > 0 && (
               <>
-                <div className="mx-5 my-4 h-px bg-[var(--border)]/40" />
+                <div className="mx-5 my-4 h-px bg-border/40" />
                 <div className="px-5">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                     Membres
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -220,7 +220,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                       </Avatar>
                     ))}
                     {selectedFriends.length > 6 && (
-                      <div className="flex size-7 items-center justify-center rounded-full bg-[var(--surface-secondary)] text-[10px] font-medium text-[var(--muted)] ring-2 ring-[var(--background)]">
+                      <div className="flex size-7 items-center justify-center rounded-full bg-surface-secondary text-[10px] font-medium text-muted-foreground ring-2 ring-background">
                         +{selectedFriends.length - 6}
                       </div>
                     )}
@@ -230,12 +230,12 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
             )}
 
             <div className="mt-auto px-3">
-              <div className="mx-2 mb-3 h-px bg-[var(--border)]/40" />
+              <div className="mx-2 mb-3 h-px bg-border/40" />
               <button
                 onClick={() => onOpenChange(false)}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--muted)] transition-all duration-200 hover:bg-[var(--surface-secondary)]/80 hover:text-[var(--foreground)]"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-surface-secondary/80 hover:text-foreground"
               >
-                <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/60">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-surface-secondary/60">
                   <XIcon size={14} />
                 </div>
                 Fermer
@@ -244,21 +244,21 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
           </aside>
 
           {/* ── Right content ── */}
-          <div className="flex flex-1 flex-col overflow-hidden bg-[var(--surface)]/50">
+          <div className="flex flex-1 flex-col overflow-hidden bg-surface/50">
             <div className="flex-1 overflow-y-auto p-8">
               {/* ── STEP 1: SELECT FRIENDS ── */}
               {step === 'select' && (
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-bold tracking-tight">Sélectionner des amis</h2>
-                    <p className="mt-1 text-sm text-[var(--muted)]">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Choisissez les personnes à ajouter au groupe.
                     </p>
                   </div>
 
                   {selectedIds.size > 0 && (
-                    <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/30 p-4">
-                      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+                    <div className="rounded-2xl border border-border/60 bg-surface-secondary/30 p-4">
+                      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                         Sélectionnés ({selectedIds.size})
                       </p>
                       <div className="flex flex-wrap gap-1.5">
@@ -293,15 +293,15 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                     />
                   </div>
 
-                  <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/30 p-2">
+                  <div className="rounded-2xl border border-border/60 bg-surface-secondary/30 p-2">
                     <ScrollArea className="h-52">
                       <div className="space-y-0.5">
                         {isLoading ? (
                           <div className="flex items-center justify-center py-8">
-                            <div className="size-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+                            <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                           </div>
                         ) : filteredFriends.length === 0 ? (
-                          <p className="py-8 text-center text-sm text-[var(--muted)]">
+                          <p className="py-8 text-center text-sm text-muted-foreground">
                             {friends.length === 0 ? 'Aucun ami à ajouter' : 'Aucun résultat'}
                           </p>
                         ) : (
@@ -314,7 +314,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                                 onClick={() => toggleFriend(friend.id)}
                                 className={cn(
                                   'flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-all duration-200',
-                                  isSelected ? 'bg-[var(--accent)]/10 shadow-sm' : 'hover:bg-[var(--background)]/60',
+                                  isSelected ? 'bg-primary/10 shadow-sm' : 'hover:bg-background/60',
                                 )}
                               >
                                 <Avatar size="sm">
@@ -323,14 +323,14 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                                 </Avatar>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-medium">{friend.displayName}</p>
-                                  <p className="truncate text-xs text-[var(--muted)]">@{friend.username}</p>
+                                  <p className="truncate text-xs text-muted-foreground">@{friend.username}</p>
                                 </div>
                                 <div
                                   className={cn(
                                     'flex size-5 shrink-0 items-center justify-center rounded-lg border-2 transition-all',
                                     isSelected
-                                      ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]'
-                                      : 'border-[var(--muted)]/25',
+                                      ? 'border-primary bg-primary text-primary-foreground'
+                                      : 'border-muted-foreground/25',
                                   )}
                                 >
                                   {isSelected && <CheckIcon size={14} />}
@@ -361,13 +361,13 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-bold tracking-tight">Personnaliser le groupe</h2>
-                    <p className="mt-1 text-sm text-[var(--muted)]">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Donnez un nom à votre groupe avant de le créer.
                     </p>
                   </div>
 
-                  <div className="space-y-4 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/30 p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+                  <div className="space-y-4 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                       Informations
                     </p>
                     <div className="space-y-1">
@@ -381,12 +381,12 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                           onChange={(e) => setGroupName(e.target.value)}
                           autoFocus
                         />
-                      <p className="text-[11px] text-[var(--muted)]/70">Laissez vide pour utiliser les noms des participants</p>
+                      <p className="text-[11px] text-muted-foreground/70">Laissez vide pour utiliser les noms des participants</p>
                     </div>
                   </div>
 
-                  <div className="space-y-3 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/30 p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+                  <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                       Membres ({selectedIds.size})
                     </p>
                     <div className="flex flex-wrap gap-1.5">

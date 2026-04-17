@@ -59,8 +59,8 @@ export function CallBar() {
         <span className="relative flex size-2 shrink-0">
           {isConnected ? (
             <>
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-40" />
-              <span className="relative inline-flex size-2 rounded-full bg-green-400" />
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-40" />
+              <span className="relative inline-flex size-2 rounded-full bg-success" />
             </>
           ) : (
             <span className="relative inline-flex size-2 rounded-full bg-[var(--accent)]" />
@@ -69,13 +69,13 @@ export function CallBar() {
 
         <span className={cn(
           'flex-1 truncate text-[11px] font-semibold',
-          isConnected ? 'text-green-400' : 'text-[var(--muted)]',
+          isConnected ? 'text-success' : 'text-[var(--muted)]',
         )}>
           {statusLabel[callStatus] ?? 'Appel…'}
         </span>
 
         {isConnected && (
-          <span className="shrink-0 font-mono text-[10px] text-green-400/70">
+          <span className="shrink-0 font-mono text-[10px] text-success/70">
             {formatDuration(callDuration)}
           </span>
         )}
@@ -89,8 +89,8 @@ export function CallBar() {
           isConnected ? 'bg-green-500/15' : 'bg-white/6',
         )}>
           {callType === 'video'
-            ? <VideoIcon size={12} className={isConnected ? 'text-green-400' : 'text-white/50'} />
-            : <PhoneIcon size={12} className={isConnected ? 'text-green-400' : 'text-white/50'} />
+            ? <VideoIcon size={12} className={isConnected ? 'text-success' : 'text-white/50'} />
+            : <PhoneIcon size={12} className={isConnected ? 'text-success' : 'text-white/50'} />
           }
         </div>
 

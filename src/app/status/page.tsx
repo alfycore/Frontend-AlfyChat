@@ -15,6 +15,7 @@ import {
   WifiIcon,
   ImageIcon,
 } from '@/components/icons';
+import { useTranslation } from '@/components/locale-provider';
 
 const monitors = [
   { slug: 'monitor-eu',       name: 'API Gateway',  Icon: GlobeIcon },
@@ -29,6 +30,8 @@ const monitors = [
 ] as const;
 
 export default function StatusPage() {
+  const { t } = useTranslation();
+  const s = t.static.statusPage;
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
@@ -74,16 +77,16 @@ export default function StatusPage() {
         {/* ── Hero ── */}
         <div className="text-center space-y-3">
           <h1 className="text-4xl font-extrabold tracking-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
-            État des services
+            {s.heading}
           </h1>
           <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
-            Surveillance en temps réel de l&apos;infrastructure AlfyChat
+            {s.subtitle}
           </p>
         </div>
 
         {/* ── Incidents / maintenance ── */}
         <section className="space-y-3">
-          <SectionHeader title="Incidents & maintenance" />
+          <SectionHeader title={s.sectionIncidents} />
           <div className="rounded-2xl border border-border/40 overflow-hidden bg-card shadow-sm">
             <iframe
               src={`https://status.alfychat.app/embed/events/live?theme=${theme}&incidents=1&maintenance=1`}
@@ -97,7 +100,7 @@ export default function StatusPage() {
 
         {/* ── Monitors ── */}
         <section className="space-y-4">
-          <SectionHeader title="Services · 60 derniers jours" />
+          <SectionHeader title={s.sectionMonitors} />
           <div className="grid gap-3">
             {monitors.map(({ slug, name, Icon, ...rest }) => (
               <div
@@ -121,7 +124,7 @@ export default function StatusPage() {
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground/40 text-center pt-1">
-            Données fournies par status.alfychat.app
+            {s.attribution}
           </p>
         </section>
 
@@ -131,7 +134,7 @@ export default function StatusPage() {
       <footer className="border-t border-border/30">
         <div className="mx-auto max-w-5xl px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground/50">
           <div className="flex items-center gap-2 flex-wrap justify-center">
-            <span>AlfyChat &mdash; Messagerie sécurisée</span>
+            <span>{s.footerBrand}</span>
             <span className="hidden sm:inline">&middot;</span>
             <span className="inline-flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-violet-500/70" /> Hostinger
@@ -142,8 +145,8 @@ export default function StatusPage() {
             </span>
           </div>
           <div className="flex items-center gap-5">
-            <Link href="/" className="hover:text-muted-foreground transition-colors">Accueil</Link>
-            <Link href="/app" className="hover:text-muted-foreground transition-colors">Application</Link>
+            <Link href="/" className="hover:text-muted-foreground transition-colors">{s.navHome}</Link>
+            <Link href="/app" className="hover:text-muted-foreground transition-colors">{s.navApp}</Link>
           </div>
         </div>
       </footer>

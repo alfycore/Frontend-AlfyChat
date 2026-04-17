@@ -154,7 +154,7 @@ export function GroupSettingsDialog({
     if (!group || !groupName.trim()) return;
     setIsSaving(true);
     try {
-      socketService.updateGroup({ groupId: group.id, name: groupName.trim() });
+      await api.updateConversation(group.id, { name: groupName.trim() });
       onUpdate?.();
     } catch (error) {
       console.error('Erreur mise à jour nom:', error);
@@ -162,17 +162,18 @@ export function GroupSettingsDialog({
     setIsSaving(false);
   };
 
-  const handleAddMembers = () => {
+  const handleAddMembers = async () => {
     if (!group || selectedFriendIds.size === 0) return;
-    socketService.updateGroup({ groupId: group.id, addParticipants: Array.from(selectedFriendIds) });
     setShowAddMembers(false);
+    const ids = Array.from(selectedFriendIds);
     setSelectedFriendIds(new Set());
+    await Promise.all(ids.map((userId) => api.addGroupParticipant(group.id, userId)));
     onUpdate?.();
   };
 
-  const handleRemoveMember = (userId: string) => {
+  const handleRemoveMember = async (userId: string) => {
     if (!group) return;
-    socketService.updateGroup({ groupId: group.id, removeParticipants: [userId] });
+    await api.removeGroupParticipant(group.id, userId);
     onUpdate?.();
   };
 
@@ -198,16 +199,16 @@ export function GroupSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="h-[70vh] max-w-2xl overflow-hidden rounded-2xl p-0 shadow-2xl">
+      <DialogContent showCloseButton={false} className="h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl p-0 shadow-2xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Paramètres du groupe</DialogTitle>
           </DialogHeader>
           <div className="flex h-full">
           {/* ── Sidebar ── */}
-          <aside className="flex w-48 shrink-0 flex-col border-r border-[var(--border)]/40 bg-[var(--background)]/80 py-6">
+          <aside className="flex w-48 shrink-0 flex-col border-r border-border/40 bg-background/80 py-6">
             <div className="mb-4 px-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">Groupe</p>
-              <p className="mt-0.5 truncate text-sm font-medium text-[var(--foreground)]">{group?.name || 'Groupe'}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Groupe</p>
+              <p className="mt-0.5 truncate text-sm font-medium text-foreground">{group?.name || 'Groupe'}</p>
             </div>
 
             <nav className="flex flex-col gap-0.5 px-2">
@@ -218,16 +219,16 @@ export function GroupSettingsDialog({
                   className={cn(
                     'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     section === id
-                      ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
-                      : 'text-[var(--muted)] hover:bg-[var(--surface-secondary)]/80 hover:text-[var(--foreground)]',
+                      ? 'bg-primary/10 text-primary shadow-sm'
+                      : 'text-muted-foreground hover:bg-surface-secondary/80 hover:text-foreground',
                   )}
                 >
                   <div
                     className={cn(
                       'flex size-7 items-center justify-center rounded-lg transition-colors',
                       section === id
-                        ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                        : 'bg-[var(--surface-secondary)]/60 text-[var(--muted)] group-hover:bg-[var(--surface-secondary)] group-hover:text-[var(--foreground)]',
+                        ? 'bg-primary/15 text-primary'
+                        : 'bg-surface-secondary/60 text-muted-foreground group-hover:bg-surface-secondary group-hover:text-foreground',
                     )}
                   >
                     <Icon size={14} />
@@ -238,12 +239,12 @@ export function GroupSettingsDialog({
             </nav>
 
             <div className="mt-auto px-2">
-              <div className="mx-2 mb-3 h-px bg-[var(--border)]/40" />
+              <div className="mx-2 mb-3 h-px bg-border/40" />
               <button
                 onClick={() => onOpenChange(false)}
-                className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--muted)] transition-all duration-200 hover:bg-[var(--surface-secondary)]/80 hover:text-[var(--foreground)]"
+                className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-surface-secondary/80 hover:text-foreground"
               >
-                <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/60">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-surface-secondary/60">
                   <XIcon size={14} />
                 </div>
                 Fermer
@@ -252,18 +253,18 @@ export function GroupSettingsDialog({
           </aside>
 
           {/* ── Content ── */}
-          <div className="flex flex-1 flex-col overflow-hidden bg-[var(--surface)]/50">
+          <div className="flex flex-1 flex-col overflow-hidden bg-surface/50">
             <div className="flex-1 overflow-y-auto p-6">
               {/* ── Général ── */}
               {section === 'general' && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-[var(--foreground)]">Paramètres généraux</h2>
-                    <p className="mt-1 text-sm text-[var(--muted)]">Gérez les paramètres de votre groupe.</p>
+                    <h2 className="text-xl font-semibold text-foreground">Paramètres généraux</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">Gérez les paramètres de votre groupe.</p>
                   </div>
 
-                  <div className="space-y-3 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/30 p-5">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+                  <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                       Nom du groupe
                     </span>
                     <div className="flex gap-2">
@@ -318,8 +319,8 @@ export function GroupSettingsDialog({
               {section === 'members' && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-[var(--foreground)]">Membres</h2>
-                    <p className="mt-1 text-sm text-[var(--muted)]">
+                    <h2 className="text-xl font-semibold text-foreground">Membres</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Gérez les membres du groupe ({group?.participants.length || 0}).
                     </p>
                   </div>
@@ -339,9 +340,9 @@ export function GroupSettingsDialog({
                   )}
 
                   {showAddMembers && (
-                    <div className="space-y-3 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/30 p-5">
+                    <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]/70">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                           Ajouter des amis
                         </p>
                         <Button
@@ -366,7 +367,7 @@ export function GroupSettingsDialog({
                         />
                       </div>
 
-                      <ScrollArea className="max-h-40">
+                      <div className="max-h-40 overflow-y-auto">
                         <div className="space-y-0.5">
                           {filteredFriends.length === 0 ? (
                             <p className="py-4 text-center text-xs text-muted-foreground">
@@ -412,7 +413,7 @@ export function GroupSettingsDialog({
                             })
                           )}
                         </div>
-                      </ScrollArea>
+                      </div>
 
                       {selectedFriendIds.size > 0 && (
                         <Button className="w-full rounded-xl" size="sm" onClick={handleAddMembers}>
@@ -423,11 +424,11 @@ export function GroupSettingsDialog({
                     </div>
                   )}
 
-                  <div className="rounded-2xl border border-[var(--border)]/60 bg-[var(--surface-secondary)]/30">
-                    <div className="border-b border-[var(--border)]/60 px-5 py-4">
+                  <div className="rounded-2xl border border-border/60 bg-surface-secondary/30">
+                    <div className="border-b border-border/60 px-5 py-4">
                       <h3 className="text-base font-semibold">Membres du groupe</h3>
                     </div>
-                    <ScrollArea className="max-h-64">
+                    <ScrollArea className="max-h-64 overflow-hidden">
                       <div className="divide-y divide-border/60">
                         {group?.participants
                           .sort((a, b) => {

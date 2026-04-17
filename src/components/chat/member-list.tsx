@@ -44,18 +44,18 @@ function MemberRow({ member, serverId, roles }: { member: Member; serverId: stri
   return (
     <UserProfilePopover userId={member.id} serverId={serverId}>
       <button className={cn(
-        'flex w-full items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-150 hover:bg-[var(--surface-secondary)]/40',
+        'group/member flex w-full items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-150 hover:bg-foreground/6',
         !isOnline && 'opacity-35',
       )}>
         <div className="relative">
-          <Avatar className="size-7 shadow-sm">
+          <Avatar className="size-7 shadow-sm ring-1 ring-border/40 transition-all group-hover/member:ring-primary/30">
             <AvatarImage src={resolveMediaUrl(member.avatarUrl)} />
-            <AvatarFallback className="bg-primary/20 text-[10px] font-semibold text-primary">
+            <AvatarFallback className="bg-linear-to-br from-primary/20 to-[#7c3aed]/15 text-[10px] font-semibold text-primary">
               {name[0]?.toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
           <span
-            className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-[1.5px] border-[var(--background)]', dotClass)}
+            className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-sidebar', dotClass)}
           />
         </div>
         <span
@@ -203,7 +203,7 @@ export function MemberList({ serverId }: MemberListProps) {
 
   if (isLoading) {
     return (
-      <div className={cn('w-full', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-surface/60')}>
+      <div className={cn('w-full', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-sidebar/60')}>
         <div className="space-y-1.5 p-3 pt-4">
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2 px-2">
@@ -236,7 +236,7 @@ export function MemberList({ serverId }: MemberListProps) {
   const remainingOnline = onlineMembers.filter((m) => !assignedIds.has(m.id));
 
   return (
-    <div className={cn('flex h-full w-full flex-col', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-surface/60')}>
+    <div className={cn('flex h-full w-full flex-col', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-sidebar/60')}>
       <ScrollArea className="flex-1">
         <div className="p-2 pt-3">
           {/* Role-based sections */}
@@ -248,7 +248,7 @@ export function MemberList({ serverId }: MemberListProps) {
                   style={{ backgroundColor: role.color }}
                 />
                 <p
-                  className="text-[10px] font-bold uppercase tracking-widest"
+                  className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em]"
                   style={{ color: role.color }}
                 >
                   {role.name}
@@ -269,8 +269,8 @@ export function MemberList({ serverId }: MemberListProps) {
           {remainingOnline.length > 0 && (
             <div className="mb-4">
               <div className="mb-1.5 flex items-center gap-1.5 px-2">
-                <span className="size-1.5 shrink-0 rounded-full bg-green-500" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/60">
+                <span className="size-1.5 shrink-0 rounded-full bg-success shadow-sm shadow-success/50" />
+                <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
                   En ligne
                 </p>
                 <span className="ml-auto text-[10px] font-medium tabular-nums text-[var(--muted)]/40">
@@ -289,8 +289,8 @@ export function MemberList({ serverId }: MemberListProps) {
           {offlineMembers.length > 0 && (
             <div className="mb-4">
               <div className="mb-1.5 flex items-center gap-1.5 px-2">
-                <span className="size-1.5 shrink-0 rounded-full bg-[var(--muted)]/30" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/30">
+                <span className="size-1.5 shrink-0 rounded-full bg-muted-foreground/30" />
+                <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40">
                   Hors ligne
                 </p>
                 <span className="ml-auto text-[10px] font-medium tabular-nums text-[var(--muted)]/25">

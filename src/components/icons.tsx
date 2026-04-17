@@ -229,6 +229,16 @@ export const RotateCcwIcon = fi('rotate-left');
 export const ChevronDownIcon = fi('angle-down');
 export const ChevronUpIcon = fi('angle-up');
 export const ChevronRightIcon = fi('angle-right');
+export const ChevronLeftIcon = fi('angle-left');
+
+// ── Inbox / Tray ──
+export const InboxIcon = fi('inbox');
+
+// ── Message Square ──
+export const MessageSquareIcon = fi('comment-alt');
+
+// ── External Link ──
+export const ExternalLinkIcon = fi('arrow-up-right');
 
 // ── Stop ──
 export const StopCircleIcon = fi('stop-circle');

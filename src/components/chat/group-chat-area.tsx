@@ -477,20 +477,20 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             </Button>
           )}
 
-          <div className="flex size-7 items-center justify-center rounded-xl bg-[var(--accent)]/8">
+          <div className="flex size-7 items-center justify-center rounded-xl bg-primary/8">
             {groupInfo?.avatarUrl ? (
               <Avatar className="size-7">
                 <AvatarImage src={resolveMediaUrl(groupInfo.avatarUrl)} />
                 <AvatarFallback className="text-[10px] font-medium">{groupInfo.name?.[0]}</AvatarFallback>
               </Avatar>
             ) : (
-              <UsersRoundIcon size={14} className="text-[var(--accent)]" />
+              <UsersRoundIcon size={14} className="text-primary" />
             )}
           </div>
 
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-sm font-semibold text-[var(--foreground)]">{groupInfo?.name || 'Groupe'}</h2>
-            <p className="text-[10px] text-[var(--muted)]/60">
+            <h2 className="truncate text-sm font-semibold text-foreground">{groupInfo?.name || 'Groupe'}</h2>
+            <p className="text-[10px] text-muted-foreground/60">
               {groupInfo?.participants.length || 0} membres
             </p>
           </div>
@@ -565,7 +565,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 <div
                   role="button"
                   tabIndex={0}
-                  className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-[var(--surface-secondary)]/40"
+                  className="inline-flex size-8 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-surface-secondary/40"
                 >
                   <MoreHorizontalIcon size={16} />
                 </div>
@@ -588,20 +588,20 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
         <ScrollArea ref={scrollRef} className="min-h-0 flex-1 p-2 md:p-4">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
-              <div className="flex flex-col items-center gap-3 text-[var(--muted)]">
+              <div className="flex flex-col items-center gap-3 text-muted-foreground">
                 <Spinner size="md" />
                 <span className="text-[13px]">Chargement des messages...</span>
               </div>
             </div>
           ) : enrichedMessages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
-              <Card className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-8 py-7 shadow-none">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent)]/10">
-                  <UsersRoundIcon size={28} className="text-[var(--accent)]" />
+              <Card className="flex flex-col items-center gap-4 rounded-3xl border border-border/20 bg-surface-secondary/30 px-8 py-7 shadow-none">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+                  <UsersRoundIcon size={28} className="text-primary" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-[15px] font-semibold text-[var(--foreground)]">{groupInfo?.name || 'Groupe'}</h3>
-                  <p className="mt-1 max-w-xs text-[13px] text-[var(--muted)]">
+                  <h3 className="text-[15px] font-semibold text-foreground">{groupInfo?.name || 'Groupe'}</h3>
+                  <p className="mt-1 max-w-xs text-[13px] text-muted-foreground">
                     C&apos;est le début de votre conversation de groupe. Envoyez un message pour commencer !
                   </p>
                 </div>
@@ -663,12 +663,12 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
           )}
 
           {typingUsers.length > 0 && (
-            <div className="mt-1 flex items-center gap-1.5 px-3 text-xs text-[var(--muted)]/70">
+            <div className="mt-1 flex items-center gap-1.5 px-3 text-xs text-muted-foreground/70">
               <span className="flex items-center gap-0.5">
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="inline-block size-1 animate-bounce rounded-full bg-[var(--muted)]"
+                    className="inline-block size-1 animate-bounce rounded-full bg-muted-foreground"
                     style={{ animationDelay: `${i * 0.18}s`, animationDuration: '0.9s' }}
                   />
                 ))}
@@ -700,10 +700,10 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
           {/* Reply preview */}
           {replyingTo && (
             <div className={`mb-2 flex items-center gap-2 px-3 py-2 ${ui.replyBar}`}>
-              <div className="h-4 w-0.5 rounded-full bg-[var(--accent)]" />
+              <div className="h-4 w-0.5 rounded-full bg-primary" />
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-[var(--accent)]">Réponse à {replyingTo.authorName}</p>
-                <p className="truncate text-[11px] text-[var(--muted)]/60">{replyingTo.content}</p>
+                <p className="text-[11px] font-semibold text-primary">Réponse à {replyingTo.authorName}</p>
+                <p className="truncate text-[11px] text-muted-foreground/60">{replyingTo.content}</p>
               </div>
               <Button size="icon-sm" variant="ghost" className="size-6 rounded-xl" onClick={() => setReplyingTo(null)}>
                 <XIcon size={14} />
@@ -711,7 +711,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             </div>
           )}
 
-          <div className={`flex items-center gap-1 px-1.5 py-1.5 transition-colors focus-within:border-[var(--accent)]/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''}`}>
+          <div className={`flex items-center gap-1 px-1.5 py-1.5 transition-colors focus-within:border-primary/30 md:gap-1.5 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''}`}>
             {/* File attachment button */}
             <TooltipProvider delayDuration={0}>
               <Tooltip>
@@ -734,12 +734,12 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               {pendingAttachments.length > 0 && (
                 <div className="flex flex-wrap gap-1 px-0.5 pt-1">
                   {pendingAttachments.map((att, i) => (
-                    <div key={i} className="flex items-center gap-1 rounded-lg border border-[var(--border)]/40 bg-[var(--surface-secondary)] px-2 py-0.5 text-[11px]">
+                    <div key={i} className="flex items-center gap-1 rounded-lg border border-border/40 bg-surface-secondary px-2 py-0.5 text-[11px]">
                       {att.isImage
                         ? <ImageIcn size={11} className="shrink-0 text-blue-400" />
                         : <FileTextIcon size={11} className="shrink-0 text-orange-400" />}
-                      <span className="max-w-[120px] truncate text-[var(--foreground)]/70">{att.name}</span>
-                      <button type="button" className="ml-0.5 text-[var(--muted)] hover:text-red-400" onClick={() => setPendingAttachments((p) => p.filter((_, j) => j !== i))}>
+                      <span className="max-w-30 truncate text-foreground/70">{att.name}</span>
+                      <button type="button" className="ml-0.5 text-muted-foreground hover:text-red-400" onClick={() => setPendingAttachments((p) => p.filter((_, j) => j !== i))}>
                         <XIcon size={10} />
                       </button>
                     </div>
@@ -754,7 +754,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 placeholder={`Écrire dans ${groupInfo?.name || 'le groupe'}…`}
-                className="w-full resize-none border-0 bg-transparent py-0.5 text-[13px] leading-5 text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/50"
+                className="w-full resize-none border-0 bg-transparent py-0.5 text-[13px] leading-5 text-foreground outline-none placeholder:text-muted-foreground/50"
                 style={{ minHeight: '20px', maxHeight: '110px', overflowY: 'auto' }}
                 aria-label="Message"
               />
@@ -769,7 +769,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
               </EmojiPicker>
               <Button
                 size="icon-sm" variant="ghost"
-                className={`size-7 rounded-xl transition-colors ${messageInput.trim() || pendingAttachments.length > 0 ? 'text-[var(--accent)]' : 'text-muted-foreground/40'}`}
+                className={`size-7 rounded-xl transition-colors ${messageInput.trim() || pendingAttachments.length > 0 ? 'text-primary' : 'text-muted-foreground/40'}`}
                 disabled={!messageInput.trim() && pendingAttachments.length === 0}
                 onClick={() => {
                   if (messageInput.trim() || pendingAttachments.length > 0) {
@@ -786,9 +786,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
       {/* ── Panel membres (sidebar droite) ── */}
       {showMembers && (
-        <div className="flex w-52 flex-col border-l border-[var(--border)]/30 bg-[var(--surface)]/60">
+        <div className="flex w-52 flex-col border-l border-border/30 bg-surface/60">
           <div className="flex items-center justify-between px-3 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/50">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
               Membres — {groupInfo?.participants.length || 0}
             </p>
             <Button size="icon-sm" variant="ghost" className="size-6 rounded-xl" onClick={() => setShowMembers(false)}>
@@ -806,7 +806,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                   <UserProfilePopover key={participant.userId} userId={participant.userId}>
                     <button
                       type="button"
-                      className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-[var(--surface-secondary)]/30 ${!participant.isOnline ? 'opacity-40' : ''}`}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-surface-secondary/30 ${!participant.isOnline ? 'opacity-40' : ''}`}
                     >
                       <div className="relative shrink-0">
                         <Avatar className="size-7">
@@ -814,8 +814,8 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
                           <AvatarFallback className="text-[10px] font-medium">{(participant.displayName || participant.username)?.[0] || '?'}</AvatarFallback>
                         </Avatar>
                         <span
-                          className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-[var(--background)] ${
-                            participant.isOnline ? 'bg-green-500' : 'bg-[var(--muted)]/30'
+                          className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background ${
+                            participant.isOnline ? 'bg-green-500' : 'bg-muted-foreground/30'
                           }`}
                         />
                       </div>

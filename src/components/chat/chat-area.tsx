@@ -742,12 +742,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             Ouvrir les conversations
           </Button>
         )}
-        <Card className="flex flex-col items-center gap-5 border-border/30 bg-card px-10 py-8 shadow-sm">
-          <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+        <Card className="flex flex-col items-center gap-5 border-border/40 bg-card/80 px-10 py-8 shadow-lg shadow-primary/5 backdrop-blur-sm">
+          <div className="flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-md shadow-primary/10">
             <MessageCircleIcon size={32} className="text-primary" />
           </div>
-          <div className="space-y-1.5">
-            <CardTitle className="text-xl font-bold">Bienvenue sur AlfyChat</CardTitle>
+          <div className="space-y-1.5 text-center">
+            <CardTitle className="font-heading text-xl tracking-tight">Bienvenue sur AlfyChat</CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
               Sélectionnez une conversation ou un salon pour commencer à discuter.
             </CardDescription>
@@ -780,10 +780,10 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
           {recipientId ? (
             <>
-              <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25">
                 <MessageCircleIcon size={14} className="text-primary" />
               </div>
-              <span className="truncate text-sm font-semibold text-foreground">
+              <span className="truncate font-heading text-sm tracking-tight text-foreground">
                 {recipientName || 'Message privé'}
               </span>
               <TooltipProvider delayDuration={0}>
@@ -791,7 +791,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                   <TooltipTrigger asChild>
                     <Badge
                       variant="outline"
-                      className="shrink-0 gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-500"
+                      className="shrink-0 gap-1 border-success/30 bg-success/10 text-[10px] text-success"
                     >
                       <ShieldCheckIcon size={10} />
                       E2EE
@@ -806,10 +806,10 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             </>
           ) : (
             <>
-              <div className="flex size-8 items-center justify-center rounded-full bg-muted">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-foreground/5 ring-1 ring-border/40">
                 <HashIcon size={14} className="text-muted-foreground" />
               </div>
-              <span className="truncate text-sm font-semibold text-foreground">général</span>
+              <span className="truncate font-heading text-sm tracking-tight text-foreground">général</span>
             </>
           )}
         </div>
@@ -900,7 +900,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
       {/* ── E2EE History Recovery Banner ──────────────────────────────────── */}
       {recipientId && hasEncryptedPlaceholders && e2eeRecoveryStatus !== 'done' && !e2eeBannerDismissed && (
-        <div className="mx-3 mb-1 mt-2 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 md:mx-4">
+        <div className="mx-3 mb-1 mt-2 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-linear-to-r from-amber-500/15 to-amber-500/5 px-4 py-2.5 shadow-sm shadow-amber-500/10 md:mx-4">
           <ShieldCheckIcon size={16} className="shrink-0 text-amber-500" />
           <span className="flex-1 text-xs text-amber-700 dark:text-amber-300">
             {e2eeRecoveryStatus === 'offline'
@@ -947,7 +947,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                   {!isSelf && <Skeleton className="size-8 shrink-0 rounded-full" />}
                   <div className={`flex flex-col gap-1 ${isSelf ? 'items-end' : 'items-start'}`}>
                     {!isSelf && <Skeleton className="mb-0.5 h-3 w-20 rounded" />}
-                    <div className={`space-y-1.5 rounded-2xl bg-muted/50 px-3 py-2.5 ${widths[i]}`}>
+                    <div className={`space-y-1.5 rounded-2xl bg-foreground/5 px-3 py-2.5 ${widths[i]}`}>
                       <Skeleton className="h-3 w-full rounded" />
                       {i % 2 === 0 && <Skeleton className="h-3 w-3/4 rounded" />}
                     </div>
@@ -958,12 +958,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
-            <Card className="flex flex-col items-center gap-4 border-border/30 bg-card px-8 py-6 shadow-none">
-              <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-                <MessageCircleIcon size={24} className="text-muted-foreground" />
+            <Card className="flex flex-col items-center gap-4 border-border/40 bg-card/60 px-8 py-6 shadow-none backdrop-blur-sm">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/15 to-[#7c3aed]/10 ring-1 ring-primary/20">
+                <MessageCircleIcon size={24} className="text-primary/70" />
               </div>
               <div className="text-center">
-                <CardTitle className="text-sm font-medium text-foreground">
+                <CardTitle className="font-heading text-sm tracking-tight text-foreground">
                   Aucun message
                 </CardTitle>
                 <CardDescription className="mt-1 text-xs text-muted-foreground">
@@ -1001,9 +1001,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       {typingUsers.length > 0 && (
         <div className="flex shrink-0 items-center gap-2 px-4 py-1.5">
           <div className="flex items-center gap-0.5">
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-linear-to-br from-primary to-[#7c3aed] [animation-delay:0ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-linear-to-br from-primary to-[#7c3aed] [animation-delay:150ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-linear-to-br from-primary to-[#7c3aed] [animation-delay:300ms]" />
           </div>
           <span className="text-xs text-muted-foreground">
             <span className="font-medium text-foreground">
@@ -1018,14 +1018,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
       {/* ── Cooldown warning ───────────────────────────────────────────────── */}
       {cooldownActive && (
-        <div className="mx-3 mb-1 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive md:mx-4">
+        <div className="mx-3 mb-1 rounded-xl border border-destructive/30 bg-linear-to-r from-destructive/15 to-destructive/5 px-3 py-2 text-xs font-medium text-destructive shadow-sm shadow-destructive/10 md:mx-4">
           Calme-toi ! Tu envoies trop de messages.
         </div>
       )}
 
       {/* ── Block notices ──────────────────────────────────────────────────── */}
       {iBlockedThem && (
-        <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2.5 text-xs text-muted-foreground md:mx-4">
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-border/40 bg-foreground/5 px-3 py-2.5 text-xs text-muted-foreground md:mx-4">
           <BanIcon size={14} className="shrink-0" />
           <span>
             Vous avez bloqué cet utilisateur.{' '}
@@ -1043,7 +1043,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         </div>
       )}
       {!iBlockedThem && theyBlockedMe && (
-        <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2.5 text-xs text-muted-foreground md:mx-4">
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-border/40 bg-foreground/5 px-3 py-2.5 text-xs text-muted-foreground md:mx-4">
           <BanIcon size={14} className="shrink-0" />
           <span>
             Vous ne pouvez pas envoyer de message à cet utilisateur tant qu&apos;il ne vous a pas
@@ -1075,7 +1075,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         {/* Reply preview */}
         {replyingTo && (
           <div className={`mb-2 flex items-center gap-2 px-3 py-2 ${ui.replyBar}`}>
-            <div className="h-4 w-0.5 rounded-full bg-primary" />
+            <div className="h-4 w-0.5 rounded-full bg-linear-to-b from-primary to-[#7c3aed]" />
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold text-primary">
                 Réponse à {replyingTo.authorName}
@@ -1173,9 +1173,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             <Button
               size="icon"
               variant="ghost"
-              className={`size-8 transition-colors ${
+              className={`size-8 transition-all ${
                 messageInput.trim() || pendingAttachments.length > 0
-                  ? 'text-primary hover:text-primary/80'
+                  ? 'bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/40'
                   : 'text-muted-foreground/40'
               }`}
               disabled={!messageInput.trim() && pendingAttachments.length === 0}

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { useTranslation } from '@/components/locale-provider';
 
 interface Changelog {
   id: string;
@@ -29,26 +30,28 @@ interface Changelog {
 
 type FilterType = 'all' | Changelog['type'];
 
-const TYPE_CONFIG: Record<string, { label: string; iconBg: string; iconColor: string; icon: React.ElementType }> = {
-  feature:     { label: 'Nouveauté',        iconBg: 'bg-blue-500/10',   iconColor: 'text-blue-500',   icon: SparklesIcon },
-  improvement: { label: 'Amélioration',     iconBg: 'bg-violet-500/10', iconColor: 'text-violet-500', icon: ZapIcon },
-  fix:         { label: 'Correctif',         iconBg: 'bg-orange-500/10', iconColor: 'text-orange-500', icon: FlameIcon },
-  security:    { label: 'Sécurité',          iconBg: 'bg-red-500/10',    iconColor: 'text-red-500',    icon: ShieldIcon },
-  breaking:    { label: 'Changement majeur', iconBg: 'bg-red-700/10',    iconColor: 'text-red-600',    icon: FlameIcon },
+const TYPE_CONFIG: Record<string, { iconBg: string; iconColor: string; icon: React.ElementType }> = {
+  feature:     { iconBg: 'bg-blue-500/10',   iconColor: 'text-blue-500',   icon: SparklesIcon },
+  improvement: { iconBg: 'bg-violet-500/10', iconColor: 'text-violet-500', icon: ZapIcon },
+  fix:         { iconBg: 'bg-orange-500/10', iconColor: 'text-orange-500', icon: FlameIcon },
+  security:    { iconBg: 'bg-red-500/10',    iconColor: 'text-red-500',    icon: ShieldIcon },
+  breaking:    { iconBg: 'bg-red-700/10',    iconColor: 'text-red-600',    icon: FlameIcon },
 };
 
-const FILTERS: { value: FilterType; label: string }[] = [
-  { value: 'all',         label: 'Tout' },
-  { value: 'feature',     label: 'Nouveauté' },
-  { value: 'improvement', label: 'Amélioration' },
-  { value: 'fix',         label: 'Correctif' },
-  { value: 'security',    label: 'Sécurité' },
-  { value: 'breaking',    label: 'Majeur' },
+const FILTERS: { value: FilterType }[] = [
+  { value: 'all' },
+  { value: 'feature' },
+  { value: 'improvement' },
+  { value: 'fix' },
+  { value: 'security' },
+  { value: 'breaking' },
 ];
 
 export default function ChangelogsPage() {
   const router = useRouter();
   const { isMobile, openSidebar } = useMobileNav();
+  const { t, locale } = useTranslation();
+  const cl18n = t.changelogs;
 
   const [changelogs, setChangelogs] = useState<Changelog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +101,7 @@ export default function ChangelogsPage() {
         </Button>
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <SparklesIcon size={14} className="shrink-0 text-muted-foreground" />
-          <span className="truncate text-sm font-semibold">Changelogs</span>
+          <span className="truncate text-sm font-semibold">{cl18n.title}</span>
         </div>
         {!loading && changelogs.length > 0 && (
           <Badge variant="secondary" className="shrink-0 text-[11px]">
@@ -122,7 +125,7 @@ export default function ChangelogsPage() {
             <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               autoFocus
-              placeholder="Rechercher…"
+              placeholder={cl18n.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-8 pl-8 text-sm"
@@ -146,7 +149,12 @@ export default function ChangelogsPage() {
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
-                {f.label}
+                {f.value === 'all' ? cl18n.filterAllShort
+                 : f.value === 'feature' ? cl18n.typeNew
+                 : f.value === 'improvement' ? cl18n.filterImprovement
+                 : f.value === 'fix' ? cl18n.typeFix
+                 : f.value === 'security' ? cl18n.typeSecurity
+                 : cl18n.typeBreakingShort}
               </button>
             ))}
           </div>
@@ -185,17 +193,15 @@ export default function ChangelogsPage() {
           </div>
           <div>
             <p className="text-sm font-semibold">
-              {search || typeFilter !== 'all' ? 'Aucun résultat' : 'Aucun changelog'}
+              {search || typeFilter !== 'all' ? cl18n.noResultsShort : cl18n.noChangelogsShort}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {search || typeFilter !== 'all'
-                ? "Essayez avec d'autres filtres."
-                : 'Revenez bientôt pour les mises à jour.'}
+              {search || typeFilter !== 'all' ? cl18n.noResultsHint : cl18n.comingSoonShort}
             </p>
           </div>
           {(search || typeFilter !== 'all') && (
             <Button variant="outline" size="sm" onClick={() => { setSearch(''); setTypeFilter('all'); }}>
-              Effacer les filtres
+              {cl18n.clearFilters}
             </Button>
           )}
         </div>
@@ -205,11 +211,15 @@ export default function ChangelogsPage() {
           <div className="space-y-3 p-4">
             {filtered.map((log, idx) => {
               const cfg = TYPE_CONFIG[log.type] ?? {
-                label: log.type,
                 iconBg: 'bg-muted',
                 iconColor: 'text-muted-foreground',
                 icon: SparklesIcon,
               };
+              const typeLabel = log.type === 'feature' ? cl18n.typeNew
+                : log.type === 'improvement' ? cl18n.typeImprovement
+                : log.type === 'fix' ? cl18n.typeFix
+                : log.type === 'security' ? cl18n.typeSecurity
+                : cl18n.typeBreaking;
               const Icon = cfg.icon;
 
               return (
@@ -222,16 +232,16 @@ export default function ChangelogsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <Badge variant="secondary" className={cn('text-xs', cfg.iconColor)}>
-                            {cfg.label}
+                            {typeLabel}
                           </Badge>
                           <Badge variant="outline" className="font-mono text-xs text-muted-foreground">
                             v{log.version}
                           </Badge>
                           {idx === 0 && typeFilter === 'all' && !search && (
-                            <Badge>Dernière version</Badge>
+                            <Badge>{cl18n.latestVersion}</Badge>
                           )}
                           <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
-                            {new Date(log.created_at).toLocaleDateString('fr-FR', {
+                            {new Date(log.created_at).toLocaleDateString(locale, {
                               year: 'numeric', month: 'short', day: 'numeric',
                             })}
                           </span>
@@ -276,7 +286,7 @@ export default function ChangelogsPage() {
                       <>
                         <Separator className="my-3" />
                         <p className="text-xs text-muted-foreground">
-                          par{' '}
+                          {cl18n.publishedBy}{' '}
                           <span className="font-medium text-foreground">@{log.author_username}</span>
                         </p>
                       </>

@@ -149,7 +149,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
     <div className={cn('flex h-full w-full flex-col overflow-hidden', ui.sidebarBg)}>
       {/* ── Header ── */}
       <div className={cn('flex h-13 shrink-0 items-center justify-between px-3', ui.header)}>
-        <span className="text-[13px] font-bold tracking-tight text-foreground">Groupes</span>
+        <span className="font-heading text-[13px] tracking-tight text-foreground">Groupes</span>
         <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -176,7 +176,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
             </div>
           ) : groups.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-sm shadow-primary/10">
                 <UsersRoundIcon size={20} className="text-primary" />
               </div>
               <div>
@@ -203,17 +203,17 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                   key={group.id}
                   onClick={() => onSelectGroup(group.id)}
                   className={cn(
-                    'group flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-150',
+                    'group/grp flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-150',
                     isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-surface-secondary/60 hover:text-foreground',
+                      ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                      : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
                   )}
                 >
                   {/* Avatar */}
                   {group.avatarUrl ? (
-                    <Avatar className="size-9 shrink-0 rounded-xl">
+                    <Avatar className={cn('size-9 shrink-0 rounded-xl ring-2 transition-all', isActive ? 'ring-primary/40' : 'ring-transparent group-hover/grp:ring-border/40')}>
                       <AvatarImage src={resolveMediaUrl(group.avatarUrl)} alt={group.name} />
-                      <AvatarFallback className="rounded-xl bg-primary/20 text-[11px] font-bold text-primary">
+                      <AvatarFallback className="rounded-xl bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-[11px] font-bold text-primary">
                         {group.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -222,8 +222,8 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                       className={cn(
                         'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
                         isActive
-                          ? 'bg-primary/15 text-primary'
-                          : 'bg-primary/8 text-primary/60 group-hover:bg-primary/15 group-hover:text-primary',
+                          ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary ring-1 ring-primary/30'
+                          : 'bg-foreground/5 text-muted-foreground group-hover/grp:bg-primary/10 group-hover/grp:text-primary',
                       )}
                     >
                       <UsersRoundIcon size={15} />
@@ -240,7 +240,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
 
                   {/* Unread badge */}
                   {unread > 0 && (
-                    <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground ring-1 ring-background">
+                    <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-[#7c3aed] px-1 text-[9px] font-semibold text-primary-foreground shadow-md shadow-primary/40 ring-2 ring-sidebar">
                       {unread > 99 ? '99+' : unread}
                     </span>
                   )}

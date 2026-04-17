@@ -81,6 +81,7 @@ export interface HostingOffer {
   features: string[];
   boost_enabled: boolean;
   boost_type: 'admin_only' | 'users' | 'mixed';
+  is_active?: boolean;
 }
 
 export interface ApiKey {

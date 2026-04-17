@@ -182,22 +182,22 @@ function ChannelRow({
     <button
       onClick={onClick}
       className={cn(
-        'group relative flex w-full items-center rounded-xl font-medium transition-colors',
+        'group/ch relative flex w-full items-center rounded-xl font-medium transition-all duration-150',
         d.channelGap, d.channelPx, d.channelPy, d.channelText,
         isActive
-          ? 'bg-accent/10 text-accent'
+          ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
           : hasUnread
-            ? 'text-foreground hover:bg-muted/70'
-            : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+            ? 'text-foreground hover:bg-foreground/6'
+            : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
       )}
     >
       {isActive && (
-        <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-linear-to-b from-primary to-[#7c3aed]" />
       )}
-      {(() => { const Icon = CHANNEL_ICON[channel.type] ?? HashIcon; return <Icon size={d.channelIcon} className={cn('shrink-0 transition-colors', isActive ? 'text-accent' : 'text-muted-foreground/60 group-hover:text-muted-foreground')} />; })()}
-      <span className={cn("truncate", hasUnread && !isActive && "font-bold")}>{channel.name}</span>
+      {(() => { const Icon = CHANNEL_ICON[channel.type] ?? HashIcon; return <Icon size={d.channelIcon} className={cn('shrink-0 transition-colors', isActive ? 'text-primary' : 'text-muted-foreground/60 group-hover/ch:text-muted-foreground')} />; })()}
+      <span className={cn("truncate", hasUnread && !isActive && "font-semibold")}>{channel.name}</span>
       {hasUnread && !isActive && (
-        <Badge variant="destructive" className="ml-auto shrink-0 min-w-5 h-5 text-[10px]">
+        <Badge variant="destructive" className="ml-auto shrink-0 min-w-5 h-5 text-[10px] shadow-sm shadow-destructive/30 ring-2 ring-sidebar">
           {unreadCount! > 99 ? '99+' : unreadCount}
         </Badge>
       )}
@@ -250,35 +250,35 @@ function VoiceChannelRow({
       <button
         onClick={() => (isConnected ? onLeave() : onJoin(serverId, channel.id))}
         className={cn(
-          'group relative flex w-full items-center rounded-xl font-medium transition-colors',
+          'group/vc relative flex w-full items-center rounded-xl font-medium transition-all duration-150',
           d.channelGap, d.channelPx, d.channelPy, d.channelText,
           isConnected
-            ? 'bg-success/10 text-success'
-            : 'text-muted-foreground hover:bg-surface-secondary/70 hover:text-foreground',
+            ? 'bg-linear-to-r from-success/15 to-success/5 text-success shadow-sm shadow-success/10'
+            : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
         )}
       >
         {isConnected && (
-          <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-success" />
+          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-success" />
         )}
         <Volume2Icon size={d.channelIcon}
           className={cn(
             'shrink-0 transition-colors',
-            isConnected ? 'text-success' : 'text-muted-foreground/60 group-hover:text-muted-foreground',
+            isConnected ? 'text-success' : 'text-muted-foreground/60 group-hover/vc:text-muted-foreground',
           )} />
         <span className="truncate">{channel.name}</span>
         {participants.length > 0 && (
-          <span className="ml-auto text-[10px] font-semibold text-muted-foreground">{participants.length}</span>
+          <span className="ml-auto text-[10px] font-semibold tabular-nums text-muted-foreground">{participants.length}</span>
         )}
       </button>
       {participants.length > 0 && (
         <div className="ml-6 mt-0.5 space-y-0.5 pb-1">
           {participants.map((p) => (
             <div key={p.userId} className="flex items-center gap-1.5 px-1.5 py-0.5">
-              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-success/15 text-[8px] font-bold text-success">
+              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-success/25 to-success/10 text-[8px] font-bold text-success ring-1 ring-success/20">
                 {p.username?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <span className="flex-1 truncate text-[11px] text-muted-foreground">{p.username}</span>
-              {p.muted && <MicOffIcon size={10} className="shrink-0 text-red-400" />}
+              {p.muted && <MicOffIcon size={10} className="shrink-0 text-destructive" />}
             </div>
           ))}
         </div>
@@ -307,7 +307,7 @@ function SectionHeader({
     <div className="group flex items-center gap-1 px-1 py-1">
       <button
         onClick={onToggle}
-        className="flex flex-1 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+        className="font-heading flex flex-1 items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 transition-colors hover:text-muted-foreground"
       >
         <ChevronRightIcon size={11}
           className={cn('shrink-0 transition-transform', !collapsed && 'rotate-90')} />
@@ -830,7 +830,7 @@ export function ChannelList({
       <div className={`flex h-full w-full flex-col overflow-hidden ${ui.sidebarBg}`}>
         {/* ── Header ── */}
         <div className={`flex ${d.headerH} shrink-0 items-center px-4 ${ui.header}`}>
-          <span className={`${d.channelText} font-bold tracking-tight text-foreground`}>{t.channelList.messagesTitle}</span>
+          <span className={`${d.channelText} font-heading tracking-tight text-foreground`}>{t.channelList.messagesTitle}</span>
         </div>
 
         <ScrollArea className="flex-1 overflow-y-auto">
@@ -841,17 +841,17 @@ export function ChannelList({
               data-tour="friends"
               onClick={() => onSelectChannel('friends')}
               className={cn(
-                `group flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
+                `group/nav flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
                 selectedChannel === 'friends'
-                  ? 'bg-accent/12 text-accent'
-                  : 'text-muted-foreground hover:bg-surface-secondary/60 hover:text-foreground',
+                  ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                  : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
               )}
             >
               <div className={cn(
                 'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
                 selectedChannel === 'friends'
-                  ? 'bg-accent/20 text-accent'
-                  : 'bg-surface-secondary/80 text-muted-foreground group-hover:bg-surface-secondary',
+                  ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary ring-1 ring-primary/30'
+                  : 'bg-foreground/5 text-muted-foreground group-hover/nav:bg-foreground/10',
               )}>
                 <UsersIcon size={14} />
               </div>
@@ -861,23 +861,41 @@ export function ChannelList({
             <button
               onClick={() => router.push('/channels/me/changelogs')}
               className={cn(
-                `group flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
+                `group/nav flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
                 selectedChannel === 'changelogs'
-                  ? 'bg-accent/12 text-accent'
-                  : 'text-muted-foreground hover:bg-surface-secondary/60 hover:text-foreground',
+                  ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                  : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
               )}
             >
               <div className={cn(
                 'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
                 selectedChannel === 'changelogs'
-                  ? 'bg-accent/20 text-accent'
-                  : 'bg-surface-secondary/80 text-muted-foreground group-hover:bg-surface-secondary',
+                  ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary ring-1 ring-primary/30'
+                  : 'bg-foreground/5 text-muted-foreground group-hover/nav:bg-foreground/10',
               )}>
                 <FileTextIcon size={14} />
               </div>
-              <span>Changelogs</span>
+              <span>{t.channelList.changelogs}</span>
             </button>
-
+              <button
+              onClick={() => router.push('/channels/hosting')}
+              className={cn(
+                `group/nav flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
+                selectedChannel === 'hosting'
+                  ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                  : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
+              )}
+            >
+              <div className={cn(
+                'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
+                selectedChannel === 'hosting'
+                  ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary ring-1 ring-primary/30'
+                  : 'bg-foreground/5 text-muted-foreground group-hover/nav:bg-foreground/10',
+              )}>
+                <FileTextIcon size={14} />
+              </div>
+              <span>{t.channelList.hosting}</span>
+            </button>
             <div className="px-1 py-1.5">
               <Separator />
             </div>
@@ -885,7 +903,7 @@ export function ChannelList({
             {/* ── Messages privés ── */}
             <div data-section="dm-list" className="mx-0.5 mt-0.5 rounded-xl  p-1.5 transition-all">
               <div className="mb-1 flex items-center justify-between px-2 pt-1">
-                <p data-tour="conversations" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
+                <p data-tour="conversations" className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
                   {t.channelList.directMessages}
                 </p>
               </div>
@@ -944,28 +962,28 @@ export function ChannelList({
                       <button
                         onClick={() => router.push(`/channels/me/${conv.recipientId}`)}
                         className={cn(
-                          `group flex w-full items-center ${d.rowGap} rounded-xl ${d.rowPx} ${d.rowPy} transition-all duration-150`,
+                          `group/dm flex w-full items-center ${d.rowGap} rounded-xl ${d.rowPx} ${d.rowPy} transition-all duration-150`,
                           isActive
-                            ? 'bg-accent/12 text-accent'
-                            : 'text-foreground hover:bg-surface-secondary/60',
-                          dragOverDmId === conv.recipientId && 'ring-1 ring-accent/30',
+                            ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                            : 'text-foreground hover:bg-foreground/6',
+                          dragOverDmId === conv.recipientId && 'ring-1 ring-primary/30',
                         )}
                       >
                         <div className="relative shrink-0">
-                          <Avatar className={cn(`${d.rowAvatar} ring-2 transition-all`, isActive ? 'ring-accent/30' : 'ring-transparent group-hover:ring-border/30')}>
+                          <Avatar className={cn(`${d.rowAvatar} ring-2 transition-all`, isActive ? 'ring-primary/40' : 'ring-transparent group-hover/dm:ring-border/40')}>
                             <AvatarImage src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
-                            <AvatarFallback className={cn('text-[11px] font-semibold', isActive ? 'bg-accent/20 text-accent' : 'bg-surface-secondary')}>
+                            <AvatarFallback className={cn('text-[11px] font-semibold', isActive ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary' : 'bg-linear-to-br from-primary/15 to-[#7c3aed]/10 text-primary/80')}>
                               {conv.recipientName?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <span className={cn(
-                            'absolute -bottom-0.5 -right-0.5 size-2.5 ring-[1.5px] ring-background',
+                            'absolute -bottom-0.5 -right-0.5 size-2.5 ring-[1.5px] ring-sidebar',
                             presenceDotShape(presence),
                             presenceDot(presence),
                           )} />
                         </div>
                         <div className="min-w-0 flex-1 text-left">
-                          <p className={cn(`truncate ${d.rowName} font-medium leading-tight`, isActive ? 'text-accent' : 'text-foreground')}>
+                          <p className={cn(`truncate ${d.rowName} font-medium leading-tight`, isActive ? 'text-primary' : 'text-foreground')}>
                             {conv.recipientName || t.channelList.user}
                           </p>
                           {customStatusMap.get(conv.recipientId) ? (
@@ -979,7 +997,7 @@ export function ChannelList({
                           )}
                         </div>
                         {dmUnread > 0 && (
-                          <Badge variant="destructive" className="ml-auto shrink-0 min-w-5 h-5 text-[10px]">
+                          <Badge variant="destructive" className="ml-auto shrink-0 min-w-5 h-5 text-[10px] shadow-sm shadow-destructive/30 ring-2 ring-sidebar">
                             {dmUnread}
                           </Badge>
                         )}
@@ -1015,7 +1033,7 @@ export function ChannelList({
 
       {/* Server name header with dropdown */}
       <DropdownMenu>
-        <DropdownMenuTrigger className={`flex h-11 w-full items-center justify-between px-3 font-semibold transition-colors hover:bg-surface-secondary/60 ${ui.isGlass ? 'border-b border-border/40 bg-background/60' : 'border-b border-border bg-surface-secondary'}`}>
+        <DropdownMenuTrigger className={`flex h-11 w-full items-center justify-between px-3 font-heading tracking-tight transition-all duration-150 hover:bg-foreground/6 ${ui.isGlass ? 'border-b border-border/40 bg-background/60' : 'border-b border-border/40 bg-sidebar/80'}`}>
           <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[13px]">
             <span className="truncate">{serverName}</span>
             {serverBadges.isCertified && (
@@ -1036,7 +1054,7 @@ export function ChannelList({
             <UserPlusIcon size={15} />
             {t.channelList.inviteMembers}
           </DropdownMenuItem>
-          <DropdownMenuItem className="gap-2 text-red-500" onClick={() => handleLeaveServer()}>
+          <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => handleLeaveServer()}>
             <LogOutIcon size={15} />
             {t.serverList.leaveServer}
           </DropdownMenuItem>
@@ -1045,7 +1063,7 @@ export function ChannelList({
 
       {/* Node offline banner */}
       {nodeOnline === false && (
-        <div className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 text-[11px] font-medium text-amber-400">
+        <div className="flex items-center gap-1.5 border-b border-amber-500/20 bg-linear-to-r from-amber-500/15 to-amber-500/5 px-3 py-1.5 text-[11px] font-medium text-amber-400">
           <WifiOffIcon size={11} className="shrink-0" />
           {t.channelList.nodeOffline}
         </div>
@@ -1138,7 +1156,7 @@ export function ChannelList({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30 hover:text-muted-foreground"
+                  className="mt-3 w-full gap-1 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40 hover:text-muted-foreground"
                   onClick={() => openCreate('category')}
                 >
                   <PlusIcon size={11} />
@@ -1199,7 +1217,7 @@ export function ChannelList({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30 hover:text-muted-foreground"
+                  className="mt-3 w-full gap-1 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40 hover:text-muted-foreground"
                   onClick={() => openCreate('category')}
                 >
                   <PlusIcon size={11} />
@@ -1232,11 +1250,11 @@ export function ChannelList({
             </DialogHeader>
             {/* Header */}
             <div className="flex items-start gap-3 border-b border-border/20 px-6 py-5 pr-12">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
-                {(() => { const Icon = CHANNEL_ICON[createType] ?? HashIcon; return <Icon size={18} className="text-accent" />; })()}
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-sm shadow-primary/10">
+                {(() => { const Icon = CHANNEL_ICON[createType] ?? HashIcon; return <Icon size={18} className="text-primary" />; })()}
               </div>
               <div>
-                <h2 className="text-[15px] font-bold">
+                <h2 className="font-heading text-[15px] tracking-tight">
                   {createType === 'category'
                     ? t.channelList.createModal.createCategory
                     : t.channelList.createModal.createChannel}
@@ -1265,10 +1283,10 @@ export function ChannelList({
                           type="button"
                           onClick={() => setCreateType(ct.id as ChannelType)}
                           className={cn(
-                            'flex flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-[10px] font-semibold transition-all',
+                            'flex flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-[10px] font-semibold transition-all duration-150',
                             isSelected
-                              ? 'border-accent bg-accent/10 text-accent'
-                              : 'border-border/40 bg-surface-secondary/30 text-muted-foreground hover:border-accent/30 hover:bg-accent/5 hover:text-foreground',
+                              ? 'border-primary/50 bg-linear-to-br from-primary/15 to-[#7c3aed]/10 text-primary shadow-sm shadow-primary/10'
+                              : 'border-border/40 bg-foreground/[0.03] text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-foreground',
                           )}
                         >
                           <ct.icon size={15} />
@@ -1309,7 +1327,7 @@ export function ChannelList({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 border-t border-border/20 bg-surface-secondary/30 px-6 py-4">
+            <div className="flex items-center justify-end gap-2 border-t border-border/30 bg-foreground/[0.02] px-6 py-4">
               <Button variant="secondary" onClick={() => setShowCreateChannel(false)}>
                 {t.common.cancel}
               </Button>
