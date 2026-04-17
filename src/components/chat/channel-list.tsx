@@ -405,20 +405,18 @@ export function ChannelList({
         raw.map(async (conv) => {
           if (conv.type === 'dm' && conv.recipientId) {
             const userRes = await api.getUser(conv.recipientId).catch(() => null);
-            if (userRes?.success && userRes.data) {
-              const userData = userRes.data as any;
-              if (userData.status) initialPresence.set(conv.recipientId, userData.status);
-              if (userData.customStatus !== undefined) initialCustomStatus.set(conv.recipientId, userData.customStatus ?? null);
-              return {
-                id: conv.id,
-                type: 'dm' as const,
-                recipientId: conv.recipientId,
-                recipientName: userData.displayName || userData.username,
-                recipientAvatar: userData.avatarUrl,
-                lastMessage: conv.lastMessage,
-                lastMessageAt: conv.lastMessageAt || conv.updatedAt,
-              };
-            }
+            const userData = (userRes?.success && userRes.data) ? userRes.data as any : null;
+            if (userData?.status) initialPresence.set(conv.recipientId, userData.status);
+            if (userData?.customStatus !== undefined) initialCustomStatus.set(conv.recipientId, userData.customStatus ?? null);
+            return {
+              id: conv.id,
+              type: 'dm' as const,
+              recipientId: conv.recipientId,
+              recipientName: userData?.displayName || userData?.username || conv.name || conv.recipientId,
+              recipientAvatar: userData?.avatarUrl,
+              lastMessage: conv.lastMessage,
+              lastMessageAt: conv.lastMessageAt || conv.updatedAt,
+            };
           }
           if (conv.type === 'group') {
             return {
