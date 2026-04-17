@@ -471,46 +471,37 @@ export function ChannelList({
           );
         }
       } catch {}
-      // Refresh presence from Redis first, then render — avoids flicker from stale DB status
+      // Afficher immédiatement les conversations avec la présence API, puis raffiner via Redis
+      const validKeys = [
+        ...sorted.filter(c => c.type === 'dm').map(c => c.recipientId),
+        ...sorted.filter(c => c.type === 'group').map(c => `group:${c.id}`),
+      ];
+      pruneUnread(validKeys);
+      conversationsStore.set(sorted, initialPresence, initialCustomStatus);
+      setConversations(sorted);
+      if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
+      if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
+      setConversationsLoading(false);
+
+      // Raffiner la présence depuis Redis en arrière-plan (ne bloque pas l'affichage)
       const dmRecipientIds = sorted
         .filter((c) => c.type === 'dm')
         .map((c) => c.recipientId)
         .filter(Boolean);
-
       if (dmRecipientIds.length > 0) {
         socketService.requestBulkPresence(dmRecipientIds, (presence) => {
-          // Merge Redis presence over the API-sourced presence
+          if (!presence || presence.length === 0) return;
           const finalPresence = new Map(initialPresence);
           const finalCustomStatus = new Map(initialCustomStatus);
           presence.forEach(({ userId, status, customStatus }) => {
             finalPresence.set(userId, status);
             if (customStatus !== undefined) finalCustomStatus.set(userId, customStatus);
           });
-          // Purger les notifications fantômes (clés inconnues du localStorage)
-          const validKeys = [
-            ...sorted.filter(c => c.type === 'dm').map(c => c.recipientId),
-            ...sorted.filter(c => c.type === 'group').map(c => `group:${c.id}`),
-          ];
-          pruneUnread(validKeys);
-          // Single batched render: conversations + correct presence at once
           conversationsStore.set(sorted, finalPresence, finalCustomStatus);
-          setConversations(sorted);
           setPresenceMap((prev) => { const next = new Map(prev); finalPresence.forEach((v, k) => next.set(k, v)); return next; });
           setCustomStatusMap((prev) => { const next = new Map(prev); finalCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
         });
-      } else {
-        // Purger les notifications fantômes même sans présence
-        const validKeys = [
-          ...sorted.filter(c => c.type === 'dm').map(c => c.recipientId),
-          ...sorted.filter(c => c.type === 'group').map(c => `group:${c.id}`),
-        ];
-        pruneUnread(validKeys);
-        conversationsStore.set(sorted, initialPresence, initialCustomStatus);
-        setConversations(sorted);
-        if (initialPresence.size > 0) setPresenceMap((prev) => { const next = new Map(prev); initialPresence.forEach((v, k) => next.set(k, v)); return next; });
-        if (initialCustomStatus.size > 0) setCustomStatusMap((prev) => { const next = new Map(prev); initialCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
       }
-      setConversationsLoading(false);
     } catch (e) {
       console.error('Erreur chargement conversations:', e);
       if (attempt < 3) {
