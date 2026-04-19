@@ -11,15 +11,14 @@
  */
 import React from 'react';
 
-interface FiProps {
+interface FiProps extends React.HTMLAttributes<HTMLElement> {
   size?: number;
-  className?: string;
-  style?: React.CSSProperties;
 }
 
 function fi(name: string) {
-  const Comp = ({ size = 20, className, style }: FiProps) => (
+  const Comp = ({ size = 20, className, style, ...rest }: FiProps) => (
     <i
+      {...rest}
       className={`fi fi-br-${name}${className ? ` ${className}` : ''}`}
       style={{ fontSize: size, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
     />
@@ -29,8 +28,9 @@ function fi(name: string) {
 }
 
 function fiBrands(name: string) {
-  const Comp = ({ size = 20, className, style }: FiProps) => (
+  const Comp = ({ size = 20, className, style, ...rest }: FiProps) => (
     <i
+      {...rest}
       className={`fi fi-brands-${name}${className ? ` ${className}` : ''}`}
       style={{ fontSize: size, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
     />
