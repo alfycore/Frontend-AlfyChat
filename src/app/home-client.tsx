@@ -7,7 +7,8 @@ import {
   KeyIcon, MessageCircleIcon, Share2Icon, HashIcon, MicIcon, SendIcon,
   SmileIcon, PlusIcon, SearchIcon, BellIcon, TerminalIcon, BookOpenIcon,
 } from '@/components/icons';
-import { NavAuthButtons } from '@/components/landing/nav-auth-buttons';
+import { SiteNavbar } from '@/components/site-navbar';
+import { SiteFooter } from '@/components/site-footer';
 import { GeoHostingBadge } from '@/components/landing/geo-tagline';
 import { GatewayBeam } from '@/components/landing/gateway-beam';
 import { Reveal, Stagger } from '@/components/landing/reveal';
@@ -32,7 +33,7 @@ import { InteractiveGridPattern } from '@/components/ui/interactive-grid-pattern
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
-const STAT_VALUES = [12500, 4.2, 320, 99.97];
+const STAT_VALUES = [70, 2, 320, 99.97];
 const STAT_DECIMALS = [0, 1, 0, 2];
 
 const MESSAGE_COLORS = [
@@ -228,76 +229,15 @@ export function HomeClient() {
     { icon: BotIcon,           text: L.preview.bullets.bots },
   ];
 
-  const footerColumns = [
-    {
-      title: L.footer.product.title,
-      links: [
-        { label: L.footer.product.features,  href: '#features' },
-        { label: L.footer.product.security,  href: '#security' },
-        { label: L.footer.product.download,  href: '/app' },
-        { label: L.footer.product.changelog, href: '/changelogs' },
-        { label: L.footer.product.help,      href: '/support' },
-      ],
-    },
-    {
-      title: L.footer.developers.title,
-      links: [
-        { label: L.footer.developers.docs,   href: '/developers/docs' },
-        { label: L.footer.developers.bots,   href: '/developers/bots' },
-        { label: L.footer.developers.portal, href: '/developers' },
-      ],
-    },
-    {
-      title: L.footer.legal.title,
-      links: [
-        { label: L.footer.legal.terms,   href: '/legal/cgu' },
-        { label: L.footer.legal.privacy, href: '/legal/privacy' },
-        { label: L.footer.legal.cookies, href: '/legal/cookies' },
-        { label: L.footer.legal.notices, href: '/legal/mentions' },
-        { label: L.footer.legal.contact, href: 'mailto:contact@alfycore.org' },
-      ],
-    },
-    {
-      title: L.footer.association.title,
-      links: [
-        { label: L.footer.association.about, href: '/about' },
-        { label: L.footer.association.jobs,  href: '/jobs' },
-        { label: L.footer.association.brand, href: '/brand' },
-        { label: L.footer.association.press, href: '/newsroom' },
-      ],
-    },
-  ];
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground font-(family-name:--font-geist-sans)">
 
       {/* ── Nav ── */}
-      <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2 font-heading text-sm">
-            <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-5" />
-            ALFYCHAT
-          </Link>
-          <div className="hidden items-center gap-1 md:flex">
-            {navLinks.map((l) => (
-              <Link
-                key={l.label}
-                href={l.href}
-                className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                {l.label}
-              </Link>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <NavAuthButtons />
-          </div>
-        </div>
-      </nav>
+      <SiteNavbar links={navLinks} />
 
       {/* ───────────── HERO ───────────── */}
       <section className="relative overflow-hidden px-6 pb-32 pt-24 md:pt-32">
-        <RetroGrid className="opacity-30" angle={70} />
+        
         <div className="pointer-events-none absolute -top-40 left-1/2 size-[700px] -translate-x-1/2 rounded-full bg-primary/20 blur-[140px]" />
         <div className="pointer-events-none absolute top-60 right-0 size-[400px] rounded-full bg-primary/10 blur-[120px]" />
 
@@ -385,7 +325,7 @@ export function HomeClient() {
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px overflow-hidden bg-border/40 md:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="bg-background p-8 text-center md:p-10">
-              <p className="font-heading text-4xl tracking-tight text-foreground md:text-5xl">
+              <p className="font-heading text-4xl tracking-tight text-foreground md:text-4xl">
                 <NumberTicker value={s.value} decimalPlaces={s.decimals} />
                 <span className="text-primary">{s.suffix}</span>
               </p>
@@ -745,55 +685,7 @@ $ alfychat-server start \\
       </section>
 
       {/* ───────────── FOOTER ───────────── */}
-      <footer className="border-t border-border/60 bg-muted/20">
-        <div className="mx-auto max-w-6xl px-6 py-14">
-          <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-5">
-            <div className="sm:col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 font-heading text-sm">
-                <img src="/logo/Alfychat.svg" alt="" className="size-5" />
-                ALFYCHAT
-              </Link>
-              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                {L.footer.tagline}
-              </p>
-              <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                {L.footer.made} <HeartIcon size={10} className="text-destructive" /> {L.footer.country}
-              </p>
-            </div>
-            {footerColumns.map((col) => (
-              <div key={col.title}>
-                <p className="mb-3 font-heading text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  {col.title}
-                </p>
-                <ul className="space-y-2 text-sm">
-                  {col.links.map((l) => (
-                    <li key={l.label}>
-                      <Link href={l.href} className="text-muted-foreground transition-colors hover:text-foreground">
-                        {l.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground md:flex-row">
-            <span className="font-heading text-[10px]">{L.footer.copyright}</span>
-            <div className="flex flex-wrap gap-4">
-              {[
-                { label: L.footer.bottom.terms,   href: '/legal/cgu' },
-                { label: L.footer.bottom.privacy, href: '/legal/privacy' },
-                { label: 'alfycore.pro',          href: 'https://alfycore.pro' },
-              ].map((l) => (
-                <Link key={l.label} href={l.href} className="transition-colors hover:text-foreground">
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

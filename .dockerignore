@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.production
+node_modules
+.git
+.gitignore
+*.log
+.next
+out
+dist

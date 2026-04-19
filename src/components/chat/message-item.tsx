@@ -313,6 +313,175 @@ export const MessageItem = memo(function MessageItem({
   // Heure courte pour l'indicateur de groupe (HH:MM)
   const shortTime = new Date(message.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
+  // ── Mode Bulles (iMessage / WhatsApp) ───────────────────────────────────────
+  if (prefs.msgStyle === 'bubble') {
+    const { textContent, images, files } = parseAttachments(message.content ?? '');
+    return (
+      <div
+        data-message-id={message.id}
+        className={cn(
+          'group relative px-3',
+          isGrouped ? 'py-0.5' : 'pt-2 pb-0.5',
+          message.pending && !message.failed && 'opacity-60',
+          message.failed && 'opacity-70',
+        )}
+      >
+        {/* ── Toolbar flottant ── */}
+        <div className={cn(
+          'absolute -top-4 z-20 flex items-center gap-0.5 rounded-xl px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 transition-all duration-150 group-hover:opacity-100',
+          isMe ? 'left-4' : 'right-4',
+          ui.isGlass
+            ? 'border border-white/20 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-black/40'
+            : 'border border-[var(--border)] bg-[var(--surface)] ring-1 ring-black/10',
+        )}>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon-sm" variant="ghost" className="size-7 rounded-xl text-[var(--foreground)]/80 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]" onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}>
+                  <ReplyIcon size={15} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Répondre</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <EmojiPicker onSelect={(emoji) => onReaction(message.id, emoji)}>
+            <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/80 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
+              <SmileIcon size={15} />
+            </div>
+          </EmojiPicker>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/80 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
+                <MoreHorizontalIcon size={15} />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="min-w-44">
+              <DropdownMenuItem onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}><ReplyIcon size={14} /><span>Répondre</span></DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onCopy(message.content)}><CopyIcon size={14} /><span>Copier le texte</span></DropdownMenuItem>
+              <DropdownMenuItem><PinIcon size={14} /><span>Épingler</span></DropdownMenuItem>
+              {isMe && <DropdownMenuItem onClick={() => onStartEdit(message.id, message.content)}><PencilIcon size={14} /><span>Modifier</span></DropdownMenuItem>}
+              {isMe && <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(message.id)}><Trash2Icon size={14} /><span>Supprimer</span></DropdownMenuItem>}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* ── Layout bulle ── */}
+        <div className={cn('flex items-end gap-2', isMe ? 'flex-row-reverse' : 'flex-row')}>
+
+          {/* Avatar — uniquement 1er message d'un groupe, côté gauche (autres) */}
+          {!isMe && (
+            isGrouped
+              ? <div className={`${d.msgAvatar} shrink-0`} />
+              : (
+                <UserProfilePopover userId={message.authorId}>
+                  <button type="button" className="mb-0.5 shrink-0">
+                    <Avatar className={`${d.msgAvatar} cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm transition-all duration-150 hover:scale-105`}>
+                      <AvatarImage src={resolveMediaUrl(message.sender?.avatarUrl)} alt={displayName} />
+                      <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 font-bold text-sm text-white">{initial}</AvatarFallback>
+                    </Avatar>
+                  </button>
+                </UserProfilePopover>
+              )
+          )}
+
+          <div className={cn('flex max-w-[72%] flex-col gap-0.5', isMe ? 'items-end' : 'items-start')}>
+
+            {/* Nom expéditeur (autres, premier du groupe) */}
+            {!isMe && !isGrouped && (
+              <span className={`${d.msgTime} ml-1 font-semibold text-foreground/75`}>{displayName}</span>
+            )}
+
+            {/* Réponse citée */}
+            {replyMessage && (() => {
+              const repliedName = replyMessage.authorId === currentUser?.id
+                ? currentUser?.displayName || currentUser?.username
+                : replyMessage.sender?.displayName || replyMessage.sender?.username || recipientName || 'Utilisateur';
+              return (
+                <div className={cn(
+                  'flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 px-2.5 py-1 text-[11px]',
+                  isMe ? 'self-end' : 'self-start',
+                  ui.isGlass ? 'bg-white/20 backdrop-blur-sm dark:bg-black/20' : 'bg-[var(--surface-secondary)]/30',
+                )}>
+                  <ReplyIcon size={11} className="shrink-0 text-[var(--accent)]/60" />
+                  <span className="font-semibold text-[var(--accent)]/80">{repliedName}</span>
+                  <span className="max-w-48 truncate text-muted-foreground">{replyMessage.content}</span>
+                </div>
+              );
+            })()}
+
+            {/* Bulle */}
+            {isEditing ? (
+              <div className="w-full space-y-1.5">
+                <textarea
+                  value={editInput}
+                  onChange={(e) => { onSetEditInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSaveEdit(message.id); } if (e.key === 'Escape') onCancelEdit(); }}
+                  ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; } }}
+                  rows={1}
+                  aria-label="Modifier le message"
+                  autoFocus
+                  className="w-full resize-none overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground/60 focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20"
+                />
+                <p className="text-[10px] text-muted-foreground/70">Entrée pour sauvegarder · Échap pour annuler</p>
+              </div>
+            ) : (
+              <div className={cn(
+                'rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm',
+                isMe
+                  ? 'rounded-br-sm bg-primary text-primary-foreground'
+                  : 'rounded-bl-sm bg-[var(--surface-secondary)]/70 text-foreground',
+              )}>
+                {textContent && (
+                  highlight
+                    ? <HighlightText text={textContent} query={highlight} />
+                    : <MarkdownRenderer content={textContent} />
+                )}
+                {!message.isSystem && extractInviteCodes(message.content).map((code) => (
+                  <InviteEmbed key={code} code={code} />
+                ))}
+                <AttachmentsEmbed images={images} files={files} />
+              </div>
+            )}
+
+            {/* Horodatage + statut */}
+            <div className={cn('flex items-center gap-1 px-1', isMe ? 'flex-row-reverse' : 'flex-row')}>
+              <span className={`${d.msgTime} tabular-nums text-muted-foreground/60`}>{shortTime}</span>
+              {message.pending && !message.failed && <ClockIcon size={10} className="text-muted-foreground/50" />}
+              {message.failed && <AlertCircleIcon size={10} className="text-destructive" title="Échec de l'envoi" />}
+              {!!message.isEdited && <span className="text-[10px] italic text-muted-foreground/60">(modifié)</span>}
+            </div>
+
+            {/* Réactions */}
+            {message.reactions && message.reactions.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {message.reactions.map((reaction, i) => {
+                  const hasReacted = !!currentUser && reaction.userIds?.includes(currentUser.id);
+                  return (
+                    <Button
+                      key={i}
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => hasReacted ? onRemoveReaction(message.id, reaction.emoji) : onReaction(message.id, reaction.emoji)}
+                      className={cn(
+                        'inline-flex h-auto items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-all duration-150',
+                        hasReacted
+                          ? 'border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
+                          : 'border-[var(--border)]/30 bg-[var(--surface-secondary)]/20 hover:border-[var(--accent)]/30 hover:bg-[var(--surface-secondary)]/40',
+                      )}
+                    >
+                      <Twemoji emoji={reaction.emoji} size={14} />
+                      {reaction.count > 0 && <span className="tabular-nums">{reaction.count}</span>}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       data-message-id={message.id}

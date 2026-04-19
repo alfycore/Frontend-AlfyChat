@@ -1,6 +1,5 @@
-import Link from 'next/link';
-import { MessageCircleIcon, ArrowLeftIcon } from '@/components/icons';
-import { Button } from '@/components/ui/button';
+import { SiteNavbar } from '@/components/site-navbar';
+import { SiteFooter } from '@/components/site-footer';
 
 export default function StaticLayout({
   children,
@@ -9,11 +8,9 @@ export default function StaticLayout({
 }) {
   return (
     <div data-no-wallpaper className="min-h-screen text-[var(--foreground)]">
-
-        {children}
-
-
-
+      <SiteNavbar />
+      {children}
+      <SiteFooter />
     </div>
   );
 }

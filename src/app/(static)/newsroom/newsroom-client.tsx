@@ -50,40 +50,6 @@ export function NewsroomClient() {
 
       <Separator />
 
-      {/* News feed */}
-      <MotionStagger stagger={0.08} className="space-y-6">
-        {s.entries.map((entry, i) => {
-          const Icon = entryIcons[i] ?? ZapIcon;
-          const tagVariant = entryTagVariants[i] ?? 'outline';
-          return (
-            <MotionStaggerItem key={entry.title} direction="up" distance={16}>
-              <article className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="p-6 space-y-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs text-muted-foreground">{entry.date}</span>
-                    <Badge variant={tagVariant} className="text-[10px]">
-                      <Icon size={10} />
-                      {entry.tag}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <h2 className="font-heading text-lg leading-snug">{entry.title}</h2>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{entry.summary}</p>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {entry.items.map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <span className="mt-1.5 block size-1.5 shrink-0 rounded-full bg-primary/60" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </article>
-            </MotionStaggerItem>
-          );
-        })}
-      </MotionStagger>
 
       <Separator />
 

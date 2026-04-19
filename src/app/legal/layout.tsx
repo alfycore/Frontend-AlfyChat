@@ -1,16 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   FileTextIcon,
   ShieldIcon,
   LockIcon,
-  ArrowLeftIcon,
   ScaleIcon,
 } from '@/components/icons';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { SiteNavbar } from '@/components/site-navbar';
+import { SiteFooter } from '@/components/site-footer';
 
 const NAV = [
   { href: '/legal/cgu',      icon: FileTextIcon, label: "Conditions d'utilisation", desc: "CGU" },
@@ -21,33 +21,10 @@ const NAV = [
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router   = useRouter();
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
-
-      {/* Header */}
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b bg-background/80 px-3 backdrop-blur-sm">
-        <Button
-          variant="ghost" size="icon"
-          className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={() => router.back()}
-        >
-          <ArrowLeftIcon size={15} />
-        </Button>
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <div className="flex size-5 items-center justify-center rounded-md bg-accent/10">
-            <ScaleIcon size={12} className="text-accent" />
-          </div>
-          <span className="truncate text-[13px] font-semibold">Informations légales</span>
-        </div>
-        <Link href="/" className="hidden items-center gap-1.5 md:flex">
-          <img src="/logo/Alfychat.svg" alt="" className="size-4" />
-          <span className="font-(family-name:--font-krona) text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            ALFYCHAT
-          </span>
-        </Link>
-      </header>
+    <div className="flex min-h-screen flex-col bg-background">
+      <SiteNavbar />
 
       <div className="flex min-h-0 flex-1">
 
@@ -124,6 +101,8 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           {children}
         </div>
       </div>
+
+      <SiteFooter />
     </div>
   );
 }

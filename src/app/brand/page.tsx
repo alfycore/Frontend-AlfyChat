@@ -25,6 +25,8 @@ import {
   ForumIcon, GalleryIcon, MegaphoneIcon,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import { SiteNavbar } from '@/components/site-navbar';
+import { SiteFooter } from '@/components/site-footer';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -468,34 +470,14 @@ export default function BrandPage() {
       <div className="min-h-screen bg-background text-foreground">
 
         {/* Header */}
-        <header className="sticky top-0 z-50 flex items-center gap-3 border-b border-border/50 bg-background/80 px-8 py-3 backdrop-blur">
-          <ScrollProgress />
-          <Image src="/logo/Alfychatlogotitleupblack.svg" alt="AlfyChat" width={120} height={28} className="dark:hidden" />
-          <Image src="/logo/Alfychatlogotitleupwihte.svg" alt="AlfyChat" width={120} height={28} className="hidden dark:block" />
-          <Badge variant="secondary" className="text-[10px]">Brand Guidelines</Badge>
-          <nav className="ml-6 hidden items-center gap-0.5 md:flex">
-            {[
-              { label: 'Logo', href: '#logo' },
-              { label: 'Typographie', href: '#typographie' },
-              { label: 'Couleurs', href: '#couleurs' },
-              { label: 'Composants', href: '#composants' },
-              { label: 'Chat', href: '#chat' },
-              { label: 'Contextes', href: '#contextes' },
-            ].map(({ label, href }) => (
-              <a
-                key={label}
-                href={href}
-                className="rounded-md px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="font-mono text-xs text-muted-foreground">v2.0</span>
-            <Badge className="bg-primary/10 text-primary border-primary/30 text-[10px]" variant="outline">Interne</Badge>
-          </div>
-        </header>
+        <SiteNavbar links={[
+          { label: 'Logo',         href: '#logo' },
+          { label: 'Typographie',  href: '#typographie' },
+          { label: 'Couleurs',     href: '#couleurs' },
+          { label: 'Composants',   href: '#composants' },
+          { label: 'Chat',         href: '#chat' },
+          { label: 'Contextes',    href: '#contextes' },
+        ]} />
 
         <main className="mx-auto max-w-5xl space-y-16 px-8 py-12">
 
@@ -1848,20 +1830,7 @@ export default function BrandPage() {
 
         </main>
 
-        <footer className="mt-8 border-t border-border/40 px-8 py-8 text-center">
-          <div className="flex flex-col items-center gap-3">
-            <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={28} height={28} className="opacity-40" />
-            <p className="text-xs text-muted-foreground">
-              AlfyChat — Brand Guidelines &nbsp;·&nbsp; Interne uniquement &nbsp;·&nbsp; 2026
-            </p>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <a href="/about" className="hover:text-foreground transition-colors">À propos</a>
-              <a href="/jobs" className="hover:text-foreground transition-colors">Emplois</a>
-              <a href="/brand" className="hover:text-foreground transition-colors">Marque</a>
-              <a href="/newsroom" className="hover:text-foreground transition-colors">Espace actualités</a>
-            </div>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </TooltipProvider>
   );

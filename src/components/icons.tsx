@@ -84,6 +84,7 @@ export const Loader2Icon = fi('spinner');
 // ── Actions ──
 export const CheckIcon = fi('check');
 export const CheckCircle2Icon = fi('check-circle');
+export const CheckCircleIcon = CheckCircle2Icon;
 export const XIcon = fi('cross');
 export const XCircleIcon = fi('cross-circle');
 export const PlusIcon = fi('plus');
