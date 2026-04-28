@@ -442,14 +442,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         data.avatarUrl = null;
       } else if (avatarFile) {
         const result = await api.uploadImage(avatarFile, 'avatar');
-        if (result.success && result.data) data.avatarUrl = result.data.url;
+        if (result.success && result.data) data.avatarUrl = resolveMediaUrl(result.data.url) ?? result.data.url;
       }
       if (deleteBannerFlag) {
         if ((user as any)?.bannerUrl) await api.deleteImage((user as any).bannerUrl).catch(() => {});
         data.bannerUrl = null;
       } else if (bannerFile) {
         const result = await api.uploadImage(bannerFile, 'banner');
-        if (result.success && result.data) data.bannerUrl = result.data.url;
+        if (result.success && result.data) data.bannerUrl = resolveMediaUrl(result.data.url) ?? result.data.url;
       }
       socketService.updateProfile(data);
       updateUser(data);
