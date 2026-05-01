@@ -1,11 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ShieldIcon, LockIcon, UsersIcon, ArrowRightIcon, HeartIcon, CheckIcon,
   GlobeIcon, ZapIcon, PhoneIcon, BotIcon, CodeIcon, ServerIcon, DatabaseIcon,
   KeyIcon, MessageCircleIcon, Share2Icon, HashIcon, MicIcon, SendIcon,
   SmileIcon, PlusIcon, SearchIcon, BellIcon, TerminalIcon, BookOpenIcon,
+  DownloadIcon,
 } from '@/components/icons';
 import { SiteNavbar } from '@/components/site-navbar';
 import { SiteFooter } from '@/components/site-footer';
@@ -32,6 +34,196 @@ import { NumberTicker } from '@/components/ui/number-ticker';
 import { InteractiveGridPattern } from '@/components/ui/interactive-grid-pattern';
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
+
+// ─── Download URLs — update these when releasing new builds ───────────────────
+const DL_BASE = 'https://github.com/alfycore/desktop-alfychat/releases/download/dev-build';
+const DOWNLOADS = {
+  windows:  { url: `${DL_BASE}/AlfyChat.Setup.1.0.1-Beta.exe`,              sha: '9588d0b7a5209ad347f2634b551173f82215839dfc90131cdb5cbc680f8579a7', ext: '.exe' },
+  macArm:   { url: `${DL_BASE}/AlfyChat-1.0.1-Beta-arm64.dmg`,              sha: 'e0747f6864a536f04164759be550ac106284446af7ab6180432120e9032cfe71', ext: '.dmg' },
+  macIntel: { url: `${DL_BASE}/AlfyChat-1.0.1-Beta.dmg`,                    sha: '03fed29199419d6e5a41b3e12d1e2324aab95ae0d10f2b1f5bc58f5ff39bcc7d', ext: '.dmg' },
+  linux:    { url: `${DL_BASE}/AlfyChat-1.0.1-Beta.AppImage`,               sha: '9a0985a27f4daa3ba43d2358cb9e37fe8d10ad1c4747b91b8cfdef007daca332', ext: '.AppImage' },
+  deb:      { url: `${DL_BASE}/alfychat-desktop_1.0.1-Beta_amd64.deb`,      sha: '9d784f1292221f492f08154af210d0b77b3fa7ca80dfff4d9226bcc86adcaa79', ext: '.deb' },
+  android:  { url: '/alfychat.apk', sha: '', ext: '.apk' },
+} as const;
+
+type PlatformKey = keyof typeof DOWNLOADS;
+type DetectedOS = 'windows' | 'mac' | 'linux' | 'android' | 'ios' | null;
+
+function detectOS(): DetectedOS {
+  if (typeof window === 'undefined') return null;
+  const ua = navigator.userAgent;
+  if (/Android/i.test(ua)) return 'android';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+  if (/Windows/i.test(ua)) return 'windows';
+  if (/Mac/i.test(ua)) return 'mac';
+  if (/Linux/i.test(ua)) return 'linux';
+  return null;
+}
+
+const OS_TO_PLATFORMS: Record<string, PlatformKey[]> = {
+  windows: ['windows'],
+  mac:     ['macArm', 'macIntel'],
+  linux:   ['linux', 'deb'],
+  android: ['android'],
+};
+
+function WinIcon({ size = 20, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <rect x="2" y="2" width="9" height="9" />
+      <rect x="13" y="2" width="9" height="9" />
+      <rect x="2" y="13" width="9" height="9" />
+      <rect x="13" y="13" width="9" height="9" />
+    </svg>
+  );
+}
+
+function MacOSIcon({ size = 20, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+    </svg>
+  );
+}
+
+function LinuxOSIcon({ size = 20, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2C9.2 2 7 4.7 7 8c0 1.4.4 2.7 1 3.8C6.5 13 6 14.4 6 16c0 2.7 1.6 4.8 3 5.6.5.3 1 .4 1.6.4h2.8c.6 0 1.1-.1 1.6-.4 1.4-.8 3-2.9 3-5.6 0-1.6-.5-3-1-4.2.6-1.1 1-2.4 1-3.8C18 4.7 15.8 2 12 2zM9.5 8.5a1 1 0 110 2 1 1 0 010-2zm5 0a1 1 0 110 2 1 1 0 010-2z" />
+    </svg>
+  );
+}
+
+function AndroidOSIcon({ size = 20, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M17.6 9.48l1.84-3.18a.64.64 0 00-.26-.85.64.64 0 00-.83.22l-1.88 3.24a11.46 11.46 0 00-8.94 0L5.65 5.67a.64.64 0 00-.87-.2.64.64 0 00-.22.83L6.4 9.48A10.78 10.78 0 001 18h22a10.78 10.78 0 00-5.4-8.52zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z" />
+    </svg>
+  );
+}
+
+const PLATFORM_ICON: Record<PlatformKey, React.FC<{ size?: number; className?: string }>> = {
+  windows:  WinIcon,
+  macArm:   MacOSIcon,
+  macIntel: MacOSIcon,
+  linux:    LinuxOSIcon,
+  deb:      LinuxOSIcon,
+  android:  AndroidOSIcon,
+};
+
+function DownloadSection({ L }: { L: import('@/i18n').Translations['landing'] }) {
+  const [os, setOs] = useState<DetectedOS>(null);
+
+  useEffect(() => { setOs(detectOS()); }, []);
+
+  const dl = L.download;
+  const recommendedKeys: PlatformKey[] = os && OS_TO_PLATFORMS[os] ? OS_TO_PLATFORMS[os] : [];
+  const otherKeys = (Object.keys(DOWNLOADS) as PlatformKey[]).filter((k) => !recommendedKeys.includes(k));
+
+  const renderCard = (key: PlatformKey, featured = false) => {
+    const Icon = PLATFORM_ICON[key];
+    const meta = DOWNLOADS[key];
+    const info = dl.platforms[key];
+    return (
+      <a
+        key={key}
+        href={meta.url}
+        download={meta.url !== '#'}
+        className={cn(
+          'group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5',
+          featured && 'border-primary/30 bg-primary/5',
+        )}
+      >
+        {featured && (
+          <span className="absolute right-3 top-3 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+            {dl.recommended}
+          </span>
+        )}
+        <div className={cn(
+          'flex size-10 items-center justify-center rounded-xl',
+          featured ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground',
+        )}>
+          <Icon size={20} />
+        </div>
+        <div className="flex-1">
+          <p className="font-heading text-sm">{info.name}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{info.desc}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={cn(
+            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+            featured
+              ? 'bg-primary text-primary-foreground group-hover:bg-primary/90'
+              : 'bg-muted text-foreground group-hover:bg-muted/80',
+          )}>
+            <DownloadIcon size={11} />{dl.downloadBtn} {meta.ext}
+          </span>
+        </div>
+        {meta.sha && (
+          <p className="font-mono text-[9px] text-muted-foreground/50 leading-tight break-all">
+            {dl.sha256label}: {meta.sha.slice(0, 32)}…
+          </p>
+        )}
+      </a>
+    );
+  };
+
+  return (
+    <section id="download" className="border-y border-border/60 bg-muted/5">
+      <div className="mx-auto max-w-6xl px-6 py-24 md:py-32">
+        <Reveal>
+          <div className="mb-14 text-center">
+            <Badge variant="secondary" className="mb-4">{dl.badge}</Badge>
+            <h2 className="font-heading text-3xl tracking-tight md:text-5xl">
+              {dl.heading1}{' '}
+              <span className="bg-linear-to-r from-primary to-[#9E7AFF] bg-clip-text text-transparent">
+                {dl.heading2}
+              </span>
+            </h2>
+            <p className="mx-auto mt-3 max-w-md text-base text-muted-foreground">
+              {dl.body}
+            </p>
+            <Badge variant="outline" className="mt-4 font-mono text-xs text-muted-foreground">
+              {dl.version}
+            </Badge>
+          </div>
+        </Reveal>
+
+        {recommendedKeys.length > 0 && (
+          <Reveal delay={80}>
+            <div className={cn(
+              'mb-6 grid gap-4',
+              recommendedKeys.length === 1 ? 'md:grid-cols-1 max-w-sm mx-auto' : 'md:grid-cols-2 max-w-2xl mx-auto',
+            )}>
+              {recommendedKeys.map((k) => renderCard(k, true))}
+            </div>
+          </Reveal>
+        )}
+
+        {os === 'ios' && (
+          <Reveal delay={80}>
+            <div className="mb-6 flex max-w-sm mx-auto items-center justify-center rounded-2xl border border-border bg-card p-6 text-center">
+              <p className="text-sm text-muted-foreground">{dl.iosSoon}</p>
+            </div>
+          </Reveal>
+        )}
+
+        {otherKeys.length > 0 && (
+          <Reveal delay={160}>
+            {recommendedKeys.length > 0 && (
+              <p className="mb-4 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                {dl.allPlatforms}
+              </p>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {otherKeys.map((k) => renderCard(k, false))}
+            </div>
+          </Reveal>
+        )}
+      </div>
+    </section>
+  );
+}
 
 const STAT_VALUES = [70, 2, 320, 99.97];
 const STAT_DECIMALS = [0, 1, 0, 2];
@@ -582,6 +774,9 @@ $ alfychat-server start \\
           </div>
         </div>
       </section>
+
+      {/* ───────────── DOWNLOAD ───────────── */}
+      <DownloadSection L={L} />
 
       {/* ───────────── ASSOCIATION ───────────── */}
       <section className="mx-auto max-w-6xl px-6 py-24 md:py-32">

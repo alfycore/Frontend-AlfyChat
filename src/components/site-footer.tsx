@@ -15,7 +15,7 @@ const COLUMNS = [
     links: [
       { label: 'Fonctionnalités', href: '/#features' },
       { label: 'Sécurité',        href: '/#security' },
-      { label: 'Télécharger',     href: '/app' },
+      { label: 'Télécharger',     href: '/#download' },
       { label: 'Changelog',       href: '/changelogs' },
       { label: 'Support',         href: '/support' },
     ],

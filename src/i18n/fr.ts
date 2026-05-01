@@ -1374,6 +1374,27 @@ export const fr = {
       },
     },
 
+    download: {
+      badge:        'Télécharger',
+      heading1:     'Disponible sur',
+      heading2:     'toutes les plateformes.',
+      body:         'Applications natives pour tous vos appareils. Gratuit et open source pour toujours.',
+      version:      'v1.0.1 Bêta',
+      recommended:  'Recommandé pour vous',
+      allPlatforms: 'Toutes les plateformes',
+      downloadBtn:  'Télécharger',
+      sha256label:  'SHA-256',
+      iosSoon:      'Application iOS bientôt disponible',
+      platforms: {
+        windows:  { name: 'Windows',               desc: 'Windows 10/11 · 78,4 Mo' },
+        macArm:   { name: 'macOS (Apple Silicon)',  desc: 'M1 / M2 / M3 · 94,6 Mo' },
+        macIntel: { name: 'macOS (Intel)',          desc: 'Intel Core · 99 Mo' },
+        linux:    { name: 'Linux (AppImage)',        desc: 'Universel · 104 Mo' },
+        deb:      { name: 'Linux (Debian/Ubuntu)',  desc: 'amd64 · 71,8 Mo' },
+        android:  { name: 'Android',                desc: 'APK téléchargement direct' },
+      },
+    },
+
     association: {
       badge:    'Open Source',
       heading1: 'Porté par AlfyCore,',
