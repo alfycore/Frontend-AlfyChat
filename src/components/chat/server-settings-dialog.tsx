@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import {
   AlertTriangleIcon,
   CheckIcon,
@@ -225,6 +225,7 @@ export function ServerSettingsDialog({
   const [adminCode, setAdminCode] = useState('');
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimResult, setClaimResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const claimInFlightRef = useRef(false);
 
   const visibleSections = navItems.filter(({ id }) => {
     if (id === 'droits' && ownerJoinedViaInvite) return false;
@@ -293,6 +294,8 @@ export function ServerSettingsDialog({
 
     const isOwner = Boolean(user && normalizedServer?.ownerId === user.id);
     let hasManageRights = isOwner;
+    // hasAdminBit : owner OU bit ADMIN (0x40) — requis pour node-token (le backend refuse MANAGE_ROLES seul)
+    let hasAdminBit = isOwner;
 
     if (!hasManageRights && user) {
       const members = Array.isArray(memberData?.members) ? memberData.members : [];
@@ -319,13 +322,19 @@ export function ServerSettingsDialog({
           const bitmask = typeof permissions === 'number' ? permissions : parseInt(permissions || '0', 10);
           return (bitmask & 0x40) !== 0 || (bitmask & 0x100) !== 0;
         });
+        hasAdminBit = memberRoles.some((role: any) => {
+          const permissions = role.permissions;
+          if (Array.isArray(permissions)) return permissions.includes('ADMIN');
+          const bitmask = typeof permissions === 'number' ? permissions : parseInt(permissions || '0', 10);
+          return (bitmask & 0x40) !== 0;
+        });
       }
     }
 
     setCanManageServer(hasManageRights);
 
-    // Only fetch the node token if the user actually has admin rights — avoids spurious 403s
-    if (hasManageRights) {
+    // Fetch node token uniquement si ADMIN strict (0x40) — évite les 403 pour les rôles MANAGE_ROLES seul
+    if (hasAdminBit) {
       const nodeTokenResponse = await api.getNodeToken(serverId);
       setNodeToken(nodeTokenResponse.success && nodeTokenResponse.data ? (nodeTokenResponse.data as any).nodeToken || '' : '');
     }
@@ -438,20 +447,23 @@ export function ServerSettingsDialog({
   }
 
   async function handleClaimAdmin() {
-    if (!adminCode.trim() || !user?.id) return;
+    if (!adminCode.trim() || !user?.id || claimInFlightRef.current) return;
+    claimInFlightRef.current = true;
     setClaimLoading(true);
     setClaimResult(null);
-
-    const response = await api.claimAdmin(serverId, adminCode.trim().toUpperCase(), user.id);
-    if (response.success) {
-      setClaimResult({ ok: true, msg: ss.permissions.adminGranted });
-      setAdminCode('');
-      await loadDialogData();
-    } else {
-      setClaimResult({ ok: false, msg: response.error || ss.permissions.invalidCode });
+    try {
+      const response = await api.claimAdmin(serverId, adminCode.trim().toUpperCase(), user.id);
+      if (response.success) {
+        setClaimResult({ ok: true, msg: ss.permissions.adminGranted });
+        setAdminCode('');
+        await loadDialogData();
+      } else {
+        setClaimResult({ ok: false, msg: response.error || ss.permissions.invalidCode });
+      }
+    } finally {
+      claimInFlightRef.current = false;
+      setClaimLoading(false);
     }
-
-    setClaimLoading(false);
   }
 
   function copyToken() {
@@ -701,7 +713,7 @@ export function ServerSettingsDialog({
               onKeyDown={handleClaimKeyDown}
               placeholder={ss.permissions.codePlaceholder}
               className="flex-1 font-mono tracking-widest"
-              maxLength={12}
+              maxLength={14}
             />
             <Button onClick={handleClaimAdmin} disabled={!adminCode.trim() || claimLoading} className="gap-2 rounded-xl">
               {claimLoading ? <Loader2Icon size={14} className="animate-spin" /> : <KeyRoundIcon size={14} />}
