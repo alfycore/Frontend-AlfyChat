@@ -272,18 +272,16 @@ export function ServerSettingsDialog({
   async function loadDialogData() {
     setIsLoading(true);
 
-    const [serverData, inviteData, memberData, roleData, nodeTokenResponse] = await Promise.all([
+    const [serverData, inviteData, memberData, roleData] = await Promise.all([
       promiseRequest<any>((resolve) => socketService.requestServerInfo(serverId, resolve)),
       promiseRequest<any>((resolve) => socketService.requestInvites(serverId, resolve)),
       promiseRequest<any>((resolve) => socketService.requestMembers(serverId, resolve)),
       promiseRequest<any>((resolve) => socketService.requestRoles(serverId, resolve)),
-      api.getNodeToken(serverId),
     ]);
 
     const normalizedServer = normalizeServer(serverId, serverData);
     setServer(normalizedServer);
     setInvites(normalizeInvites(inviteData));
-    setNodeToken(nodeTokenResponse.success && nodeTokenResponse.data ? (nodeTokenResponse.data as any).nodeToken || '' : '');
 
     if (normalizedServer) {
       setName(normalizedServer.name || '');
@@ -325,6 +323,13 @@ export function ServerSettingsDialog({
     }
 
     setCanManageServer(hasManageRights);
+
+    // Only fetch the node token if the user actually has admin rights — avoids spurious 403s
+    if (hasManageRights) {
+      const nodeTokenResponse = await api.getNodeToken(serverId);
+      setNodeToken(nodeTokenResponse.success && nodeTokenResponse.data ? (nodeTokenResponse.data as any).nodeToken || '' : '');
+    }
+
     setSection((currentSection) => {
       const allowedSections = navItems
         .filter(({ id }) => {
