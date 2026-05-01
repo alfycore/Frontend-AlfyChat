@@ -881,13 +881,13 @@ export function ServerSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[88vh] max-w-5xl overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl sm:max-w-5xl">
+      <DialogContent className="h-[88vh] max-w-5xl overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl sm:max-w-5xl max-sm:left-0 max-sm:top-0 max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0 max-sm:shadow-none">
         <DialogHeader className="sr-only">
           <DialogTitle>Paramètres du serveur</DialogTitle>
         </DialogHeader>
 
-        <div className="grid h-full min-h-0 md:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="flex min-h-0 flex-col border-r border-border/50 bg-card/40 p-4">
+        <div className="grid h-full min-h-0 grid-rows-[auto_1fr] md:grid-rows-[1fr] md:grid-cols-[280px_minmax(0,1fr)]">
+          <aside className="flex min-h-0 flex-col border-r border-b border-border/50 bg-card/40 p-4 md:border-b-0">
             <div className="overflow-hidden rounded-3xl border border-border/40 bg-card/50">
               <div className="h-24 bg-muted/30">
                 {(bannerPreview || server?.bannerUrl) && (

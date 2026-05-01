@@ -79,8 +79,8 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 flex h-14 items-stretch border-t border-border/40 bg-sidebar/95 backdrop-blur-xl md:hidden"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="fixed inset-x-0 bottom-0 z-50 flex items-stretch border-t border-border/40 bg-sidebar/95 backdrop-blur-xl md:hidden"
+      style={{ height: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {TABS.map(({ id, label, Icon }) => {
         const active = isActive(id);

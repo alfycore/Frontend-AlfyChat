@@ -336,7 +336,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── MOBILE: content ── */}
       {isMobile && (
-        <div data-layout="content" className={cn('flex min-w-0 flex-1 flex-col overflow-hidden pb-14', ui.mobilePanel, ui.panelTransition)}>
+        <div data-layout="content" className={cn('flex min-w-0 flex-1 flex-col overflow-hidden', ui.mobilePanel, ui.panelTransition)} style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' }}>
           {children}
         </div>
       )}
