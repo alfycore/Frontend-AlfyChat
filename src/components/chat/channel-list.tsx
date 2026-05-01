@@ -122,6 +122,21 @@ const CHANNEL_ICON: Record<string, any> = {
   media: MediaIcon,
 };
 
+const TYPE_ICON_INACTIVE: Record<string, string> = {
+  text:         'text-muted-foreground/50 group-hover/ch:text-muted-foreground/80',
+  announcement: 'text-amber-500/70 group-hover/ch:text-amber-500',
+  forum:        'text-blue-400/70 group-hover/ch:text-blue-400',
+  stage:        'text-purple-400/70 group-hover/ch:text-purple-400',
+  gallery:      'text-pink-400/70 group-hover/ch:text-pink-400',
+  poll:         'text-orange-400/70 group-hover/ch:text-orange-400',
+  suggestion:   'text-emerald-400/70 group-hover/ch:text-emerald-400',
+  doc:          'text-sky-400/70 group-hover/ch:text-sky-400',
+  counting:     'text-rose-400/70 group-hover/ch:text-rose-400',
+  vent:         'text-red-400/70 group-hover/ch:text-red-400',
+  thread:       'text-violet-400/70 group-hover/ch:text-violet-400',
+  media:        'text-cyan-400/70 group-hover/ch:text-cyan-400',
+};
+
 const CHANNEL_TYPES = [
   { id: 'text',         icon: HashIcon,        label: 'Texte'      },
   { id: 'announcement', icon: MegaphoneIcon,    label: 'Annonce'    },
@@ -203,7 +218,7 @@ function ChannelRow({
             : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
       )}
     >
-      <Icon size={14} className={cn('shrink-0 transition-colors', isActive ? 'text-primary' : 'text-muted-foreground/50 group-hover/ch:text-muted-foreground/80')} />
+      <Icon size={14} className={cn('shrink-0 transition-colors', isActive ? 'text-primary' : (TYPE_ICON_INACTIVE[channel.type] ?? 'text-muted-foreground/50 group-hover/ch:text-muted-foreground/80'))} />
       <span className={cn('flex-1 truncate', hasUnread && !isActive && 'font-semibold text-foreground')}>{channel.name}</span>
       {hasUnread && !isActive && (
         <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background">

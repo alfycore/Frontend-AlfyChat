@@ -46,42 +46,72 @@ const PERM_GENERAL: PermFlag[] = [
 ];
 
 const PERM_TEXT: PermFlag[] = [
-  { flag: 0x2, label: 'Envoyer des messages', key: 'send', description: 'Publier des messages dans le salon' },
-  { flag: 0x200, label: 'Gérer les messages', key: 'manage_messages', description: 'Supprimer ou épingler les messages des autres' },
-  { flag: 0x8, label: 'Joindre des fichiers', key: 'attach', description: 'Envoyer des images et fichiers' },
-  { flag: 0x4000, label: 'Mentionner @everyone', key: 'mention_everyone', description: 'Utiliser @everyone et @here' },
+  { flag: 0x2,    label: 'Envoyer des messages',  key: 'send',             description: 'Publier des messages dans le salon' },
+  { flag: 0x200,  label: 'Gérer les messages',    key: 'manage_messages',  description: 'Supprimer ou épingler les messages' },
+  { flag: 0x8,    label: 'Joindre des fichiers',  key: 'attach',           description: 'Envoyer des images et fichiers' },
+  { flag: 0x4000, label: 'Mentionner @everyone',  key: 'mention_everyone', description: 'Utiliser @everyone et @here' },
 ];
 
 const PERM_VOICE: PermFlag[] = [
   { flag: 0x10, label: 'Se connecter', key: 'voice_connect', description: 'Rejoindre le salon vocal' },
-  { flag: 0x20, label: 'Parler', key: 'voice_speak', description: 'Transmettre du son dans le salon' },
+  { flag: 0x20, label: 'Parler',       key: 'voice_speak',   description: 'Transmettre du son dans le salon' },
 ];
 
-/** Types considered "vocal" for permission display */
+const PERM_TEXT_BY_TYPE: Partial<Record<ChannelType, PermFlag[]>> = {
+  announcement: [
+    { flag: 0x2,    label: 'Publier une annonce',   key: 'send',             description: 'Rédiger et publier des annonces officielles' },
+    { flag: 0x200,  label: 'Gérer les annonces',    key: 'manage_messages',  description: 'Modifier ou supprimer les annonces' },
+    { flag: 0x4000, label: 'Mentionner @everyone',  key: 'mention_everyone', description: 'Notifier tous les membres' },
+  ],
+  forum: [
+    { flag: 0x2,   label: 'Créer un fil',         key: 'send',            description: 'Ouvrir un nouveau fil de discussion' },
+    { flag: 0x200, label: 'Gérer les fils',        key: 'manage_messages', description: 'Épingler, supprimer ou verrouiller' },
+    { flag: 0x8,   label: 'Joindre des fichiers',  key: 'attach',          description: 'Ajouter des images aux fils' },
+  ],
+  gallery: [
+    { flag: 0x2,   label: 'Partager du contenu',  key: 'send',            description: 'Publier des images et vidéos dans la galerie' },
+    { flag: 0x200, label: 'Modérer la galerie',   key: 'manage_messages', description: 'Supprimer les publications' },
+  ],
+  poll: [
+    { flag: 0x2,   label: 'Créer un sondage',     key: 'send',            description: 'Ouvrir un nouveau sondage' },
+    { flag: 0x200, label: 'Gérer les sondages',   key: 'manage_messages', description: 'Clôturer ou supprimer les sondages' },
+  ],
+  suggestion: [
+    { flag: 0x2,   label: 'Soumettre une idée',   key: 'send',            description: 'Proposer une idée à la communauté' },
+    { flag: 0x200, label: 'Gérer les suggestions', key: 'manage_messages', description: 'Accepter, refuser ou supprimer' },
+  ],
+  doc: [
+    { flag: 0x2,   label: 'Créer un document',    key: 'send',            description: 'Rédiger un nouveau document' },
+    { flag: 0x200, label: 'Gérer les documents',  key: 'manage_messages', description: 'Supprimer ou archiver les documents' },
+  ],
+  counting: [
+    { flag: 0x2,   label: 'Poster un nombre',     key: 'send',            description: 'Participer au comptage collectif' },
+    { flag: 0x200, label: 'Réinitialiser',         key: 'manage_messages', description: 'Remettre le compteur à zéro' },
+  ],
+  vent: [
+    { flag: 0x2,   label: 'Exprimer dans le défouloir', key: 'send',      description: 'Poster librement ses frustrations' },
+    { flag: 0x200, label: 'Modérer',               key: 'manage_messages', description: 'Supprimer les messages problématiques' },
+  ],
+  thread: [
+    { flag: 0x2,   label: 'Créer un fil',         key: 'send',            description: 'Démarrer un nouveau fil' },
+    { flag: 0x200, label: 'Gérer les fils',        key: 'manage_messages', description: 'Archiver ou supprimer des fils' },
+    { flag: 0x8,   label: 'Joindre des fichiers',  key: 'attach',          description: 'Ajouter des pièces jointes' },
+  ],
+  media: [
+    { flag: 0x2,   label: 'Partager un média',    key: 'send',            description: 'Publier des vidéos, images ou sons' },
+    { flag: 0x200, label: 'Gérer les médias',     key: 'manage_messages', description: 'Supprimer les publications' },
+  ],
+};
+
 const VOICE_TYPES = new Set<ChannelType>(['voice', 'stage']);
 
-/** Types considered "text-only" — no vocal section */
-const TEXT_ONLY_TYPES = new Set<ChannelType>([
-  'text', 'announcement', 'forum', 'gallery', 'poll',
-  'suggestion', 'doc', 'counting', 'vent', 'thread', 'media',
-]);
-
-/** Build the permission dict for a given channel type */
 function getPermDict(channelType: ChannelType): Record<string, PermFlag[]> {
   const dict: Record<string, PermFlag[]> = { 'Général': PERM_GENERAL };
-
   if (VOICE_TYPES.has(channelType)) {
-    // Vocal channels: show voice perms, no text perms
     dict['Vocal'] = PERM_VOICE;
-  } else if (TEXT_ONLY_TYPES.has(channelType)) {
-    // Text-based channels: show text perms, no vocal perms
-    dict['Texte'] = PERM_TEXT;
   } else {
-    // Fallback: show all
-    dict['Texte'] = PERM_TEXT;
-    dict['Vocal'] = PERM_VOICE;
+    dict['Texte'] = PERM_TEXT_BY_TYPE[channelType] ?? PERM_TEXT;
   }
-
   return dict;
 }
 
@@ -116,20 +146,20 @@ interface ChannelManagerProps {
   onChannelsChanged?: () => void;
 }
 
-const CHANNEL_TYPES: { id: ChannelType; icon: any; label: string }[] = [
-  { id: 'text',       icon: HashIcon,       label: 'Textuel' },
-  { id: 'announcement', icon: MegaphoneIcon, label: 'Annonce' },
-  { id: 'voice',      icon: Volume2Icon,    label: 'Vocal' },
-  { id: 'forum',      icon: ForumIcon,      label: 'Forum' },
-  { id: 'stage',      icon: StageIcon,      label: 'Scène' },
-  { id: 'gallery',    icon: GalleryIcon,    label: 'Galerie' },
-  { id: 'poll',       icon: PollIcon,       label: 'Sondage' },
-  { id: 'suggestion', icon: SuggestionIcon, label: 'Suggestions' },
-  { id: 'doc',        icon: DocIcon,        label: 'Document' },
-  { id: 'counting',   icon: CountingIcon,   label: 'Comptage' },
-  { id: 'vent',       icon: VentIcon,       label: 'Défouloir' },
-  { id: 'thread',     icon: ThreadIcon,     label: 'Fil' },
-  { id: 'media',      icon: MediaIcon,      label: 'Médias' },
+const CHANNEL_TYPES: { id: ChannelType; icon: any; label: string; description: string }[] = [
+  { id: 'text',         icon: HashIcon,       label: 'Texte',       description: 'Messages en temps réel' },
+  { id: 'announcement', icon: MegaphoneIcon,  label: 'Annonce',     description: 'Infos officielles' },
+  { id: 'voice',        icon: Volume2Icon,    label: 'Vocal',       description: 'Audio / vidéo en direct' },
+  { id: 'forum',        icon: ForumIcon,      label: 'Forum',       description: 'Fils structurés' },
+  { id: 'stage',        icon: StageIcon,      label: 'Scène',       description: 'Présentations live' },
+  { id: 'gallery',      icon: GalleryIcon,    label: 'Galerie',     description: 'Images & médias' },
+  { id: 'poll',         icon: PollIcon,       label: 'Sondage',     description: 'Votes communautaires' },
+  { id: 'suggestion',   icon: SuggestionIcon, label: 'Suggestion',  description: 'Boîte à idées' },
+  { id: 'doc',          icon: DocIcon,        label: 'Document',    description: 'Ressources partagées' },
+  { id: 'counting',     icon: CountingIcon,   label: 'Comptage',    description: 'Compteur collaboratif' },
+  { id: 'vent',         icon: VentIcon,       label: 'Défouloir',   description: 'Exprimer ses frustrations' },
+  { id: 'thread',       icon: ThreadIcon,     label: 'Fil',         description: 'Discussions thématiques' },
+  { id: 'media',        icon: MediaIcon,      label: 'Médias',      description: 'Vidéos & clips' },
 ];
 
 export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerProps) {
@@ -439,21 +469,22 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           {isCreating && formType !== 'category' && (
             <div className="space-y-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">Type de salon</span>
-              <div className="grid grid-cols-4 gap-1.5">
-                {CHANNEL_TYPES.map(({ id, icon: Icon, label }) => (
+              <div className="grid grid-cols-3 gap-1.5">
+                {CHANNEL_TYPES.map(({ id, icon: Icon, label, description }) => (
                   <button
                     key={id}
                     type="button"
                     onClick={() => setFormType(id)}
                     className={cn(
-                      'flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-[11px] font-medium transition-all duration-200',
+                      'flex flex-col items-start gap-1 rounded-xl border p-2.5 text-left transition-all duration-200',
                       formType === id
                         ? 'border-[var(--accent)]/50 bg-[var(--accent)]/10 text-[var(--accent)]'
                         : 'border-[var(--border)]/40 text-[var(--muted)] hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]',
                     )}
                   >
-                    <Icon size={16} />
-                    {label}
+                    <Icon size={15} />
+                    <span className="text-[11px] font-semibold leading-tight">{label}</span>
+                    <span className="text-[10px] leading-tight opacity-60">{description}</span>
                   </button>
                 ))}
               </div>

@@ -128,7 +128,7 @@ function DownloadSection({ L }: { L: import('@/i18n').Translations['landing'] })
       <a
         key={key}
         href={meta.url}
-        download={meta.url !== '#'}
+        download={(meta.url as string) !== '#'}
         className={cn(
           'group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5',
           featured && 'border-primary/30 bg-primary/5',
