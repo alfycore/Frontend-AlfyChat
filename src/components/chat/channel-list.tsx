@@ -195,7 +195,7 @@ function ChannelRow({
     <button
       onClick={onClick}
       className={cn(
-        'group/ch relative flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
+        'group/ch relative flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] font-medium transition-all duration-150',
         isActive
           ? 'bg-primary/10 text-primary'
           : hasUnread
