@@ -737,6 +737,15 @@ class SocketService {
     this.bus.off(event, callback);
   }
 
+  /**
+   * Émettre un événement localement sur le bus interne sans passer par le socket.
+   * Utilisé pour les mises à jour optimistes : tous les listeners existants
+   * reçoivent la mise à jour immédiatement, sans attendre le round-trip serveur.
+   */
+  emitLocal(event: string, data: any): void {
+    this.bus.emit(event, data);
+  }
+
   // Raccourcis pour les événements courants
   onMessage(callback: (message: unknown) => void): void {
     this.on('message:new', callback);

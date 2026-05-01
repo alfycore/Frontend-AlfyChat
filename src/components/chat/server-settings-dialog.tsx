@@ -384,16 +384,25 @@ export function ServerSettingsDialog({
       bannerUrl: nextBannerUrl,
     });
 
+    // Optimistic update — tous les listeners SERVER_UPDATE reçoivent la MAJ immédiatement
+    socketService.emitLocal('SERVER_UPDATE', {
+      payload: {
+        id: serverId,
+        name: name.trim(),
+        description,
+        isPublic,
+        iconUrl: nextIconUrl,
+        bannerUrl: nextBannerUrl,
+      },
+    });
+
+    setServer((prev) => prev ? { ...prev, name: name.trim(), description, isPublic, iconUrl: nextIconUrl, bannerUrl: nextBannerUrl } : prev);
     setIconFile(null);
     setBannerFile(null);
     setIconPreview(null);
     setBannerPreview(null);
     setIsSaving(false);
-
-    setTimeout(() => {
-      void loadDialogData();
-      onServerUpdated?.();
-    }, 300);
+    onServerUpdated?.();
   }
 
   async function handleCreateInvite() {
