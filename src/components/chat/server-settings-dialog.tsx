@@ -228,6 +228,7 @@ export function ServerSettingsDialog({
 
   const visibleSections = navItems.filter(({ id }) => {
     if (id === 'droits' && ownerJoinedViaInvite) return false;
+    if (id === 'droits' && !canManageServer && server?.ownerId) return false;
     if (canManageServer) return true;
     return id === 'invites' || id === 'droits';
   });
@@ -328,6 +329,7 @@ export function ServerSettingsDialog({
       const allowedSections = navItems
         .filter(({ id }) => {
           if (id === 'droits' && ownerJoinedViaInvite) return false;
+          if (id === 'droits' && !hasManageRights && normalizedServer?.ownerId) return false;
           if (hasManageRights) return true;
           return id === 'invites' || id === 'droits';
         })
@@ -672,6 +674,7 @@ export function ServerSettingsDialog({
           </InfoNote>
         )}
 
+        {!server?.ownerId && (
         <CardSurface>
           <div className="mb-3 flex items-center gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-amber-500/12 text-amber-400">
@@ -713,6 +716,7 @@ export function ServerSettingsDialog({
             </div>
           )}
         </CardSurface>
+        )}
       </div>
     );
   }
