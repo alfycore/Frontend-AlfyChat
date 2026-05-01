@@ -8,7 +8,7 @@ import { useTranslation } from '@/components/locale-provider';
 import { useTheme } from 'next-themes';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
@@ -107,7 +107,7 @@ export function UserPanel({ user }: UserPanelProps) {
             <div className="relative shrink-0">
               <Avatar className={d.panelAvatar}>
                 <AvatarImage src={resolveMediaUrl(user.avatarUrl)} alt={user.displayName} />
-                <AvatarFallback className="bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground text-[11px] font-semibold">
+                <AvatarFallback className="bg-primary/12 text-primary text-[11px] font-semibold">
                   {user.displayName?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>

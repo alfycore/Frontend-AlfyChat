@@ -925,7 +925,9 @@ export function ServicesPanel() {
           inst={editEndpointInst}
           onClose={() => setEditEndpointInst(null)}
           onDone={newEndpoint => {
-            setInstances(prev => prev.map(i => i.id === editEndpointInst.id ? { ...i, endpoint: newEndpoint } : i));
+            let newDomain = editEndpointInst.domain;
+            try { newDomain = new URL(newEndpoint).host; } catch {}
+            setInstances(prev => prev.map(i => i.id === editEndpointInst.id ? { ...i, endpoint: newEndpoint, domain: newDomain } : i));
           }}
         />
       )}

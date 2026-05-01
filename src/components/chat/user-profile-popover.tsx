@@ -301,9 +301,9 @@ export function UserProfilePopover({
                     style={{ background: `linear-gradient(135deg, ${cardColor}e6 0%, ${cardColor}66 55%, ${cardColor}14 100%)` }}
                   >
                     <div
-                      className="absolute inset-0 opacity-30"
+                      className="absolute inset-0 opacity-20"
                       style={{
-                        backgroundImage: `radial-gradient(circle at 20% 30%, ${cardColor}55 0%, transparent 45%), radial-gradient(circle at 80% 70%, #7c3aed33 0%, transparent 50%)`,
+                        backgroundImage: `radial-gradient(circle at 20% 30%, ${cardColor}55 0%, transparent 45%)`,
                       }}
                     />
                     <div className="absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card/60 to-transparent" />
@@ -388,7 +388,7 @@ export function UserProfilePopover({
             {/* ── Badges ── */}
             {visibleBadges.length > 0 && (
               <div className="px-4 pb-2 pt-3">
-                <p className="mb-1.5 font-heading text-[9px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50">Badges</p>
+                <p className="mb-1.5 text-[9px] font-medium text-muted-foreground/50">Badges</p>
                 <div className="flex flex-wrap gap-1">
                   {visibleBadges.map((badge) => (
                     <TooltipProvider key={badge.id}>
@@ -470,7 +470,7 @@ export function UserProfilePopover({
                   className="flex w-full items-center justify-between py-0.5"
                   onClick={() => setShowRoles(v => !v)}
                 >
-                  <p className="font-heading text-[9px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50">Rôles</p>
+                  <p className="font-heading text-[9px] font-medium text-muted-foreground/50">Rôles</p>
                   <ShieldCheckIcon size={11} className={cn('text-muted-foreground/40 transition-transform duration-200', showRoles && 'rotate-180')} />
                 </button>
                 {showRoles && (

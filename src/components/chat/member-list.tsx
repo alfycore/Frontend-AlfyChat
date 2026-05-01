@@ -48,9 +48,9 @@ function MemberRow({ member, serverId, roles }: { member: Member; serverId: stri
         !isOnline && 'opacity-35',
       )}>
         <div className="relative">
-          <Avatar className="size-7 shadow-sm ring-1 ring-border/40 transition-all group-hover/member:ring-primary/30">
+          <Avatar className="size-7 shadow-sm ring-1 ring-border/40">
             <AvatarImage src={resolveMediaUrl(member.avatarUrl)} />
-            <AvatarFallback className="bg-linear-to-br from-primary/20 to-[#7c3aed]/15 text-[10px] font-semibold text-primary">
+            <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-semibold">
               {name[0]?.toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
@@ -203,7 +203,11 @@ export function MemberList({ serverId }: MemberListProps) {
 
   if (isLoading) {
     return (
-      <div className={cn('w-full', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-sidebar/60')}>
+      <div className={cn('flex h-full w-full flex-col', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-sidebar')}>
+        <div className="shrink-0 border-b border-border/40 px-4 pb-3 pt-4">
+          <Skeleton className="h-3.5 w-16 rounded" />
+          <Skeleton className="mt-1.5 h-3 w-28 rounded" />
+        </div>
         <div className="space-y-1.5 p-3 pt-4">
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2 px-2">
@@ -236,7 +240,14 @@ export function MemberList({ serverId }: MemberListProps) {
   const remainingOnline = onlineMembers.filter((m) => !assignedIds.has(m.id));
 
   return (
-    <div className={cn('flex h-full w-full flex-col', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-sidebar/60')}>
+    <div className={cn('flex h-full w-full flex-col', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-sidebar')}>
+      {/* Header */}
+      <div className="shrink-0 border-b border-border/40 px-4 pb-3 pt-4">
+        <div className="text-[13px] font-semibold text-foreground">Membres</div>
+        <div className="mt-0.5 font-mono text-[11px] text-muted-foreground/60">
+          {members.length} membre{members.length !== 1 ? 's' : ''} · {onlineMembers.length} en ligne
+        </div>
+      </div>
       <ScrollArea className="flex-1">
         <div className="p-2 pt-3">
           {/* Role-based sections */}
@@ -248,12 +259,12 @@ export function MemberList({ serverId }: MemberListProps) {
                   style={{ backgroundColor: role.color }}
                 />
                 <p
-                  className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em]"
+                  className="text-[10.5px] font-semibold uppercase tracking-[0.06em]"
                   style={{ color: role.color }}
                 >
                   {role.name}
                 </p>
-                <span className="ml-auto text-[10px] font-medium tabular-nums text-muted-foreground/40">
+                <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground/40">
                   {roleMembers.length}
                 </span>
               </div>
@@ -269,11 +280,10 @@ export function MemberList({ serverId }: MemberListProps) {
           {remainingOnline.length > 0 && (
             <div className="mb-4">
               <div className="mb-1.5 flex items-center gap-1.5 px-2">
-                <span className="size-1.5 shrink-0 rounded-full bg-success shadow-sm shadow-success/50" />
-                <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/50">
                   En ligne
                 </p>
-                <span className="ml-auto text-[10px] font-medium tabular-nums text-muted-foreground/40">
+                <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground/40">
                   {remainingOnline.length}
                 </span>
               </div>
@@ -289,11 +299,10 @@ export function MemberList({ serverId }: MemberListProps) {
           {offlineMembers.length > 0 && (
             <div className="mb-4">
               <div className="mb-1.5 flex items-center gap-1.5 px-2">
-                <span className="size-1.5 shrink-0 rounded-full bg-muted-foreground/30" />
-                <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40">
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/35">
                   Hors ligne
                 </p>
-                <span className="ml-auto text-[10px] font-medium tabular-nums text-muted-foreground/25">
+                <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground/25">
                   {offlineMembers.length}
                 </span>
               </div>

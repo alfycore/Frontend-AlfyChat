@@ -197,7 +197,7 @@ function ParticipantTile({
           )}>
             <Avatar className="size-10 rounded-2xl shadow-xl ring-1 ring-white/10 sm:size-12">
               <AvatarImage src={resolveMediaUrl(avatarSrc)} />
-              <AvatarFallback className="rounded-2xl bg-linear-to-br from-primary to-[#7c3aed] text-white font-heading text-xl">
+              <AvatarFallback className="rounded-2xl bg-primary/80 text-white font-heading text-xl">
                 {label[0]?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
@@ -251,10 +251,10 @@ function ParticipantTile({
             videoRef.current?.play().then(() => setIsPlayBlocked(false)).catch(console.error);
           }}
         >
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-primary/30 to-[#7c3aed]/20 ring-1 ring-primary/40">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-foreground/10 ring-1 ring-white/20">
             <MicIcon size={24} className="text-white" />
           </div>
-          <span className="font-heading text-xs font-bold uppercase tracking-[0.15em]">Cliquez pour activer le son</span>
+          <span className="text-xs font-medium">Cliquez pour activer le son</span>
         </button>
       )}
     </div>
@@ -280,7 +280,7 @@ function CtrlBtn({
           danger
             ? 'bg-destructive text-destructive-foreground shadow-lg shadow-destructive/40 hover:shadow-xl hover:shadow-destructive/50'
             : active
-              ? 'bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40'
+              ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40'
               : 'bg-white/10 text-white hover:bg-white/20',
         )}
       >
@@ -353,7 +353,7 @@ export function CallPanel({
       {/* ── STATUS BAR ── */}
       <div className="flex items-center justify-between border-b border-white/5 px-4 py-2">
         <div className={cn(
-          'flex items-center gap-1.5 font-heading text-[11px] font-semibold uppercase tracking-[0.15em]',
+          'flex items-center gap-1.5 text-[11px] font-semibold',
           isConnected ? 'text-success' : 'text-white/50',
         )}>
           {isConnected ? (

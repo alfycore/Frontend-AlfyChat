@@ -133,7 +133,7 @@ export function InviteEmbed({ code }: InviteEmbedProps) {
         {/* Info row */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]/40">
+            <p className="mb-0.5 text-[10px] font-medium text-[var(--muted)]/40">
               Invitation à rejoindre
             </p>
             <p className="truncate text-[13px] font-semibold text-[var(--foreground)]">

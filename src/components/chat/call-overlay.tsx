@@ -151,7 +151,7 @@ function Tile({
           <div className={cn('rounded-2xl p-0.5 transition-all duration-200', speaking ? 'ring-2 ring-success shadow-lg shadow-success/30' : '')}>
             <Avatar className="size-20 rounded-2xl shadow-2xl ring-1 ring-white/10">
               <AvatarImage src={resolveMediaUrl(avatarSrc)} />
-              <AvatarFallback className="rounded-2xl bg-linear-to-br from-primary to-[#7c3aed] text-white font-heading text-3xl">
+              <AvatarFallback className="rounded-2xl bg-primary/80 text-white font-heading text-3xl">
                 {label[0]?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
@@ -194,10 +194,10 @@ function Tile({
             videoRef.current?.play().then(() => setIsPlayBlocked(false)).catch(console.error);
           }}
         >
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/30 to-[#7c3aed]/20 ring-1 ring-primary/40">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-foreground/15 ring-1 ring-white/20">
             <MicIcon size={24} className="text-white" />
           </div>
-          <span className="font-heading text-xs font-bold uppercase tracking-[0.15em]">Activer le son</span>
+          <span className="text-xs font-medium">Activer le son</span>
         </button>
       )}
     </div>
@@ -272,7 +272,7 @@ export function CallOverlay({
       <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
         <div className="flex items-center gap-2">
           <span className={cn(
-            'font-heading text-xs font-semibold uppercase tracking-[0.15em]',
+            'text-xs font-semibold',
             isConnected ? 'text-success' : 'text-white/50',
           )}>
             {isConnected ? `⬤ ${statusLabel}` : statusLabel}
@@ -393,7 +393,7 @@ function CtrlBtn({
           danger
             ? 'bg-destructive text-destructive-foreground shadow-lg shadow-destructive/40 hover:shadow-xl hover:shadow-destructive/60'
             : active
-              ? 'bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40'
+              ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40'
               : 'bg-white/10 text-white hover:bg-white/20',
         )}
       >

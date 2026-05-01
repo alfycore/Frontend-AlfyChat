@@ -18,6 +18,8 @@ interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
+  /** Code HTTP (0 = erreur réseau/absence de réponse) */
+  status?: number;
 }
 
 class ApiService {
@@ -67,6 +69,12 @@ class ApiService {
 
         if (!response.ok) {
           console.log('[API] Refresh token échoué (HTTP', response.status, ')');
+          // Vérifier si un autre onglet a déjà rafraîchi le token entre-temps
+          const currentRefreshToken = this.getRefreshToken();
+          if (currentRefreshToken && currentRefreshToken !== refreshTokenValue) {
+            console.log('[API] Token déjà rafraîchi par un autre onglet ✓');
+            return !!this.getToken();
+          }
           return false;
         }
 
@@ -136,6 +144,7 @@ class ApiService {
         if (!response.ok) {
           return {
             success: false,
+            status: response.status,
             error: `Service indisponible (HTTP ${response.status})`,
           };
         }
@@ -159,12 +168,13 @@ class ApiService {
       if (!response.ok) {
         return {
           success: false,
+          status: response.status,
           error: (data as any)?.error || 'Une erreur est survenue',
           data: data as T,
         };
       }
 
-      return { success: true, data: data as T };
+      return { success: true, status: response.status, data: data as T };
     } catch (error) {
       return {
         success: false,
@@ -1024,6 +1034,59 @@ class ApiService {
       `/api/admin/services/${encodeURIComponent(id)}/rotate-key`,
       { method: 'POST' },
     );
+  }
+
+  // ============ INFRASTRUCTURE (LB) ============
+
+  async getLBGateways() {
+    return this.request<{ gateways: any[] }>('/api/admin/lb/gateways');
+  }
+
+  async addLBGateway(data: { id: string; name: string; url: string }) {
+    return this.request<{ success: boolean; gateway: any }>('/api/admin/lb/gateways', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async patchLBGateway(id: string, data: { name?: string; url?: string; enabled?: boolean }) {
+    return this.request(`/api/admin/lb/gateways/${encodeURIComponent(id)}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  async deleteLBGateway(id: string) {
+    return this.request(`/api/admin/lb/gateways/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  }
+
+  async getLBServices() {
+    return this.request<{ instances: any[] }>('/api/admin/lb/services');
+  }
+
+  async addLBService(data: { id: string; serviceType: string; location: string }) {
+    return this.request<{ success: boolean; serviceKey: string; hint: string }>(
+      '/api/admin/lb/services', { method: 'POST', body: JSON.stringify(data) },
+    );
+  }
+
+  async patchLBService(id: string, data: { enabled?: boolean; endpoint?: string }) {
+    return this.request(`/api/admin/lb/services/${encodeURIComponent(id)}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  async deleteLBService(id: string) {
+    return this.request(`/api/admin/lb/services/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  }
+
+  async rotateLBServiceKey(id: string) {
+    return this.request<{ success: boolean; serviceKey: string }>(
+      `/api/admin/lb/services/${encodeURIComponent(id)}/rotate-key`,
+      { method: 'POST' },
+    );
+  }
+
+  async restoreLBService(id: string) {
+    return this.request(`/api/admin/lb/services/${encodeURIComponent(id)}/restore`, { method: 'POST' });
   }
 
   // ============ CHANGELOGS ============

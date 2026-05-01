@@ -308,3 +308,23 @@
   --muted-foreground: oklch(0.705 0.015 286.067);
   --border: oklch(1 0 0 / 12%);
 }
+
+/* ── Apple-like easing & helper classes for smooth UI animations ───────── */
+.ui-apple-ease {
+  transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.ui-smooth {
+  transition-property: transform, opacity, background-color, color;
+  transition-duration: 280ms;
+  transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-apple-ease,
+  .ui-smooth {
+    transition: none !important;
+  }
+}

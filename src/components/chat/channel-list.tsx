@@ -33,6 +33,8 @@ import {
   Trash2Icon,
   FileTextIcon,
   XIcon,
+  SearchIcon,
+  MessageCircleIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -76,7 +78,17 @@ import {
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { Kbd } from '@/components/ui/kbd';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from '@/components/ui/command';
+import { serverListStore } from '@/lib/server-list-store';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -178,28 +190,25 @@ function ChannelRow({
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
   const hasUnread = (unreadCount ?? 0) > 0;
+  const Icon = CHANNEL_ICON[channel.type] ?? HashIcon;
   const btn = (
     <button
       onClick={onClick}
       className={cn(
-        'group/ch relative flex w-full items-center rounded-xl font-medium transition-all duration-150',
-        d.channelGap, d.channelPx, d.channelPy, d.channelText,
+        'group/ch relative flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
         isActive
-          ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+          ? 'bg-primary/10 text-primary'
           : hasUnread
             ? 'text-foreground hover:bg-foreground/6'
             : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
       )}
     >
-      {isActive && (
-        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-linear-to-b from-primary to-[#7c3aed]" />
-      )}
-      {(() => { const Icon = CHANNEL_ICON[channel.type] ?? HashIcon; return <Icon size={d.channelIcon} className={cn('shrink-0 transition-colors', isActive ? 'text-primary' : 'text-muted-foreground/60 group-hover/ch:text-muted-foreground')} />; })()}
-      <span className={cn("truncate", hasUnread && !isActive && "font-semibold")}>{channel.name}</span>
+      <Icon size={14} className={cn('shrink-0 transition-colors', isActive ? 'text-primary' : 'text-muted-foreground/50 group-hover/ch:text-muted-foreground/80')} />
+      <span className={cn('flex-1 truncate', hasUnread && !isActive && 'font-semibold text-foreground')}>{channel.name}</span>
       {hasUnread && !isActive && (
-        <Badge variant="destructive" className="ml-auto shrink-0 min-w-5 h-5 text-[10px] shadow-sm shadow-destructive/30 ring-2 ring-sidebar">
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background">
           {unreadCount! > 99 ? '99+' : unreadCount}
-        </Badge>
+        </span>
       )}
     </button>
   );
@@ -304,13 +313,13 @@ function SectionHeader({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="group flex items-center gap-1 px-1 py-1">
+    <div className="group flex items-center gap-1 px-2 py-1.5">
       <button
         onClick={onToggle}
-        className="font-heading flex flex-1 items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+        className="flex flex-1 items-center gap-1 text-[11px] font-medium text-muted-foreground/40 transition-colors hover:text-muted-foreground/60"
       >
-        <ChevronRightIcon size={11}
-          className={cn('shrink-0 transition-transform', !collapsed && 'rotate-90')} />
+        <ChevronRightIcon size={10}
+          className={cn('shrink-0 transition-transform duration-150', !collapsed && 'rotate-90')} />
         {label}
       </button>
       {canAdd && (
@@ -337,7 +346,100 @@ function SectionHeader({
   );
 }
 
+// ── Search dialog (⌘K) ────────────────────────────────────────────────────────
+
+function SearchDialog({
+  open,
+  onClose,
+  conversations,
+  onSelectConversation,
+  onSelectServer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  conversations: Conversation[];
+  onSelectConversation: (id: string, type: 'dm' | 'group') => void;
+  onSelectServer: (id: string) => void;
+}) {
+  const servers = serverListStore.get();
+
+  return (
+    <CommandDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <CommandInput placeholder="Rechercher une conversation, un serveur…" autoFocus />
+      <CommandList>
+        <CommandEmpty>Aucun résultat.</CommandEmpty>
+
+        {conversations.length > 0 && (
+          <CommandGroup heading="Messages directs">
+            {conversations.filter(c => c.type !== 'group').map(c => (
+              <CommandItem
+                key={c.id}
+                value={c.recipientName || c.id}
+                onSelect={() => onSelectConversation(c.recipientId, 'dm')}
+              >
+                <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                  {(c.recipientName || '?').charAt(0).toUpperCase()}
+                </div>
+                <span className="flex-1 truncate text-[13px]">{c.recipientName}</span>
+                {c.lastMessage && !c.lastMessage.startsWith('ecdh:') && (
+                  <span className="truncate text-[11px] text-muted-foreground/50 max-w-32">{c.lastMessage}</span>
+                )}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {conversations.filter(c => c.type === 'group').length > 0 && (
+          <CommandGroup heading="Groupes">
+            {conversations.filter(c => c.type === 'group').map(c => (
+              <CommandItem
+                key={c.id}
+                value={c.recipientName || c.id}
+                onSelect={() => onSelectConversation(c.recipientId || c.id, 'group')}
+              >
+                <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-[10px] font-bold text-violet-500">
+                  G
+                </div>
+                <span className="text-[13px]">{c.recipientName}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {servers.length > 0 && (
+          <CommandGroup heading="Serveurs">
+            {servers.map((s: any) => (
+              <CommandItem
+                key={s.id}
+                value={s.name}
+                onSelect={() => onSelectServer(s.id)}
+              >
+                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-foreground/8 text-[10px] font-bold">
+                  {s.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-[13px]">{s.name}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+      </CommandList>
+    </CommandDialog>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
+
+// ── Colour tone for workspace marks ────────────────────────────────────────────────
+
+const WS_TONES = [
+  '#5865F2','#2ECC71','#FAA819','#ED4245','#EB459E',
+  '#9C84EF','#1ABC9C','#E67E22','#3498DB','#57D7A1',
+];
+function workspaceTone(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
+  return WS_TONES[Math.abs(h) % WS_TONES.length];
+}
 
 export function ChannelList({
   serverId,
@@ -379,6 +481,20 @@ export function ChannelList({
   const [createParentId, setCreateParentId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  // ── Search dialog ─────────────────────────────────────────────────────────
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // ── Drag & drop DM list ───────────────────────────────────────────────────
   const dragDmIdRef = useRef<string | null>(null);
@@ -841,85 +957,112 @@ export function ChannelList({
 
     return (
       <div className={`flex h-full w-full flex-col overflow-hidden ${ui.sidebarBg}`}>
-        {/* ── Header ── */}
-        <div className={`flex ${d.headerH} shrink-0 items-center px-4 ${ui.header}`}>
-          <span className={`${d.channelText} font-heading tracking-tight text-foreground`}>{t.channelList.messagesTitle}</span>
+        {/* ── Search dialog (⌘K) ── */}
+        <SearchDialog
+          open={searchOpen}
+          onClose={() => setSearchOpen(false)}
+          conversations={conversations}
+          onSelectConversation={(id, type) => {
+            setSearchOpen(false);
+            if (type === 'group') router.push(`/channels/groups/${id}`);
+            else router.push(`/channels/me/${id}`);
+          }}
+          onSelectServer={(id) => {
+            setSearchOpen(false);
+            router.push(`/channels/server/${id}`);
+          }}
+        />
+
+        {/* ── Header: home chip ── */}
+        <div className={cn(
+          'flex h-12 shrink-0 items-center gap-2 border-b border-border/40 px-3',
+          ui.isGlass ? 'bg-background/60' : 'bg-sidebar',
+        )}>
+          {/* Home mark */}
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-foreground text-background">
+            <MessageCircleIcon size={14} />
+          </div>
+          {/* Name chip + dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-foreground/6">
+              <span className="flex-1 truncate text-[13.5px] font-semibold tracking-[-0.01em] text-foreground">
+                {t.channelList.messagesTitle}
+              </span>
+              <ChevronDownIcon size={11} className="shrink-0 text-muted-foreground/50" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-52">
+              <DropdownMenuItem className="gap-2" onClick={() => onSelectChannel('friends')}>
+                <UsersIcon size={14} /> Amis
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* ── Search bar ── */}
+        <div className="shrink-0 px-3 py-2">
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="flex h-8 w-full items-center gap-2 rounded-lg bg-foreground/6 px-3 text-muted-foreground/60 transition-colors hover:bg-foreground/8 hover:text-muted-foreground/80"
+          >
+            <SearchIcon size={13} className="shrink-0" />
+            <span className="flex-1 text-left text-[12px]">Trouver une conversation</span>
+            <Kbd className="text-[10px] text-muted-foreground/40">⌘K</Kbd>
+          </button>
         </div>
 
         <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="space-y-0.5 p-2">
+          <div className="space-y-0.5 px-2">
 
             {/* ── Nav buttons ── */}
             <button
               data-tour="friends"
               onClick={() => onSelectChannel('friends')}
               className={cn(
-                `group/nav flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
+                'group/nav flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
                 selectedChannel === 'friends'
-                  ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                  ? 'bg-foreground/8 text-foreground'
                   : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
               )}
             >
-              <div className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
-                selectedChannel === 'friends'
-                  ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary ring-1 ring-primary/30'
-                  : 'bg-foreground/5 text-muted-foreground group-hover/nav:bg-foreground/10',
-              )}>
-                <UsersIcon size={14} />
-              </div>
+              <UsersIcon size={14} className="shrink-0" />
               <span>Amis</span>
             </button>
 
             <button
               onClick={() => router.push('/channels/me/changelogs')}
               className={cn(
-                `group/nav flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
+                'group/nav flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
                 selectedChannel === 'changelogs'
-                  ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                  ? 'bg-foreground/8 text-foreground'
                   : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
               )}
             >
-              <div className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
-                selectedChannel === 'changelogs'
-                  ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary ring-1 ring-primary/30'
-                  : 'bg-foreground/5 text-muted-foreground group-hover/nav:bg-foreground/10',
-              )}>
-                <FileTextIcon size={14} />
-              </div>
+              <FileTextIcon size={14} className="shrink-0" />
               <span>{t.channelList.changelogs}</span>
             </button>
-              <button
+
+            <button
               onClick={() => router.push('/channels/hosting')}
               className={cn(
-                `group/nav flex w-full items-center ${d.channelGap} rounded-xl ${d.channelPx} ${d.channelPy} ${d.channelText} font-semibold transition-all duration-150`,
+                'group/nav flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
                 selectedChannel === 'hosting'
-                  ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                  ? 'bg-foreground/8 text-foreground'
                   : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
               )}
             >
-              <div className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all',
-                selectedChannel === 'hosting'
-                  ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary ring-1 ring-primary/30'
-                  : 'bg-foreground/5 text-muted-foreground group-hover/nav:bg-foreground/10',
-              )}>
-                <FileTextIcon size={14} />
-              </div>
+              <FileTextIcon size={14} className="shrink-0" />
               <span>{t.channelList.hosting}</span>
             </button>
-            <div className="px-1 py-1.5">
-              <Separator />
+
+            {/* ── Section "Conversations" ── */}
+            <div className="mt-3 mb-1 px-2.5">
+              <p data-tour="conversations" className="text-[11px] font-medium text-muted-foreground/40">
+                Conversations
+              </p>
             </div>
 
-            {/* ── Messages privés ── */}
-            <div data-section="dm-list" className="mx-0.5 mt-0.5 rounded-xl  p-1.5 transition-all">
-              <div className="mb-1 flex items-center justify-between px-2 pt-1">
-                <p data-tour="conversations" className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
-                  {t.channelList.directMessages}
-                </p>
-              </div>
+            {/* ── DM list ── */}
+            <div data-section="dm-list">
               {conversationsLoading ? (
                 <p className="px-3 py-3 text-center text-[11px] text-muted-foreground/40">Chargement…</p>
               ) : conversationsError ? (
@@ -987,44 +1130,35 @@ export function ChannelList({
                       <button
                         onClick={() => router.push(`/channels/me/${conv.recipientId}`)}
                         className={cn(
-                          `group/dm flex w-full items-center ${d.rowGap} rounded-xl ${d.rowPx} ${d.rowPy} transition-all duration-150`,
+                          'group/dm flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all duration-150',
                           isActive
-                            ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                            ? 'bg-primary/10 text-primary'
                             : 'text-foreground hover:bg-foreground/6',
                           dragOverDmId === conv.recipientId && 'ring-1 ring-primary/30',
                         )}
                       >
                         <div className="relative shrink-0">
-                          <Avatar className={cn(`${d.rowAvatar} ring-2 transition-all`, isActive ? 'ring-primary/40' : 'ring-transparent group-hover/dm:ring-border/40')}>
+                          <Avatar className="size-8 rounded-full">
                             <AvatarImage src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
-                            <AvatarFallback className={cn('text-[11px] font-semibold', isActive ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary' : 'bg-linear-to-br from-primary/15 to-[#7c3aed]/10 text-primary/80')}>
+                            <AvatarFallback className="rounded-full text-[11px] font-bold bg-muted text-muted-foreground">
                               {conv.recipientName?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <span className={cn(
-                            'absolute -bottom-0.5 -right-0.5 size-2.5 ring-[1.5px] ring-sidebar',
-                            presenceDotShape(presence),
+                            'absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-sidebar',
                             presenceDot(presence),
                           )} />
                         </div>
                         <div className="min-w-0 flex-1 text-left">
-                          <p className={cn(`truncate ${d.rowName} font-medium leading-tight`, isActive ? 'text-primary' : 'text-foreground')}>
+                          <p className={cn('truncate text-[13px] font-medium leading-tight', isActive ? 'text-primary' : 'text-foreground', dmUnread > 0 && !isActive && 'font-semibold')}>
                             {conv.recipientName || t.channelList.user}
                           </p>
-                          {customStatusMap.get(conv.recipientId) ? (
-                            <p className={`truncate ${d.rowSub} text-muted-foreground/50 leading-tight`}>
-                              {customStatusMap.get(conv.recipientId)}
-                            </p>
-                          ) : (
-                            <p className={`${d.rowSub} text-muted-foreground/40 leading-tight`}>
-                              {presence === 'online' ? 'En ligne' : presence === 'idle' ? 'Absent' : presence === 'dnd' ? 'Ne pas déranger' : presence === 'invisible' ? 'Invisible' : 'Hors ligne'}
-                            </p>
-                          )}
+                         
                         </div>
-                        {dmUnread > 0 && (
-                          <Badge variant="destructive" className="ml-auto shrink-0 min-w-5 h-5 text-[10px] shadow-sm shadow-destructive/30 ring-2 ring-sidebar">
-                            {dmUnread}
-                          </Badge>
+                        {dmUnread > 0 && !isActive && (
+                          <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-destructive/90 text-[10px] font-bold text-white">
+                            {dmUnread > 99 ? '99+' : dmUnread}
+                          </span>
                         )}
                       </button>
                       </div>
@@ -1056,46 +1190,90 @@ export function ChannelList({
         </div>
       ) : null}
 
-      {/* Server name header with dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className={`flex h-11 w-full items-center justify-between px-3 font-heading tracking-tight transition-all duration-150 hover:bg-foreground/6 ${ui.isGlass ? 'border-b border-border/40 bg-background/60' : 'border-b border-border/40 bg-sidebar/80'}`}>
-          <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[13px]">
-            <span className="truncate">{serverName}</span>
+      {/* Server name header — workspace chip */}
+      <div className={cn(
+        'flex h-12 shrink-0 items-center gap-2 border-b border-border/40 px-3',
+        ui.isGlass ? 'bg-background/60' : 'bg-sidebar',
+        serverBannerUrl ? 'border-t-0' : '',
+      )}>
+        {/* Server mark */}
+        <div
+          className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-[7px] text-white"
+          style={{ background: workspaceTone(serverName) }}
+        >
+          <span className="text-[12px] font-semibold leading-none tracking-tight select-none">
+            {serverName.charAt(0).toUpperCase()}
+          </span>
+        </div>
+        {/* Name chip + dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex min-w-0 flex-1 items-center gap-1 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-foreground/6">
+            <span className="flex-1 min-w-0 truncate text-[13.5px] font-semibold tracking-[-0.01em] text-foreground">
+              {serverName}
+            </span>
             {serverBadges.isCertified && (
-              <CheckCircle2Icon size={14} className="shrink-0 text-blue-400" />
+              <CheckCircle2Icon size={12} className="shrink-0 text-blue-400" />
             )}
             {serverBadges.isPartnered && (
-              <HandshakeIcon size={14} className="shrink-0 text-violet-400" />
+              <HandshakeIcon size={12} className="shrink-0 text-violet-400" />
             )}
-          </span>
-          <ChevronDownIcon size={14} className="shrink-0 text-muted-foreground/50" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuItem className="gap-2" onClick={() => onOpenSettings?.()}>
-            <SettingsIcon size={15} />
-            {t.channelList.serverSettings}
-          </DropdownMenuItem>
-          <DropdownMenuItem className="gap-2">
-            <UserPlusIcon size={15} />
-            {t.channelList.inviteMembers}
-          </DropdownMenuItem>
-          <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => handleLeaveServer()}>
-            <LogOutIcon size={15} />
-            {t.serverList.leaveServer}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <ChevronDownIcon size={11} className="shrink-0 text-muted-foreground/50" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuItem className="gap-2" onClick={() => onOpenSettings?.()}>
+              <SettingsIcon size={15} />
+              {t.channelList.serverSettings}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2">
+              <UserPlusIcon size={15} />
+              {t.channelList.inviteMembers}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => handleLeaveServer()}>
+              <LogOutIcon size={15} />
+              {t.serverList.leaveServer}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Search bar */}
+      <div className="shrink-0 px-3 py-2">
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex h-8 w-full items-center gap-2 rounded-lg bg-foreground/6 px-3 text-muted-foreground/60 transition-colors hover:bg-foreground/8 hover:text-muted-foreground/80"
+        >
+          <SearchIcon size={13} className="shrink-0" />
+          <span className="flex-1 text-left text-[12px]">Rechercher</span>
+          <Kbd className="text-[10px] text-muted-foreground/40">⌘K</Kbd>
+        </button>
+      </div>
+
+      {/* Search dialog */}
+      <SearchDialog
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        conversations={conversations}
+        onSelectConversation={(id, type) => {
+          setSearchOpen(false);
+          if (type === 'group') router.push(`/channels/groups/${id}`);
+          else router.push(`/channels/me/${id}`);
+        }}
+        onSelectServer={(id) => {
+          setSearchOpen(false);
+          router.push(`/channels/server/${id}`);
+        }}
+      />
 
       {/* Node offline banner */}
       {nodeOnline === false && (
-        <div className="flex items-center gap-1.5 border-b border-amber-500/20 bg-linear-to-r from-amber-500/15 to-amber-500/5 px-3 py-1.5 text-[11px] font-medium text-amber-400">
+        <div className="mx-3 mb-1.5 flex items-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/8 px-2.5 py-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
           <WifiOffIcon size={11} className="shrink-0" />
           {t.channelList.nodeOffline}
         </div>
       )}
 
       <ScrollArea className="flex-1 overflow-y-auto">
-        <div className="p-2  ">
+        <div className="px-2 py-1">
           {hasCategories ? (
             <>
               {uncategorizedText.map((channel) => (
@@ -1181,7 +1359,7 @@ export function ChannelList({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full gap-1 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40 hover:text-muted-foreground"
+                  className="mt-3 w-full gap-1 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground"
                   onClick={() => openCreate('category')}
                 >
                   <PlusIcon size={11} />
@@ -1242,7 +1420,7 @@ export function ChannelList({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full gap-1 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40 hover:text-muted-foreground"
+                  className="mt-3 w-full gap-1 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground"
                   onClick={() => openCreate('category')}
                 >
                   <PlusIcon size={11} />
@@ -1275,7 +1453,7 @@ export function ChannelList({
             </DialogHeader>
             {/* Header */}
             <div className="flex items-start gap-3 border-b border-border/20 px-6 py-5 pr-12">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-sm shadow-primary/10">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground/6 ring-1 ring-border/30">
                 {(() => { const Icon = CHANNEL_ICON[createType] ?? HashIcon; return <Icon size={18} className="text-primary" />; })()}
               </div>
               <div>
@@ -1310,8 +1488,8 @@ export function ChannelList({
                           className={cn(
                             'flex flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-[10px] font-semibold transition-all duration-150',
                             isSelected
-                              ? 'border-primary/50 bg-linear-to-br from-primary/15 to-[#7c3aed]/10 text-primary shadow-sm shadow-primary/10'
-                              : 'border-border/40 bg-foreground/[0.03] text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-foreground',
+                              ? 'border-foreground/15 bg-foreground/8 text-foreground'
+                              : 'border-border/40 bg-foreground/[0.03] text-muted-foreground hover:border-foreground/10 hover:bg-foreground/5 hover:text-foreground',
                           )}
                         >
                           <ct.icon size={15} />

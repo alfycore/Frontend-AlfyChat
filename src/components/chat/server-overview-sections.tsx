@@ -65,8 +65,7 @@ export function ServerOverviewHero({ server }: { server: ServerOverviewInfo | nu
           <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/35 to-background" />
         </div>
       ) : (
-        <div className="h-40 w-full bg-linear-to-br from-primary/25 via-[#7c3aed]/15 to-primary/10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_32%)]" />
+        <div className="h-40 w-full bg-muted/20">
           <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/20 to-background" />
         </div>
       )}
@@ -77,14 +76,14 @@ export function ServerOverviewHero({ server }: { server: ServerOverviewInfo | nu
             src={server?.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
             alt={server?.name}
           />
-          <AvatarFallback className="rounded-3xl bg-linear-to-br from-primary to-[#7c3aed] font-heading text-2xl tracking-tight text-primary-foreground">
+          <AvatarFallback className="rounded-3xl bg-primary/12 font-heading text-2xl tracking-tight text-primary">
             {server?.name?.charAt(0)?.toUpperCase() || 'S'}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 pb-1">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <Badge variant={server?.isPublic ? 'default' : 'secondary'} className="gap-1.5 font-heading text-[10px] font-semibold uppercase tracking-[0.15em]">
+            <Badge variant={server?.isPublic ? 'default' : 'secondary'} className="gap-1.5 text-[11px] font-medium">
               {server?.isPublic ? <GlobeIcon size={11} /> : <LockIcon size={11} />}
               {server?.isPublic ? 'Serveur public' : 'Serveur privé'}
             </Badge>
@@ -140,7 +139,7 @@ export function ServerOverviewDescription({ description }: { description?: strin
 
   return (
     <section className={cn('rounded-3xl p-6', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
-      <p className="mb-2 font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+      <p className="mb-2 text-[11px] font-medium text-muted-foreground/50">
         À propos
       </p>
       <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
@@ -164,7 +163,7 @@ export function ServerChannelPreviewList({
     <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+          <p className="text-[11px] font-medium text-muted-foreground/50">
             Salons
           </p>
           <h2 className="mt-1 font-heading text-lg tracking-tight text-foreground">
@@ -237,7 +236,7 @@ export function ServerMembersPreview({ members }: { members: ServerOverviewMembe
   return (
     <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
       <div className="mb-4">
-        <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+        <p className="text-[11px] font-medium text-muted-foreground/50">
           Membres
         </p>
         <h2 className="mt-1 font-heading text-lg tracking-tight text-foreground">
@@ -251,7 +250,7 @@ export function ServerMembersPreview({ members }: { members: ServerOverviewMembe
             <div className="relative shrink-0">
               <Avatar className="size-10 rounded-xl border border-border/40">
                 <AvatarImage src={member.avatarUrl ? resolveMediaUrl(member.avatarUrl) : undefined} alt={member.username} className="rounded-xl" />
-                <AvatarFallback className="rounded-xl bg-linear-to-br from-primary to-[#7c3aed] text-[12px] font-semibold text-primary-foreground">
+                <AvatarFallback className="rounded-xl bg-muted text-[12px] font-semibold text-muted-foreground">
                   {(member.displayName || member.username || '?').slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>

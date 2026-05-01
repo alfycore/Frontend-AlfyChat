@@ -96,7 +96,7 @@ export function IncomingCallDialog({
             <div className="relative flex flex-col items-center px-8 pb-6 pt-10">
               {/* Ambient glow behind avatar */}
               <div className="pointer-events-none absolute inset-0 flex items-start justify-center overflow-hidden">
-                <div className="mt-4 size-48 animate-pulse rounded-full bg-linear-to-br from-primary/25 to-[#7c3aed]/15 blur-3xl" />
+                  <div className="mt-4 size-48 animate-pulse rounded-full bg-primary/15 blur-3xl" />
               </div>
 
               {/* Avatar with animated rings */}
@@ -106,7 +106,7 @@ export function IncomingCallDialog({
                 <div className="relative rounded-2xl p-1 ring-2 ring-primary/20 shadow-xl shadow-primary/15">
                   <Avatar className="size-20 rounded-2xl">
                     <AvatarImage src={resolveMediaUrl(callerAvatar)} />
-                    <AvatarFallback className="rounded-2xl bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground font-heading text-3xl">
+                    <AvatarFallback className="rounded-2xl bg-primary/80 text-primary-foreground font-heading text-3xl">
                       {callerName[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
@@ -121,7 +121,7 @@ export function IncomingCallDialog({
                     <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
                     <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
                   </span>
-                  <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                  <span className="text-[11px] font-medium text-muted-foreground">
                     {callType === 'video' ? 'Appel vidéo' : 'Appel vocal'}
                   </span>
                 </div>

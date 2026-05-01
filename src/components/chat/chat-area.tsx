@@ -39,7 +39,6 @@ import { getLastSeen, markLastSeen } from '@/lib/notification-store';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -742,17 +741,17 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             Ouvrir les conversations
           </Button>
         )}
-        <Card className="flex flex-col items-center gap-5 border-border/40 bg-card/80 px-10 py-8 shadow-lg shadow-primary/5 backdrop-blur-sm">
-          <div className="flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-md shadow-primary/10">
-            <MessageCircleIcon size={32} className="text-primary" />
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex size-16 items-center justify-center rounded-[18px] bg-foreground/6">
+            <MessageCircleIcon size={28} className="text-muted-foreground/50" />
           </div>
-          <div className="space-y-1.5 text-center">
-            <CardTitle className="font-heading text-xl tracking-tight">Bienvenue sur AlfyChat</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
+          <div className="space-y-1">
+            <p className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">Bienvenue sur AlfyChat</p>
+            <p className="text-[13px] text-muted-foreground">
               Sélectionnez une conversation ou un salon pour commencer à discuter.
-            </CardDescription>
+            </p>
           </div>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -780,10 +779,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
           {recipientId ? (
             <>
-              <div className="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25">
-                <MessageCircleIcon size={14} className="text-primary" />
-              </div>
-              <span className="truncate font-heading text-sm tracking-tight text-foreground">
+              <MessageCircleIcon size={15} className="shrink-0 text-muted-foreground/70" />
+              <span className="truncate text-[13.5px] font-semibold tracking-[-0.01em] text-foreground">
                 {recipientName || 'Message privé'}
               </span>
               <TooltipProvider delayDuration={0}>
@@ -806,10 +803,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             </>
           ) : (
             <>
-              <div className="flex size-8 items-center justify-center rounded-xl bg-foreground/5 ring-1 ring-border/40">
-                <HashIcon size={14} className="text-muted-foreground" />
-              </div>
-              <span className="truncate font-heading text-sm tracking-tight text-foreground">général</span>
+              <HashIcon size={15} className="shrink-0 text-muted-foreground/70" />
+              <span className="truncate text-[13.5px] font-semibold tracking-[-0.01em] text-foreground">général</span>
             </>
           )}
         </div>
@@ -958,19 +953,15 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
-            <Card className="flex flex-col items-center gap-4 border-border/40 bg-card/60 px-8 py-6 shadow-none backdrop-blur-sm">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary/15 to-[#7c3aed]/10 ring-1 ring-primary/20">
-                <MessageCircleIcon size={24} className="text-primary/70" />
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex size-14 items-center justify-center rounded-[14px] bg-foreground/6">
+                <MessageCircleIcon size={22} className="text-muted-foreground/50" />
               </div>
-              <div className="text-center">
-                <CardTitle className="font-heading text-sm tracking-tight text-foreground">
-                  Aucun message
-                </CardTitle>
-                <CardDescription className="mt-1 text-xs text-muted-foreground">
-                  Soyez le premier à écrire !
-                </CardDescription>
+              <div>
+                <p className="text-[13px] font-semibold text-foreground">Aucun message</p>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">Soyez le premier à écrire !</p>
               </div>
-            </Card>
+            </div>
           </div>
         ) : (
           <MessageList
@@ -1001,9 +992,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       {typingUsers.length > 0 && (
         <div className="flex shrink-0 items-center gap-2 px-4 py-1.5">
           <div className="flex items-center gap-0.5">
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-linear-to-br from-primary to-[#7c3aed] [animation-delay:0ms]" />
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-linear-to-br from-primary to-[#7c3aed] [animation-delay:150ms]" />
-            <span className="inline-block size-1.5 animate-bounce rounded-full bg-linear-to-br from-primary to-[#7c3aed] [animation-delay:300ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-foreground/25 [animation-delay:0ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-foreground/25 [animation-delay:150ms]" />
+            <span className="inline-block size-1.5 animate-bounce rounded-full bg-foreground/25 [animation-delay:300ms]" />
           </div>
           <span className="text-xs text-muted-foreground">
             <span className="font-medium text-foreground">
@@ -1075,7 +1066,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         {/* Reply preview */}
         {replyingTo && (
           <div className={`mb-2 flex items-center gap-2 px-3 py-2 ${ui.replyBar}`}>
-            <div className="h-4 w-0.5 rounded-full bg-linear-to-b from-primary to-[#7c3aed]" />
+            <div className="h-4 w-0.5 rounded-full bg-primary/60" />
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold text-primary">
                 Réponse à {replyingTo.authorName}
@@ -1175,7 +1166,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               variant="ghost"
               className={`size-8 transition-all ${
                 messageInput.trim() || pendingAttachments.length > 0
-                  ? 'bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/40'
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'text-muted-foreground/40'
               }`}
               disabled={!messageInput.trim() && pendingAttachments.length === 0}

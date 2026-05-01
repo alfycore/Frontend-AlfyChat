@@ -511,9 +511,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <MenuIcon size={16} />
           </Button>
         )}
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <meta.icon size={14} className="text-primary" />
-        </div>
+        <meta.icon size={15} className="shrink-0 text-muted-foreground/70" />
         <h2 className="truncate text-[14px] font-semibold text-foreground">{channelName || 'salon'}</h2>
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <Button
@@ -538,13 +536,13 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <LoadingSkeleton />
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-              <div className="mb-5 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-                <meta.icon size={28} className="text-primary" />
+              <div className="mb-4 flex size-16 items-center justify-center rounded-[18px] bg-foreground/6">
+                <meta.icon size={28} className="text-muted-foreground/50" />
               </div>
-              <h3 className="mb-1.5 text-lg font-semibold text-foreground">
+              <h3 className="mb-1.5 text-[17px] font-semibold tracking-[-0.015em] text-foreground">
                 Bienvenue dans #{channelName || 'salon'}
               </h3>
-              <p className="text-sm text-muted">{meta.description}.</p>
+              <p className="text-[13px] text-muted-foreground">{meta.description}.</p>
             </div>
           ) : (
             <div className="pb-1 pt-4">

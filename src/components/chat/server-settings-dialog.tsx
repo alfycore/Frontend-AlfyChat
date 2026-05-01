@@ -107,7 +107,7 @@ function SectionIntro({
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-2 block font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">{children}</label>;
+  return <label className="mb-2 block text-[11px] font-medium text-muted-foreground/50">{children}</label>;
 }
 
 function InfoNote({
@@ -868,7 +868,7 @@ export function ServerSettingsDialog({
         <div className="grid h-full min-h-0 md:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="flex min-h-0 flex-col border-r border-border/50 bg-card/40 p-4">
             <div className="overflow-hidden rounded-3xl border border-border/40 bg-card/50">
-              <div className="h-24 bg-linear-to-br from-primary/20 via-[#7c3aed]/15 to-accent/20">
+              <div className="h-24 bg-muted/30">
                 {(bannerPreview || server?.bannerUrl) && (
                   <img src={bannerPreview || resolveMediaUrl(server?.bannerUrl)} alt="" className="h-full w-full object-cover" />
                 )}
@@ -876,7 +876,7 @@ export function ServerSettingsDialog({
               <div className="flex items-end gap-3 px-4 pb-4">
                 <Avatar className="-mt-8 size-16 rounded-3xl border-4 border-card shadow-lg">
                   <AvatarImage src={iconPreview || resolveMediaUrl(server?.iconUrl) || undefined} alt={server?.name} />
-                  <AvatarFallback className="rounded-3xl bg-linear-to-br from-primary to-[#7c3aed] font-heading text-lg tracking-tight text-primary-foreground">
+                  <AvatarFallback className="rounded-3xl bg-primary/12 font-heading text-lg tracking-tight text-primary">
                     {(server?.name || 'SV').slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -890,7 +890,7 @@ export function ServerSettingsDialog({
             </div>
 
             <div className="mt-4 mb-2 px-2">
-              <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50">
+              <p className="text-[11px] font-medium text-muted-foreground/40">
                 {ss.sectionHeader}
               </p>
             </div>

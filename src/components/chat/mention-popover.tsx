@@ -87,7 +87,7 @@ export function MentionPopover({
       className="absolute z-50 max-h-56 w-64 overflow-y-auto rounded-2xl border border-border/50 bg-card/95 p-1.5 shadow-2xl shadow-black/20 backdrop-blur-xl"
       style={{ bottom: position.top, left: position.left }}
     >
-      <div className="font-heading px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+      <div className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground/50">
         Membres — {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
       </div>
       {filtered.map((user, idx) => (
@@ -108,7 +108,7 @@ export function MentionPopover({
         >
           <Avatar className="size-7 rounded-lg">
             <AvatarImage src={resolveMediaUrl(user.avatarUrl)} alt={user.username} />
-            <AvatarFallback className="rounded-lg bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-[10px] font-bold text-primary">
+            <AvatarFallback className="rounded-lg bg-muted text-[10px] font-bold text-muted-foreground">
               {(user.displayName || user.username)[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>

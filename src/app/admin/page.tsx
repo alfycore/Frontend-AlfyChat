@@ -29,7 +29,7 @@ import {
   HandshakeIcon, SettingsIcon, Link2Icon, MailIcon, CopyIcon,
   ShieldCheckIcon, ShieldAlertIcon, BanIcon, FileTextIcon,
   ChevronDownIcon, ChevronRightIcon, KeyIcon, RefreshCwIcon,
-  EyeIcon, EyeOffIcon,
+  EyeIcon, EyeOffIcon, MenuIcon,
 } from '@/components/icons';
 
 import { useAuth }      from '@/hooks/use-auth';
@@ -39,6 +39,7 @@ import { ServicesPanel }    from './services-panel';
 import { ChangelogsPanel }  from './changelogs-panel';
 import { HelpDeskPanel }    from './helpdesk-panel';
 import { SupportContentPanel } from './support-content-panel';
+import { LBPanel } from './lb-panel';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -61,7 +62,8 @@ const UICONS_LIST = [
 ];
 
 type Tab = 'overview' | 'users' | 'badges' | 'server-badges' | 'discovery' |
-           'monitoring' | 'status' | 'security' | 'changelogs' | 'services' | 'settings' | 'helpdesk' | 'support-content';
+           'monitoring' | 'status' | 'security' | 'changelogs' | 'services' |
+           'infrastructure' | 'settings' | 'helpdesk' | 'support-content';
 type ServiceType = 'users' | 'messages' | 'friends' | 'calls' | 'servers' | 'bots' | 'media';
 type ServiceInstance = {
   id: string; serviceType: ServiceType; endpoint: string; domain: string;
@@ -80,8 +82,9 @@ const NAV: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'status',        label: 'Status public',     icon: CheckCircle2Icon },
   { id: 'security',      label: 'Sécurité',          icon: ShieldAlertIcon },
   { id: 'changelogs',    label: 'Changelogs',        icon: FileTextIcon },
-  { id: 'services',      label: 'Services',          icon: ServerIcon },
-  { id: 'helpdesk',       label: 'Helpdesk',          icon: ShieldIcon },
+  { id: 'services',        label: 'Services',          icon: ServerIcon },
+  { id: 'infrastructure',  label: 'Infrastructure',    icon: ServerIcon },
+  { id: 'helpdesk',        label: 'Helpdesk',          icon: ShieldIcon },
   { id: 'support-content', label: 'Centre d\'aide',    icon: FileTextIcon },
   { id: 'settings',      label: 'Paramètres',        icon: SettingsIcon },
 ];
@@ -126,8 +129,9 @@ function StatusDot({ healthy, lastHeartbeat }: { healthy: boolean; lastHeartbeat
 export default function AdminPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [tab, setTab]       = useState<Tab>('overview');
-  const [loading, setLoading] = useState(true);
+  const [tab, setTab]           = useState<Tab>('overview');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading]   = useState(true);
 
   // Stats
   const [stats, setStats] = useState<any>(null);
@@ -349,23 +353,34 @@ export default function AdminPage() {
   return (
     <div className="flex min-h-screen bg-background text-foreground">
 
+      {/* ── Mobile overlay ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ── Sidebar ── */}
-      <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col border-r border-border bg-card">
+      <aside className={`fixed inset-y-0 left-0 z-40 flex h-screen w-52 shrink-0 flex-col border-r border-border bg-card transition-transform duration-200 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center gap-2.5 border-b border-border px-4 py-4">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
             <ShieldIcon className="size-4 text-primary" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold leading-none">Admin</p>
             <p className="text-[11px] text-muted-foreground">AlfyChat</p>
           </div>
+          <button onClick={() => setSidebarOpen(false)} className="text-muted-foreground hover:text-foreground lg:hidden">
+            <XIcon className="size-4" />
+          </button>
         </div>
 
         <nav className="flex-1 space-y-0.5 p-2 overflow-y-auto">
           {NAV.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => setTab(id)}
+              onClick={() => { setTab(id); setSidebarOpen(false); }}
               className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
                 tab === id
                   ? 'bg-muted font-medium text-foreground'
@@ -393,17 +408,22 @@ export default function AdminPage() {
       </aside>
 
       {/* ── Main ── */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         {/* Topbar */}
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/80 px-6 py-3 backdrop-blur">
-          <h1 className="text-base font-semibold">{NAV.find(n => n.id === tab)?.label}</h1>
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/80 px-4 py-3 backdrop-blur sm:px-6">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="text-muted-foreground hover:text-foreground lg:hidden">
+              <MenuIcon className="size-5" />
+            </button>
+            <h1 className="text-base font-semibold">{NAV.find(n => n.id === tab)?.label}</h1>
+          </div>
           <Button variant="outline" size="sm" onClick={loadData}>
-            <RefreshCwIcon className="size-3.5" /> Actualiser
+            <RefreshCwIcon className="size-3.5" /> <span className="hidden sm:inline">Actualiser</span>
           </Button>
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto px-6 py-6">
+        <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           {loading ? (
             <div className="flex h-64 items-center justify-center">
               <div className="size-7 animate-spin rounded-full border-[3px] border-primary border-t-transparent" />
@@ -446,6 +466,7 @@ export default function AdminPage() {
                     <Card><CardContent className="py-12 text-center text-muted-foreground">Aucun badge.</CardContent></Card>
                   ) : (
                     <Card>
+                      <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -497,6 +518,7 @@ export default function AdminPage() {
                           ))}
                         </TableBody>
                       </Table>
+                      </div>
                     </Card>
                   )}
                 </div>
@@ -520,6 +542,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <Card>
+                    <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -585,6 +608,7 @@ export default function AdminPage() {
                         ))}
                       </TableBody>
                     </Table>
+                    </div>
                   </Card>
                 </div>
               )}
@@ -667,6 +691,7 @@ export default function AdminPage() {
                   ) : (
                     <>
                       <Card>
+                        <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -712,6 +737,7 @@ export default function AdminPage() {
                             })}
                           </TableBody>
                         </Table>
+                        </div>
                       </Card>
                       {discoverServers.length > 10 && (
                         <div className="flex items-center justify-between">
@@ -1215,7 +1241,10 @@ export default function AdminPage() {
                 </div>
               )}
 
-                {/* ── Helpdesk ── */}
+                {/* ── Infrastructure (LB) ── */}
+              {tab === 'infrastructure' && <LBPanel />}
+
+              {/* ── Helpdesk ── */}
               {tab === 'helpdesk' && (
                 <div className="space-y-4">
                   <h2 className="text-lg font-semibold">Helpdesk — Support client</h2>

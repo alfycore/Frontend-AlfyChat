@@ -176,8 +176,8 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
             </div>
           ) : groups.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-sm shadow-primary/10">
-                <UsersRoundIcon size={20} className="text-primary" />
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-foreground/5 ring-1 ring-border/30">
+                <UsersRoundIcon size={20} className="text-muted-foreground" />
               </div>
               <div>
                 <p className="text-[13px] font-medium text-foreground">Aucun groupe</p>
@@ -205,7 +205,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                   className={cn(
                     'group/grp flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-150',
                     isActive
-                      ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
+                      ? 'bg-foreground/8 text-foreground'
                       : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
                   )}
                 >
@@ -213,7 +213,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                   {group.avatarUrl ? (
                     <Avatar className={cn('size-9 shrink-0 rounded-xl ring-2 transition-all', isActive ? 'ring-primary/40' : 'ring-transparent group-hover/grp:ring-border/40')}>
                       <AvatarImage src={resolveMediaUrl(group.avatarUrl)} alt={group.name} />
-                      <AvatarFallback className="rounded-xl bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-[11px] font-bold text-primary">
+                      <AvatarFallback className="rounded-xl bg-muted text-[11px] font-bold text-muted-foreground">
                         {group.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -222,8 +222,8 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                       className={cn(
                         'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all',
                         isActive
-                          ? 'bg-linear-to-br from-primary/25 to-[#7c3aed]/15 text-primary ring-1 ring-primary/30'
-                          : 'bg-foreground/5 text-muted-foreground group-hover/grp:bg-primary/10 group-hover/grp:text-primary',
+                          ? 'bg-foreground/8 text-foreground'
+                          : 'bg-foreground/5 text-muted-foreground group-hover/grp:bg-foreground/8 group-hover/grp:text-foreground',
                       )}
                     >
                       <UsersRoundIcon size={15} />
@@ -240,7 +240,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
 
                   {/* Unread badge */}
                   {unread > 0 && (
-                    <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-[#7c3aed] px-1 text-[9px] font-semibold text-primary-foreground shadow-md shadow-primary/40 ring-2 ring-sidebar">
+                    <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-destructive/90 px-1 text-[9px] font-semibold text-white">
                       {unread > 99 ? '99+' : unread}
                     </span>
                   )}

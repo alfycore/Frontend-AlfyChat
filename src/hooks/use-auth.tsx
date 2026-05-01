@@ -172,11 +172,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const socket = socketService.connect(freshToken);
       console.log('🔌 WebSocket connecté:', !!socket);
     } else {
-      // getMe a échoué même après un éventuel refresh automatique dans api.request()
-      // → les tokens sont vraiment invalides
-      console.log('❌ Échec getMe après refresh, suppression des tokens');
-      localStorage.removeItem('alfychat_token');
-      localStorage.removeItem('alfychat_refresh_token');
+      // Distinguer une vraie erreur d'auth d'une erreur réseau/serveur temporaire.
+      // status=401 : tokens invalides → déconnecter.
+      // status=0 (réseau) ou 5xx (serveur indisponible) : garder les tokens,
+      // l'utilisateur pourra recharger la page plus tard.
+      if (response.status === 401 || response.status === 403) {
+        console.log('❌ Échec getMe (auth invalide), suppression des tokens');
+        localStorage.removeItem('alfychat_token');
+        localStorage.removeItem('alfychat_refresh_token');
+        localStorage.removeItem('alfychat_session_id');
+      } else {
+        console.warn('⚠️ Échec getMe (status=' + response.status + ') — tokens conservés (erreur temporaire)');
+      }
     }
     setIsLoading(false);
     console.log('✅ checkAuth terminé');

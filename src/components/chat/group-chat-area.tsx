@@ -788,7 +788,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
       {showMembers && (
         <div className="flex w-52 flex-col border-l border-border/30 bg-surface/60">
           <div className="flex items-center justify-between px-3 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
+            <p className="text-[11px] font-medium text-muted-foreground/40">
               Membres — {groupInfo?.participants.length || 0}
             </p>
             <Button size="icon-sm" variant="ghost" className="size-6 rounded-xl" onClick={() => setShowMembers(false)}>

@@ -8,6 +8,8 @@
  * imports circulaires. Les composants s'y abonnent via `subscribe`.
  */
 
+import { useSyncExternalStore } from 'react';
+
 type Listener = () => void;
 
 const STORAGE_KEY = 'alfychat_unread';
@@ -291,8 +293,6 @@ export function getLastSeen(conversationKey: string): string | null {
 }
 
 // ── React hook ────────────────────────────────────────────────────────────────
-
-import { useSyncExternalStore } from 'react';
 
 /**
  * Snapshot vide pour le rendu serveur (SSR).

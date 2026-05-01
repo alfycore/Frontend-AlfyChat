@@ -207,7 +207,7 @@ export function GroupSettingsDialog({
           {/* ── Sidebar ── */}
           <aside className="flex w-48 shrink-0 flex-col border-r border-border/40 bg-background/80 py-6">
             <div className="mb-4 px-4">
-              <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">Groupe</p>
+              <p className="text-[11px] font-medium text-muted-foreground/50">Groupe</p>
               <p className="mt-1 truncate font-heading text-sm tracking-tight text-foreground">{group?.name || 'Groupe'}</p>
             </div>
 
@@ -264,7 +264,7 @@ export function GroupSettingsDialog({
                   </div>
 
                   <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
-                    <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
+                    <span className="text-[11px] font-medium text-muted-foreground/50">
                       Nom du groupe
                     </span>
                     <div className="flex gap-2">
@@ -287,7 +287,7 @@ export function GroupSettingsDialog({
                   </div>
 
                   <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
-                    <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-destructive/70">Zone dangereuse</p>
+                    <p className="text-[11px] font-medium text-destructive/70">Zone dangereuse</p>
                     <div className="space-y-2">
                       <Button
                         variant="outline"
@@ -342,7 +342,7 @@ export function GroupSettingsDialog({
                   {showAddMembers && (
                     <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                       <div className="flex items-center justify-between">
-                        <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
+                        <p className="text-[11px] font-medium text-muted-foreground/50">
                           Ajouter des amis
                         </p>
                         <Button
@@ -395,7 +395,7 @@ export function GroupSettingsDialog({
                                 >
                                   <Avatar className="size-7 rounded-lg">
                                     <AvatarImage src={friend.avatarUrl ? resolveMediaUrl(friend.avatarUrl) : undefined} className="rounded-lg" />
-                                    <AvatarFallback className="rounded-lg bg-linear-to-br from-primary to-[#7c3aed] text-[11px] font-semibold text-primary-foreground">{friend.displayName[0]}</AvatarFallback>
+                                    <AvatarFallback className="rounded-lg bg-muted text-[11px] font-semibold text-muted-foreground">{friend.displayName[0]}</AvatarFallback>
                                   </Avatar>
                                   <span className="flex-1 text-left text-sm">{friend.displayName}</span>
                                   <div
@@ -442,7 +442,7 @@ export function GroupSettingsDialog({
                             >
                               <Avatar size="sm" className="rounded-lg">
                                 <AvatarImage src={participant.avatarUrl ? resolveMediaUrl(participant.avatarUrl) : undefined} className="rounded-lg" />
-                                <AvatarFallback className="rounded-lg bg-linear-to-br from-primary to-[#7c3aed] text-[11px] font-semibold text-primary-foreground">{(participant.displayName || participant.username)?.[0] || '?'}</AvatarFallback>
+                                <AvatarFallback className="rounded-lg bg-muted text-[11px] font-semibold text-muted-foreground">{(participant.displayName || participant.username)?.[0] || '?'}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1">

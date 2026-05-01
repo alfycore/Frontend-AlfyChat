@@ -15,26 +15,40 @@ interface FiProps extends React.HTMLAttributes<HTMLElement> {
   size?: number;
 }
 
+// Convertit une classe Tailwind size-X en px (1 unit = 0.25rem, base = 16px)
+function sizeFromClass(className?: string): number | undefined {
+  if (!className) return undefined;
+  const m = className.match(/\bsize-(\d+(?:\.\d+)?)\b/);
+  if (!m) return undefined;
+  return Math.round(parseFloat(m[1]) * 4); // size-4 → 16, size-3.5 → 14, size-5 → 20
+}
+
 function fi(name: string) {
-  const Comp = ({ size = 20, className, style, ...rest }: FiProps) => (
-    <i
-      {...rest}
-      className={`fi fi-br-${name}${className ? ` ${className}` : ''}`}
-      style={{ fontSize: size, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
-    />
-  );
+  const Comp = ({ size, className, style, ...rest }: FiProps) => {
+    const resolvedSize = size ?? sizeFromClass(className) ?? 20;
+    return (
+      <i
+        {...rest}
+        className={`fi fi-br-${name}${className ? ` ${className}` : ''}`}
+        style={{ fontSize: resolvedSize, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
+      />
+    );
+  };
   Comp.displayName = `FiIcon(${name})`;
   return Comp;
 }
 
 function fiBrands(name: string) {
-  const Comp = ({ size = 20, className, style, ...rest }: FiProps) => (
-    <i
-      {...rest}
-      className={`fi fi-brands-${name}${className ? ` ${className}` : ''}`}
-      style={{ fontSize: size, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
-    />
-  );
+  const Comp = ({ size, className, style, ...rest }: FiProps) => {
+    const resolvedSize = size ?? sizeFromClass(className) ?? 20;
+    return (
+      <i
+        {...rest}
+        className={`fi fi-brands-${name}${className ? ` ${className}` : ''}`}
+        style={{ fontSize: resolvedSize, lineHeight: 1, display: 'inline-flex', alignItems: 'center', ...style }}
+      />
+    );
+  };
   Comp.displayName = `FiBrandsIcon(${name})`;
   return Comp;
 }

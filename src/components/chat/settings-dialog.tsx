@@ -633,7 +633,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           {/* ─── Sidebar (desktop) ─── */}
           <aside className="hidden w-56 shrink-0 flex-col border-r border-border/40 bg-muted/30 sm:flex">
             <div className="px-4 pt-5 pb-3">
-              <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
+              <p className="text-[11px] font-medium text-muted-foreground/50">
                 {t.settings.sectionHeader}
               </p>
               <p className="mt-1 truncate font-heading text-sm tracking-tight text-foreground">
@@ -684,7 +684,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <div className="flex items-center gap-3 border-b border-border/40 bg-muted/30 px-4 py-4">
                   <Avatar className="size-12 shrink-0 rounded-xl">
                     <AvatarImage src={avatarPreview || undefined} alt={displayName} className="rounded-xl" />
-                    <AvatarFallback className="rounded-xl bg-linear-to-br from-primary to-[#7c3aed] font-heading text-sm tracking-tight text-primary-foreground">{displayName?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+                    <AvatarFallback className="rounded-xl bg-primary/12 font-heading text-sm tracking-tight text-primary">{displayName?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
                     <p className="truncate font-heading text-sm tracking-tight text-foreground">{displayName || user.username}</p>
@@ -783,7 +783,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           <div className="relative cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
                             <Avatar className="size-16 rounded-2xl ring-[3px] ring-card sm:size-20">
                               <AvatarImage src={avatarPreview || undefined} alt="Avatar" className="rounded-2xl" />
-                              <AvatarFallback className="rounded-2xl bg-linear-to-br from-primary to-[#7c3aed] font-heading text-lg tracking-tight text-primary-foreground">{displayName?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+                    <AvatarFallback className="rounded-2xl bg-primary/12 font-heading text-lg tracking-tight text-primary">{displayName?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                             </Avatar>
                             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity hover:opacity-100">
                               <CameraIcon size={20} className="text-white" />

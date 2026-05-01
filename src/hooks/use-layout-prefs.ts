@@ -22,7 +22,7 @@ export type LayoutPrefs = {
 const STORAGE_KEY = 'alfychat_layout_prefs';
 
 const DEFAULT_PREFS: LayoutPrefs = {
-  serverListPosition: 'left',
+  serverListPosition: 'top',
   memberListSide: 'right',
   compactServerList: false,
   uiStyle: 'flat',

@@ -328,7 +328,7 @@ export const MessageItem = memo(function MessageItem({
       >
         {/* ── Toolbar flottant ── */}
         <div className={cn(
-          'absolute -top-4 z-20 flex items-center gap-0.5 rounded-xl px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 transition-all duration-150 group-hover:opacity-100',
+          'absolute -top-4 z-20 flex items-center gap-0.5 rounded-xl px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 ui-smooth group-hover:opacity-100',
           isMe ? 'left-4' : 'right-4',
           ui.isGlass
             ? 'border border-white/20 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-black/40'
@@ -375,9 +375,9 @@ export const MessageItem = memo(function MessageItem({
               : (
                 <UserProfilePopover userId={message.authorId}>
                   <button type="button" className="mb-0.5 shrink-0">
-                    <Avatar className={`${d.msgAvatar} cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm transition-all duration-150 hover:scale-105`}>
+                    <Avatar className={`${d.msgAvatar} cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm ui-smooth hover:scale-105`}>
                       <AvatarImage src={resolveMediaUrl(message.sender?.avatarUrl)} alt={displayName} />
-                      <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 font-bold text-sm text-white">{initial}</AvatarFallback>
+                      <AvatarFallback className="bg-muted font-bold text-sm text-muted-foreground">{initial}</AvatarFallback>
                     </Avatar>
                   </button>
                 </UserProfilePopover>
@@ -549,8 +549,8 @@ export const MessageItem = memo(function MessageItem({
                   <AvatarFallback className={cn(
                     'font-bold text-sm',
                     isMe
-                      ? 'bg-[var(--accent)] text-[var(--accent-foreground)]'
-                      : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white',
+                      ? 'bg-primary/12 text-primary'
+                      : 'bg-muted text-muted-foreground',
                   )}>
                     {initial}
                   </AvatarFallback>

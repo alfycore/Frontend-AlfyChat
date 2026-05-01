@@ -87,6 +87,19 @@ interface ServerListProps {
   horizontal?: boolean;
 }
 
+// ─── Server colour palette (deterministic from name) ─────────────────────────
+
+const SERVER_TONE_PALETTE = [
+  '#5865F2','#2ECC71','#FAA819','#ED4245','#EB459E',
+  '#9C84EF','#1ABC9C','#E67E22','#3498DB','#57D7A1',
+];
+
+function serverTone(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
+  return SERVER_TONE_PALETTE[Math.abs(h) % SERVER_TONE_PALETTE.length];
+}
+
 // ─── ServerList ───────────────────────────────────────────────────────────────
 
 export function ServerList({ selectedServer, onSelectServer, horizontal = false }: ServerListProps) {
@@ -296,6 +309,19 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
   const handleDragEnd = () => { dragId.current = null; setDragging(null); setDragOver(null); };
 
+  // ── Keyboard shortcuts (⌘0 = DMs, ⌘1-9 = servers) ────────────────────────
+  useEffect(() => {
+    if (horizontal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      if (e.key === '0') { e.preventDefault(); onSelectServer(null); return; }
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= servers.length) { e.preventDefault(); onSelectServer(servers[n - 1].id); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [servers, onSelectServer, horizontal]);
+
   // ── Calcul des totaux non-lus pour DMs et groupes ──────────────────────
   let totalDmUnread = 0;
   let totalGroupUnread = 0;
@@ -310,17 +336,22 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  // For horizontal (top strip) mode, use fixed compact sizes regardless of density
+  const hBtnSize = 'size-8';
+  const hIconSize = 16;
+
   return (
     <TooltipProvider>
       <nav
         aria-label="Serveurs"
         className={cn(
-          cn('relative flex shrink-0 items-center gap-1.5', ui.isGlass
-            ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20 border-white/15 dark:border-white/8'
-            : 'bg-sidebar'),
+          'relative flex shrink-0 items-center',
+          ui.isGlass
+            ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20'
+            : 'bg-sidebar',
           horizontal
-            ? 'h-14 w-full flex-row border-b border-border/40 px-3'
-            : cn('h-full flex-col border-r border-border/40 py-3', prefs.density === 'compact' ? 'w-14' : prefs.density === 'comfortable' ? 'w-20' : 'w-18'),
+            ? 'h-12 w-full flex-row gap-1 px-3'
+            : cn('h-full flex-col gap-2 py-3', prefs.density === 'compact' ? 'w-15' : prefs.density === 'comfortable' ? 'w-19' : 'w-17'),
         )}
       >
         {/* ── DMs ── */}
@@ -330,17 +361,17 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label={t.serverList?.dms ?? 'Messages directs'}
               className={cn(
-                'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
-                btnSize,
+                'relative flex shrink-0 cursor-pointer items-center justify-center rounded-[8px] transition-all duration-200',
+                horizontal ? cn(hBtnSize, 'mx-0') : cn(btnSize, 'mx-auto'),
                 selectedServer === null
-                  ? 'rounded-[14px] bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-primary/50'
-                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary hover:shadow-md hover:shadow-primary/10',
+                  ? 'bg-foreground text-background'
+                  : 'bg-foreground/8 text-foreground hover:bg-foreground/12',
               )}
               onClick={() => onSelectServer(null)}
             >
-              <MessageCircleIcon size={iconSize} />
+              <MessageCircleIcon size={horizontal ? hIconSize : iconSize} />
               {totalDmUnread > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-linear-to-br from-primary to-[#7c3aed] px-1 text-[8px] font-semibold text-primary-foreground shadow-md shadow-primary/40 ring-2 ring-sidebar">
+                <span className="absolute -bottom-0.5 -right-0.5 flex size-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-bold text-white">
                   {totalDmUnread > 99 ? '99+' : totalDmUnread}
                 </span>
               )}
@@ -348,7 +379,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           </TooltipTrigger>
           <TooltipContent side={side}>
             {t.serverList?.dms ?? 'Messages directs'}
-            <Kbd>Ctrl D</Kbd>
+            <Kbd>⌘0</Kbd>
           </TooltipContent>
         </Tooltip>
 
@@ -359,17 +390,17 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label="Groupes"
               className={cn(
-                'relative mx-auto flex shrink-0 cursor-pointer items-center justify-center transition-all duration-200',
-                btnSize,
+                'relative flex shrink-0 cursor-pointer items-center justify-center rounded-[8px] transition-all duration-200',
+                horizontal ? cn(hBtnSize, 'mx-0') : cn(btnSize, 'mx-auto'),
                 selectedServer === 'groups'
-                  ? 'rounded-[14px] bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-primary/50'
-                  : 'rounded-full bg-foreground/5 text-muted-foreground hover:rounded-[14px] hover:bg-primary/15 hover:text-primary hover:shadow-md hover:shadow-primary/10',
+                  ? 'bg-foreground text-background'
+                  : 'bg-foreground/8 text-foreground hover:bg-foreground/12',
               )}
               onClick={() => onSelectServer('groups')}
             >
-              <UsersRoundIcon size={iconSize} />
+              <UsersRoundIcon size={horizontal ? hIconSize : iconSize} />
               {totalGroupUnread > 0 && selectedServer !== 'groups' && (
-                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-linear-to-br from-primary to-[#7c3aed] px-1 text-[8px] font-semibold text-primary-foreground shadow-md shadow-primary/40 ring-2 ring-sidebar">
+                <span className="absolute -bottom-0.5 -right-0.5 flex size-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-bold text-white">
                   {totalGroupUnread > 99 ? '99+' : totalGroupUnread}
                 </span>
               )}
@@ -378,8 +409,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           <TooltipContent side={side}>Groupes</TooltipContent>
         </Tooltip>
 
-
-        <div className={cn('shrink-0 rounded-full bg-border/60', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
+        <div className={cn('shrink-0 rounded-full bg-border/60', horizontal ? 'mx-1 h-5 w-px' : 'my-1 h-px w-6 self-center')} />
 
         {/* ── Server list ── */}
         <ScrollArea
@@ -391,19 +421,21 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         >
           <div
             className={cn(
-              'flex items-center gap-1',
-              horizontal ? 'flex-row px-1' : 'flex-col py-0.5',
+              'flex items-center',
+              horizontal ? 'h-full flex-row gap-1 px-0.5' : 'flex-col gap-1.5 py-0.5',
             )}
           >
             {loading
               ? Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className={cn('shrink-0 rounded-full', btnSize)} />
+                  <Skeleton key={i} className={cn('shrink-0 rounded-full', horizontal ? hBtnSize : btnSize)} />
                 ))
               : servers.map((server) => {
                   const active    = selectedServer === server.id;
                   const isDragged = dragging === server.id;
                   const isOver    = dragOver  === server.id;
                   const serverUnread = notifStore.unread.get(`server:${server.id}`) ?? 0;
+                  const sz = horizontal ? hBtnSize : btnSize;
+                  const ic = horizontal ? hIconSize : iconSize;
 
                   return (
                     <div
@@ -426,49 +458,38 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                             <ContextMenuTrigger asChild>
                               <button
                                 type="button"
-                                aria-label={server.name}
+                                aria-label={`${server.name}${servers.indexOf(server) < 9 ? ` (⌘${servers.indexOf(server) + 1})` : ''}`}
                                 aria-pressed={active}
                                 onClick={() => onSelectServer(server.id)}
                                 onKeyDown={(e) => e.key === 'Enter' && onSelectServer(server.id)}
                                 className={cn(
-                                  'group relative flex shrink-0 cursor-pointer select-none items-center justify-center transition-all duration-200',
-                                  btnSize,
-                                  active ? 'rounded-[14px]' : 'rounded-2xl hover:rounded-full',
+                                  'group relative flex shrink-0 cursor-pointer select-none items-center justify-center overflow-hidden rounded-[8px] transition-all duration-200',
+                                  active
+                                    ? 'opacity-100 outline outline-2 outline-foreground outline-offset-1'
+                                    : 'opacity-75 hover:opacity-100',
+                                  sz,
                                 )}
+                                style={server.iconUrl ? {} : { background: serverTone(server.name) }}
                               >
-                                <Avatar
-                                  className={cn(
-                                    'transition-all duration-200',
-                                    btnSize,
-                                    active
-                                      ? 'rounded-[14px] shadow-lg shadow-primary/25 ring-2 ring-primary/50 ring-offset-1 ring-offset-sidebar'
-                                      : 'rounded-2xl group-hover:rounded-full group-hover:shadow-md group-hover:shadow-primary/15',
-                                    isOver && 'ring-2 ring-primary ring-offset-1 ring-offset-sidebar',
-                                  )}
-                                >
-                                  <AvatarImage
-                                    src={server.iconUrl ? resolveMediaUrl(server.iconUrl) : undefined}
+                                {server.iconUrl ? (
+                                  <img
+                                    src={resolveMediaUrl(server.iconUrl)}
                                     alt={server.name}
-                                    className={cn(active ? 'rounded-[14px]' : 'rounded-2xl group-hover:rounded-full')}
+                                    className="size-full rounded-[8px] object-cover"
                                   />
-                                  <AvatarFallback
-                                    className={cn(
-                                      'text-sm font-bold transition-all duration-200',
-                                      active
-                                        ? 'rounded-[14px] bg-linear-to-br from-primary to-[#7c3aed] text-primary-foreground'
-                                        : 'rounded-2xl bg-surface-secondary group-hover:rounded-full group-hover:bg-linear-to-br group-hover:from-primary group-hover:to-[#7c3aed] group-hover:text-primary-foreground',
-                                    )}
-                                  >
+                                ) : (
+                                  <span className={cn(
+                                    'select-none font-semibold leading-none tracking-tight text-white',
+                                    horizontal ? 'text-[10px]' : 'text-[12px]',
+                                  )}>
                                     {server.name.charAt(0).toUpperCase()}
-                                  </AvatarFallback>
-                                  {onlineIds.has(server.id) && (
-                                    <AvatarBadge className="bg-success" />
-                                  )}
-                                </Avatar>
-                                {serverUnread > 0 && !active && (
-                                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-linear-to-br from-primary to-[#7c3aed] px-1 text-[8px] font-semibold text-primary-foreground shadow-md shadow-primary/40 ring-2 ring-sidebar">
-                                    {serverUnread > 99 ? '99+' : serverUnread}
                                   </span>
+                                )}
+                                {onlineIds.has(server.id) && (
+                                  <span className="absolute bottom-0.5 right-0.5 size-1.5 rounded-full bg-success ring-[1.5px] ring-sidebar" />
+                                )}
+                                {serverUnread > 0 && !active && (
+                                  <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-[1.5px] ring-sidebar" />
                                 )}
                               </button>
                             </ContextMenuTrigger>
@@ -518,7 +539,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           <ScrollBar orientation={horizontal ? 'horizontal' : 'vertical'} className="hidden" />
         </ScrollArea>
 
-        <div className={cn('shrink-0 rounded-full bg-border/60', horizontal ? 'h-6 w-px' : 'h-px w-6')} />
+        <div className={cn('shrink-0 rounded-full bg-border/60', horizontal ? 'mx-1 h-5 w-px' : 'my-1 h-px w-6 self-center')} />
 
         {/* ── Join ── */}
         <Tooltip>
@@ -527,12 +548,12 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label={t.serverList?.modal?.joinNav ?? 'Rejoindre un serveur'}
               className={cn(
-                'group/join mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-border/80 text-muted-foreground transition-all duration-200 hover:rounded-full hover:border-solid hover:border-success hover:bg-success/10 hover:text-success hover:shadow-md hover:shadow-success/20',
-                btnSize,
+                'group/join flex shrink-0 cursor-pointer items-center justify-center rounded-[8px] border border-dashed border-border text-muted-foreground/60 transition-all duration-200 hover:border-foreground/20 hover:bg-foreground/6 hover:text-foreground',
+                horizontal ? cn(hBtnSize, 'mx-0') : cn(btnSize, 'mx-auto'),
               )}
               onClick={() => setJoinOpen(true)}
             >
-              <PlusIcon size={iconSize} className="transition-transform duration-200 group-hover/join:rotate-90" />
+              <PlusIcon size={horizontal ? hIconSize : iconSize} className="transition-transform duration-200 group-hover/join:rotate-90" />
             </button>
           </TooltipTrigger>
           <TooltipContent side={side}>
@@ -548,17 +569,16 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
               type="button"
               aria-label={t.serverList?.discoverServers ?? 'Découvrir des serveurs'}
               className={cn(
-                'mx-auto flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-all duration-200 hover:rounded-[14px] hover:bg-primary/15 hover:text-primary hover:shadow-md hover:shadow-primary/10',
-                btnSize,
+                'flex shrink-0 cursor-pointer items-center justify-center rounded-xl text-muted-foreground/60 transition-all duration-200 hover:bg-foreground/6 hover:text-foreground',
+                horizontal ? cn(hBtnSize, 'mx-0') : cn(btnSize, 'mx-auto'),
               )}
               onClick={() => router.push('/channels/discover-server')}
             >
-              <CompassIcon size={iconSize} />
+              <CompassIcon size={horizontal ? hIconSize : iconSize} />
             </button>
           </TooltipTrigger>
           <TooltipContent side={side}>{t.serverList?.discoverServers ?? 'Découvrir'}</TooltipContent>
         </Tooltip>
-
 
       </nav>
 
@@ -627,7 +647,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-[#7c3aed]/10 ring-1 ring-primary/25 shadow-sm shadow-primary/10">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground/6 ring-1 ring-border/30">
                 <Link2Icon size={18} className="text-primary" />
               </div>
               <div>
