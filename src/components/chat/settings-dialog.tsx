@@ -518,6 +518,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   };
 
   if (!user) return null;
+  const u = user; // u: User (non-nullable, safe in closures)
 
   /* ═══════════════════════════════════════════════════════════════════════ */
   /*  TAB RENDERS                                                           */
@@ -573,8 +574,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <Label className="text-[11px] text-muted-foreground/60">{t.settings.username}</Label>
                 {!editingUsername ? (
                   <div className="flex gap-2">
-                    <Input value={user.username} readOnly disabled className="flex-1 rounded-xl" />
-                    <Button type="button" variant="outline" size="icon" className="size-10 shrink-0 rounded-xl" onClick={() => { setEditingUsername(true); setNewUsername(user.username); }}><PencilIcon size={14} /></Button>
+                    <Input value={u.username} readOnly disabled className="flex-1 rounded-xl" />
+                    <Button type="button" variant="outline" size="icon" className="size-10 shrink-0 rounded-xl" onClick={() => { setEditingUsername(true); setNewUsername(u.username); }}><PencilIcon size={14} /></Button>
                   </div>
                 ) : (
                   <div className="space-y-2 rounded-2xl border border-border/40 bg-muted/20 p-3">
@@ -757,7 +758,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <div className="p-5 space-y-3">
                 <p className="text-[13px] font-semibold text-foreground">{t.settings.micMode}</p>
                 <p className="text-[12px] text-muted-foreground">{t.settings.micModeDesc}</p>
-                <RadioGroup value={micMode} onValueChange={(v) => { setMicMode(v); api.updatePreferences(user.id, { micMode: v }).catch(() => {}); }}>
+                <RadioGroup value={micMode} onValueChange={(v) => { setMicMode(v); api.updatePreferences(u.id, { micMode: v }).catch(() => {}); }}>
                   {[{ value: 'vad', label: t.settings.micModeVAD, desc: t.settings.micModeVADDesc }, { value: 'ptt', label: t.settings.micModePTT, desc: t.settings.micModePTTDesc }, { value: 'always', label: t.settings.micModeAlways, desc: t.settings.micModeAlwaysDesc }].map(({ value, label, desc }) => (
                     <label key={value} className={cn('flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-all', micMode === value ? 'border-primary/50 bg-primary/5' : 'border-border/40 hover:border-border hover:bg-muted/30')}>
                       <RadioGroupItem value={value} className="mt-0.5" />
@@ -849,14 +850,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               {notifKeywords.map((kw) => (
                 <Badge key={kw} variant="secondary" className="gap-1.5 rounded-lg">
                   {kw}
-                  <button type="button" onClick={() => { const u = notifKeywords.filter((k) => k !== kw); setNotifKeywords(u); api.updatePreferences(user.id, { notifKeywords: u }).catch(() => {}); }} className="hover:text-foreground"><XIcon size={11} /></button>
+                  <button type="button" onClick={() => { const u = notifKeywords.filter((k) => k !== kw); setNotifKeywords(u); api.updatePreferences(u.id, { notifKeywords: u2 }).catch(() => {}); }} className="hover:text-foreground"><XIcon size={11} /></button>
                 </Badge>
               ))}
             </div>
             <div className="flex gap-2">
               <Input placeholder={t.settings.addKeyword} value={newKeyword} className="flex-1 rounded-xl" onChange={(e) => setNewKeyword(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && newKeyword.trim()) { e.preventDefault(); const u = [...notifKeywords, newKeyword.trim()]; setNotifKeywords(u); api.updatePreferences(user.id, { notifKeywords: u }).catch(() => {}); setNewKeyword(''); } }} />
-              <Button variant="secondary" className="rounded-xl" disabled={!newKeyword.trim()} onClick={() => { if (newKeyword.trim()) { const u = [...notifKeywords, newKeyword.trim()]; setNotifKeywords(u); api.updatePreferences(user.id, { notifKeywords: u }).catch(() => {}); setNewKeyword(''); } }}>{t.settings.add}</Button>
+                onKeyDown={(e) => { if (e.key === 'Enter' && newKeyword.trim()) { e.preventDefault(); const u2 = [...notifKeywords, newKeyword.trim()]; setNotifKeywords(u2); api.updatePreferences(u.id, { notifKeywords: u2 }).catch(() => {}); setNewKeyword(''); } }} />
+              <Button variant="secondary" className="rounded-xl" disabled={!newKeyword.trim()} onClick={() => { if (newKeyword.trim()) { const u2 = [...notifKeywords, newKeyword.trim()]; setNotifKeywords(u2); api.updatePreferences(u.id, { notifKeywords: u2 }).catch(() => {}); setNewKeyword(''); } }}>{t.settings.add}</Button>
             </div>
           </div>
         </SettingsCard>
