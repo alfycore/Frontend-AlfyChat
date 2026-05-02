@@ -23,8 +23,11 @@ import { EmojiPicker } from '@/components/chat/emoji-picker';
 import { MessageItem, type MessageSender, type MessageData } from '@/components/chat/message-item';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
+import { useUIStyle } from '@/hooks/use-ui-style';
+import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { MenuIcon } from '@/components/icons';
 
 /* -- Types -------------------------------------------------------------------- */
 
@@ -141,7 +144,7 @@ function NewPostModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-border/30 bg-surface/80 shadow-2xl">
+      <div className="w-full max-w-lg rounded-2xl border border-border/30 bg-card/95 shadow-2xl backdrop-blur-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-border/30 px-5 py-4">
           <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10">
@@ -149,7 +152,7 @@ function NewPostModal({
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-foreground">Nouveau post</p>
-            <p className="text-[11px] text-muted">#{channelName || 'forum'}</p>
+            <p className="text-[11px] text-muted-foreground">#{channelName || 'forum'}</p>
           </div>
           <Button size="icon-sm" variant="ghost" className="size-8 rounded-xl text-muted-foreground" onClick={onClose}>
             <XIcon size={15} />
@@ -159,7 +162,7 @@ function NewPostModal({
         {/* Body */}
         <div className="space-y-3 p-5">
           <div>
-            <label className="mb-1.5 block text-[11px] font-medium text-muted">TITRE</label>
+            <label className="mb-1.5 block text-[11px] font-medium text-muted-foreground">TITRE</label>
             <Input
                 autoFocus
                 value={title}
@@ -168,10 +171,10 @@ function NewPostModal({
                 maxLength={120}
                 className="w-full"
               />
-            <p className="mt-1 text-right text-[10px] text-muted">{title.length}/120</p>
+            <p className="mt-1 text-right text-[10px] text-muted-foreground">{title.length}/120</p>
           </div>
           <div>
-            <label className="mb-1.5 block text-[11px] font-medium text-muted">CONTENU</label>
+            <label className="mb-1.5 block text-[11px] font-medium text-muted-foreground">CONTENU</label>
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -181,7 +184,7 @@ function NewPostModal({
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-[11px] font-medium text-muted">TAGS <span className="opacity-50">(optionnel, max 5)</span></label>
+            <label className="mb-1.5 block text-[11px] font-medium text-muted-foreground">TAGS <span className="opacity-50">(optionnel, max 5)</span></label>
             <div className="flex flex-wrap gap-1.5 mb-1.5">
               {tags.map((tag) => (
                 <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary">
@@ -235,7 +238,10 @@ function PostCard({ post, onClick }: { post: ForumPost; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="group w-full rounded-xl border border-border/30 bg-surface/60 p-4 text-left transition-all hover:border-primary/30 hover:bg-surface hover:shadow-md"
+      className={cn(
+        'group w-full rounded-xl border p-4 text-left transition-all',
+        'border-border/30 bg-card/60 hover:border-primary/30 hover:bg-card hover:shadow-md',
+      )}
     >
       <div className="flex items-start gap-3">
         <Avatar user={post.author} size={9} />
@@ -259,8 +265,8 @@ function PostCard({ post, onClick }: { post: ForumPost; onClick: () => void }) {
               ))}
             </div>
           )}
-          <p className="mt-0.5 line-clamp-2 text-[12px] text-muted">{post.content}</p>
-          <div className="mt-2 flex items-center gap-3 text-[11px] text-muted">
+          <p className="mt-0.5 line-clamp-2 text-[12px] text-muted-foreground">{post.content}</p>
+          <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
             <span className="font-medium text-foreground/60">
               {post.author?.displayName || post.author?.username || 'Inconnu'}
             </span>
@@ -387,7 +393,7 @@ function PostDiscussion({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Back header */}
-      <div className="flex shrink-0 items-center gap-2.5 border-b border-border/30 bg-surface/60 px-4 py-3">
+      <div className="flex shrink-0 items-center gap-2.5 border-b border-border/30 bg-card/60 px-4 py-3">
         <Button
           size="icon-sm"
           variant="ghost"
@@ -401,7 +407,7 @@ function PostDiscussion({
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">{post.title}</p>
-          <p className="text-[10px] text-muted">
+          <p className="text-[10px] text-muted-foreground">
             {messages.filter((m) => m.id !== post.id).length} réponse{messages.filter((m) => m.id !== post.id).length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -414,10 +420,10 @@ function PostDiscussion({
           <span className="text-[12px] font-semibold text-foreground/80">
             {post.author?.displayName || post.author?.username || 'Inconnu'}
           </span>
-          <span className="ml-auto text-[11px] text-muted">{timeAgo(post.createdAt)}</span>
+          <span className="ml-auto text-[11px] text-muted-foreground">{timeAgo(post.createdAt)}</span>
         </div>
         <h2 className="mb-1 text-base font-bold text-foreground">{post.title}</h2>
-        <p className="text-[13px] leading-relaxed text-muted">{post.content}</p>
+        <p className="text-[13px] leading-relaxed text-muted-foreground">{post.content}</p>
       </div>
 
       {/* Separator */}
@@ -449,7 +455,7 @@ function PostDiscussion({
               <BubbleChatIcon size={22} className="text-primary" />
             </div>
             <p className="text-sm font-medium text-foreground">Pas encore de réponses</p>
-            <p className="text-[12px] text-muted">Soyez le premier à répondre !</p>
+            <p className="text-[12px] text-muted-foreground">Soyez le premier à répondre !</p>
           </div>
         ) : (
           <div className="pb-2">
@@ -457,7 +463,7 @@ function PostDiscussion({
               <div key={gi}>
                 <div className="relative mx-4 my-3 flex items-center">
                   <Separator className="flex-1" />
-                  <span className="mx-3 shrink-0 text-[10px] text-muted">{group.date}</span>
+                  <span className="mx-3 shrink-0 text-[10px] text-muted-foreground">{group.date}</span>
                   <Separator className="flex-1" />
                 </div>
                 {group.messages.map((message) => (
@@ -487,7 +493,7 @@ function PostDiscussion({
 
       {/* Reply input */}
       <div className="shrink-0 px-4 pb-4 pt-1">
-        <div className="flex items-end gap-1 rounded-xl border border-border/60 bg-surface/80 px-2 py-1.5 transition-colors focus-within:border-violet-500/30">
+        <div className="flex items-end gap-1 rounded-xl border border-border/60 bg-card/80 px-2 py-1.5 transition-colors focus-within:border-violet-500/30">
           <label className="flex size-8 shrink-0 cursor-pointer items-center justify-center self-end rounded-xl text-muted transition-colors hover:bg-surface-secondary/40 hover:text-foreground">
             <input type="file" accept="image/*" className="hidden" />
             <PaperclipIcon size={16} />
@@ -498,7 +504,7 @@ function PostDiscussion({
             onKeyDown={handleKeyDown}
             placeholder="Répondre à ce post…"
             rows={1}
-            className="min-h-9 max-h-48 flex-1 resize-none border-0 bg-transparent py-1.5 text-sm text-foreground placeholder:text-muted focus:outline-none"
+            className="min-h-9 max-h-48 flex-1 resize-none border-0 bg-transparent py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <div className="self-end pb-0.5">
             <EmojiPicker onSelect={(emoji) => setInput((prev) => prev + emoji)}>
@@ -534,7 +540,7 @@ function ForumSkeleton() {
   return (
     <div className="space-y-3 p-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="rounded-xl border border-border/30 bg-surface/40 p-4">
+        <div key={i} className="rounded-xl border border-border/30 bg-card/40 p-4">
           <div className="flex gap-3">
             <Skeleton className="size-9 shrink-0 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -554,6 +560,8 @@ function ForumSkeleton() {
 
 export function ForumView({ serverId, channelId, channelName }: ForumViewProps) {
   const { user } = useAuth();
+  const ui = useUIStyle();
+  const { isMobile, toggleSidebar } = useMobileNav();
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null);
@@ -681,26 +689,27 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
       {/* Header */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-border/30 bg-surface/60 px-4">
-        <div className="flex size-7 items-center justify-center rounded-xl bg-primary/10">
-          <ForumIcon size={14} className="text-primary" />
+      <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
+        {isMobile && (
+          <Button size="icon-sm" variant="ghost" className="size-8 shrink-0 rounded-xl text-muted-foreground" onClick={toggleSidebar}>
+            <MenuIcon size={16} />
+          </Button>
+        )}
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-[8px] bg-violet-400/15">
+          <ForumIcon size={13} className="text-violet-400" />
         </div>
-        <h2 className="font-semibold text-foreground">{channelName || 'forum'}</h2>
-        <p className="text-[12px] text-muted">
+        <h2 className="flex-1 truncate text-[14px] font-semibold text-foreground">{channelName || 'forum'}</h2>
+        <p className="shrink-0 text-[12px] text-muted-foreground">
           {isLoading ? '…' : `${posts.length} post${posts.length !== 1 ? 's' : ''}`}
         </p>
-        <div className="ml-auto">
-          <Button
-            size="sm"
-            className="h-8 rounded-xl bg-violet-500 px-3 text-[12px] font-medium text-white hover:bg-violet-600"
-            onClick={() => setShowNewPost(true)}
-          >
-            <PlusIcon size={13} className="mr-1" />
-            Nouveau post
-          </Button>
-        </div>
+        <button
+          onClick={() => setShowNewPost(true)}
+          className="flex h-7 items-center gap-1.5 rounded-xl bg-violet-400/15 px-3 text-[12px] font-medium text-violet-400 transition-colors hover:bg-violet-400/25"
+        >
+          <PlusIcon size={13} /> Nouveau post
+        </button>
       </div>
 
       {/* Post list */}
@@ -709,20 +718,17 @@ export function ForumView({ serverId, channelId, channelName }: ForumViewProps) 
           <ForumSkeleton />
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="relative mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-              <div className="absolute inset-0 rounded-2xl bg-violet-500/8 " />
-              <ForumIcon size={32} className="relative text-primary" />
+            <div className="mb-4 flex size-[72px] items-center justify-center rounded-[22px] bg-violet-400/10">
+              <ForumIcon size={30} className="text-violet-400/60" />
             </div>
-            <h3 className="mb-1 text-xl font-bold text-foreground">Aucun post pour l&apos;instant</h3>
-            <p className="mb-4 text-sm text-muted">Lancez la discussion en créant le premier post.</p>
-            <Button
-              size="sm"
-              className="rounded-xl bg-violet-500 px-4 text-white hover:bg-violet-600"
+            <h3 className="mb-1.5 text-[18px] font-bold tracking-tight text-foreground">Aucun post pour l&apos;instant</h3>
+            <p className="mb-4 text-[13px] text-muted-foreground">Lancez la discussion en créant le premier post.</p>
+            <button
+              className="flex h-8 items-center gap-1.5 rounded-xl bg-violet-400/15 px-4 text-[12px] font-medium text-violet-400 hover:bg-violet-400/25"
               onClick={() => setShowNewPost(true)}
             >
-              <PlusIcon size={13} className="mr-1" />
-              Créer un post
-            </Button>
+              <PlusIcon size={13} /> Créer un post
+            </button>
           </div>
         ) : (
           <div className="space-y-2 p-4">

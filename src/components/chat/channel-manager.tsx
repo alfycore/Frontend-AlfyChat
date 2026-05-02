@@ -103,11 +103,17 @@ const PERM_TEXT_BY_TYPE: Partial<Record<ChannelType, PermFlag[]>> = {
   ],
 };
 
-const VOICE_TYPES = new Set<ChannelType>(['voice', 'stage']);
+const PERM_STAGE: PermFlag[] = [
+  { flag: 0x10, label: 'Rejoindre en audience',  key: 'voice_connect', description: 'Assister à la scène en tant qu\'auditeur' },
+  { flag: 0x20, label: 'Prendre la parole',       key: 'voice_speak',   description: 'Parler comme orateur désigné par l\'hôte' },
+  { flag: 0x2,  label: 'Envoyer des messages',    key: 'send',          description: 'Utiliser le chat pendant la scène' },
+];
 
 function getPermDict(channelType: ChannelType): Record<string, PermFlag[]> {
   const dict: Record<string, PermFlag[]> = { 'Général': PERM_GENERAL };
-  if (VOICE_TYPES.has(channelType)) {
+  if (channelType === 'stage') {
+    dict['Scène'] = PERM_STAGE;
+  } else if (channelType === 'voice') {
     dict['Vocal'] = PERM_VOICE;
   } else {
     dict['Texte'] = PERM_TEXT_BY_TYPE[channelType] ?? PERM_TEXT;
@@ -146,20 +152,20 @@ interface ChannelManagerProps {
   onChannelsChanged?: () => void;
 }
 
-const CHANNEL_TYPES: { id: ChannelType; icon: any; label: string; description: string }[] = [
-  { id: 'text',         icon: HashIcon,       label: 'Texte',       description: 'Messages en temps réel' },
-  { id: 'announcement', icon: MegaphoneIcon,  label: 'Annonce',     description: 'Infos officielles' },
-  { id: 'voice',        icon: Volume2Icon,    label: 'Vocal',       description: 'Audio / vidéo en direct' },
-  { id: 'forum',        icon: ForumIcon,      label: 'Forum',       description: 'Fils structurés' },
-  { id: 'stage',        icon: StageIcon,      label: 'Scène',       description: 'Présentations live' },
-  { id: 'gallery',      icon: GalleryIcon,    label: 'Galerie',     description: 'Images & médias' },
-  { id: 'poll',         icon: PollIcon,       label: 'Sondage',     description: 'Votes communautaires' },
-  { id: 'suggestion',   icon: SuggestionIcon, label: 'Suggestion',  description: 'Boîte à idées' },
-  { id: 'doc',          icon: DocIcon,        label: 'Document',    description: 'Ressources partagées' },
-  { id: 'counting',     icon: CountingIcon,   label: 'Comptage',    description: 'Compteur collaboratif' },
-  { id: 'vent',         icon: VentIcon,       label: 'Défouloir',   description: 'Exprimer ses frustrations' },
-  { id: 'thread',       icon: ThreadIcon,     label: 'Fil',         description: 'Discussions thématiques' },
-  { id: 'media',        icon: MediaIcon,      label: 'Médias',      description: 'Vidéos & clips' },
+const CHANNEL_TYPES: { id: ChannelType; icon: any; label: string; description: string; color: string }[] = [
+  { id: 'text',         icon: HashIcon,       label: 'Texte',       description: 'Messages en temps réel',        color: 'text-muted-foreground/60' },
+  { id: 'announcement', icon: MegaphoneIcon,  label: 'Annonce',     description: 'Informations officielles',      color: 'text-amber-400'           },
+  { id: 'voice',        icon: Volume2Icon,    label: 'Vocal',       description: 'Audio / vidéo en direct',       color: 'text-green-400'           },
+  { id: 'forum',        icon: ForumIcon,      label: 'Forum',       description: 'Fils de discussion',            color: 'text-blue-400'            },
+  { id: 'stage',        icon: StageIcon,      label: 'Scène',       description: 'Présentations live',            color: 'text-purple-400'          },
+  { id: 'gallery',      icon: GalleryIcon,    label: 'Galerie',     description: 'Images & médias',               color: 'text-pink-400'            },
+  { id: 'poll',         icon: PollIcon,       label: 'Sondage',     description: 'Votes & enquêtes',              color: 'text-orange-400'          },
+  { id: 'suggestion',   icon: SuggestionIcon, label: 'Suggestion',  description: 'Boîte à idées',                 color: 'text-emerald-400'         },
+  { id: 'doc',          icon: DocIcon,        label: 'Document',    description: 'Ressources & docs partagés',    color: 'text-sky-400'             },
+  { id: 'counting',     icon: CountingIcon,   label: 'Comptage',    description: 'Compteur collaboratif',         color: 'text-rose-400'            },
+  { id: 'vent',         icon: VentIcon,       label: 'Défouloir',   description: 'Exprimer ses frustrations',     color: 'text-red-400'             },
+  { id: 'thread',       icon: ThreadIcon,     label: 'Fil',         description: 'Discussions thématiques',       color: 'text-violet-400'          },
+  { id: 'media',        icon: MediaIcon,      label: 'Médias',      description: 'Vidéos, clips & sons',          color: 'text-cyan-400'            },
 ];
 
 export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerProps) {
@@ -308,7 +314,8 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
 
   const ChannelIcon = ({ type }: { type: string }) => {
     const Icon = CHANNEL_TYPE_ICON[type] ?? HashIcon;
-    return <Icon size={16} className="shrink-0 text-[var(--muted)]" />;
+    const colorCls = CHANNEL_TYPES.find((t) => t.id === type)?.color ?? 'text-[var(--muted)]';
+    return <Icon size={16} className={cn('shrink-0', colorCls)} />;
   };
 
   const DeleteConfirm = ({ target, indent = false }: { target: Channel; indent?: boolean }) => (
@@ -469,24 +476,34 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           {isCreating && formType !== 'category' && (
             <div className="space-y-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">Type de salon</span>
-              <div className="grid grid-cols-3 gap-1.5">
-                {CHANNEL_TYPES.map(({ id, icon: Icon, label, description }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setFormType(id)}
-                    className={cn(
-                      'flex flex-col items-start gap-1 rounded-xl border p-2.5 text-left transition-all duration-200',
-                      formType === id
-                        ? 'border-[var(--accent)]/50 bg-[var(--accent)]/10 text-[var(--accent)]'
-                        : 'border-[var(--border)]/40 text-[var(--muted)] hover:bg-[var(--surface-secondary)]/40 hover:text-[var(--foreground)]',
-                    )}
-                  >
-                    <Icon size={15} />
-                    <span className="text-[11px] font-semibold leading-tight">{label}</span>
-                    <span className="text-[10px] leading-tight opacity-60">{description}</span>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-1.5">
+                {CHANNEL_TYPES.map(({ id, icon: Icon, label, description, color }) => {
+                  const isSelected = formType === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setFormType(id)}
+                      className={cn(
+                        'flex items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-all duration-200',
+                        isSelected
+                          ? 'border-[var(--accent)]/40 bg-[var(--accent)]/8'
+                          : 'border-[var(--border)]/40 hover:bg-[var(--surface-secondary)]/30',
+                      )}
+                    >
+                      <span className={cn(
+                        'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors',
+                        isSelected ? 'bg-[var(--accent)]/15' : 'bg-[var(--surface-secondary)]/50',
+                      )}>
+                        <Icon size={15} className={isSelected ? 'text-[var(--accent)]' : color} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className={cn('truncate text-[12px] font-semibold leading-tight', isSelected ? 'text-[var(--accent)]' : 'text-[var(--foreground)]')}>{label}</p>
+                        <p className="truncate text-[10px] leading-tight text-[var(--muted)]/70">{description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

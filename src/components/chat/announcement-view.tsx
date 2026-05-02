@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { MegaphoneIcon, PlusIcon, XIcon, SendIcon, SmileIcon, PencilIcon, Trash2Icon } from '@/components/icons';
+import { MegaphoneIcon, PlusIcon, XIcon, SendIcon, SmileIcon, PencilIcon, Trash2Icon, MenuIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +11,9 @@ import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 import { Twemoji } from '@/lib/twemoji';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
+import { useUIStyle } from '@/hooks/use-ui-style';
+import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { useServerPermissions } from '@/hooks/use-server-permissions';
 import { cn } from '@/lib/utils';
 import { resolveMediaUrl } from '@/lib/api';
 
@@ -92,7 +95,7 @@ function ReactionBar({
               'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-all h-auto',
               hasReacted
                 ? 'border-amber-400/40 bg-amber-500/15 text-amber-400 hover:bg-amber-500/20'
-                : 'border-[var(--border)]/40 bg-[var(--surface)]/60 text-[var(--foreground)]/70 hover:border-[var(--border)] hover:bg-[var(--surface)]',
+                : 'border-border/40 bg-card/60 text-foreground/70 hover:border-border hover:bg-card',
             )}
           >
             <Twemoji emoji={r.emoji} size={14} />
@@ -105,7 +108,7 @@ function ReactionBar({
         <Button
           size="icon-sm"
           variant="ghost"
-          className="size-7 rounded-full border border-dashed border-[var(--border)]/40 text-muted-foreground hover:border-amber-400/40 hover:text-amber-400"
+          className="size-7 rounded-full border border-dashed border-border/40 text-muted-foreground hover:border-amber-400/40 hover:text-amber-400"
         >
           <SmileIcon size={13} />
         </Button>
@@ -130,6 +133,7 @@ function AnnouncementCard({
   onDelete: (id: string) => void;
 }) {
   const [showActions, setShowActions] = useState(false);
+  const ui = useUIStyle();
   const initials = (post.author?.displayName || post.author?.username || '?')[0].toUpperCase();
 
   const handleToggle = (emoji: string) => {
@@ -140,7 +144,12 @@ function AnnouncementCard({
 
   return (
     <article
-      className="group relative rounded-2xl border border-border/40 bg-card/60 p-5 shadow-sm transition-all duration-200 hover:border-amber-500/30 hover:bg-card hover:shadow-md"
+      className={cn(
+        'group relative rounded-2xl p-5 transition-all duration-200',
+        ui.isGlass
+          ? 'border border-white/12 bg-white/7 backdrop-blur-xl hover:bg-white/12 hover:border-white/20'
+          : 'border border-border/40 bg-card/60 shadow-sm hover:border-amber-500/20 hover:bg-card hover:shadow-md',
+      )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -233,17 +242,17 @@ function NewAnnouncementModal({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60" onClick={onClose}>
       <div
-        className="w-full max-w-lg rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/80 shadow-2xl"
+        className="w-full max-w-lg rounded-2xl border border-border/30 bg-card/90 shadow-2xl backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-[var(--border)]/30 px-5 py-4">
+        <div className="flex items-center gap-3 border-b border-border/30 px-5 py-4">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
             <MegaphoneIcon size={15} className="text-amber-400" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-[var(--foreground)]">Nouvelle annonce</p>
-            <p className="text-[11px] text-[var(--muted)]">#{channelName || 'annonces'}</p>
+            <p className="text-sm font-semibold text-foreground">Nouvelle annonce</p>
+            <p className="text-[11px] text-muted-foreground">#{channelName || 'annonces'}</p>
           </div>
           <Button size="icon-sm" variant="ghost" className="size-8 rounded-xl text-muted-foreground" onClick={onClose}>
             <XIcon size={15} />
@@ -252,7 +261,7 @@ function NewAnnouncementModal({
 
         {/* Body */}
         <div className="p-5">
-          <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">CONTENU <span className="opacity-50">(Markdown supporté)</span></label>
+          <label className="mb-1.5 block text-[11px] font-medium text-muted-foreground">CONTENU <span className="opacity-50">(Markdown supporté)</span></label>
           <Textarea
             autoFocus
             value={content}
@@ -261,11 +270,11 @@ function NewAnnouncementModal({
             rows={7}
             className="w-full resize-none"
           />
-          <p className="mt-1 text-right text-[10px] text-[var(--muted)]">{content.length} caractères</p>
+          <p className="mt-1 text-right text-[10px] text-muted-foreground">{content.length} caractères</p>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 border-t border-[var(--border)]/30 px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-border/30 px-5 py-3">
           <Button size="sm" variant="ghost" className="rounded-xl text-muted-foreground" onClick={onClose}>
             Annuler
           </Button>
@@ -288,6 +297,10 @@ function NewAnnouncementModal({
 
 export function AnnouncementView({ serverId, channelId, channelName }: AnnouncementViewProps) {
   const { user } = useAuth();
+  const ui = useUIStyle();
+  const { isMobile, toggleSidebar } = useMobileNav();
+  const perms = useServerPermissions(serverId);
+  const canPublish = perms.isOwner || perms.isAdmin || perms.canManage || perms.canManageMessages;
   const [posts, setPosts] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -443,31 +456,27 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
   }, [serverId, channelId, user]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[var(--background)]">
+    <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
       {/* ── Header ── */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-border/40 bg-background/60 px-4 backdrop-blur-md">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-linear-to-br from-amber-500/20 to-amber-500/8 ring-1 ring-amber-500/25 shadow-sm shadow-amber-500/10">
-          <MegaphoneIcon size={14} className="text-amber-400" />
-        </div>
-        <h2 className="font-heading tracking-tight text-foreground">{channelName || 'annonces'}</h2>
-        {posts.length > 0 && (
-          <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-            {posts.length} annonce{posts.length > 1 ? 's' : ''}
-          </span>
-        )}
-        <div className="ml-auto">
-          <Button
-            size="sm"
-            className="gap-1.5 rounded-xl bg-linear-to-br from-amber-500 to-amber-600 text-white shadow-sm shadow-amber-500/20 hover:from-amber-500 hover:to-amber-500"
-            onClick={() => setShowModal(true)}
-          >
-            <PlusIcon size={14} />
-            Publier
+      <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
+        {isMobile && (
+          <Button size="icon-sm" variant="ghost" className="size-8 shrink-0 rounded-xl text-muted-foreground" onClick={toggleSidebar}>
+            <MenuIcon size={16} />
           </Button>
+        )}
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-[8px] bg-amber-400/15">
+          <MegaphoneIcon size={13} className="text-amber-400" />
         </div>
+        <h2 className="flex-1 truncate text-[14px] font-semibold text-foreground">{channelName || 'annonces'}</h2>
+        {canPublish && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex h-7 items-center gap-1.5 rounded-xl bg-amber-400/15 px-3 text-[12px] font-medium text-amber-400 transition-colors hover:bg-amber-400/25"
+          >
+            <PlusIcon size={13} /> Publier
+          </button>
+        )}
       </div>
-
-      {/* ── Content ── */}
       <ScrollArea className="min-h-0 flex-1">
         <div className="mx-auto max-w-2xl space-y-4 p-5">
           {isLoading ? (
@@ -487,13 +496,13 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
             ))
           ) : posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="relative mb-5 flex size-20 items-center justify-center rounded-3xl bg-linear-to-br from-amber-500/25 to-amber-500/10 ring-1 ring-amber-500/25 shadow-lg shadow-amber-500/15">
-                <MegaphoneIcon size={36} className="relative text-amber-400" />
+              <div className="mb-5 flex size-[72px] items-center justify-center rounded-[22px] bg-amber-400/10">
+                <MegaphoneIcon size={30} className="text-amber-400/60" />
               </div>
-              <h3 className="mb-1.5 font-heading text-xl tracking-tight text-foreground">Aucune annonce</h3>
-              <p className="mb-5 text-sm text-muted-foreground">Publiez la première annonce dans #{channelName || 'annonces'}</p>
+              <h3 className="mb-1.5 text-[18px] font-bold tracking-tight text-foreground">Aucune annonce</h3>
+              <p className="mb-5 max-w-xs text-[13px] text-muted-foreground">Publiez la première annonce dans #{channelName || 'annonces'}</p>
               <Button
-                className="gap-1.5 rounded-xl bg-linear-to-br from-amber-500 to-amber-600 text-white shadow-sm shadow-amber-500/20 hover:from-amber-500 hover:to-amber-500"
+                className="gap-1.5 rounded-xl bg-amber-500 text-white hover:bg-amber-600"
                 onClick={() => setShowModal(true)}
               >
                 <PlusIcon size={15} />
@@ -506,7 +515,7 @@ export function AnnouncementView({ serverId, channelId, channelName }: Announcem
                 key={post.id}
                 post={post}
                 currentUserId={user?.id}
-                isAuthor={post.authorId === user?.id}
+                isAuthor={post.authorId === user?.id || canPublish}
                 onReaction={handleReaction}
                 onDelete={handleDelete}
               />

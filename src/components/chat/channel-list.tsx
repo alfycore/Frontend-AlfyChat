@@ -29,6 +29,8 @@ import {
   VentIcon,
   ThreadIcon,
   MediaIcon,
+  MinigameIcon,
+  TriviaIcon,
   PencilIcon,
   Trash2Icon,
   FileTextIcon,
@@ -104,54 +106,43 @@ import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { cn } from '@/lib/utils';
 import { statusColor, isVisibleOnline } from '@/lib/status';
 
-type ChannelType = 'text' | 'voice' | 'announcement' | 'category' | 'forum' | 'stage' | 'gallery' | 'poll' | 'suggestion' | 'doc' | 'counting' | 'vent' | 'thread' | 'media';
+type ChannelType = 'text' | 'voice' | 'announcement' | 'category' | 'forum' | 'stage' | 'gallery' | 'poll' | 'suggestion' | 'doc' | 'counting' | 'vent' | 'thread' | 'media' | 'minigame' | 'trivia';
 
-const CHANNEL_ICON: Record<string, any> = {
-  text: HashIcon,
-  announcement: MegaphoneIcon,
-  voice: Volume2Icon,
-  forum: ForumIcon,
-  stage: StageIcon,
-  gallery: GalleryIcon,
-  poll: PollIcon,
-  suggestion: SuggestionIcon,
-  doc: DocIcon,
-  counting: CountingIcon,
-  vent: VentIcon,
-  thread: ThreadIcon,
-  media: MediaIcon,
+/* ─── Source de vérité unique pour les 13 types de salon ─────────────────────
+   icon      : composant icône
+   label     : nom affiché
+   description : explication courte (picker de création)
+   iconCls   : couleur Tailwind de l'icône (état inactif)
+   activeCls : couleur Tailwind du texte/icône (état actif)
+   activeBg  : fond Tailwind (état actif)
+   bubble    : true = l'icône est enveloppée dans un pastille arrondie
+──────────────────────────────────────────────────────────────────────────── */
+const TYPE_META: Record<string, {
+  icon: any; label: string; description: string;
+  iconCls: string; activeCls: string; activeBg: string; bubble: boolean;
+}> = {
+  text:         { icon: HashIcon,       label: 'Texte',       description: 'Messages en temps réel',      iconCls: 'text-muted-foreground/55',  activeCls: 'text-primary',     activeBg: 'bg-primary/10',     bubble: false },
+  announcement: { icon: MegaphoneIcon,  label: 'Annonce',     description: 'Informations officielles',    iconCls: 'text-amber-400',            activeCls: 'text-amber-400',   activeBg: 'bg-amber-400/10',   bubble: true  },
+  voice:        { icon: Volume2Icon,    label: 'Vocal',       description: 'Audio / vidéo en direct',     iconCls: 'text-green-400',            activeCls: 'text-green-400',   activeBg: 'bg-green-400/10',   bubble: false },
+  forum:        { icon: ForumIcon,      label: 'Forum',       description: 'Fils de discussion',          iconCls: 'text-blue-400',             activeCls: 'text-blue-400',    activeBg: 'bg-blue-400/10',    bubble: true  },
+  stage:        { icon: StageIcon,      label: 'Scène',       description: 'Présentations live',          iconCls: 'text-purple-400',           activeCls: 'text-purple-400',  activeBg: 'bg-purple-400/10',  bubble: true  },
+  gallery:      { icon: GalleryIcon,    label: 'Galerie',     description: 'Images & médias',             iconCls: 'text-pink-400',             activeCls: 'text-pink-400',    activeBg: 'bg-pink-400/10',    bubble: true  },
+  poll:         { icon: PollIcon,       label: 'Sondage',     description: 'Votes & enquêtes',            iconCls: 'text-orange-400',           activeCls: 'text-orange-400',  activeBg: 'bg-orange-400/10',  bubble: true  },
+  suggestion:   { icon: SuggestionIcon, label: 'Suggestion',  description: 'Boîte à idées',               iconCls: 'text-emerald-400',          activeCls: 'text-emerald-400', activeBg: 'bg-emerald-400/10', bubble: true  },
+  doc:          { icon: DocIcon,        label: 'Document',    description: 'Ressources & docs partagés',  iconCls: 'text-sky-400',              activeCls: 'text-sky-400',     activeBg: 'bg-sky-400/10',     bubble: true  },
+  counting:     { icon: CountingIcon,   label: 'Comptage',    description: 'Compteur collaboratif',       iconCls: 'text-rose-400',             activeCls: 'text-rose-400',    activeBg: 'bg-rose-400/10',    bubble: true  },
+  vent:         { icon: VentIcon,       label: 'Défouloir',   description: 'Exprimer ses frustrations',   iconCls: 'text-red-400',              activeCls: 'text-red-400',     activeBg: 'bg-red-400/10',     bubble: true  },
+  thread:       { icon: ThreadIcon,     label: 'Fil',         description: 'Discussions thématiques',     iconCls: 'text-violet-400',           activeCls: 'text-violet-400',  activeBg: 'bg-violet-400/10',  bubble: true  },
+  media:        { icon: MediaIcon,      label: 'Média',       description: 'Vidéos, clips & sons',        iconCls: 'text-cyan-400',             activeCls: 'text-cyan-400',    activeBg: 'bg-cyan-400/10',    bubble: true  },
+  minigame:     { icon: MinigameIcon,   label: 'Mini-Jeux',   description: 'PPC, dés, jeux de salon',    iconCls: 'text-indigo-400',           activeCls: 'text-indigo-400',  activeBg: 'bg-indigo-400/10',  bubble: true  },
+  trivia:       { icon: TriviaIcon,     label: 'Trivia',      description: 'Quiz & questions de culture',  iconCls: 'text-yellow-400',           activeCls: 'text-yellow-400',  activeBg: 'bg-yellow-400/10',  bubble: true  },
 };
 
-const TYPE_ICON_INACTIVE: Record<string, string> = {
-  text:         'text-muted-foreground/50 group-hover/ch:text-muted-foreground/80',
-  announcement: 'text-amber-500/70 group-hover/ch:text-amber-500',
-  forum:        'text-blue-400/70 group-hover/ch:text-blue-400',
-  stage:        'text-purple-400/70 group-hover/ch:text-purple-400',
-  gallery:      'text-pink-400/70 group-hover/ch:text-pink-400',
-  poll:         'text-orange-400/70 group-hover/ch:text-orange-400',
-  suggestion:   'text-emerald-400/70 group-hover/ch:text-emerald-400',
-  doc:          'text-sky-400/70 group-hover/ch:text-sky-400',
-  counting:     'text-rose-400/70 group-hover/ch:text-rose-400',
-  vent:         'text-red-400/70 group-hover/ch:text-red-400',
-  thread:       'text-violet-400/70 group-hover/ch:text-violet-400',
-  media:        'text-cyan-400/70 group-hover/ch:text-cyan-400',
-};
-
-const CHANNEL_TYPES = [
-  { id: 'text',         icon: HashIcon,        label: 'Texte'      },
-  { id: 'announcement', icon: MegaphoneIcon,    label: 'Annonce'    },
-  { id: 'voice',        icon: Volume2Icon,      label: 'Vocal'      },
-  { id: 'forum',        icon: ForumIcon,        label: 'Forum'      },
-  { id: 'stage',        icon: StageIcon,        label: 'Scène'      },
-  { id: 'gallery',      icon: GalleryIcon,      label: 'Galerie'    },
-  { id: 'poll',         icon: PollIcon,         label: 'Sondage'    },
-  { id: 'suggestion',   icon: SuggestionIcon,   label: 'Suggestion' },
-  { id: 'doc',          icon: DocIcon,          label: 'Document'   },
-  { id: 'counting',     icon: CountingIcon,     label: 'Comptage'   },
-  { id: 'vent',         icon: VentIcon,         label: 'Défouloir'  },
-  { id: 'thread',       icon: ThreadIcon,       label: 'Fil'        },
-  { id: 'media',        icon: MediaIcon,        label: 'Média'      },
-] as const;
+const CHANNEL_TYPE_ORDER: ChannelType[] = [
+  'text', 'announcement', 'voice', 'forum', 'stage', 'gallery',
+  'poll', 'suggestion', 'doc', 'counting', 'vent', 'thread', 'media',
+  'minigame', 'trivia',
+];
 
 interface Channel {
   id: string;
@@ -205,20 +196,32 @@ function ChannelRow({
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
   const hasUnread = (unreadCount ?? 0) > 0;
-  const Icon = CHANNEL_ICON[channel.type] ?? HashIcon;
+  const meta = TYPE_META[channel.type] ?? TYPE_META.text;
+  const Icon = meta.icon;
+
   const btn = (
     <button
       onClick={onClick}
       className={cn(
         'group/ch relative flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] font-medium transition-all duration-150',
         isActive
-          ? 'bg-primary/10 text-primary'
+          ? cn(meta.activeBg, meta.activeCls)
           : hasUnread
             ? 'text-foreground hover:bg-foreground/6'
             : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
       )}
     >
-      <Icon size={14} className={cn('shrink-0 transition-colors', isActive ? 'text-primary' : (TYPE_ICON_INACTIVE[channel.type] ?? 'text-muted-foreground/50 group-hover/ch:text-muted-foreground/80'))} />
+      {/* Icône — bulle colorée pour les types spéciaux, icône simple pour texte/vocal */}
+      {meta.bubble ? (
+        <span className={cn(
+          'flex size-[20px] shrink-0 items-center justify-center rounded-[5px] transition-colors',
+          isActive ? 'bg-white/10' : 'bg-foreground/[0.06] group-hover/ch:bg-foreground/[0.09]',
+        )}>
+          <Icon size={12} className={cn('shrink-0 transition-colors', isActive ? meta.activeCls : meta.iconCls)} />
+        </span>
+      ) : (
+        <Icon size={14} className={cn('shrink-0 transition-colors', isActive ? meta.activeCls : meta.iconCls)} />
+      )}
       <span className={cn('flex-1 truncate', hasUnread && !isActive && 'font-semibold text-foreground')}>{channel.name}</span>
       {hasUnread && !isActive && (
         <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background">
@@ -1468,9 +1471,14 @@ export function ChannelList({
             </DialogHeader>
             {/* Header */}
             <div className="flex items-start gap-3 border-b border-border/20 px-6 py-5 pr-12">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground/6 ring-1 ring-border/30">
-                {(() => { const Icon = CHANNEL_ICON[createType] ?? HashIcon; return <Icon size={18} className="text-primary" />; })()}
-              </div>
+              {(() => {
+                const m = TYPE_META[createType] ?? TYPE_META.text;
+                return (
+                  <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-border/30', m.activeBg)}>
+                    <m.icon size={18} className={m.activeCls} />
+                  </span>
+                );
+              })()}
               <div>
                 <h2 className="font-heading text-[15px] tracking-tight">
                   {createType === 'category'
@@ -1492,23 +1500,32 @@ export function ChannelList({
               {createType !== 'category' && (
                 <div className="space-y-2">
                 <label className="text-[13px] font-semibold">{t.channelList.createModal.type}</label>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {CHANNEL_TYPES.map((ct) => {
-                      const isSelected = createType === ct.id;
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {CHANNEL_TYPE_ORDER.map((typeId) => {
+                      const m = TYPE_META[typeId];
+                      const isSelected = createType === typeId;
                       return (
                         <button
-                          key={ct.id}
+                          key={typeId}
                           type="button"
-                          onClick={() => setCreateType(ct.id as ChannelType)}
+                          onClick={() => setCreateType(typeId as ChannelType)}
                           className={cn(
-                            'flex flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-[10px] font-semibold transition-all duration-150',
+                            'flex items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-all duration-150',
                             isSelected
-                              ? 'border-foreground/15 bg-foreground/8 text-foreground'
-                              : 'border-border/40 bg-foreground/[0.03] text-muted-foreground hover:border-foreground/10 hover:bg-foreground/5 hover:text-foreground',
+                              ? cn('border-transparent', m.activeBg)
+                              : 'border-border/40 bg-foreground/[0.02] hover:border-foreground/10 hover:bg-foreground/5',
                           )}
                         >
-                          <ct.icon size={15} />
-                          {ct.label}
+                          <span className={cn(
+                            'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors',
+                            isSelected ? 'bg-white/10' : 'bg-foreground/[0.06]',
+                          )}>
+                            <m.icon size={15} className={isSelected ? m.activeCls : m.iconCls} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className={cn('truncate text-[12px] font-semibold leading-tight', isSelected ? m.activeCls : 'text-foreground')}>{m.label}</p>
+                            <p className="truncate text-[10px] leading-tight text-muted-foreground/60">{m.description}</p>
+                          </div>
                         </button>
                       );
                     })}

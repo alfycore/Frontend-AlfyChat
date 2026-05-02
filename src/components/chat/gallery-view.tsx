@@ -1,12 +1,14 @@
 ﻿'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { GalleryIcon, PlusIcon, XIcon, DownloadIcon, Maximize2Icon } from '@/components/icons';
+import { GalleryIcon, PlusIcon, XIcon, DownloadIcon, Maximize2Icon, MenuIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
+import { useUIStyle } from '@/hooks/use-ui-style';
+import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -158,7 +160,7 @@ function PinCard({
 
   return (
     <div
-      className="group relative mb-3 w-full cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface)] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      className="group relative mb-3 w-full cursor-pointer overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
@@ -293,16 +295,16 @@ function UploadModal({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-2xl border border-[var(--border)]/40 bg-[var(--surface)] shadow-2xl"
+          className="w-full max-w-md rounded-2xl border border-border/40 bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-[var(--border)]/30 px-5 py-4">
+        <div className="flex items-center gap-3 border-b border-border/30 px-5 py-4">
           <div className="flex size-8 items-center justify-center rounded-lg bg-pink-500/10">
             <GalleryIcon size={15} className="text-pink-400" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-[var(--foreground)]">Partager une image</p>
+            <p className="text-sm font-semibold text-foreground">Partager une image</p>
           </div>
           <Button size="icon-sm" variant="ghost" className="size-8 rounded-lg text-muted-foreground" onClick={onClose}>
             <XIcon size={15} />
@@ -318,8 +320,8 @@ function UploadModal({
               dragging
                 ? 'border-pink-400 bg-pink-500/10'
                 : preview
-                  ? 'border-[var(--border)]/30 bg-[var(--background)]'
-                  : 'border-[var(--border)]/40 bg-[var(--background)] hover:border-pink-400/50 hover:bg-pink-500/5',
+                  ? 'border-border/30 bg-background'
+                  : 'border-border/40 bg-background hover:border-pink-400/50 hover:bg-pink-500/5',
             )}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
@@ -356,19 +358,19 @@ function UploadModal({
 
           {/* Caption */}
           <div>
-            <label className="mb-1.5 block text-[11px] font-medium text-[var(--muted)]">LÉGENDE <span className="opacity-50">(optionnel)</span></label>
+            <label className="mb-1.5 block text-[11px] font-medium text-muted-foreground">LÉGENDE <span className="opacity-50">(optionnel)</span></label>
             <input
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Décrivez votre image…"
               maxLength={200}
-              className="w-full rounded-xl border border-[var(--border)]/50 bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-pink-500/40 focus:outline-none"
+              className="w-full rounded-xl border border-border/50 bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-pink-500/40 focus:outline-none"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 border-t border-[var(--border)]/30 px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-border/30 px-5 py-3">
           <Button size="sm" variant="ghost" className="rounded-lg text-muted-foreground" onClick={onClose}>
             Annuler
           </Button>
@@ -390,6 +392,8 @@ function UploadModal({
 
 export function GalleryView({ serverId, channelId, channelName }: GalleryViewProps) {
   const { user } = useAuth();
+  const ui = useUIStyle();
+  const { isMobile, toggleSidebar } = useMobileNav();
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -476,28 +480,24 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
   const lightboxImage = lightboxIndex !== null ? images[lightboxIndex] : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[var(--background)]">
+    <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
       {/* ── Header ── */}
-      <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-[var(--border)]/30 bg-[var(--background)]/60 px-4">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-pink-500/10">
-          <GalleryIcon size={14} className="text-pink-400" />
-        </div>
-        <h2 className="font-semibold text-[var(--foreground)]">{channelName || 'galerie'}</h2>
-        {images.length > 0 && (
-          <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 text-[11px] font-medium text-[var(--muted)]">
-            {images.length} image{images.length > 1 ? 's' : ''}
-          </span>
-        )}
-        <div className="ml-auto">
-          <Button
-            size="sm"
-            className="gap-1.5 rounded-xl bg-pink-500 text-white hover:bg-pink-600"
-            onClick={() => setShowUpload(true)}
-          >
-            <PlusIcon size={14} />
-            Partager
+      <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
+        {isMobile && (
+          <Button size="icon-sm" variant="ghost" className="size-8 shrink-0 rounded-xl text-muted-foreground" onClick={toggleSidebar}>
+            <MenuIcon size={16} />
           </Button>
+        )}
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-[8px] bg-pink-400/15">
+          <GalleryIcon size={13} className="text-pink-400" />
         </div>
+        <h2 className="flex-1 truncate text-[14px] font-semibold text-foreground">{channelName || 'galerie'}</h2>
+        <button
+          onClick={() => setShowUpload(true)}
+          className="flex h-7 items-center gap-1.5 rounded-xl bg-pink-400/15 px-3 text-[12px] font-medium text-pink-400 transition-colors hover:bg-pink-400/25"
+        >
+          <PlusIcon size={13} /> Partager
+        </button>
       </div>
 
       {/* ── Gallery grid ── */}
@@ -521,16 +521,12 @@ export function GalleryView({ serverId, channelId, channelName }: GalleryViewPro
           ) : images.length === 0 ? (
             /* Empty state */
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="relative mb-5 flex size-20 items-center justify-center rounded-3xl bg-pink-500/10">
-                <div className="absolute inset-0 rounded-3xl bg-pink-500/8 " />
-                <GalleryIcon size={36} className="relative text-pink-400" />
+              <div className="mb-5 flex size-[72px] items-center justify-center rounded-[22px] bg-pink-400/10">
+                <GalleryIcon size={30} className="text-pink-400/60" />
               </div>
-              <h3 className="mb-1.5 text-xl font-bold text-[var(--foreground)]">Galerie vide</h3>
-              <p className="mb-5 text-sm text-[var(--muted)]">Soyez le premier à partager une image dans #{channelName || 'galerie'}</p>
-              <Button
-                className="gap-1.5 rounded-xl bg-pink-500 text-white hover:bg-pink-600"
-                onClick={() => setShowUpload(true)}
-              >
+              <h3 className="mb-1.5 text-[18px] font-bold tracking-tight text-foreground">Galerie vide</h3>
+              <p className="mb-5 max-w-xs text-[13px] text-muted-foreground">Soyez le premier à partager une image dans #{channelName || 'galerie'}</p>
+              <Button className="gap-1.5 rounded-xl bg-pink-500 text-white hover:bg-pink-600" onClick={() => setShowUpload(true)}>
                 <PlusIcon size={15} />
                 Partager une image
               </Button>

@@ -197,20 +197,24 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       if (warn) toast.warning(warn);
     };
 
+    const onDelete = (d: any) => onGone(d);
+    const onKicked = (d: any) => onGone(d, 'Vous avez été retiré du serveur.');
+    const onBanned = (d: any) => onGone(d, 'Vous avez été banni du serveur.');
+
     socketService.on('SERVER_NODE_ONLINE',  onOnline);
     socketService.on('SERVER_NODE_OFFLINE', onOffline);
     socketService.on('SERVER_UPDATE',       onUpdate);
-    socketService.on('SERVER_DELETE',       (d) => onGone(d));
-    socketService.on('SERVER_KICKED',       (d) => onGone(d, 'Vous avez été retiré du serveur.'));
-    socketService.on('SERVER_BANNED',       (d) => onGone(d, 'Vous avez été banni du serveur.'));
+    socketService.on('SERVER_DELETE',       onDelete);
+    socketService.on('SERVER_KICKED',       onKicked);
+    socketService.on('SERVER_BANNED',       onBanned);
 
     return () => {
       socketService.off('SERVER_NODE_ONLINE',  onOnline);
       socketService.off('SERVER_NODE_OFFLINE', onOffline);
       socketService.off('SERVER_UPDATE',       onUpdate);
-      socketService.off('SERVER_DELETE',       onGone);
-      socketService.off('SERVER_KICKED',       onGone);
-      socketService.off('SERVER_BANNED',       onGone);
+      socketService.off('SERVER_DELETE',       onDelete);
+      socketService.off('SERVER_KICKED',       onKicked);
+      socketService.off('SERVER_BANNED',       onBanned);
     };
   }, [selectedServer, onSelectServer]);
 

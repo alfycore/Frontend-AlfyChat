@@ -120,6 +120,8 @@ export const MoreVerticalIcon = fi('menu-dots-vertical');
 export const CameraIcon = fi('camera');
 export const ImageIcon = fi('picture');
 export const VideoIcon = fi('video-camera');
+export const PlayIcon = fi('play');
+export const PauseIcon = fi('pause');
 export const VideoOffIcon = fi('video-slash');
 export const MusicIcon = fi('music');
 
@@ -220,6 +222,9 @@ export const CreditCardIcon = fi('credit-card');
 
 // ── Games / Fun ──
 export const Gamepad2Icon = fi('gamepad');
+export const MinigameIcon = fi('gamepad');
+export const TriviaIcon = fi('question');
+export const TrophyIcon = fi('trophy');
 export const GemIcon = fi('diamond');
 export const SwordIcon = fi('sword');
 export const SkullIcon = fi('skull');

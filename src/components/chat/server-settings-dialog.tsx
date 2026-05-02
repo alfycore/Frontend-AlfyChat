@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import {
@@ -25,11 +25,12 @@ import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { ChannelManager } from '@/components/chat/channel-manager';
@@ -68,72 +69,15 @@ interface ServerSettingsDialogProps {
 
 type Section = 'general' | 'invites' | 'droits' | 'roles' | 'channels' | 'domain' | 'node';
 
-const SECTION_ICONS: Record<Section, React.ComponentType<{ size?: number; className?: string }>> = {
-  general: SettingsIcon,
-  invites: UserPlusIcon,
-  droits: KeyRoundIcon,
-  roles: ShieldCheckIcon,
-  channels: HashIcon,
-  domain: GlobeIcon,
-  node: ServerIcon,
+const SECTION_META: Record<Section, { icon: React.ComponentType<{ size?: number; className?: string }>; color: string }> = {
+  general:  { icon: SettingsIcon,    color: 'text-blue-400' },
+  invites:  { icon: UserPlusIcon,    color: 'text-green-400' },
+  droits:   { icon: KeyRoundIcon,    color: 'text-amber-400' },
+  roles:    { icon: ShieldCheckIcon, color: 'text-purple-400' },
+  channels: { icon: HashIcon,        color: 'text-cyan-400' },
+  domain:   { icon: GlobeIcon,       color: 'text-indigo-400' },
+  node:     { icon: ServerIcon,      color: 'text-rose-400' },
 };
-
-function CardSurface({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn('rounded-3xl border border-border/40 bg-card/40 p-5', className)}>
-      {children}
-    </div>
-  );
-}
-
-function SectionIntro({
-  title,
-  description,
-  actions,
-}: {
-  title: string;
-  description: string;
-  actions?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h2 className="font-heading text-xl tracking-tight text-foreground">{title}</h2>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
-      </div>
-      {actions && <div className="shrink-0">{actions}</div>}
-    </div>
-  );
-}
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-2 block text-[11px] font-medium text-muted-foreground/50">{children}</label>;
-}
-
-function InfoNote({
-  icon: Icon,
-  tone,
-  children,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  tone: 'amber' | 'blue' | 'green';
-  children: React.ReactNode;
-}) {
-  const tones = {
-    amber: 'border-amber-500/20 bg-amber-500/8 text-amber-200',
-    blue: 'border-sky-500/20 bg-sky-500/8 text-sky-200',
-    green: 'border-success/20 bg-success/8 text-success',
-  } as const;
-
-  return (
-    <div className={cn('flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm', tones[tone])}>
-      <div className="mt-0.5 shrink-0">
-        <Icon size={15} />
-      </div>
-      <div className="leading-relaxed">{children}</div>
-    </div>
-  );
-}
 
 function normalizeServer(serverId: string, data: any): ServerInfo | null {
   if (!data || data.error) return null;
@@ -151,45 +95,80 @@ function normalizeServer(serverId: string, data: any): ServerInfo | null {
 }
 
 function normalizeInvites(data: any): Invite[] {
-  const rawInvites = Array.isArray(data?.invites) ? data.invites : [];
-  return rawInvites.map((invite: any) => ({
-    id: invite.id,
-    code: invite.code,
-    customSlug: invite.customSlug ?? invite.custom_slug,
-    maxUses: invite.maxUses ?? invite.max_uses,
-    uses: invite.uses || 0,
-    expiresAt: invite.expiresAt ?? invite.expires_at,
-    isPermanent: Boolean(invite.isPermanent ?? invite.is_permanent),
-    createdAt: invite.createdAt ?? invite.created_at ?? new Date().toISOString(),
+  const raw = Array.isArray(data?.invites) ? data.invites : [];
+  return raw.map((inv: any) => ({
+    id: inv.id,
+    code: inv.code,
+    customSlug: inv.customSlug ?? inv.custom_slug,
+    maxUses: inv.maxUses ?? inv.max_uses,
+    uses: inv.uses || 0,
+    expiresAt: inv.expiresAt ?? inv.expires_at,
+    isPermanent: Boolean(inv.isPermanent ?? inv.is_permanent),
+    createdAt: inv.createdAt ?? inv.created_at ?? new Date().toISOString(),
   }));
 }
 
-function promiseRequest<T>(requester: (callback: (value: T) => void) => void) {
+function promiseRequest<T>(requester: (cb: (value: T) => void) => void) {
   return new Promise<T>((resolve) => requester(resolve));
 }
 
-export function ServerSettingsDialog({
-  serverId,
-  open,
-  onOpenChange,
-  onServerUpdated,
-}: ServerSettingsDialogProps) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40">{children}</p>;
+}
+
+function SettingsCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn('overflow-hidden rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm', className)}>{children}</div>;
+}
+
+function SettingsRow({ label, description, children, border = true }: { label: string; description?: string; children?: React.ReactNode; border?: boolean }) {
+  return (
+    <div className={cn('flex items-center justify-between gap-4 px-5 py-4', border && 'border-b border-border/30 last:border-0')}>
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-medium text-foreground">{label}</p>
+        {description && <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">{description}</p>}
+      </div>
+      {children && <div className="shrink-0">{children}</div>}
+    </div>
+  );
+}
+
+function PageHeader({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
+  return (
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+        {description && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function AlertNote({ tone, icon: Icon, children }: { tone: 'amber' | 'blue' | 'green' | 'red'; icon: React.ComponentType<{ size?: number; className?: string }>; children: React.ReactNode }) {
+  const cls = { amber: 'border-amber-500/20 bg-amber-500/8 text-amber-300', blue: 'border-sky-500/20 bg-sky-500/8 text-sky-300', green: 'border-emerald-500/20 bg-emerald-500/8 text-emerald-300', red: 'border-rose-500/20 bg-rose-500/8 text-rose-300' } as const;
+  return (
+    <div className={cn('flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-[13px] leading-relaxed', cls[tone])}>
+      <Icon size={15} className="mt-0.5 shrink-0" />
+      <div>{children}</div>
+    </div>
+  );
+}
+
+export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpdated }: ServerSettingsDialogProps) {
   const { user } = useAuth();
   const { t, tx } = useTranslation();
   const ss = t.serverSettings;
+  const ui = useUIStyle();
 
-  const navItems = useMemo(
-    () => [
-      { id: 'general' as const, label: ss.sections.general },
-      { id: 'invites' as const, label: ss.sections.invitations },
-      { id: 'droits' as const, label: ss.sections.permissions },
-      { id: 'roles' as const, label: ss.sections.roles },
-      { id: 'channels' as const, label: ss.sections.channels },
-      { id: 'domain' as const, label: ss.sections.domain },
-      { id: 'node' as const, label: ss.sections.serverNode },
-    ],
-    [ss.sections],
-  );
+  const navItems = useMemo(() => [
+    { id: 'general' as const,  label: ss.sections.general },
+    { id: 'invites' as const,  label: ss.sections.invitations },
+    { id: 'droits' as const,   label: ss.sections.permissions },
+    { id: 'roles' as const,    label: ss.sections.roles },
+    { id: 'channels' as const, label: ss.sections.channels },
+    { id: 'domain' as const,   label: ss.sections.domain },
+    { id: 'node' as const,     label: ss.sections.serverNode },
+  ], [ss.sections]);
 
   const [section, setSection] = useState<Section>('general');
   const [server, setServer] = useState<ServerInfo | null>(null);
@@ -235,34 +214,24 @@ export function ServerSettingsDialog({
   });
 
   useEffect(() => {
-    const handleOwnerJoined = (data: unknown) => {
-      const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
-      const serverEventId = (payload as { serverId?: string })?.serverId;
-      if (serverEventId !== serverId) return;
+    const h = (data: unknown) => {
+      const p = (data as any)?.payload || data;
+      if ((p as any)?.serverId !== serverId) return;
       setOwnerJoinedViaInvite(true);
-      setSection((currentSection) => (currentSection === 'droits' ? 'invites' : currentSection));
+      setSection((c) => (c === 'droits' ? 'invites' : c));
     };
-
-    socketService.onServerOwnerJoined(handleOwnerJoined);
-    return () => {
-      socketService.off('SERVER_OWNER_JOINED', handleOwnerJoined as any);
-    };
+    socketService.onServerOwnerJoined(h);
+    return () => { socketService.off('SERVER_OWNER_JOINED', h as any); };
   }, [serverId]);
 
   useEffect(() => {
     if (!open || !serverId) return;
-
-    const handleServerUpdate = (data: any) => {
-      const payload = data?.payload || data;
-      if (payload?.serverId === serverId || payload?.id === serverId) {
-        void loadDialogData();
-      }
+    const h = (data: any) => {
+      const p = data?.payload || data;
+      if (p?.serverId === serverId || p?.id === serverId) void loadDialogData();
     };
-
-    socketService.on('SERVER_UPDATE', handleServerUpdate);
-    return () => {
-      socketService.off('SERVER_UPDATE', handleServerUpdate);
-    };
+    socketService.on('SERVER_UPDATE', h);
+    return () => { socketService.off('SERVER_UPDATE', h); };
   }, [open, serverId]);
 
   useEffect(() => {
@@ -272,135 +241,56 @@ export function ServerSettingsDialog({
 
   async function loadDialogData() {
     setIsLoading(true);
-
-    const [serverData, inviteData, memberData, roleData] = await Promise.all([
-      promiseRequest<any>((resolve) => socketService.requestServerInfo(serverId, resolve)),
-      promiseRequest<any>((resolve) => socketService.requestInvites(serverId, resolve)),
-      promiseRequest<any>((resolve) => socketService.requestMembers(serverId, resolve)),
-      promiseRequest<any>((resolve) => socketService.requestRoles(serverId, resolve)),
+    const [sd, id, md, rd] = await Promise.all([
+      promiseRequest<any>((cb) => socketService.requestServerInfo(serverId, cb)),
+      promiseRequest<any>((cb) => socketService.requestInvites(serverId, cb)),
+      promiseRequest<any>((cb) => socketService.requestMembers(serverId, cb)),
+      promiseRequest<any>((cb) => socketService.requestRoles(serverId, cb)),
     ]);
+    const ns = normalizeServer(serverId, sd);
+    setServer(ns);
+    setInvites(normalizeInvites(id));
+    if (ns) { setName(ns.name || ''); setDescription(ns.description || ''); setIsPublic(Boolean(ns.isPublic)); setRequireInvite(!ns.isPublic); setDomainInput(ns.customDomain || ''); }
 
-    const normalizedServer = normalizeServer(serverId, serverData);
-    setServer(normalizedServer);
-    setInvites(normalizeInvites(inviteData));
-
-    if (normalizedServer) {
-      setName(normalizedServer.name || '');
-      setDescription(normalizedServer.description || '');
-      setIsPublic(Boolean(normalizedServer.isPublic));
-      setRequireInvite(!normalizedServer.isPublic);
-      setDomainInput(normalizedServer.customDomain || '');
-    }
-
-    const isOwner = Boolean(user && normalizedServer?.ownerId === user.id);
-    let hasManageRights = isOwner;
-    // hasAdminBit : owner OU bit ADMIN (0x40) — requis pour node-token (le backend refuse MANAGE_ROLES seul)
-    let hasAdminBit = isOwner;
-
-    if (!hasManageRights && user) {
-      const members = Array.isArray(memberData?.members) ? memberData.members : [];
-      const roles = Array.isArray(roleData?.roles) ? roleData.roles : [];
-      const member = members.find((entry: any) => (entry.userId || entry.user_id) === user.id);
-
+    const isOwner = Boolean(user && ns?.ownerId === user.id);
+    let canManage = isOwner, canAdmin = isOwner;
+    if (!canManage && user) {
+      const members = Array.isArray(md?.members) ? md.members : [];
+      const roles = Array.isArray(rd?.roles) ? rd.roles : [];
+      const member = members.find((e: any) => (e.userId || e.user_id) === user.id);
       if (member) {
-        const roleIds = Array.isArray(member.roleIds || member.role_ids)
-          ? (member.roleIds || member.role_ids)
-          : (() => {
-              try {
-                return JSON.parse(member.roleIds || member.role_ids || '[]');
-              } catch {
-                return [];
-              }
-            })();
-
-        const memberRoles = roles.filter((role: any) => roleIds.includes(role.id));
-        hasManageRights = memberRoles.some((role: any) => {
-          const permissions = role.permissions;
-          if (Array.isArray(permissions)) {
-            return permissions.includes('ADMIN') || permissions.includes('MANAGE_ROLES');
-          }
-          const bitmask = typeof permissions === 'number' ? permissions : parseInt(permissions || '0', 10);
-          return (bitmask & 0x40) !== 0 || (bitmask & 0x100) !== 0;
-        });
-        hasAdminBit = memberRoles.some((role: any) => {
-          const permissions = role.permissions;
-          if (Array.isArray(permissions)) return permissions.includes('ADMIN');
-          const bitmask = typeof permissions === 'number' ? permissions : parseInt(permissions || '0', 10);
-          return (bitmask & 0x40) !== 0;
-        });
+        const rids = Array.isArray(member.roleIds || member.role_ids) ? (member.roleIds || member.role_ids) : (() => { try { return JSON.parse(member.roleIds || member.role_ids || '[]'); } catch { return []; } })();
+        const mroles = roles.filter((r: any) => rids.includes(r.id));
+        canManage = mroles.some((r: any) => { const p = r.permissions; if (Array.isArray(p)) return p.includes('ADMIN') || p.includes('MANAGE_ROLES'); const b = typeof p === 'number' ? p : parseInt(p || '0', 10); return (b & 0x40) !== 0 || (b & 0x100) !== 0; });
+        canAdmin = mroles.some((r: any) => { const p = r.permissions; if (Array.isArray(p)) return p.includes('ADMIN'); const b = typeof p === 'number' ? p : parseInt(p || '0', 10); return (b & 0x40) !== 0; });
       }
     }
+    setCanManageServer(canManage);
+    if (canAdmin) { const tr = await api.getNodeToken(serverId); setNodeToken(tr.success && tr.data ? (tr.data as any).nodeToken || '' : ''); }
 
-    setCanManageServer(hasManageRights);
-
-    // Fetch node token uniquement si ADMIN strict (0x40) — évite les 403 pour les rôles MANAGE_ROLES seul
-    if (hasAdminBit) {
-      const nodeTokenResponse = await api.getNodeToken(serverId);
-      setNodeToken(nodeTokenResponse.success && nodeTokenResponse.data ? (nodeTokenResponse.data as any).nodeToken || '' : '');
-    }
-
-    setSection((currentSection) => {
-      const allowedSections = navItems
-        .filter(({ id }) => {
-          if (id === 'droits' && ownerJoinedViaInvite) return false;
-          if (id === 'droits' && !hasManageRights && normalizedServer?.ownerId) return false;
-          if (hasManageRights) return true;
-          return id === 'invites' || id === 'droits';
-        })
-        .map((item) => item.id);
-      if (allowedSections.includes(currentSection)) return currentSection;
-      return hasManageRights ? 'general' : 'invites';
+    setSection((cur) => {
+      const allowed = navItems.filter(({ id }) => {
+        if (id === 'droits' && ownerJoinedViaInvite) return false;
+        if (id === 'droits' && !canManage && ns?.ownerId) return false;
+        if (canManage) return true;
+        return id === 'invites' || id === 'droits';
+      }).map((i) => i.id);
+      if (allowed.includes(cur)) return cur;
+      return canManage ? 'general' : 'invites';
     });
-
     setIsLoading(false);
   }
 
   async function handleSaveGeneral() {
     if (!name.trim()) return;
-
     setIsSaving(true);
-    let nextIconUrl = server?.iconUrl;
-    let nextBannerUrl = server?.bannerUrl;
-
-    if (iconFile) {
-      const uploadIconResponse = await api.uploadImage(iconFile, 'icon');
-      if (uploadIconResponse.success && uploadIconResponse.data) {
-        nextIconUrl = uploadIconResponse.data.url;
-      }
-    }
-
-    if (bannerFile) {
-      const uploadBannerResponse = await api.uploadImage(bannerFile, 'banner');
-      if (uploadBannerResponse.success && uploadBannerResponse.data) {
-        nextBannerUrl = uploadBannerResponse.data.url;
-      }
-    }
-
-    socketService.updateServerViaNode(serverId, {
-      name: name.trim(),
-      description,
-      isPublic: isPublic,
-      iconUrl: nextIconUrl,
-      bannerUrl: nextBannerUrl,
-    });
-
-    // Optimistic update — tous les listeners SERVER_UPDATE reçoivent la MAJ immédiatement
-    socketService.emitLocal('SERVER_UPDATE', {
-      payload: {
-        id: serverId,
-        name: name.trim(),
-        description,
-        isPublic,
-        iconUrl: nextIconUrl,
-        bannerUrl: nextBannerUrl,
-      },
-    });
-
-    setServer((prev) => prev ? { ...prev, name: name.trim(), description, isPublic, iconUrl: nextIconUrl, bannerUrl: nextBannerUrl } : prev);
-    setIconFile(null);
-    setBannerFile(null);
-    setIconPreview(null);
-    setBannerPreview(null);
+    let nextIcon = server?.iconUrl, nextBanner = server?.bannerUrl;
+    if (iconFile) { const r = await api.uploadImage(iconFile, 'icon'); if (r.success && r.data) nextIcon = r.data.url; }
+    if (bannerFile) { const r = await api.uploadImage(bannerFile, 'banner'); if (r.success && r.data) nextBanner = r.data.url; }
+    socketService.updateServerViaNode(serverId, { name: name.trim(), description, isPublic, iconUrl: nextIcon, bannerUrl: nextBanner });
+    socketService.emitLocal('SERVER_UPDATE', { payload: { id: serverId, name: name.trim(), description, isPublic, iconUrl: nextIcon, bannerUrl: nextBanner } });
+    setServer((p) => p ? { ...p, name: name.trim(), description, isPublic, iconUrl: nextIcon, bannerUrl: nextBanner } : p);
+    setIconFile(null); setBannerFile(null); setIconPreview(null); setBannerPreview(null);
     setIsSaving(false);
     onServerUpdated?.();
   }
@@ -408,43 +298,20 @@ export function ServerSettingsDialog({
   async function handleCreateInvite() {
     if (isCreatingInvite) return;
     setIsCreatingInvite(true);
-
-    socketService.createInvite(
-      serverId,
-      {
-        customSlug: inviteSlug.trim() || undefined,
-        maxUses: inviteMaxUses ? parseInt(inviteMaxUses, 10) : undefined,
-        isPermanent: invitePermanent,
-      },
-      () => {
-        setInviteSlug('');
-        setInviteMaxUses('');
-        setInvitePermanent(true);
-        setIsCreatingInvite(false);
-        void loadDialogData();
-      },
-    );
+    socketService.createInvite(serverId, { customSlug: inviteSlug.trim() || undefined, maxUses: inviteMaxUses ? parseInt(inviteMaxUses, 10) : undefined, isPermanent: invitePermanent }, () => { setInviteSlug(''); setInviteMaxUses(''); setInvitePermanent(true); setIsCreatingInvite(false); void loadDialogData(); });
   }
 
-  function handleDeleteInvite(inviteId: string) {
-    socketService.deleteInvite(serverId, inviteId, () => void loadDialogData());
-  }
+  function handleDeleteInvite(invId: string) { socketService.deleteInvite(serverId, invId, () => void loadDialogData()); }
 
   function copyInviteLink(code: string) {
-    const inviteUrl = `${window.location.origin}/invite/${code}`;
-    navigator.clipboard.writeText(inviteUrl).then(() => {
-      setCopiedCode(code);
-      setTimeout(() => setCopiedCode(''), 1800);
-    });
+    navigator.clipboard.writeText(`${window.location.origin}/invite/${code}`).then(() => { setCopiedCode(code); setTimeout(() => setCopiedCode(''), 1800); });
   }
 
   async function handleStartDomainVerify() {
     if (!domainInput.trim()) return;
     setIsDomainLoading(true);
-    const response = await api.startDomainVerification(serverId, domainInput.trim());
-    if (response.success && response.data) {
-      setDomainTxtRecord((response.data as any).txtRecord || '');
-    }
+    const r = await api.startDomainVerification(serverId, domainInput.trim());
+    if (r.success && r.data) setDomainTxtRecord((r.data as any).txtRecord || '');
     setIsDomainLoading(false);
   }
 
@@ -461,515 +328,362 @@ export function ServerSettingsDialog({
     setClaimLoading(true);
     setClaimResult(null);
     try {
-      const response = await api.claimAdmin(serverId, adminCode.trim().toUpperCase(), user.id);
-      if (response.success) {
-        setClaimResult({ ok: true, msg: ss.permissions.adminGranted });
-        setAdminCode('');
-        await loadDialogData();
-      } else {
-        setClaimResult({ ok: false, msg: response.error || ss.permissions.invalidCode });
-      }
-    } finally {
-      claimInFlightRef.current = false;
-      setClaimLoading(false);
-    }
+      const r = await api.claimAdmin(serverId, adminCode.trim().toUpperCase(), user.id);
+      if (r.success) { setClaimResult({ ok: true, msg: ss.permissions.adminGranted }); setAdminCode(''); await loadDialogData(); }
+      else { setClaimResult({ ok: false, msg: r.error || ss.permissions.invalidCode }); }
+    } finally { claimInFlightRef.current = false; setClaimLoading(false); }
   }
 
-  function copyToken() {
-    navigator.clipboard.writeText(nodeToken).then(() => {
-      setCopiedToken(true);
-      setTimeout(() => setCopiedToken(false), 1800);
-    });
-  }
+  function copyToken() { navigator.clipboard.writeText(nodeToken).then(() => { setCopiedToken(true); setTimeout(() => setCopiedToken(false), 1800); }); }
 
-  function handleIconChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setIconFile(file);
-    setIconPreview(URL.createObjectURL(file));
-  }
-
-  function handleBannerChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setBannerFile(file);
-    setBannerPreview(URL.createObjectURL(file));
-  }
-
-  function handleClaimKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === 'Enter') {
-      void handleClaimAdmin();
-    }
-  }
-
-  const usageLabel = (invite: Invite) => {
-    const count = String(invite.uses);
-    return invite.uses === 1
-      ? tx(ss.invitations.usageSingular, { n: count })
-      : tx(ss.invitations.usagePlural, { n: count });
-  };
-
-  function renderGeneralSection() {
+  /* ─── Section renders ─── */
+  function renderGeneral() {
     return (
       <div className="space-y-5">
-        <SectionIntro
-          title={ss.general.heading}
-          description={ss.general.subtitle}
-          actions={
-            <Button onClick={handleSaveGeneral} disabled={!name.trim() || isSaving} className="gap-2 rounded-xl">
-              {isSaving ? <Loader2Icon size={15} className="animate-spin" /> : <SaveIcon size={15} />}
-              {ss.general.saveChanges}
-            </Button>
-          }
-        />
+        <PageHeader title={ss.general.heading} description={ss.general.subtitle} action={
+          <Button onClick={handleSaveGeneral} disabled={!name.trim() || isSaving} size="sm" className="gap-2 rounded-xl">
+            {isSaving ? <Loader2Icon size={14} className="animate-spin" /> : <SaveIcon size={14} />}
+            {ss.general.saveChanges}
+          </Button>
+        } />
 
-        <CardSurface className="overflow-hidden p-0">
-          <button
-            type="button"
-            onClick={() => document.getElementById('server-banner-upload')?.click()}
-            className="group relative block h-40 w-full overflow-hidden bg-muted/40 text-left"
-          >
+        <SettingsCard className="overflow-hidden p-0">
+          <button type="button" onClick={() => document.getElementById('ssd-banner')?.click()}
+            className="group relative block h-36 w-full overflow-hidden bg-muted/40">
             {(bannerPreview || server?.bannerUrl) ? (
-              <img
-                src={bannerPreview || resolveMediaUrl(server?.bannerUrl)}
-                alt={ss.general.bannerAlt}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
+              <img src={bannerPreview || resolveMediaUrl(server?.bannerUrl)} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
             ) : (
-              <div className="h-full w-full bg-linear-to-br from-sky-500/20 via-cyan-500/10 to-accent/20" />
+              <div className="h-full w-full bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/10" />
             )}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/35 text-sm font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-              {ss.general.clickToChange}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="text-sm font-medium text-white">Changer la bannière</span>
             </div>
           </button>
-          <input id="server-banner-upload" type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
-        </CardSurface>
+          <input id="ssd-banner" type="file" accept="image/*" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) { setBannerFile(f); setBannerPreview(URL.createObjectURL(f)); } }} />
+        </SettingsCard>
 
-        <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)]">
-          <CardSurface>
-            <FieldLabel>{ss.general.serverName}</FieldLabel>
-            <button
-              type="button"
-              onClick={() => document.getElementById('server-icon-upload')?.click()}
-              className="group relative block"
-            >
-              <Avatar className="size-24 rounded-3xl border border-border/50 ring-2 ring-border/30 transition-all group-hover:ring-border/70">
+        <div className="grid gap-5 sm:grid-cols-[160px_1fr]">
+          <SettingsCard className="flex flex-col items-center gap-3 p-5">
+            <button type="button" onClick={() => document.getElementById('ssd-icon')?.click()} className="group relative">
+              <Avatar className="size-20 rounded-3xl border border-border/50 shadow-lg">
                 <AvatarImage src={iconPreview || resolveMediaUrl(server?.iconUrl) || undefined} className="rounded-3xl object-cover" />
-                <AvatarFallback className="rounded-3xl bg-accent text-xl font-bold text-accent-foreground">
-                  {(name || server?.name || 'SV').slice(0, 2).toUpperCase()}
-                </AvatarFallback>
+                <AvatarFallback className="rounded-3xl bg-primary/12 text-xl font-bold text-primary">{(name || server?.name || 'SV').slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-black/45 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {ss.general.clickToChange}
-              </div>
+              <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-black/45 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">Modifier</div>
             </button>
-            <input id="server-icon-upload" type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
-          </CardSurface>
+            <p className="text-center text-[11px] text-muted-foreground">Icône du serveur</p>
+            <input id="ssd-icon" type="file" accept="image/*" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) { setIconFile(f); setIconPreview(URL.createObjectURL(f)); } }} />
+          </SettingsCard>
 
-          <CardSurface>
-            <div className="space-y-4">
+          <SettingsCard>
+            <div className="space-y-4 p-5">
               <div>
-                <FieldLabel>{ss.general.serverName}</FieldLabel>
-                <Input value={name} onChange={(event: ChangeEvent<HTMLInputElement>) => setName(event.target.value)} placeholder={ss.general.serverNamePlaceholder} />
+                <p className="mb-1.5 text-[11px] font-medium text-muted-foreground/60">Nom du serveur</p>
+                <Input value={name} onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)} placeholder={ss.general.serverNamePlaceholder} className="rounded-xl" />
               </div>
               <div>
-                <FieldLabel>{ss.general.description}</FieldLabel>
-                <textarea
-                  value={description}
-                  onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDescription(event.target.value)}
-                  placeholder={ss.general.descriptionPlaceholder}
-                  rows={4}
-                  className="w-full resize-none rounded-2xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/45 focus:border-accent/40"
-                />
+                <p className="mb-1.5 text-[11px] font-medium text-muted-foreground/60">Description</p>
+                <textarea value={description} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)} placeholder={ss.general.descriptionPlaceholder} rows={4}
+                  className="w-full resize-none rounded-2xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/45 focus:border-primary/40" />
               </div>
             </div>
-          </CardSurface>
+          </SettingsCard>
         </div>
 
-        <CardSurface className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-foreground">{ss.general.publicServer}</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{ss.general.publicServerDesc}</p>
-          </div>
-          <Switch checked={isPublic} onCheckedChange={(v) => { setIsPublic(v); setRequireInvite(!v); }} />
-        </CardSurface>
+        <SettingsCard>
+          <SettingsRow label={ss.general.publicServer} description={ss.general.publicServerDesc} border={false}>
+            <Switch checked={isPublic} onCheckedChange={(v) => { setIsPublic(v); setRequireInvite(!v); }} />
+          </SettingsRow>
+        </SettingsCard>
       </div>
     );
   }
 
-  function renderInvitesSection() {
+  function renderInvites() {
     return (
       <div className="space-y-5">
-        <SectionIntro title={ss.invitations.heading} description={ss.invitations.subtitle} />
-
-        <CardSurface>
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_120px]">
-            <div>
-              <FieldLabel>{ss.invitations.customSlug}</FieldLabel>
-              <Input
-                value={inviteSlug}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setInviteSlug(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                placeholder={ss.invitations.slugPlaceholder}
-              />
+        <PageHeader title={ss.invitations.heading} description={ss.invitations.subtitle} />
+        <SettingsCard>
+          <div className="space-y-4 p-5">
+            <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+              <div>
+                <p className="mb-1.5 text-[11px] font-medium text-muted-foreground/60">{ss.invitations.customSlug}</p>
+                <Input value={inviteSlug} onChange={(e: ChangeEvent<HTMLInputElement>) => setInviteSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder={ss.invitations.slugPlaceholder} className="rounded-xl" />
+              </div>
+              <div>
+                <p className="mb-1.5 text-[11px] font-medium text-muted-foreground/60">{ss.invitations.maxUses}</p>
+                <Input type="number" value={inviteMaxUses} onChange={(e: ChangeEvent<HTMLInputElement>) => setInviteMaxUses(e.target.value)} placeholder="∞" className="rounded-xl" />
+              </div>
             </div>
-            <div>
-              <FieldLabel>{ss.invitations.maxUses}</FieldLabel>
-              <Input
-                type="number"
-                value={inviteMaxUses}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setInviteMaxUses(event.target.value)}
-                placeholder="∞"
-              />
+            <div className="flex items-center justify-between">
+              <label className="flex cursor-pointer items-center gap-3 text-[13px] text-muted-foreground">
+                <Switch checked={invitePermanent} onCheckedChange={setInvitePermanent} />
+                {ss.invitations.permanent}
+              </label>
+              <Button onClick={handleCreateInvite} disabled={isCreatingInvite} size="sm" className="gap-2 rounded-xl">
+                {isCreatingInvite ? <Loader2Icon size={13} className="animate-spin" /> : <PlusIcon size={13} />}
+                {ss.invitations.create}
+              </Button>
             </div>
           </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-            <label className="flex items-center gap-3 text-sm text-muted-foreground">
-              <Switch checked={invitePermanent} onCheckedChange={setInvitePermanent} />
-              {ss.invitations.permanent}
-            </label>
-
-            <Button onClick={handleCreateInvite} disabled={isCreatingInvite} className="gap-2 rounded-xl">
-              {isCreatingInvite ? <Loader2Icon size={14} className="animate-spin" /> : <PlusIcon size={14} />}
-              {ss.invitations.create}
-            </Button>
-          </div>
-        </CardSurface>
-
-        <div className="space-y-3">
+        </SettingsCard>
+        <div className="space-y-2">
           {invites.length === 0 ? (
-            <CardSurface className="py-10 text-center text-sm text-muted-foreground">
-              {ss.invitations.noInvitations}
-            </CardSurface>
-          ) : (
-            invites.map((invite) => {
-              const code = invite.customSlug || invite.code;
-              return (
-                <CardSurface key={invite.id} className="flex flex-wrap items-center gap-3 px-4 py-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-                    <Link2Icon size={16} />
-                  </div>
-
+            <div className="rounded-2xl border border-dashed border-border/40 py-10 text-center text-sm text-muted-foreground">{ss.invitations.noInvitations}</div>
+          ) : invites.map((inv) => {
+            const code = inv.customSlug || inv.code;
+            const usageLabel = inv.uses === 1 ? tx(ss.invitations.usageSingular, { n: String(inv.uses) }) : tx(ss.invitations.usagePlural, { n: String(inv.uses) });
+            return (
+              <SettingsCard key={inv.id}>
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"><Link2Icon size={15} className="text-primary" /></div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-mono text-sm font-semibold text-foreground">{code}</p>
-                    <p className="mt-1 text-[12px] text-muted-foreground">
-                      {usageLabel(invite)}
-                      {invite.maxUses ? ` / ${invite.maxUses}` : ''}
-                      {invite.isPermanent ? ` ${ss.invitations.permanentFlag}` : ''}
-                    </p>
+                    <p className="truncate font-mono text-[13px] font-semibold text-foreground">{code}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{usageLabel}{inv.maxUses ? ` / ${inv.maxUses}` : ''}{inv.isPermanent ? `  ·  ${ss.invitations.permanentFlag}` : ''}</p>
                   </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <Button variant="ghost" size="icon-sm" className="size-8" onClick={() => copyInviteLink(code)}>
-                      {copiedCode === code ? <CheckIcon size={14} className="text-success" /> : <CopyIcon size={14} />}
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="size-8 rounded-xl" onClick={() => copyInviteLink(code)}>
+                      {copiedCode === code ? <CheckIcon size={14} className="text-emerald-400" /> : <CopyIcon size={14} />}
                     </Button>
-                    <Button variant="ghost" size="icon-sm" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteInvite(invite.id)}>
+                    <Button variant="ghost" size="icon" className="size-8 rounded-xl text-muted-foreground hover:text-destructive" onClick={() => handleDeleteInvite(inv.id)}>
                       <Trash2Icon size={14} />
                     </Button>
                   </div>
-                </CardSurface>
-              );
-            })
-          )}
+                </div>
+              </SettingsCard>
+            );
+          })}
         </div>
       </div>
     );
   }
 
-  function renderPermissionsSection() {
+  function renderDroits() {
     return (
       <div className="space-y-5">
-        <SectionIntro title={ss.permissions.heading} description={ss.permissions.subtitle} />
-
-        <CardSurface className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-foreground">{ss.permissions.requireInvite}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{ss.permissions.requireInviteDesc}</p>
-          </div>
-          <Switch checked={requireInvite} onCheckedChange={canManageServer ? (v) => { setRequireInvite(v); setIsPublic(!v); } : undefined} disabled={!canManageServer} />
-        </CardSurface>
-
+        <PageHeader title={ss.permissions.heading} description={ss.permissions.subtitle} />
+        <SettingsCard>
+          <SettingsRow label={ss.permissions.requireInvite} description={ss.permissions.requireInviteDesc} border={false}>
+            <Switch checked={requireInvite} disabled={!canManageServer} onCheckedChange={canManageServer ? (v) => { setRequireInvite(v); setIsPublic(!v); } : undefined} />
+          </SettingsRow>
+        </SettingsCard>
         {canManageServer ? (
-          <Button onClick={handleSaveGeneral} disabled={isSaving} className="gap-2 rounded-xl">
-            {isSaving ? <Loader2Icon size={14} className="animate-spin" /> : <SaveIcon size={14} />}
+          <Button onClick={handleSaveGeneral} disabled={isSaving} size="sm" className="gap-2 rounded-xl">
+            {isSaving ? <Loader2Icon size={13} className="animate-spin" /> : <SaveIcon size={13} />}
             {ss.permissions.save}
           </Button>
         ) : (
-          <InfoNote icon={AlertTriangleIcon} tone="amber">
-            {ss.permissions.adminOnly}
-          </InfoNote>
+          <AlertNote tone="amber" icon={AlertTriangleIcon}>{ss.permissions.adminOnly}</AlertNote>
         )}
-
         {!server?.ownerId && (
-        <CardSurface>
-          <div className="mb-3 flex items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-amber-500/12 text-amber-400">
-              <ShieldCheckIcon size={15} />
+          <SettingsCard>
+            <div className="space-y-4 p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15"><ShieldCheckIcon size={15} className="text-amber-400" /></div>
+                <div>
+                  <p className="text-[13px] font-semibold text-foreground">{ss.permissions.claimAdmin}</p>
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">{ss.permissions.claimAdminDesc}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Input value={adminCode} onChange={(e: ChangeEvent<HTMLInputElement>) => { setAdminCode(e.target.value.toUpperCase()); setClaimResult(null); }}
+                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') void handleClaimAdmin(); }}
+                  placeholder={ss.permissions.codePlaceholder} className="flex-1 rounded-xl font-mono tracking-widest" maxLength={14} />
+                <Button onClick={handleClaimAdmin} disabled={!adminCode.trim() || claimLoading} size="sm" className="gap-2 rounded-xl">
+                  {claimLoading ? <Loader2Icon size={13} className="animate-spin" /> : <KeyRoundIcon size={13} />}
+                  {ss.permissions.validate}
+                </Button>
+              </div>
+              {claimResult && (
+                <div className={cn('flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[13px]', claimResult.ok ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border border-rose-500/20 bg-rose-500/10 text-rose-400')}>
+                  {claimResult.ok ? <CheckIcon size={13} /> : <XIcon size={13} />}
+                  {claimResult.msg}
+                </div>
+              )}
             </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{ss.permissions.claimAdmin}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">{ss.permissions.claimAdminDesc}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Input
-              value={adminCode}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                setAdminCode(event.target.value.toUpperCase());
-                setClaimResult(null);
-              }}
-              onKeyDown={handleClaimKeyDown}
-              placeholder={ss.permissions.codePlaceholder}
-              className="flex-1 font-mono tracking-widest"
-              maxLength={14}
-            />
-            <Button onClick={handleClaimAdmin} disabled={!adminCode.trim() || claimLoading} className="gap-2 rounded-xl">
-              {claimLoading ? <Loader2Icon size={14} className="animate-spin" /> : <KeyRoundIcon size={14} />}
-              {ss.permissions.validate}
-            </Button>
-          </div>
-
-          {claimResult && (
-            <div className={cn(
-              'mt-3 flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm',
-              claimResult.ok
-                ? 'border border-success/20 bg-success/10 text-success'
-                : 'border border-destructive/20 bg-destructive/10 text-destructive',
-            )}>
-              {claimResult.ok ? <CheckIcon size={14} /> : <XIcon size={14} />}
-              {claimResult.msg}
-            </div>
-          )}
-        </CardSurface>
+          </SettingsCard>
         )}
       </div>
     );
   }
 
-  function renderRolesSection() {
+  function renderRoles() {
     return (
       <div className="space-y-5">
-        <SectionIntro title={ss.roles.heading} description={ss.roles.subtitle} />
+        <PageHeader title={ss.roles.heading} description={ss.roles.subtitle} />
         <RoleManager serverId={serverId} />
       </div>
     );
   }
 
-  function renderChannelsSection() {
+  function renderChannels() {
     return (
       <div className="space-y-5">
-        <SectionIntro title={ss.channels.heading} description={ss.channels.subtitle} />
+        <PageHeader title={ss.channels.heading} description={ss.channels.subtitle} />
         <ChannelManager serverId={serverId} onChannelsChanged={onServerUpdated} />
       </div>
     );
   }
 
-  function renderDomainSection() {
+  function renderDomain() {
     return (
       <div className="space-y-5">
-        <SectionIntro title={ss.domain.heading} description={ss.domain.subtitle} />
-
-        <CardSurface>
-          <div className="flex flex-wrap gap-2">
-            <Input
-              value={domainInput}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => setDomainInput(event.target.value)}
-              placeholder={ss.domain.placeholder}
-              disabled={server?.domainVerified}
-              className="flex-1"
-            />
-            {!server?.domainVerified && (
-              <Button variant="outline" onClick={handleStartDomainVerify} disabled={!domainInput.trim() || isDomainLoading} className="rounded-xl">
-                {isDomainLoading ? <Loader2Icon size={14} className="animate-spin" /> : ss.domain.verify}
-              </Button>
+        <PageHeader title={ss.domain.heading} description={ss.domain.subtitle} />
+        <SettingsCard>
+          <div className="space-y-4 p-5">
+            <div className="flex gap-2">
+              <Input value={domainInput} onChange={(e: ChangeEvent<HTMLInputElement>) => setDomainInput(e.target.value)} placeholder={ss.domain.placeholder} disabled={server?.domainVerified} className="flex-1 rounded-xl" />
+              {!server?.domainVerified && (
+                <Button variant="outline" onClick={handleStartDomainVerify} disabled={!domainInput.trim() || isDomainLoading} size="sm" className="rounded-xl">
+                  {isDomainLoading ? <Loader2Icon size={13} className="animate-spin" /> : ss.domain.verify}
+                </Button>
+              )}
+            </div>
+            {server?.domainVerified && (
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2.5 text-[13px] text-emerald-400">
+                <CheckIcon size={14} />{ss.domain.verified}
+              </div>
             )}
           </div>
-
-          {server?.domainVerified && (
-            <div className="mt-3 flex items-center gap-2 rounded-2xl border border-success/20 bg-success/10 px-3 py-2.5 text-sm text-success">
-              <CheckIcon size={14} />
-              {ss.domain.verified}
-            </div>
-          )}
-        </CardSurface>
-
+        </SettingsCard>
         {domainTxtRecord && !server?.domainVerified && (
-          <CardSurface>
-            <p className="text-sm font-semibold text-foreground">{ss.domain.dnsInstruction}</p>
-            <div className="mt-3 flex items-center gap-2">
-              <code className="flex-1 break-all rounded-2xl bg-muted/40 px-3 py-3 font-mono text-xs text-muted-foreground">
-                {domainTxtRecord}
-              </code>
-              <Button variant="ghost" size="icon-sm" className="size-8" onClick={() => navigator.clipboard.writeText(domainTxtRecord)}>
-                <CopyIcon size={14} />
+          <SettingsCard>
+            <div className="space-y-3 p-5">
+              <p className="text-[13px] font-semibold text-foreground">{ss.domain.dnsInstruction}</p>
+              <div className="flex items-start gap-2">
+                <code className="flex-1 break-all rounded-xl bg-muted/40 px-3 py-3 font-mono text-[11px] leading-relaxed text-muted-foreground">{domainTxtRecord}</code>
+                <Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-xl" onClick={() => navigator.clipboard.writeText(domainTxtRecord)}><CopyIcon size={14} /></Button>
+              </div>
+              <Button onClick={handleCheckDomainVerify} disabled={isDomainLoading} size="sm" className="gap-2 rounded-xl">
+                {isDomainLoading ? <Loader2Icon size={13} className="animate-spin" /> : <GlobeIcon size={13} />}
+                {ss.domain.checkDns}
               </Button>
             </div>
-            <Button onClick={handleCheckDomainVerify} disabled={isDomainLoading} className="mt-3 gap-2 rounded-xl">
-              {isDomainLoading ? <Loader2Icon size={14} className="animate-spin" /> : <GlobeIcon size={14} />}
-              {ss.domain.checkDns}
-            </Button>
-          </CardSurface>
+          </SettingsCard>
         )}
       </div>
     );
   }
 
-  function renderNodeSection() {
+  function renderNode() {
     const gatewayOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://gateway.alfychat.app';
-
     return (
       <div className="space-y-5">
-        <SectionIntro title={ss.serverNode.heading} description={ss.serverNode.subtitle} />
-
-        <CardSurface>
-          <div className="mb-3 flex items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-              <ServerIcon size={15} />
+        <PageHeader title={ss.serverNode.heading} description={ss.serverNode.subtitle} />
+        <SettingsCard>
+          <div className="space-y-4 p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-rose-500/15"><ServerIcon size={15} className="text-rose-400" /></div>
+              <div>
+                <p className="text-[13px] font-semibold text-foreground">{ss.serverNode.authToken}</p>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">{ss.serverNode.authTokenDesc}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{ss.serverNode.authToken}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">{ss.serverNode.authTokenDesc}</p>
+            <div className="flex items-center gap-2">
+              <Input value={showToken ? nodeToken : '•'.repeat(Math.max(nodeToken.length, 28))} readOnly className="flex-1 rounded-xl font-mono text-xs" />
+              <Button variant="ghost" size="icon" className="size-8 rounded-xl" onClick={() => setShowToken((v) => !v)}>
+                {showToken ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
+              </Button>
+              <Button variant="ghost" size="icon" className="size-8 rounded-xl" onClick={copyToken}>
+                {copiedToken ? <CheckIcon size={14} className="text-emerald-400" /> : <CopyIcon size={14} />}
+              </Button>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Input
-              value={showToken ? nodeToken : '•'.repeat(Math.max(nodeToken.length, 24))}
-              readOnly
-              className="flex-1 font-mono text-xs"
-            />
-            <Button variant="ghost" size="icon-sm" className="size-8" onClick={() => setShowToken((current) => !current)}>
-              {showToken ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
-            </Button>
-            <Button variant="ghost" size="icon-sm" className="size-8" onClick={copyToken}>
-              {copiedToken ? <CheckIcon size={14} className="text-success" /> : <CopyIcon size={14} />}
-            </Button>
+        </SettingsCard>
+        <SettingsCard>
+          <div className="space-y-3 p-5">
+            <p className="text-[13px] font-semibold text-foreground">{ss.serverNode.startNode}</p>
+            <p className="text-[12px] text-muted-foreground">{ss.serverNode.startNodeDesc}</p>
+            <code className="block whitespace-pre-wrap break-all rounded-xl bg-muted/40 px-4 py-3.5 font-mono text-[11px] leading-relaxed text-muted-foreground">
+              {`npx @alfychat/server-node start \\\n  --server-id=${serverId} \\\n  --token=<your-token> \\\n  --gateway=${gatewayOrigin} \\\n  --port=4100`}
+            </code>
           </div>
-        </CardSurface>
-
-        <CardSurface>
-          <p className="text-sm font-semibold text-foreground">{ss.serverNode.startNode}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{ss.serverNode.startNodeDesc}</p>
-          <code className="mt-3 block whitespace-pre-wrap break-all rounded-2xl bg-muted/40 px-3 py-3 font-mono text-xs leading-relaxed text-muted-foreground">
-            {`npx @alfychat/server-node start \\
-  --server-id=${serverId} \\
-  --token=<your-token> \\
-  --gateway=${gatewayOrigin} \\
-  --port=4100`}
-          </code>
-        </CardSurface>
-
-        <InfoNote icon={AlertTriangleIcon} tone="amber">
-          {ss.serverNode.authTokenDesc}
-        </InfoNote>
+        </SettingsCard>
+        <AlertNote tone="amber" icon={AlertTriangleIcon}>{ss.serverNode.authTokenDesc}</AlertNote>
       </div>
     );
   }
 
-  function renderSectionContent() {
+  function renderContent() {
     switch (section) {
-      case 'general':
-        return renderGeneralSection();
-      case 'invites':
-        return renderInvitesSection();
-      case 'droits':
-        return renderPermissionsSection();
-      case 'roles':
-        return renderRolesSection();
-      case 'channels':
-        return renderChannelsSection();
-      case 'domain':
-        return renderDomainSection();
-      case 'node':
-        return renderNodeSection();
-      default:
-        return null;
+      case 'general':  return renderGeneral();
+      case 'invites':  return renderInvites();
+      case 'droits':   return renderDroits();
+      case 'roles':    return renderRoles();
+      case 'channels': return renderChannels();
+      case 'domain':   return renderDomain();
+      case 'node':     return renderNode();
+      default:         return null;
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[88vh] max-w-5xl overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl sm:max-w-5xl max-sm:left-0 max-sm:top-0 max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0 max-sm:shadow-none">
+      <DialogContent className={cn(
+        'h-[90vh] w-full sm:max-w-5xl overflow-hidden p-0 shadow-2xl shadow-black/40',
+        'rounded-2xl border border-border/50',
+        'max-sm:left-0 max-sm:top-0 max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0',
+        ui.isGlass ? 'bg-black/40 backdrop-blur-2xl' : 'bg-card',
+      )}>
         <DialogHeader className="sr-only">
           <DialogTitle>Paramètres du serveur</DialogTitle>
         </DialogHeader>
 
-        <div className="grid h-full min-h-0 grid-rows-[auto_1fr] md:grid-rows-[1fr] md:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="flex min-h-0 flex-col border-r border-b border-border/50 bg-card/40 p-4 md:border-b-0">
-            <div className="overflow-hidden rounded-3xl border border-border/40 bg-card/50">
-              <div className="h-24 bg-muted/30">
-                {(bannerPreview || server?.bannerUrl) && (
+        <div className="grid h-full min-h-0 md:grid-cols-[260px_1fr]">
+          {/* ─── Sidebar ─── */}
+          <aside className={cn('flex min-h-0 flex-col border-r border-border/40 p-4', ui.isGlass ? 'bg-white/5' : 'bg-muted/20')}>
+            <div className="overflow-hidden rounded-2xl border border-border/30 bg-card/30">
+              <div className="h-16 overflow-hidden">
+                {(bannerPreview || server?.bannerUrl) ? (
                   <img src={bannerPreview || resolveMediaUrl(server?.bannerUrl)} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-br from-primary/20 to-accent/10" />
                 )}
               </div>
-              <div className="flex items-end gap-3 px-4 pb-4">
-                <Avatar className="-mt-8 size-16 rounded-3xl border-4 border-card shadow-lg">
-                  <AvatarImage src={iconPreview || resolveMediaUrl(server?.iconUrl) || undefined} alt={server?.name} />
-                  <AvatarFallback className="rounded-3xl bg-primary/12 font-heading text-lg tracking-tight text-primary">
-                    {(server?.name || 'SV').slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
+              <div className="flex items-center gap-3 px-4 pb-4">
+                <Avatar className="-mt-6 size-12 shrink-0 rounded-2xl border-2 border-card shadow-md">
+                  <AvatarImage src={iconPreview || resolveMediaUrl(server?.iconUrl) || undefined} />
+                  <AvatarFallback className="rounded-2xl bg-primary/15 text-sm font-bold text-primary">{(server?.name || 'SV').slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <div className="min-w-0 pb-1">
-                  <p className="truncate font-heading text-sm tracking-tight text-foreground">{server?.name || 'Serveur'}</p>
-                  <p className="truncate text-[12px] text-muted-foreground">
-                    {canManageServer ? 'Administration complète' : 'Accès limité'}
-                  </p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-foreground">{server?.name || 'Serveur'}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{canManageServer ? 'Administration' : 'Accès limité'}</p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 mb-2 px-2">
-              <p className="text-[11px] font-medium text-muted-foreground/40">
-                {ss.sectionHeader}
-              </p>
-            </div>
+            <div className="mb-1.5 mt-4"><SectionLabel>Navigation</SectionLabel></div>
 
-            <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
-              {visibleSections.map(({ id, label }) => {
-                const Icon = SECTION_ICONS[id];
-                const active = section === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setSection(id)}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition-colors',
-                      active
-                        ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary ring-1 ring-primary/25 shadow-sm shadow-primary/10'
-                        : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-                    )}
-                  >
-                    <span className={cn(
-                      'flex size-8 shrink-0 items-center justify-center rounded-xl',
-                      active ? 'bg-primary/15 text-primary' : 'bg-muted/50 text-muted-foreground',
-                    )}>
-                      <Icon size={15} />
-                    </span>
-                    <span className="truncate font-medium">{label}</span>
-                  </button>
-                );
-              })}
-            </nav>
+            <ScrollArea className="min-h-0 flex-1">
+              <nav className="flex flex-col gap-0.5">
+                {visibleSections.map(({ id, label }) => {
+                  const { icon: Icon, color } = SECTION_META[id];
+                  const active = section === id;
+                  return (
+                    <button key={id} type="button" onClick={() => setSection(id)} className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-[13px] font-medium transition-all duration-150', active ? 'bg-primary/12 text-primary shadow-sm ring-1 ring-primary/20' : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground')}>
+                      <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-xl', active ? 'bg-primary/20' : 'bg-muted/50')}>
+                        <Icon size={14} className={active ? 'text-primary' : color} />
+                      </span>
+                      <span className="truncate">{label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </ScrollArea>
 
-            <div className="pt-3">
-              <Separator className="mb-3" />
-              <Button variant="ghost" className="w-full justify-start gap-2 rounded-2xl text-muted-foreground" onClick={() => onOpenChange(false)}>
-                <XIcon size={14} />
-                {ss.close}
-              </Button>
+            <div className="mt-3 border-t border-border/30 pt-3">
+              <button type="button" onClick={() => onOpenChange(false)}
+                className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground">
+                <XIcon size={14} />{ss.close}
+              </button>
             </div>
           </aside>
 
-          <section className="min-h-0 overflow-y-auto bg-background px-6 py-6 sm:px-7">
+          {/* ─── Content ─── */}
+          <section className={cn('min-h-0 overflow-y-auto px-6 py-6', ui.isGlass ? 'bg-white/3' : 'bg-background')}>
             {isLoading ? (
-              <div className="flex h-full items-center justify-center">
-                <Spinner size="md" />
-              </div>
-            ) : (
-              renderSectionContent()
-            )}
+              <div className="flex h-full items-center justify-center"><Spinner size="md" /></div>
+            ) : renderContent()}
           </section>
         </div>
       </DialogContent>

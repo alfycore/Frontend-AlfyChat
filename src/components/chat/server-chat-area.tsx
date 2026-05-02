@@ -31,6 +31,15 @@ import {
 import { ForumView } from '@/components/chat/forum-view';
 import { GalleryView } from '@/components/chat/gallery-view';
 import { AnnouncementView } from '@/components/chat/announcement-view';
+import { PollView } from '@/components/chat/poll-view';
+import { SuggestionView } from '@/components/chat/suggestion-view';
+import { DocView } from '@/components/chat/doc-view';
+import { CountingView } from '@/components/chat/counting-view';
+import { VentView } from '@/components/chat/vent-view';
+import { ThreadView } from '@/components/chat/thread-view';
+import { MediaView } from '@/components/chat/media-view';
+import { MinigameView } from '@/components/chat/minigame-view';
+import { TriviaView } from '@/components/chat/trivia-view';
 import { cn } from '@/lib/utils';
 
 interface ServerChatAreaProps {
@@ -72,19 +81,21 @@ function groupByDate(messages: MessageData[]) {
 
 /* ── Channel type meta ─────────────────────────────────────────────────────── */
 
-const CHANNEL_META: Record<string, { icon: any; label: string; color: string; description: string }> = {
-  text:         { icon: HashIcon,        label: 'Texte',       color: 'text-muted',       description: 'C\'est le début du salon' },
-  announcement: { icon: MegaphoneIcon,   label: 'Annonce',     color: 'text-amber-400',   description: 'Seuls les modérateurs peuvent publier ici' },
-  forum:        { icon: ForumIcon,       label: 'Forum',       color: 'text-violet-400',  description: 'Créez des fils de discussion' },
-  gallery:      { icon: GalleryIcon,     label: 'Galerie',     color: 'text-pink-400',    description: 'Partagez vos images et médias' },
-  poll:         { icon: PollIcon,        label: 'Sondage',     color: 'text-cyan-400',    description: 'Proposez des sondages à la communauté' },
-  suggestion:   { icon: SuggestionIcon,  label: 'Suggestion',  color: 'text-yellow-400',  description: 'Soumettez et votez pour des idées' },
-  doc:          { icon: DocIcon,         label: 'Document',    color: 'text-blue-400',    description: 'Documents collaboratifs' },
-  counting:     { icon: CountingIcon,    label: 'Comptage',    color: 'text-emerald-400', description: 'Comptez ensemble !' },
-  vent:         { icon: VentIcon,        label: 'Défouloir',   color: 'text-red-400',     description: 'Un espace pour s\'exprimer librement' },
-  thread:       { icon: ThreadIcon,      label: 'Fil',         color: 'text-indigo-400',  description: 'Discussions en fils de conversation' },
-  media:        { icon: MediaIcon,       label: 'Média',       color: 'text-orange-400',  description: 'Partagez vidéos et contenus multimédia' },
-  stage:        { icon: StageIcon,       label: 'Scène',        color: 'text-purple-400',  description: 'Présentations et événements en direct' },
+const CHANNEL_META: Record<string, { icon: any; label: string; color: string; bg: string; description: string }> = {
+  text:         { icon: HashIcon,        label: 'Texte',       color: 'text-muted-foreground/70', bg: 'bg-foreground/[0.06]',   description: 'C\'est le début du salon' },
+  announcement: { icon: MegaphoneIcon,   label: 'Annonce',     color: 'text-amber-400',           bg: 'bg-amber-400/15',        description: 'Seuls les modérateurs peuvent publier ici' },
+  forum:        { icon: ForumIcon,       label: 'Forum',       color: 'text-blue-400',            bg: 'bg-blue-400/15',         description: 'Créez des fils de discussion' },
+  gallery:      { icon: GalleryIcon,     label: 'Galerie',     color: 'text-pink-400',            bg: 'bg-pink-400/15',         description: 'Partagez vos images et médias' },
+  poll:         { icon: PollIcon,        label: 'Sondage',     color: 'text-orange-400',          bg: 'bg-orange-400/15',       description: 'Proposez des sondages à la communauté' },
+  suggestion:   { icon: SuggestionIcon,  label: 'Suggestion',  color: 'text-emerald-400',         bg: 'bg-emerald-400/15',      description: 'Soumettez et votez pour des idées' },
+  doc:          { icon: DocIcon,         label: 'Document',    color: 'text-sky-400',             bg: 'bg-sky-400/15',          description: 'Documents collaboratifs' },
+  counting:     { icon: CountingIcon,    label: 'Comptage',    color: 'text-rose-400',            bg: 'bg-rose-400/15',         description: 'Comptez ensemble !' },
+  vent:         { icon: VentIcon,        label: 'Défouloir',   color: 'text-red-400',             bg: 'bg-red-400/15',          description: 'Un espace pour s\'exprimer librement' },
+  thread:       { icon: ThreadIcon,      label: 'Fil',         color: 'text-violet-400',          bg: 'bg-violet-400/15',       description: 'Discussions en fils de conversation' },
+  media:        { icon: MediaIcon,       label: 'Média',       color: 'text-cyan-400',            bg: 'bg-cyan-400/15',         description: 'Partagez vidéos et contenus multimédia' },
+  stage:        { icon: StageIcon,       label: 'Scène',       color: 'text-purple-400',          bg: 'bg-purple-400/15',       description: 'Présentations et événements en direct' },
+  minigame:     { icon: null,            label: 'Mini-Jeux',   color: 'text-indigo-400',          bg: 'bg-indigo-400/15',       description: 'Jouez ensemble !' },
+  trivia:       { icon: null,            label: 'Trivia',      color: 'text-yellow-400',          bg: 'bg-yellow-400/15',       description: 'Quiz et questions de culture générale' },
 };
 
 const getChannelMeta = (type?: string) => CHANNEL_META[type || 'text'] ?? CHANNEL_META.text;
@@ -499,6 +510,42 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
     );
   }
 
+  if (channelType === 'poll') {
+    return <PollView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
+  if (channelType === 'suggestion') {
+    return <SuggestionView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
+  if (channelType === 'doc') {
+    return <DocView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
+  if (channelType === 'counting') {
+    return <CountingView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
+  if (channelType === 'vent') {
+    return <VentView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
+  if (channelType === 'thread') {
+    return <ThreadView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
+  if (channelType === 'media') {
+    return <MediaView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
+  if (channelType === 'minigame') {
+    return <MinigameView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
+  if (channelType === 'trivia') {
+    return <TriviaView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
+
   return (
     <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
       {/* ── Header ── */}
@@ -511,7 +558,9 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <MenuIcon size={16} />
           </Button>
         )}
-        <meta.icon size={15} className="shrink-0 text-muted-foreground/70" />
+        <div className={cn('flex size-7 shrink-0 items-center justify-center rounded-[8px]', meta.bg)}>
+          <meta.icon size={13} className={meta.color} />
+        </div>
         <h2 className="truncate text-[14px] font-semibold text-foreground">{channelName || 'salon'}</h2>
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <Button
@@ -536,8 +585,8 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
             <LoadingSkeleton />
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-              <div className="mb-4 flex size-16 items-center justify-center rounded-[18px] bg-foreground/6">
-                <meta.icon size={28} className="text-muted-foreground/50" />
+              <div className={cn('mb-4 flex size-16 items-center justify-center rounded-[18px]', meta.bg)}>
+                <meta.icon size={28} className={cn(meta.color, 'opacity-70')} />
               </div>
               <h3 className="mb-1.5 text-[17px] font-semibold tracking-[-0.015em] text-foreground">
                 Bienvenue dans #{channelName || 'salon'}
