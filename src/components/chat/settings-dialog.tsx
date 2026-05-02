@@ -850,7 +850,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               {notifKeywords.map((kw) => (
                 <Badge key={kw} variant="secondary" className="gap-1.5 rounded-lg">
                   {kw}
-                  <button type="button" onClick={() => { const u = notifKeywords.filter((k) => k !== kw); setNotifKeywords(u); api.updatePreferences(u.id, { notifKeywords: u2 }).catch(() => {}); }} className="hover:text-foreground"><XIcon size={11} /></button>
+                  <button type="button" onClick={() => { const kws = notifKeywords.filter((k) => k !== kw); setNotifKeywords(kws); api.updatePreferences(u.id, { notifKeywords: kws }).catch(() => {}); }} className="hover:text-foreground"><XIcon size={11} /></button>
                 </Badge>
               ))}
             </div>
