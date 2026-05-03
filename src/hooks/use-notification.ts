@@ -15,6 +15,7 @@ import {
   clearUnread,
   subscribe as subscribeNotifications,
   getSnapshot,
+  setStorageNamespace,
 } from '@/lib/notification-store';
 
 /**
@@ -40,6 +41,12 @@ export function useNotification() {
 
   useEffect(() => {
     userIdRef.current = user?.id ?? null;
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      setStorageNamespace(user.id);
+    }
   }, [user?.id]);
 
   // Contexte audio partagé — un seul par session
@@ -234,12 +241,26 @@ export function useNotification() {
       // Incrémenter les badges non-lus et afficher un toast groupé
       let totalCount = 0;
       const senders = new Set<string>();
+      const myId = userIdRef.current;
+
       for (const [convId, { count, senderName }] of entries) {
-        // convId est "dm_{id1}_{id2}" — extraire le recipientId
-        const parts = convId.split('_');
-        const myId = userIdRef.current;
-        const recipientId = parts.find((p) => p !== 'dm' && p !== myId);
-        if (recipientId) incrementUnread(recipientId);
+        if (!convId) continue;
+
+        let unreadKey: string | null = null;
+
+        if (convId.startsWith('group:')) {
+          unreadKey = convId;
+        } else if (convId.startsWith('channel:')) {
+          unreadKey = convId;
+        } else if (convId.startsWith('dm_')) {
+          const parts = convId.split('_');
+          const recipientId = parts.find((p) => p !== 'dm' && p !== myId);
+          if (recipientId) unreadKey = recipientId;
+        } else {
+          unreadKey = convId;
+        }
+
+        if (unreadKey) incrementUnread(unreadKey);
         totalCount += count;
         if (senderName) senders.add(senderName);
       }

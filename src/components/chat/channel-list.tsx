@@ -596,7 +596,8 @@ export function ChannelList({
         return bTime - aTime;
       });
       try {
-        const savedOrder = JSON.parse(localStorage.getItem('alfychat_dm_order') || '[]') as string[];
+        const orderKey = user?.id ? `alfychat_dm_order_${user.id}` : 'alfychat_dm_order';
+        const savedOrder = JSON.parse(localStorage.getItem(orderKey) || '[]') as string[];
         if (savedOrder.length > 0) {
           const orderMap = new Map(savedOrder.map((id, i) => [id, i]));
           sorted = [...sorted].sort((a, b) =>
@@ -1131,7 +1132,10 @@ export function ChannelList({
                             if (fromIdx === -1 || toIdx === -1) return prev;
                             const [item] = arr.splice(fromIdx, 1);
                             arr.splice(toIdx, 0, item);
-                            try { localStorage.setItem('alfychat_dm_order', JSON.stringify(arr.map((c) => c.recipientId))); } catch {}
+                            try {
+                              const orderKey = user?.id ? `alfychat_dm_order_${user.id}` : 'alfychat_dm_order';
+                              localStorage.setItem(orderKey, JSON.stringify(arr.map((c) => c.recipientId)));
+                            } catch {}
                             return arr;
                           });
                           dragDmIdRef.current = null;

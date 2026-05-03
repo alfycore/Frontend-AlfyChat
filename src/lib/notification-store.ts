@@ -12,8 +12,17 @@ import { useSyncExternalStore } from 'react';
 
 type Listener = () => void;
 
-const STORAGE_KEY = 'alfychat_unread';
-const LAST_SEEN_KEY = 'alfychat_last_seen';
+// Namespace storage keys by userId to avoid double-account conflicts
+let STORAGE_KEY = 'alfychat_unread';
+let LAST_SEEN_KEY = 'alfychat_last_seen';
+
+export function setStorageNamespace(userId: string) {
+  STORAGE_KEY = `alfychat_unread_${userId}`;
+  LAST_SEEN_KEY = `alfychat_last_seen_${userId}`;
+  // Reload state from user-specific localStorage
+  state.unread = loadFromStorage();
+  notify();
+}
 
 function loadFromStorage(): Map<string, number> {
   if (typeof window === 'undefined') return new Map();

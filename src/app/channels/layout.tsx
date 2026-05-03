@@ -136,30 +136,39 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
   // ── Notification sync ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (activeGroupId) {
-      setActiveGroup(activeGroupId);
-      setActiveDM(null);
-      setActiveChannel(null);
-      api.markNotificationsRead(`group:${activeGroupId}`).catch(() => {});
-      socketService.emit('MARK_READ', { key: `group:${activeGroupId}` });
-    } else if (activeDmId) {
-      setActiveDM(activeDmId);
-      setActiveGroup(null);
-      setActiveChannel(null);
-      api.markNotificationsRead(activeDmId).catch(() => {});
-      socketService.emit('MARK_READ', { key: activeDmId });
-    } else if (activeChannelId && activeServerId) {
-      setActiveChannel(activeChannelId, activeServerId);
-      setActiveDM(null);
-      setActiveGroup(null);
-      clearUnread(`channel:${activeChannelId}`);
-      api.markNotificationsRead(`channel:${activeChannelId}`).catch(() => {});
-      socketService.emit('MARK_READ', { key: `channel:${activeChannelId}` });
-    } else if (pathname === '/channels/me' || pathname === '/channels/me/') {
-      setActiveDM(null);
-      setActiveGroup(null);
-      setActiveChannel(null);
-    }
+    const syncNotifications = async () => {
+      try {
+        if (activeGroupId) {
+          setActiveGroup(activeGroupId);
+          setActiveDM(null);
+          setActiveChannel(null);
+          const key = `group:${activeGroupId}`;
+          await api.markNotificationsRead(key);
+          socketService.emit('MARK_READ', { key });
+        } else if (activeDmId) {
+          setActiveDM(activeDmId);
+          setActiveGroup(null);
+          setActiveChannel(null);
+          await api.markNotificationsRead(activeDmId);
+          socketService.emit('MARK_READ', { key: activeDmId });
+        } else if (activeChannelId && activeServerId) {
+          setActiveChannel(activeChannelId, activeServerId);
+          setActiveDM(null);
+          setActiveGroup(null);
+          const key = `channel:${activeChannelId}`;
+          clearUnread(key);
+          await api.markNotificationsRead(key);
+          socketService.emit('MARK_READ', { key });
+        } else if (pathname === '/channels/me' || pathname === '/channels/me/') {
+          setActiveDM(null);
+          setActiveGroup(null);
+          setActiveChannel(null);
+        }
+      } catch (error) {
+        console.error('Notification sync error:', error);
+      }
+    };
+    syncNotifications();
   }, [activeGroupId, activeDmId, activeChannelId, activeServerId, pathname]);
 
   useEffect(() => () => { setActiveDM(null); setActiveGroup(null); setActiveChannel(null); }, []);
