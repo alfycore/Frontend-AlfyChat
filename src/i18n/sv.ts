@@ -21,6 +21,7 @@ export const sv = {
     online:   'Online',
     offline:  'Offline',
     you:      'Du',
+    loading:  'Laddar…',
   },
 
   status: {

@@ -20,8 +20,7 @@
     members:  '{n} miembros',
     online:   'En línea',
     offline:  'Desconectado',
-    you:      'Tu',
-  },
+    you:      'Tu',    loading:  'Cargando…',  },
 
   status: {
     online:    'En línea',

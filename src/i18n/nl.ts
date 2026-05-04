@@ -21,6 +21,7 @@
     online:   'Online',
     offline:  'Offline',
     you:      'Jij',
+    loading:  'Laden…',
   },
 
   status: {

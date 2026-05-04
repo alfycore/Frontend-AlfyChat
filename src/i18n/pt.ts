@@ -21,6 +21,7 @@ export const pt = {
     online:   'Online',
     offline:  'Offline',
     you:      'Voce',
+    loading:  'Carregando…',
   },
 
   status: {

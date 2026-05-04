@@ -21,6 +21,7 @@ export const fr = {
     online:   'En ligne',
     offline:  'Hors ligne',
     you:      'Vous',
+    loading:  'Chargement…',
   },
 
   status: {

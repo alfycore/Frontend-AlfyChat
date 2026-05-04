@@ -21,6 +21,7 @@
     online:   'Online',
     offline:  'Offline',
     you:      'Tu',
+    loading:  'Caricamento…',
   },
 
   status: {

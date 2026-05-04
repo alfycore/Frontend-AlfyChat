@@ -21,6 +21,7 @@ export const pl = {
     online:   'Online',
     offline:  'Offline',
     you:      'Ty',
+    loading:  'Ładowanie…',
   },
 
   status: {

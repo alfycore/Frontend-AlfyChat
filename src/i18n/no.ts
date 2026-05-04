@@ -21,6 +21,7 @@ export const no = {
     online:   'Online',
     offline:  'Offline',
     you:      'Du',
+    loading:  'Laster…',
   },
 
   status: {

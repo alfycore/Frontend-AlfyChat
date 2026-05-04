@@ -664,7 +664,7 @@ function ChannelPermissionsEditor({
       <div className="rounded-lg border bg-[var(--surface-secondary)]/30 p-4">
         <div className="flex items-center gap-2">
           <Spinner size="sm" />
-          <span className="text-sm text-[var(--muted)]">{t.serverStatus.loading}</span>
+          <span className="text-sm text-[var(--muted)]">{t.common.loading}</span>
         </div>
       </div>
     );

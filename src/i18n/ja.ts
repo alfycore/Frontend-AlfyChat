@@ -21,6 +21,7 @@
     online:   'オンライン',
     offline:  'オフライン',
     you:      'あなた',
+    loading:  '読み込み中…',
   },
 
   status: {
