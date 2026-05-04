@@ -9,6 +9,7 @@ import {
   Trash2Icon, KeyRoundIcon, ZapIcon,
   AlertTriangleIcon, ChevronRightIcon, ArrowLeftIcon,
   XIcon, LayoutIcon, CheckIcon, Loader2Icon, PencilIcon, UploadIcon,
+  DatabaseIcon,
 } from '@/components/icons';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/components/locale-provider';
@@ -177,7 +178,7 @@ function PageHeader({ title, description }: { title: string; description?: strin
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
-type SettingsTab = 'profile' | 'voice' | 'notifications' | 'privacy' | 'appearance' | 'language' | 'layout';
+type SettingsTab = 'profile' | 'voice' | 'notifications' | 'privacy' | 'appearance' | 'language' | 'layout' | 'archives';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -203,6 +204,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     { id: 'appearance',    label: t.settings.appearance,    icon: PaletteIcon,  color: 'text-purple-400' },
     { id: 'language',      label: t.settings.language,      icon: GlobeIcon,    color: 'text-cyan-400' },
     { id: 'layout',        label: 'Mise en page',           icon: LayoutIcon,   color: 'text-indigo-400' },
+    { id: 'archives',      label: 'Archives',               icon: DatabaseIcon, color: 'text-teal-400' },
   ];
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -284,6 +286,18 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [twoFADisableCode, setTwoFADisableCode] = useState('');
   const [twoFADisabling, setTwoFADisabling] = useState(false);
 
+  /* Archive DB externe */
+  const [archiveDbConfigured, setArchiveDbConfigured] = useState(false);
+  const [archiveDbHost, setArchiveDbHost] = useState('');
+  const [archiveDbPort, setArchiveDbPort] = useState('3306');
+  const [archiveDbUser, setArchiveDbUser] = useState('');
+  const [archiveDbPassword, setArchiveDbPassword] = useState('');
+  const [archiveDbDatabase, setArchiveDbDatabase] = useState('');
+  const [archiveDbTesting, setArchiveDbTesting] = useState(false);
+  const [archiveDbSaving, setArchiveDbSaving] = useState(false);
+  const [archiveDbDeleting, setArchiveDbDeleting] = useState(false);
+  const [archiveDbTestResult, setArchiveDbTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
+
   /* Appearance */
   const [fontFamily, setFontFamily] = useState('geist');
   const { prefs: layoutPrefs, updatePrefs: updateLayoutPrefs } = useLayoutPrefs();
@@ -295,6 +309,24 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   useEffect(() => { if (open) setMobileShowMenu(true); }, [open]);
 
   /* ─── Effects ─── */
+  useEffect(() => {
+    if (open && activeTab === 'archives') {
+      api.getArchiveExternalDb().then((r) => {
+        if (r.success && r.data) {
+          const d = r.data as any;
+          setArchiveDbConfigured(d.configured === true);
+          if (d.configured) {
+            setArchiveDbHost(d.host || '');
+            setArchiveDbPort(String(d.port || 3306));
+            setArchiveDbUser(d.user || '');
+            setArchiveDbDatabase(d.database || '');
+            setArchiveDbPassword('');
+          }
+        }
+      }).catch(() => {});
+    }
+  }, [open, activeTab]);
+
   useEffect(() => {
     if (open && activeTab === 'privacy') {
       api.get2FAStatus().then((r) => { if (r.success && r.data) setTwoFAEnabled((r.data as any).enabled === true); });
@@ -1232,6 +1264,166 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     );
   }
 
+  /* ──────────────────── ARCHIVES ──────────────────── */
+  function renderArchives() {
+    const handleTest = async () => {
+      setArchiveDbTesting(true);
+      setArchiveDbTestResult(null);
+      try {
+        const r = await api.testArchiveExternalDb({
+          host: archiveDbHost, port: parseInt(archiveDbPort) || 3306,
+          user: archiveDbUser, password: archiveDbPassword, database: archiveDbDatabase,
+        });
+        setArchiveDbTestResult((r.data as any) ?? { ok: false, error: 'Erreur inconnue' });
+      } catch {
+        setArchiveDbTestResult({ ok: false, error: 'Erreur réseau' });
+      } finally {
+        setArchiveDbTesting(false);
+      }
+    };
+
+    const handleSave = async () => {
+      setArchiveDbSaving(true);
+      try {
+        const r = await api.saveArchiveExternalDb({
+          host: archiveDbHost, port: parseInt(archiveDbPort) || 3306,
+          user: archiveDbUser, password: archiveDbPassword, database: archiveDbDatabase,
+        });
+        if (r.success) {
+          setArchiveDbConfigured(true);
+          setArchiveDbPassword('');
+          toast.success('Base de données externe configurée');
+        } else {
+          toast.error((r.data as any)?.error ?? 'Erreur de configuration');
+        }
+      } catch {
+        toast.error('Erreur réseau');
+      } finally {
+        setArchiveDbSaving(false);
+      }
+    };
+
+    const handleDelete = async () => {
+      setArchiveDbDeleting(true);
+      try {
+        await api.deleteArchiveExternalDb();
+        setArchiveDbConfigured(false);
+        setArchiveDbHost(''); setArchiveDbPort('3306');
+        setArchiveDbUser(''); setArchiveDbPassword(''); setArchiveDbDatabase('');
+        setArchiveDbTestResult(null);
+        toast.success('Configuration supprimée');
+      } catch {
+        toast.error('Erreur lors de la suppression');
+      } finally {
+        setArchiveDbDeleting(false);
+      }
+    };
+
+    const canSave = archiveDbHost.trim() && archiveDbUser.trim() && archiveDbPassword.trim() && archiveDbDatabase.trim();
+    const canTest = canSave;
+
+    return (
+      <div className="space-y-5">
+        <PageHeader
+          title="Archives des messages"
+          description="Configurez une base MySQL personnelle pour recevoir automatiquement vos anciens messages archivés et les partager avec l'autre participant de vos conversations."
+        />
+
+        {/* Statut actuel */}
+        <SettingsCard>
+          <SettingsRow
+            label="Base de données externe"
+            description={archiveDbConfigured
+              ? `Connectée — ${archiveDbHost}:${archiveDbPort} / ${archiveDbDatabase}`
+              : "Aucune base configurée — vos anciens messages sont archivés uniquement localement."}
+          >
+            <div className={cn('flex size-2.5 rounded-full', archiveDbConfigured ? 'bg-emerald-400' : 'bg-muted-foreground/30')} />
+          </SettingsRow>
+        </SettingsCard>
+
+        {/* Formulaire */}
+        <SettingsCard>
+          <div className="p-5 space-y-4">
+            <p className="text-[13px] font-semibold text-foreground">
+              {archiveDbConfigured ? 'Modifier la connexion' : 'Ajouter une base de données'}
+            </p>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-[11px] text-muted-foreground/60">Hôte (host)</Label>
+                <Input value={archiveDbHost} onChange={(e) => setArchiveDbHost(e.target.value)}
+                  placeholder="db.example.com" className="rounded-xl font-mono text-[13px]" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground/60">Port</Label>
+                <Input value={archiveDbPort} onChange={(e) => setArchiveDbPort(e.target.value)}
+                  placeholder="3306" className="rounded-xl font-mono text-[13px]" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground/60">Utilisateur</Label>
+                <Input value={archiveDbUser} onChange={(e) => setArchiveDbUser(e.target.value)}
+                  placeholder="alfychat" className="rounded-xl font-mono text-[13px]" autoComplete="username" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground/60">Mot de passe</Label>
+                <Input type="password" value={archiveDbPassword} onChange={(e) => setArchiveDbPassword(e.target.value)}
+                  placeholder={archiveDbConfigured ? '(inchangé si vide)' : '••••••••'} className="rounded-xl font-mono text-[13px]" autoComplete="current-password" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground/60">Nom de la base</Label>
+                <Input value={archiveDbDatabase} onChange={(e) => setArchiveDbDatabase(e.target.value)}
+                  placeholder="messages_archive" className="rounded-xl font-mono text-[13px]" />
+              </div>
+            </div>
+
+            {/* Résultat du test */}
+            {archiveDbTestResult && (
+              <div className={cn('flex items-center gap-2 rounded-xl px-4 py-3 text-[13px]',
+                archiveDbTestResult.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400')}>
+                {archiveDbTestResult.ok
+                  ? <><CheckIcon size={14} /> Connexion réussie — la base est accessible.</>
+                  : <><AlertTriangleIcon size={14} /> {archiveDbTestResult.error}</>}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button variant="secondary" className="rounded-xl" onClick={handleTest}
+                disabled={!canTest || archiveDbTesting}>
+                {archiveDbTesting ? <Loader2Icon size={14} className="animate-spin" /> : <DatabaseIcon size={14} />}
+                Tester la connexion
+              </Button>
+              <Button className="rounded-xl" onClick={handleSave}
+                disabled={!canSave || archiveDbSaving}>
+                {archiveDbSaving ? <Loader2Icon size={14} className="animate-spin" /> : <SaveIcon size={14} />}
+                {archiveDbConfigured ? 'Mettre à jour' : 'Enregistrer'}
+              </Button>
+              {archiveDbConfigured && (
+                <Button variant="destructive" className="rounded-xl ml-auto" onClick={handleDelete}
+                  disabled={archiveDbDeleting}>
+                  {archiveDbDeleting ? <Loader2Icon size={14} className="animate-spin" /> : <Trash2Icon size={14} />}
+                  Supprimer
+                </Button>
+              )}
+            </div>
+          </div>
+        </SettingsCard>
+
+        {/* Infos */}
+        <SettingsCard>
+          <div className="p-5 space-y-3">
+            <p className="text-[13px] font-semibold text-foreground">Comment ça fonctionne ?</p>
+            <div className="space-y-2 text-[12px] leading-relaxed text-muted-foreground">
+              <p>• Lorsque vos messages dépassent <strong className="text-foreground">5 mois</strong>, ils sont automatiquement exportés vers votre base MySQL.</p>
+              <p>• La table <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">alfychat_archived_messages</code> est créée automatiquement dans votre base.</p>
+              <p>• Si l'autre participant de la conversation demande un ancien message, votre client le servira depuis votre base externe, même s'il n'est plus sur vos appareils.</p>
+              <p>• Le mot de passe est chiffré côté serveur et jamais retourné en clair.</p>
+            </div>
+          </div>
+        </SettingsCard>
+      </div>
+    );
+  }
+
   function renderContent() {
     switch (activeTab) {
       case 'profile':       return renderProfile();
@@ -1241,6 +1433,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       case 'appearance':    return renderAppearance();
       case 'language':      return renderLanguage();
       case 'layout':        return renderLayout();
+      case 'archives':      return renderArchives();
       default:              return null;
     }
   }

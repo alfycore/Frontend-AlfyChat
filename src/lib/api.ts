@@ -515,6 +515,36 @@ class ApiService {
     return this.request(`/api/archive/message/${messageId}`);
   }
 
+  async getArchiveExternalDb() {
+    return this.request('/api/archive/external-db');
+  }
+
+  async saveArchiveExternalDb(config: { host: string; port?: number; user: string; password: string; database: string }) {
+    return this.request('/api/archive/external-db', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
+  }
+
+  async testArchiveExternalDb(config: { host: string; port?: number; user: string; password: string; database: string }) {
+    return this.request('/api/archive/external-db/test', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
+  }
+
+  async deleteArchiveExternalDb() {
+    return this.request('/api/archive/external-db', { method: 'DELETE' });
+  }
+
+  async getMessagesFromExternalDb(conversationId: string, opts?: { before?: string; limit?: number; messageId?: string }) {
+    const params = new URLSearchParams({ conversationId });
+    if (opts?.before) params.set('before', opts.before);
+    if (opts?.limit)  params.set('limit', String(opts.limit));
+    if (opts?.messageId) params.set('messageId', opts.messageId);
+    return this.request(`/api/archive/external-db/messages?${params}`);
+  }
+
   async getFriendRequests() {
     return this.request('/api/friends/requests');
   }

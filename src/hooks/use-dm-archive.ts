@@ -7,6 +7,7 @@
 
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { socketService } from '@/lib/socket';
+import { api } from '@/lib/api';
 import { getDMLocalStore, type LocalArchivedMessage, type ArchiveMeta } from '@/lib/dm-local-store';
 
 interface ArchiveStatus {
@@ -45,6 +46,19 @@ interface ArchiveResponsePayload {
 interface UseDMArchiveOptions {
   conversationId?: string;
   enabled?: boolean;
+}
+
+function apiMsgToLocal(m: any): LocalArchivedMessage {
+  return {
+    messageId: m.messageId ?? m.id,
+    conversationId: m.conversationId ?? m.conversation_id,
+    senderId: m.senderId ?? m.sender_id,
+    content: m.content,
+    nonce: m.nonce,
+    replyToId: m.replyToId ?? m.reply_to_id,
+    createdAt: m.createdAt ?? m.created_at,
+    archivedAt: m.archivedAt ?? m.archived_at,
+  };
 }
 
 export function useDMArchive(options: UseDMArchiveOptions = {}) {
@@ -103,18 +117,39 @@ export function useDMArchive(options: UseDMArchiveOptions = {}) {
       let messages: LocalArchivedMessage[] = [];
 
       if (payload.messageId) {
-        // Demande un message spécifique
+        // Demande un message spécifique — IndexedDB d'abord
         const msg = await localStore.current.getMessage(payload.messageId);
-        if (msg) messages = [msg];
+        if (msg) {
+          messages = [msg];
+        } else {
+          // Fallback : DB externe
+          const res = await api.getMessagesFromExternalDb(payload.conversationId, { messageId: payload.messageId }).catch(() => null);
+          const extMsgs: LocalArchivedMessage[] = ((res as any)?.data?.messages ?? []).map(apiMsgToLocal);
+          messages = extMsgs;
+        }
       } else {
-        // Demande un lot de messages
-        messages = await localStore.current.getMessagesByConversation(
+        // Demande un lot — IndexedDB d'abord
+        const localMsgs = await localStore.current.getMessagesByConversation(
           payload.conversationId,
-          {
-            before: payload.beforeDate,
-            limit: payload.limit,
-          }
+          { before: payload.beforeDate, limit: payload.limit }
         );
+
+        // Compléter avec DB externe si pas assez de résultats locaux
+        if (localMsgs.length < payload.limit) {
+          const res = await api.getMessagesFromExternalDb(payload.conversationId, {
+            before: payload.beforeDate,
+            limit: payload.limit - localMsgs.length,
+          }).catch(() => null);
+          const extMsgs: LocalArchivedMessage[] = ((res as any)?.data?.messages ?? []).map(apiMsgToLocal);
+
+          // Fusionner + dédupliquer
+          const merged = new Map<string, LocalArchivedMessage>();
+          for (const m of [...localMsgs, ...extMsgs]) merged.set(m.messageId, m);
+          messages = Array.from(merged.values())
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        } else {
+          messages = localMsgs;
+        }
       }
 
       if (messages.length > 0) {
