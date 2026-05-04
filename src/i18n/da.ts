@@ -679,6 +679,7 @@
     searchingE2EE: 'Søger i {count} beskeder (E2EE)', localE2EE: 'Lokal søgning (E2EE)',
     searching: 'Søger…', minChars: 'Indtast mindst 2 tegn', noResults: 'Ingen resultater',
     results: '{n} resultat(er)', unknownSender: 'Ukendt',
+    today: 'I dag kl. {time}', searchYesterday: 'I går kl. {time}',
   },
   messageItem: {
     user: 'Bruger', yesterday: 'i går kl. {time}', daysAgo: 'for {n} dage siden kl. {time}',

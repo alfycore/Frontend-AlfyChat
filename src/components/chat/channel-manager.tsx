@@ -508,12 +508,6 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
                     </button>
                   );
                 })}
-                        <p className={cn('truncate text-[12px] font-semibold leading-tight', isSelected ? 'text-[var(--accent)]' : 'text-[var(--foreground)]')}>{label}</p>
-                        <p className="truncate text-[10px] leading-tight text-[var(--muted)]/70">{description}</p>
-                      </div>
-                    </button>
-                  );
-                })}
               </div>
             </div>
           )}

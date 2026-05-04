@@ -679,6 +679,7 @@ export const pl = {
     searchingE2EE: 'Szukam w {count} wiadomosciach (E2EE)', localE2EE: 'Wyszukiwanie lokalne (E2EE)',
     searching: 'Szukam�', minChars: 'Wpisz co najmniej 2 znaki', noResults: 'Brak wynik�w',
     results: '{n} wynik(�w)', unknownSender: 'Nieznany',
+    today: 'Dzisiaj o {time}', searchYesterday: 'Wczoraj o {time}',
   },
   messageItem: {
     user: 'Uzytkownik', yesterday: 'wczoraj o {time}', daysAgo: '{n} dni temu o {time}',

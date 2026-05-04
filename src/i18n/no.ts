@@ -679,6 +679,7 @@ export const no = {
     searchingE2EE: 'S�ker i {count} meldinger (E2EE)', localE2EE: 'Lokalt s�k (E2EE)',
     searching: 'S�ker�', minChars: 'Skriv inn minst 2 tegn', noResults: 'Ingen resultater',
     results: '{n} resultat(er)', unknownSender: 'Ukjent',
+    today: 'I dag kl. {time}', searchYesterday: 'I går kl. {time}',
   },
   messageItem: {
     user: 'Bruker', yesterday: 'i g�r kl. {time}', daysAgo: 'for {n} dager siden kl. {time}',

@@ -679,6 +679,7 @@ export const pt = {
     searchingE2EE: 'A pesquisar em {count} mensagens (E2EE)', localE2EE: 'Pesquisa local (E2EE)',
     searching: 'A pesquisar�', minChars: 'Introduza pelo menos 2 caracteres', noResults: 'Sem resultados',
     results: '{n} resultado(s)', unknownSender: 'Desconhecido',
+    today: 'Hoje às {time}', searchYesterday: 'Ontem às {time}',
   },
   messageItem: {
     user: 'Utilizador', yesterday: 'ontem �s {time}', daysAgo: 'h� {n} dias �s {time}',

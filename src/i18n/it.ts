@@ -679,6 +679,7 @@
     searchingE2EE: 'Ricerca in {count} messaggi (E2EE)', localE2EE: 'Ricerca locale (E2EE)',
     searching: 'Ricerca in corso…', minChars: 'Inserisci almeno 2 caratteri', noResults: 'Nessun risultato',
     results: '{n} risultato/i', unknownSender: 'Sconosciuto',
+    today: 'Oggi alle {time}', searchYesterday: 'Ieri alle {time}',
   },
   messageItem: {
     user: 'Utente', yesterday: 'ieri alle {time}', daysAgo: '{n} giorni fa alle {time}',

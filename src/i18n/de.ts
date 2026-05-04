@@ -679,6 +679,7 @@
     searchingE2EE: 'Suche in {count} Nachrichten (E2EE)', localE2EE: 'Lokale Suche (E2EE)',
     searching: 'Suche läuft…', minChars: 'Mindestens 2 Zeichen eingeben', noResults: 'Keine Ergebnisse',
     results: '{n} Ergebnis(se)', unknownSender: 'Unbekannt',
+    today: 'Heute um {time}', searchYesterday: 'Gestern um {time}',
   },
   messageItem: {
     user: 'Benutzer', yesterday: 'gestern um {time}', daysAgo: 'vor {n} Tagen um {time}',

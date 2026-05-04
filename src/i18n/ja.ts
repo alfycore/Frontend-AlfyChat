@@ -684,6 +684,7 @@
     searchingE2EE: '{count} 件のメッセージを検索中 (E2EE)', localE2EE: 'ローカル検索 (E2EE)',
     searching: '検索中…', minChars: '2文字以上入力してください', noResults: '結果なし',
     results: '{n} 件の結果', unknownSender: '不明',
+    today: '{time}に今日', searchYesterday: '{time}に昨日',
   },
   messageItem: {
     user: 'ユーザー', yesterday: '昨日 {time}', daysAgo: '{n} 日前 {time}',

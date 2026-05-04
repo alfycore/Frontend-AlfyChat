@@ -679,6 +679,7 @@
     searchingE2EE: 'Zoeken in {count} berichten (E2EE)', localE2EE: 'Lokaal zoeken (E2EE)',
     searching: 'Zoeken…', minChars: 'Voer minimaal 2 tekens in', noResults: 'Geen resultaten',
     results: '{n} resultaat/resultaten', unknownSender: 'Onbekend',
+    today: 'Vandaag om {time}', searchYesterday: 'Gisteren om {time}',
   },
   messageItem: {
     user: 'Gebruiker', yesterday: 'gisteren om {time}', daysAgo: '{n} dagen geleden om {time}',
