@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Twemoji, emojiToTwemojiUrl } from '@/lib/twemoji';
 import { ChevronDownIcon, ClockIcon, SearchIcon, SmileIcon, StarIcon } from '@/components/icons';
+import { useUIStyle } from '@/hooks/use-ui-style';
 
 // ==========================================
 // EMOJI DATA
@@ -1477,6 +1478,8 @@ interface EmojiPickerProps {
 }
 
 export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProps) {
+  const ui = useUIStyle();
+  const g = ui.isGlass;
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'emoji' | 'gif' | 'sticker'>('emoji');
 
@@ -1624,9 +1627,13 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
         )}
       </PopoverTrigger>
 
-      <PopoverContent align="end" side="top" className="w-90 overflow-hidden rounded-[22px] border border-white/10 bg-[#151618] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:w-100">
+      <PopoverContent align="end" side="top" className={`w-90 overflow-hidden rounded-[22px] p-0 text-popover-foreground sm:w-100 ${
+          g
+            ? 'border border-white/[0.16] bg-white/35 backdrop-blur-3xl shadow-[0_24px_80px_rgba(0,0,0,0.10),inset_0_0.5px_0_rgba(255,255,255,0.40)] dark:border-white/[0.10] dark:bg-[oklch(0.18_0.006_286/0.65)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.40)]'
+            : 'border border-border/50 bg-popover shadow-[0_24px_80px_rgba(0,0,0,0.12)]'
+        }`}>
         {/* ── Tab bar ── */}
-        <div className="flex shrink-0 items-center gap-1 border-b border-white/8 px-3 pt-3">
+        <div className={`flex shrink-0 items-center gap-1 border-b px-3 pt-3 ${g ? 'border-white/[0.12] dark:border-white/[0.06]' : 'border-border/30'}`}>
           {(['gif', 'sticker', 'emoji'] as const).map((tab) => (
             <button
               key={tab}
@@ -1634,8 +1641,12 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
               onClick={() => { setActiveTab(tab); setSearch(''); }}
               className={`rounded-t-xl px-3 py-2 text-[13px] font-semibold transition-all ${
                 activeTab === tab
-                  ? 'bg-white/10 text-white shadow-[inset_0_-1px_0_rgba(255,255,255,0.08)]'
-                  : 'text-white/55 hover:bg-white/5 hover:text-white/85'
+                  ? g
+                    ? 'bg-white/[0.18] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.35)] text-foreground dark:bg-white/[0.10] dark:shadow-none'
+                    : 'bg-foreground/[0.08] text-foreground'
+                  : g
+                    ? 'text-foreground/50 hover:bg-white/[0.12] hover:text-foreground dark:text-foreground/40 dark:hover:bg-white/[0.06]'
+                    : 'text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground'
               }`}
             >
               {tab === 'gif' ? 'GIF' : tab === 'sticker' ? 'Autocollants' : 'Émoji'}
@@ -1647,21 +1658,25 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
         {activeTab === 'emoji' && (
           <>
             {/* Search */}
-            <div className="border-b border-white/8 px-3 py-3">
+            <div className={`border-b px-3 py-3 ${g ? 'border-white/[0.12] dark:border-white/[0.06]' : 'border-border/30'}`}>
               <div className="flex items-center gap-2">
                 <div className="relative min-w-0 flex-1">
-                  <SearchIcon size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/45" />
+                  <SearchIcon size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
                   <Input
                     ref={searchInputRef}
                     placeholder=":aoiBot:"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="h-10 rounded-xl border-white/10 bg-[#111214] pl-9 pr-3 text-[14px] text-white placeholder:text-white/35"
+                    className={`h-10 rounded-xl pl-9 pr-3 text-[14px] text-foreground placeholder:text-muted-foreground/50 ${
+                      g
+                        ? 'border-white/[0.18] bg-white/30 backdrop-blur-2xl shadow-[0_1px_6px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.40)] dark:border-white/[0.10] dark:bg-white/[0.08] dark:shadow-[0_1px_6px_rgba(0,0,0,0.20),inset_0_0.5px_0_rgba(255,255,255,0.04)]'
+                        : 'border-border/40 bg-background'
+                    }`}
                   />
                 </div>
                 <button
                   type="button"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[22px] transition-colors hover:bg-white/6"
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-xl text-[22px] transition-all ${g ? 'hover:bg-white/[0.14] hover:shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:hover:bg-white/[0.08]' : 'hover:bg-foreground/[0.06]'}`}
                   onClick={() => setSearch('')}
                   title="Effacer la recherche"
                 >
@@ -1672,15 +1687,23 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
 
             <div className="flex h-64 min-h-0">
               {!search && (
-                <div className="flex w-12 shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-white/8 bg-black/10 px-1.5 py-3 [&::-webkit-scrollbar]:hidden">
+                <div className={`flex w-12 shrink-0 flex-col items-center gap-1 overflow-y-auto border-r px-1.5 py-3 [&::-webkit-scrollbar]:hidden ${
+                  g
+                    ? 'border-white/[0.10] bg-white/[0.12] dark:border-white/[0.06] dark:bg-white/[0.03]'
+                    : 'border-border/30 bg-foreground/[0.03]'
+                }`}>
                   {navTabs.map((tab) => (
                     <button
                       key={`nav-${tab.index}`}
                       type="button"
                       className={`flex size-9 items-center justify-center rounded-xl transition-all duration-150 ${
                         activeCategory === tab.index
-                          ? 'bg-white/12 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]'
-                          : 'text-white/45 hover:bg-white/6 hover:text-white/80'
+                          ? g
+                            ? 'bg-white/[0.22] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.30)] text-foreground dark:bg-white/[0.12] dark:shadow-none'
+                            : 'bg-foreground/[0.10] text-foreground'
+                          : g
+                            ? 'text-foreground/50 hover:bg-white/[0.16] hover:text-foreground hover:shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:text-foreground/40 dark:hover:bg-white/[0.08]'
+                            : 'text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground'
                       }`}
                       onClick={() => scrollToCategory(tab.index)}
                       title={tab.name}
@@ -1701,16 +1724,16 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
               <ScrollArea className="flex-1">
                 <div className="px-2.5 py-2.5">
                   {visibleCategories.length === 0 ? (
-                    <div className="flex h-48 flex-col items-center justify-center gap-2 text-white/65">
+                    <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
                       <span className="text-3xl">🔍</span>
                       <p className="text-[13px]">Aucun emoji trouvé</p>
                     </div>
                   ) : (
                     visibleCategories.map((category, catIndex) => (
                       <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-3 last:mb-0">
-                        <div className="sticky top-0 z-10 mb-1.5 bg-[#151618]/96 py-1 backdrop-blur-sm">
-                          <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold text-white/80">
-                            <span className="inline-flex items-center justify-center text-white/70">
+                        <div className={`sticky top-0 z-10 mb-1.5 py-1 backdrop-blur-xl ${g ? 'bg-white/[0.42] dark:bg-[oklch(0.18_0.006_286/0.88)]' : 'bg-popover/96'}`}>
+                          <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold text-foreground/80">
+                            <span className="inline-flex items-center justify-center text-muted-foreground">
                               <ChevronDownIcon size={12} />
                             </span>
                             <span>{category.name}</span>
@@ -1721,7 +1744,11 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
                             <button
                               key={`${catIndex}-${i}`}
                               type="button"
-                              className="group flex aspect-square items-center justify-center rounded-[10px] border border-transparent bg-transparent transition-all duration-100 hover:scale-[1.08] hover:border-white/6 hover:bg-white/6 active:scale-95"
+                              className={`group flex aspect-square items-center justify-center rounded-[10px] border border-transparent bg-transparent transition-all duration-100 hover:scale-[1.08] active:scale-95 ${
+                                g
+                                  ? 'hover:border-white/[0.15] hover:bg-white/[0.16] hover:shadow-[0_1px_6px_rgba(0,0,0,0.04)] dark:hover:border-white/[0.10] dark:hover:bg-white/[0.08]'
+                                  : 'hover:border-foreground/[0.06] hover:bg-foreground/[0.06]'
+                              }`}
                               onClick={() => handleSelect(emoji)}
                               onMouseEnter={() => setHoveredEmoji({ emoji, name: EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji })}
                               onMouseLeave={() => setHoveredEmoji(null)}
@@ -1739,25 +1766,25 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
             </div>
 
             {/* Hover preview bar */}
-            <div className="flex h-11 shrink-0 items-center gap-2 border-t border-white/8 bg-black/15 px-3">
+            <div className={`flex h-11 shrink-0 items-center gap-2 border-t px-3 ${g ? 'border-white/[0.10] bg-white/[0.08] dark:border-white/[0.06] dark:bg-white/[0.03]' : 'border-border/30 bg-foreground/[0.03]'}`}>
               {hoveredEmoji ? (
                 <>
-                  <div className="flex size-7 items-center justify-center rounded-full bg-white/6">
+                  <div className={`flex size-7 items-center justify-center rounded-full ${g ? 'bg-white/[0.22] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.30)] dark:bg-white/[0.10] dark:shadow-none' : 'bg-foreground/[0.06]'}`}>
                     <Twemoji emoji={hoveredEmoji.emoji} size={18} />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-[12px] font-semibold text-white">{previewName}</p>
-                    
+                    <p className="truncate text-[12px] font-semibold text-foreground">{previewName}</p>
+
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="flex size-7 items-center justify-center rounded-full bg-white/6">
-                    <SmileIcon size={15} className="text-white/70" />
+                  <div className={`flex size-7 items-center justify-center rounded-full ${g ? 'bg-white/[0.22] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.30)] dark:bg-white/[0.10] dark:shadow-none' : 'bg-foreground/[0.06]'}`}>
+                    <SmileIcon size={15} className="text-muted-foreground" />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-[12px] font-semibold text-white/85">Émoji</p>
-                    <p className="truncate text-[10px] text-white/40">{previewName}</p>
+                    <p className="truncate text-[12px] font-semibold text-foreground/85">Émoji</p>
+                    <p className="truncate text-[10px] text-muted-foreground/60">{previewName}</p>
                   </div>
                 </>
               )}
@@ -1768,14 +1795,18 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
         {/* ── GIF tab ── */}
         {activeTab === 'gif' && (
           <>
-            <div className="border-b border-white/8 px-3 py-3">
+            <div className={`border-b px-3 py-3 ${g ? 'border-white/[0.12] dark:border-white/[0.06]' : 'border-border/30'}`}>
               <div className="relative">
-                <SearchIcon size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/45" />
+                <SearchIcon size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
                 <Input
                   placeholder="Rechercher un GIF..."
                   value={gifSearch}
                   onChange={(e) => setGifSearch(e.target.value)}
-                  className="h-10 rounded-xl border-white/10 bg-[#111214] pl-9 pr-3 text-[14px] text-white placeholder:text-white/35"
+                  className={`h-10 rounded-xl pl-9 pr-3 text-[14px] text-foreground placeholder:text-muted-foreground/50 ${
+                    g
+                      ? 'border-white/[0.18] bg-white/30 backdrop-blur-2xl shadow-[0_1px_6px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.40)] dark:border-white/[0.10] dark:bg-white/[0.08] dark:shadow-[0_1px_6px_rgba(0,0,0,0.20),inset_0_0.5px_0_rgba(255,255,255,0.04)]'
+                      : 'border-border/40 bg-background'
+                  }`}
                 />
               </div>
             </div>
@@ -1796,7 +1827,7 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
                     <button
                       key={gif.id}
                       type="button"
-                      className="mb-1 block w-full overflow-hidden rounded-xl border border-white/6 transition-all duration-200 hover:scale-[1.02] hover:opacity-90"
+                      className={`mb-1 block w-full overflow-hidden rounded-xl border transition-all duration-200 hover:scale-[1.02] hover:opacity-90 ${g ? 'border-white/[0.12] dark:border-white/[0.06]' : 'border-border/30'}`}
                       onClick={() => handleGifSelect(gif)}
                     >
                       <img
@@ -1817,16 +1848,16 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
               )}
             </ScrollArea>
 
-            <p className="border-t border-white/8 py-2 text-center text-[10px] text-white/35">Powered by Tenor</p>
+            <p className={`border-t py-2 text-center text-[10px] ${g ? 'border-white/[0.10] text-foreground/30 dark:text-foreground/20' : 'border-border/30 text-muted-foreground/50'}`}>Powered by Tenor</p>
           </>
         )}
 
         {/* ── Autocollants tab ── */}
         {activeTab === 'sticker' && (
-          <div className="flex h-67 flex-col items-center justify-center gap-3 text-white/75">
+          <div className="flex h-67 flex-col items-center justify-center gap-3 text-muted-foreground">
             <span className="text-4xl">🧩</span>
             <p className="text-[13px] font-medium">Autocollants</p>
-            <p className="text-[11px] text-white/45">Bientôt disponible</p>
+            <p className="text-[11px] text-muted-foreground/60">Bientôt disponible</p>
           </div>
         )}
       </PopoverContent>

@@ -163,11 +163,11 @@ function LoadingSkeleton() {
       {widths.map((w, i) => (
         <div key={i} className={cn('flex gap-3', i % 3 !== 0 && 'pl-11')}>
           {i % 3 === 0 && (
-            <Skeleton className="size-10 shrink-0 rounded-full border border-white/10 bg-white/5" />
+            <Skeleton className="size-10 shrink-0 rounded-full border border-border/30 bg-foreground/[0.06]" />
           )}
           <div className="flex-1 space-y-2">
-            {i % 3 === 0 && <Skeleton className="h-3 w-24 rounded-xl border border-white/10 bg-white/5" />}
-            <Skeleton className="h-4 rounded-xl border border-white/10 bg-white/5" style={{ width: `${w}%` }} />
+            {i % 3 === 0 && <Skeleton className="h-3 w-24 rounded-xl border border-border/30 bg-foreground/[0.06]" />}
+            <Skeleton className="h-4 rounded-xl border border-border/30 bg-foreground/[0.06]" style={{ width: `${w}%` }} />
           </div>
         </div>
       ))}

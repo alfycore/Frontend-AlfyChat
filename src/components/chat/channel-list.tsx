@@ -215,7 +215,7 @@ function ChannelRow({
       {meta.bubble ? (
         <span className={cn(
           'flex size-[20px] shrink-0 items-center justify-center rounded-[5px] transition-colors',
-          isActive ? 'bg-white/10' : 'bg-foreground/[0.06] group-hover/ch:bg-foreground/[0.09]',
+          isActive ? 'bg-foreground/[0.10]' : 'bg-foreground/[0.06] group-hover/ch:bg-foreground/[0.09]',
         )}>
           <Icon size={12} className={cn('shrink-0 transition-colors', isActive ? meta.activeCls : meta.iconCls)} />
         </span>
@@ -1522,7 +1522,7 @@ export function ChannelList({
                         >
                           <span className={cn(
                             'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors',
-                            isSelected ? 'bg-white/10' : 'bg-foreground/[0.06]',
+                            isSelected ? 'bg-foreground/[0.10]' : 'bg-foreground/[0.06]',
                           )}>
                             <m.icon size={15} className={isSelected ? m.activeCls : m.iconCls} />
                           </span>
