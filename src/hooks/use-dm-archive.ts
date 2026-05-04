@@ -55,6 +55,7 @@ function apiMsgToLocal(m: any): LocalArchivedMessage {
     senderId: m.senderId ?? m.sender_id,
     content: m.content,
     nonce: m.nonce,
+    encryptionKey: m.encryptionKey ?? '',
     replyToId: m.replyToId ?? m.reply_to_id,
     createdAt: m.createdAt ?? m.created_at,
     archivedAt: m.archivedAt ?? m.archived_at,

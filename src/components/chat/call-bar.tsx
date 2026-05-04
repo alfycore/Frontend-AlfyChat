@@ -3,6 +3,7 @@
 import { PhoneIcon, PhoneOffIcon, MonitorUpIcon, MicIcon, MicOffIcon, VideoIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useCallContext } from '@/hooks/use-call-context';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 export function CallBar() {
@@ -18,6 +19,7 @@ export function CallBar() {
     toggleMute,
   } = useCallContext();
   const router = useRouter();
+  const { t } = useTranslation();
 
   if (callStatus === 'idle' || callStatus === 'ended') return null;
 
@@ -30,10 +32,10 @@ export function CallBar() {
   const isConnected = callStatus === 'connected';
 
   const statusLabel: Record<string, string> = {
-    calling: 'Appel en cours…',
-    ringing: 'Sonnerie…',
-    connecting: 'Connexion…',
-    connected: callType === 'video' ? 'Vidéo connectée' : 'Vocal connecté',
+    calling: t.callBar.calling,
+    ringing: t.callBar.ringing,
+    connecting: t.callBar.connecting,
+    connected: callType === 'video' ? t.callBar.videoConnected : t.callBar.voiceConnected,
   };
 
   const handleNavigate = () => {
@@ -71,7 +73,7 @@ export function CallBar() {
           'flex-1 truncate font-heading text-[11px] font-semibold tracking-tight',
           isConnected ? 'text-success' : 'text-muted-foreground',
         )}>
-          {statusLabel[callStatus] ?? 'Appel…'}
+          {statusLabel[callStatus] ?? t.callBar.call}
         </span>
 
         {isConnected && (
@@ -95,11 +97,11 @@ export function CallBar() {
         </div>
 
         <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground/70">
-          {callerName || 'Appel en cours'}
+          {callerName || t.callBar.ongoingCall}
         </span>
 
         {isScreenSharing && (
-          <MonitorUpIcon size={12} className="shrink-0 text-primary" aria-label="Partage d'écran" />
+          <MonitorUpIcon size={12} className="shrink-0 text-primary" aria-label={t.callBar.shareScreen} />
         )}
 
         {/* Mute toggle */}
