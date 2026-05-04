@@ -22,6 +22,7 @@ import { CallBar } from '@/components/chat/call-bar';
 import { GroupCreateDialog } from '@/components/chat/group-create-dialog';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 interface Group {
   id: string;
@@ -40,6 +41,7 @@ interface GroupsListProps {
 export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) {
   const { user } = useAuth();
   const ui = useUIStyle();
+  const { t } = useTranslation();
   const notifStore = useNotificationStore();
 
   const [groups, setGroups] = useState<Group[]>([]);
@@ -57,7 +59,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
         .filter((conv) => conv.type === 'group')
         .map((conv) => ({
           id: conv.id,
-          name: conv.name || 'Groupe',
+          name: conv.name || t.group.defaultName,
           avatarUrl: conv.avatarUrl,
           lastMessage: conv.lastMessage,
           lastMessageAt: conv.lastMessageAt || conv.updatedAt,
@@ -149,7 +151,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
     <div className={cn('flex h-full w-full flex-col overflow-hidden', ui.sidebarBg)}>
       {/* ── Header ── */}
       <div className={cn('flex h-13 shrink-0 items-center justify-between px-3', ui.header)}>
-        <span className="font-heading text-[13px] tracking-tight text-foreground">Groupes</span>
+        <span className="font-heading text-[13px] tracking-tight text-foreground">{t.group.groupsTitle}</span>
         <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -162,7 +164,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
               <PlusIcon size={15} />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Nouveau groupe</TooltipContent>
+          <TooltipContent>{t.group.newGroup}</TooltipContent>
         </Tooltip>
         </TooltipProvider>
       </div>
@@ -180,8 +182,8 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                 <UsersRoundIcon size={20} className="text-muted-foreground" />
               </div>
               <div>
-                <p className="text-[13px] font-medium text-foreground">Aucun groupe</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">Créez votre premier groupe</p>
+                <p className="text-[13px] font-medium text-foreground">{t.group.noGroups}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{t.group.createFirstGroup}</p>
               </div>
               <Button
                 size="sm"
@@ -190,7 +192,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                 className="gap-1.5"
               >
                 <PlusIcon size={13} />
-                Créer un groupe
+                {t.group.createGroup}
               </Button>
             </div>
           ) : (
@@ -234,7 +236,9 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
                   <div className="min-w-0 flex-1 text-left">
                     <p className="truncate text-[13px] font-medium leading-tight">{group.name}</p>
                     <p className="text-[10px] leading-tight text-muted-foreground/50">
-                      {group.participantCount} membre{group.participantCount !== 1 ? 's' : ''}
+                      {group.participantCount !== 1
+                        ? t.group.memberCountPlural.replace('{n}', group.participantCount.toString())
+                        : t.group.memberCount.replace('{n}', group.participantCount.toString())}
                     </p>
                   </div>
 

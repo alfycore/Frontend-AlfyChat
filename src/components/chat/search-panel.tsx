@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { resolveMediaUrl, api } from '@/lib/api';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 import type { MessageData } from '@/components/chat/message-item';
 
@@ -44,15 +45,15 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   );
 }
 
-function formatSearchDate(dateString: string): string {
+function formatSearchDate(dateString: string, labels: { today: string; yesterday: string }): string {
   const date = new Date(dateString);
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfYesterday = new Date(startOfToday.getTime() - 86400000);
-  const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  if (date >= startOfToday) return `Aujourd'hui à ${time}`;
-  if (date >= startOfYesterday) return `Hier à ${time}`;
-  return `${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à ${time}`;
+  const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  if (date >= startOfToday) return labels.today.replace('{time}', time);
+  if (date >= startOfYesterday) return labels.yesterday.replace('{time}', time);
+  return `${date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${time}`;
 }
 
 /** Nettoyage du texte des pièces jointes pour l'affichage */
@@ -74,6 +75,7 @@ export function SearchPanel({
   onClose,
   onJumpToMessage,
 }: SearchPanelProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MessageData[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -203,7 +205,7 @@ export function SearchPanel({
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-3">
         <div className="flex items-center gap-2">
           <SearchIcon size={15} className="text-muted-foreground" />
-          <span className="text-sm font-semibold text-foreground">Recherche</span>
+          <span className="text-sm font-semibold text-foreground">{t.search.title}</span>
         </div>
         <Button size="icon" variant="ghost" className="size-7" onClick={onClose}>
           <XIcon size={14} />
@@ -221,7 +223,7 @@ export function SearchPanel({
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher des messages…"
+            placeholder={t.search.placeholder}
             className="h-8 pl-8 pr-8 text-sm"
           />
           {query && (
@@ -237,10 +239,10 @@ export function SearchPanel({
         {isDM && (
           <p className="mt-1.5 text-[10px] text-muted-foreground/70">
             {isLoadingAll
-              ? `Chargement des messages… (${localMessages.length} chargés)`
+              ? t.search.loadingMessages.replace('{count}', localMessages.length.toString())
               : allLoaded
-                ? `Recherche sur ${localMessages.length} messages (E2EE)`
-                : 'Recherche locale (E2EE)'}
+                ? t.search.searchingE2EE.replace('{count}', localMessages.length.toString())
+                : t.search.localE2EE}
           </p>
         )}
       </div>
@@ -250,22 +252,22 @@ export function SearchPanel({
         {isSearching ? (
           <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
             <Spinner size="sm" />
-            <span className="text-xs">Recherche en cours…</span>
+            <span className="text-xs">{t.search.searching}</span>
           </div>
         ) : !hasSearched ? (
           <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
             <SearchIcon size={28} className="opacity-30" />
-            <span className="text-xs">Tapez au moins 2 caractères</span>
+            <span className="text-xs">{t.search.minChars}</span>
           </div>
         ) : results.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
             <MessageCircleIcon size={28} className="opacity-30" />
-            <span className="text-xs">Aucun résultat</span>
+            <span className="text-xs">{t.search.noResults}</span>
           </div>
         ) : (
           <div className="flex flex-col gap-0.5 px-1.5 pb-2">
             <div className="px-2 pb-1 pt-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              {results.length} résultat{results.length > 1 ? 's' : ''}
+              {t.search.results.replace('{n}', results.length.toString())}
             </div>
             {results.map((msg) => {
               const cleanContent = stripAttachments(msg.content || '');
@@ -289,10 +291,10 @@ export function SearchPanel({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-1.5">
                       <span className="truncate text-xs font-semibold text-foreground">
-                        {sender?.displayName || sender?.username || 'Inconnu'}
+                        {sender?.displayName || sender?.username || t.search.unknownSender}
                       </span>
                       <span className="shrink-0 text-[10px] text-muted-foreground/70">
-                        {formatSearchDate(msg.createdAt)}
+                        {formatSearchDate(msg.createdAt, { today: t.search.today, yesterday: t.search.searchYesterday })}
                       </span>
                     </div>
                     <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">

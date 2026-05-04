@@ -10,6 +10,7 @@ import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { cn } from '@/lib/utils';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { statusColor, isVisibleOnline, type UserStatus } from '@/lib/status';
+import { useTranslation } from '@/components/locale-provider';
 
 interface Role {
   id: string;
@@ -101,6 +102,7 @@ export function MemberList({ serverId }: MemberListProps) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const ui = useUIStyle();
+  const { t } = useTranslation();
 
   useEffect(() => {
     setIsLoading(true);
@@ -243,9 +245,11 @@ export function MemberList({ serverId }: MemberListProps) {
     <div className={cn('flex h-full w-full flex-col', ui.isGlass ? ui.contentBg : 'bg-sidebar')}>
       {/* Header */}
       <div className="shrink-0 border-b border-border/40 px-4 pb-3 pt-4">
-        <div className="text-[13px] font-semibold text-foreground">Membres</div>
+        <div className="text-[13px] font-semibold text-foreground">{t.memberList.title}</div>
         <div className="mt-0.5 font-mono text-[11px] text-muted-foreground/60">
-          {members.length} membre{members.length !== 1 ? 's' : ''} · {onlineMembers.length} en ligne
+          {members.length !== 1
+            ? t.memberList.memberCountPlural.replace('{n}', members.length.toString())
+            : t.memberList.memberCount.replace('{n}', members.length.toString())} · {onlineMembers.length} {t.memberList.online.toLowerCase()}
         </div>
       </div>
       <ScrollArea className="flex-1">
@@ -281,7 +285,7 @@ export function MemberList({ serverId }: MemberListProps) {
             <div className="mb-4">
               <div className="mb-1.5 flex items-center gap-1.5 px-2">
                 <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/50">
-                  En ligne
+                  {t.memberList.online}
                 </p>
                 <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground/40">
                   {remainingOnline.length}
@@ -300,7 +304,7 @@ export function MemberList({ serverId }: MemberListProps) {
             <div className="mb-4">
               <div className="mb-1.5 flex items-center gap-1.5 px-2">
                 <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/35">
-                  Hors ligne
+                  {t.memberList.offline}
                 </p>
                 <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground/25">
                   {offlineMembers.length}
