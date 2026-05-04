@@ -4,10 +4,12 @@ import { MicIcon, MicOffIcon, HeadphonesIcon, HeadphoneOffIcon, PhoneOffIcon, Vo
 import { useVoice } from '@/hooks/use-voice';
 import { Button } from '@/components/ui/button';
 import { NetworkQualityIndicator } from '@/components/chat/network-quality-indicator';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 export function VoiceControlBar() {
   const voice = useVoice();
+  const { t } = useTranslation();
 
   if (!voice || !voice.currentChannelId) return null;
 
@@ -39,10 +41,10 @@ export function VoiceControlBar() {
           'font-heading text-[11px] font-semibold tracking-tight',
           isConnecting ? 'text-amber-500' : 'text-success'
         )}>
-          {isConnecting ? 'Connexion…' : 'Vocal actif'}
+          {isConnecting ? t.voiceControlBar.connecting : t.voiceControlBar.voiceActive}
         </span>
         <span className="ml-auto rounded-lg bg-foreground/[0.04] px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-          {participants.length} {participants.length === 1 ? 'membre' : 'membres'}
+          {t.voiceControlBar.members.replace('{n}', String(participants.length))}
         </span>
       </div>
 

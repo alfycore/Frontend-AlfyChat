@@ -5,6 +5,7 @@ import { PhoneIcon, PhoneOffIcon, VideoIcon } from '@/components/icons';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from '@/components/locale-provider';
 import { resolveMediaUrl } from '@/lib/api';
 
 interface IncomingCallDialogProps {
@@ -24,6 +25,7 @@ export function IncomingCallDialog({
   onAccept,
   onDecline,
 }: IncomingCallDialogProps) {
+  const { t } = useTranslation();
   const ctxRef = useRef<AudioContext | null>(null);
 
   // ── Ringtone: two-tone pulse (440 Hz + 480 Hz), 0.6s on / 1.2s off ──
@@ -88,7 +90,7 @@ export function IncomingCallDialog({
       <DialogContent showCloseButton={false} className="max-w-[320px] overflow-hidden rounded-3xl border border-border/40 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl">
             <DialogHeader className="sr-only">
               <DialogTitle>
-                {callType === 'video' ? 'Appel vidéo entrant' : 'Appel vocal entrant'}
+                {callType === 'video' ? t.calls.incomingVideo : t.calls.incomingVoice}
               </DialogTitle>
             </DialogHeader>
 
@@ -122,7 +124,7 @@ export function IncomingCallDialog({
                     <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
                   </span>
                   <span className="text-[11px] font-medium text-muted-foreground">
-                    {callType === 'video' ? 'Appel vidéo' : 'Appel vocal'}
+                    {callType === 'video' ? t.calls.videoLabel : t.calls.voiceLabel}
                   </span>
                 </div>
               </div>
@@ -139,7 +141,7 @@ export function IncomingCallDialog({
                 >
                   <PhoneOffIcon size={26} />
                 </Button>
-                <span className="text-[11px] font-medium text-muted-foreground">Refuser</span>
+                <span className="text-[11px] font-medium text-muted-foreground">{t.friends.decline}</span>
               </div>
 
               {/* Accept */}
@@ -155,7 +157,7 @@ export function IncomingCallDialog({
                     <PhoneIcon size={26} />
                   )}
                 </Button>
-                <span className="text-[11px] font-medium text-muted-foreground">Accepter</span>
+                <span className="text-[11px] font-medium text-muted-foreground">{t.friends.accept}</span>
               </div>
             </div>
       </DialogContent>

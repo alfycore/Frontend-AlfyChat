@@ -34,89 +34,90 @@ import {
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 // ── Permission categories by channel type ──
 
-type PermFlag = { flag: number; label: string; key: string; description?: string };
+type PermFlag = { flag: number; labelKey: string; key: string; description?: string };
 
 // Values MUST match server-node/src/enums/Permission.ts
 const PERM_GENERAL: PermFlag[] = [
-  { flag: 0x1, label: 'Voir le salon', key: 'view', description: 'Permet de voir le salon dans la liste' },
-  { flag: 0x80, label: 'Gérer le salon', key: 'manage_channel', description: 'Modifier le nom, la description, les permissions…' },
+  { flag: 0x1,  labelKey: 'viewChannel',   key: 'view',          description: 'Permet de voir le salon dans la liste' },
+  { flag: 0x80, labelKey: 'manageChannel', key: 'manage_channel', description: 'Modifier le nom, la description, les permissions…' },
 ];
 
 const PERM_TEXT: PermFlag[] = [
-  { flag: 0x2,    label: 'Envoyer des messages',  key: 'send',             description: 'Publier des messages dans le salon' },
-  { flag: 0x200,  label: 'Gérer les messages',    key: 'manage_messages',  description: 'Supprimer ou épingler les messages' },
-  { flag: 0x8,    label: 'Joindre des fichiers',  key: 'attach',           description: 'Envoyer des images et fichiers' },
-  { flag: 0x4000, label: 'Mentionner @everyone',  key: 'mention_everyone', description: 'Utiliser @everyone et @here' },
+  { flag: 0x2,    labelKey: 'sendMessages',    key: 'send',             description: 'Publier des messages dans le salon' },
+  { flag: 0x200,  labelKey: 'manageMessages',  key: 'manage_messages',  description: 'Supprimer ou épingler les messages' },
+  { flag: 0x8,    labelKey: 'attachFiles',     key: 'attach',           description: 'Envoyer des images et fichiers' },
+  { flag: 0x4000, labelKey: 'mentionEveryone', key: 'mention_everyone', description: 'Utiliser @everyone et @here' },
 ];
 
 const PERM_VOICE: PermFlag[] = [
-  { flag: 0x10, label: 'Se connecter', key: 'voice_connect', description: 'Rejoindre le salon vocal' },
-  { flag: 0x20, label: 'Parler',       key: 'voice_speak',   description: 'Transmettre du son dans le salon' },
+  { flag: 0x10, labelKey: 'connect', key: 'voice_connect', description: 'Rejoindre le salon vocal' },
+  { flag: 0x20, labelKey: 'speak',   key: 'voice_speak',   description: 'Transmettre du son dans le salon' },
 ];
 
 const PERM_TEXT_BY_TYPE: Partial<Record<ChannelType, PermFlag[]>> = {
   announcement: [
-    { flag: 0x2,    label: 'Publier une annonce',   key: 'send',             description: 'Rédiger et publier des annonces officielles' },
-    { flag: 0x200,  label: 'Gérer les annonces',    key: 'manage_messages',  description: 'Modifier ou supprimer les annonces' },
-    { flag: 0x4000, label: 'Mentionner @everyone',  key: 'mention_everyone', description: 'Notifier tous les membres' },
+    { flag: 0x2,    labelKey: 'postAnnouncement',    key: 'send',             description: 'Rédiger et publier des annonces officielles' },
+    { flag: 0x200,  labelKey: 'manageAnnouncements', key: 'manage_messages',  description: 'Modifier ou supprimer les annonces' },
+    { flag: 0x4000, labelKey: 'mentionEveryone',     key: 'mention_everyone', description: 'Notifier tous les membres' },
   ],
   forum: [
-    { flag: 0x2,   label: 'Créer un fil',         key: 'send',            description: 'Ouvrir un nouveau fil de discussion' },
-    { flag: 0x200, label: 'Gérer les fils',        key: 'manage_messages', description: 'Épingler, supprimer ou verrouiller' },
-    { flag: 0x8,   label: 'Joindre des fichiers',  key: 'attach',          description: 'Ajouter des images aux fils' },
+    { flag: 0x2,   labelKey: 'createThread',  key: 'send',            description: 'Ouvrir un nouveau fil de discussion' },
+    { flag: 0x200, labelKey: 'manageThreads', key: 'manage_messages', description: 'Épingler, supprimer ou verrouiller' },
+    { flag: 0x8,   labelKey: 'attachFiles',   key: 'attach',          description: 'Ajouter des images aux fils' },
   ],
   gallery: [
-    { flag: 0x2,   label: 'Partager du contenu',  key: 'send',            description: 'Publier des images et vidéos dans la galerie' },
-    { flag: 0x200, label: 'Modérer la galerie',   key: 'manage_messages', description: 'Supprimer les publications' },
+    { flag: 0x2,   labelKey: 'shareContent',    key: 'send',            description: 'Publier des images et vidéos dans la galerie' },
+    { flag: 0x200, labelKey: 'moderateGallery', key: 'manage_messages', description: 'Supprimer les publications' },
   ],
   poll: [
-    { flag: 0x2,   label: 'Créer un sondage',     key: 'send',            description: 'Ouvrir un nouveau sondage' },
-    { flag: 0x200, label: 'Gérer les sondages',   key: 'manage_messages', description: 'Clôturer ou supprimer les sondages' },
+    { flag: 0x2,   labelKey: 'createPoll',  key: 'send',            description: 'Ouvrir un nouveau sondage' },
+    { flag: 0x200, labelKey: 'managePolls', key: 'manage_messages', description: 'Clôturer ou supprimer les sondages' },
   ],
   suggestion: [
-    { flag: 0x2,   label: 'Soumettre une idée',   key: 'send',            description: 'Proposer une idée à la communauté' },
-    { flag: 0x200, label: 'Gérer les suggestions', key: 'manage_messages', description: 'Accepter, refuser ou supprimer' },
+    { flag: 0x2,   labelKey: 'submitIdea',  key: 'send',            description: 'Proposer une idée à la communauté' },
+    { flag: 0x200, labelKey: 'manageIdeas', key: 'manage_messages', description: 'Accepter, refuser ou supprimer' },
   ],
   doc: [
-    { flag: 0x2,   label: 'Créer un document',    key: 'send',            description: 'Rédiger un nouveau document' },
-    { flag: 0x200, label: 'Gérer les documents',  key: 'manage_messages', description: 'Supprimer ou archiver les documents' },
+    { flag: 0x2,   labelKey: 'createDoc',  key: 'send',            description: 'Rédiger un nouveau document' },
+    { flag: 0x200, labelKey: 'manageDocs', key: 'manage_messages', description: 'Supprimer ou archiver les documents' },
   ],
   counting: [
-    { flag: 0x2,   label: 'Poster un nombre',     key: 'send',            description: 'Participer au comptage collectif' },
-    { flag: 0x200, label: 'Réinitialiser',         key: 'manage_messages', description: 'Remettre le compteur à zéro' },
+    { flag: 0x2,   labelKey: 'postNumber', key: 'send',            description: 'Participer au comptage collectif' },
+    { flag: 0x200, labelKey: 'resetCount', key: 'manage_messages', description: 'Remettre le compteur à zéro' },
   ],
   vent: [
-    { flag: 0x2,   label: 'Exprimer dans le défouloir', key: 'send',      description: 'Poster librement ses frustrations' },
-    { flag: 0x200, label: 'Modérer',               key: 'manage_messages', description: 'Supprimer les messages problématiques' },
+    { flag: 0x2,   labelKey: 'ventExpress', key: 'send',            description: 'Poster librement ses frustrations' },
+    { flag: 0x200, labelKey: 'moderate',    key: 'manage_messages', description: 'Supprimer les messages problématiques' },
   ],
   thread: [
-    { flag: 0x2,   label: 'Créer un fil',         key: 'send',            description: 'Démarrer un nouveau fil' },
-    { flag: 0x200, label: 'Gérer les fils',        key: 'manage_messages', description: 'Archiver ou supprimer des fils' },
-    { flag: 0x8,   label: 'Joindre des fichiers',  key: 'attach',          description: 'Ajouter des pièces jointes' },
+    { flag: 0x2,   labelKey: 'createThread',  key: 'send',            description: 'Démarrer un nouveau fil' },
+    { flag: 0x200, labelKey: 'manageThreads', key: 'manage_messages', description: 'Archiver ou supprimer des fils' },
+    { flag: 0x8,   labelKey: 'attachFiles',   key: 'attach',          description: 'Ajouter des pièces jointes' },
   ],
   media: [
-    { flag: 0x2,   label: 'Partager un média',    key: 'send',            description: 'Publier des vidéos, images ou sons' },
-    { flag: 0x200, label: 'Gérer les médias',     key: 'manage_messages', description: 'Supprimer les publications' },
+    { flag: 0x2,   labelKey: 'shareMedia',  key: 'send',            description: 'Publier des vidéos, images ou sons' },
+    { flag: 0x200, labelKey: 'manageMedia', key: 'manage_messages', description: 'Supprimer les publications' },
   ],
 };
 
 const PERM_STAGE: PermFlag[] = [
-  { flag: 0x10, label: 'Rejoindre en audience',  key: 'voice_connect', description: 'Assister à la scène en tant qu\'auditeur' },
-  { flag: 0x20, label: 'Prendre la parole',       key: 'voice_speak',   description: 'Parler comme orateur désigné par l\'hôte' },
-  { flag: 0x2,  label: 'Envoyer des messages',    key: 'send',          description: 'Utiliser le chat pendant la scène' },
+  { flag: 0x10, labelKey: 'joinAsAudience', key: 'voice_connect', description: 'Assister à la scène en tant qu\'auditeur' },
+  { flag: 0x20, labelKey: 'takeSpeech',     key: 'voice_speak',   description: 'Parler comme orateur désigné par l\'hôte' },
+  { flag: 0x2,  labelKey: 'sendMessages',   key: 'send',          description: 'Utiliser le chat pendant la scène' },
 ];
 
-function getPermDict(channelType: ChannelType): Record<string, PermFlag[]> {
-  const dict: Record<string, PermFlag[]> = { 'Général': PERM_GENERAL };
+function getPermDict(channelType: ChannelType, cTypes: Record<string, string>): Record<string, PermFlag[]> {
+  const dict: Record<string, PermFlag[]> = { 'General': PERM_GENERAL };
   if (channelType === 'stage') {
-    dict['Scène'] = PERM_STAGE;
+    dict[cTypes.stage ?? 'Stage'] = PERM_STAGE;
   } else if (channelType === 'voice') {
-    dict['Vocal'] = PERM_VOICE;
+    dict[cTypes.voice ?? 'Voice'] = PERM_VOICE;
   } else {
-    dict['Texte'] = PERM_TEXT_BY_TYPE[channelType] ?? PERM_TEXT;
+    dict[cTypes.text ?? 'Text'] = PERM_TEXT_BY_TYPE[channelType] ?? PERM_TEXT;
   }
   return dict;
 }
@@ -169,6 +170,7 @@ const CHANNEL_TYPES: { id: ChannelType; icon: any; label: string; description: s
 ];
 
 export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerProps) {
+  const { t } = useTranslation();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
@@ -321,7 +323,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
   const DeleteConfirm = ({ target, indent = false }: { target: Channel; indent?: boolean }) => (
     <div className={cn('rounded-2xl border border-destructive/30 bg-destructive/5 p-4 space-y-3', indent && 'ml-4')}>
       <p className="text-[13px] font-semibold text-destructive">
-        {target.type === 'category' ? 'Supprimer la catégorie' : 'Supprimer le salon'}
+        {target.type === 'category' ? t.channelMgr.deleteCategory : t.channelMgr.deleteChannel}
       </p>
       <p className="text-[13px] text-[var(--muted)]">
         {target.type === 'category' ? (
@@ -331,8 +333,8 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
         )}
       </p>
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>Annuler</Button>
-        <Button size="sm" className="bg-destructive text-white hover:bg-destructive/90" onClick={handleDelete}>Supprimer</Button>
+        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>{t.channelMgr.cancel}</Button>
+        <Button size="sm" className="bg-destructive text-white hover:bg-destructive/90" onClick={handleDelete}>{t.messageItem.delete}</Button>
       </div>
     </div>
   );
@@ -425,12 +427,12 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             {catChannels.map((ch) => (
               <ChannelRow key={ch.id} channel={ch} indent />
             ))}
-            {catChannels.length === 0 && <p className="ml-4 text-xs text-[var(--muted)]/50">Catégorie vide</p>}
+            {catChannels.length === 0 && <p className="ml-4 text-xs text-[var(--muted)]/50">{t.channelMgr.emptyCategory}</p>}
           </div>
         );
       })}
 
-      {channels.length === 0 && !isEditorOpen && <p className="text-sm text-[var(--muted)]">Aucun salon créé.</p>}
+      {channels.length === 0 && !isEditorOpen && <p className="text-sm text-[var(--muted)]">{t.channelMgr.noChannels}</p>}
 
       {/* Per-channel permissions editor */}
       {permsChannel && (
@@ -447,7 +449,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             onClick={() => openCreate('text')}
           >
             <PlusIcon size={14} />
-            Nouveau salon
+            {t.channelMgr.newChannel}
           </Button>
           <Button
             variant="outline"
@@ -456,7 +458,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
             onClick={() => openCreate('category')}
           >
             <FolderOpenIcon size={14} />
-            Catégorie
+            {t.channelMgr.newCategory}
           </Button>
         </div>
       )}
@@ -467,17 +469,19 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           <h4 className="text-sm font-semibold">
             {isCreating
               ? formType === 'category'
-                ? 'Nouvelle catégorie'
-                : `Nouveau salon${formParentId ? ` dans "${categories.find((c) => c.id === formParentId)?.name}"` : ''}`
-              : `Modifier "${editingChannel?.name}"`}
+                ? t.channelMgr.newCategory
+                : t.channelMgr.newChannelTitle
+              : t.channelMgr.editChannelTitle.replace('{name}', editingChannel?.name ?? '')}
           </h4>
 
           {/* Type visual grid */}
           {isCreating && formType !== 'category' && (
             <div className="space-y-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">Type de salon</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">{t.channelMgr.channelType}</span>
               <div className="grid grid-cols-2 gap-1.5">
-                {CHANNEL_TYPES.map(({ id, icon: Icon, label, description, color }) => {
+              {CHANNEL_TYPES.map(({ id, icon: Icon, color }) => {
+                  const typeLabel = (t.channelMgr.channelTypes as Record<string, string>)[id] ?? id;
+                  const typeDesc  = (t.channelMgr.channelDescs as Record<string, string>)[id] ?? '';
                   const isSelected = formType === id;
                   return (
                     <button
@@ -498,6 +502,12 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
                         <Icon size={15} className={isSelected ? 'text-[var(--accent)]' : color} />
                       </span>
                       <div className="min-w-0">
+                        <p className={cn('truncate text-[12px] font-semibold leading-tight', isSelected ? 'text-[var(--accent)]' : 'text-[var(--foreground)]')}>{typeLabel}</p>
+                        <p className="truncate text-[10px] leading-tight text-[var(--muted)]/70">{typeDesc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
                         <p className={cn('truncate text-[12px] font-semibold leading-tight', isSelected ? 'text-[var(--accent)]' : 'text-[var(--foreground)]')}>{label}</p>
                         <p className="truncate text-[10px] leading-tight text-[var(--muted)]/70">{description}</p>
                       </div>
@@ -511,14 +521,14 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           {/* Name input */}
           <div className="space-y-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">
-              {formType === 'category' ? 'Nom de la catégorie' : 'Nom du salon'}
+              {formType === 'category' ? t.channelMgr.categoryName : t.channelMgr.channelName}
             </span>
             <Input
                 value={formName}
                 onChange={(e) =>
                   setFormName(formType === 'category' ? e.target.value : e.target.value.toLowerCase().replace(/\s+/g, '-'))
                 }
-                placeholder={formType === 'category' ? 'GÉNÉRAL' : 'mon-salon'}
+                placeholder={formType === 'category' ? t.channelMgr.categoryPlaceholder : t.channelMgr.channelPlaceholder}
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                 className="rounded-xl border-[var(--border)]/60 bg-[var(--background)]/60"
@@ -528,7 +538,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           {/* Category pills */}
           {isCreating && formType !== 'category' && categories.length > 0 && (
             <div className="space-y-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">Catégorie (optionnel)</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">{t.channelMgr.categoryOptional}</span>
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
@@ -540,7 +550,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
                       : 'border-[var(--border)]/40 text-[var(--muted)] hover:bg-[var(--surface-secondary)]/40',
                   )}
                 >
-                  Aucune
+                  {t.channelMgr.none}
                 </button>
                 {categories.map((cat) => (
                   <button
@@ -564,7 +574,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving} className="rounded-lg">
               <XIcon size={14} className="mr-1.5" />
-              Annuler
+              {t.channelMgr.cancel}
             </Button>
             <Button size="sm" onClick={handleSave} disabled={!formName.trim() || isSaving} className="rounded-lg">
               {isSaving ? (
@@ -572,7 +582,7 @@ export function ChannelManager({ serverId, onChannelsChanged }: ChannelManagerPr
               ) : (
                 <SaveIcon size={14} className="mr-1.5" />
               )}
-              {isCreating ? 'Créer' : 'Enregistrer'}
+              {isCreating ? t.channelMgr.create : t.channelMgr.save}
             </Button>
           </div>
         </div>
@@ -597,6 +607,7 @@ function ChannelPermissionsEditor({
   const [perms, setPerms] = useState<ChannelPerm[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     setLoading(true);
@@ -652,23 +663,23 @@ function ChannelPermissionsEditor({
   };
 
   const selectedRole = roles.find((r) => r.id === selectedRoleId);
-  const permDict = getPermDict(channel.type);
+  const permDict = getPermDict(channel.type, t.channelMgr.channelTypes as unknown as Record<string, string>);
 
   if (loading) {
     return (
       <div className="rounded-lg border bg-[var(--surface-secondary)]/30 p-4">
         <div className="flex items-center gap-2">
           <Spinner size="sm" />
-          <span className="text-sm text-[var(--muted)]">Chargement…</span>
+          <span className="text-sm text-[var(--muted)]">{t.serverStatus.loading}</span>
         </div>
       </div>
     );
   }
 
   const STATE_LABEL: Record<string, string> = {
-    allow: 'Autoriser',
-    deny: 'Refuser',
-    inherit: 'Hériter',
+    allow:   t.channelMgr.allow,
+    deny:    t.channelMgr.deny,
+    inherit: t.channelMgr.inherit,
   };
 
   return (
@@ -678,7 +689,7 @@ function ChannelPermissionsEditor({
           <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--surface-secondary)]/40">
             <ShieldIcon size={16} />
           </div>
-          Permissions — #{channel.name}
+          {t.channelMgr.permissions.replace('{name}', channel.name)}
           <span className="ml-1 rounded-lg bg-[var(--surface-secondary)]/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">
             {channel.type}
           </span>
@@ -689,7 +700,7 @@ function ChannelPermissionsEditor({
       </div>
 
       {roles.length === 0 ? (
-        <p className="text-xs text-[var(--muted)]">Aucun rôle configuré.</p>
+        <p className="text-xs text-[var(--muted)]">{t.channelMgr.noRoles}</p>
       ) : (
         <>
           {/* Role selector */}
@@ -724,8 +735,9 @@ function ChannelPermissionsEditor({
                     {category}
                   </p>
                   <div className="space-y-1 rounded-xl border border-[var(--border)]/30 bg-[var(--background)]/30 p-1">
-                    {flags.map(({ flag, label, description }) => {
+                    {flags.map(({ flag, labelKey, description }) => {
                       const state = getPermState(selectedRole.id, flag);
+                      const permLabel = (t.channelMgr.perm as unknown as Record<string, string>)[labelKey] ?? labelKey;
                       return (
                         <button
                           key={flag}
@@ -745,7 +757,7 @@ function ChannelPermissionsEditor({
                             {state === 'inherit' && <MinusIcon size={12} />}
                           </span>
                           <div className="min-w-0 flex-1 text-left">
-                            <span className="block text-[13px] font-medium">{label}</span>
+                            <span className="block text-[13px] font-medium">{permLabel}</span>
                             {description && (
                               <span className="block text-[11px] text-[var(--muted)]/70">{description}</span>
                             )}
@@ -768,7 +780,7 @@ function ChannelPermissionsEditor({
               ))}
 
               <p className="text-[10px] text-[var(--muted)]">
-                Cliquez pour alterner : Hériter → Autoriser → Refuser → Hériter
+                {t.channelMgr.toggleHint}
               </p>
             </div>
           )}

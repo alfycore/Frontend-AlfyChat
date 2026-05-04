@@ -108,8 +108,8 @@ export function CallBar() {
         <button
           type="button"
           onClick={toggleMute}
-          aria-label={isMuted ? 'Réactiver le micro' : 'Couper le micro'}
-          title={isMuted ? 'Réactiver le micro' : 'Couper le micro'}
+          aria-label={isMuted ? t.callBar.unmuteMic : t.callBar.muteMic}
+          title={isMuted ? t.callBar.unmuteMic : t.callBar.muteMic}
           className={cn(
             'flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-150 hover:scale-110 active:scale-95',
             isMuted
@@ -124,8 +124,8 @@ export function CallBar() {
         <button
           type="button"
           onClick={endCall}
-          aria-label="Raccrocher"
-          title="Raccrocher"
+          aria-label={t.callBar.hangup}
+          title={t.callBar.hangup}
           className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-destructive/15 text-destructive transition-all duration-150 hover:scale-110 hover:bg-destructive hover:text-destructive-foreground active:scale-95"
         >
           <PhoneOffIcon size={13} />

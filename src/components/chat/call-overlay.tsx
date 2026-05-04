@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 import { useAudioLevel } from '@/hooks/use-audio-level';
 import { getAudioPreferences } from '@/hooks/use-call';
 
@@ -68,6 +69,7 @@ function Tile({
   micMuted?: boolean; muteVideo?: boolean; muteAudio?: boolean; isLocal?: boolean;
   isConnected?: boolean; isScreenShare?: boolean;
 }) {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const speaking = useAudioLevel(micMuted ? null : stream);
 
@@ -174,7 +176,7 @@ function Tile({
         <SpeakingBars active={speaking} />
         <span className="rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">{label}</span>
         {isScreenShare && (
-          <span className="rounded-lg bg-linear-to-br from-destructive to-destructive/80 px-2 py-0.5 font-heading text-[10px] font-bold uppercase tracking-[0.15em] text-white shadow-md shadow-destructive/40">EN DIRECT</span>
+          <span className="rounded-lg bg-linear-to-br from-destructive to-destructive/80 px-2 py-0.5 font-heading text-[10px] font-bold uppercase tracking-[0.15em] text-white shadow-md shadow-destructive/40">{t.callOverlay.live}</span>
         )}
       </div>
 
@@ -197,7 +199,7 @@ function Tile({
           <div className="flex size-14 items-center justify-center rounded-2xl bg-foreground/15 ring-1 ring-white/20">
             <MicIcon size={24} className="text-white" />
           </div>
-          <span className="text-xs font-medium">Activer le son</span>
+          <span className="text-xs font-medium">{t.callOverlay.enableSound}</span>
         </button>
       )}
     </div>
@@ -229,6 +231,7 @@ export function CallOverlay({
 }: CallOverlayProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { t } = useTranslation();
 
   const isConnected = status === 'connected';
 
@@ -257,9 +260,9 @@ export function CallOverlay({
   }, []);
 
   const statusLabel =
-    status === 'calling' ? 'Appel en cours…'
-    : status === 'ringing' ? 'Sonnerie…'
-    : status === 'connecting' ? 'Connexion…'
+    status === 'calling' ? t.callOverlay.calling
+    : status === 'ringing' ? t.callOverlay.ringing
+    : status === 'connecting' ? t.callOverlay.connecting
     : isConnected ? formatDuration(duration)
     : '';
 
@@ -299,7 +302,7 @@ export function CallOverlay({
           {isScreenSharing && screenStream && (
             <div className="col-span-2 overflow-hidden rounded-2xl">
               <Tile
-                label={currentUserName || 'Vous'}
+                label={currentUserName || t.callOverlay.you}
                 avatarSrc={currentUserAvatar}
                 stream={screenStream}
                 isLocal={true}
@@ -311,7 +314,7 @@ export function CallOverlay({
 
           {/* Local tile */}
           <Tile
-            label="Vous"
+            label={t.callOverlay.you}
             avatarSrc={currentUserAvatar}
             stream={localStream}
             micMuted={isMuted}
@@ -340,11 +343,11 @@ export function CallOverlay({
 
       {/* ── Controls ── */}
       <div className="flex items-center justify-center gap-5 border-t border-white/5 bg-zinc-900/60 px-6 py-4 backdrop-blur-md">
-        <CtrlBtn active={isMuted} onClick={onToggleMute} label={isMuted ? 'Muet' : 'Micro'}>
+        <CtrlBtn active={isMuted} onClick={onToggleMute} label={isMuted ? t.callOverlay.muted : t.callOverlay.mic}>
           {isMuted ? <MicOffIcon size={20} /> : <MicIcon size={20} />}
         </CtrlBtn>
 
-        <CtrlBtn active={hasLocalVideo} onClick={onToggleVideo} label="Caméra">
+        <CtrlBtn active={hasLocalVideo} onClick={onToggleVideo} label={t.callOverlay.camera}>
           {isVideoOff || !hasLocalVideo ? <VideoOffIcon size={20} /> : <VideoIcon size={20} />}
         </CtrlBtn>
 
@@ -352,7 +355,7 @@ export function CallOverlay({
           <CtrlBtn
             active={isScreenSharing}
             onClick={isScreenSharing ? onStopScreenShare : onStartScreenShare}
-            label={isScreenSharing ? 'Arrêter' : 'Écran'}
+            label={isScreenSharing ? t.callOverlay.stopShare : t.callOverlay.shareScreen}
           >
             {isScreenSharing ? <MonitorOffIcon size={20} /> : <MonitorUpIcon size={20} />}
           </CtrlBtn>
@@ -362,12 +365,12 @@ export function CallOverlay({
           <button
             type="button"
             onClick={onEndCall}
-            aria-label="Raccrocher"
+            aria-label={t.callOverlay.hangup}
             className="flex size-14 items-center justify-center rounded-2xl bg-destructive text-destructive-foreground shadow-2xl shadow-destructive/40 transition-all duration-200 hover:scale-110 hover:shadow-2xl hover:shadow-destructive/60 active:scale-95"
           >
             <PhoneOffIcon size={24} />
           </button>
-          <span className="text-[10px] font-medium text-white/40">Raccrocher</span>
+          <span className="text-[10px] font-medium text-white/40">{t.callOverlay.hangup}</span>
         </div>
       </div>
     </div>
