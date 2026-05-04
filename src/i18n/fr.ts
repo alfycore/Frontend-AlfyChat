@@ -1527,6 +1527,8 @@ export const fr = {
     noResults:      'Aucun résultat',
     results:        '{n} résultat(s)',
     unknownSender:  'Inconnu',
+    today:          'Aujourd\'hui à {time}',
+    searchYesterday:'Hier à {time}',
   },
 
   messageItem: {

@@ -1530,6 +1530,8 @@ export const en = {
     noResults:      'No results',
     results:        '{n} result(s)',
     unknownSender:  'Unknown',
+    today:          'Today at {time}',
+    searchYesterday:'Yesterday at {time}',
   },
 
   messageItem: {

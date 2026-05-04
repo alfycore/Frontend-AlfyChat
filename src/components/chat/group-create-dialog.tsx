@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTranslation } from '@/components/locale-provider';
 
 interface Friend {
   id: string;
@@ -31,6 +32,7 @@ interface GroupCreateDialogProps {
 }
 
 export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreateDialogProps) {
+  const { t } = useTranslation();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [groupName, setGroupName] = useState('');
@@ -149,25 +151,25 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
   const selectedFriends = friends.filter((f) => selectedIds.has(f.id));
 
   const STEPS = [
-    { id: 'select' as const, label: 'Sélectionner', icon: UserPlusIcon },
-    { id: 'customize' as const, label: 'Personnaliser', icon: PencilIcon },
+    { id: 'select' as const, label: t.group.stepSelect, icon: UserPlusIcon },
+    { id: 'customize' as const, label: t.group.stepCustomize, icon: PencilIcon },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl p-0 shadow-2xl">
           <DialogHeader className="sr-only">
-            <DialogTitle>Créer un nouveau groupe</DialogTitle>
+            <DialogTitle>{t.group.newGroup}</DialogTitle>
           </DialogHeader>
           <div className="flex h-full">
           {/* ── Left navigation ── */}
           <aside className="flex w-52 shrink-0 flex-col border-r border-border/40 bg-background/80 py-6">
             <div className="mb-4 px-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                Nouveau groupe
+                {t.group.newGroup}
               </p>
               <p className="mt-0.5 text-sm font-medium text-foreground">
-                {selectedIds.size} membre{selectedIds.size !== 1 ? 's' : ''} sélectionné{selectedIds.size !== 1 ? 's' : ''}
+                {t.group.numSelected.replace('{n}', String(selectedIds.size))}
               </p>
             </div>
 
@@ -207,7 +209,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                 <div className="mx-5 my-4 h-px bg-border/40" />
                 <div className="px-5">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Membres
+                    {t.group.sectionLabel}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {selectedFriends.slice(0, 6).map((f) => (
@@ -238,7 +240,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                 <div className="flex size-7 items-center justify-center rounded-lg bg-surface-secondary/60">
                   <XIcon size={14} />
                 </div>
-                Fermer
+                {t.group.close}
               </button>
             </div>
           </aside>
@@ -250,16 +252,16 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
               {step === 'select' && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold tracking-tight">Sélectionner des amis</h2>
+                    <h2 className="text-xl font-bold tracking-tight">{t.group.selectFriends}</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Choisissez les personnes à ajouter au groupe.
+                      {t.group.selectFriendsDesc}
                     </p>
                   </div>
 
                   {selectedIds.size > 0 && (
                     <div className="rounded-2xl border border-border/60 bg-surface-secondary/30 p-4">
                       <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                        Sélectionnés ({selectedIds.size})
+                        {t.group.selected.replace('{n}', String(selectedIds.size))}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {selectedFriends.map((f) => (
@@ -285,7 +287,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                   <div className="relative">
                     <SearchIcon size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
                     <Input
-                      placeholder="Rechercher des amis..."
+                      placeholder={t.group.searchFriends}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       autoFocus
@@ -302,7 +304,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                           </div>
                         ) : filteredFriends.length === 0 ? (
                           <p className="py-8 text-center text-sm text-muted-foreground">
-                            {friends.length === 0 ? 'Aucun ami à ajouter' : 'Aucun résultat'}
+                            {friends.length === 0 ? t.group.noFriendsToAdd : t.group.noResults}
                           </p>
                         ) : (
                           filteredFriends.map((friend) => {
@@ -349,7 +351,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                       disabled={selectedIds.size < 1}
                       className="gap-2 rounded-xl"
                     >
-                      Suivant
+                      {t.group.next}
                       <ArrowRightIcon size={16} />
                     </Button>
                   </div>
@@ -360,18 +362,18 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
               {step === 'customize' && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold tracking-tight">Personnaliser le groupe</h2>
+                    <h2 className="text-xl font-bold tracking-tight">{t.group.customizeGroup}</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Donnez un nom à votre groupe avant de le créer.
+                      {t.group.customizeGroupDesc}
                     </p>
                   </div>
 
                   <div className="space-y-4 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                      Informations
+                      {t.group.information}
                     </p>
                     <div className="space-y-1">
-                      <span className="text-xs font-medium">Nom du groupe</span>
+                      <span className="text-xs font-medium">{t.group.groupName}</span>
                       <Input
                           placeholder={
                             selectedFriends.map((f) => f.displayName).slice(0, 3).join(', ') +
@@ -381,13 +383,13 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                           onChange={(e) => setGroupName(e.target.value)}
                           autoFocus
                         />
-                      <p className="text-[11px] text-muted-foreground/70">Laissez vide pour utiliser les noms des participants</p>
+                      <p className="text-[11px] text-muted-foreground/70">{t.group.groupNameHint}</p>
                     </div>
                   </div>
 
                   <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                      Membres ({selectedIds.size})
+                      {t.group.membersTab.replace('{n}', String(selectedIds.size))}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedFriends.map((f) => (
@@ -408,7 +410,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
 
                   <div className="flex items-center justify-between">
                     <Button variant="ghost" onClick={() => setStep('select')} className="rounded-xl">
-                      Retour
+                      {t.common.back}
                     </Button>
                     <Button
                       onClick={handleCreate}
@@ -416,7 +418,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                       className="gap-2 rounded-xl"
                     >
                       <UsersRoundIcon size={16} />
-                      {isCreating ? 'Création...' : 'Créer le groupe'}
+                      {isCreating ? t.group.creating : t.group.createGroup}
                     </Button>
                   </div>
                 </div>

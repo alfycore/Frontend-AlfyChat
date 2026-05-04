@@ -22,6 +22,7 @@ import { resolveMediaUrl } from '@/lib/api';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 // ── Attachment parser ────────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ function isPreviewable(name: string) {
 function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: string; url: string }[] }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [filePreview, setFilePreview] = useState<{ name: string; src: string } | null>(null);
+  const { t } = useTranslation();
   if (!images.length && !files.length) return null;
   return (
     <div className="mt-1.5 flex flex-col gap-1.5">
@@ -107,7 +109,7 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
               <span className="text-xl leading-none">{icon}</span>
               <div className="min-w-0">
                 <p className="max-w-[180px] truncate text-[12px] font-medium text-foreground/90">{f.name}</p>
-                <p className="text-[10px] uppercase text-muted-foreground">{ext || 'fichier'}{canPreview ? ' · Aperçu disponible' : ''}</p>
+                <p className="text-[10px] uppercase text-muted-foreground">{ext || t.messageItem.file}{canPreview ? t.messageItem.previewAvailable : ''}</p>
               </div>
             </button>
             {/* Download button */}
@@ -115,7 +117,7 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
               href={src}
               download={f.name}
               className="flex shrink-0 items-center border-l border-[var(--border)]/20 px-2.5 py-2.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)]/70 hover:text-[var(--foreground)]"
-              title="Télécharger"
+              title={t.messageItem.download}
               onClick={(e) => e.stopPropagation()}
             >
               <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -138,7 +140,7 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
           <button
             className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
             onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
-            aria-label="Fermer"
+            aria-label={t.messageItem.closeLightbox}
           >
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -164,7 +166,7 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
               <span className="max-w-[300px] truncate text-[13px] font-medium text-[var(--foreground)]">{filePreview.name}</span>
               <div className="flex items-center gap-2">
                 <a href={filePreview.src} download={filePreview.name} className="rounded-lg border border-[var(--border)]/30 px-3 py-1.5 text-[11px] text-[var(--muted)] transition-colors hover:text-[var(--foreground)]">
-                  Télécharger
+                  {t.messageItem.download}
                 </a>
                 <button type="button" className="rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:text-[var(--foreground)]" onClick={() => setFilePreview(null)}>
                   <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -207,7 +209,7 @@ export type MessageData = {
   failed?: boolean;
 };
 
-export const formatTime = (dateString: string): string => {
+export const formatTime = (dateString: string, labels?: { yesterday: string; daysAgo: string }): string => {
   const date = new Date(dateString);
   const now = new Date();
   const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -215,10 +217,10 @@ export const formatTime = (dateString: string): string => {
   const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
   const oneWeekAgo = new Date(startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000);
   if (date >= startOfToday) return time;
-  if (date >= startOfYesterday) return `hier à ${time}`;
+  if (date >= startOfYesterday) return labels ? labels.yesterday.replace('{time}', time) : `hier à ${time}`;
   if (date >= oneWeekAgo) {
     const diffDays = Math.floor((startOfToday.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
-    return `il y a ${diffDays} jours à ${time}`;
+    return labels ? labels.daysAgo.replace('{n}', String(diffDays)).replace('{time}', time) : `il y a ${diffDays} jours à ${time}`;
   }
   return `${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })} à ${time}`;
 };
@@ -290,10 +292,11 @@ export const MessageItem = memo(function MessageItem({
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
   const ui = useUIStyle();
+  const { t } = useTranslation();
   const isMe = !!currentUser && message.authorId === currentUser.id;
   const displayName = isMe
     ? currentUser!.displayName || currentUser!.username
-    : message.sender?.displayName || message.sender?.username || recipientName || 'Utilisateur';
+    : message.sender?.displayName || message.sender?.username || recipientName || t.messageItem.user;
   const initial = displayName?.[0]?.toUpperCase() || 'U';
 
   // ── Message système ──
@@ -303,7 +306,7 @@ export const MessageItem = memo(function MessageItem({
         <div className="h-px flex-1 bg-[var(--border)]/15" />
         <span className="flex items-center gap-1.5 rounded-full border border-[var(--border)]/20 bg-[var(--surface-secondary)]/30 px-3 py-1 text-[10px] italic text-muted-foreground">
           <MarkdownRenderer content={message.content} />
-          <span className="text-[9px] tabular-nums text-muted-foreground/70">{formatTime(message.createdAt)}</span>
+          <span className="text-[9px] tabular-nums text-muted-foreground/70">{formatTime(message.createdAt, { yesterday: t.messageItem.yesterday, daysAgo: t.messageItem.daysAgo })}</span>
         </span>
         <div className="h-px flex-1 bg-[var(--border)]/15" />
       </div>
@@ -337,11 +340,11 @@ export const MessageItem = memo(function MessageItem({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button size="icon-sm" variant="ghost" className="size-7 rounded-xl text-[var(--foreground)]/80 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]" onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}>
+                <Button size="icon-sm" variant="ghost" className="size-7 rounded-xl text-[var(--foreground)]/80 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]" onClick={() => onReply(message.id, message.content, displayName || t.messageItem.user)}>
                   <ReplyIcon size={15} />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Répondre</TooltipContent>
+              <TooltipContent>{t.messageItem.reply}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           <EmojiPicker onSelect={(emoji) => onReaction(message.id, emoji)}>
@@ -356,11 +359,11 @@ export const MessageItem = memo(function MessageItem({
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="min-w-44">
-              <DropdownMenuItem onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}><ReplyIcon size={14} /><span>Répondre</span></DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onCopy(message.content)}><CopyIcon size={14} /><span>Copier le texte</span></DropdownMenuItem>
-              <DropdownMenuItem><PinIcon size={14} /><span>Épingler</span></DropdownMenuItem>
-              {isMe && <DropdownMenuItem onClick={() => onStartEdit(message.id, message.content)}><PencilIcon size={14} /><span>Modifier</span></DropdownMenuItem>}
-              {isMe && <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(message.id)}><Trash2Icon size={14} /><span>Supprimer</span></DropdownMenuItem>}
+              <DropdownMenuItem onClick={() => onReply(message.id, message.content, displayName || t.messageItem.user)}><ReplyIcon size={14} /><span>{t.messageItem.reply}</span></DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onCopy(message.content)}><CopyIcon size={14} /><span>{t.messageItem.copyText}</span></DropdownMenuItem>
+              <DropdownMenuItem><PinIcon size={14} /><span>{t.messageItem.pin}</span></DropdownMenuItem>
+              {isMe && <DropdownMenuItem onClick={() => onStartEdit(message.id, message.content)}><PencilIcon size={14} /><span>{t.messageItem.edit}</span></DropdownMenuItem>}
+              {isMe && <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(message.id)}><Trash2Icon size={14} /><span>{t.messageItem.delete}</span></DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -395,7 +398,7 @@ export const MessageItem = memo(function MessageItem({
             {replyMessage && (() => {
               const repliedName = replyMessage.authorId === currentUser?.id
                 ? currentUser?.displayName || currentUser?.username
-                : replyMessage.sender?.displayName || replyMessage.sender?.username || recipientName || 'Utilisateur';
+                : replyMessage.sender?.displayName || replyMessage.sender?.username || recipientName || t.messageItem.user;
               return (
                 <div className={cn(
                   'flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 px-2.5 py-1 text-[11px]',
@@ -418,11 +421,11 @@ export const MessageItem = memo(function MessageItem({
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSaveEdit(message.id); } if (e.key === 'Escape') onCancelEdit(); }}
                   ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; } }}
                   rows={1}
-                  aria-label="Modifier le message"
+                  aria-label={t.messageItem.edit}
                   autoFocus
                   className="w-full resize-none overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground/60 focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20"
                 />
-                <p className="text-[10px] text-muted-foreground/70">Entrée pour sauvegarder · Échap pour annuler</p>
+                <p className="text-[10px] text-muted-foreground/70">{t.messageItem.editHint}</p>
               </div>
             ) : (
               <div className={cn(
@@ -447,8 +450,8 @@ export const MessageItem = memo(function MessageItem({
             <div className={cn('flex items-center gap-1 px-1', isMe ? 'flex-row-reverse' : 'flex-row')}>
               <span className={`${d.msgTime} tabular-nums text-muted-foreground/60`}>{shortTime}</span>
               {message.pending && !message.failed && <ClockIcon size={10} className="text-muted-foreground/50" />}
-              {message.failed && <AlertCircleIcon size={10} className="text-destructive" title="Échec de l'envoi" />}
-              {!!message.isEdited && <span className="text-[10px] italic text-muted-foreground/60">(modifié)</span>}
+              {message.failed && <AlertCircleIcon size={10} className="text-destructive" title={t.messageItem.sendFailed} />}
+              {!!message.isEdited && <span className="text-[10px] italic text-muted-foreground/60">{t.messageItem.edited}</span>}
             </div>
 
             {/* Réactions */}
@@ -499,12 +502,12 @@ export const MessageItem = memo(function MessageItem({
               <Button
                 size="icon-sm" variant="ghost"
                 className="size-7 rounded-xl text-[var(--foreground)]/80 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]"
-                onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}
+                onClick={() => onReply(message.id, message.content, displayName || t.messageItem.user)}
               >
                 <ReplyIcon size={15} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Répondre</TooltipContent>
+            <TooltipContent>{t.messageItem.reply}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -521,11 +524,11 @@ export const MessageItem = memo(function MessageItem({
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="min-w-44">
-            <DropdownMenuItem onClick={() => onReply(message.id, message.content, displayName || 'Utilisateur')}><ReplyIcon size={14} /><span>Répondre</span></DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onCopy(message.content)}><CopyIcon size={14} /><span>Copier le texte</span></DropdownMenuItem>
-            <DropdownMenuItem><PinIcon size={14} /><span>Épingler</span></DropdownMenuItem>
-            {isMe && <DropdownMenuItem onClick={() => onStartEdit(message.id, message.content)}><PencilIcon size={14} /><span>Modifier</span></DropdownMenuItem>}
-            {isMe && <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(message.id)}><Trash2Icon size={14} /><span>Supprimer</span></DropdownMenuItem>}
+            <DropdownMenuItem onClick={() => onReply(message.id, message.content, displayName || t.messageItem.user)}><ReplyIcon size={14} /><span>{t.messageItem.reply}</span></DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onCopy(message.content)}><CopyIcon size={14} /><span>{t.messageItem.copyText}</span></DropdownMenuItem>
+            <DropdownMenuItem><PinIcon size={14} /><span>{t.messageItem.pin}</span></DropdownMenuItem>
+            {isMe && <DropdownMenuItem onClick={() => onStartEdit(message.id, message.content)}><PencilIcon size={14} /><span>{t.messageItem.edit}</span></DropdownMenuItem>}
+            {isMe && <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(message.id)}><Trash2Icon size={14} /><span>{t.messageItem.delete}</span></DropdownMenuItem>}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -566,7 +569,7 @@ export const MessageItem = memo(function MessageItem({
             {replyMessage && (() => {
               const repliedName = replyMessage.authorId === currentUser?.id
                 ? currentUser?.displayName || currentUser?.username
-                : replyMessage.sender?.displayName || replyMessage.sender?.username || recipientName || 'Utilisateur';
+                : replyMessage.sender?.displayName || replyMessage.sender?.username || recipientName || t.messageItem.user;
               return (
                 <div className={cn('mb-1.5 flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 px-2.5 py-1 text-[11px]', ui.isGlass ? 'bg-white/[0.50] backdrop-blur-sm dark:bg-white/[0.08]' : 'bg-[var(--surface-secondary)]/30')}>
                   <ReplyIcon size={11} className="shrink-0 text-[var(--accent)]/60" />
@@ -596,16 +599,16 @@ export const MessageItem = memo(function MessageItem({
                 )}
 
                 <span className={`${d.msgTime} tabular-nums text-muted-foreground/70`}>
-                  {formatTime(message.createdAt)}
+                  {formatTime(message.createdAt, { yesterday: t.messageItem.yesterday, daysAgo: t.messageItem.daysAgo })}
                 </span>
                 {message.pending && !message.failed && <ClockIcon size={11} className="text-muted-foreground/50" />}
                 {message.failed && (
-                  <span className="flex items-center gap-1 text-[10px] text-destructive" title="Échec de l'envoi — ce message n'a pas été sauvegardé">
+                  <span className="flex items-center gap-1 text-[10px] text-destructive" title={t.messageItem.sendFailed}>
                     <AlertCircleIcon size={11} />
-                    Échec de l&apos;envoi
+                    {t.messageItem.sendFailed}
                   </span>
                 )}
-                {!!message.isEdited && <span className="text-[10px] italic text-muted-foreground/70">(modifié)</span>}
+                {!!message.isEdited && <span className="text-[10px] italic text-muted-foreground/70">{t.messageItem.edited}</span>}
               </div>
             )}
 
@@ -627,11 +630,11 @@ export const MessageItem = memo(function MessageItem({
                     if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; }
                   }}
                   rows={1}
-                  aria-label="Modifier le message"
+                  aria-label={t.messageItem.edit}
                   autoFocus
                   className="w-full resize-none overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface-secondary)]/50 px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground/60 focus:border-[var(--accent)]/60 focus:ring-2 focus:ring-[var(--accent)]/20"
                 />
-                <p className="text-[10px] text-muted-foreground/70">Entrée pour sauvegarder · Échap pour annuler</p>
+                <p className="text-[10px] text-muted-foreground/70">{t.messageItem.editHint}</p>
               </div>
             ) : (() => {
               const { textContent, images, files } = parseAttachments(message.content ?? '');

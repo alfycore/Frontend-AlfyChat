@@ -19,6 +19,7 @@ import { socketService } from '@/lib/socket';
 import { statusLabel, statusTextColor, statusColor, isVisibleOnline } from '@/lib/status';
 import { sanitizeSvg } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,13 +75,24 @@ interface UserProfilePopoverProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatMemberSince(createdAt: string): string {
+interface DurLabels { durDay: string; durDays: string; durMonth: string; durMonths: string; durYear: string; durYears: string; durAnd: string; }
+function formatMemberSince(createdAt: string, labels?: DurLabels): string {
   const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000);
-  if (diff < 30) return `${diff} jour${diff > 1 ? 's' : ''}`;
-  if (diff < 365) { const m = Math.floor(diff / 30); return `${m} mois`; }
+  if (!labels) {
+    if (diff < 30) return `${diff} jour${diff > 1 ? 's' : ''}`;
+    if (diff < 365) { const m = Math.floor(diff / 30); return `${m} mois`; }
+    const y = Math.floor(diff / 365);
+    const rm = Math.floor((diff % 365) / 30);
+    return rm > 0 ? `${y} an${y > 1 ? 's' : ''} et ${rm} mois` : `${y} an${y > 1 ? 's' : ''}`;
+  }
+  const unit = (n: number, s: string, p: string) => `${n} ${n === 1 ? s : p}`;
+  if (diff < 30) return unit(diff, labels.durDay, labels.durDays);
+  if (diff < 365) { const m = Math.floor(diff / 30); return unit(m, labels.durMonth, labels.durMonths); }
   const y = Math.floor(diff / 365);
   const rm = Math.floor((diff % 365) / 30);
-  return rm > 0 ? `${y} an${y > 1 ? 's' : ''} et ${rm} mois` : `${y} an${y > 1 ? 's' : ''}`;
+  return rm > 0
+    ? `${unit(y, labels.durYear, labels.durYears)} ${labels.durAnd} ${unit(rm, labels.durMonth, labels.durMonths)}`
+    : unit(y, labels.durYear, labels.durYears);
 }
 
 function BadgeIcon({ badge }: { badge: UserBadge }) {
@@ -261,9 +273,10 @@ export function UserProfilePopover({
   }
 
   // ── Derived values ────────────────────────────────────────────────────────
+  const { t } = useTranslation();
   const cardColor    = localColor ?? profile?.cardColor ?? '#5865F2';
   const visibleBadges = profile?.showBadges !== false ? (profile?.badges ?? []).filter((b: any) => !(profile?.hiddenBadgeIds ?? []).includes(b.id)).slice(0, 6) : [];
-  const memberSince  = profile?.createdAt ? formatMemberSince(profile.createdAt) : null;
+  const memberSince  = profile?.createdAt ? formatMemberSince(profile.createdAt, t.userProfile as unknown as DurLabels) : null;
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -345,7 +358,7 @@ export function UserProfilePopover({
                           <input type="color" className="sr-only" value={cardColor} onChange={(e) => handleColorChange(e.target.value)} />
                         </label>
                       </TooltipTrigger>
-                      <TooltipContent side="left" className="text-[11px]">Couleur de la carte</TooltipContent>
+                      <TooltipContent side="left" className="text-[11px]">{t.userProfile.cardColor}</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 ) : (
@@ -388,7 +401,7 @@ export function UserProfilePopover({
             {/* ── Badges ── */}
             {visibleBadges.length > 0 && (
               <div className="px-4 pb-2 pt-3">
-                <p className="mb-1.5 text-[9px] font-medium text-muted-foreground/50">Badges</p>
+                <p className="mb-1.5 text-[9px] font-medium text-muted-foreground/50">{t.userProfile.badges}</p>
                 <div className="flex flex-wrap gap-1">
                   {visibleBadges.map((badge) => (
                     <TooltipProvider key={badge.id}>
@@ -407,7 +420,7 @@ export function UserProfilePopover({
                           </div>
                         </TooltipTrigger>
                         <TooltipContent className="text-[10px]">
-                          Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}
+                          {t.userProfile.badgeEarned.replace('{date}', new Date(badge.earnedAt).toLocaleDateString())}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -430,7 +443,7 @@ export function UserProfilePopover({
                     className="mt-1 text-[10px] font-semibold text-primary transition-colors hover:text-primary/80"
                     onClick={() => setShowFullBio(v => !v)}
                   >
-                    {showFullBio ? 'Réduire' : 'Lire la suite →'}
+                    {showFullBio ? t.userProfile.readLess : t.userProfile.readMore}
                   </button>
                 )}
               </div>
@@ -457,7 +470,7 @@ export function UserProfilePopover({
             {memberSince && (
               <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg bg-foreground/[0.03] px-2.5 py-1.5 text-[11px] text-muted-foreground/70">
                 <CalendarIcon size={12} className="shrink-0 text-muted-foreground/50" />
-                <span>Membre depuis</span>
+                <span>{t.userProfile.memberSince}</span>
                 <span className="ml-auto font-semibold text-foreground/80">{memberSince}</span>
               </div>
             )}
@@ -470,7 +483,7 @@ export function UserProfilePopover({
                   className="flex w-full items-center justify-between py-0.5"
                   onClick={() => setShowRoles(v => !v)}
                 >
-                  <p className="font-heading text-[9px] font-medium text-muted-foreground/50">Rôles</p>
+                  <p className="font-heading text-[9px] font-medium text-muted-foreground/50">{t.userProfile.roles}</p>
                   <ShieldCheckIcon size={11} className={cn('text-muted-foreground/40 transition-transform duration-200', showRoles && 'rotate-180')} />
                 </button>
                 {showRoles && (
@@ -512,7 +525,7 @@ export function UserProfilePopover({
                   className="group/dm flex h-9 w-full items-center gap-2 rounded-xl border border-border/40 bg-foreground/[0.03] px-3 text-[12px] text-muted-foreground transition-all duration-150 hover:border-primary/40 hover:bg-primary/8 hover:text-foreground hover:shadow-sm hover:shadow-primary/10"
                 >
                   <MessageCircleIcon size={14} className="shrink-0 transition-colors group-hover/dm:text-primary" />
-                  <span className="truncate">Envoyer un message à <span className="font-semibold text-foreground/80">@{profile.username}</span></span>
+                  <span className="truncate">{t.userProfile.sendMessageTo} <span className="font-semibold text-foreground/80">@{profile.username}</span></span>
                 </button>
               </div>
             )}
@@ -530,7 +543,7 @@ export function UserProfilePopover({
                         className="h-8 flex-1 gap-1.5 rounded-lg text-[11px] font-semibold text-amber-500 hover:bg-amber-500/10 hover:text-amber-500"
                         onClick={() => setConfirmKick(true)}
                       >
-                        <UserXIcon size={13} /> Expulser
+                        <UserXIcon size={13} /> {t.userProfile.kick}
                       </Button>
                       <Button
                         size="sm"
@@ -538,7 +551,7 @@ export function UserProfilePopover({
                         className="h-8 flex-1 gap-1.5 rounded-lg text-[11px] font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => setConfirmBan(true)}
                       >
-                        <BanIcon size={13} /> Bannir
+                        <BanIcon size={13} /> {t.userProfile.ban}
                       </Button>
                     </div>
                   )}
@@ -546,12 +559,12 @@ export function UserProfilePopover({
                   {confirmKick && (
                     <div className="space-y-1.5 rounded-xl border border-amber-500/25 bg-linear-to-br from-amber-500/10 to-amber-500/5 p-2.5 shadow-sm shadow-amber-500/5">
                       <p className="text-[11px] text-amber-600 dark:text-amber-400">
-                        Expulser <span className="font-semibold text-foreground">{profile.displayName}</span> du serveur ?
+                        {t.userProfile.kickConfirm.replace('{name}', profile.displayName)}
                       </p>
                       <div className="flex gap-1.5">
-                        <Button size="sm" variant="ghost" className="h-7 flex-1 rounded-md text-[11px]" onClick={() => setConfirmKick(false)}>Annuler</Button>
+                        <Button size="sm" variant="ghost" className="h-7 flex-1 rounded-md text-[11px]" onClick={() => setConfirmKick(false)}>{t.common.cancel}</Button>
                         <Button size="sm" className="h-7 flex-1 gap-1 rounded-md bg-amber-500 text-[11px] text-white hover:bg-amber-600" onClick={handleKick}>
-                          <UserXIcon size={11} /> Confirmer
+                          <UserXIcon size={11} /> {t.userProfile.confirm}
                         </Button>
                       </div>
                     </div>
@@ -560,18 +573,18 @@ export function UserProfilePopover({
                   {confirmBan && (
                     <div className="space-y-1.5 rounded-xl border border-destructive/25 bg-linear-to-br from-destructive/10 to-destructive/5 p-2.5 shadow-sm shadow-destructive/5">
                       <p className="text-[11px] text-destructive">
-                        Bannir <span className="font-semibold text-foreground">{profile.displayName}</span> définitivement ?
+                        {t.userProfile.banConfirm.replace('{name}', profile.displayName)}
                       </p>
                       <Input
-                        placeholder="Raison (optionnel)"
+                        placeholder={t.userProfile.reasonPlaceholder}
                         value={banReason}
                         onChange={(e) => setBanReason(e.target.value)}
                         className="h-7 rounded-md border-border/40 bg-background/60 text-[11px]"
                       />
                       <div className="flex gap-1.5">
-                        <Button size="sm" variant="ghost" className="h-7 flex-1 rounded-md text-[11px]" onClick={() => { setConfirmBan(false); setBanReason(''); }}>Annuler</Button>
+                        <Button size="sm" variant="ghost" className="h-7 flex-1 rounded-md text-[11px]" onClick={() => { setConfirmBan(false); setBanReason(''); }}>{t.common.cancel}</Button>
                         <Button size="sm" className="h-7 flex-1 gap-1 rounded-md bg-destructive text-[11px] text-destructive-foreground hover:bg-destructive/90" onClick={handleBan}>
-                          <BanIcon size={11} /> Confirmer
+                          <BanIcon size={11} /> {t.userProfile.confirm}
                         </Button>
                       </div>
                     </div>
@@ -591,11 +604,12 @@ export function UserProfilePopover({
 /* ── Friend action button (banner overlay) ─────────────────────────────────── */
 
 function FriendActionButton({ status, onAdd }: { status: FriendStatus; onAdd: () => void }) {
+  const { t } = useTranslation();
   const config: Record<FriendStatus, { icon: typeof UserPlusIcon; label: string; color: string; disabled: boolean }> = {
-    none:             { icon: UserPlusIcon,  label: 'Ajouter en ami',     color: 'text-white/80 hover:text-white', disabled: false },
-    friend:           { icon: UserCheckIcon, label: 'Ami',                color: 'text-success',                   disabled: true },
-    pending_sent:     { icon: CheckIcon,     label: 'Demande envoyée',   color: 'text-amber-400',                 disabled: true },
-    pending_received: { icon: UserPlusIcon,  label: 'Accepter la demande', color: 'text-primary hover:text-primary/80', disabled: false },
+    none:             { icon: UserPlusIcon,  label: t.userProfile.addFriend,    color: 'text-white/80 hover:text-white', disabled: false },
+    friend:           { icon: UserCheckIcon, label: t.userProfile.friendStatus, color: 'text-success',                   disabled: true },
+    pending_sent:     { icon: CheckIcon,     label: t.userProfile.pendingSent,  color: 'text-amber-400',                 disabled: true },
+    pending_received: { icon: UserPlusIcon,  label: t.userProfile.acceptRequest, color: 'text-primary hover:text-primary/80', disabled: false },
   };
   const c = config[status];
   const Icon = c.icon;

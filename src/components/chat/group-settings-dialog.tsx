@@ -29,6 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTranslation } from '@/components/locale-provider';
 
 interface Participant {
   userId: string;
@@ -78,6 +79,7 @@ export function GroupSettingsDialog({
 }: GroupSettingsDialogProps) {
   const { user } = useAuth();
   const ui = useUIStyle();
+  const { t } = useTranslation();
   const [section, setSection] = useState<'general' | 'members'>('general');
   const [groupName, setGroupName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -195,22 +197,22 @@ export function GroupSettingsDialog({
   const canManageMembers = isOwner || myRole === 'admin';
 
   const SECTIONS = [
-    { id: 'general' as const, label: 'Général', icon: SettingsIcon },
-    { id: 'members' as const, label: `Membres (${group?.participants.length || 0})`, icon: UsersRoundIcon },
+    { id: 'general' as const, label: t.group.general, icon: SettingsIcon },
+    { id: 'members' as const, label: t.group.membersTab.replace('{n}', String(group?.participants.length || 0)), icon: UsersRoundIcon },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className={cn('h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl border border-border/50 p-0 shadow-2xl shadow-black/30', ui.glassModal)}>
           <DialogHeader className="sr-only">
-            <DialogTitle>Paramètres du groupe</DialogTitle>
+            <DialogTitle>{t.group.settings}</DialogTitle>
           </DialogHeader>
           <div className="flex h-full">
           {/* ── Sidebar ── */}
           <aside className="flex w-48 shrink-0 flex-col border-r border-border/40 bg-background/80 py-6">
             <div className="mb-4 px-4">
-              <p className="text-[11px] font-medium text-muted-foreground/50">Groupe</p>
-              <p className="mt-1 truncate font-heading text-sm tracking-tight text-foreground">{group?.name || 'Groupe'}</p>
+              <p className="text-[11px] font-medium text-muted-foreground/50">{t.group.sectionLabel}</p>
+              <p className="mt-1 truncate font-heading text-sm tracking-tight text-foreground">{group?.name || t.group.defaultName}</p>
             </div>
 
             <nav className="flex flex-col gap-0.5 px-2">
@@ -249,7 +251,7 @@ export function GroupSettingsDialog({
                 <div className="flex size-7 items-center justify-center rounded-lg bg-surface-secondary/60">
                   <XIcon size={14} />
                 </div>
-                Fermer
+                {t.group.close}
               </button>
             </div>
           </aside>
@@ -261,19 +263,19 @@ export function GroupSettingsDialog({
               {section === 'general' && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="font-heading text-xl tracking-tight text-foreground">Paramètres généraux</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">Gérez les paramètres de votre groupe.</p>
+                    <h2 className="font-heading text-xl tracking-tight text-foreground">{t.group.generalSettings}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{t.group.generalSettingsDesc}</p>
                   </div>
 
                   <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                     <span className="text-[11px] font-medium text-muted-foreground/50">
-                      Nom du groupe
+                      {t.group.groupName}
                     </span>
                     <div className="flex gap-2">
                       <Input
                           value={groupName}
                           onChange={(e) => setGroupName(e.target.value)}
-                          placeholder="Nom du groupe"
+                          placeholder={t.group.groupName}
                           className="flex-1"
                         />
                       <Button
@@ -283,13 +285,13 @@ export function GroupSettingsDialog({
                         className="gap-1.5 rounded-xl"
                       >
                         <PencilIcon size={14} />
-                        Sauver
+                        {t.group.save}
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
-                    <p className="text-[11px] font-medium text-destructive/70">Zone dangereuse</p>
+                    <p className="text-[11px] font-medium text-destructive/70">{t.group.dangerZone}</p>
                     <div className="space-y-2">
                       <Button
                         variant="outline"
@@ -300,7 +302,7 @@ export function GroupSettingsDialog({
                         }}
                       >
                         <LogOutIcon size={16} className="mr-2" />
-                        Quitter le groupe
+                        {t.group.leave}
                       </Button>
                       {isOwner && (
                         <Button
@@ -309,7 +311,7 @@ export function GroupSettingsDialog({
                           onClick={handleDeleteGroup}
                         >
                           <Trash2Icon size={16} className="mr-2" />
-                          Supprimer le groupe
+                          {t.group.deleteGroup}
                         </Button>
                       )}
                     </div>
@@ -321,9 +323,9 @@ export function GroupSettingsDialog({
               {section === 'members' && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="font-heading text-xl tracking-tight text-foreground">Membres</h2>
+                    <h2 className="font-heading text-xl tracking-tight text-foreground">{t.group.sectionLabel}</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Gérez les membres du groupe ({group?.participants.length || 0}).
+                      {t.group.manageMembers.replace('{n}', String(group?.participants.length || 0))}
                     </p>
                   </div>
 
@@ -337,7 +339,7 @@ export function GroupSettingsDialog({
                       }}
                     >
                       <UserPlusIcon size={16} />
-                      Ajouter des membres
+                      {t.group.addMembers}
                     </Button>
                   )}
 
@@ -345,7 +347,7 @@ export function GroupSettingsDialog({
                     <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                       <div className="flex items-center justify-between">
                         <p className="text-[11px] font-medium text-muted-foreground/50">
-                          Ajouter des amis
+                          {t.group.addFriends}
                         </p>
                         <Button
                           variant="ghost"
@@ -362,7 +364,7 @@ export function GroupSettingsDialog({
                       <div className="relative">
                         <SearchIcon size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
                         <Input
-                          placeholder="Rechercher..."
+                          placeholder={t.group.search}
                           value={friendSearch}
                           onChange={(e) => setFriendSearch(e.target.value)}
                           className="pl-8"
@@ -373,7 +375,7 @@ export function GroupSettingsDialog({
                         <div className="space-y-0.5">
                           {filteredFriends.length === 0 ? (
                             <p className="py-4 text-center text-xs text-muted-foreground">
-                              {friends.length === 0 ? 'Tous vos amis sont déjà dans le groupe' : 'Aucun résultat'}
+                              {friends.length === 0 ? t.group.allFriendsAdded : t.group.noResults}
                             </p>
                           ) : (
                             filteredFriends.map((friend) => {
@@ -420,7 +422,7 @@ export function GroupSettingsDialog({
                       {selectedFriendIds.size > 0 && (
                         <Button className="w-full rounded-xl" size="sm" onClick={handleAddMembers}>
                           <UserPlusIcon size={14} className="mr-1" />
-                          Ajouter ({selectedFriendIds.size})
+                          {t.group.addCount.replace('{n}', String(selectedFriendIds.size))}
                         </Button>
                       )}
                     </div>
@@ -428,7 +430,7 @@ export function GroupSettingsDialog({
 
                   <div className="rounded-2xl border border-border/60 bg-surface-secondary/30">
                     <div className="border-b border-border/60 px-5 py-4">
-                      <h3 className="font-heading text-base tracking-tight">Membres du groupe</h3>
+                      <h3 className="font-heading text-base tracking-tight">{t.group.groupMembersTitle}</h3>
                     </div>
                     <ScrollArea className="max-h-64 overflow-hidden">
                       <div className="divide-y divide-border/60">
@@ -455,7 +457,7 @@ export function GroupSettingsDialog({
                                     <CrownIcon size={12} className="shrink-0 text-amber-500" />
                                   )}
                                   {participant.userId === user?.id && (
-                                    <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">Vous</Badge>
+                                    <Badge variant="secondary" className="ml-1 h-4 text-[9px] px-1">{t.group.you}</Badge>
                                   )}
                                 </div>
                                 <p className="truncate text-xs text-muted-foreground">@{participant.username}</p>
