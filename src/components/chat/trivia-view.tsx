@@ -247,7 +247,7 @@ export function TriviaView({ serverId, channelId, channelName }: TriviaViewProps
   /* ── Menu ── */
   if (state === 'menu') {
     return (
-      <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+      <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
         <Header ui={ui} isMobile={isMobile} toggleSidebar={toggleSidebar} channelName={channelName} />
         <ScrollArea className="min-h-0 flex-1">
           <div className="mx-auto max-w-lg p-6">
@@ -320,7 +320,7 @@ export function TriviaView({ serverId, channelId, channelName }: TriviaViewProps
     const correct = history.filter((h) => h.correct).length;
     const pct = Math.round((correct / total) * 100);
     return (
-      <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+      <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
         <Header ui={ui} isMobile={isMobile} toggleSidebar={toggleSidebar} channelName={channelName} />
         <ScrollArea className="min-h-0 flex-1">
           <div className="mx-auto max-w-lg p-6">
@@ -374,7 +374,7 @@ export function TriviaView({ serverId, channelId, channelName }: TriviaViewProps
   const progress = ((qIndex + 1) / deck.length) * 100;
 
   return (
-    <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+    <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
       <Header ui={ui} isMobile={isMobile} toggleSidebar={toggleSidebar} channelName={channelName} onExit={() => setState('menu')} />
 
       <ScrollArea className="min-h-0 flex-1">

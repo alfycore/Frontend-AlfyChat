@@ -466,7 +466,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
   /* -- Render -- */
 
   return (
-    <div data-tour="friends-panel" className={`flex h-full flex-1 flex-row overflow-hidden ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+    <div data-tour="friends-panel" className={`flex h-full flex-1 flex-row overflow-hidden ${ui.contentBg}`}>
       {/* ===== CENTER ===== */}
       <div ref={tabsListRef} className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}

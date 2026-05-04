@@ -65,7 +65,7 @@ export default function ServerWelcomePage() {
   }
 
   return (
-    <div className={`flex h-full flex-col overflow-y-auto ${ui.isGlass ? 'bg-white/15 backdrop-blur-2xl dark:bg-black/20' : ''}`}>
+    <div className={`flex h-full flex-col overflow-y-auto ${ui.isGlass ? 'bg-white/[0.45] backdrop-blur-2xl dark:bg-white/[0.06]' : ''}`}>
       <ServerOverviewHero server={serverInfo} />
 
       <div className="flex-1 space-y-6 px-6 py-6 sm:px-8">

@@ -230,7 +230,7 @@ export function DocView({ serverId, channelId, channelName }: DocViewProps) {
 
   if (creating) {
     return (
-      <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+      <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
         <div className={`flex h-14 shrink-0 items-center gap-2 px-3 ${ui.header}`}>
           <span className="text-[14px] font-semibold">Nouveau document</span>
         </div>
@@ -243,7 +243,7 @@ export function DocView({ serverId, channelId, channelName }: DocViewProps) {
 
   if (viewDoc && editing) {
     return (
-      <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+      <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
         <div className={`flex h-14 shrink-0 items-center gap-2 px-3 ${ui.header}`}>
           <span className="text-[14px] font-semibold">Modifier le document</span>
         </div>
@@ -256,7 +256,7 @@ export function DocView({ serverId, channelId, channelName }: DocViewProps) {
 
   if (viewDoc) {
     return (
-      <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+      <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
         {/* doc header */}
         <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
           <Button size="icon-sm" variant="ghost" className="size-8 shrink-0 rounded-xl text-muted-foreground" onClick={() => setViewDoc(null)}>
@@ -285,7 +285,7 @@ export function DocView({ serverId, channelId, channelName }: DocViewProps) {
   }
 
   return (
-    <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+    <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
       {/* Header */}
       <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
         {isMobile && (

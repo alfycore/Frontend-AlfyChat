@@ -203,7 +203,7 @@ export function MemberList({ serverId }: MemberListProps) {
 
   if (isLoading) {
     return (
-      <div className={cn('flex h-full w-full flex-col', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-sidebar')}>
+      <div className={cn('flex h-full w-full flex-col', ui.isGlass ? ui.contentBg : 'bg-sidebar')}>
         <div className="shrink-0 border-b border-border/40 px-4 pb-3 pt-4">
           <Skeleton className="h-3.5 w-16 rounded" />
           <Skeleton className="mt-1.5 h-3 w-28 rounded" />
@@ -240,7 +240,7 @@ export function MemberList({ serverId }: MemberListProps) {
   const remainingOnline = onlineMembers.filter((m) => !assignedIds.has(m.id));
 
   return (
-    <div className={cn('flex h-full w-full flex-col', ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20' : 'bg-sidebar')}>
+    <div className={cn('flex h-full w-full flex-col', ui.isGlass ? ui.contentBg : 'bg-sidebar')}>
       {/* Header */}
       <div className="shrink-0 border-b border-border/40 px-4 pb-3 pt-4">
         <div className="text-[13px] font-semibold text-foreground">Membres</div>

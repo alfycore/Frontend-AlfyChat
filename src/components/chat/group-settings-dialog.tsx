@@ -18,6 +18,7 @@ import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import {
   Avatar,
   AvatarImage,
@@ -76,6 +77,7 @@ export function GroupSettingsDialog({
   onLeave,
 }: GroupSettingsDialogProps) {
   const { user } = useAuth();
+  const ui = useUIStyle();
   const [section, setSection] = useState<'general' | 'members'>('general');
   const [groupName, setGroupName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -199,7 +201,7 @@ export function GroupSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl">
+      <DialogContent showCloseButton={false} className={cn('h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl border border-border/50 p-0 shadow-2xl shadow-black/30', ui.glassModal)}>
           <DialogHeader className="sr-only">
             <DialogTitle>Paramètres du groupe</DialogTitle>
           </DialogHeader>

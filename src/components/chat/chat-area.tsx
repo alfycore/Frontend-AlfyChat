@@ -762,7 +762,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
   return (
     <div data-tour="chat-area" className="flex h-full flex-1 overflow-hidden">
-      <div className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+      <div className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.contentBg}`}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className={`flex ${d.headerH} shrink-0 items-center justify-between px-3 md:px-4 ${ui.header}`}>
         <div className="flex min-w-0 items-center gap-2.5">

@@ -331,7 +331,7 @@ export const MessageItem = memo(function MessageItem({
           'absolute -top-4 z-20 flex items-center gap-0.5 rounded-xl px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 ui-smooth group-hover:opacity-100',
           isMe ? 'left-4' : 'right-4',
           ui.isGlass
-            ? 'border border-white/20 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-black/40'
+            ? 'border border-black/[0.10] bg-white/[0.70] backdrop-blur-xl dark:border-white/[0.12] dark:bg-white/[0.15]'
             : 'border border-[var(--border)] bg-[var(--surface)] ring-1 ring-black/10',
         )}>
           <TooltipProvider>
@@ -400,7 +400,7 @@ export const MessageItem = memo(function MessageItem({
                 <div className={cn(
                   'flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 px-2.5 py-1 text-[11px]',
                   isMe ? 'self-end' : 'self-start',
-                  ui.isGlass ? 'bg-white/20 backdrop-blur-sm dark:bg-black/20' : 'bg-[var(--surface-secondary)]/30',
+                  ui.isGlass ? 'bg-white/[0.50] backdrop-blur-sm dark:bg-white/[0.08]' : 'bg-[var(--surface-secondary)]/30',
                 )}>
                   <ReplyIcon size={11} className="shrink-0 text-[var(--accent)]/60" />
                   <span className="font-semibold text-[var(--accent)]/80">{repliedName}</span>
@@ -492,7 +492,7 @@ export const MessageItem = memo(function MessageItem({
         message.failed && 'opacity-70',
       )}>
       {/* ── Toolbar flottant ── */}
-      <div className={cn('absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 transition-all duration-150 group-hover:opacity-100', ui.isGlass ? 'border border-white/20 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-black/40' : 'border border-[var(--border)] bg-[var(--surface)] ring-1 ring-black/10')}>
+      <div className={cn('absolute -top-4 right-4 z-20 flex items-center gap-0.5 rounded-xl px-1 py-0.5 opacity-0 shadow-lg shadow-black/40 transition-all duration-150 group-hover:opacity-100', ui.isGlass ? 'border border-black/[0.10] bg-white/[0.70] backdrop-blur-xl dark:border-white/[0.12] dark:bg-white/[0.15]' : 'border border-[var(--border)] bg-[var(--surface)] ring-1 ring-black/10')}>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -568,7 +568,7 @@ export const MessageItem = memo(function MessageItem({
                 ? currentUser?.displayName || currentUser?.username
                 : replyMessage.sender?.displayName || replyMessage.sender?.username || recipientName || 'Utilisateur';
               return (
-                <div className={cn('mb-1.5 flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 px-2.5 py-1 text-[11px]', ui.isGlass ? 'bg-white/20 backdrop-blur-sm dark:bg-black/20' : 'bg-[var(--surface-secondary)]/30')}>
+                <div className={cn('mb-1.5 flex items-center gap-1.5 rounded-xl border-l-2 border-[var(--accent)]/40 px-2.5 py-1 text-[11px]', ui.isGlass ? 'bg-white/[0.50] backdrop-blur-sm dark:bg-white/[0.08]' : 'bg-[var(--surface-secondary)]/30')}>
                   <ReplyIcon size={11} className="shrink-0 text-[var(--accent)]/60" />
                   <span className="font-semibold text-[var(--accent)]/80">{repliedName}</span>
                   <span className="max-w-64 truncate text-muted-foreground">{replyMessage.content}</span>

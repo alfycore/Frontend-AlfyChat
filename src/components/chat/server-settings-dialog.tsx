@@ -622,8 +622,8 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
       <DialogContent className={cn(
         'h-[90vh] w-full sm:max-w-5xl overflow-hidden p-0 shadow-2xl shadow-black/40',
         'rounded-2xl border border-border/50',
-        'max-sm:left-0 max-sm:top-0 max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0',
-        ui.isGlass ? 'bg-black/40 backdrop-blur-2xl' : 'bg-card',
+        'max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:rounded-none max-sm:border-0',
+        ui.glassModal,
       )}>
         <DialogHeader className="sr-only">
           <DialogTitle>Paramètres du serveur</DialogTitle>
@@ -631,7 +631,7 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
 
         <div className="grid h-full min-h-0 md:grid-cols-[260px_1fr]">
           {/* ─── Sidebar ─── */}
-          <aside className={cn('flex min-h-0 flex-col border-r border-border/40 p-4', ui.isGlass ? 'bg-white/5' : 'bg-muted/20')}>
+          <aside className={cn('flex min-h-0 flex-col border-r border-border/40 p-4', ui.glassModalSidebar)}>
             <div className="overflow-hidden rounded-2xl border border-border/30 bg-card/30">
               <div className="h-16 overflow-hidden">
                 {(bannerPreview || server?.bannerUrl) ? (
@@ -680,7 +680,7 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
           </aside>
 
           {/* ─── Content ─── */}
-          <section className={cn('min-h-0 overflow-y-auto px-6 py-6', ui.isGlass ? 'bg-white/3' : 'bg-background')}>
+          <section className={cn('min-h-0 overflow-y-auto px-6 py-6', ui.isGlass ? 'bg-transparent' : 'bg-background')}>
             {isLoading ? (
               <div className="flex h-full items-center justify-center"><Spinner size="md" /></div>
             ) : renderContent()}

@@ -468,7 +468,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   return (
     <div className="flex h-full flex-1">
       {/* ── Zone de chat principale ── */}
-      <div data-tour="chat-area" className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+      <div data-tour="chat-area" className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.contentBg}`}>
         {/* ── Header ── */}
         <div className={`flex ${d.headerH} shrink-0 items-center gap-3 px-4 ${ui.isGlass ? 'border-b border-white/15 bg-white/10 dark:border-white/8' : 'border-b border-border/30 bg-surface/60'}`}>
           {isMobile && (

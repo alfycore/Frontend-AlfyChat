@@ -315,7 +315,7 @@ export function MinigameView({ serverId, channelId, channelName }: MinigameViewP
   const game = GAMES.find((g) => g.id === activeGame);
 
   return (
-    <div className={`flex h-full min-h-0 flex-col ${ui.isGlass ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/25' : ''}`}>
+    <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
       {/* Header */}
       <div className={`flex h-14 shrink-0 items-center gap-2.5 px-3 ${ui.header}`}>
         {isMobile && (

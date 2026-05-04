@@ -138,7 +138,7 @@ export function ServerOverviewDescription({ description }: { description?: strin
   if (!description) return null;
 
   return (
-    <section className={cn('rounded-3xl p-6', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
+    <section className={cn('rounded-3xl p-6', ui.isGlass ? 'border border-black/[0.08] bg-white/[0.52] backdrop-blur-xl dark:border-white/[0.10] dark:bg-white/[0.07]' : 'border border-border/40 bg-card/40')}>
       <p className="mb-2 text-[11px] font-medium text-muted-foreground/50">
         À propos
       </p>
@@ -160,7 +160,7 @@ export function ServerChannelPreviewList({
   const firstTextChannel = channels.find((channel) => channel.type !== 'voice');
 
   return (
-    <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
+    <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-black/[0.08] bg-white/[0.52] backdrop-blur-xl dark:border-white/[0.10] dark:bg-white/[0.07]' : 'border border-border/40 bg-card/40')}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-medium text-muted-foreground/50">
@@ -234,7 +234,7 @@ export function ServerChannelPreviewList({
 export function ServerMembersPreview({ members }: { members: ServerOverviewMember[] }) {
   const ui = useUIStyle();
   return (
-    <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-white/20 bg-white/20 backdrop-blur-xl dark:border-white/10 dark:bg-black/20' : 'border border-border/40 bg-card/40')}>
+    <section className={cn('rounded-3xl p-4 sm:p-5', ui.isGlass ? 'border border-black/[0.08] bg-white/[0.52] backdrop-blur-xl dark:border-white/[0.10] dark:bg-white/[0.07]' : 'border border-border/40 bg-card/40')}>
       <div className="mb-4">
         <p className="text-[11px] font-medium text-muted-foreground/50">
           Membres

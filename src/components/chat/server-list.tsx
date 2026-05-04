@@ -351,7 +351,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         className={cn(
           'relative flex shrink-0 items-center',
           ui.isGlass
-            ? 'bg-white/20 backdrop-blur-2xl dark:bg-black/20'
+            ? 'bg-white/[0.52] backdrop-blur-2xl dark:bg-white/[0.07]'
             : 'bg-sidebar',
           horizontal
             ? 'h-12 w-full flex-row gap-1 px-3'

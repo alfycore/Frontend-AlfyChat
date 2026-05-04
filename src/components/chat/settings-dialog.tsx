@@ -1250,13 +1250,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className={cn(
         'flex h-[88vh] w-full sm:max-w-5xl gap-0 overflow-hidden rounded-2xl border border-border/50 p-0 shadow-2xl shadow-black/30',
-        'max-sm:left-0 max-sm:top-0 max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0',
-        ui.isGlass ? 'bg-black/40 backdrop-blur-2xl' : 'bg-card',
+        'max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:rounded-none max-sm:border-0',
+        ui.glassModal,
       )}>
         <VisuallyHidden.Root><DialogTitle>{t.settings.sectionHeader}</DialogTitle></VisuallyHidden.Root>
 
         {/* ─── Sidebar (desktop) ─── */}
-        <aside className={cn('hidden w-56 shrink-0 flex-col border-r border-border/40 sm:flex', ui.isGlass ? 'bg-white/5' : 'bg-muted/30')}>
+        <aside className={cn('hidden w-56 shrink-0 flex-col border-r border-border/40 sm:flex', ui.glassModalSidebar)}>
           <div className="flex items-center gap-3 border-b border-border/40 px-4 py-4">
             <Avatar className="size-10 shrink-0 rounded-2xl">
               <AvatarImage src={avatarPreview || undefined} className="rounded-2xl" />

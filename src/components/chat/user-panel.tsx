@@ -98,7 +98,7 @@ export function UserPanel({ user }: UserPanelProps) {
   };
 
   return (
-    <div data-tour="user-panel" className={`flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t px-1.5 md:gap-1 md:px-2 ${ui.isGlass ? 'border-white/15 bg-white/20 backdrop-blur-2xl dark:border-white/8 dark:bg-black/20' : 'border-border/40 bg-sidebar/80 backdrop-blur-md'}`}>
+    <div data-tour="user-panel" className={`flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t px-1.5 md:gap-1 md:px-2 ${ui.isGlass ? 'border-black/[0.08] bg-white/[0.52] backdrop-blur-2xl dark:border-white/[0.10] dark:bg-white/[0.07]' : 'border-border/40 bg-sidebar/80 backdrop-blur-md'}`}>
       {/* Avatar + user info */}
       <div className="min-w-0 flex-1">
       <DropdownMenu>

@@ -293,13 +293,42 @@
   isolation: isolate;
 }
 
-/* ── Glass mode: adaptive text over light wallpapers ────────────────────── */
-/* When brightness detected as "light", switch glass panel text to dark      */
+/*
+ * Glass mode: color variables adapt to light/dark theme.
+ * BackgroundProvider auto-switches the theme (light ↔ dark) based on
+ * wallpaper brightness, so :root (light) and .dark are the right hooks.
+ *
+ * Light theme glass — dark text, dark borders, visible on bright wallpapers.
+ */
+:root [data-ui-style="glass"] {
+  --foreground: oklch(0.12 0.005 285.823);
+  --surface-foreground: oklch(0.12 0.005 285.823);
+  --muted-foreground: oklch(0.42 0.016 285.938);
+  --border: oklch(0 0 0 / 10%);
+  --sidebar-foreground: oklch(0.12 0.005 285.823);
+}
+
+/*
+ * Dark theme glass — light text, white borders, visible on dark wallpapers.
+ */
+.dark [data-ui-style="glass"] {
+  --foreground: oklch(0.985 0 0);
+  --surface-foreground: oklch(0.985 0 0);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --border: oklch(1 0 0 / 12%);
+  --sidebar-foreground: oklch(0.985 0 0);
+}
+
+/*
+ * Fallback: data-wallpaper-brightness is set by useBackground on <html>.
+ * These selectors override theme-level variables when brightness is known.
+ */
 [data-wallpaper-brightness="light"] [data-ui-style="glass"] {
-  --foreground: oklch(0.141 0.005 285.823);
-  --surface-foreground: oklch(0.141 0.005 285.823);
-  --muted-foreground: oklch(0.45 0.016 285.938);
-  --border: oklch(0.0 0 0 / 12%);
+  --foreground: oklch(0.12 0.005 285.823);
+  --surface-foreground: oklch(0.12 0.005 285.823);
+  --muted-foreground: oklch(0.42 0.016 285.938);
+  --border: oklch(0 0 0 / 10%);
+  --sidebar-foreground: oklch(0.12 0.005 285.823);
 }
 
 [data-wallpaper-brightness="dark"] [data-ui-style="glass"] {
@@ -307,6 +336,7 @@
   --surface-foreground: oklch(0.985 0 0);
   --muted-foreground: oklch(0.705 0.015 286.067);
   --border: oklch(1 0 0 / 12%);
+  --sidebar-foreground: oklch(0.985 0 0);
 }
 
 /* ── Apple-like easing & helper classes for smooth UI animations ───────── */
