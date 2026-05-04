@@ -10,6 +10,7 @@ import { BackgroundProvider } from "@/components/background-provider";
 import { PrefetchDMs } from "@/components/prefetch-dms";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
+import { ChunkErrorHandler } from "@/components/chunk-error-handler";
 
 const ralewayHeading = Raleway({subsets:['latin'],variable:'--font-heading'});
 
@@ -67,6 +68,7 @@ export default function RootLayout({
         className="bg-background text-foreground antialiased"
         suppressHydrationWarning
       >
+        <ChunkErrorHandler />
         <ThemeProvider>
           <LocaleProvider>
             <AuthProvider>
