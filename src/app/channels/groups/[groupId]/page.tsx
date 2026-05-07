@@ -1,6 +1,14 @@
 'use client';
 
-// La page est un shell – le layout groups gère l'affichage via GroupChatArea.
+import { useRouter, useParams } from 'next/navigation';
+import { GroupChatArea } from '@/components/chat/group-chat-area';
+
 export default function GroupPage() {
-  return null;
+  const router = useRouter();
+  const params = useParams();
+  const groupId = params?.groupId as string | undefined;
+
+  if (!groupId) return null;
+
+  return <GroupChatArea groupId={groupId} onLeave={() => router.push('/channels/groups')} />;
 }

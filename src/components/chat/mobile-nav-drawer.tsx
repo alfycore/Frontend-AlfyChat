@@ -16,6 +16,8 @@
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
 import { VoiceControlBar } from '@/components/chat/voice-control-bar';
+import { useUIStyle } from '@/hooks/use-ui-style';
+import { cn } from '@/lib/utils';
 
 interface MobileNavDrawerProps {
   /** Ref DOM attachée à la div principale du tiroir (utilisée par useSwipeDrawer). */
@@ -44,6 +46,8 @@ export function MobileNavDrawer({
   onSelectChannel,
   onOpenSettings,
 }: MobileNavDrawerProps) {
+  const ui = useUIStyle();
+
   return (
     <>
       {/* ── Fond assombri ─────────────────────────────────────────────────── */}
@@ -51,18 +55,30 @@ export function MobileNavDrawer({
       <div
         ref={backdropRef as React.RefObject<HTMLDivElement>}
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-black will-change-[opacity] md:hidden"
+        className={cn(
+          'fixed inset-0 z-40 will-change-[opacity] md:hidden',
+          ui.isGlass ? 'bg-black/40 backdrop-blur-[2px]' : 'bg-black',
+        )}
         style={{ opacity: 0, pointerEvents: 'none' }}
       />
 
       {/* ── Tiroir principal ──────────────────────────────────────────────── */}
       <div
         ref={sidebarRef as React.RefObject<HTMLDivElement>}
-        className="fixed left-0 top-0 z-50 flex shadow-[4px_0_32px_rgba(0,0,0,0.25)] will-change-transform md:hidden"
+        className={cn(
+          'fixed left-0 top-0 z-50 flex will-change-transform md:hidden',
+          ui.isGlass
+            ? 'overflow-hidden rounded-r-[1.4rem] border border-black/[0.08] bg-white/[0.45] shadow-[8px_0_40px_rgba(0,0,0,0.20),inset_0_0.5px_0_rgba(255,255,255,0.90)] backdrop-blur-3xl dark:border-white/[0.10] dark:bg-[oklch(0.20_0.006_286/0.68)] dark:shadow-[8px_0_40px_rgba(0,0,0,0.45)]'
+            : 'shadow-[4px_0_32px_rgba(0,0,0,0.25)]',
+        )}
         style={{ width, bottom: 'calc(3.5rem + env(safe-area-inset-bottom))', transform: `translateX(-${width}px)` }}>
+        {ui.isGlass && (
+          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.55),transparent_34%),radial-gradient(circle_at_95%_85%,rgba(255,255,255,0.20),transparent_38%)] dark:bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_95%_85%,rgba(255,255,255,0.07),transparent_38%)]" />
+        )}
+
         {/* ── Rail serveurs ──────────────────────────────────────────────── */}
         {/* Le composant ServerList gère lui-même sa largeur via la densité */}
-        <div className="flex h-full shrink-0 flex-col">
+        <div className="relative z-10 flex h-full shrink-0 flex-col">
           <ServerList
             selectedServer={activeServerId}
             onSelectServer={(id) => {
@@ -75,10 +91,10 @@ export function MobileNavDrawer({
         </div>
 
         {/* ── Séparateur ─────────────────────────────────────────────────── */}
-        <div className="w-px shrink-0 bg-border/40" />
+        <div className={cn('relative z-10 w-px shrink-0', ui.isGlass ? 'bg-black/[0.09] dark:bg-white/[0.10]' : 'bg-border/40')} />
 
         {/* ── Panneau channels ───────────────────────────────────────────── */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-sidebar">
+        <div className={cn('relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden', !ui.isGlass && 'bg-sidebar')}>
           <ChannelList
             serverId={activeServerId}
             selectedChannel={selectedChannel}

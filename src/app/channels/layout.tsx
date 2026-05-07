@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { MessageCircleIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useLayoutPrefs, useLayoutPrefsSync } from '@/hooks/use-layout-prefs';
@@ -49,7 +48,10 @@ function LoadingScreen() {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
       <div className="relative z-10 flex flex-col items-center gap-4">
         <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-primary/10">
-          <MessageCircleIcon size={32} className="text-primary" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-9 dark:hidden" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" className="hidden size-9 dark:block" />
         </div>
         <p className="text-sm text-muted-foreground">Chargement…</p>
       </div>
@@ -262,7 +264,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       className={cn(
         'flex h-dvh overflow-hidden',
         !ui.isGlass && 'bg-background',
-        ui.rootPadding,
+        !isMobile && ui.rootPadding,
         isTopBottom ? 'flex-col' : 'flex-row',
       )}
       style={ui.isGlass ? { backgroundImage: glassBg, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
