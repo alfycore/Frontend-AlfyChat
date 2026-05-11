@@ -10,9 +10,9 @@ Merci de l'intérêt que vous portez à ce projet ! Voici les règles à suivre 
 ## 1. Authentification & Gestion de compte
 
 ### Inscription
-- [x] Inscription avec email valide
-- [!] Inscription avec email déjà utilisé → message d'erreur clair
-- [~] Inscription avec email invalide → validation côté client et serveur
+- [ ] Inscription avec email valide
+- [ ] Inscription avec email déjà utilisé → message d'erreur clair
+- [ ] Inscription avec email invalide → validation côté client et serveur
 - [ ] Mot de passe trop court (< 8 caractères) → refus
 - [ ] Mot de passe fort accepté
 - [ ] CAPTCHA Cloudflare Turnstile → présent et fonctionnel
