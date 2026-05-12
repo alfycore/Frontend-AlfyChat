@@ -1,22 +1,13 @@
 'use client';
 
 // ==========================================
-// ALFYCHAT - APPELS GROUPE (LiveKit SFU)
-// Séparé des appels DM P2P — utilise LiveKit
-// comme SFU pour la topology N→N sans mesh.
+// ALFYCHAT - APPELS GROUPE (WebRTC mesh P2P)
+// Topologie full-mesh : chaque pair est connecté
+// directement à chaque autre pair via WebRTC.
+// La signalisation passe par Socket.io / Gateway.
 // ==========================================
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Room,
-  RoomEvent,
-  Track,
-  RemoteParticipant,
-  LocalParticipant,
-  ConnectionState,
-  TrackPublication,
-  RemoteTrackPublication,
-} from 'livekit-client';
 import { socketService } from '@/lib/socket';
 
 // ── Types ──────────────────────────────────────────────────
@@ -28,7 +19,6 @@ export interface GroupCallParticipant {
   username:       string;
   isMuted:        boolean;
   isVideoEnabled: boolean;
-  /** MediaStream contenant les pistes audio/vidéo du participant */
   stream:         MediaStream | null;
 }
 
@@ -64,209 +54,249 @@ const INITIAL: GroupCallState = {
   incomingCall:   null,
 };
 
-// ── Helpers ───────────────────────────────────────────────
-
-function participantToStream(participant: RemoteParticipant | LocalParticipant): MediaStream {
-  const stream = new MediaStream();
-  participant.trackPublications.forEach((pub: TrackPublication) => {
-    if (pub.track && (pub.track.kind === Track.Kind.Audio || pub.track.kind === Track.Kind.Video)) {
-      stream.addTrack(pub.track.mediaStreamTrack);
-    }
-  });
-  return stream;
-}
+const ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+];
 
 // ── Hook principal ─────────────────────────────────────────
 
 export function useGroupCall() {
   const [state, setState] = useState<GroupCallState>(INITIAL);
-  const roomRef           = useRef<Room | null>(null);
-  const stateRef          = useRef(state);
-  stateRef.current = state;
+  const stateRef        = useRef(state);
+  stateRef.current      = state;
+
+  const localStreamRef  = useRef<MediaStream | null>(null);
+  // Map userId → RTCPeerConnection
+  const peersRef        = useRef<Map<string, RTCPeerConnection>>(new Map());
 
   // ── Nettoyage ────────────────────────────────────────────
 
   const cleanup = useCallback(() => {
-    if (roomRef.current) {
-      roomRef.current.disconnect();
-      roomRef.current = null;
-    }
+    peersRef.current.forEach((pc) => pc.close());
+    peersRef.current.clear();
+    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    localStreamRef.current = null;
     setState(INITIAL);
   }, []);
 
-  // ── Connexion à la room LiveKit ──────────────────────────
+  // ── Acquérir le media local ──────────────────────────────
 
-  const connectToRoom = useCallback(
-    async (token: string, wsUrl: string, callId: string, channelId: string) => {
-      setState((prev) => ({ ...prev, status: 'connecting', callId, channelId, error: null }));
+  const acquireLocalStream = useCallback(async (withVideo: boolean): Promise<MediaStream> => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
+    localStreamRef.current = stream;
+    return stream;
+  }, []);
 
-      const room = new Room({
-        adaptiveStream: true,
-        dynacast:       true,
-      });
-      roomRef.current = room;
+  // ── Créer un RTCPeerConnection vers un pair ──────────────
 
-      // ── Événements room ──
-      room.on(RoomEvent.Connected, () => {
-        const localStream = participantToStream(room.localParticipant);
-        setState((prev) => ({
-          ...prev,
-          status:         'connected',
-          localStream,
-          isMuted:        !room.localParticipant.isMicrophoneEnabled,
-          isVideoEnabled: room.localParticipant.isCameraEnabled,
-        }));
-      });
+  const createPeer = useCallback((targetUserId: string): RTCPeerConnection => {
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
-      room.on(RoomEvent.Disconnected, () => {
-        cleanup();
-      });
+    // Ajouter les pistes locales au peer
+    localStreamRef.current?.getTracks().forEach((track) => {
+      pc.addTrack(track, localStreamRef.current!);
+    });
 
-      room.on(RoomEvent.ConnectionStateChanged, (cs: ConnectionState) => {
-        if (cs === ConnectionState.Reconnecting) {
-          setState((prev) => ({ ...prev, error: 'Reconnexion en cours…' }));
-        } else if (cs === ConnectionState.Connected) {
-          setState((prev) => ({ ...prev, error: null }));
-        }
-      });
-
-      // ── Participants distants ──
-      const buildParticipant = (p: RemoteParticipant): GroupCallParticipant => ({
-        userId:         p.identity,
-        username:       p.name || p.identity,
-        isMuted:        !p.isMicrophoneEnabled,
-        isVideoEnabled: p.isCameraEnabled,
-        stream:         participantToStream(p),
-      });
-
-      room.on(RoomEvent.ParticipantConnected, (p: RemoteParticipant) => {
-        setState((prev) => ({
-          ...prev,
-          participants: [...prev.participants, buildParticipant(p)],
-        }));
-      });
-
-      room.on(RoomEvent.ParticipantDisconnected, (p: RemoteParticipant) => {
-        setState((prev) => ({
-          ...prev,
-          participants: prev.participants.filter((x) => x.userId !== p.identity),
-        }));
-      });
-
-      // Rafraîchir le stream quand une piste est abonnée/désabonnée
-      const refreshParticipant = (_: unknown, pub: RemoteTrackPublication, p: RemoteParticipant) => {
-        setState((prev) => ({
-          ...prev,
-          participants: prev.participants.map((x) =>
-            x.userId === p.identity
-              ? { ...x, stream: participantToStream(p), isMuted: !p.isMicrophoneEnabled, isVideoEnabled: p.isCameraEnabled }
-              : x,
-          ),
-        }));
-      };
-      room.on(RoomEvent.TrackSubscribed,   refreshParticipant);
-      room.on(RoomEvent.TrackUnsubscribed, refreshParticipant);
-
-      // Mute local
-      room.localParticipant.on('trackMuted' as any, (pub: TrackPublication) => {
-        if (pub.track?.kind === Track.Kind.Audio) {
-          setState((prev) => ({ ...prev, isMuted: true }));
-        }
-      });
-      room.localParticipant.on('trackUnmuted' as any, (pub: TrackPublication) => {
-        if (pub.track?.kind === Track.Kind.Audio) {
-          setState((prev) => ({ ...prev, isMuted: false }));
-        }
-      });
-
-      // Charger les participants déjà présents
-      const existing = Array.from(room.remoteParticipants.values()).map(buildParticipant);
-      if (existing.length) {
-        setState((prev) => ({ ...prev, participants: existing }));
+    // Relay des candidates ICE via Socket.io
+    pc.onicecandidate = ({ candidate }) => {
+      if (candidate && stateRef.current.callId) {
+        socketService.sendICECandidate(stateRef.current.callId, candidate, targetUserId);
       }
+    };
 
-      try {
-        await room.connect(wsUrl, token, { autoSubscribe: true });
-        await room.localParticipant.setMicrophoneEnabled(true);
-      } catch (err) {
-        console.error('[GROUP_CALL] Connexion LiveKit échouée:', err);
-        setState((prev) => ({ ...prev, error: "Impossible de rejoindre l'appel", status: 'ended' }));
-        roomRef.current = null;
+    // Recevoir le flux distant
+    pc.ontrack = ({ streams }) => {
+      const remoteStream = streams[0] ?? null;
+      setState((prev) => ({
+        ...prev,
+        participants: prev.participants.map((p) =>
+          p.userId === targetUserId ? { ...p, stream: remoteStream } : p,
+        ),
+      }));
+    };
+
+    // Supprimer le pair si la connexion échoue
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        pc.close();
+        peersRef.current.delete(targetUserId);
+        setState((prev) => ({
+          ...prev,
+          participants: prev.participants.filter((p) => p.userId !== targetUserId),
+        }));
       }
-    },
-    [cleanup],
-  );
+    };
 
-  // ── Écouter les events Socket.IO ─────────────────────────
+    peersRef.current.set(targetUserId, pc);
+    return pc;
+  }, []);
+
+  // ── Créer et envoyer une offre à un pair ────────────────
+
+  const offerTo = useCallback(async (targetUserId: string) => {
+    const pc    = createPeer(targetUserId);
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    if (stateRef.current.callId) {
+      socketService.sendWebRTCOffer(stateRef.current.callId, offer, targetUserId);
+    }
+  }, [createPeer]);
+
+  // ── Écouter les events Socket.IO ────────────────────────
 
   useEffect(() => {
+    // Appel entrant dans un canal
     const onIncoming = (data: { payload: IncomingGroupCallData }) => {
       setState((prev) => ({
         ...prev,
-        status:      'incoming',
+        status:       'incoming',
         incomingCall: data.payload,
         callId:       data.payload.callId,
         channelId:    data.payload.channelId,
       }));
     };
 
-    const onToken = (data: { callId: string; token: string; wsUrl: string }) => {
-      const channelId = stateRef.current.channelId || '';
-      connectToRoom(data.token, data.wsUrl, data.callId, channelId);
+    // Confirmation de l'entrée dans l'appel (initiateur + rejoignant)
+    const onJoined = (data: { callId: string; participants?: Array<{ userId: string; username: string }> }) => {
+      setState((prev) => {
+        const existing = new Set(prev.participants.map((p) => p.userId));
+        const incoming = (data.participants ?? [])
+          .filter((p) => !existing.has(p.userId))
+          .map((p) => ({ userId: p.userId, username: p.username, isMuted: false, isVideoEnabled: false, stream: null }));
+        return {
+          ...prev,
+          callId:       data.callId,
+          status:       'connected',
+          participants: [...prev.participants, ...incoming],
+        };
+      });
     };
 
-    const onLeft = (data: { payload: { callId: string; userId: string } }) => {
+    // Un nouveau pair a rejoint → on lui envoie une offre WebRTC
+    const onParticipantJoined = async (data: { payload: { callId: string; userId: string; username: string } }) => {
+      if (stateRef.current.status !== 'connected') return;
+      if (stateRef.current.callId !== data.payload.callId) return;
+
+      // Ajouter le pair dans la liste si pas déjà présent
+      setState((prev) => ({
+        ...prev,
+        participants: prev.participants.some((p) => p.userId === data.payload.userId)
+          ? prev.participants
+          : [...prev.participants, { userId: data.payload.userId, username: data.payload.username, isMuted: false, isVideoEnabled: false, stream: null }],
+      }));
+
+      // Initier la connexion WebRTC vers ce nouveau pair
+      await offerTo(data.payload.userId);
+    };
+
+    // Un pair a quitté l'appel
+    const onParticipantLeft = (data: { payload: { callId: string; userId: string } }) => {
+      const pc = peersRef.current.get(data.payload.userId);
+      pc?.close();
+      peersRef.current.delete(data.payload.userId);
       setState((prev) => ({
         ...prev,
         participants: prev.participants.filter((p) => p.userId !== data.payload.userId),
       }));
     };
 
+    // Appel terminé par l'initiateur
     const onEnded = (data: { payload: { callId: string } }) => {
       if (data.payload.callId === stateRef.current.callId) cleanup();
     };
 
-    socketService.on('GROUP_CALL_INCOMING',         onIncoming);
-    socketService.on('GROUP_CALL_TOKEN',            onToken);
-    socketService.on('GROUP_CALL_PARTICIPANT_LEFT', onLeft);
-    socketService.on('GROUP_CALL_ENDED',            onEnded);
+    // ── Signalisation WebRTC ─────────────────────────────
+
+    // Réception d'une offre → créer une réponse
+    const onOffer = async (data: { payload: { callId: string; offer: RTCSessionDescriptionInit; fromUserId: string } }) => {
+      if (data.payload.callId !== stateRef.current.callId) return;
+
+      let pc = peersRef.current.get(data.payload.fromUserId);
+      if (!pc) pc = createPeer(data.payload.fromUserId);
+
+      await pc.setRemoteDescription(new RTCSessionDescription(data.payload.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socketService.sendWebRTCAnswer(data.payload.callId, answer, data.payload.fromUserId);
+    };
+
+    // Réception d'une réponse
+    const onAnswer = async (data: { payload: { callId: string; answer: RTCSessionDescriptionInit; fromUserId: string } }) => {
+      if (data.payload.callId !== stateRef.current.callId) return;
+      const pc = peersRef.current.get(data.payload.fromUserId);
+      if (!pc) return;
+      await pc.setRemoteDescription(new RTCSessionDescription(data.payload.answer));
+    };
+
+    // Réception d'un candidat ICE
+    const onICE = async (data: { payload: { callId: string; candidate: RTCIceCandidateInit; fromUserId: string } }) => {
+      if (data.payload.callId !== stateRef.current.callId) return;
+      const pc = peersRef.current.get(data.payload.fromUserId);
+      if (!pc) return;
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(data.payload.candidate));
+      } catch {
+        // ignore les candidats tardifs
+      }
+    };
+
+    socketService.on('GROUP_CALL_INCOMING',          onIncoming);
+    socketService.on('GROUP_CALL_JOINED',            onJoined);
+    socketService.on('GROUP_CALL_PARTICIPANT_JOINED', onParticipantJoined);
+    socketService.on('GROUP_CALL_PARTICIPANT_LEFT',  onParticipantLeft);
+    socketService.on('GROUP_CALL_ENDED',             onEnded);
+    socketService.on('WEBRTC_OFFER',                 onOffer);
+    socketService.on('WEBRTC_ANSWER',                onAnswer);
+    socketService.on('WEBRTC_ICE_CANDIDATE',         onICE);
 
     return () => {
-      socketService.off('GROUP_CALL_INCOMING',         onIncoming);
-      socketService.off('GROUP_CALL_TOKEN',            onToken);
-      socketService.off('GROUP_CALL_PARTICIPANT_LEFT', onLeft);
-      socketService.off('GROUP_CALL_ENDED',            onEnded);
+      socketService.off('GROUP_CALL_INCOMING',          onIncoming);
+      socketService.off('GROUP_CALL_JOINED',            onJoined);
+      socketService.off('GROUP_CALL_PARTICIPANT_JOINED', onParticipantJoined);
+      socketService.off('GROUP_CALL_PARTICIPANT_LEFT',  onParticipantLeft);
+      socketService.off('GROUP_CALL_ENDED',             onEnded);
+      socketService.off('WEBRTC_OFFER',                 onOffer);
+      socketService.off('WEBRTC_ANSWER',                onAnswer);
+      socketService.off('WEBRTC_ICE_CANDIDATE',         onICE);
     };
-  }, [connectToRoom, cleanup]);
+  }, [offerTo, createPeer, cleanup]);
 
   // ── Actions ───────────────────────────────────────────────
 
   /** Initier un appel groupe dans un canal serveur */
-  const initiateGroupCall = useCallback(
-    (channelId: string, type: 'voice' | 'video' = 'voice') => {
-      setState((prev) => ({ ...prev, channelId, status: 'connecting', incomingCall: null }));
+  const initiateGroupCall = useCallback(async (channelId: string, type: 'voice' | 'video' = 'voice') => {
+    setState((prev) => ({ ...prev, channelId, status: 'connecting', error: null }));
+    try {
+      const stream = await acquireLocalStream(type === 'video');
+      setState((prev) => ({ ...prev, localStream: stream }));
       socketService.initiateGroupCall(channelId, type);
-    },
-    [],
-  );
+    } catch {
+      setState((prev) => ({ ...prev, status: 'idle', error: 'Impossible d\'accéder au micro/caméra' }));
+    }
+  }, [acquireLocalStream]);
 
   /** Rejoindre un appel groupe (accepter l'invitation) */
-  const joinGroupCall = useCallback(
-    (callId?: string) => {
-      const id = callId || stateRef.current.callId;
-      if (!id) return;
-      setState((prev) => ({ ...prev, status: 'connecting', incomingCall: null }));
+  const joinGroupCall = useCallback(async (callId?: string) => {
+    const id = callId || stateRef.current.callId;
+    if (!id) return;
+    setState((prev) => ({ ...prev, status: 'connecting', incomingCall: null, error: null }));
+    try {
+      const withVideo = stateRef.current.incomingCall?.callType === 'video';
+      const stream    = await acquireLocalStream(withVideo);
+      setState((prev) => ({ ...prev, localStream: stream, callId: id }));
       socketService.joinGroupCall(id);
-    },
-    [],
-  );
+    } catch {
+      setState((prev) => ({ ...prev, status: 'idle', error: 'Impossible d\'accéder au micro/caméra' }));
+    }
+  }, [acquireLocalStream]);
 
-  /** Refuser / ignorer un appel groupe entrant */
+  /** Refuser un appel groupe entrant */
   const declineGroupCall = useCallback(() => {
     setState((prev) => ({ ...prev, status: 'idle', incomingCall: null, callId: null }));
   }, []);
 
-  /** Quitter l'appel groupe */
+  /** Quitter l'appel */
   const leaveGroupCall = useCallback(() => {
     const callId = stateRef.current.callId;
     if (!callId) return;
@@ -274,7 +304,7 @@ export function useGroupCall() {
     cleanup();
   }, [cleanup]);
 
-  /** Terminer l'appel pour tout le monde (initiateur) */
+  /** Terminer l'appel pour tous (initiateur/admin) */
   const endGroupCall = useCallback(() => {
     const callId = stateRef.current.callId;
     if (!callId) return;
@@ -282,31 +312,43 @@ export function useGroupCall() {
     cleanup();
   }, [cleanup]);
 
-  /** Mute/Unmute micro */
-  const toggleMute = useCallback(async () => {
-    if (!roomRef.current) return;
+  /** Mute / Unmute le micro local */
+  const toggleMute = useCallback(() => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
     const muted = !stateRef.current.isMuted;
-    await roomRef.current.localParticipant.setMicrophoneEnabled(!muted);
+    stream.getAudioTracks().forEach((t) => { t.enabled = !muted; });
     setState((prev) => ({ ...prev, isMuted: muted }));
   }, []);
 
-  /** Activer/Désactiver caméra */
-  const toggleVideo = useCallback(async () => {
-    if (!roomRef.current) return;
+  /** Activer / Désactiver la caméra locale */
+  const toggleVideo = useCallback(() => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
     const enabled = !stateRef.current.isVideoEnabled;
-    await roomRef.current.localParticipant.setCameraEnabled(enabled);
+    stream.getVideoTracks().forEach((t) => { t.enabled = enabled; });
     setState((prev) => ({ ...prev, isVideoEnabled: enabled }));
   }, []);
 
-  /** Partager l'écran */
+  /** Partage d'écran — remplace la piste vidéo dans chaque PeerConnection */
   const startScreenShare = useCallback(async () => {
-    if (!roomRef.current) return;
-    await roomRef.current.localParticipant.setScreenShareEnabled(true);
-  }, []);
+    const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+    const screenTrack  = screenStream.getVideoTracks()[0];
+    peersRef.current.forEach((pc) => {
+      const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+      sender?.replaceTrack(screenTrack);
+    });
+    screenTrack.onended = () => stopScreenShare();
+  }, []); // stopScreenShare referenced via closure below
 
-  const stopScreenShare = useCallback(async () => {
-    if (!roomRef.current) return;
-    await roomRef.current.localParticipant.setScreenShareEnabled(false);
+  const stopScreenShare = useCallback(() => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
+    const camTrack = stream.getVideoTracks()[0];
+    peersRef.current.forEach((pc) => {
+      const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+      if (sender && camTrack) sender.replaceTrack(camTrack);
+    });
   }, []);
 
   return {

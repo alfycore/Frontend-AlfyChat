@@ -3,24 +3,49 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { EyeIcon, EyeOffIcon, LockIcon, ZapIcon, GlobeIcon, UsersIcon } from '@/components/icons';
-import { InteractiveGridPattern } from '@/components/ui/interactive-grid-pattern';
-import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
+import {
+  MailIcon, EyeIcon, EyeOffIcon, LockIcon, UserIcon,
+} from '@/components/icons';
 import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Field, FieldGroup, FieldLabel, FieldDescription, FieldSeparator,
-} from '@/components/ui/field';
+import { cn } from '@/lib/utils';
+
+function Spinner({ className }: { className?: string }) {
+  return (
+    <svg className={cn('animate-spin', className)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+    </svg>
+  );
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
+      {message}
+    </div>
+  );
+}
+
+function InfoBanner({ message, variant = 'warning' }: { message: string; variant?: 'warning' | 'success' }) {
+  const cls = variant === 'success'
+    ? 'border-success/20 bg-success/10 text-success'
+    : 'border-warning/20 bg-warning/10 text-warning';
+  return (
+    <div className={cn('rounded-lg border px-4 py-3 text-[13px]', cls)}>
+      {message}
+    </div>
+  );
+}
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-svh items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>}>
+    <Suspense fallback={null}>
       <RegisterContent />
     </Suspense>
   );
@@ -95,31 +120,14 @@ function RegisterContent() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
-
-    if (password !== confirmPassword) {
-      setError(t.auth.register.passwordMismatch);
-      return;
-    }
-    if (password.length < 8) {
-      setError(t.auth.register.passwordTooShort);
-      return;
-    }
-    if (!acceptTerms) {
-      setError(t.auth.register.mustAcceptTerms);
-      return;
-    }
-    if (turnstileEnabled && !turnstileToken) {
-      setError(t.auth.register.captchaRequired);
-      return;
-    }
-
+    if (password !== confirmPassword) { setError(t.auth.register.passwordMismatch); return; }
+    if (password.length < 8) { setError(t.auth.register.passwordTooShort); return; }
+    if (!acceptTerms) { setError(t.auth.register.mustAcceptTerms); return; }
+    if (turnstileEnabled && !turnstileToken) { setError(t.auth.register.captchaRequired); return; }
     setIsLoading(true);
-
     try {
       const result = await register({
-        email,
-        username,
-        password,
+        email, username, password,
         displayName: displayName || username,
         ...(inviteCode && { inviteCode }),
         ...(turnstileToken && { turnstileToken }),
@@ -142,56 +150,56 @@ function RegisterContent() {
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      {/* ── Colonne formulaire ── */}
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <MotionFade direction="down" distance={8} duration={0.35} className="flex justify-center gap-2 md:justify-start">
-          <Link href="/" className="flex items-center gap-2 font-(family-name:--font-krona) font-medium">
-            <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-6" />
-            ALFYCHAT
-          </Link>
-        </MotionFade>
 
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-sm">
+      {/* ── Colonne gauche : formulaire ── */}
+      <div className="flex flex-col bg-background">
 
-            <form onSubmit={handleSubmit} className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
-              <MotionStagger>
-                <FieldGroup>
-                  <MotionStaggerItem className="flex flex-col items-center gap-1 text-center">
-                    <h1 className="font-(family-name:--font-krona) text-2xl font-bold">{t.auth.register.heading}</h1>
-                    <p className="text-sm text-balance text-muted-foreground">
-                      {t.auth.register.subtitle}
-                    </p>
-                  </MotionStaggerItem>
+        {/* Logo */}
+   <div className="p-8 pb-0">
+          <MotionFade direction="down" distance={6} duration={0.3}>
+            <Link href="/" className="inline-flex items-center gap-2.5 ui-smooth opacity-80 hover:opacity-100">
+              <div className="flex size-8 items-center justify-center rounded-lg">
+                <img src="/logo/Alfychat.svg" alt="" className="size-16" />
+              </div>
+              <span className="font-(family-name:--font-krona) text-sm font-medium tracking-wide text-foreground">
+                ALFYCHAT
+              </span>
+            </Link>
+          </MotionFade>
+        </div>
 
-                  {error && (
-                    <MotionStaggerItem>
-                      <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                        {error}
-                      </div>
-                    </MotionStaggerItem>
-                  )}
+        {/* Formulaire */}
+        <div className="flex flex-1 items-center justify-center px-8 py-10">
+          <div className="w-full max-w-xs">
+            <MotionStagger className="flex flex-col gap-6">
 
+              <MotionStaggerItem className="flex flex-col gap-1">
+                <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
+                  {t.auth.register.heading}
+                </h1>
+                <p className="text-[13px] text-muted-foreground">{t.auth.register.subtitle}</p>
+              </MotionStaggerItem>
+
+              <MotionStaggerItem>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+                  {error && <ErrorBanner message={error} />}
                   {!registrationEnabled && !inviteCode && settingsLoaded && (
-                    <MotionStaggerItem>
-                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
-                        {t.auth.register.closedDesc}
-                      </div>
-                    </MotionStaggerItem>
+                    <InfoBanner message={t.auth.register.closedDesc} variant="warning" />
                   )}
-
                   {inviteCode && (
-                    <MotionStaggerItem>
-                      <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
-                        {t.auth.register.inviteDesc}
-                      </div>
-                    </MotionStaggerItem>
+                    <InfoBanner message={t.auth.register.inviteDesc} variant="success" />
                   )}
 
                   {/* Email */}
-                  <MotionStaggerItem>
-                    <Field>
-                      <FieldLabel htmlFor="email">{t.auth.register.email}</FieldLabel>
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="email" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t.auth.register.email}
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                        <MailIcon size={14} />
+                      </span>
                       <Input
                         id="email"
                         type="email"
@@ -199,15 +207,21 @@ function RegisterContent() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        className="h-9 pl-8 text-sm"
                       />
-                    </Field>
-                  </MotionStaggerItem>
+                    </div>
+                  </div>
 
-                  {/* Identifiant + Nom */}
-                  <MotionStaggerItem>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field>
-                        <FieldLabel htmlFor="username">{t.auth.register.username}</FieldLabel>
+                  {/* Identifiant + Nom affiché */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="username" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {t.auth.register.username}
+                      </label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                          <UserIcon size={14} />
+                        </span>
                         <Input
                           id="username"
                           type="text"
@@ -215,52 +229,63 @@ function RegisterContent() {
                           required
                           value={username}
                           onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                          className="h-9 pl-8 text-sm"
                         />
-                      </Field>
-                      <Field>
-                        <FieldLabel htmlFor="displayName">{t.auth.register.displayName}</FieldLabel>
-                        <Input
-                          id="displayName"
-                          type="text"
-                          placeholder={t.auth.register.displayNamePlaceholder}
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                        />
-                      </Field>
+                      </div>
                     </div>
-                  </MotionStaggerItem>
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="displayName" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {t.auth.register.displayName}
+                      </label>
+                      <Input
+                        id="displayName"
+                        type="text"
+                        placeholder={t.auth.register.displayNamePlaceholder}
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                  </div>
 
                   {/* Mot de passe */}
-                  <MotionStaggerItem>
-                    <Field>
-                      <FieldLabel htmlFor="password">{t.auth.register.password}</FieldLabel>
-                      <div className="relative">
-                        <Input
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder={t.auth.register.passwordDesc}
-                          required
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pr-9"
-                        />
-                        <button
-                          type="button"
-                          className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? t.auth.register.hide : t.auth.register.show}
-                        >
-                          {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
-                        </button>
-                      </div>
-                      <FieldDescription>{t.auth.register.passwordDesc}</FieldDescription>
-                    </Field>
-                  </MotionStaggerItem>
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t.auth.register.password}
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                        <LockIcon size={14} />
+                      </span>
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder={t.auth.register.passwordDesc}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-9 pl-8 pr-9 text-sm"
+                      />
+                      <button
+                        type="button"
+                        className="ui-smooth absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? t.auth.register.hide : t.auth.register.show}
+                      >
+                        {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Confirmation */}
-                  <MotionStaggerItem>
-                    <Field>
-                      <FieldLabel htmlFor="confirmPassword">{t.auth.register.confirmPassword}</FieldLabel>
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="confirmPassword" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t.auth.register.confirmPassword}
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                        <LockIcon size={14} />
+                      </span>
                       <Input
                         id="confirmPassword"
                         type={showPassword ? 'text' : 'password'}
@@ -268,109 +293,81 @@ function RegisterContent() {
                         required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="h-9 pl-8 text-sm"
                       />
-                    </Field>
-                  </MotionStaggerItem>
+                    </div>
+                  </div>
 
                   {/* CGU */}
-                  <MotionStaggerItem>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="terms"
-                        checked={acceptTerms}
-                        onCheckedChange={(checked) => setAcceptTerms(checked === true)}
-                        className="shrink-0"
-                      />
-                      <label htmlFor="terms" className="text-sm font-normal leading-normal select-none">
-                        {t.auth.register.accept}{' '}
-                        <Link href="/terms" className="underline underline-offset-4 hover:text-primary">{t.auth.register.termsOf}</Link>
-                        {' '}{t.auth.register.and}{' '}
-                        <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">{t.auth.register.privacyPolicy}</Link>
-                      </label>
-                    </div>
-                  </MotionStaggerItem>
+                  <div className="flex items-start gap-2.5">
+                    <Checkbox
+                      id="terms"
+                      checked={acceptTerms}
+                      onCheckedChange={(checked) => setAcceptTerms(checked === true)}
+                      className="mt-0.5 shrink-0"
+                    />
+                    <label htmlFor="terms" className="text-[13px] leading-relaxed text-muted-foreground select-none">
+                      {t.auth.register.accept}{' '}
+                      <Link href="/terms" className="text-foreground underline underline-offset-4 hover:text-primary">
+                        {t.auth.register.termsOf}
+                      </Link>
+                      {' '}{t.auth.register.and}{' '}
+                      <Link href="/privacy" className="text-foreground underline underline-offset-4 hover:text-primary">
+                        {t.auth.register.privacyPolicy}
+                      </Link>
+                    </label>
+                  </div>
 
                   {/* Turnstile */}
                   {turnstileEnabled && turnstileSiteKey && (
-                    <MotionStaggerItem>
-                      <div className="flex justify-center">
-                        <div ref={turnstileRef} />
-                      </div>
-                    </MotionStaggerItem>
+                    <div className="flex">
+                      <div ref={turnstileRef} />
+                    </div>
                   )}
 
-                  <MotionStaggerItem>
-                    <Field>
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading || (!registrationEnabled && !inviteCode)}
-                      >
-                        {isLoading && <Loader2 className="size-4 animate-spin" />}
-                        {isLoading ? t.auth.register.creating : t.auth.register.createAccount}
-                      </Button>
-                    </Field>
-                  </MotionStaggerItem>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={isLoading || (!registrationEnabled && !inviteCode)}
+                  >
+                    {isLoading && <Spinner className="size-4" />}
+                    {isLoading ? t.auth.register.creating : t.auth.register.createAccount}
+                  </Button>
+                </form>
+              </MotionStaggerItem>
 
-                  <MotionStaggerItem>
-                    <FieldSeparator>{t.auth.login.or}</FieldSeparator>
-                  </MotionStaggerItem>
+              {/* Lien connexion */}
+              <MotionStaggerItem className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50">
+                    {t.auth.login.or}
+                  </span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <p className="text-[13px] text-muted-foreground">
+                  {t.auth.register.alreadyAccount}{' '}
+                  <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+                    {t.auth.register.logIn}
+                  </Link>
+                </p>
+              </MotionStaggerItem>
 
-                  <MotionStaggerItem>
-                    <FieldDescription className="font-(family-name:--font-geist-sans) text-center">
-                      {t.auth.register.alreadyAccount}{' '}
-                      <Link href="/login" className="underline underline-offset-4">
-                        {t.auth.register.logIn}
-                      </Link>
-                    </FieldDescription>
-                  </MotionStaggerItem>
-                </FieldGroup>
-              </MotionStagger>
-            </form>
-
+            </MotionStagger>
           </div>
         </div>
       </div>
 
-      {/* ── Panneau visuel ── */}
-      <div className="relative hidden overflow-hidden bg-background lg:flex lg:flex-col lg:items-center lg:justify-center">
-        <InteractiveGridPattern
-          className="mask-[radial-gradient(700px_circle_at_center,white,transparent)] inset-x-0 inset-y-[-30%] h-[200%] skew-y-12"
-          squaresClassName="stroke-primary/20 hover:fill-primary/10"
-          width={40}
-          height={40}
-          squares={[40, 40]}
+      {/* ── Colonne droite : image ── */}
+      <div className="relative hidden overflow-hidden lg:block">
+        <img
+          src="/backgrounds/defaut.jpg"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="relative z-10 flex flex-col items-center gap-6 px-12 text-center">
-          <MotionFade delay={0.05} direction="none" duration={0.5} className="flex size-20 items-center justify-center rounded-[28px] t p-4">
-            <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-full" />
-          </MotionFade>
-          <MotionFade delay={0.15} direction="down" distance={16} duration={0.6}>
-            <h2 className="font-(family-name:--font-krona) text-2xl font-bold tracking-tight">ALFYCHAT</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              <AnimatedGradientText colorFrom="#7c3aed" colorTo="#9E7AFF" speed={0.6}>
-                {t.auth.login.panelTagline}
-              </AnimatedGradientText>
-            </p>
-          </MotionFade>
-          <MotionStagger delay={0.3} stagger={0.1} className="flex flex-col gap-3 text-left">
-            {[
-              { icon: LockIcon, text: t.auth.login.panelFeature1 },
-              { icon: UsersIcon, text: t.auth.register.sideCommunityDesc },
-              { icon: ZapIcon, text: t.auth.login.panelFeature2 },
-              { icon: GlobeIcon, text: t.auth.login.panelFeature3 },
-            ].map((item) => (
-              <MotionStaggerItem key={item.text} direction="left" distance={20}>
-                <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-background/60 px-4 py-2.5 backdrop-blur-sm transition-colors hover:border-primary/40">
-                  <item.icon size={14} className="shrink-0 text-primary" />
-                  <span className="text-sm text-muted-foreground">{item.text}</span>
-                </div>
-              </MotionStaggerItem>
-            ))}
-          </MotionStagger>
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-background to-transparent" />
       </div>
+
     </div>
   );
 }

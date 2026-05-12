@@ -351,7 +351,7 @@ class SocketService {
     this.socket?.emit('CALL_SCREEN_SHARE', { callId, active });
   }
 
-  // ── Appels groupe LiveKit SFU ──
+  // ── Appels groupe (WebRTC mesh) ──
 
   initiateGroupCall(channelId: string, type: 'voice' | 'video'): void {
     this.socket?.emit('GROUP_CALL_INITIATE', { channelId, type });

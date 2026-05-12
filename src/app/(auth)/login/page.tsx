@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldIcon, EyeIcon, EyeOffIcon, MailIcon, LockIcon, ZapIcon, GlobeIcon } from '@/components/icons';
-import { Loader2 } from 'lucide-react';
-import { InteractiveGridPattern } from '@/components/ui/interactive-grid-pattern';
-import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
+import {
+  ShieldIcon, EyeIcon, EyeOffIcon, MailIcon, LockIcon,
+  ArrowLeftIcon, CheckCircleIcon,
+} from '@/components/icons';
 import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { useAuth } from '@/hooks/use-auth';
@@ -17,9 +17,29 @@ import { Input } from '@/components/ui/input';
 import {
   InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot,
 } from '@/components/ui/input-otp';
-import {
-  Field, FieldGroup, FieldLabel, FieldDescription, FieldSeparator,
-} from '@/components/ui/field';
+import { cn } from '@/lib/utils';
+
+function Spinner({ className }: { className?: string }) {
+  return (
+    <svg
+      className={cn('animate-spin', className)}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+    </svg>
+  );
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
+      {message}
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -31,12 +51,10 @@ export default function LoginPage() {
   const { login, loginWith2FA } = useAuth();
   const router = useRouter();
 
-  // 2FA step
   const [twoFactorStep, setTwoFactorStep] = useState(false);
   const [twoFactorToken, set2FAToken] = useState('');
   const [totpCode, setTotpCode] = useState('');
 
-  // Email non vérifié
   const [emailNotVerifiedStep, setEmailNotVerifiedStep] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -89,28 +107,22 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
-
     if (turnstileEnabled && !turnstileToken) {
       setError(t.auth.login.captchaRequired);
       return;
     }
-
     setIsLoading(true);
-
     try {
       const result = await login(email, password, turnstileToken || undefined);
-
       if (result.twoFactorRequired && result.twoFactorToken) {
         set2FAToken(result.twoFactorToken);
         setTwoFactorStep(true);
         return;
       }
-
       if (result.emailNotVerified) {
         setEmailNotVerifiedStep(true);
         return;
       }
-
       if (result.success) {
         router.push('/channels/me');
       } else {
@@ -128,12 +140,10 @@ export default function LoginPage() {
   const handle2FASubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
-
     if (totpCode.length < 6) {
       setError(t.auth.login.needCode6Digits);
       return;
     }
-
     setIsLoading(true);
     try {
       const result = await loginWith2FA(twoFactorToken, totpCode, password);
@@ -161,156 +171,153 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      {/* ── Colonne formulaire ── */}
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <MotionFade direction="down" distance={8} duration={0.35} className="flex justify-center gap-2 md:justify-start">
-          <Link href="/" className="flex items-center gap-2 font-(family-name:--font-krona) font-medium">
-            <img src="/logo/Alfychat.svg" alt="ALFYCHAT" className="size-6" />
-            ALFYCHAT
-          </Link>
-        </MotionFade>
 
-        <div className="flex flex-1 items-center justify-center">
+      {/* ── Colonne gauche : formulaire ── */}
+      <div className="flex flex-col bg-background">
+
+        {/* Logo en haut */}
+        <div className="p-8 pb-0">
+          <MotionFade direction="down" distance={6} duration={0.3}>
+            <Link href="/" className="inline-flex items-center gap-2.5 ui-smooth opacity-80 hover:opacity-100">
+              <div className="flex size-8 items-center justify-center rounded-lg">
+                <img src="/logo/Alfychat.svg" alt="" className="size-16" />
+              </div>
+              <span className="font-(family-name:--font-krona) text-sm font-medium tracking-wide text-foreground">
+                ALFYCHAT
+              </span>
+            </Link>
+          </MotionFade>
+        </div>
+
+        {/* Formulaire centré verticalement */}
+        <div className="flex flex-1 items-center justify-center px-8 py-12">
           <div className="w-full max-w-xs">
 
-            {/* ────── Étape email non vérifié ────── */}
+            {/* ── Vue : email non vérifié ── */}
             {emailNotVerifiedStep ? (
-              <MotionStagger className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
-                <MotionStaggerItem className="flex flex-col items-center gap-2 text-center">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-amber-500/10">
-                    <MailIcon size={20} className="text-amber-400" />
+              <MotionStagger className="flex flex-col gap-6">
+                <MotionStaggerItem className="flex flex-col items-start gap-3">
+                  <div className="flex size-11 items-center justify-center rounded-xl border border-warning/20 bg-warning/10">
+                    <MailIcon size={18} className="text-warning" />
                   </div>
-                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">{t.auth.login.emailUnverified}</h1>
-                  <p className="font-(family-name:--font-geist-sans) text-sm text-balance text-muted-foreground">
-                    {t.auth.login.emailUnverifiedDesc}
-                  </p>
+                  <div>
+                    <h1 className="font-(family-name:--font-krona) text-xl font-bold text-foreground">
+                      {t.auth.login.emailUnverified}
+                    </h1>
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+                      {t.auth.login.emailUnverifiedDesc}
+                    </p>
+                  </div>
                 </MotionStaggerItem>
 
-                <MotionStaggerItem>
-                  <FieldGroup>
-                    {resendSuccess && (
-                      <div className="font-(family-name:--font-geist-sans) rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
-                        {t.auth.login.emailResent}
-                      </div>
-                    )}
-
-                    <Field>
-                      <Button
-                        className="w-full"
-                        disabled={resendLoading || resendSuccess}
-                        onClick={handleResendVerification}
-                      >
-                        {resendLoading && <Loader2 className="size-4 animate-spin" />}
-                        {resendLoading ? t.common.sending : resendSuccess ? `${t.common.send} ✓` : t.auth.login.resendVerification}
-                      </Button>
-                    </Field>
-                    <Field>
-                      <Button
-                        variant="ghost"
-                        className="w-full"
-                        onClick={() => { setEmailNotVerifiedStep(false); setResendSuccess(false); setError(''); }}
-                      >
-                        {t.common.back}
-                      </Button>
-                    </Field>
-                  </FieldGroup>
+                <MotionStaggerItem className="flex flex-col gap-2">
+                  {resendSuccess && (
+                    <div className="flex items-center gap-2 rounded-lg border border-success/20 bg-success/10 px-4 py-3 text-[13px] text-success">
+                      <CheckCircleIcon size={13} />
+                      {t.auth.login.emailResent}
+                    </div>
+                  )}
+                  <Button className="w-full" size="lg" disabled={resendLoading || resendSuccess} onClick={handleResendVerification}>
+                    {resendLoading && <Spinner className="size-4" />}
+                    {resendLoading ? t.common.sending : resendSuccess ? `${t.common.send} ✓` : t.auth.login.resendVerification}
+                  </Button>
+                  <Button variant="ghost" size="lg" className="w-full gap-1.5 text-muted-foreground"
+                    onClick={() => { setEmailNotVerifiedStep(false); setResendSuccess(false); setError(''); }}>
+                    <ArrowLeftIcon size={13} />
+                    {t.common.back}
+                  </Button>
                 </MotionStaggerItem>
               </MotionStagger>
 
             ) : twoFactorStep ? (
-              /* ────── Étape 2FA ────── */
-              <MotionStagger className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
-                <MotionStaggerItem className="flex flex-col items-center gap-2 text-center">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-                    <ShieldIcon size={20} className="text-primary" />
+              /* ── Vue : 2FA ── */
+              <MotionStagger className="flex flex-col gap-6">
+                <MotionStaggerItem className="flex flex-col items-start gap-3">
+                  <div className="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                    <ShieldIcon size={18} className="text-primary" />
                   </div>
-                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold">{t.auth.login.twoFAHeading}</h1>
-                  <p className="text-sm text-balance text-muted-foreground">
-                    {t.auth.login.twoFASubtitle}
-                  </p>
+                  <div>
+                    <h1 className="font-(family-name:--font-krona) text-xl font-bold text-foreground">
+                      {t.auth.login.twoFAHeading}
+                    </h1>
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+                      {t.auth.login.twoFASubtitle}
+                    </p>
+                  </div>
                 </MotionStaggerItem>
 
                 <MotionStaggerItem>
-                  <form onSubmit={handle2FASubmit}>
-                    <FieldGroup>
-                      {error && (
-                        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                          {error}
-                        </div>
-                      )}
+                  <form onSubmit={handle2FASubmit} className="flex flex-col gap-4">
+                    {error && <ErrorBanner message={error} />}
 
-                      <Field>
-                        <FieldLabel>{t.auth.login.twoFACodeLabel}</FieldLabel>
-                        <div className="flex justify-center py-2">
-                          <InputOTP
-                            maxLength={6}
-                            pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
-                            value={totpCode}
-                            onChange={(val) => setTotpCode(val)}
-                            autoFocus
-                          >
-                            <InputOTPGroup>
-                              <InputOTPSlot index={0} />
-                              <InputOTPSlot index={1} />
-                              <InputOTPSlot index={2} />
-                            </InputOTPGroup>
-                            <InputOTPSeparator />
-                            <InputOTPGroup>
-                              <InputOTPSlot index={3} />
-                              <InputOTPSlot index={4} />
-                              <InputOTPSlot index={5} />
-                            </InputOTPGroup>
-                          </InputOTP>
-                        </div>
-                        <p className="text-center text-xs text-muted-foreground">
-                          {t.auth.login.twoFABackupHint}
-                        </p>
-                      </Field>
-
-                      <Field>
-                        <Button type="submit" className="w-full" disabled={isLoading || totpCode.length < 6}>
-                          {isLoading && <Loader2 className="size-4 animate-spin" />}
-                          {isLoading ? t.auth.login.twoFAVerifying : t.auth.login.twoFAVerify}
-                        </Button>
-                      </Field>
-                      <Field>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="w-full"
-                          onClick={() => { setTwoFactorStep(false); setError(''); setTotpCode(''); }}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {t.auth.login.twoFACodeLabel}
+                      </label>
+                      <div className="flex py-2">
+                        <InputOTP
+                          maxLength={6}
+                          pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+                          value={totpCode}
+                          onChange={(val) => setTotpCode(val)}
+                          autoFocus
                         >
-                          {t.common.back}
-                        </Button>
-                      </Field>
-                    </FieldGroup>
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                          </InputOTPGroup>
+                          <InputOTPSeparator />
+                          <InputOTPGroup>
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground/60">
+                        {t.auth.login.twoFABackupHint}
+                      </p>
+                    </div>
+
+                    <Button type="submit" className="w-full" size="lg" disabled={isLoading || totpCode.length < 6}>
+                      {isLoading && <Spinner className="size-4" />}
+                      {isLoading ? t.auth.login.twoFAVerifying : t.auth.login.twoFAVerify}
+                    </Button>
+                    <Button type="button" variant="ghost" size="lg" className="w-full gap-1.5 text-muted-foreground"
+                      onClick={() => { setTwoFactorStep(false); setError(''); setTotpCode(''); }}>
+                      <ArrowLeftIcon size={13} />
+                      {t.common.back}
+                    </Button>
                   </form>
                 </MotionStaggerItem>
               </MotionStagger>
 
             ) : (
-              /* ────── Formulaire principal ────── */
-              <form onSubmit={handleSubmit} className="font-(family-name:--font-geist-sans) flex flex-col gap-6">
-                <MotionStagger>
-                  <FieldGroup>
-                    <MotionStaggerItem className="flex flex-col items-center gap-1 text-center">
-                      <h1 className="font-(family-name:--font-krona) text-2xl font-bold">{t.auth.login.heading}</h1>
-                      <p className="text-sm text-balance text-muted-foreground">
-                        {t.auth.login.subtitle}
-                      </p>
-                    </MotionStaggerItem>
+              /* ── Vue : formulaire principal ── */
+              <MotionStagger className="flex flex-col gap-6">
+                <MotionStaggerItem className="flex flex-col gap-1">
+                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
+                    {t.auth.login.heading}
+                  </h1>
+                  <p className="text-[13px] text-muted-foreground">
+                    {t.auth.login.subtitle}
+                  </p>
+                </MotionStaggerItem>
 
-                    {error && (
-                      <MotionStaggerItem>
-                        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                          {error}
-                        </div>
-                      </MotionStaggerItem>
-                    )}
+                <MotionStaggerItem>
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    {error && <ErrorBanner message={error} />}
 
-                    <MotionStaggerItem>
-                      <Field>
-                        <FieldLabel htmlFor="email">{t.auth.login.email}</FieldLabel>
+                    {/* Email */}
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="email" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {t.auth.login.email}
+                      </label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                          <MailIcon size={14} />
+                        </span>
                         <Input
                           id="email"
                           type="email"
@@ -318,122 +325,99 @@ export default function LoginPage() {
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          className="h-9 pl-8 text-sm"
                         />
-                      </Field>
-                    </MotionStaggerItem>
+                      </div>
+                    </div>
 
-                    <MotionStaggerItem>
-                      <Field>
-                        <div className="flex items-center">
-                          <FieldLabel htmlFor="password">{t.auth.login.password}</FieldLabel>
-                          <Link
-                            href="/forgot-password"
-                            className="ml-auto text-sm underline-offset-4 hover:underline"
-                          >
-                            {t.auth.login.forgotPassword}
-                          </Link>
-                        </div>
-                        <div className="relative">
-                          <Input
-                            id="password"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder={t.auth.login.passwordPlaceholder}
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="pr-9"
-                          />
-                          <button
-                            type="button"
-                            className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? t.auth.login.hidePassword : t.auth.login.showPassword}
-                          >
-                            {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
-                          </button>
-                        </div>
-                      </Field>
-                    </MotionStaggerItem>
+                    {/* Mot de passe */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                          {t.auth.login.password}
+                        </label>
+                        <Link
+                          href="/forgot-password"
+                          className="text-[12px] text-muted-foreground/60 underline-offset-4 ui-smooth hover:text-primary hover:underline"
+                        >
+                          {t.auth.login.forgotPassword}
+                        </Link>
+                      </div>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                          <LockIcon size={14} />
+                        </span>
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder={t.auth.login.passwordPlaceholder}
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="h-9 pl-8 pr-9 text-sm"
+                        />
+                        <button
+                          type="button"
+                          className="ui-smooth absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? t.auth.login.hidePassword : t.auth.login.showPassword}
+                        >
+                          {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
+                        </button>
+                      </div>
+                    </div>
 
                     {/* Turnstile */}
                     {turnstileEnabled && turnstileSiteKey && (
-                      <MotionStaggerItem>
-                        <div className="flex justify-center">
-                          <div ref={turnstileRef} />
-                        </div>
-                      </MotionStaggerItem>
+                      <div className="flex">
+                        <div ref={turnstileRef} />
+                      </div>
                     )}
 
-                    <MotionStaggerItem>
-                      <Field>
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={isLoading || (turnstileEnabled && !turnstileToken)}
-                        >
-                          {isLoading && <Loader2 className="size-4 animate-spin" />}
-                          {isLoading ? t.auth.login.logging : t.auth.login.login}
-                        </Button>
-                      </Field>
-                    </MotionStaggerItem>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      size="lg"
+                      disabled={isLoading || (turnstileEnabled && !turnstileToken)}
+                    >
+                      {isLoading && <Spinner className="size-4" />}
+                      {isLoading ? t.auth.login.logging : t.auth.login.login}
+                    </Button>
+                  </form>
+                </MotionStaggerItem>
 
-                    <MotionStaggerItem>
-                      <FieldSeparator>{t.auth.login.or}</FieldSeparator>
-                    </MotionStaggerItem>
-
-                    <MotionStaggerItem>
-                      <FieldDescription className="font-(family-name:--font-geist-sans) text-center">
-                        {t.auth.login.noAccount}{' '}
-                        <Link href="/register" className="underline underline-offset-4">
-                          {t.auth.login.createAccount}
-                        </Link>
-                      </FieldDescription>
-                    </MotionStaggerItem>
-                  </FieldGroup>
-                </MotionStagger>
-              </form>
+                {/* Séparateur + lien inscription */}
+                <MotionStaggerItem className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50">
+                      {t.auth.login.or}
+                    </span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                  <p className="text-[13px] text-muted-foreground">
+                    {t.auth.login.noAccount}{' '}
+                    <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
+                      {t.auth.login.createAccount}
+                    </Link>
+                  </p>
+                </MotionStaggerItem>
+              </MotionStagger>
             )}
 
           </div>
         </div>
       </div>
 
-      {/* ── Panneau visuel ── */}
-      <div className="relative hidden overflow-hidden bg-background lg:flex lg:flex-col lg:items-center lg:justify-center">
-        <InteractiveGridPattern
-          className="mask-[radial-gradient(700px_circle_at_center,white,transparent)] inset-x-0 inset-y-[-30%] h-[200%] skew-y-12"
-          squaresClassName="stroke-primary/20 hover:fill-primary/10"
-          width={40}
-          height={40}
-          squares={[40, 40]}
+      {/* ── Colonne droite : image ── */}
+      <div className="relative hidden overflow-hidden lg:block">
+        <img
+          src="/backgrounds/defaut.jpg"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="relative z-10 flex flex-col items-center gap-6 px-12 text-center">
-
-          <MotionFade delay={0.1} direction="down" distance={16} duration={0.6}>
-            <h2 className="font-(family-name:--font-krona) text-2xl font-bold tracking-tight">ALFYCHAT</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              <AnimatedGradientText colorFrom="#7c3aed" colorTo="#9E7AFF" speed={0.6}>
-                {t.auth.login.panelTagline}
-              </AnimatedGradientText>
-            </p>
-          </MotionFade>
-          <MotionStagger delay={0.25} stagger={0.1} className="flex flex-col gap-3 text-left">
-            {[
-              { icon: LockIcon, text: t.auth.login.panelFeature1 },
-              { icon: ZapIcon, text: t.auth.login.panelFeature2 },
-              { icon: GlobeIcon, text: t.auth.login.panelFeature3 },
-            ].map((item) => (
-              <MotionStaggerItem key={item.text} direction="left" distance={20}>
-                <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-background/60 px-4 py-2.5 backdrop-blur-sm transition-colors hover:border-primary/40">
-                  <item.icon size={14} className="shrink-0 text-primary" />
-                  <span className="text-sm text-muted-foreground">{item.text}</span>
-                </div>
-              </MotionStaggerItem>
-            ))}
-          </MotionStagger>
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-background to-transparent" />
       </div>
+
     </div>
   );
 }
