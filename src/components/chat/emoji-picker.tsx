@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Twemoji, emojiToTwemojiUrl } from '@/lib/twemoji';
-import { ChevronDownIcon, ClockIcon, SearchIcon, SmileIcon, StarIcon } from '@/components/icons';
+import { ClockIcon, SearchIcon, SmileIcon, StarIcon } from '@/components/icons';
 import { useUIStyle } from '@/hooks/use-ui-style';
 
 // ==========================================
@@ -1477,20 +1477,25 @@ interface EmojiPickerProps {
   children?: React.ReactNode;
 }
 
+const TAB_LABELS: Record<'emoji' | 'gif' | 'sticker', string> = {
+  emoji: 'Émoji',
+  gif: 'GIF',
+  sticker: 'Autocollants',
+};
+
 export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProps) {
   const ui = useUIStyle();
   const g = ui.isGlass;
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'emoji' | 'gif' | 'sticker'>('emoji');
 
-  // ─── Emoji state ───────────────────────────────────────────────────────────
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(0);
   const [recentEmojis, setRecentEmojis] = useState<string[]>([]);
   const [hoveredEmoji, setHoveredEmoji] = useState<{ emoji: string; name: string } | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const categoryNavRef = useRef<HTMLDivElement>(null);
 
-  // ─── GIF state ─────────────────────────────────────────────────────────────
   const [gifSearch, setGifSearch] = useState('');
   const [gifs, setGifs] = useState<GifResult[]>([]);
   const [isLoadingGifs, setIsLoadingGifs] = useState(false);
@@ -1500,7 +1505,6 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
   const gifDebounceRef = useRef<NodeJS.Timeout>(undefined);
   const gifSentinelRef = useRef<HTMLDivElement>(null);
 
-  // ─── GIF fetching ──────────────────────────────────────────────────────────
   const fetchTenorGifs = useCallback(async (query: string, next?: string): Promise<GifResult[]> => {
     try {
       let url = query
@@ -1535,7 +1539,6 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
     }
   }, [fetchTenorGifs]);
 
-  // Infinite scroll sentinel for GIFs
   useEffect(() => {
     const sentinel = gifSentinelRef.current;
     if (!sentinel) return;
@@ -1551,12 +1554,10 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
     return () => obs.disconnect();
   }, [hasMoreGifs, isLoadingMoreGifs, isLoadingGifs, gifSearch, loadGifs]);
 
-  // Load GIFs when GIF tab becomes active
   useEffect(() => {
     if (open && activeTab === 'gif') { loadGifs(''); setGifSearch(''); }
   }, [open, activeTab, loadGifs]);
 
-  // Debounced GIF search
   useEffect(() => {
     if (activeTab !== 'gif') return;
     if (gifDebounceRef.current) clearTimeout(gifDebounceRef.current);
@@ -1564,13 +1565,12 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
     return () => { if (gifDebounceRef.current) clearTimeout(gifDebounceRef.current); };
   }, [gifSearch, activeTab, loadGifs]);
 
-  // ─── Emoji logic ───────────────────────────────────────────────────────────
   useEffect(() => { preloadEmojiImages(); }, []);
 
   useEffect(() => {
     if (open) {
       setRecentEmojis(getRecentEmojis());
-      if (activeTab === 'emoji') setTimeout(() => searchInputRef.current?.focus(), 100);
+      if (activeTab === 'emoji') setTimeout(() => searchInputRef.current?.focus(), 80);
     } else {
       setSearch('');
       setActiveCategory(0);
@@ -1613,9 +1613,21 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
   const scrollToCategory = useCallback((index: number) => {
     setActiveCategory(index);
     document.getElementById(`emoji-cat-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // keep nav button visible
+    const nav = categoryNavRef.current;
+    if (nav) {
+      const btn = nav.children[index] as HTMLElement;
+      if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
   }, []);
 
-  const previewName = hoveredEmoji?.name ? `:${hoveredEmoji.name}:` : 'Survolez un emoji…';
+  const border = g
+    ? 'border-white/[0.10] dark:border-white/[0.06]'
+    : 'border-border/30';
+
+  const inputCls = g
+    ? 'border-white/[0.16] bg-white/20 backdrop-blur-xl placeholder:text-muted-foreground/40 dark:border-white/[0.08] dark:bg-white/[0.06]'
+    : 'border-border/40 bg-background/60 placeholder:text-muted-foreground/40';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -1627,208 +1639,191 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
         )}
       </PopoverTrigger>
 
-      <PopoverContent align="end" side="top" className={`w-90 overflow-hidden rounded-[22px] p-0 text-popover-foreground sm:w-100 ${
+      <PopoverContent
+        align="end"
+        side="top"
+        className={`w-[340px] overflow-hidden rounded-2xl p-0 text-popover-foreground ${
           g
-            ? 'border border-white/[0.16] bg-white/35 backdrop-blur-3xl shadow-[0_24px_80px_rgba(0,0,0,0.10),inset_0_0.5px_0_rgba(255,255,255,0.40)] dark:border-white/[0.10] dark:bg-[oklch(0.18_0.006_286/0.65)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.40)]'
-            : 'border border-border/50 bg-popover shadow-[0_24px_80px_rgba(0,0,0,0.12)]'
-        }`}>
-        {/* ── Tab bar ── */}
-        <div className={`flex shrink-0 items-center gap-1 border-b px-3 pt-3 ${g ? 'border-white/[0.12] dark:border-white/[0.06]' : 'border-border/30'}`}>
-          {(['gif', 'sticker', 'emoji'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => { setActiveTab(tab); setSearch(''); }}
-              className={`rounded-t-xl px-3 py-2 text-[13px] font-semibold transition-all ${
-                activeTab === tab
-                  ? g
-                    ? 'bg-white/[0.18] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.35)] text-foreground dark:bg-white/[0.10] dark:shadow-none'
-                    : 'bg-foreground/[0.08] text-foreground'
-                  : g
-                    ? 'text-foreground/50 hover:bg-white/[0.12] hover:text-foreground dark:text-foreground/40 dark:hover:bg-white/[0.06]'
-                    : 'text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground'
-              }`}
-            >
-              {tab === 'gif' ? 'GIF' : tab === 'sticker' ? 'Autocollants' : 'Émoji'}
-            </button>
-          ))}
+            ? 'border border-white/[0.16] bg-white/30 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.12),inset_0_0.5px_0_rgba(255,255,255,0.35)] dark:border-white/[0.10] dark:bg-[oklch(0.16_0.006_286/0.72)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
+            : 'border border-border/40 bg-popover shadow-[0_20px_60px_rgba(0,0,0,0.12)]'
+        }`}
+      >
+
+        {/* ── Header: tab switcher ── */}
+        <div className={`flex items-center justify-between border-b px-3 py-2 ${border}`}>
+          <div className={`flex items-center gap-0.5 rounded-lg p-0.5 ${g ? 'bg-white/[0.10] dark:bg-white/[0.05]' : 'bg-foreground/[0.05]'}`}>
+            {(['emoji', 'gif', 'sticker'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => { setActiveTab(tab); setSearch(''); }}
+                className={`rounded-md px-2.5 py-1 text-[12px] font-semibold tracking-wide transition-all duration-150 ${
+                  activeTab === tab
+                    ? g
+                      ? 'bg-white/[0.22] text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:bg-white/[0.12] dark:shadow-none'
+                      : 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {TAB_LABELS[tab]}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* ── Emoji tab ── */}
+        {/* ══════════════════════ EMOJI TAB ══════════════════════ */}
         {activeTab === 'emoji' && (
           <>
             {/* Search */}
-            <div className={`border-b px-3 py-3 ${g ? 'border-white/[0.12] dark:border-white/[0.06]' : 'border-border/30'}`}>
-              <div className="flex items-center gap-2">
-                <div className="relative min-w-0 flex-1">
-                  <SearchIcon size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
-                  <Input
-                    ref={searchInputRef}
-                    placeholder=":aoiBot:"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className={`h-10 rounded-xl pl-9 pr-3 text-[14px] text-foreground placeholder:text-muted-foreground/50 ${
-                      g
-                        ? 'border-white/[0.18] bg-white/30 backdrop-blur-2xl shadow-[0_1px_6px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.40)] dark:border-white/[0.10] dark:bg-white/[0.08] dark:shadow-[0_1px_6px_rgba(0,0,0,0.20),inset_0_0.5px_0_rgba(255,255,255,0.04)]'
-                        : 'border-border/40 bg-background'
-                    }`}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className={`flex size-9 shrink-0 items-center justify-center rounded-xl text-[22px] transition-all ${g ? 'hover:bg-white/[0.14] hover:shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:hover:bg-white/[0.08]' : 'hover:bg-foreground/[0.06]'}`}
-                  onClick={() => setSearch('')}
-                  title="Effacer la recherche"
-                >
-                  👋
-                </button>
+            <div className={`border-b px-3 py-2 ${border}`}>
+              <div className="relative">
+                <SearchIcon size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+                <Input
+                  ref={searchInputRef}
+                  placeholder="Rechercher un emoji…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className={`h-8 rounded-lg pl-8 pr-3 text-[13px] text-foreground ${inputCls}`}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 
-            <div className="flex h-64 min-h-0">
-              {!search && (
-                <div className={`flex w-12 shrink-0 flex-col items-center gap-1 overflow-y-auto border-r px-1.5 py-3 [&::-webkit-scrollbar]:hidden ${
-                  g
-                    ? 'border-white/[0.10] bg-white/[0.12] dark:border-white/[0.06] dark:bg-white/[0.03]'
-                    : 'border-border/30 bg-foreground/[0.03]'
-                }`}>
-                  {navTabs.map((tab) => (
-                    <button
-                      key={`nav-${tab.index}`}
-                      type="button"
-                      className={`flex size-9 items-center justify-center rounded-xl transition-all duration-150 ${
-                        activeCategory === tab.index
-                          ? g
-                            ? 'bg-white/[0.22] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.30)] text-foreground dark:bg-white/[0.12] dark:shadow-none'
-                            : 'bg-foreground/[0.10] text-foreground'
-                          : g
-                            ? 'text-foreground/50 hover:bg-white/[0.16] hover:text-foreground hover:shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:text-foreground/40 dark:hover:bg-white/[0.08]'
-                            : 'text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground'
-                      }`}
-                      onClick={() => scrollToCategory(tab.index)}
-                      title={tab.name}
-                    >
-                      {tab.index === 0 ? (
-                        <StarIcon size={16} />
-                      ) : tab.name === 'Récents' ? (
-                        <ClockIcon size={16} />
-                      ) : (
-                        <Twemoji emoji={tab.icon} size={18} />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* Category nav — horizontal scroll */}
+            {!search && (
+              <div
+                ref={categoryNavRef}
+                className={`flex items-center gap-0.5 overflow-x-auto border-b px-2 py-1.5 [&::-webkit-scrollbar]:hidden ${border}`}
+              >
+                {navTabs.map((tab) => (
+                  <button
+                    key={`nav-${tab.index}`}
+                    type="button"
+                    onClick={() => scrollToCategory(tab.index)}
+                    title={tab.name}
+                    className={`flex shrink-0 size-[30px] items-center justify-center rounded-lg transition-all duration-150 ${
+                      activeCategory === tab.index
+                        ? g
+                          ? 'bg-white/[0.20] text-foreground dark:bg-white/[0.12]'
+                          : 'bg-foreground/[0.10] text-foreground'
+                        : g
+                          ? 'text-foreground/40 hover:bg-white/[0.12] hover:text-foreground dark:text-foreground/30 dark:hover:bg-white/[0.07]'
+                          : 'text-muted-foreground/60 hover:bg-foreground/[0.06] hover:text-foreground'
+                    }`}
+                  >
+                    {tab.name === 'Récents' ? (
+                      <ClockIcon size={14} />
+                    ) : tab.index === 0 && recentEmojis.length === 0 ? (
+                      <StarIcon size={14} />
+                    ) : (
+                      <Twemoji emoji={tab.icon} size={15} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
 
-              {/* Emoji grid */}
-              <ScrollArea className="flex-1">
-                <div className="px-2.5 py-2.5">
-                  {visibleCategories.length === 0 ? (
-                    <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
-                      <span className="text-3xl">🔍</span>
-                      <p className="text-[13px]">Aucun emoji trouvé</p>
-                    </div>
-                  ) : (
-                    visibleCategories.map((category, catIndex) => (
-                      <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-3 last:mb-0">
-                        <div className={`sticky top-0 z-10 mb-1.5 py-1 backdrop-blur-xl ${g ? 'bg-white/[0.42] dark:bg-[oklch(0.18_0.006_286/0.88)]' : 'bg-popover/96'}`}>
-                          <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold text-foreground/80">
-                            <span className="inline-flex items-center justify-center text-muted-foreground">
-                              <ChevronDownIcon size={12} />
-                            </span>
-                            <span>{category.name}</span>
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-8 gap-1 sm:grid-cols-9">
-                          {category.emojis.map((emoji, i) => (
-                            <button
-                              key={`${catIndex}-${i}`}
-                              type="button"
-                              className={`group flex aspect-square items-center justify-center rounded-[10px] border border-transparent bg-transparent transition-all duration-100 hover:scale-[1.08] active:scale-95 ${
-                                g
-                                  ? 'hover:border-white/[0.15] hover:bg-white/[0.16] hover:shadow-[0_1px_6px_rgba(0,0,0,0.04)] dark:hover:border-white/[0.10] dark:hover:bg-white/[0.08]'
-                                  : 'hover:border-foreground/[0.06] hover:bg-foreground/[0.06]'
-                              }`}
-                              onClick={() => handleSelect(emoji)}
-                              onMouseEnter={() => setHoveredEmoji({ emoji, name: EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji })}
-                              onMouseLeave={() => setHoveredEmoji(null)}
-                              title={EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji}
-                            >
-                              <Twemoji emoji={emoji} size={24} className="transition-transform" />
-                            </button>
-                          ))}
-                        </div>
+            {/* Emoji grid */}
+            <ScrollArea className="h-[230px]">
+              <div className="px-2 py-2">
+                {visibleCategories.length === 0 ? (
+                  <div className="flex h-44 flex-col items-center justify-center gap-2">
+                    <span className="text-3xl">🔍</span>
+                    <p className="text-[12px] text-muted-foreground/60">Aucun emoji trouvé</p>
+                  </div>
+                ) : (
+                  visibleCategories.map((category, catIndex) => (
+                    <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2 last:mb-0">
+                      <div className={`sticky top-0 z-10 mb-1 pt-0.5 pb-1 ${g ? 'bg-white/[0.35] backdrop-blur-xl dark:bg-[oklch(0.16_0.006_286/0.85)]' : 'bg-popover/95 backdrop-blur-sm'}`}>
+                        <p className="px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                          {category.name}
+                        </p>
                       </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
+                      <div className="grid grid-cols-9 gap-0.5">
+                        {category.emojis.map((emoji, i) => (
+                          <button
+                            key={`${catIndex}-${i}`}
+                            type="button"
+                            onClick={() => handleSelect(emoji)}
+                            onMouseEnter={() => setHoveredEmoji({ emoji, name: EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji })}
+                            onMouseLeave={() => setHoveredEmoji(null)}
+                            className={`flex aspect-square items-center justify-center rounded-lg transition-all duration-100 hover:scale-110 active:scale-95 ${
+                              g
+                                ? 'hover:bg-white/[0.18] dark:hover:bg-white/[0.10]'
+                                : 'hover:bg-foreground/[0.07]'
+                            }`}
+                          >
+                            <Twemoji emoji={emoji} size={22} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
 
-            {/* Hover preview bar */}
-            <div className={`flex h-11 shrink-0 items-center gap-2 border-t px-3 ${g ? 'border-white/[0.10] bg-white/[0.08] dark:border-white/[0.06] dark:bg-white/[0.03]' : 'border-border/30 bg-foreground/[0.03]'}`}>
+            {/* Preview bar */}
+            <div className={`flex h-9 shrink-0 items-center gap-2 border-t px-3 ${border} ${g ? 'bg-white/[0.06] dark:bg-black/[0.06]' : 'bg-foreground/[0.02]'}`}>
               {hoveredEmoji ? (
                 <>
-                  <div className={`flex size-7 items-center justify-center rounded-full ${g ? 'bg-white/[0.22] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.30)] dark:bg-white/[0.10] dark:shadow-none' : 'bg-foreground/[0.06]'}`}>
-                    <Twemoji emoji={hoveredEmoji.emoji} size={18} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-[12px] font-semibold text-foreground">{previewName}</p>
-
-                  </div>
+                  <Twemoji emoji={hoveredEmoji.emoji} size={16} />
+                  <p className="truncate text-[11px] font-medium text-foreground/70">
+                    :{hoveredEmoji.name}:
+                  </p>
                 </>
               ) : (
-                <>
-                  <div className={`flex size-7 items-center justify-center rounded-full ${g ? 'bg-white/[0.22] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.30)] dark:bg-white/[0.10] dark:shadow-none' : 'bg-foreground/[0.06]'}`}>
-                    <SmileIcon size={15} className="text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-[12px] font-semibold text-foreground/85">Émoji</p>
-                    <p className="truncate text-[10px] text-muted-foreground/60">{previewName}</p>
-                  </div>
-                </>
+                <p className="text-[11px] text-muted-foreground/40">Survolez un emoji…</p>
               )}
             </div>
           </>
         )}
 
-        {/* ── GIF tab ── */}
+        {/* ══════════════════════ GIF TAB ══════════════════════ */}
         {activeTab === 'gif' && (
           <>
-            <div className={`border-b px-3 py-3 ${g ? 'border-white/[0.12] dark:border-white/[0.06]' : 'border-border/30'}`}>
+            <div className={`border-b px-3 py-2 ${border}`}>
               <div className="relative">
-                <SearchIcon size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
+                <SearchIcon size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
                 <Input
-                  placeholder="Rechercher un GIF..."
+                  placeholder="Rechercher un GIF…"
                   value={gifSearch}
                   onChange={(e) => setGifSearch(e.target.value)}
-                  className={`h-10 rounded-xl pl-9 pr-3 text-[14px] text-foreground placeholder:text-muted-foreground/50 ${
-                    g
-                      ? 'border-white/[0.18] bg-white/30 backdrop-blur-2xl shadow-[0_1px_6px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.40)] dark:border-white/[0.10] dark:bg-white/[0.08] dark:shadow-[0_1px_6px_rgba(0,0,0,0.20),inset_0_0.5px_0_rgba(255,255,255,0.04)]'
-                      : 'border-border/40 bg-background'
-                  }`}
+                  className={`h-8 rounded-lg pl-8 pr-3 text-[13px] text-foreground ${inputCls}`}
                 />
               </div>
             </div>
 
-            <ScrollArea className="h-52">
+            <ScrollArea className="h-[280px]">
               {isLoadingGifs ? (
-                <div className="flex h-60 items-center justify-center">
+                <div className="flex h-[280px] items-center justify-center">
                   <Spinner size="sm" />
                 </div>
               ) : gifs.length === 0 ? (
-                <div className="flex h-60 flex-col items-center justify-center gap-2">
+                <div className="flex h-[280px] flex-col items-center justify-center gap-2">
                   <span className="text-3xl">🎞️</span>
-                  <p className="text-[13px] text-(--muted)/60">Aucun GIF trouvé</p>
+                  <p className="text-[12px] text-muted-foreground/50">Aucun GIF trouvé</p>
                 </div>
               ) : (
-                <div className="columns-2 gap-1 px-2 pb-2">
+                <div className="columns-2 gap-1.5 px-2 pt-2 pb-2">
                   {gifs.map((gif) => (
                     <button
                       key={gif.id}
                       type="button"
-                      className={`mb-1 block w-full overflow-hidden rounded-xl border transition-all duration-200 hover:scale-[1.02] hover:opacity-90 ${g ? 'border-white/[0.12] dark:border-white/[0.06]' : 'border-border/30'}`}
                       onClick={() => handleGifSelect(gif)}
+                      className={`mb-1.5 block w-full overflow-hidden rounded-xl transition-all duration-150 hover:opacity-80 hover:scale-[1.01] active:scale-[0.98] ${
+                        g ? 'ring-1 ring-white/[0.10] dark:ring-white/[0.06]' : 'ring-1 ring-border/20'
+                      }`}
                     >
                       <img
                         src={gif.previewUrl || gif.url}
@@ -1838,9 +1833,9 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
                       />
                     </button>
                   ))}
-                  <div ref={gifSentinelRef} className="h-4 w-full col-span-2" />
+                  <div ref={gifSentinelRef} className="h-2 w-full" />
                   {isLoadingMoreGifs && (
-                    <div className="flex justify-center py-2 col-span-2">
+                    <div className="flex justify-center py-3">
                       <Spinner size="sm" />
                     </div>
                   )}
@@ -1848,18 +1843,23 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
               )}
             </ScrollArea>
 
-            <p className={`border-t py-2 text-center text-[10px] ${g ? 'border-white/[0.10] text-foreground/30 dark:text-foreground/20' : 'border-border/30 text-muted-foreground/50'}`}>Powered by Tenor</p>
+            <div className={`border-t px-3 py-1.5 ${border}`}>
+              <p className="text-[10px] text-muted-foreground/35 text-center">Powered by Tenor</p>
+            </div>
           </>
         )}
 
-        {/* ── Autocollants tab ── */}
+        {/* ══════════════════════ STICKER TAB ══════════════════════ */}
         {activeTab === 'sticker' && (
-          <div className="flex h-67 flex-col items-center justify-center gap-3 text-muted-foreground">
+          <div className="flex h-[300px] flex-col items-center justify-center gap-3">
             <span className="text-4xl">🧩</span>
-            <p className="text-[13px] font-medium">Autocollants</p>
-            <p className="text-[11px] text-muted-foreground/60">Bientôt disponible</p>
+            <div className="text-center">
+              <p className="text-[13px] font-semibold text-foreground/80">Autocollants</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground/50">Bientôt disponible</p>
+            </div>
           </div>
         )}
+
       </PopoverContent>
     </Popover>
   );
