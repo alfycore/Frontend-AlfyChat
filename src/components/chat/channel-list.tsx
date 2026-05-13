@@ -972,7 +972,7 @@ export function ChannelList({
   // ── DM mode ──────────────────────────────────────────────────────────────
 
   if (!serverId) {
-    const dmConversations = conversations.filter((c) => c.type !== 'group');
+    const dmConversations = conversations;
 
     return (
       <div className={`flex h-full w-full flex-col overflow-hidden ${ui.sidebarBg}`}>
@@ -1099,29 +1099,36 @@ export function ChannelList({
               ) : (
                 <div className="space-y-0.5">
                   {dmConversations.map((conv) => {
-                    const isActive =
-                      selectedChannel === conv.recipientId ||
-                      selectedChannel === `dm:${conv.recipientId}`;
-                    const dmUnread = notifStore.unread.get(conv.recipientId) ?? 0;
+                    const isGroup = conv.type === 'group';
+                    const unreadKey = isGroup ? `group:${conv.id}` : conv.recipientId;
+                    const isActive = isGroup
+                      ? selectedChannel === `group:${conv.id}` || selectedChannel === conv.id
+                      : selectedChannel === conv.recipientId || selectedChannel === `dm:${conv.recipientId}`;
+                    const dmUnread = notifStore.unread.get(unreadKey) ?? 0;
                     const presence = presenceMap.get(conv.recipientId);
+                    const navigate = () => {
+                      clearUnread(unreadKey);
+                      if (isGroup) router.push(`/channels/groups/${conv.id}`);
+                      else router.push(`/channels/me/${conv.recipientId}`);
+                    };
                     return (
                       <div
                         key={conv.id}
-                        draggable
-                        onDragStart={(e) => {
+                        draggable={!isGroup}
+                        onDragStart={isGroup ? undefined : (e) => {
                           dragDmIdRef.current = conv.recipientId;
                           setDraggingDmId(conv.recipientId);
                           e.dataTransfer.effectAllowed = 'move';
                         }}
-                        onDragOver={(e) => {
+                        onDragOver={isGroup ? undefined : (e) => {
                           e.preventDefault();
                           e.dataTransfer.dropEffect = 'move';
                           if (dragDmIdRef.current !== conv.recipientId) setDragOverDmId(conv.recipientId);
                         }}
-                        onDragLeave={(e) => {
+                        onDragLeave={isGroup ? undefined : (e) => {
                           if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverDmId(null);
                         }}
-                        onDrop={(e) => {
+                        onDrop={isGroup ? undefined : (e) => {
                           e.preventDefault();
                           const from = dragDmIdRef.current;
                           if (!from || from === conv.recipientId) { setDragOverDmId(null); return; }
@@ -1142,40 +1149,41 @@ export function ChannelList({
                           setDraggingDmId(null);
                           setDragOverDmId(null);
                         }}
-                        onDragEnd={() => { dragDmIdRef.current = null; setDraggingDmId(null); setDragOverDmId(null); }}
+                        onDragEnd={isGroup ? undefined : () => { dragDmIdRef.current = null; setDraggingDmId(null); setDragOverDmId(null); }}
                         className={cn(
                           'transition-all duration-150',
-                          draggingDmId === conv.recipientId && 'opacity-40 scale-95',
-                          dragOverDmId === conv.recipientId && draggingDmId !== conv.recipientId && 'translate-y-0.5',
+                          !isGroup && draggingDmId === conv.recipientId && 'opacity-40 scale-95',
+                          !isGroup && dragOverDmId === conv.recipientId && draggingDmId !== conv.recipientId && 'translate-y-0.5',
                         )}
                       >
                       <button
-                        onClick={() => router.push(`/channels/me/${conv.recipientId}`)}
+                        onClick={navigate}
                         className={cn(
                           'group/dm flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all duration-150',
                           isActive
                             ? 'bg-primary/10 text-primary'
                             : 'text-foreground hover:bg-foreground/6',
-                          dragOverDmId === conv.recipientId && 'ring-1 ring-primary/30',
+                          !isGroup && dragOverDmId === conv.recipientId && 'ring-1 ring-primary/30',
                         )}
                       >
                         <div className="relative shrink-0">
-                          <Avatar className="size-8 rounded-full">
+                          <Avatar className={cn('size-8', isGroup ? 'rounded-xl' : 'rounded-full')}>
                             <AvatarImage src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
-                            <AvatarFallback className="rounded-full text-[11px] font-bold bg-muted text-muted-foreground">
+                            <AvatarFallback className={cn('text-[11px] font-bold bg-muted text-muted-foreground', isGroup ? 'rounded-xl' : 'rounded-full')}>
                               {conv.recipientName?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
-                          <span className={cn(
-                            'absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-sidebar',
-                            presenceDot(presence),
-                          )} />
+                          {!isGroup && (
+                            <span className={cn(
+                              'absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-sidebar',
+                              presenceDot(presence),
+                            )} />
+                          )}
                         </div>
                         <div className="min-w-0 flex-1 text-left">
                           <p className={cn('truncate text-[13px] font-medium leading-tight', isActive ? 'text-primary' : 'text-foreground', dmUnread > 0 && !isActive && 'font-semibold')}>
-                            {conv.recipientName || t.channelList.user}
+                            {conv.recipientName || (isGroup ? 'Groupe' : t.channelList.user)}
                           </p>
-                         
                         </div>
                         {dmUnread > 0 && !isActive && (
                           <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-destructive/90 text-[10px] font-bold text-white">

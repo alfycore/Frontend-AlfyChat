@@ -79,7 +79,7 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
             <img
               src={src}
               alt=""
-              className="max-h-72 max-w-xs cursor-zoom-in rounded-xl object-cover shadow-md ring-1 ring-[var(--border)]/20 transition-opacity hover:opacity-95"
+              className="max-h-72 max-w-xs cursor-pointer rounded-xl object-cover shadow-md ring-1 ring-[var(--border)]/20 transition-opacity hover:opacity-95"
               loading="lazy"
               onClick={() => setLightbox(src)}
             />
@@ -131,7 +131,7 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
       {/* Image lightbox */}
       {lightbox && (
         <div
-          className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
           onClick={() => setLightbox(null)}
           onKeyDown={(e) => e.key === 'Escape' && setLightbox(null)}
           role="dialog"
@@ -144,7 +144,13 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
           >
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
-          <img src={lightbox} alt="" className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
+          <img
+            src={lightbox}
+            alt=""
+            className="h-screen w-screen object-contain"
+            onClick={(e) => e.stopPropagation()}
+            draggable={false}
+          />
         </div>
       )}
 

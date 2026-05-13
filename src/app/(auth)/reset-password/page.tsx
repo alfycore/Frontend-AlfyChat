@@ -233,12 +233,14 @@ function ResetPasswordForm() {
       </div>
 
       {/* ── Colonne droite : image ── */}
-      <div className="relative hidden overflow-hidden lg:block">
-        <img
-          src="/backgrounds/defaut.jpg"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+      <div className="hidden bg-background p-4 lg:block">
+        <div className="relative h-full overflow-hidden rounded-2xl">
+          <img
+            src="/backgrounds/defaut.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </div>
       </div>
 
     </div>
