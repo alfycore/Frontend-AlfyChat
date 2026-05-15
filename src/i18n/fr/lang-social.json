@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "Découvrir des serveurs",
+    "label": "Exploration",
+    "heading": "Trouvez votre communauté",
+    "description": "Explorez les serveurs référencés par AlfyChat — des communautés certifiées et partenaires vous attendent.",
+    "searchPlaceholder": "Rechercher un serveur…",
+    "certified": "Certifié",
+    "certifiedTooltip": "Serveur certifié par AlfyChat",
+    "partner": "Partenaire",
+    "partnerTooltip": "Serveur partenaire AlfyChat",
+    "memberCount": "{n} membres",
+    "joining": "Rejoindre…",
+    "join": "Rejoindre",
+    "noResults": "Aucun serveur trouvé",
+    "noResultsSearch": "Essayez avec d'autres mots-clés.",
+    "noResultsEmpty": "Aucun serveur n'est référencé pour le moment."
+  },
+  "invite": {
+    "invalid": "Invitation invalide",
+    "backHome": "Retour à l'accueil",
+    "youreInvited": "Vous êtes invité à rejoindre",
+    "memberCount": "{n} membre(s)",
+    "usages": "{uses}/{maxUses} utilisations",
+    "expires": "Expire le {date}",
+    "joinServer": "Rejoindre le serveur",
+    "loginToJoin": "Se connecter pour rejoindre",
+    "notNow": "Pas maintenant",
+    "footer": "AlfyChat — Messagerie sécurisée et décentralisée"
+  }
+}

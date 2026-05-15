@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "サーバーを探す",
+    "label": "探索",
+    "heading": "コミュニティを見つけよう",
+    "description": "AlfyChatに掲載されているサーバーを探索 — 認定・パートナーコミュニティが待っています。",
+    "searchPlaceholder": "サーバーを検索…",
+    "certified": "認定済み",
+    "certifiedTooltip": "AlfyChatによる認定サーバー",
+    "partner": "パートナー",
+    "partnerTooltip": "AlfyChatパートナーサーバー",
+    "memberCount": "{n}人のメンバー",
+    "joining": "参加中…",
+    "join": "参加",
+    "noResults": "サーバーが見つかりません",
+    "noResultsSearch": "別のキーワードで試してください。",
+    "noResultsEmpty": "まだサーバーが掲載されていません。"
+  },
+  "invite": {
+    "invalid": "無効な招待",
+    "backHome": "ホームに戻る",
+    "youreInvited": "招待されました",
+    "memberCount": "{n}人のメンバー",
+    "usages": "{uses}/{maxUses}回使用",
+    "expires": "{date}に期限切れ",
+    "joinServer": "サーバーに参加",
+    "loginToJoin": "ログインして参加",
+    "notNow": "今はしない",
+    "footer": "AlfyChat — セキュアな分散型メッセージサービス"
+  }
+}

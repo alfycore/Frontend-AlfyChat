@@ -8,6 +8,7 @@ import { signalService } from '@/lib/signal-service';
 import { api } from '@/lib/api';
 import { notify } from '@/hooks/use-notification';
 import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
+import { userProfileCache } from '@/lib/user-profile-cache';
 
 interface Reaction {
   emoji: string;
@@ -280,8 +281,9 @@ export function useMessages(channelId?: string, recipientId?: string) {
       // ── Filtre de conversation ──────────────────────────────────────────────
       // Ne traiter que les messages de la conversation actuellement ouverte.
       if (channelId) {
-        // Canal serveur : ignorer si ce n'est pas le bon canal
-        if (message.channelId !== channelId) return;
+        // Canal serveur ou groupe DM — le payload peut avoir channelId OU conversationId/groupId
+        const msgChannelId = message.channelId ?? message.groupId ?? message.conversationId;
+        if (msgChannelId !== channelId) return;
       } else if (recipientId) {
         // DM : comparer par conversationId (dm_xxx_yyy) ou par participants
         const currentConvId = (() => {
@@ -354,6 +356,15 @@ export function useMessages(channelId?: string, recipientId?: string) {
         reactions: groupedReactions,
         sender: message.sender,
       };
+
+      // Mettre à jour le cache de profils avec les infos de l'expéditeur
+      if (message.sender?.id) {
+        userProfileCache.patchProfile(message.sender.id, {
+          username: message.sender.username,
+          displayName: message.sender.displayName,
+          avatarUrl: message.sender.avatarUrl,
+        });
+      }
 
       setMessages((prev) => {
         const existingMsg = prev.find(m => m.id === normalizedMessage.id);
@@ -586,6 +597,16 @@ export function useMessages(channelId?: string, recipientId?: string) {
     socketService.on('e2ee:history-response', handleE2EEHistoryResponse);
     // ───────────────────────────────────────────────────────────────────────
 
+    // Rejoindre à nouveau la conversation après une reconnexion socket
+    const handleReconnect = () => {
+      if (recipientId) {
+        socketService.joinConversation(recipientId);
+      } else if (channelId) {
+        socketService.joinConversation(undefined, channelId);
+      }
+    };
+    socketService.on('socket:reconnected', handleReconnect);
+
     return () => {
       socketService.off('message:new', handleNewMessage);
       socketService.off('message:sent', handleMessageSent);
@@ -598,6 +619,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
       socketService.off('REACTION_ADD', handleReactionAdd);
       socketService.off('REACTION_REMOVE', handleReactionRemove);
       socketService.off('e2ee:history-response', handleE2EEHistoryResponse);
+      socketService.off('socket:reconnected', handleReconnect);
     };
     // Inclure user?.id pour recharger les messages si l'utilisateur change (ex: reload complet)
   }, [channelId, recipientId, user?.id]);
@@ -712,6 +734,18 @@ export function useMessages(channelId?: string, recipientId?: string) {
           setMessages(finalMessages);
         }
 
+        // Peupler le cache de profils avec les expéditeurs des messages
+        userProfileCache.seedProfiles(
+          finalMessages
+            .filter((m: any) => m.sender?.id)
+            .map((m: any) => ({
+              id: m.sender.id,
+              username: m.sender.username || '',
+              displayName: m.sender.displayName,
+              avatarUrl: m.sender.avatarUrl,
+            }))
+        );
+
         setHasMoreMessages(rawMessages.length >= 50);
         if (!servedFromCache) setIsLoading(false);
       } else {
@@ -785,7 +819,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
   }, [hasMoreMessages, isLoadingMoreMessages, messages, channelId, recipientId, user]);
 
   const sendMessage = useCallback(
-    async (content: string, replyToId?: string) => {
+    async (content: string, replyToId?: string, mentionedUserIds?: string[]) => {
       if (!user) return;
 
       // Message optimiste : afficher le texte clair immédiatement
@@ -862,6 +896,7 @@ export function useMessages(channelId?: string, recipientId?: string) {
         recipientId,
         content,
         replyToId,
+        mentionedUserIds,
       });
     },
     [channelId, recipientId, user]

@@ -29,6 +29,7 @@ import { useUIStyle } from '@/hooks/use-ui-style';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ImageCropperDialog } from '@/components/chat/image-cropper-dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
@@ -186,6 +187,13 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState('');
+  const [cropperMode, setCropperMode] = useState<'icon' | 'banner'>('icon');
+  const handleSsdCropDone = (file: File, previewUrl: string) => {
+    if (cropperMode === 'icon') { setIconFile(file); setIconPreview(previewUrl); }
+    else { setBannerFile(file); setBannerPreview(previewUrl); }
+  };
 
   const [inviteSlug, setInviteSlug] = useState('');
   const [inviteMaxUses, setInviteMaxUses] = useState('');
@@ -359,7 +367,7 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
               <span className="text-sm font-medium text-white">Changer la bannière</span>
             </div>
           </button>
-          <input id="ssd-banner" type="file" accept="image/*" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) { setBannerFile(f); setBannerPreview(URL.createObjectURL(f)); } }} />
+          <input id="ssd-banner" type="file" accept="image/*" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onloadend = () => { setCropperSrc(r.result as string); setCropperMode('banner'); setCropperOpen(true); }; r.readAsDataURL(f); e.target.value = ''; }} />
         </SettingsCard>
 
         <div className="grid gap-5 sm:grid-cols-[160px_1fr]">
@@ -372,7 +380,7 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
               <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-black/45 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">Modifier</div>
             </button>
             <p className="text-center text-[11px] text-muted-foreground">Icône du serveur</p>
-            <input id="ssd-icon" type="file" accept="image/*" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) { setIconFile(f); setIconPreview(URL.createObjectURL(f)); } }} />
+            <input id="ssd-icon" type="file" accept="image/*" className="hidden" onChange={(e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onloadend = () => { setCropperSrc(r.result as string); setCropperMode('icon'); setCropperOpen(true); }; r.readAsDataURL(f); e.target.value = ''; }} />
           </SettingsCard>
 
           <SettingsCard>
@@ -618,6 +626,7 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
         'h-[90vh] w-full sm:max-w-5xl overflow-hidden p-0 shadow-2xl shadow-black/40',
@@ -688,5 +697,15 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
         </div>
       </DialogContent>
     </Dialog>
+
+    <ImageCropperDialog
+      open={cropperOpen}
+      onOpenChange={setCropperOpen}
+      imageSrc={cropperSrc}
+      aspectRatio={cropperMode === 'icon' ? 1 : 3}
+      shape={cropperMode === 'icon' ? 'rect' : 'rect'}
+      onCrop={handleSsdCropDone}
+    />
+    </>
   );
 }

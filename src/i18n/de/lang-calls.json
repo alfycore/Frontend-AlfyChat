@@ -1,0 +1,70 @@
+{
+    "calls":  {
+                  "calling":  "Verbinde...",
+                  "ringing":  "Klingelt...",
+                  "connecting":  "Verbinden...",
+                  "ended":  "Anruf beendet",
+                  "incomingVoice":  "Eingehender Sprachanruf",
+                  "incomingVideo":  "Eingehender Videoanruf",
+                  "enableCamera":  "Kamera aktivieren",
+                  "disableCamera":  "Kamera deaktivieren",
+                  "hangup":  "Auflegen",
+                  "fullscreen":  "Vollbild",
+                  "exitFullscreen":  "Vollbild beenden",
+                  "voiceLabel":  "Sprache",
+                  "videoLabel":  "Video",
+                  "sharing":  "Teilen",
+                  "connectedVoice":  "Mit Sprachkanal verbunden",
+                  "participants":  "{n} Teilnehmer",
+                  "leave":  "Verlassen",
+                  "join":  "Beitreten"
+              },
+    "callBar":  {
+                    "calling":  "Anruf läuft…",
+                    "ringing":  "Klingelt…",
+                    "connecting":  "Verbinde…",
+                    "videoConnected":  "Video verbunden",
+                    "voiceConnected":  "Sprache verbunden",
+                    "call":  "Anruf…",
+                    "shareScreen":  "Bildschirm teilen",
+                    "muteMic":  "Mikrofon stummschalten",
+                    "unmuteMic":  "Mikrofon aktivieren",
+                    "hangup":  "Auflegen",
+                    "ongoingCall":  "Laufender Anruf"
+                },
+    "callOverlay":  {
+                        "calling":  "Anruf läuft…",
+                        "ringing":  "Klingelt…",
+                        "connecting":  "Verbinde…",
+                        "you":  "Du",
+                        "live":  "LIVE",
+                        "enableSound":  "Ton aktivieren",
+                        "muted":  "Stumm",
+                        "mic":  "Mikro",
+                        "camera":  "Kamera",
+                        "stopShare":  "Stopp",
+                        "shareScreen":  "Bildschirm",
+                        "hangup":  "Auflegen",
+                        "voiceCall":  "Sprachanruf",
+                        "videoCall":  "Videoanruf",
+                        "clickEnableSound":  "Klicken um Ton zu aktivieren",
+                        "screenOf":  "{name} — Bildschirm",
+                        "myScreen":  "Mein Bildschirm"
+                    },
+    "voiceControlBar":  {
+                            "connecting":  "Verbinde…",
+                            "voiceActive":  "Sprache aktiv",
+                            "members":  "{n} Mitglied(er)"
+                        },
+    "networkQuality":  {
+                           "excellent":  "Ausgezeichnet",
+                           "good":  "Gut",
+                           "fair":  "Mittel",
+                           "poor":  "Schwach",
+                           "unknown":  "Unbekannt",
+                           "quality":  "Qualität: ",
+                           "ping":  "Ping",
+                           "loss":  "Verlust",
+                           "jitter":  "Jitter"
+                       }
+}

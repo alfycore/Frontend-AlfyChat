@@ -128,12 +128,24 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
       });
     };
 
+    // Mise à jour du nom/avatar du groupe en temps réel (sans rechargement)
+    const handleGroupUpdate = (d: any) => {
+      const p = d?.payload ?? d;
+      if (!p?.groupId) return;
+      setGroups((prev) => prev.map((g) =>
+        g.id === p.groupId
+          ? { ...g, name: p.name ?? g.name, avatarUrl: p.avatarUrl ?? g.avatarUrl }
+          : g
+      ));
+    };
+
     socketService.on('message:new', handleMessageNew);
     socketService.onGroupCreate(handleRefresh);
     socketService.onGroupLeave(handleRefresh);
     socketService.onGroupDelete(handleRefresh);
     socketService.onGroupMemberAdd(handleRefresh);
     socketService.onGroupMemberRemove(handleRefresh);
+    socketService.on('GROUP_UPDATE', handleGroupUpdate);
     socketService.on('socket:reconnected', handleRefresh);
 
     return () => {
@@ -143,6 +155,7 @@ export function GroupsList({ selectedGroupId, onSelectGroup }: GroupsListProps) 
       socketService.off('GROUP_DELETE', handleRefresh);
       socketService.off('GROUP_MEMBER_ADD', handleRefresh);
       socketService.off('GROUP_MEMBER_REMOVE', handleRefresh);
+      socketService.off('GROUP_UPDATE', handleGroupUpdate);
       socketService.off('socket:reconnected', handleRefresh);
     };
   }, []);

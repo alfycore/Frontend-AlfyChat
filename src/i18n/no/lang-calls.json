@@ -1,0 +1,70 @@
+{
+    "calls":  {
+                  "calling":  "Ringer...",
+                  "ringing":  "Ringer...",
+                  "connecting":  "Kobler til...",
+                  "ended":  "Samtale avsluttet",
+                  "incomingVoice":  "Innkommende talesamtale",
+                  "incomingVideo":  "Innkommende videosamtale",
+                  "enableCamera":  "Aktiver kamera",
+                  "disableCamera":  "Deaktiver kamera",
+                  "hangup":  "Legg pa",
+                  "fullscreen":  "Fullskjerm",
+                  "exitFullscreen":  "Avslutt fullskjerm",
+                  "voiceLabel":  "Tale",
+                  "videoLabel":  "Video",
+                  "sharing":  "Deler",
+                  "connectedVoice":  "Koblet til talekanal",
+                  "participants":  "{n} deltaker(e)",
+                  "leave":  "Forlat",
+                  "join":  "Bli med"
+              },
+    "callBar":  {
+                    "calling":  "Ringer�",
+                    "ringing":  "Ringer opp�",
+                    "connecting":  "Kobler til�",
+                    "videoConnected":  "Video tilkoblet",
+                    "voiceConnected":  "Stemme tilkoblet",
+                    "call":  "Samtale�",
+                    "shareScreen":  "Del skjerm",
+                    "muteMic":  "Sl� av mikrofon",
+                    "unmuteMic":  "Sl� p� mikrofon",
+                    "hangup":  "Legg p�",
+                    "ongoingCall":  "P�g�ende samtale"
+                },
+    "callOverlay":  {
+                        "calling":  "Ringer�",
+                        "ringing":  "Ringer opp�",
+                        "connecting":  "Kobler til�",
+                        "you":  "Du",
+                        "live":  "LIVE",
+                        "enableSound":  "Aktiver lyd",
+                        "muted":  "Dempet",
+                        "mic":  "Mikrofon",
+                        "camera":  "Kamera",
+                        "stopShare":  "Stopp",
+                        "shareScreen":  "Skjerm",
+                        "hangup":  "Legg p�",
+                        "voiceCall":  "Taleanrop",
+                        "videoCall":  "Videosamtale",
+                        "clickEnableSound":  "Klikk for � aktivere lyd",
+                        "screenOf":  "{name} � Skjerm",
+                        "myScreen":  "Min skjerm"
+                    },
+    "voiceControlBar":  {
+                            "connecting":  "Kobler til�",
+                            "voiceActive":  "Stemme aktiv",
+                            "members":  "{n} medlem(mer)"
+                        },
+    "networkQuality":  {
+                           "excellent":  "Utmerket",
+                           "good":  "God",
+                           "fair":  "Middels",
+                           "poor":  "D�rlig",
+                           "unknown":  "Ukjent",
+                           "quality":  "Kvalitet: ",
+                           "ping":  "Ping",
+                           "loss":  "Tap",
+                           "jitter":  "Jitter"
+                       }
+}

@@ -1,0 +1,34 @@
+{
+  "common": {
+    "cancel": "Anuluj",
+    "confirm": "Potwierdz",
+    "save": "Zapisz",
+    "saving": "Zapisywanie...",
+    "saved": "? Zapisano",
+    "close": "Zamknij",
+    "back": "Wstecz",
+    "create": "Utw�rz",
+    "creating": "Tworzenie...",
+    "validate": "Zatwierdz",
+    "send": "Wyslij",
+    "sending": "Wysylanie...",
+    "leave": "Opusc",
+    "open": "Otw�rz",
+    "settings": "Ustawienia",
+    "error": "Blad",
+    "preview": "Podglad",
+    "members": "{n} czlonk�w",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "Ty",
+    "loading": "Ładowanie…"
+  },
+  "status": {
+    "online": "Online",
+    "idle": "Nieobecny",
+    "dnd": "Nie przeszkadzac",
+    "invisible": "Niewidoczny",
+    "offline": "Offline",
+    "you": "Ty"
+  }
+}

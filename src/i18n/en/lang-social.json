@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "Discover servers",
+    "label": "Explore",
+    "heading": "Find your community",
+    "description": "Browse servers listed on AlfyChat — certified and partner communities are waiting for you.",
+    "searchPlaceholder": "Search a server…",
+    "certified": "Certified",
+    "certifiedTooltip": "Certified by AlfyChat",
+    "partner": "Partner",
+    "partnerTooltip": "AlfyChat partner server",
+    "memberCount": "{n} members",
+    "joining": "Joining…",
+    "join": "Join",
+    "noResults": "No servers found",
+    "noResultsSearch": "Try different keywords.",
+    "noResultsEmpty": "No servers are listed yet."
+  },
+  "invite": {
+    "invalid": "Invalid invitation",
+    "backHome": "Back to home",
+    "youreInvited": "You're invited to join",
+    "memberCount": "{n} member(s)",
+    "usages": "{uses}/{maxUses} uses",
+    "expires": "Expires {date}",
+    "joinServer": "Join server",
+    "loginToJoin": "Log in to join",
+    "notNow": "Not now",
+    "footer": "AlfyChat — Secure and decentralised messaging"
+  }
+}

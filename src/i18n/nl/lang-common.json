@@ -1,0 +1,34 @@
+{
+  "common": {
+    "cancel": "Annuleer",
+    "confirm": "Bevestigen",
+    "save": "Opslaan",
+    "saving": "Opslaan...",
+    "saved": "✓ Opgeslagen",
+    "close": "Sluiten",
+    "back": "Terug",
+    "create": "Aanmaken",
+    "creating": "Aanmaken...",
+    "validate": "Valideren",
+    "send": "Verzenden",
+    "sending": "Verzenden...",
+    "leave": "Verlaten",
+    "open": "Openen",
+    "settings": "Instellingen",
+    "error": "Fout",
+    "preview": "Voorbeeld",
+    "members": "{n} leden",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "Jij",
+    "loading": "Laden…"
+  },
+  "status": {
+    "online": "Online",
+    "idle": "Afwezig",
+    "dnd": "Niet storen",
+    "invisible": "Onzichtbaar",
+    "offline": "Offline",
+    "you": "Jij"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "common": {
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "save": "Salva",
+    "saving": "Salvataggio...",
+    "saved": "✓ Salvato",
+    "close": "Chiudi",
+    "back": "Indietro",
+    "create": "Crea",
+    "creating": "Creazione...",
+    "validate": "Convalida",
+    "send": "Invia",
+    "sending": "Invio...",
+    "leave": "Lascia",
+    "open": "Apri",
+    "settings": "Impostazioni",
+    "error": "Errore",
+    "preview": "Anteprima",
+    "members": "{n} membri",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "Tu",
+    "loading": "Caricamento…"
+  },
+  "status": {
+    "online": "Online",
+    "idle": "Assente",
+    "dnd": "Non disturbare",
+    "invisible": "Invisibile",
+    "offline": "Offline",
+    "you": "Tu"
+  }
+}

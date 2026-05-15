@@ -1,0 +1,34 @@
+{
+  "common": {
+    "cancel": "Annuller",
+    "confirm": "Bekræft",
+    "save": "Gem",
+    "saving": "Gemmer...",
+    "saved": "✓ Gemt",
+    "close": "Luk",
+    "back": "Tilbage",
+    "create": "Opret",
+    "creating": "Opretter...",
+    "validate": "Valider",
+    "send": "Send",
+    "sending": "Sender...",
+    "leave": "Forlad",
+    "open": "Åbn",
+    "settings": "Indstillinger",
+    "error": "Fejl",
+    "preview": "Forhåndsvisning",
+    "members": "{n} medlemmer",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "Du",
+    "loading": "Indlæser…"
+  },
+  "status": {
+    "online": "Online",
+    "idle": "Fraværende",
+    "dnd": "Forstyr ikke",
+    "invisible": "Usynlig",
+    "offline": "Offline",
+    "you": "Du"
+  }
+}

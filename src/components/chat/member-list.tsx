@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { cn } from '@/lib/utils';
 import { useUIStyle } from '@/hooks/use-ui-style';
-import { statusColor, isVisibleOnline, type UserStatus } from '@/lib/status';
+import { statusIcon, isVisibleOnline, type UserStatus } from '@/lib/status';
 import { useTranslation } from '@/components/locale-provider';
 
 interface Role {
@@ -35,7 +35,6 @@ interface MemberListProps {
 function MemberRow({ member, serverId, roles }: { member: Member; serverId: string; roles: Role[] }) {
   const isOnline = isVisibleOnline(member.status);
   const name = member.displayName || member.username;
-  const dotClass = statusColor(member.status);
 
   const memberRoles = roles
     .filter((r) => member.roles.includes(r.id) && !r.name.startsWith('@'))
@@ -55,9 +54,9 @@ function MemberRow({ member, serverId, roles }: { member: Member; serverId: stri
               {name[0]?.toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
-          <span
-            className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-sidebar', dotClass)}
-          />
+          <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-sidebar ring-2 ring-sidebar">
+            <img src={statusIcon(member.status)} width={12} height={12} alt="" draggable={false} className="block" />
+          </span>
         </div>
         <span
           className="truncate text-[12px] font-medium leading-tight"
@@ -184,6 +183,18 @@ export function MemberList({ serverId }: MemberListProps) {
       });
     };
 
+    const handleProfileUpdate = (d: any) => {
+      const p = d?.payload ?? d;
+      if (!p?.userId) return;
+      setMembers(prev => prev.map(m =>
+        m.id === p.userId
+          ? { ...m,
+              displayName: p.displayName !== undefined ? p.displayName : m.displayName,
+              avatarUrl:   p.avatarUrl   !== undefined ? p.avatarUrl   : m.avatarUrl }
+          : m
+      ));
+    };
+
     socketService.onPresenceUpdate(handlePresence);
     socketService.onMemberJoin(handleMemberJoin);
     socketService.onMemberLeave(handleMemberLeave);
@@ -191,6 +202,7 @@ export function MemberList({ serverId }: MemberListProps) {
     socketService.on('ROLE_CREATE', handleRoleChange);
     socketService.on('ROLE_UPDATE', handleRoleChange);
     socketService.on('ROLE_DELETE', handleRoleChange);
+    socketService.on('PROFILE_UPDATE', handleProfileUpdate);
 
     return () => {
       socketService.off('PRESENCE_UPDATE', handlePresence);
@@ -200,6 +212,7 @@ export function MemberList({ serverId }: MemberListProps) {
       socketService.off('ROLE_CREATE', handleRoleChange);
       socketService.off('ROLE_UPDATE', handleRoleChange);
       socketService.off('ROLE_DELETE', handleRoleChange);
+      socketService.off('PROFILE_UPDATE', handleProfileUpdate);
     };
   }, [serverId]);
 

@@ -22,6 +22,7 @@ type Listener = () => void;
 let _conversations: CachedConversation[] = [];
 let _presenceMap: Map<string, string> = new Map();
 let _customStatusMap: Map<string, string | null> = new Map();
+let _emojiMap: Map<string, string | null> = new Map();
 let _loaded = false;
 const _listeners = new Set<Listener>();
 
@@ -34,6 +35,7 @@ export const conversationsStore = {
   get(): CachedConversation[] { return _conversations; },
   getPresence(): Map<string, string> { return _presenceMap; },
   getCustomStatus(): Map<string, string | null> { return _customStatusMap; },
+  getEmojiMap(): Map<string, string | null> { return _emojiMap; },
   isLoaded(): boolean { return _loaded; },
 
   // ── Écriture initiale (depuis loadConversations) ─────────────────────────
@@ -65,12 +67,33 @@ export const conversationsStore = {
     _notify();
   },
 
+  // ── Ajouter une nouvelle conversation (sans doublon) ─────────────────────
+  addConversation(conv: CachedConversation): void {
+    if (_conversations.find((c) => c.id === conv.id)) return;
+    _conversations = [conv, ..._conversations];
+    _notify();
+  },
+
+  // ── Mettre à jour l'avatar/nom du destinataire sur PROFILE_UPDATE ─────────
+  updateRecipientProfile(userId: string, updates: { displayName?: string | null; avatarUrl?: string | null }): void {
+    let changed = false;
+    _conversations = _conversations.map((c) => {
+      if (c.recipientId !== userId) return c;
+      changed = true;
+      return {
+        ...c,
+        recipientName: updates.displayName ?? c.recipientName,
+        recipientAvatar: updates.avatarUrl !== undefined ? (updates.avatarUrl ?? undefined) : c.recipientAvatar,
+      };
+    });
+    if (changed) _notify();
+  },
+
   // ── Mettre à jour la présence d'un utilisateur ───────────────────────────
-  setPresence(userId: string, status: string, customStatus?: string | null): void {
+  setPresence(userId: string, status: string, customStatus?: string | null, emoji?: string | null): void {
     _presenceMap = new Map(_presenceMap).set(userId, status);
-    if (customStatus !== undefined) {
-      _customStatusMap = new Map(_customStatusMap).set(userId, customStatus);
-    }
+    if (customStatus !== undefined) _customStatusMap = new Map(_customStatusMap).set(userId, customStatus);
+    if (emoji !== undefined) _emojiMap = new Map(_emojiMap).set(userId, emoji);
     _notify();
   },
 
@@ -85,6 +108,7 @@ export const conversationsStore = {
     _conversations = [];
     _presenceMap = new Map();
     _customStatusMap = new Map();
+    _emojiMap = new Map();
     _loaded = false;
     _notify();
   },

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { api } from '@/lib/api';
 import { socketService } from '@/lib/socket';
+import { userProfileCache } from '@/lib/user-profile-cache';
 import { signalService } from '@/lib/signal-service';
 import {
   generateKeypair,
@@ -24,6 +25,7 @@ interface User {
   role?: 'user' | 'moderator' | 'admin';
   status: 'online' | 'offline' | 'idle' | 'dnd' | 'invisible';
   customStatus?: string | null;
+  emoji?: string | null;
   createdAt: string;
 }
 
@@ -59,16 +61,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const handleProfileUpdate = (data: unknown) => {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
-      const p = payload as { id?: string; userId?: string; displayName?: string; avatarUrl?: string; bio?: string; status?: 'online' | 'idle' | 'dnd' | 'invisible' | 'offline' };
+      const p = payload as { id?: string; userId?: string; displayName?: string; avatarUrl?: string; bio?: string; status?: 'online' | 'idle' | 'dnd' | 'invisible' | 'offline'; username?: string; cardColor?: string };
       // Mise à jour de son propre profil (réponse du gateway) OU notification d'un autre client
       const targetId = p?.id || p?.userId;
       if (!targetId || targetId === user.id) {
         setUser((prev) => prev ? { ...prev, ...p } : prev);
       }
+      // Mettre à jour le cache global de profils pour tous les utilisateurs
+      if (targetId) {
+        userProfileCache.patchProfile(targetId, {
+          username: (p as any).username,
+          displayName: p.displayName,
+          avatarUrl: p.avatarUrl,
+        });
+      }
     };
+    const handlePresenceRestored = (data: unknown) => {
+      const p = ((data as any)?.payload ?? data) as { status?: string; emoji?: string | null; text?: string | null };
+      if (p?.status) {
+        setUser((prev) => prev ? {
+          ...prev,
+          status: p.status as User['status'],
+          emoji: p.emoji ?? prev.emoji,
+          customStatus: p.text ?? prev.customStatus,
+        } : prev);
+      }
+    };
+
     socketService.onProfileUpdate(handleProfileUpdate);
+    socketService.on('PRESENCE_RESTORED', handlePresenceRestored);
     return () => {
       socketService.off('PROFILE_UPDATE', handleProfileUpdate as any);
+      socketService.off('PRESENCE_RESTORED', handlePresenceRestored);
     };
   }, [user?.id]);
 

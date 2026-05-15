@@ -40,11 +40,11 @@ const FAKE_FRIENDS = [
   { id: '4', name: 'Tom',    initials: 'TO', color: '#eb459e', status: 'offline', label: 'Hors ligne'        },
 ];
 
-const STATUS_COLOR: Record<string, string> = {
-  online:  'bg-green-500',
-  idle:    'bg-yellow-500',
-  dnd:     'bg-red-500',
-  offline: 'bg-gray-500',
+const STATUS_ICON: Record<string, string> = {
+  online:  '/statusicon/online.svg',
+  idle:    '/statusicon/idle.svg',
+  dnd:     '/statusicon/donotdisturb.svg',
+  offline: '/statusicon/offline.svg',
 };
 
 const FEATURES = [
@@ -399,7 +399,9 @@ export default function GotoStartPage() {
                         >
                           {f.initials}
                         </div>
-                        <span className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-[var(--surface)] ${STATUS_COLOR[f.status]}`} />
+                        <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-[var(--surface)] ring-2 ring-[var(--surface)]">
+                          <img src={STATUS_ICON[f.status] ?? STATUS_ICON.offline} width={12} height={12} alt="" draggable={false} className="block" />
+                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-[var(--foreground)]">{f.name}</p>

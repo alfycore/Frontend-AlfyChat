@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useUIStyle } from '@/hooks/use-ui-style';
-import { statusColor } from '@/lib/status';
+import { statusIcon } from '@/lib/status';
 
 export interface ServerOverviewInfo {
   name: string;
@@ -48,7 +48,7 @@ function ChannelTypeIcon({ type }: { type: ServerOverviewChannel['type'] }) {
 }
 
 function StatusDot({ status }: { status?: string }) {
-  return <span className={cn('size-2 rounded-full', statusColor(status))} />;
+  return <img src={statusIcon(status)} width={12} height={12} alt="" draggable={false} />;
 }
 
 export function ServerOverviewHero({ server }: { server: ServerOverviewInfo | null }) {

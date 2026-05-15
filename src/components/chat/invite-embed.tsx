@@ -69,6 +69,14 @@ export function InviteEmbed({ code }: InviteEmbedProps) {
       if (currentUserId && ownerId && currentUserId === ownerId && info?.server?.id) {
         socketService.getSocket()?.emit('SERVER_OWNER_JOINED', { serverId: info.server.id });
       }
+      // Notifier le gateway → join rooms socket + sync autres onglets/appareils + update store
+      if (info?.server?.id) {
+        socketService.getSocket()?.emit('SERVER_SELF_JOIN', {
+          serverId: info.server.id,
+          name: info.server.name,
+          iconUrl: info.server.iconUrl,
+        });
+      }
       // Navigate to the server after a short delay
       setTimeout(() => router.push('/channels'), 600);
     } else {

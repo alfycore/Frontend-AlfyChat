@@ -1,0 +1,70 @@
+{
+    "calls":  {
+                  "calling":  "呼び出し中...",
+                  "ringing":  "呼び出し音...",
+                  "connecting":  "接続中...",
+                  "ended":  "通話終了",
+                  "incomingVoice":  "着信通話",
+                  "incomingVideo":  "着信ビデオ通話",
+                  "enableCamera":  "カメラをオンにする",
+                  "disableCamera":  "カメラをオフにする",
+                  "hangup":  "切る",
+                  "fullscreen":  "全画面表示",
+                  "exitFullscreen":  "全画面表示を終了",
+                  "voiceLabel":  "音声",
+                  "videoLabel":  "ビデオ",
+                  "sharing":  "共有中",
+                  "connectedVoice":  "音声チャンネルに接続中",
+                  "participants":  "{n}人の参加者",
+                  "leave":  "退出",
+                  "join":  "参加"
+              },
+    "callBar":  {
+                    "calling":  "発信中…",
+                    "ringing":  "呼び出し中…",
+                    "connecting":  "接続中…",
+                    "videoConnected":  "ビデオ接続済み",
+                    "voiceConnected":  "音声接続済み",
+                    "call":  "通話…",
+                    "shareScreen":  "画面を共有",
+                    "muteMic":  "マイクをミュート",
+                    "unmuteMic":  "マイクを有効化",
+                    "hangup":  "通話終了",
+                    "ongoingCall":  "通話中"
+                },
+    "callOverlay":  {
+                        "calling":  "発信中…",
+                        "ringing":  "呼び出し中…",
+                        "connecting":  "接続中…",
+                        "you":  "あなた",
+                        "live":  "ライブ",
+                        "enableSound":  "音声を有効化",
+                        "muted":  "ミュート中",
+                        "mic":  "マイク",
+                        "camera":  "カメラ",
+                        "stopShare":  "停止",
+                        "shareScreen":  "画面",
+                        "hangup":  "終了",
+                        "voiceCall":  "音声通話",
+                        "videoCall":  "ビデオ通話",
+                        "clickEnableSound":  "クリックして音声を有効化",
+                        "screenOf":  "{name} — 画面",
+                        "myScreen":  "自分の画面"
+                    },
+    "voiceControlBar":  {
+                            "connecting":  "接続中…",
+                            "voiceActive":  "音声アクティブ",
+                            "members":  "{n} メンバー"
+                        },
+    "networkQuality":  {
+                           "excellent":  "優秀",
+                           "good":  "良好",
+                           "fair":  "普通",
+                           "poor":  "低品質",
+                           "unknown":  "不明",
+                           "quality":  "品質: ",
+                           "ping":  "Ping",
+                           "loss":  "パケットロス",
+                           "jitter":  "ジッター"
+                       }
+}

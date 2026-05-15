@@ -1,0 +1,70 @@
+{
+    "calls":  {
+                  "calling":  "Dzwonie...",
+                  "ringing":  "Dzwoni...",
+                  "connecting":  "Laczenie...",
+                  "ended":  "Polaczenie zakonczone",
+                  "incomingVoice":  "Przychodzace polaczenie glosowe",
+                  "incomingVideo":  "Przychodzace polaczenie wideo",
+                  "enableCamera":  "Wlacz kamere",
+                  "disableCamera":  "Wylacz kamere",
+                  "hangup":  "Rozlacz",
+                  "fullscreen":  "Pelny ekran",
+                  "exitFullscreen":  "Wyjdz z pelnego ekranu",
+                  "voiceLabel":  "Glos",
+                  "videoLabel":  "Wideo",
+                  "sharing":  "Udostepnianie",
+                  "connectedVoice":  "Polaczono z kanalem glosowym",
+                  "participants":  "{n} uczestnik(ow)",
+                  "leave":  "Opuść",
+                  "join":  "Dołącz"
+              },
+    "callBar":  {
+                    "calling":  "Dzwonie�",
+                    "ringing":  "Dzwoni�",
+                    "connecting":  "Laczenie�",
+                    "videoConnected":  "Wideo polaczone",
+                    "voiceConnected":  "Glos polaczony",
+                    "call":  "Polaczenie�",
+                    "shareScreen":  "Udostepnij ekran",
+                    "muteMic":  "Wycisz mikrofon",
+                    "unmuteMic":  "Wlacz mikrofon",
+                    "hangup":  "Rozlacz",
+                    "ongoingCall":  "Trwajace polaczenie"
+                },
+    "callOverlay":  {
+                        "calling":  "Dzwonie�",
+                        "ringing":  "Dzwoni�",
+                        "connecting":  "Laczenie�",
+                        "you":  "Ty",
+                        "live":  "NA ZYWO",
+                        "enableSound":  "Wlacz dzwiek",
+                        "muted":  "Wyciszony",
+                        "mic":  "Mikrofon",
+                        "camera":  "Kamera",
+                        "stopShare":  "Stop",
+                        "shareScreen":  "Ekran",
+                        "hangup":  "Rozlacz",
+                        "voiceCall":  "Polaczenie glosowe",
+                        "videoCall":  "Polaczenie wideo",
+                        "clickEnableSound":  "Kliknij, aby wlaczyc dzwiek",
+                        "screenOf":  "{name} � Ekran",
+                        "myScreen":  "M�j ekran"
+                    },
+    "voiceControlBar":  {
+                            "connecting":  "Laczenie�",
+                            "voiceActive":  "Glos aktywny",
+                            "members":  "{n} czlonek/�w"
+                        },
+    "networkQuality":  {
+                           "excellent":  "Doskonala",
+                           "good":  "Dobra",
+                           "fair":  "Srednia",
+                           "poor":  "Slaba",
+                           "unknown":  "Nieznana",
+                           "quality":  "Jakosc: ",
+                           "ping":  "Ping",
+                           "loss":  "Utrata",
+                           "jitter":  "Jitter"
+                       }
+}

@@ -165,6 +165,7 @@ export const Link2Icon = fi('link-alt');
 
 // ── Notification / Bell ──
 export const BellIcon = fi('bell');
+export const BellOffIcon = fi('bell-slash');
 
 // ── Time ──
 export const ClockIcon = fi('clock');

@@ -35,9 +35,14 @@ interface MaintenanceEvent {
   id: number;
   maintenance_id: number;
   start_date_time: number;
-  end_date_time: number;
-  event_status: string;
-  maintenance?: { id: number; title: string; monitors: Array<{ monitor_tag: string; impact: string }> };
+  end_date_time: number;    // computed: start_date_time + duration_seconds
+  event_status: string;     // derived: ONGOING | SCHEDULED | COMPLETED
+  maintenance?: {
+    id: number;
+    title: string;
+    description?: string;
+    monitors: Array<{ monitor_tag: string; impact: string }>;
+  };
 }
 
 interface MonitorSummary {
@@ -132,6 +137,62 @@ function bucketByDay(
     });
 }
 
+// Kener v4 /api/v4/maintenances response: { maintenances: [...] }
+// Each maintenance has: id, title, description, start_date_time, duration_seconds, rrule, status ("ACTIVE"|"INACTIVE"), monitors[]
+// There is NO end_date_time — compute it as start_date_time + duration_seconds.
+// There is NO event_status — derive it from timestamps.
+async function fetchMaintenanceEvents(
+  startTs: number,
+  endTs: number,
+): Promise<{ events: MaintenanceEvent[]; _debug: Record<string, unknown> }> {
+  const nowTs = Math.floor(Date.now() / 1000);
+  const debug: Record<string, unknown> = {};
+
+  try {
+    const raw = await kener<any>('/api/v4/maintenances?status=ACTIVE');
+    const maintsArr: any[] = Array.isArray(raw) ? raw : (raw?.maintenances ?? []);
+    debug.maintsCount  = maintsArr.length;
+    debug.maintSample  = maintsArr[0];
+
+    const events: MaintenanceEvent[] = maintsArr.map((m: any) => {
+      // end_date_time must be computed from start + duration
+      const endDateTime: number = m.end_date_time ?? (m.start_date_time + (m.duration_seconds ?? 0));
+
+      const event_status: string =
+        endDateTime < nowTs        ? 'COMPLETED'
+        : m.start_date_time > nowTs ? 'SCHEDULED'
+        : 'ONGOING';
+
+      return {
+        id:               m.id,
+        maintenance_id:   m.id,
+        start_date_time:  m.start_date_time,
+        end_date_time:    endDateTime,
+        event_status,
+        maintenance: {
+          id:          m.id,
+          title:       m.title,
+          description: m.description,
+          monitors:    m.monitors ?? [],
+        },
+      };
+    });
+
+    // Also include recently-completed ones (ended within the display window)
+    const relevant = events.filter(e =>
+      e.event_status !== 'COMPLETED' || e.end_date_time > startTs,
+    );
+
+    debug.source        = 'maintenances';
+    debug.relevantCount = relevant.length;
+    return { events: relevant, _debug: debug };
+  } catch (e: any) {
+    debug.error  = e?.message;
+    debug.source = 'error';
+    return { events: [], _debug: debug };
+  }
+}
+
 export async function GET(req: NextRequest) {
   if (!KENER_TOKEN) {
     return NextResponse.json({ error: 'Status API not configured' }, { status: 503 });
@@ -141,15 +202,16 @@ export async function GET(req: NextRequest) {
   const startTs = endTs - days * DAY;
 
   try {
-    const [monitorsRes, incidentsRes, maintEventsRes] = await Promise.all([
+    const [monitorsRes, incidentsRes] = await Promise.all([
       kener<{ monitors: Array<{ tag: string; name: string; status: string; is_hidden?: string }> }>(
         '/api/v4/monitors',
       ),
       kener<{ incidents: Array<any> }>(`/api/v4/incidents?start_ts=${startTs}&end_ts=${endTs}`),
-      kener<{ events: MaintenanceEvent[] }>(
-        `/api/v4/maintenances/events?start_ts=${startTs}&end_ts=${endTs + 30 * DAY}&limit=100`,
-      ).catch(() => ({ events: [] as MaintenanceEvent[] })),
     ]);
+
+    // Fetch maintenance events defensively — Kener may return a direct array,
+    // a { events: [...] } object, or nothing; and the endpoint may not exist.
+    const { events: maintenanceEvents, _debug: maintDebug } = await fetchMaintenanceEvents(startTs, endTs);
 
     const visible = monitorsRes.monitors.filter(m => m.is_hidden !== 'YES' && m.status === 'ACTIVE');
 
@@ -160,8 +222,8 @@ export async function GET(req: NextRequest) {
             `/api/v4/monitors/${encodeURIComponent(m.tag)}/data?start_ts=${startTs}&end_ts=${endTs}`,
           );
           // Filter maintenance events that affect this monitor
-          const monitorMaintEvents = maintEventsRes.events.filter(e =>
-            e.maintenance?.monitors.some(mon => mon.monitor_tag === m.tag),
+          const monitorMaintEvents = maintenanceEvents.filter(e =>
+            e.maintenance?.monitors?.some((mon: any) => mon.monitor_tag === m.tag),
           );
           const dayBuckets = bucketByDay(data, days, endTs, monitorMaintEvents);
           const totalPoints = data.length;
@@ -206,7 +268,8 @@ export async function GET(req: NextRequest) {
         overall,
         monitors: summaries,
         incidents: incidentsRes.incidents,
-        maintenanceEvents: maintEventsRes.events,
+        maintenanceEvents: maintenanceEvents,
+        _maintDebug: maintDebug,
       },
       {
         headers: {

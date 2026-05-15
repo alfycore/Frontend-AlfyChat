@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { UsersRoundIcon, SearchIcon, CheckIcon, XIcon, UserPlusIcon, PencilIcon, ArrowRightIcon } from '@/components/icons';
+import { UsersRoundIcon, SearchIcon, CheckIcon, XIcon, UserPlusIcon, PencilIcon, ArrowRightIcon, CameraIcon } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ImageCropperDialog } from '@/components/chat/image-cropper-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslation } from '@/components/locale-provider';
 
@@ -40,6 +41,11 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [step, setStep] = useState<'select' | 'customize'>('select');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState('');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -48,6 +54,8 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
       setGroupName('');
       setSearch('');
       setStep('select');
+      setAvatarFile(null);
+      setAvatarPreview(null);
     }
   }, [open]);
 
@@ -132,7 +140,12 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
         groupName.trim() ||
         selectedFriends.map((f) => f.displayName || f.username).slice(0, 3).join(', ') +
           (selectedFriends.length > 3 ? '...' : '');
-      socketService.createGroup({ name: defaultName, participantIds: Array.from(selectedIds) });
+      let uploadedAvatarUrl: string | undefined;
+      if (avatarFile) {
+        const r = await api.uploadImage(avatarFile, 'avatar');
+        if (r.success && r.data) uploadedAvatarUrl = r.data.url;
+      }
+      socketService.createGroup({ name: defaultName, participantIds: Array.from(selectedIds), avatarUrl: uploadedAvatarUrl });
     } catch (error) {
       console.error('Erreur création groupe:', error);
       socketService.off('GROUP_CREATE', handleGroupCreate);
@@ -156,6 +169,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
   ];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl p-0 shadow-2xl">
           <DialogHeader className="sr-only">
@@ -368,6 +382,60 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                     </p>
                   </div>
 
+                  {/* ── Avatar upload ── */}
+                  <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
+                    <div
+                      className="relative cursor-pointer"
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      <Avatar className="size-16 rounded-2xl ring-2 ring-border">
+                        <AvatarImage src={avatarPreview || undefined} className="rounded-2xl" />
+                        <AvatarFallback className="rounded-2xl bg-primary/15 text-2xl font-bold text-primary">
+                          <UsersRoundIcon size={24} />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+                        <CameraIcon size={18} className="text-white" />
+                      </div>
+                    </div>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        const r = new FileReader();
+                        r.onloadend = () => { setCropperSrc(r.result as string); setCropperOpen(true); };
+                        r.readAsDataURL(f);
+                        e.target.value = '';
+                      }}
+                    />
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-sm font-medium">{t.group.groupIcon}</p>
+                      <p className="text-xs text-muted-foreground">{t.group.groupIconHint}</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => avatarInputRef.current?.click()}
+                          className="text-xs font-medium text-primary hover:underline"
+                        >
+                          {t.group.changeIcon}
+                        </button>
+                        {avatarPreview && (
+                          <button
+                            type="button"
+                            onClick={() => { setAvatarFile(null); setAvatarPreview(null); }}
+                            className="text-xs font-medium text-destructive hover:underline"
+                          >
+                            {t.group.removeIcon}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-4 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                       {t.group.information}
@@ -428,5 +496,15 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
           </div>
       </DialogContent>
     </Dialog>
+
+    <ImageCropperDialog
+      open={cropperOpen}
+      onOpenChange={setCropperOpen}
+      imageSrc={cropperSrc}
+      aspectRatio={1}
+      shape="circle"
+      onCrop={(file, previewUrl) => { setAvatarFile(file); setAvatarPreview(previewUrl); }}
+    />
+    </>
   );
 }

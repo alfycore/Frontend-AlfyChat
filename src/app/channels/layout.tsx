@@ -13,8 +13,10 @@ import { useSwipeDrawer } from '@/hooks/use-swipe-drawer';
 import { CallProvider, useCallContext } from '@/hooks/use-call-context';
 import { MobileNavProvider } from '@/hooks/use-mobile-nav';
 import { VoiceProvider } from '@/hooks/use-voice';
+import { usePresence } from '@/hooks/use-presence';
 import { setActiveDM, setActiveGroup, setActiveChannel, clearUnread } from '@/lib/notification-store';
 import { api, resolveMediaUrl } from '@/lib/api';
+import { preloadEmojiImages } from '@/components/chat/emoji-picker';
 import { socketService } from '@/lib/socket';
 import { ServerList } from '@/components/chat/server-list';
 import { ChannelList } from '@/components/chat/channel-list';
@@ -45,13 +47,13 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
 function LoadingScreen() {
   return (
     <div className="relative flex h-dvh items-center justify-center overflow-hidden bg-background">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
+      
       <div className="relative z-10 flex flex-col items-center gap-4">
-        <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-primary/10">
+        <div className="flex size-16 animate-pulse items-center justify-center ">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-9 dark:hidden" />
+          <img src="/logo/Alfychat.svg" alt="AlfyChat" className="dark:hidden" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" className="hidden size-9 dark:block" />
+          <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" className="hidden dark:block" />
         </div>
         <p className="text-sm text-muted-foreground">Chargement…</p>
       </div>
@@ -65,7 +67,16 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  const [layoutReady, setLayoutReady] = useState(false);
+
   const { user, isLoading, isAuthenticated } = useAuth();
+
+  usePresence({
+    chosenStatus: (user?.status as 'online' | 'idle' | 'dnd' | 'invisible') ?? 'online',
+    customStatus: user?.customStatus,
+    emoji: user?.emoji,
+  });
+
   const router = useRouter();
   const pathname = usePathname();
 
@@ -96,15 +107,15 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
 
   // ── Incoming call ──────────────────────────────────────────────────────────
-  const { callType, callStatus, callerName, callerAvatar, acceptCall, declineCall } = useCallContext();
-  const [incomingCall, setIncomingCall] = useState<{ callerName: string; callerAvatar?: string; callType: 'voice' | 'video' } | null>(null);
+  const { callType, callStatus, callerName, callerAvatar, isGroup, callCategory, acceptCall, joinCall, declineCall } = useCallContext();
+  const [incomingCall, setIncomingCall] = useState<{ callerName: string; callerAvatar?: string; callType: 'voice' | 'video'; isGroup: boolean; isServerCall: boolean } | null>(null);
   useEffect(() => {
     if (callStatus === 'ringing') {
-      setIncomingCall({ callerName: callerName || 'Utilisateur', callerAvatar, callType: callType || 'voice' });
+      setIncomingCall({ callerName: callerName || 'Utilisateur', callerAvatar, callType: callType || 'voice', isGroup: !!isGroup, isServerCall: callCategory === 'server' });
     } else {
       setIncomingCall(null);
     }
-  }, [callStatus, callType, callerName, callerAvatar]);
+  }, [callStatus, callType, callerName, callerAvatar, isGroup, callCategory]);
 
   // ── Resizable channel list ─────────────────────────────────────────────────
   const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
@@ -191,6 +202,18 @@ function LayoutInner({ children }: { children: ReactNode }) {
     else if (activeServerId) router.push(`/channels/server/${activeServerId}/${ch}`);
   }, [router, activeServerId]);
 
+  // ── Prefetch initial data (servers + conversations) before revealing UI ─────
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    preloadEmojiImages();
+    const timer = setTimeout(() => { if (!cancelled) setLayoutReady(true); }, 5000);
+    Promise.all([api.getServers(), api.getConversations()]).finally(() => {
+      if (!cancelled) { clearTimeout(timer); setLayoutReady(true); }
+    });
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [user?.id]);
+
   // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push('/login');
@@ -199,8 +222,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
   // ── Close mobile sidebar on navigate ──────────────────────────────────────
   useEffect(() => { if (isMobile) closeAll(); }, [pathname, isMobile, closeAll]);
 
-  if (!mounted || isLoading) return <LoadingScreen />;
-  if (!user) return <LoadingScreen />;
+  if (!mounted || isLoading || !user || !layoutReady) return <LoadingScreen />;
 
   // ── Glass wallpaper ────────────────────────────────────────────────────────
   const glassBg = wallpaper
@@ -274,7 +296,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
         callerName={incomingCall?.callerName || ''}
         callerAvatar={incomingCall?.callerAvatar}
         callType={incomingCall?.callType || 'voice'}
-        onAccept={acceptCall}
+        isGroup={incomingCall?.isGroup}
+        isServerCall={incomingCall?.isServerCall}
+        onAccept={incomingCall?.isGroup ? joinCall : acceptCall}
         onDecline={declineCall}
       />
 

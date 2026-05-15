@@ -1,0 +1,70 @@
+{
+    "calls":  {
+                  "calling":  "Ringer op...",
+                  "ringing":  "Ringer...",
+                  "connecting":  "Forbinder...",
+                  "ended":  "Opkald afsluttet",
+                  "incomingVoice":  "Indgaende taleopkald",
+                  "incomingVideo":  "Indgaende videoopkald",
+                  "enableCamera":  "Aktiver kamera",
+                  "disableCamera":  "Deaktiver kamera",
+                  "hangup":  "Lagg pa",
+                  "fullscreen":  "Fuldskarm",
+                  "exitFullscreen":  "Afslut fuldskarm",
+                  "voiceLabel":  "Tale",
+                  "videoLabel":  "Video",
+                  "sharing":  "Deler",
+                  "connectedVoice":  "Forbundet til talekanal",
+                  "participants":  "{n} deltager(e)",
+                  "leave":  "Forlad",
+                  "join":  "Deltag"
+              },
+    "callBar":  {
+                    "calling":  "Ringer…",
+                    "ringing":  "Ringer op…",
+                    "connecting":  "Forbinder…",
+                    "videoConnected":  "Video forbundet",
+                    "voiceConnected":  "Stemme forbundet",
+                    "call":  "Opkald…",
+                    "shareScreen":  "Del skærm",
+                    "muteMic":  "Slå mikrofon fra",
+                    "unmuteMic":  "Slå mikrofon til",
+                    "hangup":  "Læg på",
+                    "ongoingCall":  "Igangværende opkald"
+                },
+    "callOverlay":  {
+                        "calling":  "Ringer…",
+                        "ringing":  "Ringer op…",
+                        "connecting":  "Forbinder…",
+                        "you":  "Dig",
+                        "live":  "LIVE",
+                        "enableSound":  "Aktiver lyd",
+                        "muted":  "Lydløs",
+                        "mic":  "Mikrofon",
+                        "camera":  "Kamera",
+                        "stopShare":  "Stop",
+                        "shareScreen":  "Skærm",
+                        "hangup":  "Læg på",
+                        "voiceCall":  "Stemmeopkald",
+                        "videoCall":  "Videoopkald",
+                        "clickEnableSound":  "Klik for at aktivere lyd",
+                        "screenOf":  "{name} — Skærm",
+                        "myScreen":  "Min skærm"
+                    },
+    "voiceControlBar":  {
+                            "connecting":  "Forbinder…",
+                            "voiceActive":  "Stemme aktiv",
+                            "members":  "{n} medlem(mer)"
+                        },
+    "networkQuality":  {
+                           "excellent":  "Fremragende",
+                           "good":  "God",
+                           "fair":  "Middel",
+                           "poor":  "Dårlig",
+                           "unknown":  "Ukendt",
+                           "quality":  "Kvalitet: ",
+                           "ping":  "Ping",
+                           "loss":  "Tab",
+                           "jitter":  "Jitter"
+                       }
+}

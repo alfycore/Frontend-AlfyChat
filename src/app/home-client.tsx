@@ -12,6 +12,13 @@ import { SiteNavbar } from '@/components/site-navbar';
 import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Reveal } from '@/components/landing/reveal';
+import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
+import { WordRotate } from '@/components/ui/word-rotate';
+import { ShimmerButton } from '@/components/ui/shimmer-button';
+import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
+import { GeoHostingBadge } from '@/components/landing/geo-tagline';
+import { useTranslation } from '@/components/locale-provider';
 
 /* ─── OS Icons ───────────────────────────────────────────────────────────── */
 function WinIcon({ size = 16 }: { size?: number }) {
@@ -111,6 +118,8 @@ function Label({ children }: { children: React.ReactNode }) {
    PAGE
 ═══════════════════════════════════════════════════════════════════════════ */
 export function HomeClient() {
+  const { t } = useTranslation();
+  const L = t.landing;
   return (
     <div className="bg-background text-foreground">
       <SiteNavbar />
@@ -120,66 +129,76 @@ export function HomeClient() {
           ╚══════════════════════════════════════════════════════════════════╝ */}
       <section className="grid min-h-[calc(100svh-65px)] lg:grid-cols-2">
 
-        {/* Colonne gauche — contenu centré, max-w comme login */}
-        <div className="flex items-center justify-center px-8 py-16">
-          <div className="w-full max-w-sm">
-            <MotionStagger className="flex flex-col gap-6">
+        {/* Colonne gauche */}
+        <div className="flex flex-col justify-center px-5 py-14 sm:px-8 sm:py-16 md:px-10 lg:px-14 lg:py-20">
 
-              <MotionStaggerItem>
-                <span className="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1.5">
-                  <span className="size-1.5 animate-pulse rounded-full bg-success" />
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Open source · France
-                  </span>
+          <Reveal>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-1.5 text-xs backdrop-blur-md sm:mb-8 sm:px-4 sm:text-sm">
+              <span className="size-1.5 animate-pulse rounded-full bg-success" />
+              <AnimatedGradientText colorFrom="#7c3aed" colorTo="#9E7AFF" speed={0.6} className="text-xs font-medium">
+                {L.hero.badge}
+              </AnimatedGradientText>
+            </div>
+          </Reveal>
+
+          <Reveal delay={80}>
+            <h1 className="font-heading text-4xl leading-[1.05] tracking-tight sm:text-5xl md:text-6xl xl:text-7xl">
+              {L.hero.titleLine1}<br />
+              <span className="bg-linear-to-br from-primary via-[#7c3aed] to-[#9E7AFF] bg-clip-text text-transparent">
+                {L.hero.titleLine2}
+              </span>
+            </h1>
+          </Reveal>
+
+          <Reveal delay={160}>
+            <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:mt-6 sm:text-base md:text-lg">
+              <span>{L.hero.tagline}</span>
+              <WordRotate
+                words={[...L.hero.rotatingWords]}
+                duration={2800}
+                className="font-semibold text-foreground"
+              />
+            </div>
+          </Reveal>
+
+          <Reveal delay={220}>
+            <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted-foreground sm:mt-6 sm:text-base">
+              {L.hero.subtitle}
+            </p>
+          </Reveal>
+
+          <Reveal delay={300}>
+            <div className="mt-8 flex flex-wrap gap-2.5 sm:mt-10 sm:gap-3">
+              <Link href="/register">
+                <ShimmerButton
+                  background="oklch(0.457 0.24 277.023)"
+                  borderRadius="14px"
+                  className="gap-2 px-6 py-2.5 text-sm font-medium sm:px-8 sm:py-3 sm:text-base"
+                >
+                  {L.hero.ctaPrimary}
+                  <ArrowRightIcon size={15} />
+                </ShimmerButton>
+              </Link>
+              <Link href="/login">
+                <InteractiveHoverButton className="h-10 rounded-2xl border border-border bg-background/60 px-6 text-sm backdrop-blur-md sm:h-12 sm:px-8 sm:text-base">
+                  {L.hero.ctaSecondary}
+                </InteractiveHoverButton>
+              </Link>
+            </div>
+          </Reveal>
+
+          <Reveal delay={360}>
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 sm:mt-8 sm:gap-x-6">
+              {[L.hero.badges.crypto, <GeoHostingBadge key="g" />, L.hero.badges.gdpr, L.hero.badges.free].map((item, i) => (
+                <span key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
+                  <CheckIcon size={10} className="text-success" />
+                  {item}
                 </span>
-              </MotionStaggerItem>
-
-              <MotionStaggerItem>
-                <h1 className="font-(family-name:--font-krona) text-[2.6rem] font-bold leading-[1.08] tracking-tight">
-                  La messagerie<br />
-                  <span className="bg-linear-to-br from-primary via-[#7c3aed] to-[#9E7AFF] bg-clip-text text-transparent">
-                    qui vous appartient
-                  </span>
-                </h1>
-              </MotionStaggerItem>
-
-              <MotionStaggerItem>
-                <p className="text-[13px] leading-relaxed text-muted-foreground">
-                  Chiffrement de bout en bout, auto-hébergement et code ouvert. Vos conversations, vos règles — maintenant et pour toujours.
-                </p>
-              </MotionStaggerItem>
-
-              <MotionStaggerItem className="flex flex-col gap-2.5">
-                <Link href="/register" className="block">
-                  <Button size="lg" className="w-full gap-2">
-                    Créer un compte <ArrowRightIcon size={14} />
-                  </Button>
-                </Link>
-                <Link href="/login" className="block">
-                  <Button size="lg" variant="outline" className="w-full">
-                    Se connecter
-                  </Button>
-                </Link>
-              </MotionStaggerItem>
-
-              <MotionStaggerItem>
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-border" />
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/40">inclus</span>
-                  <div className="h-px flex-1 bg-border" />
-                </div>
-                <div className="mt-3.5 flex flex-wrap gap-x-4 gap-y-1.5">
-                  {TRUST.map((t) => (
-                    <span key={t} className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                      <CheckIcon size={11} className="text-success" />{t}
-                    </span>
-                  ))}
-                </div>
-              </MotionStaggerItem>
-
-            </MotionStagger>
-          </div>
+              ))}
+            </div>
+          </Reveal>
         </div>
+
 
         {/* Colonne droite — identique au login (p-4, rounded-2xl) */}
         <div className="hidden bg-background p-4 lg:block">

@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
   UsersRoundIcon,
   CrownIcon,
@@ -13,6 +13,7 @@ import {
   Trash2Icon,
   LogOutIcon,
   SettingsIcon,
+  CameraIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -28,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ImageCropperDialog } from '@/components/chat/image-cropper-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslation } from '@/components/locale-provider';
 
@@ -82,6 +84,12 @@ export function GroupSettingsDialog({
   const { t } = useTranslation();
   const [section, setSection] = useState<'general' | 'members'>('general');
   const [groupName, setGroupName] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showAddMembers, setShowAddMembers] = useState(false);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -91,6 +99,8 @@ export function GroupSettingsDialog({
   useEffect(() => {
     if (open && group) {
       setGroupName(group.name);
+      setAvatarFile(null);
+      setAvatarPreview(group.avatarUrl ? (resolveMediaUrl(group.avatarUrl) ?? null) : null);
       setSection(initialSection || 'general');
       setFriendSearch('');
       setSelectedFriendIds(new Set());
@@ -158,12 +168,43 @@ export function GroupSettingsDialog({
     if (!group || !groupName.trim()) return;
     setIsSaving(true);
     try {
-      await api.updateConversation(group.id, { name: groupName.trim() });
-      onUpdate?.();
+      const update: { name?: string; avatarUrl?: string } = {};
+      if (groupName.trim() !== group.name) update.name = groupName.trim();
+      if (avatarFile) {
+        const r = await api.uploadImage(avatarFile, 'avatar');
+        if (r.success && r.data) { update.avatarUrl = r.data.url; setAvatarFile(null); }
+      }
+      if (Object.keys(update).length > 0) {
+        await api.updateConversation(group.id, update);
+        onUpdate?.();
+      }
     } catch (error) {
-      console.error('Erreur mise à jour nom:', error);
+      console.error('Erreur mise à jour groupe:', error);
     }
     setIsSaving(false);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onloadend = () => { setCropperSrc(r.result as string); setCropperOpen(true); };
+    r.readAsDataURL(f);
+    e.target.value = '';
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!group) return;
+    setIsUploadingAvatar(true);
+    try {
+      await api.updateConversation(group.id, { avatarUrl: null as any });
+      setAvatarPreview(null);
+      setAvatarFile(null);
+      onUpdate?.();
+    } catch (error) {
+      console.error('Erreur suppression avatar:', error);
+    }
+    setIsUploadingAvatar(false);
   };
 
   const handleAddMembers = async () => {
@@ -202,6 +243,7 @@ export function GroupSettingsDialog({
   ];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className={cn('h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl border border-border/50 p-0 shadow-2xl shadow-black/30', ui.glassModal)}>
           <DialogHeader className="sr-only">
@@ -267,6 +309,51 @@ export function GroupSettingsDialog({
                     <p className="mt-1 text-sm text-muted-foreground">{t.group.generalSettingsDesc}</p>
                   </div>
 
+                  {/* ── Avatar ── */}
+                  <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
+                    <div className="relative cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                      <Avatar className="size-16 rounded-2xl ring-2 ring-border">
+                        <AvatarImage src={avatarPreview || undefined} className="rounded-2xl" />
+                        <AvatarFallback className="rounded-2xl bg-primary/15 text-2xl font-bold text-primary">
+                          <UsersRoundIcon size={24} />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+                        <CameraIcon size={18} className="text-white" />
+                      </div>
+                    </div>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-sm font-medium">{t.group.groupIcon}</p>
+                      <p className="text-xs text-muted-foreground">{t.group.groupIconHint}</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => avatarInputRef.current?.click()}
+                          className="text-xs font-medium text-primary hover:underline"
+                        >
+                          {t.group.changeIcon}
+                        </button>
+                        {avatarPreview && (
+                          <button
+                            type="button"
+                            onClick={handleRemoveAvatar}
+                            disabled={isUploadingAvatar}
+                            className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
+                          >
+                            {t.group.removeIcon}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
                     <span className="text-[11px] font-medium text-muted-foreground/50">
                       {t.group.groupName}
@@ -280,7 +367,7 @@ export function GroupSettingsDialog({
                         />
                       <Button
                         onClick={handleSaveName}
-                        disabled={isSaving || groupName === group?.name}
+                        disabled={isSaving || (groupName === group?.name && !avatarFile)}
                         size="sm"
                         className="gap-1.5 rounded-xl"
                       >
@@ -487,5 +574,15 @@ export function GroupSettingsDialog({
           </div>
       </DialogContent>
     </Dialog>
+
+    <ImageCropperDialog
+      open={cropperOpen}
+      onOpenChange={setCropperOpen}
+      imageSrc={cropperSrc}
+      aspectRatio={1}
+      shape="circle"
+      onCrop={(file, previewUrl) => { setAvatarFile(file); setAvatarPreview(previewUrl); }}
+    />
+    </>
   );
 }

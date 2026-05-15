@@ -1,6 +1,7 @@
 ﻿'use client';
 
-import { memo, useState, type Dispatch, type SetStateAction } from 'react';
+import { memo, useState, useEffect, useSyncExternalStore, type Dispatch, type SetStateAction } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon, AlertCircleIcon,
 } from '@/components/icons';
@@ -19,6 +20,7 @@ import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { InviteEmbed, extractInviteCodes } from '@/components/chat/invite-embed';
 import { Twemoji } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
+import { userProfileCache } from '@/lib/user-profile-cache';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { cn } from '@/lib/utils';
@@ -68,7 +70,21 @@ function isPreviewable(name: string) {
 function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: string; url: string }[] }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [filePreview, setFilePreview] = useState<{ name: string; src: string } | null>(null);
+  const [zoom, setZoom] = useState(1);
   const { t } = useTranslation();
+
+  useEffect(() => { setZoom(1); }, [lightbox]);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setZoom(prev => Math.min(5, Math.max(0.1, prev * (e.deltaY > 0 ? 0.9 : 1 / 0.9))));
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, [lightbox]);
   if (!images.length && !files.length) return null;
   return (
     <div className="mt-1.5 flex flex-col gap-1.5">
@@ -129,9 +145,10 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
       })}
 
       {/* Image lightbox */}
-      {lightbox && (
+      {lightbox && typeof document !== 'undefined' && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
           onClick={() => setLightbox(null)}
           onKeyDown={(e) => e.key === 'Escape' && setLightbox(null)}
           role="dialog"
@@ -144,14 +161,28 @@ function AttachmentsEmbed({ images, files }: { images: string[]; files: { name: 
           >
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
+          {zoom !== 1 && (
+            <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white/70 select-none">
+              {Math.round(zoom * 100)}%
+            </div>
+          )}
           <img
             src={lightbox}
             alt=""
-            className="h-screen w-screen object-contain"
+            style={{
+              maxWidth: '100vw',
+              maxHeight: '100vh',
+              width: 'auto',
+              height: 'auto',
+              transform: `scale(${zoom})`,
+              transformOrigin: 'center',
+              transition: 'transform 0.05s',
+            }}
             onClick={(e) => e.stopPropagation()}
             draggable={false}
           />
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* File preview modal */}
@@ -299,10 +330,16 @@ export const MessageItem = memo(function MessageItem({
   const d = densityCls(prefs.density);
   const ui = useUIStyle();
   const { t } = useTranslation();
+  // S'abonner au cache de profils pour re-rendre quand un avatar/nom change
+  useSyncExternalStore(userProfileCache.subscribe, userProfileCache.getSnapshot, userProfileCache.getServerSnapshot);
   const isMe = !!currentUser && message.authorId === currentUser.id;
+  const cachedSender = !isMe && message.authorId ? userProfileCache.getProfile(message.authorId) : undefined;
   const displayName = isMe
     ? currentUser!.displayName || currentUser!.username
-    : message.sender?.displayName || message.sender?.username || recipientName || t.messageItem.user;
+    : cachedSender?.displayName || cachedSender?.username || message.sender?.displayName || message.sender?.username || recipientName || t.messageItem.user;
+  const senderAvatarUrl = isMe
+    ? currentUser!.avatarUrl
+    : cachedSender?.avatarUrl ?? message.sender?.avatarUrl;
   const initial = displayName?.[0]?.toUpperCase() || 'U';
 
   // ── Message système ──
@@ -385,7 +422,7 @@ export const MessageItem = memo(function MessageItem({
                 <UserProfilePopover userId={message.authorId}>
                   <button type="button" className="mb-0.5 shrink-0">
                     <Avatar className={`${d.msgAvatar} cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm ui-smooth hover:scale-105`}>
-                      <AvatarImage src={resolveMediaUrl(message.sender?.avatarUrl)} alt={displayName} />
+                      <AvatarImage src={resolveMediaUrl(senderAvatarUrl)} alt={displayName} />
                       <AvatarFallback className="bg-muted font-bold text-sm text-muted-foreground">{initial}</AvatarFallback>
                     </Avatar>
                   </button>
@@ -554,7 +591,7 @@ export const MessageItem = memo(function MessageItem({
             <UserProfilePopover userId={message.authorId}>
               <button type="button" className="mt-0.5 shrink-0">
                 <Avatar className={`${d.msgAvatar} cursor-pointer ring-2 ring-[var(--border)]/20 shadow-sm transition-all duration-150 hover:scale-105 hover:ring-[var(--accent)]/30`}>
-                  <AvatarImage src={resolveMediaUrl(isMe ? currentUser?.avatarUrl : message.sender?.avatarUrl)} alt={displayName} />
+                  <AvatarImage src={resolveMediaUrl(senderAvatarUrl)} alt={displayName} />
                   <AvatarFallback className={cn(
                     'font-bold text-sm',
                     isMe

@@ -73,6 +73,14 @@ export default function InvitePage() {
       if (currentUserId && ownerId && currentUserId === ownerId && inviteInfo?.server?.id) {
         socketService.getSocket()?.emit('SERVER_OWNER_JOINED', { serverId: inviteInfo.server.id });
       }
+      // Rejoindre les rooms socket + notifier tous les onglets/appareils
+      if (inviteInfo?.server?.id) {
+        socketService.getSocket()?.emit('SERVER_SELF_JOIN', {
+          serverId: inviteInfo.server.id,
+          name: inviteInfo.server.name,
+          iconUrl: inviteInfo.server.iconUrl,
+        });
+      }
       router.push('/channels');
     } else {
       setError(res.error || 'Impossible de rejoindre ce serveur');

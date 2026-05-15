@@ -13,6 +13,9 @@ interface IncomingCallDialogProps {
   callerName: string;
   callerAvatar?: string;
   callType: 'voice' | 'video';
+  isGroup?: boolean;
+  /** When true, renders a passive banner instead of the modal dialog (server/community calls) */
+  isServerCall?: boolean;
   onAccept: () => void;
   onDecline: () => void;
 }
@@ -22,6 +25,8 @@ export function IncomingCallDialog({
   callerName,
   callerAvatar,
   callType,
+  isGroup = false,
+  isServerCall = false,
   onAccept,
   onDecline,
 }: IncomingCallDialogProps) {
@@ -85,6 +90,38 @@ export function IncomingCallDialog({
     }
   }, [open]);
 
+  // Server calls use a non-intrusive banner instead of a blocking modal
+  if (isServerCall) {
+    if (!open) return null;
+    return (
+      <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-primary/20 bg-card/90 px-4 py-2.5 shadow-lg shadow-black/20 backdrop-blur-sm">
+        <span className="relative flex size-2 shrink-0">
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-50" />
+          <span className="relative inline-flex size-2 rounded-full bg-primary" />
+        </span>
+        <span className="text-[12px] font-medium text-foreground/80">
+          Appel en cours dans <span className="font-semibold text-foreground">{callerName}</span>
+        </span>
+        <Button
+          size="sm"
+          onClick={onAccept}
+          className="ml-auto h-7 rounded-lg bg-success/90 px-3 text-[11px] font-semibold text-white hover:bg-success"
+        >
+          {callType === 'video' ? <VideoIcon size={12} className="mr-1.5" /> : <PhoneIcon size={12} className="mr-1.5" />}
+          Rejoindre
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onDecline}
+          className="h-7 rounded-lg px-2 text-[11px] text-muted-foreground hover:text-destructive"
+        >
+          <PhoneOffIcon size={12} />
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <Dialog open={open}>
       <DialogContent showCloseButton={false} className="max-w-[320px] overflow-hidden rounded-3xl border border-border/40 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl">
@@ -144,7 +181,7 @@ export function IncomingCallDialog({
                 <span className="text-[11px] font-medium text-muted-foreground">{t.friends.decline}</span>
               </div>
 
-              {/* Accept */}
+              {/* Accept / Join */}
               <div className="flex flex-col items-center gap-2">
                 <Button
                   size="icon"
@@ -157,7 +194,9 @@ export function IncomingCallDialog({
                     <PhoneIcon size={26} />
                   )}
                 </Button>
-                <span className="text-[11px] font-medium text-muted-foreground">{t.friends.accept}</span>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {isGroup ? t.calls.join ?? 'Rejoindre' : t.friends.accept}
+                </span>
               </div>
             </div>
       </DialogContent>

@@ -38,11 +38,18 @@ interface CallPanelProps {
   currentUserAvatar?: string;
   duration: number;
   mediaError?: string;
+  /** Group call participants (excludes self). When provided, renders N tiles instead of the 1:1 fallback. */
+  participants?: { userId: string; name: string; avatar?: string; handRaised?: boolean }[];
+  callCategory?: 'dm' | 'group' | 'server';
+  callMode?: 'p2p' | 'sfu';
+  tierLabel?: string;
+  handRaised?: boolean;
   onToggleMute: () => void;
   onToggleVideo: () => void;
   onStartScreenShare: () => void;
   onStopScreenShare: () => void;
   onEndCall: () => void;
+  onToggleHand?: () => void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -91,11 +98,14 @@ interface TileProps {
   isLocal?: boolean;
   isConnected?: boolean;
   isScreenShare?: boolean;
+  /** Click to pin/unpin this tile */
+  onClick?: () => void;
+  isPinned?: boolean;
 }
 
 function ParticipantTile({
   label, avatarSrc, stream, micMuted, muteVideo, muteAudio, isLocal,
-  isConnected, isScreenShare,
+  isConnected, isScreenShare, onClick, isPinned,
 }: TileProps) {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -163,12 +173,18 @@ function ParticipantTile({
   );
 
   return (
-    <div className={cn(
-      'group relative flex h-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-zinc-900/90 shadow-inner shadow-black/40 transition-all duration-200',
-      speaking
-        ? 'ring-2 ring-success shadow-lg shadow-success/20'
-        : 'ring-1 ring-white/10',
-    )}>
+    <div
+      className={cn(
+        'group relative flex h-full flex-col items-center justify-center overflow-hidden bg-zinc-900/90 shadow-inner shadow-black/40 transition-all duration-200',
+        speaking
+          ? 'ring-2 ring-success shadow-lg shadow-success/20'
+          : isPinned
+            ? 'ring-2 ring-primary shadow-lg shadow-primary/20'
+            : 'ring-1 ring-white/10',
+        onClick && 'cursor-pointer',
+      )}
+      onClick={onClick}
+    >
 
       {/*
         UN SEUL <video> toujours monté — évite le problème de srcObject
@@ -259,6 +275,15 @@ function ParticipantTile({
           <span className="text-xs font-medium">{t.callOverlay.clickEnableSound}</span>
         </button>
       )}
+
+      {/* Pin hover hint */}
+      {onClick && !isPlayBlocked && (
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+          <span className="rounded-xl bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md ring-1 ring-white/15">
+            {isPinned ? '✕ Désépingler' : '📌 Épingler'}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -311,13 +336,20 @@ export function CallPanel({
   currentUserAvatar,
   duration,
   mediaError,
+  participants,
+  callCategory,
+  callMode,
+  tierLabel,
+  handRaised = false,
   onToggleMute,
   onToggleVideo,
   onStartScreenShare,
   onStopScreenShare,
   onEndCall,
+  onToggleHand,
 }: CallPanelProps) {
   const { t } = useTranslation();
+  const [pinnedKey, setPinnedKey] = useState<string | null>(null);
   const isConnected = status === 'connected';
 
   const statusLabel =
@@ -327,28 +359,125 @@ export function CallPanel({
     : isConnected ? formatDuration(duration)
     : '';
 
-  // Stream caméra remote = stream avec audio (key sans "_screen")
-  // Stream screen share remote = stream sans audio (key se termine par "_screen")
-  let remoteStream: MediaStream | null = null;
-  let remoteScreenStream: MediaStream | null = null;
-  for (const [key, s] of remoteStreams.entries()) {
-    if (key.endsWith('_screen')) {
-      remoteScreenStream = s;
-    } else {
-      remoteStream = s;
+  const showLocalScreenTile = isScreenSharing && !!screenStream;
+
+  // Build ordered tile list
+  interface TileDef {
+    key: string;
+    tileProps: Omit<TileProps, 'onClick' | 'isPinned'>;
+  }
+
+  const tiles: TileDef[] = [
+    {
+      key: 'local',
+      tileProps: {
+        label: currentUserName || t.callOverlay.you,
+        avatarSrc: currentUserAvatar,
+        stream: localStream,
+        micMuted: isMuted,
+        muteVideo: isVideoOff,
+        isLocal: true,
+        isConnected,
+      },
+    },
+  ];
+
+  const useGroupTiles = participants && participants.length > 0;
+
+  if (useGroupTiles) {
+    // N-participant mode: one tile per remote participant
+    for (const peer of participants!) {
+      const peerStream = remoteStreams.get(peer.userId) ?? null;
+      const peerScreenStream = remoteStreams.get(`${peer.userId}_screen`) ?? null;
+      tiles.push({
+        key: peer.userId,
+        tileProps: {
+          label: peer.name,
+          avatarSrc: peer.avatar,
+          stream: peerStream,
+          isLocal: false,
+          isConnected: isConnected && (!!peerStream || !!peerScreenStream),
+        },
+      });
+      if (peerScreenStream) {
+        tiles.push({
+          key: `${peer.userId}_screen`,
+          tileProps: {
+            label: t.callOverlay.screenOf.replace('{name}', peer.name),
+            avatarSrc: peer.avatar,
+            stream: peerScreenStream,
+            isLocal: false,
+            isConnected,
+            isScreenShare: true,
+          },
+        });
+      }
     }
+  } else {
+    // 1:1 fallback
+    let remoteStream: MediaStream | null = null;
+    let remoteScreenStream: MediaStream | null = null;
+    for (const [key, s] of remoteStreams.entries()) {
+      if (key.endsWith('_screen')) remoteScreenStream = s;
+      else remoteStream = s;
+    }
+    tiles.push({
+      key: 'remote',
+      tileProps: {
+        label: recipientName,
+        avatarSrc: recipientAvatar,
+        stream: remoteStream,
+        isLocal: false,
+        isConnected: isConnected && (!!remoteStream || remoteIsScreenSharing),
+      },
+    });
+    if (remoteScreenStream) {
+      tiles.push({
+        key: 'remote_screen',
+        tileProps: {
+          label: t.callOverlay.screenOf.replace('{name}', recipientName),
+          avatarSrc: recipientAvatar,
+          stream: remoteScreenStream,
+          isLocal: false,
+          isConnected,
+          isScreenShare: true,
+        },
+      });
+    }
+  }
+
+  if (showLocalScreenTile) {
+    tiles.push({
+      key: 'local_screen',
+      tileProps: {
+        label: t.callOverlay.myScreen,
+        avatarSrc: currentUserAvatar,
+        stream: screenStream,
+        isLocal: true,
+        isConnected,
+        isScreenShare: true,
+      },
+    });
   }
 
   const hasLocalVideo =
     !!localStream && !isVideoOff &&
     localStream.getVideoTracks().some((t) => t.readyState === 'live' && t.enabled);
 
-  // Tuile screen share locale (quand JE partage mon écran)
-  const showLocalScreenTile = isScreenSharing && !!screenStream;
-  // Tuile screen share remote (quand L'AUTRE partage)
-  const showRemoteScreenTile = !!remoteScreenStream;
-  // 3 colonnes quand il y a une 3e tuile (partage local OU remote)
-  const threeCol = showLocalScreenTile || showRemoteScreenTile;
+  const handlePin = (key: string) => setPinnedKey(prev => prev === key ? null : key);
+
+  // If the pinned tile was removed (e.g. screen share stopped), clear pin
+  const effectivePinned = tiles.some(t => t.key === pinnedKey) ? pinnedKey : null;
+
+  const pinnedTile = effectivePinned ? tiles.find(t => t.key === effectivePinned) : null;
+  const otherTiles = effectivePinned ? tiles.filter(t => t.key !== effectivePinned) : tiles;
+
+  // Dynamic grid columns based on tile count
+  const gridCols =
+    tiles.length <= 1 ? 'grid-cols-1'
+    : tiles.length <= 4 ? 'grid-cols-2'
+    : tiles.length <= 9 ? 'grid-cols-3'
+    : 'grid-cols-4';
 
   return (
     <div className="border-b border-white/5 bg-zinc-950">
@@ -369,63 +498,113 @@ export function CallPanel({
           )}
           {statusLabel}
         </div>
-        <span className="text-[11px] font-medium text-white/30">
-          {type === 'video' ? t.calls.videoLabel : t.calls.voiceLabel}
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Quality / mode badge for group and server calls */}
+          {isConnected && callCategory && callCategory !== 'dm' && (
+            <span className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-white/40">
+              {callMode === 'sfu' ? (tierLabel ?? 'SFU') : 'P2P'}
+            </span>
+          )}
+          <span className="text-[11px] font-medium text-white/30">
+            {useGroupTiles
+              ? `${(participants?.length ?? 0) + 1} · ${type === 'video' ? t.calls.videoLabel : t.calls.voiceLabel}`
+              : (type === 'video' ? t.calls.videoLabel : t.calls.voiceLabel)}
+          </span>
+        </div>
       </div>
 
-      {/* ── TILES GRID ── */}
-      <div className="p-3">
-        {/* Grille hauteur fixe — indépendant de la largeur du container */}
-        <div className={cn(
-          'grid h-44 gap-2',
-          threeCol ? 'grid-cols-3' : 'grid-cols-2',
-        )}>
+      {/* ── SERVER STAGE LAYOUT ── */}
+      {callCategory === 'server' && useGroupTiles && (
+        <div className="flex gap-2 p-3">
+          {/* Main tile — active / pinned speaker */}
+          <div className="aspect-video min-w-0 flex-[3] overflow-hidden rounded-2xl">
+            {pinnedTile ? (
+              <ParticipantTile
+                {...pinnedTile.tileProps}
+                onClick={() => handlePin(pinnedTile.key)}
+                isPinned
+              />
+            ) : tiles[0] && (
+              <ParticipantTile
+                {...tiles[0].tileProps}
+                onClick={() => handlePin(tiles[0].key)}
+                isPinned={false}
+              />
+            )}
+          </div>
 
-          {/* Tuile locale */}
-          <ParticipantTile
-            label={t.callOverlay.you}
-            avatarSrc={currentUserAvatar}
-            stream={localStream}
-            micMuted={isMuted}
-            muteVideo={isVideoOff}
-            isLocal={true}
-            isConnected={isConnected}
-          />
-
-          {/* Tuile remote — caméra */}
-          <ParticipantTile
-            label={recipientName}
-            avatarSrc={recipientAvatar}
-            stream={remoteStream}
-            isLocal={false}
-            isConnected={isConnected && (!!remoteStream || remoteIsScreenSharing)}
-          />
-
-          {/* Tuile screen share remote (l'autre partage son écran) */}
-          {showRemoteScreenTile && (
-            <ParticipantTile
-              label={t.callOverlay.screenOf.replace('{name}', recipientName)}
-              avatarSrc={recipientAvatar}
-              stream={remoteScreenStream}
-              isLocal={false}
-              isConnected={isConnected}
-              isScreenShare={true}
-            />
-          )}
-
-          {/* Tuile partage local (je partage mon écran) */}
-          {showLocalScreenTile && (
-            <ParticipantTile
-              label={t.callOverlay.myScreen}
-              avatarSrc={currentUserAvatar}
-              stream={screenStream}
-              isLocal={true}
-              isConnected={isConnected}
-              isScreenShare={true}
-            />
-          )}
+          {/* Participant strip — avatars + hand-raise indicators */}
+          <div className="flex w-[88px] shrink-0 flex-col gap-1.5 overflow-y-auto">
+            {tiles.map((tile) => {
+              if (tile.key === (pinnedTile?.key ?? tiles[0]?.key)) return null;
+              const peer = participants?.find((p) => p.userId === tile.key);
+              return (
+                <button
+                  key={tile.key}
+                  type="button"
+                  onClick={() => handlePin(tile.key)}
+                  className="relative flex flex-col items-center gap-1 rounded-xl bg-zinc-900/80 p-1.5 ring-1 ring-white/10 hover:ring-white/25 active:scale-95 transition-transform"
+                >
+                  <Avatar className="size-10 rounded-xl">
+                    <AvatarImage src={resolveMediaUrl(tile.tileProps.avatarSrc)} />
+                    <AvatarFallback className="rounded-xl bg-primary/80 text-white font-heading text-base">
+                      {tile.tileProps.label[0]?.toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="max-w-full truncate text-[9px] text-white/50">{tile.tileProps.label}</span>
+                  {peer?.handRaised && (
+                    <span className="absolute -right-0.5 -top-0.5 text-[11px]">✋</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
+      )}
+
+      {/* ── TILES (DM / Group / Server fallback) ── */}
+      {callCategory !== 'server' && (
+      <div className="p-3">
+        {pinnedTile ? (
+          /* ── Spotlight mode: large pinned tile + thumbnail strip ── */
+          <div className="flex flex-col gap-2">
+            {/* Main tile — 16:9 */}
+            <div className="aspect-video w-full overflow-hidden rounded-2xl">
+              <ParticipantTile
+                {...pinnedTile.tileProps}
+                onClick={() => handlePin(pinnedTile.key)}
+                isPinned={true}
+              />
+            </div>
+            {/* Thumbnails strip */}
+            {otherTiles.length > 0 && (
+              <div className="flex gap-2">
+                {otherTiles.map(tile => (
+                  <div key={tile.key} className="aspect-video flex-1 overflow-hidden rounded-2xl">
+                    <ParticipantTile
+                      {...tile.tileProps}
+                      onClick={() => handlePin(tile.key)}
+                      isPinned={false}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ── Equal grid — each tile is 16:9 ── */
+          <div className={cn('grid gap-2', gridCols)}>
+            {tiles.map(tile => (
+              <div key={tile.key} className="aspect-video overflow-hidden rounded-2xl">
+                <ParticipantTile
+                  {...tile.tileProps}
+                  onClick={() => handlePin(tile.key)}
+                  isPinned={false}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Media error */}
         {mediaError && (
@@ -435,6 +614,15 @@ export function CallPanel({
           </div>
         )}
       </div>
+      )}
+
+      {/* Media error for server stage layout */}
+      {callCategory === 'server' && mediaError && (
+        <div className="mx-3 mb-2 flex items-center gap-2 rounded-xl border border-destructive/30 bg-linear-to-r from-destructive/15 to-destructive/5 px-3 py-2 shadow-sm shadow-destructive/10">
+          <AlertTriangleIcon size={14} className="shrink-0 text-destructive" />
+          <p className="text-xs leading-relaxed text-destructive">{mediaError}</p>
+        </div>
+      )}
 
       {/* ── CONTROLS ── */}
       <div className="flex items-center justify-center gap-5 border-t border-white/5 bg-zinc-900/80 px-4 py-3 md:gap-6">
@@ -446,13 +634,20 @@ export function CallPanel({
           {isVideoOff || !hasLocalVideo ? <VideoOffIcon size={18} /> : <VideoIcon size={18} />}
         </CtrlBtn>
 
-        {isConnected && (
+        {isConnected && callCategory !== 'server' && (
           <CtrlBtn
             active={isScreenSharing}
             onClick={isScreenSharing ? onStopScreenShare : onStartScreenShare}
             label={isScreenSharing ? t.callOverlay.stopShare : t.callOverlay.shareScreen}
           >
             {isScreenSharing ? <MonitorOffIcon size={18} /> : <MonitorUpIcon size={18} />}
+          </CtrlBtn>
+        )}
+
+        {/* Raise / lower hand (server calls only) */}
+        {isConnected && callCategory === 'server' && onToggleHand && (
+          <CtrlBtn active={handRaised} onClick={onToggleHand} label={handRaised ? 'Baisser' : 'Lever la main'}>
+            <span className="text-lg leading-none">✋</span>
           </CtrlBtn>
         )}
 

@@ -1,0 +1,70 @@
+{
+    "calls":  {
+                  "calling":  "Bellen...",
+                  "ringing":  "Overgaan...",
+                  "connecting":  "Verbinden...",
+                  "ended":  "Gesprek beindigd",
+                  "incomingVoice":  "Inkomend spraakgesprek",
+                  "incomingVideo":  "Inkomend videogesprek",
+                  "enableCamera":  "Camera inschakelen",
+                  "disableCamera":  "Camera uitschakelen",
+                  "hangup":  "Ophangen",
+                  "fullscreen":  "Volledig scherm",
+                  "exitFullscreen":  "Volledig scherm verlaten",
+                  "voiceLabel":  "Stem",
+                  "videoLabel":  "Video",
+                  "sharing":  "Delen",
+                  "connectedVoice":  "Verbonden met spraakkanaal",
+                  "participants":  "{n} deelnemer(s)",
+                  "leave":  "Verlaten",
+                  "join":  "Deelnemen"
+              },
+    "callBar":  {
+                    "calling":  "Bellen…",
+                    "ringing":  "Overgaan…",
+                    "connecting":  "Verbinden…",
+                    "videoConnected":  "Video verbonden",
+                    "voiceConnected":  "Spraak verbonden",
+                    "call":  "Gesprek…",
+                    "shareScreen":  "Scherm delen",
+                    "muteMic":  "Microfoon dempen",
+                    "unmuteMic":  "Microfoon activeren",
+                    "hangup":  "Ophangen",
+                    "ongoingCall":  "Lopend gesprek"
+                },
+    "callOverlay":  {
+                        "calling":  "Bellen…",
+                        "ringing":  "Overgaan…",
+                        "connecting":  "Verbinden…",
+                        "you":  "Jij",
+                        "live":  "LIVE",
+                        "enableSound":  "Geluid inschakelen",
+                        "muted":  "Gedempt",
+                        "mic":  "Micro",
+                        "camera":  "Camera",
+                        "stopShare":  "Stoppen",
+                        "shareScreen":  "Scherm",
+                        "hangup":  "Ophangen",
+                        "voiceCall":  "Spraakgesprek",
+                        "videoCall":  "Videogesprek",
+                        "clickEnableSound":  "Klik om geluid in te schakelen",
+                        "screenOf":  "{name} — Scherm",
+                        "myScreen":  "Mijn scherm"
+                    },
+    "voiceControlBar":  {
+                            "connecting":  "Verbinden…",
+                            "voiceActive":  "Spraak actief",
+                            "members":  "{n} lid/leden"
+                        },
+    "networkQuality":  {
+                           "excellent":  "Uitstekend",
+                           "good":  "Goed",
+                           "fair":  "Matig",
+                           "poor":  "Slecht",
+                           "unknown":  "Onbekend",
+                           "quality":  "Kwaliteit: ",
+                           "ping":  "Ping",
+                           "loss":  "Verlies",
+                           "jitter":  "Jitter"
+                       }
+}

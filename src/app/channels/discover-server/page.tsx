@@ -89,10 +89,18 @@ export default function DiscoverServerPage() {
         setJoiningId(null);
         return;
       }
-      // 2. Rejoindre les rooms socket du serveur
+      // 2. Mettre à jour le store immédiatement (infos déjà disponibles localement)
+      const serverData = servers.find((s) => s.id === serverId);
+      const { serverListStore } = await import('@/lib/server-list-store');
+      serverListStore.add({
+        id: serverId,
+        name: serverData?.name ?? '',
+        iconUrl: serverData?.icon_url ?? undefined,
+      });
+      // 3. Rejoindre les rooms socket + notifier autres onglets/appareils
       const { socketService } = await import('@/lib/socket');
       socketService.joinServer(serverId);
-      // 3. Naviguer vers le serveur
+      // 4. Naviguer vers le serveur
       router.push(`/channels/server/${serverId}`);
     } catch (e) {
       console.error('Erreur join:', e);

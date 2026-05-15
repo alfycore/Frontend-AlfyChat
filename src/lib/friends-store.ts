@@ -11,6 +11,7 @@ export interface CachedFriend {
   avatarUrl?: string;
   status: 'online' | 'idle' | 'dnd' | 'invisible' | 'offline';
   customStatus?: string | null;
+  emoji?: string | null;
   isOnline: boolean;
 }
 
@@ -64,10 +65,16 @@ export const friendsStore = {
   },
 
   // ── Mises à jour incrémentales (WebSocket) ───────────────────────────────
-  updateFriendPresence(userId: string, status: string, customStatus?: string | null): void {
+  updateFriendPresence(userId: string, status: string, customStatus?: string | null, emoji?: string | null): void {
     _friends = _friends.map((f) =>
       f.id === userId
-        ? { ...f, status: status as CachedFriend['status'], customStatus: customStatus ?? f.customStatus, isOnline: status !== 'offline' && status !== 'invisible' }
+        ? {
+            ...f,
+            status: status as CachedFriend['status'],
+            customStatus: customStatus ?? f.customStatus,
+            emoji: emoji !== undefined ? emoji : f.emoji,
+            isOnline: status !== 'offline' && status !== 'invisible',
+          }
         : f,
     );
     _notify();
@@ -78,6 +85,16 @@ export const friendsStore = {
   },
   removeFriend(friendId: string): void {
     _friends = _friends.filter((f) => f.id !== friendId);
+    _notify();
+  },
+
+  addBlocked(user: CachedBlockedUser): void {
+    if (_blocked.find((b) => b.id === user.id)) return;
+    _blocked = [..._blocked, user];
+    _notify();
+  },
+  removeBlocked(userId: string): void {
+    _blocked = _blocked.filter((b) => b.id !== userId);
     _notify();
   },
 

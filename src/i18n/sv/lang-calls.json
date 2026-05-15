@@ -1,0 +1,70 @@
+{
+    "calls":  {
+                  "calling":  "Ringer...",
+                  "ringing":  "Ringer...",
+                  "connecting":  "Ansluter...",
+                  "ended":  "Samtal avslutat",
+                  "incomingVoice":  "Inkommande roststal",
+                  "incomingVideo":  "Inkommande videosamtal",
+                  "enableCamera":  "Aktivera kamera",
+                  "disableCamera":  "Inaktivera kamera",
+                  "hangup":  "Lagg pa",
+                  "fullscreen":  "Helskarm",
+                  "exitFullscreen":  "Avsluta helskarm",
+                  "voiceLabel":  "Rost",
+                  "videoLabel":  "Video",
+                  "sharing":  "Delar",
+                  "connectedVoice":  "Ansluten till rostekanal",
+                  "participants":  "{n} deltagare",
+                  "leave":  "Lämna",
+                  "join":  "Gå med"
+              },
+    "callBar":  {
+                    "calling":  "Ringer�",
+                    "ringing":  "Ringer upp�",
+                    "connecting":  "Ansluter�",
+                    "videoConnected":  "Video ansluten",
+                    "voiceConnected":  "R�st ansluten",
+                    "call":  "Samtal�",
+                    "shareScreen":  "Dela sk�rm",
+                    "muteMic":  "St�ng av mikrofon",
+                    "unmuteMic":  "Aktivera mikrofon",
+                    "hangup":  "L�gg p�",
+                    "ongoingCall":  "P�g�ende samtal"
+                },
+    "callOverlay":  {
+                        "calling":  "Ringer�",
+                        "ringing":  "Ringer upp�",
+                        "connecting":  "Ansluter�",
+                        "you":  "Du",
+                        "live":  "LIVE",
+                        "enableSound":  "Aktivera ljud",
+                        "muted":  "Tystad",
+                        "mic":  "Mikrofon",
+                        "camera":  "Kamera",
+                        "stopShare":  "Stopp",
+                        "shareScreen":  "Sk�rm",
+                        "hangup":  "L�gg p�",
+                        "voiceCall":  "R�stsamtal",
+                        "videoCall":  "Videosamtal",
+                        "clickEnableSound":  "Klicka f�r att aktivera ljud",
+                        "screenOf":  "{name} � Sk�rm",
+                        "myScreen":  "Min sk�rm"
+                    },
+    "voiceControlBar":  {
+                            "connecting":  "Ansluter�",
+                            "voiceActive":  "R�st aktiv",
+                            "members":  "{n} medlem/mar"
+                        },
+    "networkQuality":  {
+                           "excellent":  "Utm�rkt",
+                           "good":  "Bra",
+                           "fair":  "Medel",
+                           "poor":  "D�lig",
+                           "unknown":  "Ok�nd",
+                           "quality":  "Kvalitet: ",
+                           "ping":  "Ping",
+                           "loss":  "F�rlust",
+                           "jitter":  "Jitter"
+                       }
+}

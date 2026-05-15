@@ -12,11 +12,19 @@ export function CallBar() {
     callType,
     callerName,
     callRecipientId,
+    callChannelId,
+    isGroup,
+    callCategory,
+    callMode,
+    tierLabel,
+    handRaised,
     callDuration,
     isScreenSharing,
     isMuted,
     endCall,
+    leaveCall,
     toggleMute,
+    toggleHand,
   } = useCallContext();
   const router = useRouter();
   const { t } = useTranslation();
@@ -39,7 +47,16 @@ export function CallBar() {
   };
 
   const handleNavigate = () => {
-    if (callRecipientId) router.push(`/channels/me/${callRecipientId}`);
+    if (isGroup && callChannelId) {
+      // Navigate to the channel — the server/channel IDs are not stored here; best effort
+    } else if (callRecipientId) {
+      router.push(`/channels/me/${callRecipientId}`);
+    }
+  };
+
+  const handleHangup = () => {
+    if (isGroup) leaveCall();
+    else endCall();
   };
 
   return (
@@ -104,6 +121,31 @@ export function CallBar() {
           <MonitorUpIcon size={12} className="shrink-0 text-primary" aria-label={t.callBar.shareScreen} />
         )}
 
+        {/* Quality / mode badge (group or server calls only) */}
+        {isConnected && callCategory !== 'dm' && (
+          <span className="shrink-0 rounded-md border border-border/40 bg-foreground/5 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {callMode === 'sfu' ? tierLabel : 'P2P'}
+          </span>
+        )}
+
+        {/* Raise / lower hand (server calls only) */}
+        {isConnected && callCategory === 'server' && (
+          <button
+            type="button"
+            onClick={toggleHand}
+            aria-label={handRaised ? 'Baisser la main' : 'Lever la main'}
+            title={handRaised ? 'Baisser la main' : 'Lever la main'}
+            className={cn(
+              'flex size-7 shrink-0 items-center justify-center rounded-lg text-sm transition-all duration-150 hover:scale-110 active:scale-95',
+              handRaised
+                ? 'bg-warning/20 text-warning'
+                : 'bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground',
+            )}
+          >
+            ✋
+          </button>
+        )}
+
         {/* Mute toggle */}
         <button
           type="button"
@@ -120,12 +162,12 @@ export function CallBar() {
           {isMuted ? <MicOffIcon size={13} /> : <MicIcon size={13} />}
         </button>
 
-        {/* End call */}
+        {/* End / Leave call */}
         <button
           type="button"
-          onClick={endCall}
-          aria-label={t.callBar.hangup}
-          title={t.callBar.hangup}
+          onClick={handleHangup}
+          aria-label={isGroup ? (t.calls?.leave ?? 'Quitter') : t.callBar.hangup}
+          title={isGroup ? (t.calls?.leave ?? 'Quitter') : t.callBar.hangup}
           className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-destructive/15 text-destructive transition-all duration-150 hover:scale-110 hover:bg-destructive hover:text-destructive-foreground active:scale-95"
         >
           <PhoneOffIcon size={13} />

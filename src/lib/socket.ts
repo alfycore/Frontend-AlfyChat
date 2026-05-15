@@ -266,6 +266,15 @@ class SocketService {
     this.socket?.emit(event, data);
   }
 
+  /** Émet un événement avec acknowledgement (callback optionnel). */
+  emitWithAck(event: string, data: any, callback?: (response: any) => void): void {
+    if (callback) {
+      this.socket?.emit(event, data, callback);
+    } else {
+      this.socket?.emit(event, data);
+    }
+  }
+
   // Messages
   sendMessage(data: {
     channelId?: string;
@@ -275,6 +284,7 @@ class SocketService {
     e2eeType?: 1 | 3;
     replyToId?: string;
     attachments?: string[];
+    mentionedUserIds?: string[];
   }): void {
     console.log('[Socket] Emission message:send:', data);
     this.emitOrQueue('message:send', data);
@@ -314,8 +324,17 @@ class SocketService {
   }
 
   // Présence
-  updatePresence(status: 'online' | 'idle' | 'dnd' | 'invisible', customStatus?: string | null): void {
-    this.socket?.emit('PRESENCE_UPDATE', { status, customStatus: customStatus ?? null });
+  updatePresence(status: 'online' | 'idle' | 'dnd' | 'invisible', customStatus?: string | null, emoji?: string | null): void {
+    this.socket?.emit('PRESENCE_UPDATE', {
+      status,
+      customStatus: customStatus ?? null,
+      text: customStatus ?? null,
+      emoji: emoji ?? null,
+    });
+  }
+
+  sendHeartbeat(active = true): void {
+    this.socket?.emit('HEARTBEAT', { active });
   }
 
   // Appels
@@ -323,12 +342,18 @@ class SocketService {
     data: {
       recipientId?: string;
       conversationId?: string;
-      channelId?: string;
       type: 'voice' | 'video';
     },
     callback?: (response: any) => void,
   ): void {
     this.socket?.emit('CALL_INITIATE', data, callback);
+  }
+
+  initiateGroupCall(
+    data: { channelId: string; type: 'voice' | 'video' },
+    callback?: (response: any) => void,
+  ): void {
+    this.socket?.emit('CALL_INITIATE_GROUP', data, callback);
   }
 
   acceptCall(callId: string): void {
@@ -351,22 +376,12 @@ class SocketService {
     this.socket?.emit('CALL_SCREEN_SHARE', { callId, active });
   }
 
-  // ── Appels groupe (WebRTC mesh) ──
-
-  initiateGroupCall(channelId: string, type: 'voice' | 'video'): void {
-    this.socket?.emit('GROUP_CALL_INITIATE', { channelId, type });
+  joinCall(callId: string, callback?: (response: Record<string, unknown>) => void): void {
+    this.socket?.emit('CALL_JOIN', { callId }, callback);
   }
 
-  joinGroupCall(callId: string): void {
-    this.socket?.emit('GROUP_CALL_JOIN', { callId });
-  }
-
-  leaveGroupCall(callId: string): void {
-    this.socket?.emit('GROUP_CALL_LEAVE', { callId });
-  }
-
-  endGroupCall(callId: string): void {
-    this.socket?.emit('GROUP_CALL_END', { callId });
+  leaveCall(callId: string): void {
+    this.socket?.emit('CALL_LEAVE', { callId });
   }
 
   onReconnected(callback: (data: unknown) => void): void {
@@ -464,7 +479,7 @@ class SocketService {
   }
 
   /** Récupère la présence en masse pour une liste d'utilisateurs (DM list, amis). */
-  requestBulkPresence(userIds: string[], callback: (data: Array<{ userId: string; status: string; customStatus: string | null }>) => void): void {
+  requestBulkPresence(userIds: string[], callback: (data: Array<{ userId: string; status: string; customStatus: string | null; emoji: string | null }>) => void): void {
     this.waitForConnection().then(() => {
       this.socket!.emit('GET_BULK_PRESENCE', { userIds }, (res: any) => {
         callback(res?.presence || []);

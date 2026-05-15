@@ -1386,6 +1386,39 @@ class ApiService {
     return res.success ? (res.data as { encryptedBundle: string | null }) : null;
   }
 
+  // ============ NOTIFICATIONS — PARAMÈTRES PAR CANAL ============
+
+  async getChannelNotifSettings() {
+    return this.request<Record<string, { level: string; targetType: string }>>('/api/messages/notifications/settings');
+  }
+
+  async setChannelNotifSetting(targetId: string, level: 'all' | 'mentions' | 'nothing', targetType: 'channel' | 'dm' | 'group' | 'server') {
+    return this.request(`/api/messages/notifications/settings/${targetId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ level, targetType }),
+    });
+  }
+
+  async deleteChannelNotifSetting(targetId: string) {
+    return this.request(`/api/messages/notifications/settings/${targetId}`, { method: 'DELETE' });
+  }
+
+  // ============ WEB PUSH ============
+
+  async subscribePush(subscription: { endpoint: string; keys: { p256dh: string; auth: string }; userAgent?: string }) {
+    return this.request('/api/users/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+    });
+  }
+
+  async unsubscribePush(endpoint: string) {
+    return this.request('/api/users/push/subscribe', {
+      method: 'DELETE',
+      body: JSON.stringify({ endpoint }),
+    });
+  }
+
   // ============ MÉTHODES GÉNÉRIQUES ============
   async get<T = unknown>(endpoint: string) {
     return this.request<T>(endpoint, { method: 'GET' });

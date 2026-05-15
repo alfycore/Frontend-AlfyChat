@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "Servers ontdekken",
+    "label": "Verkennen",
+    "heading": "Vind jouw community",
+    "description": "Blader door servers op AlfyChat — gecertificeerde en partnercommunities wachten op je.",
+    "searchPlaceholder": "Server zoeken…",
+    "certified": "Gecertificeerd",
+    "certifiedTooltip": "Gecertificeerd door AlfyChat",
+    "partner": "Partner",
+    "partnerTooltip": "AlfyChat-partnerserver",
+    "memberCount": "{n} leden",
+    "joining": "Deelnemen…",
+    "join": "Deelnemen",
+    "noResults": "Geen servers gevonden",
+    "noResultsSearch": "Probeer andere trefwoorden.",
+    "noResultsEmpty": "Nog geen servers vermeld."
+  },
+  "invite": {
+    "invalid": "Ongeldige uitnodiging",
+    "backHome": "Terug naar home",
+    "youreInvited": "Je bent uitgenodigd om deel te nemen aan",
+    "memberCount": "{n} lid/leden",
+    "usages": "{uses}/{maxUses} gebruik(en)",
+    "expires": "Vervalt op {date}",
+    "joinServer": "Deelnemen aan server",
+    "loginToJoin": "Log in om deel te nemen",
+    "notNow": "Niet nu",
+    "footer": "AlfyChat — Veilig en gedecentraliseerd berichten"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "calls": {
+    "calling": "Appel en cours...",
+    "ringing": "Sonnerie...",
+    "connecting": "Connexion...",
+    "ended": "Appel terminé",
+    "incomingVoice": "Appel vocal entrant",
+    "incomingVideo": "Appel vidéo entrant",
+    "enableCamera": "Activer la caméra",
+    "disableCamera": "Couper la caméra",
+    "hangup": "Raccrocher",
+    "fullscreen": "Plein écran",
+    "exitFullscreen": "Quitter le plein écran",
+    "voiceLabel": "Vocal",
+    "videoLabel": "Vidéo",
+    "sharing": "Partage",
+    "connectedVoice": "Connecté au vocal",
+    "participants": "{n} personne(s)",
+    "leave": "Quitter",
+    "join": "Rejoindre"
+  },
+  "callBar": {
+    "calling": "Appel en cours…",
+    "ringing": "Sonnerie…",
+    "connecting": "Connexion…",
+    "videoConnected": "Vidéo connectée",
+    "voiceConnected": "Vocal connecté",
+    "call": "Appel…",
+    "shareScreen": "Partage d'écran",
+    "muteMic": "Couper le micro",
+    "unmuteMic": "Réactiver le micro",
+    "hangup": "Raccrocher",
+    "ongoingCall": "Appel en cours"
+  },
+  "callOverlay": {
+    "calling": "Appel en cours…",
+    "ringing": "Sonnerie…",
+    "connecting": "Connexion…",
+    "you": "Vous",
+    "live": "EN DIRECT",
+    "enableSound": "Activer le son",
+    "muted": "Muet",
+    "mic": "Micro",
+    "camera": "Caméra",
+    "stopShare": "Arrêter",
+    "shareScreen": "Écran",
+    "hangup": "Raccrocher",
+    "voiceCall": "Appel vocal",
+    "videoCall": "Appel vidéo",
+    "clickEnableSound": "Cliquez pour activer le son",
+    "screenOf": "{name} — écran",
+    "myScreen": "Mon écran"
+  },
+  "voiceControlBar": {
+    "connecting": "Connexion…",
+    "voiceActive": "Vocal actif",
+    "members": "{n} membre(s)"
+  },
+  "networkQuality": {
+    "excellent": "Excellente",
+    "good": "Bonne",
+    "fair": "Moyenne",
+    "poor": "Faible",
+    "unknown": "Inconnue",
+    "quality": "Qualité : ",
+    "ping": "Ping",
+    "loss": "Pertes",
+    "jitter": "Gigue"
+  }
+}

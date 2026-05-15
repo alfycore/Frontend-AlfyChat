@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
+import { socketService } from '@/lib/socket';
 import { _subscribeWallpaper } from '@/hooks/use-layout-prefs';
 
 const STORAGE_KEY = 'alfychat_wallpaper';
@@ -171,6 +172,8 @@ export function useBackground(): BackgroundState {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       api.updatePreferences(user.id, { wallpaper: url }).catch(() => {});
+      // Sync cross-device via WebSocket
+      socketService.emit('PREFERENCES_UPDATE', { type: 'wallpaper', wallpaper: url });
     }, 800);
   }, [isAuthenticated, user?.id]);
 
@@ -194,6 +197,34 @@ export function useBackground(): BackgroundState {
   const setOpacity = useCallback((value: number) => {
     localStorage.setItem(OPACITY_KEY, String(value));
     setOpacityState(value);
+  }, []);
+
+  // Sync cross-tab via storage event
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY) return;
+      const url = e.newValue ? normalizeWallpaperUrl(e.newValue) : null;
+      _wallpaperState = url;
+      setWallpaperState(url);
+      notifyAll();
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  // Sync cross-device via WebSocket
+  useEffect(() => {
+    const handleWsPrefs = (data: any) => {
+      if (data?.type !== 'wallpaper') return;
+      const url = data.wallpaper ? normalizeWallpaperUrl(data.wallpaper) : null;
+      _wallpaperState = url;
+      if (url) { try { localStorage.setItem(STORAGE_KEY, url); } catch {} }
+      else { localStorage.removeItem(STORAGE_KEY); }
+      setWallpaperState(url);
+      notifyAll();
+    };
+    socketService.on('PREFERENCES_UPDATE', handleWsPrefs);
+    return () => socketService.off('PREFERENCES_UPDATE', handleWsPrefs);
   }, []);
 
   return { wallpaper, blur, opacity, brightness, setWallpaper, setBlur, setOpacity };

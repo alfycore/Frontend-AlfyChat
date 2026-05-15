@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "Opdag servere",
+    "label": "Udforsk",
+    "heading": "Find dit fællesskab",
+    "description": "Gennemse servere på AlfyChat — certificerede og partnerfællesskaber venter på dig.",
+    "searchPlaceholder": "Søg server…",
+    "certified": "Certificeret",
+    "certifiedTooltip": "Certificeret af AlfyChat",
+    "partner": "Partner",
+    "partnerTooltip": "AlfyChat-partnerserver",
+    "memberCount": "{n} medlemmer",
+    "joining": "Tilmelder…",
+    "join": "Tilmeld",
+    "noResults": "Ingen servere fundet",
+    "noResultsSearch": "Prøv andre søgeord.",
+    "noResultsEmpty": "Ingen servere er listet endnu."
+  },
+  "invite": {
+    "invalid": "Ugyldig invitation",
+    "backHome": "Tilbage til start",
+    "youreInvited": "Du er inviteret til at tilmelde dig",
+    "memberCount": "{n} medlem/mer",
+    "usages": "{uses}/{maxUses} brug",
+    "expires": "Udløber {date}",
+    "joinServer": "Tilmeld server",
+    "loginToJoin": "Log ind for at tilmelde",
+    "notNow": "Ikke nu",
+    "footer": "AlfyChat — Sikker og decentraliseret beskedtjeneste"
+  }
+}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
+import { socketService } from '@/lib/socket';
 
 export type ServerListPosition = 'left' | 'right' | 'top' | 'bottom';
 
@@ -124,6 +125,20 @@ export function useLayoutPrefs() {
     _dbSaveListeners.forEach(fn => fn(_prefs));
   }, []);
 
+  // Sync cross-tab via storage event (même navigateur, autre onglet)
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY || !e.newValue) return;
+      try {
+        const incoming = JSON.parse(e.newValue) as LayoutPrefs;
+        _prefs = { ...DEFAULT_PREFS, ...incoming };
+        _notify();
+      } catch {}
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   return { prefs: _prefs, updatePrefs };
 }
 
@@ -163,12 +178,24 @@ export function useLayoutPrefsSync() {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
         api.updatePreferences(user.id, { layoutPrefs: prefs }).catch(() => {});
+        // Sync cross-device via WebSocket
+        socketService.emit('PREFERENCES_UPDATE', { type: 'layoutPrefs', layoutPrefs: prefs });
       }, 800);
     };
+
+    // Recevoir les préférences d'un autre appareil via WebSocket
+    const handleWsPrefs = (data: any) => {
+      if (data?.type !== 'layoutPrefs' || !data?.layoutPrefs) return;
+      _prefs = { ...DEFAULT_PREFS, ...data.layoutPrefs };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_prefs)); } catch {}
+      _notify();
+    };
+    socketService.on('PREFERENCES_UPDATE', handleWsPrefs);
 
     _dbSaveListeners.add(saveToDb);
     return () => {
       _dbSaveListeners.delete(saveToDb);
+      socketService.off('PREFERENCES_UPDATE', handleWsPrefs);
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [isAuthenticated, user?.id]);

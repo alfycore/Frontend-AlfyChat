@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "Descobrir servidores",
+    "label": "Explorar",
+    "heading": "Encontra a tua comunidade",
+    "description": "Navega pelos servidores no AlfyChat � comunidades certificadas e parceiras aguardam-te.",
+    "searchPlaceholder": "Procurar servidor�",
+    "certified": "Certificado",
+    "certifiedTooltip": "Certificado pelo AlfyChat",
+    "partner": "Parceiro",
+    "partnerTooltip": "Servidor parceiro do AlfyChat",
+    "memberCount": "{n} membros",
+    "joining": "A entrar�",
+    "join": "Entrar",
+    "noResults": "Sem servidores encontrados",
+    "noResultsSearch": "Tenta palavras-chave diferentes.",
+    "noResultsEmpty": "Ainda n�o h� servidores listados."
+  },
+  "invite": {
+    "invalid": "Convite inv�lido",
+    "backHome": "Voltar ao in�cio",
+    "youreInvited": "Foste convidado(a) a entrar em",
+    "memberCount": "{n} membro(s)",
+    "usages": "{uses}/{maxUses} utiliza��es",
+    "expires": "Expira a {date}",
+    "joinServer": "Entrar no servidor",
+    "loginToJoin": "Inicia sess�o para entrar",
+    "notNow": "Agora n�o",
+    "footer": "AlfyChat � Mensagens seguras e descentralizadas"
+  }
+}

@@ -16,7 +16,7 @@ import {
 import { api, resolveMediaUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { socketService } from '@/lib/socket';
-import { statusLabel, statusTextColor, statusColor, isVisibleOnline } from '@/lib/status';
+import { statusLabel, statusTextColor, statusIcon, isVisibleOnline, formatLastSeen, richStatusLabel } from '@/lib/status';
 import { sanitizeSvg } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/components/locale-provider';
@@ -52,6 +52,9 @@ interface UserProfileData {
   bio?: string;
   status: string;
   isOnline: boolean;
+  customStatus?: string | null;
+  statusEmoji?: string | null;
+  lastSeenAt?: string | null;
   cardColor?: string;
   badges?: UserBadge[];
   showBadges?: boolean;
@@ -244,7 +247,7 @@ export function UserProfilePopover({
   function handleColorChange(color: string) {
     setLocalColor(color);
     if (colorTimer) clearTimeout(colorTimer);
-    setColorTimer(setTimeout(() => { api.updateProfile({ cardColor: color }).catch(() => {}); }, 600));
+    setColorTimer(setTimeout(() => { socketService.updateProfile({ cardColor: color }); }, 600));
   }
 
   async function handleAddFriend() {
@@ -327,8 +330,8 @@ export function UserProfilePopover({
               {/* Avatar */}
               <div className="absolute -bottom-7 left-4">
                 <div className="relative">
-                  <Avatar className="size-16 rounded-2xl ring-[3px] ring-card shadow-lg">
-                    <AvatarImage src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} className="rounded-2xl" />
+                  <Avatar className="size-16  ring-[3px] ring-card shadow-lg">
+                    <AvatarImage src={resolveMediaUrl(profile.avatarUrl)} alt={profile.displayName} className="" />
                     <AvatarFallback
                       className="rounded-2xl font-heading text-xl"
                       style={{ backgroundColor: cardColor + '20', color: cardColor }}
@@ -337,12 +340,9 @@ export function UserProfilePopover({
                     </AvatarFallback>
                   </Avatar>
                   {isVisibleOnline(profile?.status) && (
-                    <span
-                      className={cn(
-                        'absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-[2.5px] ring-card shadow-sm',
-                        statusColor(profile?.status),
-                      )}
-                    />
+                    <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-card ring-2 ring-card">
+                      <img src={statusIcon(profile?.status)} width={18} height={18} alt="" draggable={false} className="block" />
+                    </span>
                   )}
                 </div>
               </div>
@@ -392,10 +392,15 @@ export function UserProfilePopover({
                 <span className="font-mono">@{profile.username}</span>
                 <span className="text-border/60">·</span>
                 <span className={cn('flex items-center gap-1 font-medium', statusTextColor(profile.status))}>
-                  <span className={cn('size-1.5 rounded-full', statusColor(profile.status))} />
-                  {statusLabel(profile.status)}
+                  <img src={statusIcon(profile.status)} width={12} height={12} alt="" draggable={false} />
+                  {richStatusLabel({ status: profile.status as any, emoji: profile.statusEmoji, text: profile.customStatus })}
                 </span>
               </p>
+              {!isVisibleOnline(profile.status) && profile.lastSeenAt && (
+                <p className="mt-0.5 text-[10px] text-muted-foreground/50">
+                  {formatLastSeen(profile.lastSeenAt)}
+                </p>
+              )}
             </div>
 
             {/* ── Badges ── */}

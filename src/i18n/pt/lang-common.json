@@ -1,0 +1,34 @@
+{
+  "common": {
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "saving": "A guardar...",
+    "saved": "? Guardado",
+    "close": "Fechar",
+    "back": "Voltar",
+    "create": "Criar",
+    "creating": "A criar...",
+    "validate": "Validar",
+    "send": "Enviar",
+    "sending": "A enviar...",
+    "leave": "Sair",
+    "open": "Abrir",
+    "settings": "Defini��es",
+    "error": "Erro",
+    "preview": "Pr�-visualiza��o",
+    "members": "{n} membros",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "Voce",
+    "loading": "Carregando…"
+  },
+  "status": {
+    "online": "Online",
+    "idle": "Ausente",
+    "dnd": "N�o perturbar",
+    "invisible": "Invis�vel",
+    "offline": "Offline",
+    "you": "Voce"
+  }
+}

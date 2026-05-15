@@ -52,7 +52,7 @@ import { useNotificationStore } from '@/lib/notification-store';
 import { friendsStore } from '@/lib/friends-store';
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { useTranslation } from '@/components/locale-provider';
-import { statusColor, statusLabel, isVisibleOnline } from '@/lib/status';
+import { statusIcon, statusLabel, isVisibleOnline } from '@/lib/status';
 
 /* --- Types ---------------------------------------------------------------- */
 
@@ -63,6 +63,7 @@ interface Friend {
   avatarUrl?: string;
   status: 'online' | 'idle' | 'dnd' | 'invisible' | 'offline';
   customStatus?: string | null;
+  emoji?: string | null;
   isOnline: boolean;
 }
 
@@ -176,16 +177,18 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
     };
     const handlePresenceUpdate = (data: unknown) => {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
-      const p = payload as { userId?: string; status?: string; customStatus?: string | null };
+      const p = payload as { userId?: string; status?: string; customStatus?: string | null; text?: string | null; emoji?: string | null };
+      const text = p?.text ?? p?.customStatus ?? null;
       if (p?.userId && p?.status) {
-        friendsStore.updateFriendPresence(p.userId, p.status, p.customStatus);
+        friendsStore.updateFriendPresence(p.userId, p.status, text, p.emoji ?? null);
         setFriends((prev) =>
           prev.map((f) =>
             f.id === p.userId
               ? {
                   ...f,
                   status: p.status as Friend['status'],
-                  customStatus: p.customStatus ?? f.customStatus,
+                  customStatus: text ?? f.customStatus,
+                  emoji: p.emoji !== undefined ? p.emoji : f.emoji,
                   isOnline: isVisibleOnline(p.status),
                 }
               : f,
@@ -219,12 +222,29 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       );
     };
     const handleReconnect = () => loadFriends();
+    // Block/Unblock en temps réel (sync multi-onglet)
+    const handleUserBlocked = (data: any) => {
+      const blockedId = data?.blockedId;
+      if (!blockedId) return;
+      // Retirer de la liste d'amis et recharger les bloqués
+      friendsStore.removeFriend(blockedId);
+      setFriends((prev) => prev.filter((f) => f.id !== blockedId));
+      loadBlockedUsers();
+    };
+    const handleUserUnblocked = (data: any) => {
+      const unblockedId = data?.unblockedId;
+      if (!unblockedId) return;
+      friendsStore.removeBlocked(unblockedId);
+      setBlockedUsers((prev) => prev.filter((u) => u.id !== unblockedId));
+    };
 
     socketService.onFriendRequest(handleFriendRequest);
     socketService.onFriendAccepted(handleFriendAccepted);
     socketService.onPresenceUpdate(handlePresenceUpdate);
     socketService.on('FRIEND_REMOVE', handleFriendRemove);
     socketService.onProfileUpdate(handleProfileUpdate);
+    socketService.on('USER_BLOCKED', handleUserBlocked);
+    socketService.on('USER_UNBLOCKED', handleUserUnblocked);
     socketService.on('socket:reconnected', handleReconnect);
 
     return () => {
@@ -233,6 +253,8 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
       socketService.off('PRESENCE_UPDATE', handlePresenceUpdate as any);
       socketService.off('FRIEND_REMOVE', handleFriendRemove as any);
       socketService.off('PROFILE_UPDATE', handleProfileUpdate as any);
+      socketService.off('USER_BLOCKED', handleUserBlocked);
+      socketService.off('USER_UNBLOCKED', handleUserUnblocked);
       socketService.off('socket:reconnected', handleReconnect as any);
     };
   }, []);
@@ -280,6 +302,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                   ...f,
                   status: p.status as Friend['status'],
                   customStatus: p.customStatus ?? f.customStatus,
+                  emoji: (p as { emoji?: string | null }).emoji !== undefined ? (p as { emoji?: string | null }).emoji : f.emoji,
                   isOnline: isVisibleOnline(p.status),
                 };
               }),
@@ -841,7 +864,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                 Afficher dans les cartes
               </p>
               <p className="mb-2 px-1.5 text-[9px] text-muted-foreground">
-                Max 2 \u00e9l\u00e9ments
+                Max 2 &eacute;l&eacute;ements
               </p>
               <div className="flex flex-col gap-0.5">
                 {(Object.keys(DISPLAY_FIELD_LABELS) as DisplayField[]).map((field) => {
@@ -883,7 +906,6 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
           ) : (
             <div className="space-y-0.5">
               {onlineFriends.map((friend) => {
-                const dotCls = statusColor(friend.status);
                 const sLabel = statusLabel(friend.status);
                 return (
                   <UserProfilePopover
@@ -902,7 +924,9 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                             {friend.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className={cn('absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[1.5px] ring-sidebar', dotCls)} />
+                        <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-sidebar ring-2 ring-sidebar">
+                          <img src={statusIcon(friend.status)} width={12} height={12} alt="" draggable={false} className="block" />
+                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-medium leading-tight">{friend.displayName}</p>
@@ -911,7 +935,9 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
                             ? `@${friend.username}`
                             : displayFields[0] === 'status'
                               ? sLabel
-                              : friend.customStatus || sLabel}
+                              : friend.customStatus
+                                ? (friend.emoji ? `${friend.emoji} ${friend.customStatus}` : friend.customStatus)
+                                : sLabel}
                         </p>
                       </div>
                     </button>
@@ -946,12 +972,14 @@ function FriendRow({
   const { t } = useTranslation();
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
-  const dot = statusColor(friend.status);
   const sLabel = statusLabel(friend.status);
   const [profileOpen, setProfileOpen] = useState(false);
 
+  const richCustomStatus = friend.customStatus
+    ? (friend.emoji ? `${friend.emoji} ${friend.customStatus}` : friend.customStatus)
+    : null;
   const fieldValue: Record<DisplayField, string | null> = {
-    customStatus: friend.customStatus || null,
+    customStatus: richCustomStatus || null,
     username: `@${friend.username}`,
     status: sLabel,
   };
@@ -978,7 +1006,9 @@ function FriendRow({
             <AvatarImage src={resolveMediaUrl(friend.avatarUrl)} />
             <AvatarFallback className="bg-muted text-xs font-semibold text-muted-foreground">{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <span className={cn('absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-background', dot)} />
+          <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-background ring-2 ring-background">
+            <img src={statusIcon(friend.status)} width={12} height={12} alt="" draggable={false} className="block" />
+          </span>
         </button>
       </UserProfilePopover>
 

@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "Utforska servrar",
+    "label": "Utforska",
+    "heading": "Hitta din gemenskap",
+    "description": "Bl�ddra bland servrar p� AlfyChat � certifierade och partnergemenskaper v�ntar p� dig.",
+    "searchPlaceholder": "S�k server�",
+    "certified": "Certifierad",
+    "certifiedTooltip": "Certifierad av AlfyChat",
+    "partner": "Partner",
+    "partnerTooltip": "AlfyChat-partnerserver",
+    "memberCount": "{n} medlemmar",
+    "joining": "G�r med�",
+    "join": "G� med",
+    "noResults": "Inga servrar hittades",
+    "noResultsSearch": "Prova andra s�kord.",
+    "noResultsEmpty": "Inga servrar listade �nnu."
+  },
+  "invite": {
+    "invalid": "Ogiltig inbjudan",
+    "backHome": "Tillbaka till start",
+    "youreInvited": "Du �r inbjuden att g� med i",
+    "memberCount": "{n} medlem/medlemmar",
+    "usages": "{uses}/{maxUses} anv�ndningar",
+    "expires": "Utg�r {date}",
+    "joinServer": "G� med i server",
+    "loginToJoin": "Logga in f�r att g� med",
+    "notNow": "Inte nu",
+    "footer": "AlfyChat � S�ker och decentraliserad meddelandetj�nst"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "common": {
+    "cancel": "Avbryt",
+    "confirm": "Bekr�fta",
+    "save": "Spara",
+    "saving": "Sparar...",
+    "saved": "? Sparad",
+    "close": "St�ng",
+    "back": "Tillbaka",
+    "create": "Skapa",
+    "creating": "Skapar...",
+    "validate": "Validera",
+    "send": "Skicka",
+    "sending": "Skickar...",
+    "leave": "L�mna",
+    "open": "�ppna",
+    "settings": "Inst�llningar",
+    "error": "Fel",
+    "preview": "F�rhandsvisning",
+    "members": "{n} medlemmar",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "Du",
+    "loading": "Laddar…"
+  },
+  "status": {
+    "online": "Online",
+    "idle": "Fr�nvarande",
+    "dnd": "St�r ej",
+    "invisible": "Osynlig",
+    "offline": "Offline",
+    "you": "Du"
+  }
+}

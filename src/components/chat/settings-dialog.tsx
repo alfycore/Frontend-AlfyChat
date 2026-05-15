@@ -34,6 +34,7 @@ import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
 import { cn } from '@/lib/utils';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { ImageCropperDialog } from '@/components/chat/image-cropper-dialog';
 import { VisuallyHidden } from 'radix-ui';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -225,6 +226,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [deleteAvatarFlag, setDeleteAvatarFlag] = useState(false);
   const [deleteBannerFlag, setDeleteBannerFlag] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState('');
+  const [cropperMode, setCropperMode] = useState<'avatar' | 'banner'>('avatar');
   const [isSaving, setIsSaving] = useState(false);
   const [interests, setInterests] = useState<string[]>(DEFAULT_INTERESTS);
   const [newInterest, setNewInterest] = useState('');
@@ -259,6 +263,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [dndEnabled, setDndEnabled] = useState(false);
   const [notifKeywords, setNotifKeywords] = useState<string[]>(['urgent', 'alerte']);
   const [newKeyword, setNewKeyword] = useState('');
+  const [quietStart, setQuietStart] = useState('');
+  const [quietEnd, setQuietEnd] = useState('');
 
   /* Privacy */
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
@@ -392,6 +398,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         }
         if (p.dndEnabled !== undefined) setDndEnabled(p.dndEnabled);
         if (Array.isArray(p.notifKeywords)) setNotifKeywords(p.notifKeywords);
+        if (p.quietStart) setQuietStart(p.quietStart);
+        if (p.quietEnd)   setQuietEnd(p.quietEnd);
       }
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -428,12 +436,25 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) { setAvatarFile(f); setDeleteAvatarFlag(false); const r = new FileReader(); r.onloadend = () => setAvatarPreview(r.result as string); r.readAsDataURL(f); }
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onloadend = () => { setCropperSrc(reader.result as string); setCropperMode('avatar'); setCropperOpen(true); };
+    reader.readAsDataURL(f);
+    e.target.value = '';
   };
 
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) { setBannerFile(f); setDeleteBannerFlag(false); const r = new FileReader(); r.onloadend = () => setBannerPreview(r.result as string); r.readAsDataURL(f); }
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onloadend = () => { setCropperSrc(reader.result as string); setCropperMode('banner'); setCropperOpen(true); };
+    reader.readAsDataURL(f);
+    e.target.value = '';
+  };
+
+  const handleCropDone = (file: File, previewUrl: string) => {
+    if (cropperMode === 'avatar') { setAvatarFile(file); setAvatarPreview(previewUrl); setDeleteAvatarFlag(false); }
+    else { setBannerFile(file); setBannerPreview(previewUrl); setDeleteBannerFlag(false); }
   };
 
   const handleDeleteAvatar = () => { setAvatarPreview(null); setAvatarFile(null); setDeleteAvatarFlag(true); };
@@ -461,8 +482,17 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   const saveNotificationPrefs = async () => {
     if (!user) return;
-    try { await api.updatePreferences(user.id, { notificationsSound: notifSound, notificationsDesktop: notifDesktop, notificationsDm: notifDm, notificationsMentions: notifMentions, dndEnabled }); }
-    catch { /* silent */ }
+    try {
+      await api.updatePreferences(user.id, {
+        notificationsSound: notifSound,
+        notificationsDesktop: notifDesktop,
+        notificationsDm: notifDm,
+        notificationsMentions: notifMentions,
+        dndEnabled,
+        quietStart: quietStart || null,
+        quietEnd: quietEnd || null,
+      });
+    } catch { /* silent */ }
     socketService.updatePresence(dndEnabled ? 'dnd' : 'online');
   };
 
@@ -527,11 +557,29 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     if (newUsername.length < 3) { toast.error("Le nom d'utilisateur doit faire au moins 3 caractères"); return; }
     if (!usernameAvailable) { toast.error("Ce nom d'utilisateur n'est pas disponible"); return; }
     setUsernameChanging(true);
-    try {
-      const r = await api.changeUsername(user.id, { newUsername, password: usernamePassword });
-      if (r.success) { toast.success("Nom d'utilisateur modifié"); updateUser({ username: newUsername } as any); setEditingUsername(false); setNewUsername(''); setUsernamePassword(''); setUsernameAvailable(null); }
-      else { toast.error((r as any).error || 'Erreur lors du changement'); }
-    } catch { toast.error("Erreur lors du changement de nom d'utilisateur"); }
+    await new Promise<void>((resolve) => {
+      const onSuccess = (d: any) => {
+        cleanup();
+        toast.success("Nom d'utilisateur modifié");
+        updateUser({ username: d?.username ?? newUsername } as any);
+        setEditingUsername(false); setNewUsername(''); setUsernamePassword(''); setUsernameAvailable(null);
+        resolve();
+      };
+      const onError = (d: any) => {
+        cleanup();
+        toast.error(d?.error || "Erreur lors du changement de nom d'utilisateur");
+        resolve();
+      };
+      const cleanup = () => {
+        socketService.off('CHANGE_USERNAME_SUCCESS', onSuccess);
+        socketService.off('CHANGE_USERNAME_ERROR', onError);
+      };
+      socketService.on('CHANGE_USERNAME_SUCCESS', onSuccess);
+      socketService.on('CHANGE_USERNAME_ERROR', onError);
+      socketService.emit('CHANGE_USERNAME', { newUsername, password: usernamePassword });
+      // Timeout de sécurité
+      setTimeout(() => { cleanup(); toast.error('Délai dépassé'); resolve(); }, 10000);
+    });
     setUsernameChanging(false);
   };
 
@@ -858,9 +906,43 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       <div className="space-y-5">
         <PageHeader title={t.settings.notifications} />
         <SettingsCard>
-          <SettingsRow label={t.settings.dndMode} description={t.settings.dndModeDesc} border={false}>
+          <SettingsRow label={t.settings.dndMode} description={t.settings.dndModeDesc}>
             <Switch checked={dndEnabled} onCheckedChange={(v) => { setDndEnabled(v); setTimeout(saveNotificationPrefs, 0); }} />
           </SettingsRow>
+          <div className="px-5 pb-4 pt-1 space-y-2">
+            <p className="text-[12px] text-muted-foreground">Plage horaire de silence (les mentions passent quand même)</p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Label className="text-[12px] text-muted-foreground w-7">De</Label>
+                <Input
+                  type="time"
+                  value={quietStart}
+                  onChange={(e) => setQuietStart(e.target.value)}
+                  onBlur={() => setTimeout(saveNotificationPrefs, 0)}
+                  className="h-8 w-28 rounded-lg text-[12px]"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-[12px] text-muted-foreground w-1">à</Label>
+                <Input
+                  type="time"
+                  value={quietEnd}
+                  onChange={(e) => setQuietEnd(e.target.value)}
+                  onBlur={() => setTimeout(saveNotificationPrefs, 0)}
+                  className="h-8 w-28 rounded-lg text-[12px]"
+                />
+              </div>
+              {(quietStart || quietEnd) && (
+                <button
+                  type="button"
+                  className="text-[11px] text-muted-foreground hover:text-foreground"
+                  onClick={() => { setQuietStart(''); setQuietEnd(''); setTimeout(saveNotificationPrefs, 0); }}
+                >
+                  Effacer
+                </button>
+              )}
+            </div>
+          </div>
         </SettingsCard>
         <SettingsCard>
           {[
@@ -1440,6 +1522,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   /* ─── Dialog ─── */
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className={cn(
         'flex h-[88vh] w-full sm:max-w-5xl gap-0 overflow-hidden rounded-2xl border border-border/50 p-0 shadow-2xl shadow-black/30',
@@ -1541,5 +1624,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         </div>
       </DialogContent>
     </Dialog>
+
+    <ImageCropperDialog
+      open={cropperOpen}
+      onOpenChange={setCropperOpen}
+      imageSrc={cropperSrc}
+      aspectRatio={cropperMode === 'avatar' ? 1 : 3}
+      shape={cropperMode === 'avatar' ? 'circle' : 'rect'}
+      onCrop={handleCropDone}
+    />
+    </>
   );
 }

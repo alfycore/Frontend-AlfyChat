@@ -12,10 +12,11 @@ import { toast } from 'sonner';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
-import { useNotificationStore, getUnread, clearUnread } from '@/lib/notification-store';
+import { useNotificationStore, getUnread, clearUnread, pruneServerUnread } from '@/lib/notification-store';
+import { NotificationCenter } from '@/components/chat/notification-center';
 import { serverListStore } from '@/lib/server-list-store';
 import { conversationsStore } from '@/lib/conversations-store';
-import { statusColor } from '@/lib/status';
+import { statusIcon } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import {
@@ -210,6 +211,13 @@ export function AppSidebar({ className }: AppSidebarProps) {
   const [onlineNodeIds, setOnlineNodeIds] = useState<Set<string>>(new Set());
   const [serversLoading, setServersLoading] = useState(!serverListStore.isLoaded());
 
+  // Purger les clés server: orphelines dès que la liste de serveurs est connue
+  useEffect(() => {
+    if (!serversLoading && servers.length >= 0) {
+      pruneServerUnread(servers.map((s) => s.id));
+    }
+  }, [servers, serversLoading]);
+
   // ── Conversations ─────────────────────────────────────────────────────────
   const conversations = useSyncExternalStore(
     conversationsStore.subscribe,
@@ -390,7 +398,16 @@ export function AppSidebar({ className }: AppSidebarProps) {
           parentId: ch.parentId ?? ch.parent_id ?? null,
           position: ch.position ?? 0,
         }));
-        setChannelsMap((prev) => new Map(prev).set(serverId, chs));
+        setChannelsMap((prev) => {
+          const next = new Map(prev).set(serverId, chs);
+          // Purger les clés channel: qui n'appartiennent plus à ce serveur
+          const allChannelIds = Array.from(next.values()).flat().map((c) => c.id);
+          pruneServerUnread(
+            Array.from(next.keys()),
+            allChannelIds,
+          );
+          return next;
+        });
       });
     },
     [channelsMap],
@@ -604,6 +621,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
             <span className="flex-1 truncate text-[13px] font-semibold tracking-tight text-sidebar-foreground">
               AlfyChat
             </span>
+            <NotificationCenter />
             <button
               onClick={() => router.push('/channels/discover-server')}
               className="flex size-6 items-center justify-center rounded-md text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
@@ -701,12 +719,9 @@ export function AppSidebar({ className }: AppSidebarProps) {
                               </AvatarFallback>
                             </Avatar>
                             {conv.type === 'dm' && (
-                              <span
-                                className={cn(
-                                  'absolute -bottom-0.5 -right-0.5 size-2 rounded-full border-[1.5px] border-sidebar',
-                                  statusColor(presence),
-                                )}
-                              />
+                              <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-sidebar ring-2 ring-sidebar">
+                                <img src={statusIcon(presence)} width={12} height={12} alt="" draggable={false} className="block" />
+                              </span>
                             )}
                           </div>
                           <div className="min-w-0 flex-1">

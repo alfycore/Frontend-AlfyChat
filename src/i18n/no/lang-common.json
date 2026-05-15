@@ -1,0 +1,34 @@
+{
+  "common": {
+    "cancel": "Avbryt",
+    "confirm": "Bekreft",
+    "save": "Lagre",
+    "saving": "Lagrer...",
+    "saved": "? Lagret",
+    "close": "Lukk",
+    "back": "Tilbake",
+    "create": "Opprett",
+    "creating": "Oppretter...",
+    "validate": "Valider",
+    "send": "Send",
+    "sending": "Sender...",
+    "leave": "Forlat",
+    "open": "�pne",
+    "settings": "Innstillinger",
+    "error": "Feil",
+    "preview": "Forh�ndsvisning",
+    "members": "{n} medlemmer",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "Du",
+    "loading": "Laster…"
+  },
+  "status": {
+    "online": "Online",
+    "idle": "Borte",
+    "dnd": "Ikke forstyrr",
+    "invisible": "Usynlig",
+    "offline": "Offline",
+    "you": "Du"
+  }
+}

@@ -68,7 +68,9 @@ import {
   ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
 } from '@/components/ui/context-menu';
+import { NotificationSettingsItem } from '@/components/chat/notification-settings-popover';
 import {
   Dialog,
   DialogContent,
@@ -98,13 +100,14 @@ import {
 } from '@/components/ui/tooltip';
 import { UserPanel } from '@/components/chat/user-panel';
 import { CallBar } from '@/components/chat/call-bar';
+import { GroupCreateDialog } from '@/components/chat/group-create-dialog';
 import { useTranslation } from '@/components/locale-provider';
 
 import { useVoice, type VoiceParticipant } from '@/hooks/use-voice';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { cn } from '@/lib/utils';
-import { statusColor, isVisibleOnline } from '@/lib/status';
+import { statusIcon, isVisibleOnline, formatLastSeen } from '@/lib/status';
 
 type ChannelType = 'text' | 'voice' | 'announcement' | 'category' | 'forum' | 'stage' | 'gallery' | 'poll' | 'suggestion' | 'doc' | 'counting' | 'vent' | 'thread' | 'media' | 'minigame' | 'trivia';
 
@@ -165,7 +168,7 @@ interface Conversation {
 
 // Toujours rounded-full — forme cohérente avec les autres composants
 const presenceDotShape = (_status?: string) => 'rounded-full';
-const presenceDot = (status?: string) => statusColor(status);
+const presenceDot = (status?: string) => statusIcon(status);
 
 interface ChannelListProps {
   serverId: string | null;
@@ -184,6 +187,7 @@ function ChannelRow({
   onRename,
   onDelete,
   unreadCount,
+  mentionCount,
 }: {
   channel: Channel;
   isActive: boolean;
@@ -192,10 +196,12 @@ function ChannelRow({
   onRename?: (channel: Channel) => void;
   onDelete?: (channel: Channel) => void;
   unreadCount?: number;
+  mentionCount?: number;
 }) {
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
-  const hasUnread = (unreadCount ?? 0) > 0;
+  const hasMention = (mentionCount ?? 0) > 0;
+  const hasUnread  = (unreadCount  ?? 0) > 0 || hasMention;
   const meta = TYPE_META[channel.type] ?? TYPE_META.text;
   const Icon = meta.icon;
 
@@ -203,7 +209,8 @@ function ChannelRow({
     <button
       onClick={onClick}
       className={cn(
-        'group/ch relative flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] font-medium transition-all duration-150',
+        'group/ch relative flex w-full items-center rounded-lg text-left font-medium transition-all duration-150',
+        d.channelGap, d.channelPx, d.channelPy, d.channelText,
         isActive
           ? cn(meta.activeBg, meta.activeCls)
           : hasUnread
@@ -214,16 +221,25 @@ function ChannelRow({
       {/* Icône — bulle colorée pour les types spéciaux, icône simple pour texte/vocal */}
       {meta.bubble ? (
         <span className={cn(
-          'flex size-[20px] shrink-0 items-center justify-center rounded-[5px] transition-colors',
+          'flex shrink-0 items-center justify-center rounded-[5px] transition-colors',
+          prefs.density === 'compact' ? 'size-4' : prefs.density === 'comfortable' ? 'size-5.5' : 'size-5',
           isActive ? 'bg-foreground/[0.10]' : 'bg-foreground/[0.06] group-hover/ch:bg-foreground/[0.09]',
         )}>
-          <Icon size={12} className={cn('shrink-0 transition-colors', isActive ? meta.activeCls : meta.iconCls)} />
+          <Icon
+            size={prefs.density === 'compact' ? 10 : prefs.density === 'comfortable' ? 13 : 12}
+            className={cn('shrink-0 transition-colors', isActive ? meta.activeCls : meta.iconCls)}
+          />
         </span>
       ) : (
-        <Icon size={14} className={cn('shrink-0 transition-colors', isActive ? meta.activeCls : meta.iconCls)} />
+        <Icon size={d.channelIcon} className={cn('shrink-0 transition-colors', isActive ? meta.activeCls : meta.iconCls)} />
       )}
       <span className={cn('flex-1 truncate', hasUnread && !isActive && 'font-semibold text-foreground')}>{channel.name}</span>
-      {hasUnread && !isActive && (
+      {!isActive && hasMention && (
+        <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">
+          @{mentionCount! > 99 ? '99+' : mentionCount}
+        </span>
+      )}
+      {!isActive && !hasMention && hasUnread && (
         <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background">
           {unreadCount! > 99 ? '99+' : unreadCount}
         </span>
@@ -237,6 +253,8 @@ function ChannelRow({
     <ContextMenu>
       <ContextMenuTrigger asChild>{btn}</ContextMenuTrigger>
       <ContextMenuContent className="min-w-40">
+        <NotificationSettingsItem targetId={channel.id} targetType="channel" />
+        <ContextMenuSeparator />
         <ContextMenuItem onClick={() => onRename?.(channel)}>
           <PencilIcon size={13} className="mr-2 shrink-0 opacity-60" />
           Renommer
@@ -330,8 +348,10 @@ function SectionHeader({
   onAdd: () => void;
 }) {
   const { t } = useTranslation();
+  const { prefs } = useLayoutPrefs();
+  const d = densityCls(prefs.density);
   return (
-    <div className="group flex items-center gap-1 px-2 py-1.5">
+    <div className={cn('group flex items-center gap-1', d.channelPx, d.channelPy)}>
       <button
         onClick={onToggle}
         className="flex flex-1 items-center gap-1 text-[11px] font-medium text-muted-foreground/40 transition-colors hover:text-muted-foreground/60"
@@ -481,6 +501,7 @@ export function ChannelList({
   const conversationsRef = useRef<Conversation[]>([]);
   const [presenceMap, setPresenceMap] = useState<Map<string, string>>(new Map());
   const [customStatusMap, setCustomStatusMap] = useState<Map<string, string | null>>(new Map());
+  const [emojiMap, setEmojiMap] = useState<Map<string, string | null>>(new Map());
 
   const [serverName, setServerName] = useState('Serveur');
   const [serverBannerUrl, setServerBannerUrl] = useState<string | null>(null);
@@ -494,6 +515,7 @@ export function ChannelList({
   const [voiceCollapsed, setVoiceCollapsed] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [createName, setCreateName] = useState('');
   const [createType, setCreateType] = useState<ChannelType>('text');
   const [createParentId, setCreateParentId] = useState<string | null>(null);
@@ -628,13 +650,16 @@ export function ChannelList({
           if (!presence || presence.length === 0) return;
           const finalPresence = new Map(initialPresence);
           const finalCustomStatus = new Map(initialCustomStatus);
-          presence.forEach(({ userId, status, customStatus }) => {
-            finalPresence.set(userId, status);
-            if (customStatus !== undefined) finalCustomStatus.set(userId, customStatus);
+          const finalEmoji = new Map<string, string | null>();
+          presence.forEach((p) => {
+            finalPresence.set(p.userId, p.status);
+            if (p.customStatus !== undefined) finalCustomStatus.set(p.userId, p.customStatus);
+            if (p.emoji !== undefined) finalEmoji.set(p.userId, p.emoji);
           });
           conversationsStore.set(sorted, finalPresence, finalCustomStatus);
           setPresenceMap((prev) => { const next = new Map(prev); finalPresence.forEach((v, k) => next.set(k, v)); return next; });
           setCustomStatusMap((prev) => { const next = new Map(prev); finalCustomStatus.forEach((v, k) => next.set(k, v)); return next; });
+          if (finalEmoji.size > 0) setEmojiMap((prev) => { const next = new Map(prev); finalEmoji.forEach((v, k) => next.set(k, v)); return next; });
         });
       }
     } catch (e) {
@@ -743,8 +768,10 @@ export function ChannelList({
         setConversations(conversationsStore.get());
         const cached = conversationsStore.getPresence();
         const cachedCustom = conversationsStore.getCustomStatus();
+        const cachedEmoji = conversationsStore.getEmojiMap();
         if (cached.size > 0) setPresenceMap(new Map(cached));
         if (cachedCustom.size > 0) setCustomStatusMap(new Map(cachedCustom));
+        if (cachedEmoji.size > 0) setEmojiMap(new Map(cachedEmoji));
       } else {
         loadConversations();
       }
@@ -795,11 +822,14 @@ export function ChannelList({
       const createdAt = message.createdAt || new Date().toISOString();
       const isFromMe = msgAuthorId === user?.id;
       setConversations((prev) => {
-        const idx = prev.findIndex(
-          (c) =>
-            c.id === convId ||
-            (user && (c.recipientId === msgAuthorId || c.recipientId === msgRecipientId)),
-        );
+        const idx = prev.findIndex((c) => {
+          if (c.id === convId) return true;
+          // Fallback DM uniquement si le message est bien un DM (recipientId présent)
+          if (msgRecipientId && c.type === 'dm') {
+            return c.recipientId === msgAuthorId || c.recipientId === msgRecipientId;
+          }
+          return false;
+        });
         if (idx === -1) {
           // Conversation inconnue : recharger la liste sans toucher aux compteurs
           loadConversationsRef.current();
@@ -819,21 +849,47 @@ export function ChannelList({
       const payload = data?.payload || data;
       const userId = payload?.userId;
       const status = payload?.status;
-      const customStatus = payload?.customStatus;
+      const text = payload?.text ?? payload?.customStatus;
+      const emoji = payload?.emoji ?? undefined;
       if (!userId) return;
-      conversationsStore.setPresence(userId, status, customStatus);
+      conversationsStore.setPresence(userId, status, text, emoji);
       setPresenceMap((prev) => { const next = new Map(prev); next.set(userId, status); return next; });
-      if (customStatus !== undefined) setCustomStatusMap((prev) => { const next = new Map(prev); next.set(userId, customStatus); return next; });
+      if (text !== undefined) setCustomStatusMap((prev) => { const next = new Map(prev); next.set(userId, text); return next; });
+      if (emoji !== undefined) setEmojiMap((prev) => { const next = new Map(prev); next.set(userId, emoji ?? null); return next; });
+    };
+    // Nouvelle conversation DM : mise à jour sans refetch HTTP
+    const handleConversationCreate = (data: any) => {
+      if (!data?.id) return;
+      const conv = {
+        id: data.id,
+        type: (data.type || 'dm') as 'dm' | 'group',
+        recipientId: data.recipientId || '',
+        recipientName: data.recipientName || '',
+        recipientAvatar: data.recipientAvatar || undefined,
+      };
+      conversationsStore.addConversation(conv);
+      setConversations(conversationsStore.get());
+    };
+    // Mise à jour de l'avatar/nom du destinataire dans la liste DM
+    const handleProfileUpdate = (data: any) => {
+      const p = data?.payload ?? data;
+      if (!p?.userId) return;
+      conversationsStore.updateRecipientProfile(p.userId, { displayName: p.displayName, avatarUrl: p.avatarUrl });
+      setConversations(conversationsStore.get());
     };
     const handleReconnect = () => loadConversationsRef.current();
     socketService.on('message:new', handleMessageNew);
     socketService.onFriendAccepted(handleRefresh);
     socketService.onPresenceUpdate(handlePresence);
+    socketService.on('CONVERSATION_CREATE', handleConversationCreate);
+    socketService.on('PROFILE_UPDATE', handleProfileUpdate);
     socketService.on('socket:reconnected', handleReconnect);
     return () => {
       socketService.off('message:new', handleMessageNew);
       socketService.off('FRIEND_ACCEPT', handleRefresh);
       socketService.off('PRESENCE_UPDATE', handlePresence);
+      socketService.off('CONVERSATION_CREATE', handleConversationCreate);
+      socketService.off('PROFILE_UPDATE', handleProfileUpdate);
       socketService.off('socket:reconnected', handleReconnect);
     };
   }, [serverId, user]);
@@ -994,7 +1050,8 @@ export function ChannelList({
 
         {/* ── Header: home chip ── */}
         <div className={cn(
-          'flex h-12 shrink-0 items-center gap-2 border-b border-border/40 px-3',
+          'flex shrink-0 items-center gap-2 border-b border-border/40 px-3',
+          d.headerH,
           ui.isGlass ? 'bg-background/60' : 'bg-sidebar',
         )}>
           {/* Home mark */}
@@ -1037,40 +1094,55 @@ export function ChannelList({
               data-tour="friends"
               onClick={() => onSelectChannel('friends')}
               className={cn(
-                'group/nav flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
+                'group/nav flex w-full items-center rounded-lg font-medium transition-all duration-150',
+                d.channelGap, d.channelPx, d.channelPy, d.channelText,
                 selectedChannel === 'friends'
                   ? 'bg-foreground/8 text-foreground'
                   : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
               )}
             >
-              <UsersIcon size={14} className="shrink-0" />
+              <UsersIcon size={d.channelIcon} className="shrink-0" />
               <span>Amis</span>
             </button>
 
             <button
               onClick={() => router.push('/channels/me/changelogs')}
               className={cn(
-                'group/nav flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
+                'group/nav flex w-full items-center rounded-lg font-medium transition-all duration-150',
+                d.channelGap, d.channelPx, d.channelPy, d.channelText,
                 selectedChannel === 'changelogs'
                   ? 'bg-foreground/8 text-foreground'
                   : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
               )}
             >
-              <FileTextIcon size={14} className="shrink-0" />
+              <FileTextIcon size={d.channelIcon} className="shrink-0" />
               <span>{t.channelList.changelogs}</span>
             </button>
 
             <button
               onClick={() => router.push('/channels/hosting')}
               className={cn(
-                'group/nav flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
+                'group/nav flex w-full items-center rounded-lg font-medium transition-all duration-150',
+                d.channelGap, d.channelPx, d.channelPy, d.channelText,
                 selectedChannel === 'hosting'
                   ? 'bg-foreground/8 text-foreground'
                   : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
               )}
             >
-              <FileTextIcon size={14} className="shrink-0" />
+              <FileTextIcon size={d.channelIcon} className="shrink-0" />
               <span>{t.channelList.hosting}</span>
+            </button>
+
+            <button
+              onClick={() => setShowCreateGroup(true)}
+              className={cn(
+                'group/nav flex w-full items-center rounded-lg font-medium transition-all duration-150',
+                d.channelGap, d.channelPx, d.channelPy, d.channelText,
+                'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
+              )}
+            >
+              <UsersRoundIcon size={d.channelIcon} className="shrink-0" />
+              <span>{t.group.createGroup}</span>
             </button>
 
             {/* ── Section "Conversations" ── */}
@@ -1106,6 +1178,12 @@ export function ChannelList({
                       : selectedChannel === conv.recipientId || selectedChannel === `dm:${conv.recipientId}`;
                     const dmUnread = notifStore.unread.get(unreadKey) ?? 0;
                     const presence = presenceMap.get(conv.recipientId);
+                    const dmCustomStatus = customStatusMap.get(conv.recipientId);
+                    const dmEmoji = emojiMap.get(conv.recipientId);
+                    const dmLastSeen = !isGroup && presence === 'offline' ? formatLastSeen((conv as any).lastSeenAt) : null;
+                    const dmSubtext = !isGroup
+                      ? (dmCustomStatus ? (dmEmoji ? `${dmEmoji} ${dmCustomStatus}` : dmCustomStatus) : dmLastSeen)
+                      : null;
                     const navigate = () => {
                       clearUnread(unreadKey);
                       if (isGroup) router.push(`/channels/groups/${conv.id}`);
@@ -1159,7 +1237,8 @@ export function ChannelList({
                       <button
                         onClick={navigate}
                         className={cn(
-                          'group/dm flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all duration-150',
+                          'group/dm flex w-full items-center rounded-lg transition-all duration-150',
+                          d.rowGap, d.rowPx, d.rowPy,
                           isActive
                             ? 'bg-primary/10 text-primary'
                             : 'text-foreground hover:bg-foreground/6',
@@ -1167,23 +1246,25 @@ export function ChannelList({
                         )}
                       >
                         <div className="relative shrink-0">
-                          <Avatar className={cn('size-8', isGroup ? 'rounded-xl' : 'rounded-full')}>
+                          <Avatar className={cn(d.rowAvatar, isGroup ? 'rounded-xl' : 'rounded-full')}>
                             <AvatarImage src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
                             <AvatarFallback className={cn('text-[11px] font-bold bg-muted text-muted-foreground', isGroup ? 'rounded-xl' : 'rounded-full')}>
                               {conv.recipientName?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
                           {!isGroup && (
-                            <span className={cn(
-                              'absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-sidebar',
-                              presenceDot(presence),
-                            )} />
+                            <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-sidebar ring-2 ring-sidebar">
+                              <img src={presenceDot(presence)} width={12} height={12} alt="" draggable={false} className="block" />
+                            </span>
                           )}
                         </div>
                         <div className="min-w-0 flex-1 text-left">
-                          <p className={cn('truncate text-[13px] font-medium leading-tight', isActive ? 'text-primary' : 'text-foreground', dmUnread > 0 && !isActive && 'font-semibold')}>
+                          <p className={cn('truncate font-medium leading-tight', d.rowName, isActive ? 'text-primary' : 'text-foreground', dmUnread > 0 && !isActive && 'font-semibold')}>
                             {conv.recipientName || (isGroup ? 'Groupe' : t.channelList.user)}
                           </p>
+                          {dmSubtext && (
+                            <p className="truncate text-[10px] leading-tight text-muted-foreground/50">{dmSubtext}</p>
+                          )}
                         </div>
                         {dmUnread > 0 && !isActive && (
                           <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-destructive/90 text-[10px] font-bold text-white">
@@ -1203,7 +1284,14 @@ export function ChannelList({
         <CallBar />
         {user && <UserPanel user={user} />}
 
-
+        {/* ── Modale : Créer un groupe ── */}
+        <GroupCreateDialog
+          open={showCreateGroup}
+          onOpenChange={setShowCreateGroup}
+          onCreated={(groupId) => {
+            if (groupId) router.push(`/channels/groups/${groupId}`);
+          }}
+        />
       </div>
     );
   }
@@ -1222,7 +1310,8 @@ export function ChannelList({
 
       {/* Server name header — workspace chip */}
       <div className={cn(
-        'flex h-12 shrink-0 items-center gap-2 border-b border-border/40 px-3',
+        'flex shrink-0 items-center gap-2 border-b border-border/40 px-3',
+        d.headerH,
         ui.isGlass ? 'bg-background/60' : 'bg-sidebar',
         serverBannerUrl ? 'border-t-0' : '',
       )}>
@@ -1316,6 +1405,7 @@ export function ChannelList({
                   onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
                   onDelete={(ch) => setConfirmDeleteChannel(ch)}
                   unreadCount={notifStore.unread.get(`channel:${channel.id}`) ?? 0}
+                  mentionCount={notifStore.mentions?.get(`channel:${channel.id}`) ?? 0}
                 />
               ))}
               {uncategorizedVoice.map((channel) => (
@@ -1363,6 +1453,7 @@ export function ChannelList({
                             onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
                             onDelete={(ch) => setConfirmDeleteChannel(ch)}
                             unreadCount={notifStore.unread.get(`channel:${channel.id}`) ?? 0}
+                  mentionCount={notifStore.mentions?.get(`channel:${channel.id}`) ?? 0}
                           />
                         ))}
                         {catVoice.map((channel) => (
@@ -1418,6 +1509,7 @@ export function ChannelList({
                       onRename={(ch) => { setEditingChannel(ch); setEditChannelName(ch.name); }}
                       onDelete={(ch) => setConfirmDeleteChannel(ch)}
                       unreadCount={notifStore.unread.get(`channel:${channel.id}`) ?? 0}
+                  mentionCount={notifStore.mentions?.get(`channel:${channel.id}`) ?? 0}
                     />
                   ))}
               </div>

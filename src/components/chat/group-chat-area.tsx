@@ -30,6 +30,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { EmojiPicker } from '@/components/chat/emoji-picker';
+import { CallPanel } from '@/components/chat/call-panel';
 
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { GroupSettingsDialog } from '@/components/chat/group-settings-dialog';
@@ -125,6 +126,30 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const {
     initiateGroupCall,
     callStatus,
+    callType,
+    callChannelId,
+    isGroup: callIsGroup,
+    callCategory,
+    callMode,
+    tierLabel,
+    handRaised,
+    localStream,
+    remoteStreams,
+    screenStream,
+    isMuted,
+    isVideoOff,
+    isScreenSharing,
+    remoteIsScreenSharing,
+    mediaError,
+    callDuration,
+    participantInfo,
+    toggleMute,
+    toggleVideo,
+    startScreenShare,
+    stopScreenShare,
+    leaveCall,
+    endCall,
+    toggleHand,
   } = useCallContext();
 
   const loadGroupInfo = useCallback(async () => {
@@ -186,32 +211,52 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
     };
   }, [groupId, user?.id, loadGroupInfo, onLeave]);
 
-  const scrollToBottom = useCallback(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  const getViewport = useCallback(() => {
+    return scrollRef.current?.querySelector<HTMLDivElement>('[data-slot="scroll-area-viewport"]') ?? null;
   }, []);
 
+  const scrollToBottom = useCallback(() => {
+    const vp = getViewport();
+    if (vp) vp.scrollTop = vp.scrollHeight;
+  }, [getViewport]);
+
   const checkIfAtBottom = useCallback(() => {
-    if (scrollRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const vp = getViewport();
+    if (vp) {
+      const { scrollTop, scrollHeight, clientHeight } = vp;
       isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
     }
-  }, []);
+  }, [getViewport]);
 
   useEffect(() => {
     if (isAtBottomRef.current) scrollToBottom();
   }, [messages, scrollToBottom]);
 
   useEffect(() => {
-    scrollToBottom();
+    isAtBottomRef.current = true;
+    requestAnimationFrame(() => {
+      scrollToBottom();
+      requestAnimationFrame(scrollToBottom);
+    });
   }, [groupId, scrollToBottom]);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (el) {
-      el.addEventListener('scroll', checkIfAtBottom);
-      return () => el.removeEventListener('scroll', checkIfAtBottom);
+    if (!isLoading && enrichedMessages.length > 0) {
+      requestAnimationFrame(() => {
+        scrollToBottom();
+        requestAnimationFrame(scrollToBottom);
+      });
     }
-  }, [checkIfAtBottom]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  useEffect(() => {
+    const vp = getViewport();
+    if (vp) {
+      vp.addEventListener('scroll', checkIfAtBottom);
+      return () => vp.removeEventListener('scroll', checkIfAtBottom);
+    }
+  }, [checkIfAtBottom, getViewport]);
 
   useEffect(() => {
     if (!messagesContainerRef.current) return;
@@ -583,6 +628,38 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             </DropdownMenu>
           </div>
         </div>
+
+        {/* ── Call panel ── */}
+        {callStatus !== 'idle' && callStatus !== 'ended' &&
+          callIsGroup && callChannelId === groupId && (
+          <CallPanel
+            type={callType || 'voice'}
+            status={callStatus as 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended'}
+            localStream={localStream}
+            remoteStreams={remoteStreams}
+            screenStream={screenStream}
+            isMuted={isMuted}
+            isVideoOff={isVideoOff}
+            isScreenSharing={isScreenSharing}
+            remoteIsScreenSharing={remoteIsScreenSharing}
+            recipientName={groupInfo?.name || 'Groupe'}
+            currentUserName={user?.displayName || user?.username || 'Vous'}
+            currentUserAvatar={user?.avatarUrl}
+            duration={callDuration}
+            mediaError={mediaError}
+            participants={Array.from(participantInfo.entries()).map(([uid, info]) => ({ userId: uid, name: info.name, avatar: info.avatar }))}
+            callCategory={callCategory ?? undefined}
+            callMode={callMode}
+            tierLabel={tierLabel}
+            handRaised={handRaised}
+            onToggleMute={toggleMute}
+            onToggleVideo={toggleVideo}
+            onStartScreenShare={startScreenShare}
+            onStopScreenShare={stopScreenShare}
+            onEndCall={leaveCall}
+            onToggleHand={toggleHand}
+          />
+        )}
 
         {/* ── Messages ── */}
         <ScrollArea ref={scrollRef} className="min-h-0 flex-1 p-2 md:p-4">

@@ -49,6 +49,20 @@ export function statusTextColor(status?: string | null): string {
   return STATUS_TEXT_COLORS[(status as UserStatus)] ?? STATUS_TEXT_COLORS.offline;
 }
 
+/** Chemins SVG des icônes de statut (depuis /statusicon/). */
+export const STATUS_ICONS: Record<UserStatus, string> = {
+  online:    '/statusicon/online.svg',
+  idle:      '/statusicon/idle.svg',
+  dnd:       '/statusicon/donotdisturb.svg',
+  invisible: '/statusicon/offline.svg',
+  offline:   '/statusicon/offline.svg',
+};
+
+/** Retourne le chemin de l'icône SVG pour un statut donné. */
+export function statusIcon(status?: string | null): string {
+  return STATUS_ICONS[(status as UserStatus)] ?? STATUS_ICONS.offline;
+}
+
 /**
  * Retourne true si le statut est "visible en ligne" (online / idle / dnd).
  * Les utilisateurs invisibles ou hors ligne retournent false.
@@ -77,3 +91,31 @@ export function effectiveStatus(status?: string | null): UserStatus {
 /** Liste des statuts sélectionnables par l'utilisateur (pas 'offline'). */
 export const SELECTABLE_STATUSES = ['online', 'idle', 'dnd', 'invisible'] as const;
 export type SelectableStatus = (typeof SELECTABLE_STATUSES)[number];
+
+// ============ PRÉSENCE RICHE ============
+
+export interface RichPresence {
+  status: UserStatus;
+  chosenStatus?: UserStatus;
+  emoji?: string | null;
+  text?: string | null;
+}
+
+/** Retourne le label d'affichage combiné emoji + texte, ou le label du statut. */
+export function richStatusLabel(p: RichPresence): string {
+  if (p.emoji && p.text) return `${p.emoji} ${p.text}`;
+  if (p.text) return p.text;
+  return statusLabel(p.status);
+}
+
+/** Retourne "Vu il y a X" en français, ou null si date absente. */
+export function formatLastSeen(lastSeenAt: Date | string | null | undefined): string | null {
+  if (!lastSeenAt) return null;
+  const diff = Math.floor((Date.now() - new Date(lastSeenAt).getTime()) / 1000);
+  if (diff < 60) return "Vu à l'instant";
+  if (diff < 3600) return `Vu il y a ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `Vu il y a ${Math.floor(diff / 3600)}h`;
+  if (diff < 7 * 86400) return `Vu il y a ${Math.floor(diff / 86400)}j`;
+  if (diff < 30 * 86400) return `Vu il y a ${Math.floor(diff / (7 * 86400))} sem`;
+  return `Vu il y a ${Math.floor(diff / (30 * 86400))} mois`;
+}

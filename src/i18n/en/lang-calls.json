@@ -1,0 +1,70 @@
+{
+  "calls": {
+    "calling": "Calling...",
+    "ringing": "Ringing...",
+    "connecting": "Connecting...",
+    "ended": "Call ended",
+    "incomingVoice": "Incoming voice call",
+    "incomingVideo": "Incoming video call",
+    "enableCamera": "Enable camera",
+    "disableCamera": "Disable camera",
+    "hangup": "Hang up",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen",
+    "voiceLabel": "Voice",
+    "videoLabel": "Video",
+    "sharing": "Sharing",
+    "connectedVoice": "Connected to voice",
+    "participants": "{n} participant(s)",
+    "leave": "Leave",
+    "join": "Join"
+  },
+  "callBar": {
+    "calling": "Calling...",
+    "ringing": "Ringing...",
+    "connecting": "Connecting...",
+    "videoConnected": "Video connected",
+    "voiceConnected": "Voice connected",
+    "call": "Call",
+    "shareScreen": "Share screen",
+    "muteMic": "Mute microphone",
+    "unmuteMic": "Unmute microphone",
+    "hangup": "Hang up",
+    "ongoingCall": "Ongoing call"
+  },
+  "callOverlay": {
+    "calling": "Calling...",
+    "ringing": "Ringing...",
+    "connecting": "Connecting...",
+    "you": "You",
+    "live": "LIVE",
+    "enableSound": "Enable sound",
+    "muted": "Muted",
+    "mic": "Mic",
+    "camera": "Camera",
+    "stopShare": "Stop",
+    "shareScreen": "Screen",
+    "hangup": "Hang up",
+    "voiceCall": "Voice call",
+    "videoCall": "Video call",
+    "clickEnableSound": "Click to enable sound",
+    "screenOf": "{name} — screen",
+    "myScreen": "My screen"
+  },
+  "voiceControlBar": {
+    "connecting": "Connecting...",
+    "voiceActive": "Voice active",
+    "members": "{n} member(s)"
+  },
+  "networkQuality": {
+    "excellent": "Excellent",
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor",
+    "unknown": "Unknown",
+    "quality": "Quality: ",
+    "ping": "Ping",
+    "loss": "Loss",
+    "jitter": "Jitter"
+  }
+}

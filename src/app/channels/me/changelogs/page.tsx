@@ -1,21 +1,16 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { SparklesIcon, ZapIcon, ShieldIcon, FlameIcon, MenuIcon, ArrowLeftIcon, SearchIcon, XIcon } from '@/components/icons';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useTranslation } from '@/components/locale-provider';
+import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 
 interface Changelog {
   id: string;
@@ -30,38 +25,30 @@ interface Changelog {
 
 type FilterType = 'all' | Changelog['type'];
 
-const TYPE_CONFIG: Record<string, { iconBg: string; iconColor: string; icon: React.ElementType }> = {
-  feature:     { iconBg: 'bg-blue-500/10',   iconColor: 'text-blue-500',   icon: SparklesIcon },
-  improvement: { iconBg: 'bg-violet-500/10', iconColor: 'text-violet-500', icon: ZapIcon },
-  fix:         { iconBg: 'bg-orange-500/10', iconColor: 'text-orange-500', icon: FlameIcon },
-  security:    { iconBg: 'bg-red-500/10',    iconColor: 'text-red-500',    icon: ShieldIcon },
-  breaking:    { iconBg: 'bg-red-700/10',    iconColor: 'text-red-600',    icon: FlameIcon },
-};
+const TYPE_CFG = {
+  feature:     { dot: 'bg-blue-500',   glow: 'shadow-blue-500/40',   badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',        line: 'border-l-blue-500/50',    icon: SparklesIcon },
+  improvement: { dot: 'bg-violet-500', glow: 'shadow-violet-500/40', badge: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',  line: 'border-l-violet-500/50',  icon: ZapIcon      },
+  fix:         { dot: 'bg-orange-500', glow: 'shadow-orange-500/40', badge: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',  line: 'border-l-orange-500/50',  icon: FlameIcon    },
+  security:    { dot: 'bg-red-500',    glow: 'shadow-red-500/40',    badge: 'bg-red-500/10 text-red-600 dark:text-red-400',           line: 'border-l-red-500/50',     icon: ShieldIcon   },
+  breaking:    { dot: 'bg-rose-700',   glow: 'shadow-rose-700/40',   badge: 'bg-rose-700/10 text-rose-700 dark:text-rose-400',        line: 'border-l-rose-700/50',    icon: FlameIcon    },
+} as const;
 
-const FILTERS: { value: FilterType }[] = [
-  { value: 'all' },
-  { value: 'feature' },
-  { value: 'improvement' },
-  { value: 'fix' },
-  { value: 'security' },
-  { value: 'breaking' },
-];
+const FILTER_KEYS: FilterType[] = ['all', 'feature', 'improvement', 'fix', 'security', 'breaking'];
 
 export default function ChangelogsPage() {
   const router = useRouter();
   const { isMobile, openSidebar } = useMobileNav();
   const { t, locale } = useTranslation();
-  const cl18n = t.changelogs;
+  const cl = t.changelogs;
 
   const [changelogs, setChangelogs] = useState<Changelog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>('all');
   const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
-    api
-      .getChangelogs(100, 0)
+    api.getChangelogs(100, 0)
       .then((res) => {
         const raw = res.data;
         const list: Changelog[] = Array.isArray(raw)
@@ -77,14 +64,35 @@ export default function ChangelogsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const counts = useMemo(() => {
+    const m: Record<string, number> = { all: changelogs.length };
+    for (const c of changelogs) m[c.type] = (m[c.type] ?? 0) + 1;
+    return m;
+  }, [changelogs]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return changelogs.filter((cl) => {
-      const matchType = typeFilter === 'all' || cl.type === typeFilter;
-      const matchSearch = !q || cl.title.toLowerCase().includes(q) || cl.version.toLowerCase().includes(q);
-      return matchType && matchSearch;
+    return changelogs.filter((c) => {
+      if (filter !== 'all' && c.type !== filter) return false;
+      if (q && !c.title.toLowerCase().includes(q) && !c.version.toLowerCase().includes(q)) return false;
+      return true;
     });
-  }, [changelogs, search, typeFilter]);
+  }, [changelogs, search, filter]);
+
+  const typeLabel = (type: Changelog['type']) =>
+    type === 'feature' ? cl.typeNew
+    : type === 'improvement' ? cl.typeImprovement
+    : type === 'fix' ? cl.typeFix
+    : type === 'security' ? cl.typeSecurity
+    : cl.typeBreaking;
+
+  const filterLabel = (type: FilterType) =>
+    type === 'all' ? cl.filterAllShort
+    : type === 'feature' ? cl.typeNew
+    : type === 'improvement' ? cl.filterImprovement
+    : type === 'fix' ? cl.typeFix
+    : type === 'security' ? cl.typeSecurity
+    : cl.typeBreakingShort;
 
   return (
     <div className="flex h-dvh flex-col bg-background">
@@ -100,19 +108,19 @@ export default function ChangelogsPage() {
           <ArrowLeftIcon size={15} />
         </Button>
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <SparklesIcon size={14} className="shrink-0 text-muted-foreground" />
-          <span className="truncate text-sm font-semibold">{cl18n.title}</span>
+          <SparklesIcon size={14} className="shrink-0 text-primary" />
+          <span className="truncate text-sm font-semibold">{cl.title}</span>
         </div>
         {!loading && changelogs.length > 0 && (
-          <Badge variant="secondary" className="shrink-0 text-[11px]">
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
             {changelogs.length}
-          </Badge>
+          </span>
         )}
         <Button
           variant="ghost"
           size="icon"
           className="size-8 shrink-0 text-muted-foreground"
-          onClick={() => { setShowSearch((v) => !v); if (showSearch) setSearch(''); }}
+          onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch(''); }}
         >
           {showSearch ? <XIcon size={14} /> : <SearchIcon size={14} />}
         </Button>
@@ -120,12 +128,12 @@ export default function ChangelogsPage() {
 
       {/* Search bar */}
       {showSearch && (
-        <div className="shrink-0 border-b border-border bg-background px-3 py-2">
+        <div className="shrink-0 border-b border-border px-3 py-2">
           <div className="relative">
             <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               autoFocus
-              placeholder={cl18n.searchPlaceholder}
+              placeholder={cl.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-8 pl-8 text-sm"
@@ -134,171 +142,175 @@ export default function ChangelogsPage() {
         </div>
       )}
 
-      {/* Filter tabs */}
+      {/* Filter pills */}
       {!loading && changelogs.length > 0 && (
-        <div className="shrink-0 border-b border-border bg-background">
+        <div className="shrink-0 border-b border-border">
           <div className="flex gap-1 overflow-x-auto px-3 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setTypeFilter(f.value)}
-                className={cn(
-                  'shrink-0 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
-                  typeFilter === f.value
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
-              >
-                {f.value === 'all' ? cl18n.filterAllShort
-                 : f.value === 'feature' ? cl18n.typeNew
-                 : f.value === 'improvement' ? cl18n.filterImprovement
-                 : f.value === 'fix' ? cl18n.typeFix
-                 : f.value === 'security' ? cl18n.typeSecurity
-                 : cl18n.typeBreakingShort}
-              </button>
-            ))}
+            {FILTER_KEYS.map((type) => {
+              const count = counts[type] ?? 0;
+              if (type !== 'all' && count === 0) return null;
+              const active = filter === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setFilter(type)}
+                  className={cn(
+                    'flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                    active
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  {filterLabel(type)}
+                  <span className={cn(
+                    'rounded-full px-1.5 py-px text-[10px] tabular-nums',
+                    active ? 'bg-white/20 text-white' : 'bg-muted-foreground/15 text-muted-foreground',
+                  )}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Loading */}
+      {/* Loading skeletons — timeline style */}
       {loading ? (
-        <div className="space-y-3 p-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Skeleton className="size-9 shrink-0 rounded-md" />
-                  <div className="flex flex-1 flex-wrap items-center gap-2">
-                    <Skeleton className="h-5 w-20 rounded-full" />
-                    <Skeleton className="h-5 w-14 rounded-full" />
-                    <Skeleton className="ml-auto h-4 w-24" />
+        <div className="p-6">
+          <div className="relative pl-8">
+            <div className="absolute left-2.75 top-0 h-full w-px bg-border/40" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="relative mb-8">
+                <div className="absolute -left-5 top-2.5 size-4 rounded-full bg-muted ring-4 ring-background" />
+                <div className="overflow-hidden rounded-2xl border border-border/50 bg-card p-4">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+                    <div className="h-5 w-12 animate-pulse rounded-md bg-muted" />
+                    <div className="ml-auto h-4 w-20 animate-pulse rounded bg-muted" />
+                  </div>
+                  <div className="mb-3 h-4 w-2/3 animate-pulse rounded bg-muted" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-full animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-5/6 animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
                   </div>
                 </div>
-                <Skeleton className="mt-1 h-4 w-3/5" />
-              </CardHeader>
-              <CardContent className="space-y-2 pt-0">
-                <Skeleton className="h-3.5 w-full" />
-                <Skeleton className="h-3.5 w-5/6" />
-                <Skeleton className="h-3.5 w-4/6" />
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            ))}
+          </div>
         </div>
 
       ) : filtered.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-          <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-            <SparklesIcon size={22} className="text-muted-foreground/50" />
+        /* Empty state */
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+            <SparklesIcon size={24} className="text-muted-foreground/40" />
           </div>
           <div>
             <p className="text-sm font-semibold">
-              {search || typeFilter !== 'all' ? cl18n.noResultsShort : cl18n.noChangelogsShort}
+              {search || filter !== 'all' ? cl.noResultsShort : cl.noChangelogsShort}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {search || typeFilter !== 'all' ? cl18n.noResultsHint : cl18n.comingSoonShort}
+              {search || filter !== 'all' ? cl.noResultsHint : cl.comingSoonShort}
             </p>
           </div>
-          {(search || typeFilter !== 'all') && (
-            <Button variant="outline" size="sm" onClick={() => { setSearch(''); setTypeFilter('all'); }}>
-              {cl18n.clearFilters}
+          {(search || filter !== 'all') && (
+            <Button variant="outline" size="sm" onClick={() => { setSearch(''); setFilter('all'); }}>
+              {cl.clearFilters}
             </Button>
           )}
         </div>
 
       ) : (
+        /* Timeline */
         <ScrollArea className="min-h-0 flex-1">
-          <div className="space-y-3 p-4">
-            {filtered.map((log, idx) => {
-              const cfg = TYPE_CONFIG[log.type] ?? {
-                iconBg: 'bg-muted',
-                iconColor: 'text-muted-foreground',
-                icon: SparklesIcon,
-              };
-              const typeLabel = log.type === 'feature' ? cl18n.typeNew
-                : log.type === 'improvement' ? cl18n.typeImprovement
-                : log.type === 'fix' ? cl18n.typeFix
-                : log.type === 'security' ? cl18n.typeSecurity
-                : cl18n.typeBreaking;
-              const Icon = cfg.icon;
+          <div className="p-6">
+            <div className="relative pl-8">
+              {/* Vertical connecting line */}
+              <div className="absolute left-2.75 top-2 bottom-2 w-px bg-border/40" />
 
-              return (
-                <Card key={log.id} className="overflow-hidden transition-shadow duration-150 hover:shadow-md">
-                  <CardHeader>
-                    <div className="flex items-start gap-3">
-                      <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', cfg.iconBg, cfg.iconColor)}>
-                        <Icon size={16} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <Badge variant="secondary" className={cn('text-xs', cfg.iconColor)}>
-                            {typeLabel}
-                          </Badge>
-                          <Badge variant="outline" className="font-mono text-xs text-muted-foreground">
+              {filtered.map((log, idx) => {
+                const cfg = TYPE_CFG[log.type] ?? TYPE_CFG.feature;
+                const Icon = cfg.icon;
+                const isFirst = idx === 0 && filter === 'all' && !search;
+
+                return (
+                  <div key={log.id} className="relative mb-5 last:mb-0">
+                    {/* Timeline dot */}
+                    <div className={cn(
+                      'absolute -left-5 top-3 size-4 rounded-full ring-4 ring-background shadow-md',
+                      cfg.dot,
+                      cfg.glow,
+                    )} />
+
+                    {/* Card */}
+                    <div className={cn(
+                      'overflow-hidden rounded-2xl border border-border/50 bg-card border-l-2 transition-shadow hover:shadow-md',
+                      cfg.line,
+                    )}>
+                      {/* Card header */}
+                      <div className="px-4 pt-4 pb-3">
+                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                          <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none', cfg.badge)}>
+                            <Icon size={10} />
+                            {typeLabel(log.type)}
+                          </span>
+                          <span className="rounded-md border border-border/60 px-2 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">
                             v{log.version}
-                          </Badge>
-                          {idx === 0 && typeFilter === 'all' && !search && (
-                            <Badge>{cl18n.latestVersion}</Badge>
+                          </span>
+                          {isFirst && (
+                            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground">
+                              {cl.latestVersion}
+                            </span>
                           )}
-                          <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
+                          <time
+                            dateTime={log.created_at}
+                            className="ml-auto shrink-0 text-[11px] tabular-nums text-muted-foreground"
+                          >
                             {new Date(log.created_at).toLocaleDateString(locale, {
                               year: 'numeric', month: 'short', day: 'numeric',
                             })}
-                          </span>
+                          </time>
                         </div>
-                        <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground">
+                        <h2 className="text-sm font-semibold leading-snug text-foreground">
                           {log.title}
-                        </p>
+                        </h2>
                       </div>
-                    </div>
-                  </CardHeader>
 
-                  <CardContent className="pt-0">
-                    {log.banner_url && (
-                      <div className="mb-3 overflow-hidden rounded-md">
-                        <img src={log.banner_url} alt="" className="max-h-36 w-full object-cover" />
+                      {/* Banner */}
+                      {log.banner_url && (
+                        <div className="mx-4 mb-3 overflow-hidden rounded-xl">
+                          <img
+                            src={resolveMediaUrl(log.banner_url) ?? log.banner_url}
+                            alt=""
+                            className="max-h-44 w-full object-cover"
+                          />
+                        </div>
+                      )}
+
+                      {/* Content */}
+                      <div className="px-4 pb-4 text-sm text-muted-foreground">
+                        <MarkdownRenderer content={log.content} />
                       </div>
-                    )}
 
-                    <div className={cn(
-                      'prose prose-sm max-w-none text-muted-foreground',
-                      '[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2',
-                      '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:italic',
-                      '[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-foreground',
-                      '[&_h1]:text-sm [&_h1]:font-bold [&_h1]:text-foreground',
-                      '[&_h2]:text-sm [&_h2]:font-bold [&_h2]:text-foreground',
-                      '[&_h3]:text-xs [&_h3]:font-bold [&_h3]:text-foreground',
-                      '[&_hr]:border-border',
-                      '[&_li]:text-xs [&_li]:leading-relaxed',
-                      '[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1',
-                      '[&_p]:text-xs [&_p]:leading-relaxed',
-                      '[&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:border-border [&_pre]:bg-muted [&_pre]:p-3',
-                      '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
-                      '[&_strong]:font-semibold [&_strong]:text-foreground',
-                      '[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1',
-                    )}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {log.content}
-                      </ReactMarkdown>
+                      {/* Author */}
+                      {log.author_username && (
+                        <div className="border-t border-border/30 px-4 py-2.5">
+                          <p className="text-[11px] text-muted-foreground/60">
+                            {cl.publishedBy}{' '}
+                            <span className="font-medium text-muted-foreground">@{log.author_username}</span>
+                          </p>
+                        </div>
+                      )}
                     </div>
-
-                    {log.author_username && (
-                      <>
-                        <Separator className="my-3" />
-                        <p className="text-xs text-muted-foreground">
-                          {cl18n.publishedBy}{' '}
-                          <span className="font-medium text-foreground">@{log.author_username}</span>
-                        </p>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </ScrollArea>
       )}
     </div>
   );
 }
-

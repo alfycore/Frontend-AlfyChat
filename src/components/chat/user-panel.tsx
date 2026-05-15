@@ -16,7 +16,7 @@ import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { useUIStyle } from '@/hooks/use-ui-style';
-import { statusColor, statusLabel, SELECTABLE_STATUSES, type UserStatus } from '@/lib/status';
+import { statusIcon, statusLabel, SELECTABLE_STATUSES, type UserStatus } from '@/lib/status';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useVoice } from '@/hooks/use-voice';
 import { NetworkQualityIndicator } from '@/components/chat/network-quality-indicator';
@@ -28,6 +28,7 @@ interface User {
   avatarUrl?: string;
   status: UserStatus;
   customStatus?: string | null;
+  emoji?: string | null;
 }
 
 interface UserPanelProps {
@@ -44,6 +45,7 @@ export function UserPanel({ user }: UserPanelProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingCustomStatus, setEditingCustomStatus] = useState(false);
   const [customStatusDraft, setCustomStatusDraft] = useState(user.customStatus ?? '');
+  const [emojiDraft, setEmojiDraft] = useState(user.emoji ?? '');
   const customStatusInputRef = useRef<HTMLInputElement>(null);
 
   // ── Hooks voix/appel ─────────────────────────────────────────────────────
@@ -76,24 +78,24 @@ export function UserPanel({ user }: UserPanelProps) {
 
   useEffect(() => {
     setCustomStatusDraft(user.customStatus ?? '');
-  }, [user.customStatus]);
+    setEmojiDraft(user.emoji ?? '');
+  }, [user.customStatus, user.emoji]);
 
   useEffect(() => {
     if (editingCustomStatus) customStatusInputRef.current?.focus();
   }, [editingCustomStatus]);
 
-  const dotColor = statusColor(user.status);
-
   const handleStatusChange = (s: typeof SELECTABLE_STATUSES[number]) => {
-    socketService.updatePresence(s, user.customStatus ?? null);
+    socketService.updatePresence(s, user.customStatus ?? null, user.emoji ?? null);
     updateUser({ status: s });
   };
 
   const saveCustomStatus = () => {
     const trimmed = customStatusDraft.trim().slice(0, 100);
+    const emoji = emojiDraft.trim().slice(0, 2) || null;
     const activeStatus = user.status === 'offline' ? 'online' : user.status as typeof SELECTABLE_STATUSES[number];
-    socketService.updatePresence(activeStatus, trimmed || null);
-    updateUser({ customStatus: trimmed || null });
+    socketService.updatePresence(activeStatus, trimmed || null, emoji);
+    updateUser({ customStatus: trimmed || null, emoji });
     setEditingCustomStatus(false);
   };
 
@@ -111,18 +113,16 @@ export function UserPanel({ user }: UserPanelProps) {
                   {user.displayName?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-[1.5px] ring-sidebar ${dotColor}`}>
-                {user.status === 'dnd' && (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="block h-[2px] w-[5px] rounded-full bg-white" />
-                  </span>
-                )}
+              <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-sidebar ring-2 ring-sidebar">
+                <img src={statusIcon(user.status)} width={12} height={12} alt="" draggable={false} className="block" />
               </span>
             </div>
             <div className="min-w-0 flex-1 text-left">
               <p className={`truncate ${d.panelName} font-heading tracking-tight leading-tight text-foreground`}>{user.displayName}</p>
               <p className={`truncate ${d.panelSub} text-muted-foreground/70`}>
-                {user.customStatus ? user.customStatus : statusLabel(user.status)}
+                {user.customStatus
+                  ? (user.emoji ? `${user.emoji} ${user.customStatus}` : user.customStatus)
+                  : statusLabel(user.status)}
               </p>
             </div>
           </div>
@@ -146,12 +146,13 @@ export function UserPanel({ user }: UserPanelProps) {
             </DropdownMenuItem>
 
             {/* Effacer le statut personnalisé */}
-            {user.customStatus && (
+            {(user.customStatus || user.emoji) && (
               <DropdownMenuItem onSelect={() => {
                 const activeStatus = user.status === 'offline' ? 'online' : user.status as typeof SELECTABLE_STATUSES[number];
-                socketService.updatePresence(activeStatus, null);
-                updateUser({ customStatus: null });
+                socketService.updatePresence(activeStatus, null, null);
+                updateUser({ customStatus: null, emoji: null });
                 setCustomStatusDraft('');
+                setEmojiDraft('');
               }}>
                 <span className="text-[13px] text-destructive">Effacer le statut</span>
               </DropdownMenuItem>
@@ -162,13 +163,7 @@ export function UserPanel({ user }: UserPanelProps) {
               const isActive = user.status === s;
               return (
                 <DropdownMenuItem key={s} onSelect={() => handleStatusChange(s)}>
-                  <div className={`relative size-2.5 rounded-full ${statusColor(s)}`}>
-                    {s === 'dnd' && (
-                      <span className="absolute inset-0 flex items-center justify-center">
-                        <span className="block h-[2px] w-[5px] rounded-full bg-white" />
-                      </span>
-                    )}
-                  </div>
+                  <img src={statusIcon(s)} width={12} height={12} alt="" draggable={false} />
                   <span className="flex-1 text-[13px]">{statusLabel(s)}</span>
                   {isActive && <CheckIcon size={14} className="text-primary" />}
                 </DropdownMenuItem>
@@ -182,18 +177,32 @@ export function UserPanel({ user }: UserPanelProps) {
       <Dialog open={editingCustomStatus} onOpenChange={(open) => { if (!open) setEditingCustomStatus(false); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Définir un statut personnalisé</DialogTitle></DialogHeader>
-          <Input
-            ref={customStatusInputRef}
-            value={customStatusDraft}
-            onChange={(e) => setCustomStatusDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') saveCustomStatus();
-              if (e.key === 'Escape') setEditingCustomStatus(false);
-            }}
-            maxLength={100}
-            placeholder="Définir un statut..."
-            autoFocus
-          />
+          <div className="flex gap-2">
+            <Input
+              value={emojiDraft}
+              onChange={(e) => setEmojiDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveCustomStatus();
+                if (e.key === 'Escape') setEditingCustomStatus(false);
+              }}
+              maxLength={2}
+              placeholder="😀"
+              className="w-16 shrink-0 text-center text-lg"
+            />
+            <Input
+              ref={customStatusInputRef}
+              value={customStatusDraft}
+              onChange={(e) => setCustomStatusDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveCustomStatus();
+                if (e.key === 'Escape') setEditingCustomStatus(false);
+              }}
+              maxLength={100}
+              placeholder="Définir un statut..."
+              autoFocus
+              className="flex-1"
+            />
+          </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditingCustomStatus(false)}>Annuler</Button>
             <Button onClick={saveCustomStatus}>Enregistrer</Button>

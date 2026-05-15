@@ -1,0 +1,34 @@
+{
+  "common": {
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "save": "保存",
+    "saving": "保存中...",
+    "saved": "✓ 保存済み",
+    "close": "閉じる",
+    "back": "戻る",
+    "create": "作成",
+    "creating": "作成中...",
+    "validate": "検証",
+    "send": "送信",
+    "sending": "送信中...",
+    "leave": "退出",
+    "open": "開く",
+    "settings": "設定",
+    "error": "エラー",
+    "preview": "プレビュー",
+    "members": "{n}人のメンバー",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "you": "あなた",
+    "loading": "読み込み中…"
+  },
+  "status": {
+    "online": "オンライン",
+    "idle": "離席中",
+    "dnd": "取り込み中",
+    "invisible": "非表示",
+    "offline": "オフライン",
+    "you": "あなた"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "Oppdag servere",
+    "label": "Utforsk",
+    "heading": "Finn fellesskapet ditt",
+    "description": "Bla gjennom servere p� AlfyChat � sertifiserte og partnerfellesskap venter p� deg.",
+    "searchPlaceholder": "S�k server�",
+    "certified": "Sertifisert",
+    "certifiedTooltip": "Sertifisert av AlfyChat",
+    "partner": "Partner",
+    "partnerTooltip": "AlfyChat-partnerserver",
+    "memberCount": "{n} medlemmer",
+    "joining": "Bli med�",
+    "join": "Bli med",
+    "noResults": "Ingen servere funnet",
+    "noResultsSearch": "Pr�v andre s�keord.",
+    "noResultsEmpty": "Ingen servere er listet enn�."
+  },
+  "invite": {
+    "invalid": "Ugyldig invitasjon",
+    "backHome": "Tilbake til start",
+    "youreInvited": "Du er invitert til � bli med i",
+    "memberCount": "{n} medlem/mer",
+    "usages": "{uses}/{maxUses} bruk",
+    "expires": "Utl�per {date}",
+    "joinServer": "Bli med i server",
+    "loginToJoin": "Logg inn for � bli med",
+    "notNow": "Ikke n�",
+    "footer": "AlfyChat � Sikker og desentralisert meldingstjeneste"
+  }
+}

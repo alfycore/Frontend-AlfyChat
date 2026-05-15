@@ -27,6 +27,7 @@ import {
   FileTextIcon,
   MenuIcon,
 } from '@/components/icons';
+import { useTranslation } from '@/components/locale-provider';
 import { useMessages } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
@@ -113,6 +114,7 @@ const MessageList = memo(function MessageList({
   onCancelEdit,
   onDelete,
 }: MessageListProps) {
+  const { t } = useTranslation();
   // Trouver l'index du premier message non lu (après lastSeenAt)
   let newMessagesDividerIdx = -1;
   if (lastSeenAt) {
@@ -131,7 +133,7 @@ const MessageList = memo(function MessageList({
       {isLoadingMoreMessages && (
         <div className="flex items-center justify-center gap-2 py-3 text-muted-foreground">
           <Spinner size="sm" />
-          <span className="text-xs">Chargement des anciens messages…</span>
+          <span className="text-xs">{t.chat.loadingOlder}</span>
         </div>
       )}
 
@@ -147,7 +149,7 @@ const MessageList = memo(function MessageList({
             {showDivider && (
               <div className="my-2 flex items-center gap-2 px-4">
                 <div className="h-px flex-1 bg-destructive/40" />
-                <span className="shrink-0 text-[11px] font-semibold text-destructive">Nouveaux messages</span>
+                <span className="shrink-0 text-[11px] font-semibold text-destructive">{t.chat.newMessages}</span>
                 <div className="h-px flex-1 bg-destructive/40" />
               </div>
             )}
@@ -192,6 +194,7 @@ const MessageList = memo(function MessageList({
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProps) {
+  const { t, tx } = useTranslation();
   const { user } = useAuth();
   const ui = useUIStyle();
   const { isMobile, openSidebar } = useMobileNav();
@@ -263,6 +266,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     callType,
     callConversationId,
     callRecipientId,
+    callChannelId,
+    isGroup: callIsGroup,
+    callCategory,
+    callMode,
+    tierLabel,
+    handRaised,
     callerName: ctxCallerName,
     callerAvatar,
     localStream,
@@ -274,11 +283,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     remoteIsScreenSharing,
     mediaError,
     callDuration,
+    participantInfo,
     toggleMute,
     toggleVideo,
     startScreenShare,
     stopScreenShare,
     endCall,
+    leaveCall,
+    toggleHand,
   } = useCallContext();
 
   const {
@@ -493,12 +505,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
       for (const file of files) {
         if (file.size > MAX) {
-          notify.error('Fichier trop volumineux', `${file.name} dépasse 10 Mo`);
+          notify.error(t.chat.fileTooLarge, tx(t.chat.fileTooLargeDesc, { name: file.name }));
           continue;
         }
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
         if (!ACCEPTED.includes(file.type) && !ACCEPTED_EXTS.includes(ext)) {
-          notify.error('Type non supporté', `${file.name} n'est pas accepté`);
+          notify.error(t.chat.fileTypeError, tx(t.chat.fileTypeErrorDesc, { name: file.name }));
           continue;
         }
         setIsUploading(true);
@@ -510,7 +522,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               { name: file.name, url: res.data!.url, isImage: res.data!.isImage },
             ]);
           } else {
-            notify.error('Erreur upload', res.error || "Impossible d'uploader le fichier");
+            notify.error(t.chat.uploadError, res.error || t.chat.uploadError);
           }
         } finally {
           setIsUploading(false);
@@ -532,7 +544,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         const file = item.getAsFile();
         if (!file) continue;
         if (file.size > 10 * 1024 * 1024) {
-          notify.error('Fichier trop volumineux', 'L\'image dépasse 10 Mo');
+          notify.error(t.chat.fileTooLarge, t.chat.fileTooLargeDesc.replace('{name}', 'image'));
           continue;
         }
         setIsUploading(true);
@@ -544,7 +556,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               { name: file.name || 'image.png', url: res.data!.url, isImage: res.data!.isImage },
             ]);
           } else {
-            notify.error('Erreur upload', res.error || 'Impossible d\'uploader l\'image');
+            notify.error(t.chat.uploadError, res.error || t.chat.uploadError);
           }
         } finally {
           setIsUploading(false);
@@ -578,7 +590,22 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       content = content ? content + attStr : attStr.trimStart();
     }
 
-    sendMessage(content, replyingTo?.id);
+    const mentionedUserIds: string[] = [];
+    if (channelId) {
+      const mentionRegex = /(?:^|\s)@(\w+)/g;
+      let match: RegExpExecArray | null;
+      while ((match = mentionRegex.exec(content)) !== null) {
+        const username = match[1].toLowerCase();
+        const found = mentionUsersMemo.find(
+          (u) => u.username.toLowerCase() === username,
+        );
+        if (found && !mentionedUserIds.includes(found.id)) {
+          mentionedUserIds.push(found.id);
+        }
+      }
+    }
+
+    sendMessage(content, replyingTo?.id, mentionedUserIds.length > 0 ? mentionedUserIds : undefined);
     setMessageInput('');
     setPendingAttachments([]);
     setReplyingTo(null);
@@ -738,7 +765,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             onClick={openSidebar}
           >
             <MenuIcon size={18} />
-            Ouvrir les conversations
+            {t.chat.openSidebar}
           </Button>
         )}
         <div className="flex flex-col items-center gap-4 text-center">
@@ -746,9 +773,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             <MessageCircleIcon size={28} className="text-muted-foreground/50" />
           </div>
           <div className="space-y-1">
-            <p className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">Bienvenue sur AlfyChat</p>
+            <p className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">{t.chat.welcomeHeading}</p>
             <p className="text-[13px] text-muted-foreground">
-              Sélectionnez une conversation ou un salon pour commencer à discuter.
+              {t.chat.welcomeDesc}
             </p>
           </div>
         </div>
@@ -781,7 +808,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             <>
               <MessageCircleIcon size={15} className="shrink-0 text-muted-foreground/70" />
               <span className="truncate text-[13.5px] font-semibold tracking-[-0.01em] text-foreground">
-                {recipientName || 'Message privé'}
+                {recipientName || t.chat.privateMessage}
               </span>
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
@@ -794,17 +821,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                       E2EE
                     </Badge>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    Chiffrement de bout en bout (Signal Protocol) — le serveur ne peut pas lire vos
-                    messages
-                  </TooltipContent>
+                  <TooltipContent>{t.chat.e2eeTooltip}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </>
           ) : (
             <>
               <HashIcon size={15} className="shrink-0 text-muted-foreground/70" />
-              <span className="truncate text-[13.5px] font-semibold tracking-[-0.01em] text-foreground">général</span>
+              <span className="truncate text-[13.5px] font-semibold tracking-[-0.01em] text-foreground">{t.chat.generalChannel}</span>
             </>
           )}
         </div>
@@ -823,7 +847,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                     <SearchIcon size={15} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Rechercher dans la conversation</TooltipContent>
+                <TooltipContent>{t.chat.searchTooltip}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
 
@@ -840,7 +864,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                     <PhoneIcon size={15} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Appel vocal</TooltipContent>
+                <TooltipContent>{t.chat.voiceCall}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
 
@@ -857,7 +881,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                     <VideoIcon size={15} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Appel vidéo</TooltipContent>
+                <TooltipContent>{t.chat.videoCall}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
@@ -868,7 +892,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       {callStatus !== 'idle' &&
         callStatus !== 'ended' &&
         (callConversationId === getConversationId() ||
-          (recipientId && callRecipientId === recipientId)) && (
+          (recipientId && callRecipientId === recipientId) ||
+          (callIsGroup && channelId && callChannelId === channelId)) && (
           <CallPanel
             type={callType || 'voice'}
             status={callStatus as 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended'}
@@ -885,11 +910,17 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             currentUserAvatar={user?.avatarUrl}
             duration={callDuration}
             mediaError={mediaError}
+            participants={callIsGroup ? Array.from(participantInfo.entries()).map(([uid, info]) => ({ userId: uid, name: info.name, avatar: info.avatar })) : undefined}
+            callCategory={callCategory ?? undefined}
+            callMode={callMode}
+            tierLabel={tierLabel}
+            handRaised={handRaised}
             onToggleMute={toggleMute}
             onToggleVideo={toggleVideo}
             onStartScreenShare={startScreenShare}
             onStopScreenShare={stopScreenShare}
-            onEndCall={endCall}
+            onEndCall={callIsGroup ? leaveCall : endCall}
+            onToggleHand={toggleHand}
           />
         )}
 
@@ -898,9 +929,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         <div className="mx-3 mb-1 mt-2 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-linear-to-r from-amber-500/15 to-amber-500/5 px-4 py-2.5 shadow-sm shadow-amber-500/10 md:mx-4">
           <ShieldCheckIcon size={16} className="shrink-0 text-amber-500" />
           <span className="flex-1 text-xs text-amber-700 dark:text-amber-300">
-            {e2eeRecoveryStatus === 'offline'
-              ? 'Votre correspondant est hors ligne. Réessayez quand il sera connecté.'
-              : 'Certains messages n\u2019ont pas pu être déchiffrés. Demandez à votre correspondant de partager l\u2019historique.'}
+            {e2eeRecoveryStatus === 'offline' ? t.chat.e2eeOffline : t.chat.e2eeMissing}
           </span>
           <Button
             size="sm"
@@ -910,9 +939,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             onClick={requestE2EEHistory}
           >
             {e2eeRecoveryStatus === 'requesting' ? (
-              <><Spinner size="sm" className="mr-1.5" />En attente…</>
+              <><Spinner size="sm" className="mr-1.5" />{t.chat.e2eeWaiting}</>
             ) : (
-              'Récupérer l\u2019historique'
+              t.chat.e2eeRecover
             )}
           </Button>
           <Button
@@ -958,8 +987,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 <MessageCircleIcon size={22} className="text-muted-foreground/50" />
               </div>
               <div>
-                <p className="text-[13px] font-semibold text-foreground">Aucun message</p>
-                <p className="mt-0.5 text-[12px] text-muted-foreground">Soyez le premier à écrire !</p>
+                <p className="text-[13px] font-semibold text-foreground">{t.chat.noMessages}</p>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">{t.chat.beFirst}</p>
               </div>
             </div>
           </div>
@@ -997,12 +1026,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
             <span className="inline-block size-1.5 animate-bounce rounded-full bg-foreground/25 [animation-delay:300ms]" />
           </div>
           <span className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">
-              {typingUsers.map((u) => u.username).join(', ')}
-            </span>
             {typingUsers.length > 1
-              ? ' sont en train d\u2019écrire…'
-              : ' est en train d\u2019écrire…'}
+              ? tx(t.chat.typingPlural, { names: typingUsers.map((u) => u.username).join(', ') })
+              : tx(t.chat.typing, { names: typingUsers[0]?.username ?? '' })}
           </span>
         </div>
       )}
@@ -1044,7 +1070,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       )}
 
       {/* ── Input area ─────────────────────────────────────────────────────── */}
-      <form onSubmit={handleSendMessage} className="relative shrink-0 px-3 pb-3 pt-1 md:px-4 md:pb-4">
+      <form onSubmit={handleSendMessage} className="relative shrink-0 px-2 pb-2 pt-1">
         <input
           ref={fileInputRef}
           type="file"
@@ -1088,7 +1114,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
         {/* Input bar */}
         <div
-          className={`flex items-center gap-1.5 px-2 py-1.5 transition-colors focus-within:border-primary/40 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''} ${isBlocked ? 'pointer-events-none opacity-40' : ''}`}
+          className={`flex items-center gap-1.5 px-1 py-1 transition-colors focus-within:border-primary/40 ${ui.inputBar} ${replyingTo ? 'rounded-tl-none rounded-tr-none border-t-0' : ''} ${isBlocked ? 'pointer-events-none opacity-40' : ''}`}
         >
           <TooltipProvider delayDuration={0}>
             <Tooltip>

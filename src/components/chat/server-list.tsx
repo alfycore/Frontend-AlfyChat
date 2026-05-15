@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
@@ -117,8 +117,13 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const notifStore = useNotificationStore();
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const [servers,    setServers   ] = useState<Server[]>([]);
-  const [loading,    setLoading   ] = useState(true);
+  // useSyncExternalStore → re-render automatique sur tout changement du store
+  const servers = useSyncExternalStore(
+    serverListStore.subscribe,
+    serverListStore.getSnapshot,
+    serverListStore.getServerSnapshot,
+  );
+  const [loading,    setLoading   ] = useState(!serverListStore.isLoaded());
   const [onlineIds,  setOnlineIds ] = useState<Set<string>>(new Set());
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [leaveId,    setLeaveId   ] = useState<string | null>(null);
@@ -152,8 +157,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           list = list.sort((a, b) => (rank.get(a.id) ?? list.length) - (rank.get(b.id) ?? list.length));
         }
       } catch { /* ignore */ }
-      serverListStore.set(list);
-      setServers(list);
+      serverListStore.set(list); // notifie automatiquement via useSyncExternalStore
     }
     setLoading(false);
   }, []);
@@ -161,7 +165,6 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   // Au montage : utiliser le cache si disponible, sinon fetcher
   useEffect(() => {
     if (serverListStore.isLoaded()) {
-      setServers(serverListStore.get());
       setLoading(false);
     } else {
       loadServers();
@@ -184,15 +187,13 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         ...(p.name != null ? { name: p.name } : {}),
         ...(p.iconUrl !== undefined ? { iconUrl: p.iconUrl || undefined } : {}),
       };
-      serverListStore.update(id, updates);
-      setServers(prev => prev.map(sv => sv.id === id ? { ...sv, ...updates } : sv));
+      serverListStore.update(id, updates); // re-render auto via useSyncExternalStore
     };
 
     const onGone = (d: any, warn?: string) => {
       const id = getId(d);
       if (!id) return;
-      serverListStore.remove(id);
-      setServers(p => p.filter(sv => sv.id !== id));
+      serverListStore.remove(id); // re-render auto via useSyncExternalStore
       if (selectedServer === id) onSelectServer(null);
       if (warn) toast.warning(warn);
     };
@@ -201,12 +202,27 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     const onKicked = (d: any) => onGone(d, 'Vous avez été retiré du serveur.');
     const onBanned = (d: any) => onGone(d, 'Vous avez été banni du serveur.');
 
+    // SERVER_JOINED : reçu après un join HTTP (invite-embed ou autre onglet/appareil)
+    const onAdded = (d: any) => {
+      const p = d?.payload ?? d;
+      if (!p?.id) return;
+      // Éviter les doublons si déjà dans le store
+      if (serverListStore.get().some(s => s.id === p.id)) return;
+      serverListStore.add({
+        id: p.id,
+        name: p.name ?? '',
+        iconUrl: p.iconUrl ?? undefined,
+        ownerId: p.ownerId ?? undefined,
+      });
+    };
+
     socketService.on('SERVER_NODE_ONLINE',  onOnline);
     socketService.on('SERVER_NODE_OFFLINE', onOffline);
     socketService.on('SERVER_UPDATE',       onUpdate);
     socketService.on('SERVER_DELETE',       onDelete);
     socketService.on('SERVER_KICKED',       onKicked);
     socketService.on('SERVER_BANNED',       onBanned);
+    socketService.on('SERVER_JOINED',        onAdded);
 
     return () => {
       socketService.off('SERVER_NODE_ONLINE',  onOnline);
@@ -215,6 +231,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
       socketService.off('SERVER_DELETE',       onDelete);
       socketService.off('SERVER_KICKED',       onKicked);
       socketService.off('SERVER_BANNED',       onBanned);
+      socketService.off('SERVER_JOINED',       onAdded);
     };
   }, [selectedServer, onSelectServer]);
 
@@ -231,8 +248,13 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     if (res.success && res.data) {
       const s = res.data as any;
       const newServer: Server = { id: s.id ?? s.serverId, name: s.name, iconUrl: s.iconUrl };
-      serverListStore.add(newServer);
-      setServers(p => [...p, newServer]);
+      serverListStore.add(newServer); // re-render auto via useSyncExternalStore
+      // Notifier le gateway → join rooms socket + sync autres onglets/appareils
+      socketService.getSocket()?.emit('SERVER_SELF_JOIN', {
+        serverId: newServer.id,
+        name: newServer.name,
+        iconUrl: newServer.iconUrl,
+      });
       setJoinOk(`Bienvenue sur ${newServer.name} !`);
       setTimeout(() => { setJoinOpen(false); resetJoin(); onSelectServer(newServer.id); }, 1200);
     } else {
@@ -244,8 +266,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const handleLeave = async (id: string) => {
     const res = await api.leaveServer(id);
     if (res.success) {
-      serverListStore.remove(id);
-      setServers(p => p.filter(s => s.id !== id));
+      serverListStore.remove(id); // re-render auto via useSyncExternalStore
       if (selectedServer === id) onSelectServer(null);
       toast.success('Serveur quitté.');
     } else {
@@ -258,8 +279,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const handleDelete = async (id: string) => {
     const res = await api.deleteServer(id);
     if (res.success) {
-      serverListStore.remove(id);
-      setServers(p => p.filter(s => s.id !== id));
+      serverListStore.remove(id); // re-render auto via useSyncExternalStore
       if (selectedServer === id) onSelectServer(null);
       toast.success('Serveur supprimé.');
     } else {
@@ -296,16 +316,15 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
     e.preventDefault();
     const fromId = dragId.current;
     if (!fromId || fromId === targetId) { setDragOver(null); return; }
-    setServers(prev => {
-      const next = [...prev];
-      const from = next.findIndex(s => s.id === fromId);
-      const to   = next.findIndex(s => s.id === targetId);
-      if (from === -1 || to === -1) return prev;
+    const next = [...serverListStore.get()];
+    const from = next.findIndex(s => s.id === fromId);
+    const to   = next.findIndex(s => s.id === targetId);
+    if (from !== -1 && to !== -1) {
       const [moved] = next.splice(from, 1);
       next.splice(to, 0, moved);
       try { localStorage.setItem('alfychat_server_order', JSON.stringify(next.map(s => s.id))); } catch { /* ignore */ }
-      return next;
-    });
+      serverListStore.set(next); // re-render auto via useSyncExternalStore
+    }
     dragId.current = null;
     setDragging(null);
     setDragOver(null);
@@ -387,31 +406,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
           </TooltipContent>
         </Tooltip>
 
-        {/* ── Groups ── */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label="Groupes"
-              className={cn(
-                'relative flex shrink-0 cursor-pointer items-center justify-center rounded-[8px] transition-all duration-200',
-                horizontal ? cn(hBtnSize, 'mx-0') : cn(btnSize, 'mx-auto'),
-                selectedServer === 'groups'
-                  ? 'bg-foreground text-background'
-                  : 'bg-foreground/8 text-foreground hover:bg-foreground/12',
-              )}
-              onClick={() => onSelectServer('groups')}
-            >
-              <UsersRoundIcon size={horizontal ? hIconSize : iconSize} />
-              {totalGroupUnread > 0 && selectedServer !== 'groups' && (
-                <span className="absolute -bottom-0.5 -right-0.5 flex size-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-bold text-white">
-                  {totalGroupUnread > 99 ? '99+' : totalGroupUnread}
-                </span>
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side={side}>Groupes</TooltipContent>
-        </Tooltip>
+
 
         <div className={cn('shrink-0 rounded-full bg-border/60', horizontal ? 'mx-1 h-5 w-px' : 'my-1 h-px w-6 self-center')} />
 
@@ -437,7 +432,8 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                   const active    = selectedServer === server.id;
                   const isDragged = dragging === server.id;
                   const isOver    = dragOver  === server.id;
-                  const serverUnread = notifStore.unread.get(`server:${server.id}`) ?? 0;
+                  const serverUnread   = notifStore.unread.get(`server:${server.id}`) ?? 0;
+                  const serverMention = (notifStore as any).mentions?.get(`server:${server.id}`) ?? 0;
                   const sz = horizontal ? hBtnSize : btnSize;
                   const ic = horizontal ? hIconSize : iconSize;
 
@@ -492,7 +488,10 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                                 {onlineIds.has(server.id) && (
                                   <span className="absolute bottom-0.5 right-0.5 size-1.5 rounded-full bg-success ring-[1.5px] ring-sidebar" />
                                 )}
-                                {serverUnread > 0 && !active && (
+                                {serverMention > 0 && !active && (
+                                  <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-violet-600 ring-[1.5px] ring-sidebar" />
+                                )}
+                                {serverUnread > 0 && serverMention === 0 && !active && (
                                   <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-destructive ring-[1.5px] ring-sidebar" />
                                 )}
                               </button>

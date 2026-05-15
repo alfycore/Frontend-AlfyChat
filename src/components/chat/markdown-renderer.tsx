@@ -1,474 +1,516 @@
-﻿'use client';
+'use client';
 
-import React, { useId, useState } from 'react';
+import React, { memo, useId, useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { twemojify } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
 
-interface MarkdownRendererProps {
-  content: string;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function sanitizeUrl(url: string): string {
+  const lower = url.trimStart().toLowerCase();
+  if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('vbscript:')) return '#';
+  return url;
 }
 
-/**
- * Full Discord-style markdown renderer.
- * Supports: # headings, **bold**, *italic*, __underline__, ~~strikethrough~~,
- * `inline code`, ```code blocks```, [links](url), > blockquotes,
- * - unordered lists, 1. ordered lists, ![images](url), ||spoilers||
- * All emoji rendered as Twitter emoji (Twemoji).
- */
-export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  const uid = useId();
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+function resolveImg(url: string): string {
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return resolveMediaUrl(url) ?? url;
+}
 
-  const handleClick = (e: React.MouseEvent<HTMLElement>) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'IMG') {
-      setLightboxSrc((target as HTMLImageElement).src);
-    }
-  };
+// ── Lightbox ──────────────────────────────────────────────────────────────────
 
-  const lightbox = lightboxSrc ? (
+function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setZoom(z => Math.min(5, Math.max(0.1, z * (e.deltaY > 0 ? 0.9 : 1.11))));
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('wheel', onWheel);
+    };
+  }, [onClose]);
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex cursor-zoom-out items-center justify-center bg-black/80"
-      onClick={() => setLightboxSrc(null)}
-      onKeyDown={(e) => e.key === 'Escape' && setLightboxSrc(null)}
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      onClick={onClose}
       role="dialog"
       aria-modal
     >
       <button
-        className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-        onClick={(e) => { e.stopPropagation(); setLightboxSrc(null); }}
-        aria-label="Fermer"
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        aria-label="Close"
       >
-        <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
       </button>
-      <img
-        src={lightboxSrc}
-        alt=""
-        className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      />
-    </div>
-  ) : null;
-
-  // Si le contenu est uniquement une URL d'image/GIF, l'afficher directement
-  const trimmed = content.trim();
-  const isExternalImage = /^https?:\/\/\S+\.(gif|png|jpe?g|webp)(\?\S*)?$/i.test(trimmed) ||
-    /^https?:\/\/media\d*\.(tenor|giphy)\.com\//i.test(trimmed);
-  const isLocalUpload = /^\/uploads\/\S+\.(gif|png|jpe?g|webp)$/i.test(trimmed);
-  const isServerFile = /^\/api\/servers\/[^/]+\/files\/\S+\.(gif|png|jpe?g|webp)$/i.test(trimmed);
-  if (isExternalImage || isLocalUpload || isServerFile) {
-    const src = ((isLocalUpload || isServerFile) ? resolveMediaUrl(trimmed) : trimmed) ?? trimmed;
-    return (
-      <>
-        <img
-          src={src} alt=""
-          className="max-h-60 max-w-xs cursor-zoom-in rounded-xl shadow-sm"
-          loading="lazy"
-          onClick={() => setLightboxSrc(src)}
-        />
-        {lightbox}
-      </>
-    );
-  }
-
-  const elements = parseMarkdown(content, uid);
-  return (
-    <>
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div className="whitespace-pre-wrap wrap-break-word" onClick={handleClick}>{elements}</div>
-      {lightbox}
-    </>
-  );
-});
-
-// ── Top-level parser: split by code blocks ──
-
-function parseMarkdown(text: string, uid: string): React.ReactNode[] {
-  const codeBlockRegex = /```(\w*)\n?([\s\S]*?)```/g;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = codeBlockRegex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(...parseBlocks(text.slice(lastIndex, match.index), `${uid}-pre-${match.index}`));
-    }
-
-    const lang = match[1];
-    const code = match[2].trimEnd();
-    parts.push(
-      <pre
-        key={`${uid}-cb-${match.index}`}
-        className="my-1.5 overflow-x-auto rounded-xl border border-[var(--border)]/40 bg-[var(--surface-secondary)]/20 p-3 text-sm"
-      >
-        {lang && (
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]/70">{lang}</span>
-        )}
-        <code className="text-[var(--foreground)]/90">{code}</code>
-      </pre>
-    );
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < text.length) {
-    parts.push(...parseBlocks(text.slice(lastIndex), `${uid}-post-${lastIndex}`));
-  }
-
-  return parts.length > 0 ? parts : [text];
-}
-
-// ── Block-level parser: headings, blockquotes, lists, paragraphs ──
-
-function parseBlocks(text: string, keyPrefix: string): React.ReactNode[] {
-  const lines = text.split('\n');
-  const results: React.ReactNode[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Empty line → line break
-    if (line.trim() === '') {
-      if (i > 0) results.push(<br key={`${keyPrefix}-br-${i}`} />);
-      i++;
-      continue;
-    }
-
-    // Headings: # h1 ... ###### h6
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const headingContent = headingMatch[2];
-      const headingClasses: Record<number, string> = {
-        1: 'text-2xl font-bold mt-2 mb-1',
-        2: 'text-xl font-bold mt-2 mb-1',
-        3: 'text-lg font-semibold mt-1.5 mb-0.5',
-        4: 'text-base font-semibold mt-1 mb-0.5',
-        5: 'text-sm font-semibold mt-1',
-        6: 'text-sm font-medium mt-1 text-[var(--muted)]',
-      };
-      results.push(
-        <div key={`${keyPrefix}-h-${i}`} className={headingClasses[level]}>
-          {formatInline(headingContent, `${keyPrefix}-h-${i}`)}
-        </div>
-      );
-      i++;
-      continue;
-    }
-
-    // Blockquote: > text (can be multi-line)
-    if (line.startsWith('> ') || line === '>') {
-      const quoteLines: string[] = [];
-      while (i < lines.length && (lines[i].startsWith('> ') || lines[i] === '>')) {
-        quoteLines.push(lines[i].replace(/^>\s?/, ''));
-        i++;
-      }
-      results.push(
-        <div
-          key={`${keyPrefix}-bq-${i}`}
-          className="my-1.5 rounded-lg border-l-4 border-[var(--accent)]/40 bg-[var(--surface-secondary)]/10 py-1 pl-3 pr-2 text-[var(--muted)]"
-        >
-          {quoteLines.map((ql, qi) => (
-            <React.Fragment key={qi}>
-              {qi > 0 && <br />}
-              {formatInline(ql, `${keyPrefix}-bq-${i}-${qi}`)}
-            </React.Fragment>
-          ))}
-        </div>
-      );
-      continue;
-    }
-
-    // Unordered list: * item or - item or + item
-    if (/^(\s*)[*\-+]\s+/.test(line)) {
-      const listItems: { content: string; indent: number }[] = [];
-      while (i < lines.length && /^(\s*)[*\-+]\s+/.test(lines[i])) {
-        const m = lines[i].match(/^(\s*)[*\-+]\s+(.*)/);
-        if (m) {
-          listItems.push({ content: m[2], indent: m[1].length });
-        }
-        i++;
-      }
-      results.push(renderUnorderedList(listItems, `${keyPrefix}-ul-${i}`));
-      continue;
-    }
-
-    // Ordered list: 1. item
-    if (/^(\s*)\d+\.\s+/.test(line)) {
-      const listItems: { content: string; indent: number }[] = [];
-      while (i < lines.length && /^(\s*)\d+\.\s+/.test(lines[i])) {
-        const m = lines[i].match(/^(\s*)\d+\.\s+(.*)/);
-        if (m) {
-          listItems.push({ content: m[2], indent: m[1].length });
-        }
-        i++;
-      }
-      results.push(renderOrderedList(listItems, `${keyPrefix}-ol-${i}`));
-      continue;
-    }
-
-    // Horizontal rule: --- or *** or ___
-    if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
-      results.push(
-        <hr key={`${keyPrefix}-hr-${i}`} className="my-2 border-[var(--border)]/40" />
-      );
-      i++;
-      continue;
-    }
-
-    // Normal line
-    results.push(
-      <React.Fragment key={`${keyPrefix}-l-${i}`}>
-        {i > 0 && results.length > 0 && <br />}
-        {formatInline(line, `${keyPrefix}-l-${i}`)}
-      </React.Fragment>
-    );
-    i++;
-  }
-
-  return results;
-}
-
-// ── List renderers ──
-
-function renderUnorderedList(
-  items: { content: string; indent: number }[],
-  keyPrefix: string
-): React.ReactNode {
-  return (
-    <ul key={keyPrefix} className="my-1 list-inside list-disc space-y-0.5 pl-2">
-      {items.map((item, idx) => (
-        <li
-          key={`${keyPrefix}-${idx}`}
-          className="text-[var(--foreground)]/90"
-          style={{ paddingLeft: item.indent > 0 ? `${item.indent * 8}px` : undefined }}
-        >
-          {formatInline(item.content, `${keyPrefix}-${idx}`)}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function renderOrderedList(
-  items: { content: string; indent: number }[],
-  keyPrefix: string
-): React.ReactNode {
-  return (
-    <ol key={keyPrefix} className="my-1 list-inside list-decimal space-y-0.5 pl-2">
-      {items.map((item, idx) => (
-        <li
-          key={`${keyPrefix}-${idx}`}
-          className="text-[var(--foreground)]/90"
-          style={{ paddingLeft: item.indent > 0 ? `${item.indent * 8}px` : undefined }}
-        >
-          {formatInline(item.content, `${keyPrefix}-${idx}`)}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-// ── Inline formatting ──
-
-function formatInline(text: string, keyPrefix: string): React.ReactNode[] {
-  let keyCounter = 0;
-  const patterns: [RegExp, (match: RegExpMatchArray, key: string) => React.ReactNode][] = [
-    // Timestamps: @time:1713100000
-    [
-      /@time:(\d+)/g,
-      (m, k) => {
-        const ts = parseInt(m[1], 10);
-        const date = new Date(ts * 1000);
-        const local = date.toLocaleString(undefined, {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        });
-        const utc = date.toUTCString();
-        return (
-          <time
-            key={k}
-            dateTime={date.toISOString()}
-            title={utc}
-            className="cursor-help rounded bg-[var(--surface-secondary)]/40 px-1.5 py-0.5 font-medium text-[var(--foreground)] underline decoration-dotted"
-          >
-            {local}
-          </time>
-        );
-      },
-    ],
-    // Mentions: @username
-    [
-      /@([a-z0-9_]{2,32})/gi,
-      (m, k) => (
-        <span
-          key={k}
-          className="inline-flex items-center rounded bg-[var(--accent)]/15 px-1 py-0.5 text-[var(--accent)] font-medium cursor-pointer hover:bg-[var(--accent)]/25 transition-colors"
-          data-mention={m[1]}
-        >
-          @{m[1]}
+      {zoom !== 1 && (
+        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white/70 select-none">
+          {Math.round(zoom * 100)}%
         </span>
-      ),
-    ],
-    // Images: ![alt](url)
-    [
-      /!\[([^\]]*)\]\(([^)]+)\)/g,
-      (m, k) => (
-        <img
-          key={k}
-          src={resolveMediaUrl(m[2]) || m[2]}
-          alt={m[1]}
-          className="my-1 inline-block max-h-60 max-w-xs cursor-zoom-in rounded-xl shadow-sm"
-          loading="lazy"
-        />
-      ),
-    ],
-    // Inline code: `code`
-    [
-      /`([^`]+)`/g,
-      (m, k) => (
-        <code key={k} className="rounded-md bg-[var(--surface-secondary)]/40 px-1.5 py-0.5 text-[0.85em] font-mono">
-          {m[1]}
-        </code>
-      ),
-    ],
-    // Spoiler: ||text||
-    [
-      /\|\|(.+?)\|\|/g,
-      (m, k) => <Spoiler key={k}>{m[1]}</Spoiler>,
-    ],
-    // Bold + Italic: ***text***
-    [
-      /\*\*\*(.+?)\*\*\*/g,
-      (m, k) => (
-        <strong key={k} className="font-bold">
-          <em>{m[1]}</em>
-        </strong>
-      ),
-    ],
-    // Bold: **text**
-    [
-      /\*\*(.+?)\*\*/g,
-      (m, k) => (
-        <strong key={k} className="font-bold">
-          {m[1]}
-        </strong>
-      ),
-    ],
-    // Underline: __text__
-    [
-      /__(.+?)__/g,
-      (m, k) => <u key={k}>{m[1]}</u>,
-    ],
-    // Strikethrough: ~~text~~
-    [
-      /~~(.+?)~~/g,
-      (m, k) => (
-        <s key={k} className="text-[var(--muted)] line-through">
-          {m[1]}
-        </s>
-      ),
-    ],
-    // Italic: *text*
-    [
-      /\*(.+?)\*/g,
-      (m, k) => <em key={k}>{m[1]}</em>,
-    ],
-    // Italic: _text_
-    [
-      /_(.+?)_/g,
-      (m, k) => <em key={k}>{m[1]}</em>,
-    ],
-    // Links: [text](url)
-    [
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      (m, k) => (
-        <a
-          key={k}
-          href={m[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[var(--accent)] underline decoration-[var(--accent)]/40 hover:decoration-[var(--accent)]"
-        >
-          {m[1]}
-        </a>
-      ),
-    ],
-    // Auto-link URLs
-    [
-      /(https?:\/\/[^\s<]+)/g,
-      (m, k) => (
-        <a
-          key={k}
-          href={m[1]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[var(--accent)] underline decoration-[var(--accent)]/40 hover:decoration-[var(--accent)]"
-        >
-          {m[1]}
-        </a>
-      ),
-    ],
-  ];
-
-  let nodes: React.ReactNode[] = [text];
-
-  patterns.forEach(([regex, render]) => {
-    const newNodes: React.ReactNode[] = [];
-
-    nodes.forEach((node) => {
-      if (typeof node !== 'string') {
-        newNodes.push(node);
-        return;
-      }
-
-      const str = node;
-      let lastIdx = 0;
-      let m: RegExpExecArray | null;
-      const r = new RegExp(regex.source, regex.flags);
-
-      while ((m = r.exec(str)) !== null) {
-        if (m.index > lastIdx) {
-          newNodes.push(str.slice(lastIdx, m.index));
-        }
-        newNodes.push(render(m, `${keyPrefix}-${keyCounter++}`));
-        lastIdx = m.index + m[0].length;
-      }
-
-      if (lastIdx < str.length) {
-        newNodes.push(str.slice(lastIdx));
-      }
-    });
-
-    nodes = newNodes;
-  });
-
-  // Final pass: convert emoji characters to Twemoji in remaining text nodes
-  const twemojified: React.ReactNode[] = [];
-  nodes.forEach((node) => {
-    if (typeof node === 'string') {
-      twemojified.push(...twemojify(node, 20, `${keyPrefix}-tw-${keyCounter++}`));
-    } else {
-      twemojified.push(node);
-    }
-  });
-
-  return twemojified;
+      )}
+      <img
+        src={src}
+        alt=""
+        style={{ maxWidth: '100vw', maxHeight: '100vh', transform: `scale(${zoom})`, transition: 'transform 0.1s' }}
+        onClick={(e) => e.stopPropagation()}
+        draggable={false}
+      />
+    </div>,
+    document.body,
+  );
 }
 
-// ── Spoiler component ──
+// ── Spoiler ───────────────────────────────────────────────────────────────────
 
 function Spoiler({ children }: { children: React.ReactNode }) {
-  const [revealed, setRevealed] = React.useState(false);
+  const [shown, setShown] = useState(false);
   return (
     <span
-      className={`cursor-pointer rounded-lg px-1 transition-all duration-200 ${
-        revealed ? 'bg-[var(--surface-secondary)]/40 text-[var(--foreground)]' : 'bg-[var(--surface-secondary)] text-transparent'
+      role="button"
+      tabIndex={0}
+      onClick={() => setShown(v => !v)}
+      onKeyDown={(e) => { if (e.key === 'Enter') setShown(v => !v); }}
+      className={`cursor-pointer select-none rounded px-1 py-0.5 transition-all ${
+        shown ? 'bg-neutral-500/20 text-inherit' : 'bg-neutral-500/80 text-transparent **:invisible'
       }`}
-      onClick={() => setRevealed((v) => !v)}
     >
       {children}
     </span>
   );
 }
+
+// ── Inline renderer ───────────────────────────────────────────────────────────
+
+type KG = { n: number };
+
+// Safe heading tag lookup — avoids JSX namespace entirely
+const HEADING_TAGS: React.ElementType[] = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+
+function renderInline(text: string, pfx: string, kg: KG, onImg?: (s: string) => void): React.ReactNode[] {
+  if (!text) return [];
+  const k = () => `${pfx}-${kg.n++}`;
+
+  const rules: [RegExp, (m: RegExpExecArray) => React.ReactNode][] = [
+    // Inline code — highest priority, not further parsed
+    [/`([^`]+)`/, (m) => (
+      <code key={k()} className="rounded bg-black/20 px-[0.4em] py-[0.1em] font-mono text-[0.875em]">
+        {m[1]}
+      </code>
+    )],
+    // Spoiler ||text||
+    [/\|\|(.+?)\|\|/, (m) => (
+      <Spoiler key={k()}>{renderInline(m[1], pfx, kg, onImg)}</Spoiler>
+    )],
+    // Bold + italic ***text***
+    [/\*\*\*(.+?)\*\*\*/, (m) => (
+      <strong key={k()}><em>{renderInline(m[1], pfx, kg, onImg)}</em></strong>
+    )],
+    // Bold **text**
+    [/\*\*(.+?)\*\*/, (m) => (
+      <strong key={k()}>{renderInline(m[1], pfx, kg, onImg)}</strong>
+    )],
+    // Underline __text__ (Discord style)
+    [/__(.+?)__/, (m) => (
+      <u key={k()}>{renderInline(m[1], pfx, kg, onImg)}</u>
+    )],
+    // Strikethrough ~~text~~
+    [/~~(.+?)~~/, (m) => (
+      <s key={k()} className="opacity-60">{renderInline(m[1], pfx, kg, onImg)}</s>
+    )],
+    // Italic *text* or _text_
+    [/\*([^*\n]+?)\*|_([^_\n]+?)_/, (m) => (
+      <em key={k()}>{renderInline(m[1] ?? m[2], pfx, kg, onImg)}</em>
+    )],
+    // Image ![alt](url)
+    [/!\[([^\]]*)\]\(([^)"'\s]+)(?:\s+"[^"]*")?\)/, (m) => {
+      const src = sanitizeUrl(resolveImg(m[2]));
+      return (
+        <img
+          key={k()}
+          src={src}
+          alt={m[1]}
+          className="my-1 max-h-48 max-w-full cursor-zoom-in rounded-lg shadow"
+          loading="lazy"
+          onClick={() => onImg?.(src)}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+      );
+    }],
+    // Link [text](url)
+    [/\[([^\]]+)\]\(([^)]+)\)/, (m) => (
+      <a
+        key={k()}
+        href={sanitizeUrl(m[2])}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline underline-offset-2 hover:opacity-80 transition-opacity"
+      >
+        {renderInline(m[1], pfx, kg, onImg)}
+      </a>
+    )],
+    // Timestamp @time:unix
+    [/@time:(\d+)/, (m) => {
+      const d = new Date(parseInt(m[1], 10) * 1000);
+      return (
+        <time
+          key={k()}
+          dateTime={d.toISOString()}
+          title={d.toUTCString()}
+          className="cursor-help rounded bg-primary/10 px-1.5 py-0.5 text-sm underline decoration-dotted"
+        >
+          {d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+        </time>
+      );
+    }],
+    // Mention @username
+    [/@([a-z0-9_]{2,32})/i, (m) => (
+      <span
+        key={k()}
+        className="cursor-pointer rounded bg-primary/15 px-1 py-0.5 font-medium text-primary hover:bg-primary/25 transition-colors"
+        data-mention={m[1]}
+      >
+        @{m[1]}
+      </span>
+    )],
+    // Auto-link
+    [/(https?:\/\/[^\s<>"']+)/, (m) => (
+      <a
+        key={k()}
+        href={sanitizeUrl(m[1])}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline underline-offset-2 hover:opacity-80 transition-opacity"
+      >
+        {m[1]}
+      </a>
+    )],
+  ];
+
+  let segs: (string | React.ReactNode)[] = [text];
+
+  for (const [pat, render] of rules) {
+    const next: (string | React.ReactNode)[] = [];
+    const re = new RegExp(pat.source, 'g');
+    for (const seg of segs) {
+      if (typeof seg !== 'string') { next.push(seg); continue; }
+      let last = 0;
+      let m: RegExpExecArray | null;
+      re.lastIndex = 0;
+      while ((m = re.exec(seg)) !== null) {
+        if (m.index > last) next.push(seg.slice(last, m.index));
+        next.push(render(m));
+        last = m.index + m[0].length;
+        if (m[0].length === 0) re.lastIndex++;
+      }
+      if (last < seg.length) next.push(seg.slice(last));
+    }
+    segs = next;
+  }
+
+  const out: React.ReactNode[] = [];
+  for (const seg of segs) {
+    if (typeof seg === 'string') out.push(...twemojify(seg, 20, `${pfx}-tw-${kg.n++}`));
+    else out.push(seg);
+  }
+  return out;
+}
+
+// ── Block tokenizer ───────────────────────────────────────────────────────────
+
+type Align = 'left' | 'center' | 'right' | undefined;
+type ListRow = { text: string; indent: number };
+
+type BToken =
+  | { t: 'h'; level: number; text: string }
+  | { t: 'hr' }
+  | { t: 'fence'; lang: string; code: string }
+  | { t: 'bq'; lines: string[] }
+  | { t: 'ul'; items: ListRow[] }
+  | { t: 'ol'; items: ListRow[]; start: number }
+  | { t: 'table'; heads: string[]; aligns: Align[]; rows: string[][] }
+  | { t: 'p'; lines: string[] };
+
+function tokenize(src: string): BToken[] {
+  const lines = src.split('\n');
+  const out: BToken[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const raw = lines[i];
+    const line = raw.trim();
+
+    if (!line) { i++; continue; }
+
+    // Heading
+    const hm = line.match(/^(#{1,6})\s+(.*?)(?:\s+#+)?$/);
+    if (hm) { out.push({ t: 'h', level: hm[1].length, text: hm[2] }); i++; continue; }
+
+    // HR
+    if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(line)) { out.push({ t: 'hr' }); i++; continue; }
+
+    // Fenced code block
+    if (line.startsWith('```')) {
+      const lang = line.slice(3).trim();
+      const code: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith('```')) { code.push(lines[i]); i++; }
+      i++;
+      out.push({ t: 'fence', lang, code: code.join('\n') });
+      continue;
+    }
+
+    // Blockquote
+    if (/^\s*>/.test(raw)) {
+      const ql: string[] = [];
+      while (i < lines.length && /^\s*>/.test(lines[i])) { ql.push(lines[i].replace(/^\s*>\s?/, '')); i++; }
+      out.push({ t: 'bq', lines: ql });
+      continue;
+    }
+
+    // Table
+    if (line.startsWith('|') && i + 1 < lines.length && /^\|[\s:|\\-]+\|/.test(lines[i + 1].trim())) {
+      const parseRow = (l: string) => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+      const getAlign = (cell: string): Align => {
+        const s = cell.trim();
+        if (/^:.*:$/.test(s)) return 'center';
+        if (/:$/.test(s)) return 'right';
+        if (/^:/.test(s)) return 'left';
+        return undefined;
+      };
+      const heads = parseRow(raw);
+      const aligns = parseRow(lines[i + 1]).map(getAlign);
+      const rows: string[][] = [];
+      i += 2;
+      while (i < lines.length && lines[i].trim().startsWith('|')) { rows.push(parseRow(lines[i])); i++; }
+      out.push({ t: 'table', heads, aligns, rows });
+      continue;
+    }
+
+    // Unordered list
+    if (/^(\s*)[*\-+]\s/.test(raw)) {
+      const items: ListRow[] = [];
+      while (i < lines.length && /^(\s*)[*\-+]\s/.test(lines[i])) {
+        const m = lines[i].match(/^(\s*)[*\-+]\s+(.*)/);
+        if (m) items.push({ text: m[2], indent: m[1].length });
+        i++;
+      }
+      out.push({ t: 'ul', items });
+      continue;
+    }
+
+    // Ordered list
+    if (/^(\s*)\d+\.\s/.test(raw)) {
+      const sm = raw.match(/^(\s*)(\d+)\.\s/);
+      const start = sm ? parseInt(sm[2], 10) : 1;
+      const items: ListRow[] = [];
+      while (i < lines.length && /^(\s*)\d+\.\s/.test(lines[i])) {
+        const m = lines[i].match(/^(\s*)\d+\.\s+(.*)/);
+        if (m) items.push({ text: m[2], indent: m[1].length });
+        i++;
+      }
+      out.push({ t: 'ol', items, start });
+      continue;
+    }
+
+    // Paragraph
+    const pl: string[] = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !/^#{1,6}\s/.test(lines[i].trim()) &&
+      !/^(?:-{3,}|\*{3,}|_{3,})$/.test(lines[i].trim()) &&
+      !lines[i].trim().startsWith('```') &&
+      !/^\s*>/.test(lines[i]) &&
+      !lines[i].trim().startsWith('|') &&
+      !/^(\s*)[*\-+]\s/.test(lines[i]) &&
+      !/^(\s*)\d+\.\s/.test(lines[i])
+    ) { pl.push(lines[i]); i++; }
+    if (pl.length) out.push({ t: 'p', lines: pl });
+  }
+
+  return out;
+}
+
+// ── Block renderer ─────────────────────────────────────────────────────────────
+
+const H_SIZE   = ['text-2xl', 'text-xl', 'text-lg', 'text-base', 'text-sm', 'text-xs'];
+const H_WEIGHT = ['font-bold', 'font-bold', 'font-semibold', 'font-semibold', 'font-medium', 'font-medium'];
+const H_MARGIN = ['mt-4 mb-2', 'mt-3 mb-1.5', 'mt-2.5 mb-1', 'mt-2 mb-1', 'mt-1.5 mb-0.5', 'mt-1 mb-0.5'];
+
+function renderBlocks(tokens: BToken[], pfx: string, kg: KG, onImg: (s: string) => void): React.ReactNode[] {
+  return tokens.map((tok, idx) => {
+    const p = `${pfx}-${idx}`;
+
+    if (tok.t === 'h') {
+      const lv = Math.min(tok.level - 1, 5);
+      const Tag = HEADING_TAGS[lv];
+      return (
+        <Tag key={p} className={`${H_SIZE[lv]} ${H_WEIGHT[lv]} ${H_MARGIN[lv]} leading-tight`}>
+          {renderInline(tok.text, p, kg, onImg)}
+        </Tag>
+      );
+    }
+
+    if (tok.t === 'hr') return <hr key={p} className="my-3 border-border/30" />;
+
+    if (tok.t === 'fence') return (
+      <div key={p} className="my-2 overflow-hidden rounded-xl border border-border/40 bg-muted/30">
+        {tok.lang && (
+          <div className="border-b border-border/30 bg-muted/50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {tok.lang}
+          </div>
+        )}
+        <pre className="overflow-x-auto p-3 text-[0.875em] leading-relaxed">
+          <code>{tok.code}</code>
+        </pre>
+      </div>
+    );
+
+    if (tok.t === 'bq') {
+      const inner = tokenize(tok.lines.join('\n'));
+      return (
+        <blockquote key={p} className="my-1.5 rounded-r-lg border-l-4 border-primary/40 bg-primary/5 py-1.5 pl-4 pr-3 text-muted-foreground">
+          {renderBlocks(inner, p, kg, onImg)}
+        </blockquote>
+      );
+    }
+
+    if (tok.t === 'ul') return renderList(tok.items, 'ul', undefined, p, kg, onImg);
+    if (tok.t === 'ol') return renderList(tok.items, 'ol', tok.start, p, kg, onImg);
+
+    if (tok.t === 'table') return (
+      <div key={p} className="my-2 overflow-x-auto rounded-xl border border-border/40">
+        <table className="min-w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border/40 bg-muted/30">
+              {tok.heads.map((h, hi) => (
+                <th key={hi} className="px-4 py-2 font-semibold" style={{ textAlign: tok.aligns[hi] ?? 'left' }}>
+                  {renderInline(h, `${p}-h${hi}`, kg, onImg)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tok.rows.map((row, ri) => (
+              <tr key={ri} className="border-b border-border/20 last:border-0 even:bg-muted/10 hover:bg-muted/20 transition-colors">
+                {row.map((cell, ci) => (
+                  <td key={ci} className="px-4 py-2 text-foreground/80" style={tok.aligns[ci] ? { textAlign: tok.aligns[ci] } : undefined}>
+                    {renderInline(cell, `${p}-c${ri}-${ci}`, kg, onImg)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+
+    if (tok.t === 'p') {
+      const nodes: React.ReactNode[] = [];
+      tok.lines.forEach((line, li) => {
+        const hardBreak = line.endsWith('  ');
+        if (li > 0) nodes.push(<br key={`${p}-br${li}`} />);
+        nodes.push(...renderInline(line.replace(/  $/, ''), `${p}-l${li}`, kg, onImg));
+        if (hardBreak) nodes.push(<br key={`${p}-hb${li}`} />);
+      });
+      return <p key={p} className="leading-relaxed">{nodes}</p>;
+    }
+
+    return null;
+  });
+}
+
+// ── List renderer ──────────────────────────────────────────────────────────────
+
+function renderList(
+  items: ListRow[],
+  type: 'ul' | 'ol',
+  start: number | undefined,
+  pfx: string,
+  kg: KG,
+  onImg: (s: string) => void,
+): React.ReactNode {
+  const Tag: React.ElementType = type;
+  const cls = type === 'ul' ? 'my-1 list-disc pl-5 space-y-0.5' : 'my-1 list-decimal pl-5 space-y-0.5';
+  const base = items[0]?.indent ?? 0;
+  const out: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < items.length) {
+    const item = items[i];
+    if (item.indent > base) { i++; continue; }
+    const children: ListRow[] = [];
+    let j = i + 1;
+    while (j < items.length && items[j].indent > base) { children.push(items[j]); j++; }
+    out.push(
+      <li key={`${pfx}-${i}`} className="leading-relaxed">
+        {renderInline(item.text, `${pfx}-li${i}`, kg, onImg)}
+        {children.length > 0 && renderList(children, type, undefined, `${pfx}-s${i}`, kg, onImg)}
+      </li>,
+    );
+    i = j;
+  }
+
+  return (
+    <Tag key={pfx} className={cls} {...(type === 'ol' && start !== undefined ? { start } : {})}>
+      {out}
+    </Tag>
+  );
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
+
+export interface MarkdownRendererProps {
+  content: string;
+}
+
+export const MarkdownRenderer = memo(function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  const uid = useId();
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const onImg = useCallback((src: string) => setLightbox(src), []);
+
+  const trimmed = content.trim();
+  const isBareImg =
+    /^https?:\/\/\S+\.(gif|png|jpe?g|webp|svg)(\?[^\s]*)?$/i.test(trimmed) ||
+    /^https?:\/\/media\d*\.(tenor|giphy)\.com\//i.test(trimmed) ||
+    /^\/(uploads|api\/servers|api\/media)\/\S+\.(gif|png|jpe?g|webp|svg)$/i.test(trimmed);
+
+  if (isBareImg) {
+    const src = sanitizeUrl(resolveImg(trimmed));
+    return (
+      <>
+        <img
+          src={src}
+          alt=""
+          className="mt-1 max-h-60 max-w-xs cursor-zoom-in rounded-xl shadow"
+          loading="lazy"
+          onClick={() => setLightbox(src)}
+        />
+        {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
+      </>
+    );
+  }
+
+  const kg: KG = { n: 0 };
+  const tokens = tokenize(content);
+  const rendered = renderBlocks(tokens, uid, kg, onImg);
+
+  return (
+    <>
+      <div className="markdown-body min-w-0 wrap-break-word leading-relaxed">{rendered}</div>
+      {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
+    </>
+  );
+});

@@ -1,0 +1,31 @@
+{
+  "discover": {
+    "pageTitle": "Odkryj serwery",
+    "label": "Eksploruj",
+    "heading": "Znajdz swoja spolecznosc",
+    "description": "Przegladaj serwery na AlfyChat � certyfikowane i partnerskie spolecznosci czekaja na ciebie.",
+    "searchPlaceholder": "Szukaj serwera�",
+    "certified": "Certyfikowany",
+    "certifiedTooltip": "Certyfikowany przez AlfyChat",
+    "partner": "Partner",
+    "partnerTooltip": "Serwer partnerski AlfyChat",
+    "memberCount": "{n} czlonk�w",
+    "joining": "Dolaczanie�",
+    "join": "Dolacz",
+    "noResults": "Nie znaleziono serwer�w",
+    "noResultsSearch": "Spr�buj innych sl�w kluczowych.",
+    "noResultsEmpty": "Nie ma jeszcze zadnych serwer�w."
+  },
+  "invite": {
+    "invalid": "Nieprawidlowe zaproszenie",
+    "backHome": "Powr�t do strony gl�wnej",
+    "youreInvited": "Zostales zaproszony do dolaczenia do",
+    "memberCount": "{n} czlonek/czlonk�w",
+    "usages": "{uses}/{maxUses} uzyc",
+    "expires": "Wygasa {date}",
+    "joinServer": "Dolacz do serwera",
+    "loginToJoin": "Zaloguj sie, aby dolaczyc",
+    "notNow": "Nie teraz",
+    "footer": "AlfyChat � Bezpieczna i zdecentralizowana komunikacja"
+  }
+}

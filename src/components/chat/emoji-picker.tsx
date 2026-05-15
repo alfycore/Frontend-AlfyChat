@@ -1368,7 +1368,7 @@ const EMOJI_SEARCH_NAMES: Record<string, string> = {
 // RECENT EMOJIS (localStorage)
 // ==========================================
 
-const CACHE_KEY = 'alfychat_emoji_cache_v1';
+const CACHE_KEY = 'alfychat_emoji_cache_v2';
 const RECENT_KEY = 'alfychat_emoji_recent';
 const MAX_RECENT = 24;
 
@@ -1380,22 +1380,16 @@ function getAllEmojis(): string[] {
   return Array.from(set);
 }
 
-function preloadEmojiImages(): void {
+export function preloadEmojiImages(): void {
   if (typeof window === 'undefined') return;
   if (localStorage.getItem(CACHE_KEY) === 'done') return;
 
   const all = getAllEmojis();
   let done = 0;
+  const tick = () => { if (++done >= all.length) localStorage.setItem(CACHE_KEY, 'done'); };
 
   for (const emoji of all) {
-    const img = new Image();
-    img.src = emojiToTwemojiUrl(emoji);
-    const tick = () => {
-      done++;
-      if (done >= all.length) localStorage.setItem(CACHE_KEY, 'done');
-    };
-    img.onload = tick;
-    img.onerror = tick;
+    fetch(emojiToTwemojiUrl(emoji), { priority: 'low' } as RequestInit).then(tick).catch(tick);
   }
 }
 
@@ -1564,8 +1558,6 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
     gifDebounceRef.current = setTimeout(() => loadGifs(gifSearch), 400);
     return () => { if (gifDebounceRef.current) clearTimeout(gifDebounceRef.current); };
   }, [gifSearch, activeTab, loadGifs]);
-
-  useEffect(() => { preloadEmojiImages(); }, []);
 
   useEffect(() => {
     if (open) {

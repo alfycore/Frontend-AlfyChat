@@ -1,0 +1,70 @@
+{
+    "calls":  {
+                  "calling":  "Chamando...",
+                  "ringing":  "Tocando...",
+                  "connecting":  "Conectando...",
+                  "ended":  "Chamada encerrada",
+                  "incomingVoice":  "Chamada de voz recebida",
+                  "incomingVideo":  "Videochamada recebida",
+                  "enableCamera":  "Ativar camera",
+                  "disableCamera":  "Desativar camera",
+                  "hangup":  "Desligar",
+                  "fullscreen":  "Tela cheia",
+                  "exitFullscreen":  "Sair da tela cheia",
+                  "voiceLabel":  "Voz",
+                  "videoLabel":  "Video",
+                  "sharing":  "Compartilhando",
+                  "connectedVoice":  "Conectado ao canal de voz",
+                  "participants":  "{n} participante(s)",
+                  "leave":  "Sair",
+                  "join":  "Entrar"
+              },
+    "callBar":  {
+                    "calling":  "A chamar�",
+                    "ringing":  "A tocar�",
+                    "connecting":  "A ligar�",
+                    "videoConnected":  "V�deo ligado",
+                    "voiceConnected":  "Voz ligada",
+                    "call":  "Chamada�",
+                    "shareScreen":  "Partilhar ecr�",
+                    "muteMic":  "Silenciar microfone",
+                    "unmuteMic":  "Ativar microfone",
+                    "hangup":  "Desligar",
+                    "ongoingCall":  "Chamada em curso"
+                },
+    "callOverlay":  {
+                        "calling":  "A chamar�",
+                        "ringing":  "A tocar�",
+                        "connecting":  "A ligar�",
+                        "you":  "Tu",
+                        "live":  "AO VIVO",
+                        "enableSound":  "Ativar som",
+                        "muted":  "Silenciado",
+                        "mic":  "Micro",
+                        "camera":  "C�mara",
+                        "stopShare":  "Parar",
+                        "shareScreen":  "Ecr�",
+                        "hangup":  "Desligar",
+                        "voiceCall":  "Chamada de voz",
+                        "videoCall":  "Videochamada",
+                        "clickEnableSound":  "Clicar para ativar som",
+                        "screenOf":  "{name} � Ecr�",
+                        "myScreen":  "O meu ecr�"
+                    },
+    "voiceControlBar":  {
+                            "connecting":  "A ligar�",
+                            "voiceActive":  "Voz ativa",
+                            "members":  "{n} membro(s)"
+                        },
+    "networkQuality":  {
+                           "excellent":  "Excelente",
+                           "good":  "Boa",
+                           "fair":  "Razo�vel",
+                           "poor":  "Fraca",
+                           "unknown":  "Desconhecida",
+                           "quality":  "Qualidade: ",
+                           "ping":  "Ping",
+                           "loss":  "Perda",
+                           "jitter":  "Jitter"
+                       }
+}
