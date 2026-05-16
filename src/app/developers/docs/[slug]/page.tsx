@@ -66,6 +66,46 @@ function PageHeader({
   );
 }
 
+const BADGE_COLOR_MAP: Record<string, string> = {
+  amber: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  blue: 'border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  green: 'border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400',
+  violet: 'border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-violet-400',
+  red: 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400',
+};
+
+function DocHeading({
+  icon: Icon,
+  title,
+  subtitle,
+  badge,
+  badgeColor,
+}: {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  title: string;
+  subtitle: string;
+  badge?: string;
+  badgeColor?: string;
+}) {
+  const badgeCls = badgeColor ? (BADGE_COLOR_MAP[badgeColor] ?? '') : '';
+  return (
+    <div className="mb-6 flex items-start gap-4">
+      <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 ring-1 ring-accent-soft-hover">
+        <Icon size={22} className="text-accent" />
+      </div>
+      <div>
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {badge && (
+            <Badge variant="outline" className={`text-[10px] font-bold px-1.5 py-0 ${badgeCls}`}>{badge}</Badge>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-accent/60">
