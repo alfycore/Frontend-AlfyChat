@@ -910,12 +910,14 @@
     "typeFix": "Correctif",
     "typeSecurity": "Sécurité",
     "typeBreaking": "Changement majeur",
+    "typeNews": "Actualité",
     "filterAllShort": "Tout",
+    "filterNews": "Actualités",
     "typeBreakingShort": "Majeur",
     "noResultsShort": "Aucun résultat",
-    "noChangelogsShort": "Aucun changelog",
+    "noChangelogsShort": "Aucune entrée",
     "comingSoonShort": "Revenez bientôt pour les mises à jour.",
-    "latestVersion": "Dernière version",
+    "latestVersion": "Dernière",
     "publishedBy": "Publié par"
   }
 }

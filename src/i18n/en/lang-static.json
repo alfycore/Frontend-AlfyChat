@@ -910,12 +910,14 @@
     "typeFix": "Fix",
     "typeSecurity": "Security",
     "typeBreaking": "Breaking change",
+    "typeNews": "News",
     "filterAllShort": "All",
+    "filterNews": "News",
     "typeBreakingShort": "Major",
     "noResultsShort": "No results",
-    "noChangelogsShort": "No changelogs",
+    "noChangelogsShort": "No entries",
     "comingSoonShort": "Check back for updates.",
-    "latestVersion": "Latest version",
+    "latestVersion": "Latest",
     "publishedBy": "Published by"
   }
 }

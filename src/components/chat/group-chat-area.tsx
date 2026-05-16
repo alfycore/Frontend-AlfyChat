@@ -12,6 +12,7 @@ import {
   UsersRoundIcon, SendIcon, SmileIcon, MoreHorizontalIcon, ReplyIcon, XIcon,
   LogOutIcon, SettingsIcon, CrownIcon, ImageIcon as ImageIcn, MenuIcon,
   UserPlusIcon, PhoneIcon, VideoIcon, PaperclipIcon, FileTextIcon,
+  Maximize2Icon,
 } from '@/components/icons';
 import { useMessages } from '@/hooks/use-messages';
 import { useAuth } from '@/hooks/use-auth';
@@ -72,6 +73,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const ui = useUIStyle();
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
+  const [callMinimized, setCallMinimized] = useState(false);
+  const [callPanelHeight, setCallPanelHeight] = useState(220);
+
   const [messageInput, setMessageInput] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editInput, setEditInput] = useState('');
@@ -676,35 +680,60 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
         {/* ── Call panel ── */}
         {callStatus !== 'idle' && callStatus !== 'ended' &&
-          callIsGroup && callChannelId === groupId && (
-          <CallPanel
-            type={callType || 'voice'}
-            status={callStatus as 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended'}
-            localStream={localStream}
-            remoteStreams={remoteStreams}
-            screenStream={screenStream}
-            isMuted={isMuted}
-            isVideoOff={isVideoOff}
-            isScreenSharing={isScreenSharing}
-            remoteIsScreenSharing={remoteIsScreenSharing}
-            recipientName={groupInfo?.name || 'Groupe'}
-            currentUserName={user?.displayName || user?.username || 'Vous'}
-            currentUserAvatar={user?.avatarUrl}
-            duration={callDuration}
-            mediaError={mediaError}
-            participants={Array.from(participantInfo.entries()).map(([uid, info]) => ({ userId: uid, name: info.name, avatar: info.avatar }))}
-            callCategory={callCategory ?? undefined}
-            callMode={callMode}
-            tierLabel={tierLabel}
-            handRaised={handRaised}
-            onToggleMute={toggleMute}
-            onToggleVideo={toggleVideo}
-            onStartScreenShare={startScreenShare}
-            onStopScreenShare={stopScreenShare}
-            onEndCall={leaveCall}
-            onToggleHand={toggleHand}
-          />
-        )}
+          callIsGroup && callChannelId === groupId && (() => {
+          const callProps = {
+            type: (callType || 'voice') as 'voice' | 'video',
+            status: callStatus as 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended',
+            localStream, remoteStreams, screenStream, isMuted, isVideoOff, isScreenSharing, remoteIsScreenSharing,
+            recipientName: groupInfo?.name || 'Groupe',
+            currentUserName: user?.displayName || user?.username || 'Vous',
+            currentUserAvatar: user?.avatarUrl,
+            duration: callDuration, mediaError,
+            participants: Array.from(participantInfo.entries()).map(([uid, info]) => ({ userId: uid, name: info.name, avatar: info.avatar })),
+            callCategory: callCategory ?? undefined, callMode, tierLabel, handRaised,
+            onToggleMute: toggleMute, onToggleVideo: toggleVideo,
+            onStartScreenShare: startScreenShare, onStopScreenShare: stopScreenShare,
+            onEndCall: leaveCall, onToggleHand: toggleHand,
+          };
+          if (isMobile) {
+            if (callMinimized) return (
+              <div className="fixed bottom-4 right-4 z-[60] flex w-36 cursor-pointer flex-col overflow-hidden rounded-2xl bg-zinc-900 shadow-2xl ring-1 ring-white/10" onClick={() => setCallMinimized(false)}>
+                <div className="relative aspect-video">
+                  {Array.from(remoteStreams.values())[0] ? (
+                    <video autoPlay playsInline muted ref={(el) => { if (el) el.srcObject = Array.from(remoteStreams.values())[0] ?? null; }} className="absolute inset-0 size-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-zinc-800"><Maximize2Icon size={20} className="text-white/30" /></div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30"><Maximize2Icon size={16} className="text-white/70" /></div>
+                </div>
+                <div className="px-2 py-1 text-[10px] font-medium text-white/50 truncate">{groupInfo?.name || 'Groupe'}</div>
+              </div>
+            );
+            return (
+              <div className="fixed inset-0 z-[60] flex flex-col bg-zinc-950">
+                <CallPanel {...callProps} onMinimize={() => setCallMinimized(true)} />
+              </div>
+            );
+          }
+          return (
+            <>
+              <div style={{ height: callPanelHeight }} className="overflow-hidden">
+                <CallPanel {...callProps} compact={callPanelHeight < 280} />
+              </div>
+              <div
+                className="group flex h-1.5 w-full shrink-0 cursor-row-resize items-center justify-center bg-zinc-900 hover:bg-zinc-800 transition-colors"
+                onMouseDown={(e) => {
+                  const startY = e.clientY; const startH = callPanelHeight;
+                  const onMove = (me: MouseEvent) => setCallPanelHeight(Math.max(120, startH + me.clientY - startY));
+                  const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+                  window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
+                }}
+              >
+                <span className="h-0.5 w-8 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors" />
+              </div>
+            </>
+          );
+        })()}
 
         {/* ── Messages ── */}
         <ScrollArea ref={scrollRef} className="min-h-0 flex-1 p-2 md:p-4">

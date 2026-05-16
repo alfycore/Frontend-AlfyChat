@@ -1,10 +1,13 @@
 ﻿'use client';
 
-import { memo, useState, useEffect, useSyncExternalStore, type Dispatch, type SetStateAction } from 'react';
+import { memo, useState, useEffect, useRef, useSyncExternalStore, type Dispatch, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon, AlertCircleIcon,
 } from '@/components/icons';
+import {
+  Drawer, DrawerContent, DrawerTitle, DrawerDescription,
+} from '@/components/ui/drawer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -317,6 +320,214 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   );
 }
 
+// ── Gestes mobile ─────────────────────────────────────────────────────────────
+
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+const DRAWER_EDGE = 44; // zone réservée au nav drawer (même valeur que use-swipe-drawer)
+
+/* Bottom sheet Discord-style */
+function MobileMessageSheet({
+  open, onOpenChange, isMe,
+  onReply, onReaction, onCopy, onEdit, onDelete,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  isMe: boolean;
+  onReply: () => void;
+  onReaction: (emoji: string) => void;
+  onCopy: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="mx-auto max-w-lg rounded-t-2xl outline-none">
+        <DrawerTitle className="sr-only">Actions du message</DrawerTitle>
+        <DrawerDescription className="sr-only">Choisissez une action</DrawerDescription>
+
+        {/* Réactions rapides */}
+        <div className="flex items-center justify-around border-b border-border/30 px-4 py-3">
+          {QUICK_REACTIONS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              className="flex size-11 items-center justify-center rounded-full text-2xl transition-transform active:scale-125"
+              onClick={() => { onReaction(emoji); onOpenChange(false); }}
+            >
+              {emoji}
+            </button>
+          ))}
+          <EmojiPicker onSelect={(emoji) => { onReaction(emoji); onOpenChange(false); }}>
+            <button
+              type="button"
+              className="flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground"
+            >
+              <SmileIcon size={18} />
+            </button>
+          </EmojiPicker>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col pb-safe">
+          {[
+            { icon: <ReplyIcon size={20} />, label: 'Répondre', action: () => { onReply(); onOpenChange(false); }, cls: '' },
+            { icon: <CopyIcon size={20} />,  label: 'Copier le texte', action: () => { onCopy(); onOpenChange(false); }, cls: '' },
+            { icon: <PinIcon size={20} />,   label: 'Épingler', action: () => onOpenChange(false), cls: '' },
+            ...(isMe ? [
+              { icon: <PencilIcon size={20} />, label: 'Modifier', action: () => { onEdit(); onOpenChange(false); }, cls: '' },
+              { icon: <Trash2Icon size={20} />, label: 'Supprimer', action: () => { onDelete(); onOpenChange(false); }, cls: 'text-destructive' },
+            ] : []),
+          ].map(({ icon, label, action, cls }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={action}
+              className={cn(
+                'flex items-center gap-4 px-5 py-3.5 text-sm font-medium transition-colors active:bg-muted',
+                cls || 'text-foreground',
+              )}
+            >
+              <span className="shrink-0 text-muted-foreground">{icon}</span>
+              {label}
+            </button>
+          ))}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+/* Wrapper gestes : swipe droite → reply, double tap → ❤️, long press → sheet */
+function MessageGestureWrapper({
+  onReply,
+  onDoubleTap,
+  onLongPress,
+  children,
+}: {
+  onReply: () => void;
+  onDoubleTap: () => void;
+  onLongPress: () => void;
+  children: React.ReactNode;
+}) {
+  const [offset, setOffset] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const [heart, setHeart] = useState(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const swipeFired = useRef(false);
+  const didMove = useRef(false);
+  const lastTap = useRef(0);
+  const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const THRESHOLD = 64;
+
+  const clearLP = () => {
+    if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null; }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    startX.current = t.clientX;
+    startY.current = t.clientY;
+    swipeFired.current = false;
+    didMove.current = false;
+
+    // Double tap
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      lastTap.current = 0;
+      navigator.vibrate?.(10);
+      setHeart(true);
+      onDoubleTap();
+      return;
+    }
+    lastTap.current = now;
+
+    // Long press — uniquement hors zone nav drawer
+    if (startX.current > DRAWER_EDGE) {
+      lpTimer.current = setTimeout(() => {
+        if (!didMove.current) {
+          navigator.vibrate?.(30);
+          onLongPress();
+        }
+      }, 500);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    didMove.current = true;
+    clearLP();
+    const dx = e.touches[0].clientX - startX.current; // négatif = swipe gauche
+    const dy = Math.abs(e.touches[0].clientY - startY.current);
+    if (dy > Math.abs(dx) || dx > 0) { setOffset(0); setSwiping(false); return; }
+    setSwiping(true);
+    setOffset(Math.max(dx, -(THRESHOLD + 16)));
+    if (!swipeFired.current && -dx >= THRESHOLD) {
+      swipeFired.current = true;
+      navigator.vibrate?.(15);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    clearLP();
+    if (swipeFired.current) { swipeFired.current = false; onReply(); }
+    setOffset(0);
+    setSwiping(false);
+  };
+
+  // Éteint l'animation cœur après 700ms
+  useEffect(() => {
+    if (!heart) return;
+    const t = setTimeout(() => setHeart(false), 700);
+    return () => clearTimeout(t);
+  }, [heart]);
+
+  const progress = Math.min(-offset / THRESHOLD, 1);
+
+  return (
+    <div
+      className="relative"
+      style={{ touchAction: 'pan-y' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+    >
+      {/* Icône reply (apparaît à droite en glissant vers la gauche) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-2 top-1/2 flex size-8 items-center justify-center rounded-full bg-primary/15"
+        style={{
+          transform: `translateY(-50%) scale(${0.5 + 0.5 * progress})`,
+          opacity: progress,
+        }}
+      >
+        <ReplyIcon size={14} className="text-primary" />
+      </div>
+
+      {/* Animation cœur double tap */}
+      {heart && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-3xl animate-heart-pop"
+        >
+          ❤️
+        </div>
+      )}
+
+      {/* Contenu décalé */}
+      <div
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: swiping ? 'none' : 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          willChange: swiping ? 'transform' : 'auto',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ── MessageItem ───────────────────────────────────────────────────────────────
 
 export const MessageItem = memo(function MessageItem({
@@ -330,6 +541,7 @@ export const MessageItem = memo(function MessageItem({
   const d = densityCls(prefs.density);
   const ui = useUIStyle();
   const { t } = useTranslation();
+  const [sheetOpen, setSheetOpen] = useState(false);
   // S'abonner au cache de profils pour re-rendre quand un avatar/nom change
   useSyncExternalStore(userProfileCache.subscribe, userProfileCache.getSnapshot, userProfileCache.getServerSnapshot);
   const isMe = !!currentUser && message.authorId === currentUser.id;
@@ -363,6 +575,12 @@ export const MessageItem = memo(function MessageItem({
   if (prefs.msgStyle === 'bubble') {
     const { textContent, images, files } = parseAttachments(message.content ?? '');
     return (
+      <>
+      <MessageGestureWrapper
+        onReply={() => onReply(message.id, message.content, displayName || t.messageItem.user)}
+        onDoubleTap={() => onReaction(message.id, '❤️')}
+        onLongPress={() => setSheetOpen(true)}
+      >
       <div
         data-message-id={message.id}
         className={cn(
@@ -395,7 +613,7 @@ export const MessageItem = memo(function MessageItem({
               <SmileIcon size={15} />
             </div>
           </EmojiPicker>
-          <DropdownMenu>
+          <DropdownMenu open={sheetOpen} onOpenChange={setSheetOpen}>
             <DropdownMenuTrigger asChild>
               <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/80 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
                 <MoreHorizontalIcon size={15} />
@@ -525,10 +743,28 @@ export const MessageItem = memo(function MessageItem({
           </div>
         </div>
       </div>
+      </MessageGestureWrapper>
+      <MobileMessageSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        isMe={isMe}
+        onReply={() => onReply(message.id, message.content, displayName || t.messageItem.user)}
+        onReaction={(emoji) => onReaction(message.id, emoji)}
+        onCopy={() => onCopy(message.content)}
+        onEdit={() => onStartEdit(message.id, message.content)}
+        onDelete={() => onDelete(message.id)}
+      />
+    </>
     );
   }
 
   return (
+    <>
+    <MessageGestureWrapper
+      onReply={() => onReply(message.id, message.content, displayName || t.messageItem.user)}
+      onDoubleTap={() => onReaction(message.id, '❤️')}
+      onLongPress={() => setSheetOpen(true)}
+    >
     <div
       data-message-id={message.id}
       className={cn(
@@ -560,7 +796,7 @@ export const MessageItem = memo(function MessageItem({
           </div>
         </EmojiPicker>
 
-        <DropdownMenu>
+        <DropdownMenu open={sheetOpen} onOpenChange={setSheetOpen}>
           <DropdownMenuTrigger asChild>
             <div className="inline-flex items-center justify-center size-7 rounded-xl text-[var(--foreground)]/80 hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)] cursor-pointer">
               <MoreHorizontalIcon size={15} />
@@ -725,5 +961,17 @@ export const MessageItem = memo(function MessageItem({
         </div>
       </div>
     </div>
+    </MessageGestureWrapper>
+    <MobileMessageSheet
+      open={sheetOpen}
+      onOpenChange={setSheetOpen}
+      isMe={isMe}
+      onReply={() => onReply(message.id, message.content, displayName || t.messageItem.user)}
+      onReaction={(emoji) => onReaction(message.id, emoji)}
+      onCopy={() => onCopy(message.content)}
+      onEdit={() => onStartEdit(message.id, message.content)}
+      onDelete={() => onDelete(message.id)}
+    />
+    </>
   );
 });

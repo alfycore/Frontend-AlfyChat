@@ -28,8 +28,7 @@ const TABS: Tab[] = [
 
 // ─── Composant ────────────────────────────────────────────────────────────────
 
-export function MobileBottomNav() {
-  
+export function MobileBottomNav({ embedded = false }: { embedded?: boolean }) {
   const pathname = usePathname();
   const router   = useRouter();
   const {
@@ -79,7 +78,10 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 flex items-stretch border-t border-border/40 bg-sidebar/95 backdrop-blur-xl md:hidden"
+      className={cn(
+        'flex items-stretch border-t border-border/40 bg-sidebar/95 backdrop-blur-xl',
+        embedded ? 'shrink-0' : 'fixed inset-x-0 bottom-0 z-50 md:hidden',
+      )}
       style={{ height: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {TABS.map(({ id, label, Icon }) => {

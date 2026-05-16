@@ -1029,6 +1029,8 @@ export function useCall(options: UseCallOptions = {}) {
   }, []);
 
   const stopScreenShare = useCallback(async () => {
+    // Signal remote FIRST so they remove the tile before the track freezes
+    if (callIdRef.current) socketService.notifyScreenShare(callIdRef.current, false);
     const screenStream = screenStreamRef.current;
     if (screenStream) {
       const screenTrackIds = new Set(screenStream.getVideoTracks().map((t) => t.id));
@@ -1042,7 +1044,6 @@ export function useCall(options: UseCallOptions = {}) {
     }
     originalVideoTrackRef.current = null;
     setState((prev) => ({ ...prev, isScreenSharing: false, screenStream: null }));
-    if (callIdRef.current) socketService.notifyScreenShare(callIdRef.current, false);
   }, []);
 
   const switchAudioInput = useCallback(async (deviceId: string) => {

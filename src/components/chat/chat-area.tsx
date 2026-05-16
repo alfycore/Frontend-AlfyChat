@@ -26,6 +26,7 @@ import {
   PaperclipIcon,
   FileTextIcon,
   MenuIcon,
+  Maximize2Icon,
 } from '@/components/icons';
 import { useTranslation } from '@/components/locale-provider';
 import { useMessages } from '@/hooks/use-messages';
@@ -201,6 +202,11 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
 
+  /* ── Call panel state ── */
+  const [callMinimized, setCallMinimized] = useState(false);
+  const [callPanelHeight, setCallPanelHeight] = useState(220);
+  const callPanelRef = useRef<HTMLDivElement>(null);
+
   /* ── Local state ── */
   const [messageInput, setMessageInput] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -254,8 +260,6 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   const isTypingRef = useRef(false);
   const hasInitialScrollRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [kbHeight, setKbHeight] = useState(0);
-  const [bottomH, setBottomH] = useState(80);
 
   /** Resolve the actual scrollable viewport inside Radix ScrollArea */
   const getViewport = useCallback(() => {
@@ -444,38 +448,6 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     return () => obs.disconnect();
   }, [scrollToBottom]);
 
-  // Hauteur du clavier virtuel via visualViewport — iOS/Android
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.visualViewport) return;
-    const vv = window.visualViewport;
-    const update = () => setKbHeight(Math.max(0, window.innerHeight - vv.height));
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-    };
-  }, []);
-
-  // Mesure la hauteur de la section basse (barre saisie + notices)
-  useEffect(() => {
-    if (!bottomRef.current) return;
-    const obs = new ResizeObserver(() => {
-      if (bottomRef.current) setBottomH(bottomRef.current.offsetHeight);
-    });
-    obs.observe(bottomRef.current);
-    return () => obs.disconnect();
-  }, []);
-
-  // Sur mobile : ajoute un padding-bottom dans le ScrollArea pour que le dernier
-  // message reste visible au-dessus de la barre de saisie (qui est absolue)
-  useEffect(() => {
-    if (!isMobile) return;
-    const vp = getViewport();
-    if (!vp) return;
-    vp.style.paddingBottom = `${bottomH}px`;
-    return () => { vp.style.paddingBottom = ''; };
-  }, [isMobile, bottomH, getViewport]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -825,7 +797,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
   return (
     <div data-tour="chat-area" className="flex h-full min-h-0 flex-1 overflow-hidden">
-      <div className={cn('flex min-w-0 flex-1 flex-col overflow-x-hidden', isMobile ? 'relative' : 'overflow-y-hidden', ui.contentBg)}>
+      <div className={cn('flex min-w-0 flex-1 flex-col overflow-hidden', ui.contentBg)}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className={`flex ${d.headerH} shrink-0 items-center justify-between px-3 md:px-4 ${ui.header}`}>
         <div className="flex min-w-0 items-center gap-2.5">
@@ -929,36 +901,100 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         callStatus !== 'ended' &&
         (callConversationId === getConversationId() ||
           (recipientId && callRecipientId === recipientId) ||
-          (callIsGroup && channelId && callChannelId === channelId)) && (
-          <CallPanel
-            type={callType || 'voice'}
-            status={callStatus as 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended'}
-            localStream={localStream}
-            remoteStreams={remoteStreams}
-            screenStream={screenStream}
-            isMuted={isMuted}
-            isVideoOff={isVideoOff}
-            isScreenSharing={isScreenSharing}
-            remoteIsScreenSharing={remoteIsScreenSharing}
-            recipientName={ctxCallerName || recipientName || 'Utilisateur'}
-            recipientAvatar={callerAvatar}
-            currentUserName={user?.displayName || user?.username || 'Vous'}
-            currentUserAvatar={user?.avatarUrl}
-            duration={callDuration}
-            mediaError={mediaError}
-            participants={callIsGroup ? Array.from(participantInfo.entries()).map(([uid, info]) => ({ userId: uid, name: info.name, avatar: info.avatar })) : undefined}
-            callCategory={callCategory ?? undefined}
-            callMode={callMode}
-            tierLabel={tierLabel}
-            handRaised={handRaised}
-            onToggleMute={toggleMute}
-            onToggleVideo={toggleVideo}
-            onStartScreenShare={startScreenShare}
-            onStopScreenShare={stopScreenShare}
-            onEndCall={callIsGroup ? leaveCall : endCall}
-            onToggleHand={toggleHand}
-          />
-        )}
+          (callIsGroup && channelId && callChannelId === channelId)) && (() => {
+          const callProps = {
+            type: (callType || 'voice') as 'voice' | 'video',
+            status: callStatus as 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended',
+            localStream,
+            remoteStreams,
+            screenStream,
+            isMuted,
+            isVideoOff,
+            isScreenSharing,
+            remoteIsScreenSharing,
+            recipientName: ctxCallerName || recipientName || 'Utilisateur',
+            recipientAvatar: callerAvatar,
+            currentUserName: user?.displayName || user?.username || 'Vous',
+            currentUserAvatar: user?.avatarUrl,
+            duration: callDuration,
+            mediaError,
+            participants: callIsGroup ? Array.from(participantInfo.entries()).map(([uid, info]) => ({ userId: uid, name: info.name, avatar: info.avatar })) : undefined,
+            callCategory: callCategory ?? undefined,
+            callMode,
+            tierLabel,
+            handRaised,
+            onToggleMute: toggleMute,
+            onToggleVideo: toggleVideo,
+            onStartScreenShare: startScreenShare,
+            onStopScreenShare: stopScreenShare,
+            onEndCall: callIsGroup ? leaveCall : endCall,
+            onToggleHand: toggleHand,
+          };
+
+          if (isMobile) {
+            /* ── Mobile: full-screen overlay or floating PiP ── */
+            if (callMinimized) {
+              return (
+                <div
+                  className="fixed bottom-4 right-4 z-[60] flex w-36 cursor-pointer flex-col overflow-hidden rounded-2xl bg-zinc-900 shadow-2xl ring-1 ring-white/10"
+                  onClick={() => setCallMinimized(false)}
+                >
+                  <div className="relative aspect-video">
+                    {/* Remote video thumbnail */}
+                    {Array.from(remoteStreams.values())[0] ? (
+                      <video
+                        autoPlay playsInline muted
+                        ref={(el) => { if (el) el.srcObject = Array.from(remoteStreams.values())[0] ?? null; }}
+                        className="absolute inset-0 size-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-zinc-800 text-white/30">
+                        <Maximize2Icon size={20} />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <Maximize2Icon size={16} className="text-white/70" />
+                    </div>
+                  </div>
+                  <div className="px-2 py-1 text-[10px] font-medium text-white/50 truncate">
+                    {ctxCallerName || recipientName}
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div className="fixed inset-0 z-[60] flex flex-col bg-zinc-950">
+                <CallPanel {...callProps} onMinimize={() => setCallMinimized(true)} />
+              </div>
+            );
+          }
+
+          /* ── Desktop: inline resizable panel ── */
+          return (
+            <>
+              <div ref={callPanelRef} style={{ height: callPanelHeight }} className="overflow-hidden">
+                <CallPanel {...callProps} compact={callPanelHeight < 280} />
+              </div>
+              {/* Resize handle */}
+              <div
+                className="group flex h-1.5 w-full shrink-0 cursor-row-resize items-center justify-center bg-zinc-900 hover:bg-zinc-800 transition-colors"
+                onMouseDown={(e) => {
+                  const startY = e.clientY;
+                  const startH = callPanelHeight;
+                  const onMove = (me: MouseEvent) => setCallPanelHeight(Math.max(120, startH + me.clientY - startY));
+                  const onUp = () => {
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onUp);
+                  };
+                  window.addEventListener('mousemove', onMove);
+                  window.addEventListener('mouseup', onUp);
+                }}
+              >
+                <span className="h-0.5 w-8 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors" />
+              </div>
+            </>
+          );
+        })()}
 
       {/* ── E2EE History Recovery Banner ──────────────────────────────────── */}
       {recipientId && hasEncryptedPlaceholders && e2eeRecoveryStatus !== 'done' && !e2eeBannerDismissed && (
@@ -1053,17 +1089,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         )}
       </ScrollArea>
 
-      {/* ── Section basse — absolue sur mobile pour coller au-dessus du clavier ── */}
-      <div
-        ref={bottomRef}
-        className={cn(
-          isMobile
-            ? 'absolute inset-x-0 bottom-0 z-10'
-            : 'shrink-0',
-          ui.contentBg,
-        )}
-        style={isMobile && kbHeight > 0 ? { transform: `translateY(${-kbHeight}px)` } : undefined}
-      >
+      {/* ── Section basse ── */}
+      <div ref={bottomRef} className={cn('shrink-0', ui.contentBg)}>
       {/* ── Typing indicator ───────────────────────────────────────────────── */}
       {typingUsers.length > 0 && (
         <div className="flex shrink-0 items-center gap-2 px-4 py-1.5">
@@ -1117,7 +1144,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       )}
 
       {/* ── Input area ─────────────────────────────────────────────────────── */}
-      <form onSubmit={handleSendMessage} className="relative shrink-0 px-2 pt-1" style={{ paddingBottom: 'max(0.5rem, calc(env(safe-area-inset-bottom) + var(--vk-offset, 0px)))' }}>
+      <form onSubmit={handleSendMessage} className="relative shrink-0 px-2 pt-1 pb-2">
         <input
           ref={fileInputRef}
           type="file"

@@ -11,6 +11,7 @@ import { useNotification } from '@/hooks/use-notification';
 import { useResizablePanel } from '@/hooks/use-resizable-panel';
 import { useSwipeDrawer } from '@/hooks/use-swipe-drawer';
 import { CallProvider, useCallContext } from '@/hooks/use-call-context';
+import { GlobalCallAudio } from '@/components/chat/global-call-audio';
 import { MobileNavProvider } from '@/hooks/use-mobile-nav';
 import { VoiceProvider } from '@/hooks/use-voice';
 import { usePresence } from '@/hooks/use-presence';
@@ -138,12 +139,19 @@ function LayoutInner({ children }: { children: ReactNode }) {
   });
 
   // ── Mobile swipe drawer ────────────────────────────────────────────────────
-  const SIDEBAR_WIDTH = 320;
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  useEffect(() => {
+    const update = () => setSidebarWidth(window.innerWidth);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
   const { sidebarRef, backdropRef } = useSwipeDrawer({
     open: showSidebar,
     onOpen: openSidebar,
     onClose: closeSidebar,
-    width: SIDEBAR_WIDTH,
+    width: sidebarWidth,
     enabled: isMobile,
   });
 
@@ -370,18 +378,29 @@ function LayoutInner({ children }: { children: ReactNode }) {
       {!isMobile && layoutPrefs.serverListPosition === 'bottom' && serverListPanel}
 
       {/* ── MOBILE: content ── */}
-      {isMobile && (
-        <div data-layout="content" className={cn('flex min-w-0 flex-1 flex-col overflow-hidden', ui.mobilePanel, ui.panelTransition)} style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' }}>
-          {children}
-        </div>
-      )}
+      {isMobile && (() => {
+        // Show bottom nav when not in the sidebar AND on home/friends/settings (no active chat)
+        const showNav = !showSidebar && (showSettings || (!activeDmId && !activeGroupId && !activeChannelId));
+        return (
+          <>
+            <div
+              data-layout="content"
+              className={cn('flex min-w-0 flex-1 flex-col overflow-hidden', ui.mobilePanel, ui.panelTransition)}
+              style={showNav ? { paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' } : undefined}
+            >
+              {children}
+            </div>
+            {showNav && <MobileBottomNav />}
+          </>
+        );
+      })()}
 
       {/* ── MOBILE: tiroir navigation (serveurs + channels) ── */}
       {isMobile && (
         <MobileNavDrawer
           sidebarRef={sidebarRef}
           backdropRef={backdropRef}
-          width={SIDEBAR_WIDTH}
+          width={sidebarWidth}
           onClose={closeSidebar}
           activeServerId={activeServerId}
           selectedChannel={selectedChannel}
@@ -405,9 +424,6 @@ function LayoutInner({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* ── MOBILE: bottom nav ── */}
-      {isMobile && <MobileBottomNav />}
-
       {/* ── Server settings dialog ── */}
       {serverSettingsOpen && activeServerId && (
         <ServerSettingsDialog
@@ -429,6 +445,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 export default function ChannelsLayout({ children }: { children: ReactNode }) {
   return (
     <CallProvider>
+      <GlobalCallAudio />
       <MobileNavProvider>
         <VoiceProvider>
           <LayoutInner>{children}</LayoutInner>

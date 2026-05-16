@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const EDGE_ZONE = 28;          // px from left edge to start opening gesture
+const EDGE_ZONE = 44;          // px from left edge to start opening gesture
 const OPEN_RATIO = 0.35;       // fraction of sidebar width to consider open
 const VELOCITY_MIN = 0.3;      // px/ms — quick flick threshold
 const ANGLE_LOCK = 1.2;        // horizontal must dominate vertical by this ratio

@@ -1214,10 +1214,10 @@ class ApiService {
   }
 
   async createChangelog(data: {
-    version: string;
+    version?: string;
     title: string;
     content: string;
-    type: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking';
+    type: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking' | 'news';
     bannerUrl?: string;
   }) {
     return this.request('/api/admin/changelogs', {
@@ -1230,8 +1230,8 @@ class ApiService {
     version?: string;
     title?: string;
     content?: string;
-    type?: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking';
-    bannerUrl?: string;
+    type?: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking' | 'news';
+    bannerUrl?: string | null;
   }) {
     return this.request(`/api/admin/changelogs/${changelogId}`, {
       method: 'PATCH',

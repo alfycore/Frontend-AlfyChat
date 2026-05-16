@@ -2,295 +2,288 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { api } from '@/lib/api';
+import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { useTranslation } from '@/components/locale-provider';
-import { SparklesIcon, ZapIcon, ShieldIcon, FlameIcon, ArrowLeftIcon, SearchIcon, XIcon } from '@/components/icons';
-import { Badge } from '@/components/ui/badge';
+import {
+  SparklesIcon, ZapIcon, ShieldIcon, FlameIcon, MegaphoneIcon,
+  ArrowLeftIcon, SearchIcon, XIcon,
+} from '@/components/icons';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/components/locale-provider';
+import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 
-interface Changelog {
+interface FeedEntry {
   id: string;
   version: string;
   title: string;
   content: string;
-  type: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking';
+  type: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking' | 'news';
   banner_url?: string | null;
   author_username?: string | null;
   created_at: string;
 }
 
-type FilterType = 'all' | Changelog['type'];
+type FilterType = 'all' | FeedEntry['type'];
 
-const TYPE_CONFIG: Record<string, { iconBg: string; iconColor: string; dot: string; icon: React.ElementType }> = {
-  feature:     { iconBg: 'bg-blue-500/10',   iconColor: 'text-blue-500',   dot: 'bg-blue-500',   icon: SparklesIcon },
-  improvement: { iconBg: 'bg-violet-500/10', iconColor: 'text-violet-500', dot: 'bg-violet-500', icon: ZapIcon },
-  fix:         { iconBg: 'bg-orange-500/10', iconColor: 'text-orange-500', dot: 'bg-orange-500', icon: FlameIcon },
-  security:    { iconBg: 'bg-red-500/10',    iconColor: 'text-red-500',    dot: 'bg-red-500',    icon: ShieldIcon },
-  breaking:    { iconBg: 'bg-red-700/10',    iconColor: 'text-red-600',    dot: 'bg-red-700',    icon: FlameIcon },
-};
+const TYPE_CFG = {
+  news:        { badge: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',        accent: 'border-l-teal-500',   flatHover: 'hover:shadow-teal-500/10',   icon: MegaphoneIcon },
+  feature:     { badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',        accent: 'border-l-blue-500',   flatHover: 'hover:shadow-blue-500/10',   icon: SparklesIcon  },
+  improvement: { badge: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',  accent: 'border-l-violet-500', flatHover: 'hover:shadow-violet-500/10', icon: ZapIcon       },
+  fix:         { badge: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',  accent: 'border-l-orange-500', flatHover: 'hover:shadow-orange-500/10', icon: FlameIcon     },
+  security:    { badge: 'bg-red-500/10 text-red-600 dark:text-red-400',           accent: 'border-l-red-500',    flatHover: 'hover:shadow-red-500/10',    icon: ShieldIcon    },
+  breaking:    { badge: 'bg-rose-700/10 text-rose-700 dark:text-rose-400',        accent: 'border-l-rose-700',   flatHover: 'hover:shadow-rose-700/10',   icon: FlameIcon     },
+} as const;
 
-const PROSE = cn(
-  'prose prose-sm max-w-none text-muted-foreground',
-  '[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2',
-  '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:italic',
-  '[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-sm [&_code]:text-foreground',
-  '[&_h1]:text-base [&_h1]:font-bold [&_h1]:text-foreground',
-  '[&_h2]:text-base [&_h2]:font-bold [&_h2]:text-foreground',
-  '[&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-foreground',
-  '[&_li]:text-sm [&_li]:leading-relaxed',
-  '[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1',
-  '[&_p]:text-sm [&_p]:leading-relaxed',
-  '[&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:border-border [&_pre]:bg-muted [&_pre]:p-4',
-  '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
-  '[&_strong]:font-semibold [&_strong]:text-foreground',
-  '[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1',
-);
+const FILTER_KEYS: FilterType[] = ['all', 'news', 'feature', 'improvement', 'fix', 'security', 'breaking'];
 
 export default function ChangelogsPublicPage() {
   const { t, locale } = useTranslation();
-  const cl18n = t.changelogs;
+  const cl = t.changelogs;
   const router = useRouter();
-  const [changelogs, setChangelogs] = useState<Changelog[]>([]);
+
+  const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
-    api
-      .getChangelogs(100, 0)
-      .then((res) => setChangelogs(res.data ?? []))
-      .catch(() => setChangelogs([]))
+    api.getChangelogs(200, 0)
+      .then((res) => {
+        const raw = res.data;
+        const list: FeedEntry[] = Array.isArray(raw)
+          ? (raw as FeedEntry[])
+          : Array.isArray((raw as any)?.changelogs)
+          ? ((raw as any).changelogs as FeedEntry[])
+          : Array.isArray((raw as any)?.data)
+          ? ((raw as any).data as FeedEntry[])
+          : [];
+        setEntries(list);
+      })
+      .catch(() => setEntries([]))
       .finally(() => setLoading(false));
   }, []);
 
+  const counts = useMemo(() => {
+    const m: Record<string, number> = { all: entries.length };
+    for (const e of entries) m[e.type] = (m[e.type] ?? 0) + 1;
+    return m;
+  }, [entries]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return changelogs.filter((cl) => {
-      const matchType = typeFilter === 'all' || cl.type === typeFilter;
-      const matchSearch = !q || cl.title.toLowerCase().includes(q) || cl.content.toLowerCase().includes(q) || cl.version.toLowerCase().includes(q);
-      return matchType && matchSearch;
+    return entries.filter((e) => {
+      if (filter !== 'all' && e.type !== filter) return false;
+      if (q && !e.title.toLowerCase().includes(q) && !e.version.toLowerCase().includes(q) && !e.content.toLowerCase().includes(q)) return false;
+      return true;
     });
-  }, [changelogs, search, typeFilter]);
+  }, [entries, search, filter]);
 
-  // Group by year/month for blog-style timeline
-  const grouped = useMemo(() => {
-    const map = new Map<string, Changelog[]>();
-    for (const cl of filtered) {
-      const d = new Date(cl.created_at);
-      const key = d.toLocaleDateString(locale, { year: 'numeric', month: 'long' });
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(cl);
-    }
-    return Array.from(map.entries());
-  }, [filtered, locale]);
+  const typeLabel = (type: FeedEntry['type']) => ({
+    news: cl.typeNews, feature: cl.typeNew, improvement: cl.typeImprovement,
+    fix: cl.typeFix, security: cl.typeSecurity, breaking: cl.typeBreaking,
+  } as Record<string, string>)[type] ?? type;
+
+  const filterLabel = (type: FilterType) => ({
+    all: cl.filterAllShort, news: (cl as any).filterNews ?? cl.typeNews,
+    feature: cl.typeNew, improvement: cl.typeImprovement,
+    fix: cl.typeFix, security: cl.typeSecurity, breaking: cl.typeBreakingShort,
+  } as Record<string, string>)[type] ?? type;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <div className="flex min-h-0 flex-col bg-background">
 
-        {/* Back */}
-        <Button variant="ghost" size="sm" className="mb-6 -ml-1 h-8 gap-1.5 text-xs text-muted-foreground" onClick={() => router.back()}>
-          <ArrowLeftIcon size={13} />
-          {cl18n.back}
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/95 px-3 backdrop-blur-sm sm:h-14 sm:gap-2.5 sm:px-4">
+        <Button variant="ghost" size="icon" className="size-7 shrink-0 text-muted-foreground sm:size-8" onClick={() => router.back()}>
+          <ArrowLeftIcon size={14} />
         </Button>
-
-        {/* Hero */}
-        <div className="mb-8">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-              <SparklesIcon size={15} className="text-primary" />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">{cl18n.title}</h1>
-            {!loading && changelogs.length > 0 && (
-              <Badge variant="secondary" className="ml-1">{cl18n.entriesCount.replace('{n}', String(changelogs.length))}</Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">{cl18n.subtitle}</p>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+          <SparklesIcon size={13} className="shrink-0 text-primary sm:size-3.5" />
+          <span className="truncate text-[13px] font-semibold sm:text-sm">{cl.title}</span>
         </div>
+        {!loading && entries.length > 0 && (
+          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground sm:px-2 sm:text-[11px]">
+            {entries.length}
+          </span>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7 shrink-0 text-muted-foreground sm:size-8"
+          onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch(''); }}
+        >
+          {showSearch ? <XIcon size={13} /> : <SearchIcon size={13} />}
+        </Button>
+      </header>
 
-        {/* Search + filters */}
-        <div className="mb-8 space-y-3">
+      {/* ── Search ── */}
+      {showSearch && (
+        <div className="shrink-0 border-b border-border px-2 py-1.5 sm:px-4 sm:py-2">
           <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <SearchIcon className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-muted-foreground sm:size-3.5" />
             <Input
-              placeholder={cl18n.searchPlaceholder}
+              autoFocus
+              placeholder={cl.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="h-7 pl-7 text-xs sm:h-8 sm:pl-8 sm:text-sm"
             />
-            {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <XIcon size={14} />
-              </button>
-            )}
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {([
-              { value: 'all',         label: cl18n.filterAll },
-              { value: 'feature',     label: cl18n.filterNew },
-              { value: 'improvement', label: cl18n.filterImprovement },
-              { value: 'fix',         label: cl18n.filterFix },
-              { value: 'security',    label: cl18n.filterSecurity },
-              { value: 'breaking',    label: cl18n.filterBreaking },
-            ] as { value: FilterType; label: string }[]).map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setTypeFilter(f.value)}
-                className={cn(
-                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                  typeFilter === f.value
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+        </div>
+      )}
+
+      {/* ── Filter pills ── */}
+      {!loading && entries.length > 0 && (
+        <div className="shrink-0 border-b border-border">
+          <div className="flex gap-1 overflow-x-auto px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-4 sm:py-2">
+            {FILTER_KEYS.map((type) => {
+              const count = counts[type] ?? 0;
+              if (type !== 'all' && count === 0) return null;
+              const active = filter === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setFilter(type)}
+                  className={cn(
+                    'flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs',
+                    active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  {filterLabel(type)}
+                  <span className={cn(
+                    'rounded-full px-1 py-px text-[9px] tabular-nums sm:px-1.5 sm:text-[10px]',
+                    active ? 'bg-white/20 text-white' : 'bg-muted-foreground/15 text-muted-foreground',
+                  )}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Loading ── */}
+      {loading ? (
+        <div className="p-3 sm:p-5">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-2xl border border-border/50 bg-card border-l-4 border-l-muted">
+                  <div className="h-20 animate-pulse bg-muted sm:h-24" />
+                  <div className="space-y-2 p-3 sm:space-y-2.5 sm:p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-14 animate-pulse rounded-full bg-muted sm:h-5 sm:w-16" />
+                      <div className="h-4 w-10 animate-pulse rounded-md bg-muted sm:h-5 sm:w-12" />
+                      <div className="ml-auto h-3 w-16 animate-pulse rounded bg-muted sm:w-20" />
+                    </div>
+                    <div className="h-3.5 w-2/3 animate-pulse rounded bg-muted sm:h-4" />
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full animate-pulse rounded bg-muted sm:h-3" />
+                      <div className="h-2.5 w-4/5 animate-pulse rounded bg-muted sm:h-3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Loading */}
-        {loading ? (
-          <div className="space-y-8">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="space-y-4">
-                <Skeleton className="h-5 w-32" />
-                <div className="space-y-4 pl-6 border-l border-border">
-                  <Card>
-                    <CardContent className="pt-5 space-y-3">
-                      <div className="flex gap-2">
-                        <Skeleton className="h-5 w-24 rounded-full" />
-                        <Skeleton className="h-5 w-16 rounded-full" />
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center sm:gap-4 sm:p-8">
+          <div className="flex size-14 items-center justify-center rounded-full bg-muted sm:size-16">
+            <SparklesIcon size={22} className="text-muted-foreground/40 sm:size-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold sm:text-sm">
+              {search || filter !== 'all' ? cl.noResultsShort : cl.noChangelogsShort}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">
+              {search || filter !== 'all' ? cl.noResultsHint : cl.comingSoonShort}
+            </p>
+          </div>
+          {(search || filter !== 'all') && (
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => { setSearch(''); setFilter('all'); }}>
+              {cl.clearFilters}
+            </Button>
+          )}
+        </div>
+
+      ) : (
+        <div className="p-3 sm:p-5">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
+              {filtered.map((entry, idx) => {
+                const cfg = TYPE_CFG[entry.type] ?? TYPE_CFG.feature;
+                const Icon = cfg.icon;
+                const isFirst = idx === 0 && filter === 'all' && !search;
+
+                return (
+                  <div
+                    key={entry.id}
+                    className={cn(
+                      'overflow-hidden rounded-2xl border border-border/50 bg-card border-l-4 transition-shadow hover:shadow-md',
+                      cfg.accent,
+                    )}
+                  >
+                    {entry.banner_url && (
+                      <img
+                        src={resolveMediaUrl(entry.banner_url) ?? entry.banner_url}
+                        alt=""
+                        className="w-full max-h-36 object-cover sm:max-h-48 lg:max-h-40"
+                      />
+                    )}
+
+                    <div className="px-3 pt-3 pb-2 sm:px-4 sm:pt-4 sm:pb-3">
+                      <div className="mb-2 flex flex-wrap items-center gap-1 sm:mb-2 sm:gap-1.5">
+                        <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none sm:text-[11px]', cfg.badge)}>
+                          <Icon size={9} className="sm:size-2.5" />
+                          {typeLabel(entry.type)}
+                        </span>
+                        {entry.version && (
+                          <span className="rounded-md border border-border/60 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground sm:px-2 sm:text-[11px]">
+                            v{entry.version}
+                          </span>
+                        )}
+                        {isFirst && (
+                          <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-semibold leading-none text-primary-foreground sm:text-[10px]">
+                            {cl.latestVersion}
+                          </span>
+                        )}
+                        <time
+                          dateTime={entry.created_at}
+                          className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground sm:text-[11px]"
+                        >
+                          {new Date(entry.created_at).toLocaleDateString(locale, {
+                            year: 'numeric', month: 'short', day: 'numeric',
+                          })}
+                        </time>
                       </div>
-                      <Skeleton className="h-5 w-2/3" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-            <div className="flex size-16 items-center justify-center rounded-full bg-muted">
-              <SparklesIcon size={24} className="text-muted-foreground/40" />
-            </div>
-            <div>
-              <p className="font-semibold">{cl18n.noResults}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {search || typeFilter !== 'all' ? cl18n.noResultsHint : cl18n.comingSoon}
-              </p>
-            </div>
-            {(search || typeFilter !== 'all') && (
-              <Button variant="outline" size="sm" onClick={() => { setSearch(''); setTypeFilter('all'); }}>
-                {cl18n.clearFilters}
-              </Button>
-            )}
-          </div>
-        ) : (
-          /* Timeline grouped by month */
-          <div className="space-y-10">
-            {grouped.map(([month, entries]) => (
-              <section key={month}>
-                {/* Month heading */}
-                <div className="mb-4 flex items-center gap-3">
-                  <h2 className="text-sm font-semibold capitalize text-muted-foreground">{month}</h2>
-                  <div className="flex-1 border-t border-border" />
-                  <span className="shrink-0 text-xs text-muted-foreground">{entries.length}</span>
-                </div>
+                      <h2 className="text-[13px] font-semibold leading-snug text-foreground sm:text-sm">{entry.title}</h2>
+                    </div>
 
-                {/* Entries */}
-                <div className="space-y-4 border-l-2 border-border pl-6">
-                  {entries.map((log, idx) => {
-                    const cfg = TYPE_CONFIG[log.type] ?? {
-                      iconBg: 'bg-muted', iconColor: 'text-muted-foreground',
-                      dot: 'bg-muted-foreground', icon: SparklesIcon,
-                    };
-                    const typeLabel = ({
-                      feature: cl18n.typeNew, improvement: cl18n.typeImprovement,
-                      fix: cl18n.typeFix, security: cl18n.typeSecurity, breaking: cl18n.typeBreaking,
-                    } as Record<string, string>)[log.type] ?? log.type;
-                    const Icon = cfg.icon;
-                    const isFirst = idx === 0 && changelogs[0]?.id === log.id && typeFilter === 'all' && !search;
+                    <div className="px-3 pb-3 text-[12px] text-muted-foreground wrap-anywhere sm:px-4 sm:pb-4 sm:text-sm">
+                      <MarkdownRenderer content={entry.content} />
+                    </div>
 
-                    return (
-                      <div key={log.id} className="relative">
-                        {/* Timeline dot */}
-                        <div className={cn(
-                          'absolute -left-[2.1rem] top-4 size-3 rounded-full border-2 border-background ring-2',
-                          cfg.dot, 'ring-border',
-                        )} />
-
-                        <Card className="overflow-hidden transition-shadow hover:shadow-md">
-                          <CardContent className="pt-5">
-                            {/* Top row */}
-                            <div className="mb-3 flex flex-wrap items-center gap-2">
-                              <div className={cn('flex size-7 shrink-0 items-center justify-center rounded-md', cfg.iconBg, cfg.iconColor)}>
-                                <Icon size={13} />
-                              </div>
-                              <Badge variant="secondary" className={cn('text-xs', cfg.iconColor)}>
-                                {typeLabel}
-                              </Badge>
-                              <Badge variant="outline" className="font-mono text-xs text-muted-foreground">
-                                v{log.version}
-                              </Badge>
-                              {isFirst && <Badge>{cl18n.latestVersion}</Badge>}
-                              <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
-                                {new Date(log.created_at).toLocaleDateString(locale, {
-                                  day: 'numeric', month: 'short', year: 'numeric',
-                                })}
-                              </span>
-                            </div>
-
-                            {/* Title */}
-                            <h3 className="mb-3 text-base font-bold leading-snug text-foreground">
-                              {log.title}
-                            </h3>
-
-                            {/* Banner */}
-                            {log.banner_url && (
-                              <div className="mb-4 overflow-hidden rounded-md">
-                                <img src={log.banner_url} alt="" className="max-h-48 w-full object-cover" />
-                              </div>
-                            )}
-
-                            {/* Content */}
-                            <div className={PROSE}>
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {log.content}
-                              </ReactMarkdown>
-                            </div>
-
-                            {/* Author */}
-                            {log.author_username && (
-                              <>
-                                <Separator className="mt-4 mb-3" />
-                                <p className="text-xs text-muted-foreground">
-                                  {cl18n.publishedBy}{' '}
-                                  <span className="font-medium text-foreground">@{log.author_username}</span>
-                                </p>
-                              </>
-                            )}
-                          </CardContent>
-                        </Card>
+                    {entry.author_username && (
+                      <div className="border-t border-border/30 px-3 py-2 sm:px-4 sm:py-2.5">
+                        <p className="text-[10px] text-muted-foreground/60 sm:text-[11px]">
+                          {cl.publishedBy}{' '}
+                          <span className="font-medium text-muted-foreground">@{entry.author_username}</span>
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
-

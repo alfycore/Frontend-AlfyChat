@@ -509,7 +509,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({ content }: Mark
 
   return (
     <>
-      <div className="markdown-body min-w-0 wrap-break-word leading-relaxed">{rendered}</div>
+      <div className="markdown-body min-w-0 wrap-anywhere leading-relaxed">{rendered}</div>
       {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
     </>
   );

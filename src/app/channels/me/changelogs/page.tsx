@@ -4,148 +4,166 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { SparklesIcon, ZapIcon, ShieldIcon, FlameIcon, MenuIcon, ArrowLeftIcon, SearchIcon, XIcon } from '@/components/icons';
+import {
+  SparklesIcon, ZapIcon, ShieldIcon, FlameIcon, MegaphoneIcon,
+  ArrowLeftIcon, SearchIcon, XIcon, MenuIcon,
+} from '@/components/icons';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { useTranslation } from '@/components/locale-provider';
 import { MarkdownRenderer } from '@/components/chat/markdown-renderer';
 
-interface Changelog {
+/* ── Types ──────────────────────────────────────────────────────────────────── */
+
+interface FeedEntry {
   id: string;
   version: string;
   title: string;
   content: string;
-  type: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking';
+  type: 'feature' | 'fix' | 'improvement' | 'security' | 'breaking' | 'news';
   banner_url?: string | null;
   author_username?: string | null;
   created_at: string;
 }
 
-type FilterType = 'all' | Changelog['type'];
+type FilterType = 'all' | FeedEntry['type'];
+
+/* ── Config ─────────────────────────────────────────────────────────────────── */
 
 const TYPE_CFG = {
-  feature:     { dot: 'bg-blue-500',   glow: 'shadow-blue-500/40',   badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',        line: 'border-l-blue-500/50',    icon: SparklesIcon },
-  improvement: { dot: 'bg-violet-500', glow: 'shadow-violet-500/40', badge: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',  line: 'border-l-violet-500/50',  icon: ZapIcon      },
-  fix:         { dot: 'bg-orange-500', glow: 'shadow-orange-500/40', badge: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',  line: 'border-l-orange-500/50',  icon: FlameIcon    },
-  security:    { dot: 'bg-red-500',    glow: 'shadow-red-500/40',    badge: 'bg-red-500/10 text-red-600 dark:text-red-400',           line: 'border-l-red-500/50',     icon: ShieldIcon   },
-  breaking:    { dot: 'bg-rose-700',   glow: 'shadow-rose-700/40',   badge: 'bg-rose-700/10 text-rose-700 dark:text-rose-400',        line: 'border-l-rose-700/50',    icon: FlameIcon    },
+  news:        { badge: 'bg-teal-500/15 text-teal-500',     accent: 'border-l-teal-500',   flatHover: 'hover:border-teal-500/20',   icon: MegaphoneIcon },
+  feature:     { badge: 'bg-blue-500/15 text-blue-500',     accent: 'border-l-blue-500',   flatHover: 'hover:border-blue-500/20',   icon: SparklesIcon  },
+  improvement: { badge: 'bg-violet-500/15 text-violet-500', accent: 'border-l-violet-500', flatHover: 'hover:border-violet-500/20', icon: ZapIcon       },
+  fix:         { badge: 'bg-orange-500/15 text-orange-500', accent: 'border-l-orange-500', flatHover: 'hover:border-orange-500/20', icon: FlameIcon     },
+  security:    { badge: 'bg-red-500/15 text-red-500',       accent: 'border-l-red-500',    flatHover: 'hover:border-red-500/20',    icon: ShieldIcon    },
+  breaking:    { badge: 'bg-rose-600/15 text-rose-500',     accent: 'border-l-rose-600',   flatHover: 'hover:border-rose-600/20',   icon: FlameIcon     },
 } as const;
 
-const FILTER_KEYS: FilterType[] = ['all', 'feature', 'improvement', 'fix', 'security', 'breaking'];
+const FILTER_KEYS: FilterType[] = ['all', 'news', 'feature', 'improvement', 'fix', 'security', 'breaking'];
+
+/* ── Component ──────────────────────────────────────────────────────────────── */
 
 export default function ChangelogsPage() {
   const router = useRouter();
-  const { isMobile, openSidebar } = useMobileNav();
+  const { isMobile, toggleSidebar } = useMobileNav();
+  const ui = useUIStyle();
   const { t, locale } = useTranslation();
   const cl = t.changelogs;
 
-  const [changelogs, setChangelogs] = useState<Changelog[]>([]);
+  const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
-    api.getChangelogs(100, 0)
+    api.getChangelogs(200, 0)
       .then((res) => {
         const raw = res.data;
-        const list: Changelog[] = Array.isArray(raw)
-          ? (raw as Changelog[])
+        const list: FeedEntry[] = Array.isArray(raw)
+          ? (raw as FeedEntry[])
           : Array.isArray((raw as any)?.changelogs)
-          ? ((raw as any).changelogs as Changelog[])
+          ? ((raw as any).changelogs as FeedEntry[])
           : Array.isArray((raw as any)?.data)
-          ? ((raw as any).data as Changelog[])
+          ? ((raw as any).data as FeedEntry[])
           : [];
-        setChangelogs(list);
+        setEntries(list);
       })
-      .catch(() => setChangelogs([]))
+      .catch(() => setEntries([]))
       .finally(() => setLoading(false));
   }, []);
 
   const counts = useMemo(() => {
-    const m: Record<string, number> = { all: changelogs.length };
-    for (const c of changelogs) m[c.type] = (m[c.type] ?? 0) + 1;
+    const m: Record<string, number> = { all: entries.length };
+    for (const e of entries) m[e.type] = (m[e.type] ?? 0) + 1;
     return m;
-  }, [changelogs]);
+  }, [entries]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return changelogs.filter((c) => {
-      if (filter !== 'all' && c.type !== filter) return false;
-      if (q && !c.title.toLowerCase().includes(q) && !c.version.toLowerCase().includes(q)) return false;
+    return entries.filter((e) => {
+      if (filter !== 'all' && e.type !== filter) return false;
+      if (q && !e.title.toLowerCase().includes(q) && !e.version.toLowerCase().includes(q) && !e.content.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [changelogs, search, filter]);
+  }, [entries, search, filter]);
 
-  const typeLabel = (type: Changelog['type']) =>
-    type === 'feature' ? cl.typeNew
-    : type === 'improvement' ? cl.typeImprovement
-    : type === 'fix' ? cl.typeFix
-    : type === 'security' ? cl.typeSecurity
-    : cl.typeBreaking;
+  const typeLabel = (type: FeedEntry['type']) => ({
+    news: cl.typeNews, feature: cl.typeNew, improvement: cl.typeImprovement,
+    fix: cl.typeFix, security: cl.typeSecurity, breaking: cl.typeBreaking,
+  } as Record<string, string>)[type] ?? type;
 
-  const filterLabel = (type: FilterType) =>
-    type === 'all' ? cl.filterAllShort
-    : type === 'feature' ? cl.typeNew
-    : type === 'improvement' ? cl.filterImprovement
-    : type === 'fix' ? cl.typeFix
-    : type === 'security' ? cl.typeSecurity
-    : cl.typeBreakingShort;
+  const filterLabel = (type: FilterType) => ({
+    all: cl.filterAllShort, news: (cl as any).filterNews ?? cl.typeNews,
+    feature: cl.typeNew, improvement: cl.typeImprovement,
+    fix: cl.typeFix, security: cl.typeSecurity, breaking: cl.typeBreakingShort,
+  } as Record<string, string>)[type] ?? type;
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
+    <div className={`flex h-full min-h-0 flex-col ${ui.contentBg}`}>
 
-      {/* Header */}
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-3">
+      {/* ── Header ── */}
+      <div className={`flex h-12 shrink-0 items-center gap-2 px-2 sm:h-14 sm:gap-2.5 sm:px-3 ${ui.header}`}>
         {isMobile && (
-          <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground" onClick={openSidebar}>
-            <MenuIcon size={16} />
+          <Button size="icon-sm" variant="ghost" className="size-7 shrink-0 rounded-xl text-muted-foreground sm:size-8" onClick={toggleSidebar}>
+            <MenuIcon size={15} />
           </Button>
         )}
-        <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground" onClick={() => router.back()}>
-          <ArrowLeftIcon size={15} />
+        <Button size="icon-sm" variant="ghost" className="size-7 shrink-0 rounded-xl text-muted-foreground sm:size-8" onClick={() => router.back()}>
+          <ArrowLeftIcon size={14} />
         </Button>
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <SparklesIcon size={14} className="shrink-0 text-primary" />
-          <span className="truncate text-sm font-semibold">{cl.title}</span>
+        <div className="flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-primary/10 sm:size-7 sm:rounded-[8px]">
+          <SparklesIcon size={11} className="text-primary sm:size-3.25" />
         </div>
-        {!loading && changelogs.length > 0 && (
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
-            {changelogs.length}
+        <h1 className="flex-1 truncate text-[13px] font-semibold text-foreground sm:text-[14px]">{cl.title}</h1>
+        {!loading && entries.length > 0 && (
+          <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground sm:px-2 sm:text-[11px]', ui.chip)}>
+            {entries.length}
           </span>
         )}
         <Button
+          size="icon-sm"
           variant="ghost"
-          size="icon"
-          className="size-8 shrink-0 text-muted-foreground"
+          className="size-7 shrink-0 rounded-xl text-muted-foreground sm:size-8"
           onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch(''); }}
         >
-          {showSearch ? <XIcon size={14} /> : <SearchIcon size={14} />}
+          {showSearch ? <XIcon size={13} /> : <SearchIcon size={13} />}
         </Button>
-      </header>
+      </div>
 
-      {/* Search bar */}
+      {/* ── Search ── */}
       {showSearch && (
-        <div className="shrink-0 border-b border-border px-3 py-2">
+        <div className={cn(
+          'shrink-0 px-2 py-1.5 sm:px-3 sm:py-2',
+          ui.isGlass
+            ? 'border-b border-white/8 dark:border-white/6'
+            : 'border-b border-border/50',
+        )}>
           <div className="relative">
-            <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <SearchIcon className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-muted-foreground sm:size-3.5" />
             <Input
               autoFocus
               placeholder={cl.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-8 pl-8 text-sm"
+              className="h-7 pl-7 text-xs rounded-xl sm:h-8 sm:pl-8 sm:text-sm"
             />
           </div>
         </div>
       )}
 
-      {/* Filter pills */}
-      {!loading && changelogs.length > 0 && (
-        <div className="shrink-0 border-b border-border">
-          <div className="flex gap-1 overflow-x-auto px-3 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* ── Filter pills ── */}
+      {!loading && entries.length > 0 && (
+        <div className={cn(
+          'shrink-0',
+          ui.isGlass
+            ? 'border-b border-white/8 dark:border-white/6'
+            : 'border-b border-border/50',
+        )}>
+          <div className="flex gap-1 overflow-x-auto px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-3 sm:py-2">
             {FILTER_KEYS.map((type) => {
               const count = counts[type] ?? 0;
               if (type !== 'all' && count === 0) return null;
@@ -155,16 +173,18 @@ export default function ChangelogsPage() {
                   key={type}
                   onClick={() => setFilter(type)}
                   className={cn(
-                    'flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                    'flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all duration-150 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs',
                     active
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : ui.isGlass
+                      ? 'text-muted-foreground hover:bg-white/10 dark:hover:bg-white/8'
+                      : 'text-muted-foreground hover:bg-foreground/6 hover:text-foreground',
                   )}
                 >
                   {filterLabel(type)}
                   <span className={cn(
-                    'rounded-full px-1.5 py-px text-[10px] tabular-nums',
-                    active ? 'bg-white/20 text-white' : 'bg-muted-foreground/15 text-muted-foreground',
+                    'rounded-full px-1 py-px text-[9px] tabular-nums sm:px-1.5 sm:text-[10px]',
+                    active ? 'bg-white/20 text-white' : 'bg-foreground/6 text-muted-foreground',
                   )}>
                     {count}
                   </span>
@@ -175,138 +195,157 @@ export default function ChangelogsPage() {
         </div>
       )}
 
-      {/* Loading skeletons — timeline style */}
+      {/* ── Loading ── */}
       {loading ? (
-        <div className="p-6">
-          <div className="relative pl-8">
-            <div className="absolute left-2.75 top-0 h-full w-px bg-border/40" />
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="relative mb-8">
-                <div className="absolute -left-5 top-2.5 size-4 rounded-full bg-muted ring-4 ring-background" />
-                <div className="overflow-hidden rounded-2xl border border-border/50 bg-card p-4">
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
-                    <div className="h-5 w-12 animate-pulse rounded-md bg-muted" />
-                    <div className="ml-auto h-4 w-20 animate-pulse rounded bg-muted" />
-                  </div>
-                  <div className="mb-3 h-4 w-2/3 animate-pulse rounded bg-muted" />
-                  <div className="space-y-2">
-                    <div className="h-3 w-full animate-pulse rounded bg-muted" />
-                    <div className="h-3 w-5/6 animate-pulse rounded bg-muted" />
-                    <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+        <div className="p-3 sm:p-5">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'overflow-hidden rounded-2xl border-l-4 border-l-muted',
+                    ui.isGlass
+                      ? 'bg-white/5 ring-1 ring-inset ring-white/10'
+                      : 'border border-border/40 bg-card/60',
+                  )}
+                >
+                  <div className="h-20 animate-pulse bg-foreground/6 sm:h-24" />
+                  <div className="space-y-2 p-3 sm:space-y-2.5 sm:p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-14 animate-pulse rounded-full bg-foreground/10 sm:h-5 sm:w-16" />
+                      <div className="h-4 w-10 animate-pulse rounded-lg bg-foreground/10 sm:h-5 sm:w-12" />
+                      <div className="ml-auto h-3 w-16 animate-pulse rounded bg-foreground/10 sm:w-20" />
+                    </div>
+                    <div className="h-3.5 w-2/3 animate-pulse rounded bg-foreground/10 sm:h-4" />
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full animate-pulse rounded bg-foreground/10 sm:h-3" />
+                      <div className="h-2.5 w-4/5 animate-pulse rounded bg-foreground/10 sm:h-3" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
       ) : filtered.length === 0 ? (
-        /* Empty state */
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-muted">
-            <SparklesIcon size={24} className="text-muted-foreground/40" />
+        /* ── Empty ── */
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center sm:gap-4 sm:p-8">
+          <div className={cn(
+            'flex size-14 items-center justify-center rounded-[18px] sm:size-18 sm:rounded-[22px]',
+            ui.isGlass
+              ? 'bg-primary/10 backdrop-blur-xl ring-1 ring-inset ring-primary/20'
+              : 'bg-primary/10',
+          )}>
+            <SparklesIcon size={22} className="text-primary/50 sm:size-7" />
           </div>
           <div>
-            <p className="text-sm font-semibold">
+            <p className="text-xs font-semibold text-foreground sm:text-[13px]">
               {search || filter !== 'all' ? cl.noResultsShort : cl.noChangelogsShort}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-[11px] text-muted-foreground sm:text-[12px]">
               {search || filter !== 'all' ? cl.noResultsHint : cl.comingSoonShort}
             </p>
           </div>
           {(search || filter !== 'all') && (
-            <Button variant="outline" size="sm" onClick={() => { setSearch(''); setFilter('all'); }}>
+            <Button variant="outline" size="sm" className="rounded-xl text-xs sm:text-sm" onClick={() => { setSearch(''); setFilter('all'); }}>
               {cl.clearFilters}
             </Button>
           )}
         </div>
 
       ) : (
-        /* Timeline */
+        /* ── Feed ── */
         <ScrollArea className="min-h-0 flex-1">
-          <div className="p-6">
-            <div className="relative pl-8">
-              {/* Vertical connecting line */}
-              <div className="absolute left-2.75 top-2 bottom-2 w-px bg-border/40" />
+          <div className="p-3 sm:p-5">
+            <div className="mx-auto w-full max-w-5xl">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
+                {filtered.map((entry, idx) => {
+                  const cfg = TYPE_CFG[entry.type] ?? TYPE_CFG.feature;
+                  const Icon = cfg.icon;
+                  const isFirst = idx === 0 && filter === 'all' && !search;
 
-              {filtered.map((log, idx) => {
-                const cfg = TYPE_CFG[log.type] ?? TYPE_CFG.feature;
-                const Icon = cfg.icon;
-                const isFirst = idx === 0 && filter === 'all' && !search;
+                  return (
+                    <article
+                      key={entry.id}
+                      className={cn(
+                        'overflow-hidden rounded-2xl border-l-4 transition-all duration-200',
+                        cfg.accent,
+                        ui.isGlass
+                          ? 'bg-white/7 backdrop-blur-xl ring-1 ring-inset ring-white/12 hover:bg-white/12 hover:ring-white/20 dark:bg-white/4 dark:hover:bg-white/8'
+                          : cn('border-t border-r border-b border-border/40 bg-card/60 shadow-sm hover:bg-card hover:shadow-md', cfg.flatHover),
+                      )}
+                    >
+                      {/* Banner */}
+                      {entry.banner_url && (
+                        <img
+                          src={resolveMediaUrl(entry.banner_url) ?? entry.banner_url}
+                          alt=""
+                          className="w-full max-h-36 object-cover sm:max-h-48 lg:max-h-40"
+                        />
+                      )}
 
-                return (
-                  <div key={log.id} className="relative mb-5 last:mb-0">
-                    {/* Timeline dot */}
-                    <div className={cn(
-                      'absolute -left-5 top-3 size-4 rounded-full ring-4 ring-background shadow-md',
-                      cfg.dot,
-                      cfg.glow,
-                    )} />
-
-                    {/* Card */}
-                    <div className={cn(
-                      'overflow-hidden rounded-2xl border border-border/50 bg-card border-l-2 transition-shadow hover:shadow-md',
-                      cfg.line,
-                    )}>
                       {/* Card header */}
-                      <div className="px-4 pt-4 pb-3">
-                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                          <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none', cfg.badge)}>
-                            <Icon size={10} />
-                            {typeLabel(log.type)}
+                      <div className="px-3 pt-3 pb-2 sm:px-5 sm:pt-4 sm:pb-3">
+                        <div className="mb-2 flex flex-wrap items-center gap-1 sm:mb-2.5 sm:gap-1.5">
+                          <span className={cn(
+                            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none sm:px-2.5 sm:text-[11px]',
+                            cfg.badge,
+                          )}>
+                            <Icon size={9} className="sm:size-2.5" />
+                            {typeLabel(entry.type)}
                           </span>
-                          <span className="rounded-md border border-border/60 px-2 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">
-                            v{log.version}
-                          </span>
+                          {entry.version && (
+                            <span className={cn(
+                              'rounded-lg px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground sm:px-2 sm:text-[11px]',
+                              ui.isGlass
+                                ? 'bg-white/10 dark:bg-white/[0.07]'
+                                : 'border border-border/60 bg-background/50',
+                            )}>
+                              v{entry.version}
+                            </span>
+                          )}
                           {isFirst && (
-                            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground">
+                            <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-semibold leading-none text-primary-foreground shadow-sm sm:px-2.5 sm:text-[10px]">
                               {cl.latestVersion}
                             </span>
                           )}
                           <time
-                            dateTime={log.created_at}
-                            className="ml-auto shrink-0 text-[11px] tabular-nums text-muted-foreground"
+                            dateTime={entry.created_at}
+                            className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground sm:text-[11px]"
                           >
-                            {new Date(log.created_at).toLocaleDateString(locale, {
+                            {new Date(entry.created_at).toLocaleDateString(locale, {
                               year: 'numeric', month: 'short', day: 'numeric',
                             })}
                           </time>
                         </div>
-                        <h2 className="text-sm font-semibold leading-snug text-foreground">
-                          {log.title}
-                        </h2>
+                        <h2 className="text-[13px] font-semibold leading-snug text-foreground sm:text-[14px]">{entry.title}</h2>
                       </div>
 
-                      {/* Banner */}
-                      {log.banner_url && (
-                        <div className="mx-4 mb-3 overflow-hidden rounded-xl">
-                          <img
-                            src={resolveMediaUrl(log.banner_url) ?? log.banner_url}
-                            alt=""
-                            className="max-h-44 w-full object-cover"
-                          />
-                        </div>
-                      )}
-
                       {/* Content */}
-                      <div className="px-4 pb-4 text-sm text-muted-foreground">
-                        <MarkdownRenderer content={log.content} />
+                      <div className="px-3 pb-3 text-[12px] text-muted-foreground leading-relaxed wrap-anywhere sm:px-5 sm:pb-4 sm:text-[13px]">
+                        <MarkdownRenderer content={entry.content} />
                       </div>
 
                       {/* Author */}
-                      {log.author_username && (
-                        <div className="border-t border-border/30 px-4 py-2.5">
-                          <p className="text-[11px] text-muted-foreground/60">
+                      {entry.author_username && (
+                        <div className={cn(
+                          'px-3 py-2 sm:px-5 sm:py-2.5',
+                          ui.isGlass
+                            ? 'border-t border-white/8 dark:border-white/6'
+                            : 'border-t border-border/30',
+                        )}>
+                          <p className="text-[10px] text-muted-foreground/60 sm:text-[11px]">
                             {cl.publishedBy}{' '}
-                            <span className="font-medium text-muted-foreground">@{log.author_username}</span>
+                            <span className="font-medium text-muted-foreground/80">@{entry.author_username}</span>
                           </p>
                         </div>
                       )}
-                    </div>
-                  </div>
-                );
-              })}
+                    </article>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </ScrollArea>

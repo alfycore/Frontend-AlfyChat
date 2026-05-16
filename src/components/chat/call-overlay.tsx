@@ -323,12 +323,13 @@ export function CallOverlay({
             isConnected={isConnected}
           />
 
-          {/* Remote tile */}
+          {/* Remote tile — audio handled by GlobalCallAudio */}
           <Tile
             label={recipientName}
             avatarSrc={recipientAvatar}
             stream={remoteStream}
             isLocal={false}
+            muteAudio={true}
             isConnected={isConnected && !!remoteStream}
           />
         </div>

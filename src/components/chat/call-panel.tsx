@@ -12,6 +12,7 @@ import {
   PhoneIcon,
   AlertTriangleIcon,
   WifiIcon,
+  Minimize2Icon,
 } from '@/components/icons';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { resolveMediaUrl } from '@/lib/api';
@@ -44,6 +45,10 @@ interface CallPanelProps {
   callMode?: 'p2p' | 'sfu';
   tierLabel?: string;
   handRaised?: boolean;
+  /** When true, all tiles render in a single horizontal row (compact mode) */
+  compact?: boolean;
+  /** Called when user clicks the minimize/PiP button (mobile) */
+  onMinimize?: () => void;
   onToggleMute: () => void;
   onToggleVideo: () => void;
   onStartScreenShare: () => void;
@@ -341,6 +346,8 @@ export function CallPanel({
   callMode,
   tierLabel,
   handRaised = false,
+  compact = false,
+  onMinimize,
   onToggleMute,
   onToggleVideo,
   onStartScreenShare,
@@ -396,6 +403,7 @@ export function CallPanel({
           avatarSrc: peer.avatar,
           stream: peerStream,
           isLocal: false,
+          muteAudio: true,
           isConnected: isConnected && (!!peerStream || !!peerScreenStream),
         },
       });
@@ -407,6 +415,7 @@ export function CallPanel({
             avatarSrc: peer.avatar,
             stream: peerScreenStream,
             isLocal: false,
+            muteAudio: true,
             isConnected,
             isScreenShare: true,
           },
@@ -428,6 +437,7 @@ export function CallPanel({
         avatarSrc: recipientAvatar,
         stream: remoteStream,
         isLocal: false,
+        muteAudio: true,
         isConnected: isConnected && (!!remoteStream || remoteIsScreenSharing),
       },
     });
@@ -439,6 +449,7 @@ export function CallPanel({
           avatarSrc: recipientAvatar,
           stream: remoteScreenStream,
           isLocal: false,
+          muteAudio: true,
           isConnected,
           isScreenShare: true,
         },
@@ -480,10 +491,10 @@ export function CallPanel({
     : 'grid-cols-4';
 
   return (
-    <div className="border-b border-white/5 bg-zinc-950">
+    <div className="flex h-full flex-col border-b border-white/5 bg-zinc-950">
 
       {/* ── STATUS BAR ── */}
-      <div className="flex items-center justify-between border-b border-white/5 px-4 py-2">
+      <div className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-2">
         <div className={cn(
           'flex items-center gap-1.5 text-[11px] font-semibold',
           isConnected ? 'text-success' : 'text-white/50',
@@ -510,14 +521,24 @@ export function CallPanel({
               ? `${(participants?.length ?? 0) + 1} · ${type === 'video' ? t.calls.videoLabel : t.calls.voiceLabel}`
               : (type === 'video' ? t.calls.videoLabel : t.calls.voiceLabel)}
           </span>
+          {onMinimize && (
+            <button
+              type="button"
+              onClick={onMinimize}
+              className="flex size-6 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/8 hover:text-white"
+              aria-label="Réduire"
+            >
+              <Minimize2Icon size={13} />
+            </button>
+          )}
         </div>
       </div>
 
       {/* ── SERVER STAGE LAYOUT ── */}
       {callCategory === 'server' && useGroupTiles && (
-        <div className="flex gap-2 p-3">
+        <div className="flex flex-1 min-h-0 gap-2 p-3">
           {/* Main tile — active / pinned speaker */}
-          <div className="aspect-video min-w-0 flex-[3] overflow-hidden rounded-2xl">
+          <div className="min-h-0 min-w-0 flex-[3] overflow-hidden rounded-2xl">
             {pinnedTile ? (
               <ParticipantTile
                 {...pinnedTile.tileProps}
@@ -564,12 +585,12 @@ export function CallPanel({
 
       {/* ── TILES (DM / Group / Server fallback) ── */}
       {callCategory !== 'server' && (
-      <div className="p-3">
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden p-3">
         {pinnedTile ? (
           /* ── Spotlight mode: large pinned tile + thumbnail strip ── */
-          <div className="flex flex-col gap-2">
-            {/* Main tile — 16:9 */}
-            <div className="aspect-video w-full overflow-hidden rounded-2xl">
+          <div className="flex h-full flex-col gap-2">
+            {/* Main tile — fills remaining space */}
+            <div className="min-h-0 flex-1 overflow-hidden rounded-2xl">
               <ParticipantTile
                 {...pinnedTile.tileProps}
                 onClick={() => handlePin(pinnedTile.key)}
@@ -578,7 +599,7 @@ export function CallPanel({
             </div>
             {/* Thumbnails strip */}
             {otherTiles.length > 0 && (
-              <div className="flex gap-2">
+              <div className="flex shrink-0 gap-2">
                 {otherTiles.map(tile => (
                   <div key={tile.key} className="aspect-video flex-1 overflow-hidden rounded-2xl">
                     <ParticipantTile
@@ -591,11 +612,24 @@ export function CallPanel({
               </div>
             )}
           </div>
-        ) : (
-          /* ── Equal grid — each tile is 16:9 ── */
-          <div className={cn('grid gap-2', gridCols)}>
+        ) : compact ? (
+          /* ── Compact (1-row): all tiles in a single horizontal row ── */
+          <div className="flex h-full items-center gap-2 overflow-x-auto">
             {tiles.map(tile => (
-              <div key={tile.key} className="aspect-video overflow-hidden rounded-2xl">
+              <div key={tile.key} className="aspect-video h-28 shrink-0 overflow-hidden rounded-xl sm:h-32">
+                <ParticipantTile
+                  {...tile.tileProps}
+                  onClick={() => handlePin(tile.key)}
+                  isPinned={false}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* ── Equal grid — tiles fill the available height ── */
+          <div className={cn('grid h-full gap-2', gridCols)}>
+            {tiles.map(tile => (
+              <div key={tile.key} className="min-h-0 overflow-hidden rounded-2xl">
                 <ParticipantTile
                   {...tile.tileProps}
                   onClick={() => handlePin(tile.key)}
@@ -625,7 +659,7 @@ export function CallPanel({
       )}
 
       {/* ── CONTROLS ── */}
-      <div className="flex items-center justify-center gap-5 border-t border-white/5 bg-zinc-900/80 px-4 py-3 md:gap-6">
+      <div className="flex shrink-0 items-center justify-center gap-5 border-t border-white/5 bg-zinc-900/80 px-4 py-3 md:gap-6">
         <CtrlBtn active={isMuted} onClick={onToggleMute} label={isMuted ? t.callOverlay.muted : t.callOverlay.mic}>
           {isMuted ? <MicOffIcon size={18} /> : <MicIcon size={18} />}
         </CtrlBtn>
