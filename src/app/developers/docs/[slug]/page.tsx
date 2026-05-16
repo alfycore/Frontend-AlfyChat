@@ -114,6 +114,19 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+function DocSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border/40 bg-card/40 p-5">
+      <h2 className="mb-3 text-sm font-semibold tracking-tight text-foreground">{title}</h2>
+      <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
+    </div>
+  );
+}
+
+function Strong({ children }: { children: React.ReactNode }) {
+  return <strong className="font-semibold text-foreground">{children}</strong>;
+}
+
 function InfoCard({
   color,
   title,
