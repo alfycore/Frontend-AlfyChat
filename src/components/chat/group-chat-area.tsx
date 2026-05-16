@@ -80,6 +80,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   const [showMembers, setShowMembers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState<'general' | 'members'>('general');
+  const [activeGroupCall, setActiveGroupCall] = useState<{ callId: string; callType: string; callerName?: string } | null>(null);
 
   // Timestamp de la dernière visite — capturé à l'ouverture du groupe
   const [lastSeenAt, setLastSeenAt] = useState<string | null>(() => getLastSeen(`group:${groupId}`));
@@ -92,6 +93,26 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
     }, 5000);
     return () => clearTimeout(timer);
   }, [lastSeenAt]);
+
+  // Appel actif dans ce groupe (pour les membres qui rejoignent après le démarrage)
+  useEffect(() => {
+    const handleCallActive = (payload: any) => {
+      const p = (payload?.payload || payload) as any;
+      if (p?.channelId !== groupId && p?.callId !== activeGroupCall?.callId) {
+        if (p?.channelId !== groupId) return;
+      }
+      setActiveGroupCall({ callId: p.callId, callType: p.callType || 'voice', callerName: p.callerName });
+    };
+    const handleCallActiveEnded = (payload: any) => {
+      setActiveGroupCall(null);
+    };
+    socketService.on('CALL_ACTIVE', handleCallActive);
+    socketService.on('CALL_ACTIVE_ENDED', handleCallActiveEnded);
+    return () => {
+      socketService.off('CALL_ACTIVE', handleCallActive);
+      socketService.off('CALL_ACTIVE_ENDED', handleCallActiveEnded);
+    };
+  }, [groupId, activeGroupCall?.callId]);
 
   // ── File attachments ──
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -505,6 +526,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   };
 
   const handleInitiateCall = (type: 'voice' | 'video') => {
+    setActiveGroupCall(null);
     initiateGroupCall(groupId, type, groupInfo?.name);
   };
 
@@ -628,6 +650,29 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             </DropdownMenu>
           </div>
         </div>
+
+        {/* ── Bannière appel actif (pour les membres non encore dans l'appel) ── */}
+        {activeGroupCall && callStatus === 'idle' && (
+          <div className="mx-3 mt-2 flex items-center gap-2 rounded-xl border border-success/30 bg-success/10 px-3 py-2">
+            <span className="relative flex size-2 shrink-0">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-50" />
+              <span className="relative inline-flex size-2 rounded-full bg-success" />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-xs font-medium text-success">
+              {activeGroupCall.callerName
+                ? `${activeGroupCall.callerName} a démarré un appel`
+                : 'Appel en cours'}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 shrink-0 rounded-lg border border-success/40 bg-success/15 px-3 text-xs font-semibold text-success hover:bg-success hover:text-white"
+              onClick={() => initiateGroupCall(groupId, (activeGroupCall.callType as 'voice' | 'video') || 'voice', groupInfo?.name)}
+            >
+              Rejoindre
+            </Button>
+          </div>
+        )}
 
         {/* ── Call panel ── */}
         {callStatus !== 'idle' && callStatus !== 'ended' &&

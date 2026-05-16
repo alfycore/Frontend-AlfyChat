@@ -11,7 +11,12 @@ import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
@@ -196,20 +201,20 @@ function RegisterContent() {
                     <label htmlFor="email" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                       {t.auth.register.email}
                     </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                        <MailIcon size={14} />
-                      </span>
-                      <Input
+                    <InputGroup className="h-9">
+                      <InputGroupInput
                         id="email"
                         type="email"
                         placeholder={t.auth.register.emailPlaceholder}
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="h-9 pl-8 text-sm"
+                        className="text-sm"
                       />
-                    </div>
+                      <InputGroupAddon align="inline-start">
+                        <MailIcon size={14} className="text-muted-foreground/50" />
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
 
                   {/* Identifiant + Nom affiché */}
@@ -218,33 +223,35 @@ function RegisterContent() {
                       <label htmlFor="username" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                         {t.auth.register.username}
                       </label>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                          <UserIcon size={14} />
-                        </span>
-                        <Input
+                      <InputGroup className="h-9">
+                        <InputGroupInput
                           id="username"
                           type="text"
                           placeholder={t.auth.register.usernamePlaceholder}
                           required
                           value={username}
                           onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                          className="h-9 pl-8 text-sm"
+                          className="text-sm"
                         />
-                      </div>
+                        <InputGroupAddon align="inline-start">
+                          <UserIcon size={14} className="text-muted-foreground/50" />
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="displayName" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                         {t.auth.register.displayName}
                       </label>
-                      <Input
-                        id="displayName"
-                        type="text"
-                        placeholder={t.auth.register.displayNamePlaceholder}
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        className="h-9 text-sm"
-                      />
+                      <InputGroup className="h-9">
+                        <InputGroupInput
+                          id="displayName"
+                          type="text"
+                          placeholder={t.auth.register.displayNamePlaceholder}
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          className="text-sm"
+                        />
+                      </InputGroup>
                     </div>
                   </div>
 
@@ -253,28 +260,29 @@ function RegisterContent() {
                     <label htmlFor="password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                       {t.auth.register.password}
                     </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                        <LockIcon size={14} />
-                      </span>
-                      <Input
+                    <InputGroup className="h-9">
+                      <InputGroupInput
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder={t.auth.register.passwordDesc}
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="h-9 pl-8 pr-9 text-sm"
+                        className="text-sm"
                       />
-                      <button
-                        type="button"
-                        className="ui-smooth absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? t.auth.register.hide : t.auth.register.show}
-                      >
-                        {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
-                      </button>
-                    </div>
+                      <InputGroupAddon align="inline-start">
+                        <LockIcon size={14} className="text-muted-foreground/50" />
+                      </InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? t.auth.register.hide : t.auth.register.show}
+                          size="icon-xs"
+                        >
+                          {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
+                        </InputGroupButton>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
 
                   {/* Confirmation */}
@@ -282,20 +290,20 @@ function RegisterContent() {
                     <label htmlFor="confirmPassword" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                       {t.auth.register.confirmPassword}
                     </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                        <LockIcon size={14} />
-                      </span>
-                      <Input
+                    <InputGroup className="h-9">
+                      <InputGroupInput
                         id="confirmPassword"
                         type={showPassword ? 'text' : 'password'}
                         placeholder={t.auth.register.confirmPlaceholder}
                         required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="h-9 pl-8 text-sm"
+                        className="text-sm"
                       />
-                    </div>
+                      <InputGroupAddon align="inline-start">
+                        <LockIcon size={14} className="text-muted-foreground/50" />
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
 
                   {/* CGU */}

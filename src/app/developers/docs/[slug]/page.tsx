@@ -25,6 +25,7 @@ import {
   WifiIcon,
   AlertTriangleIcon,
   UserPlusIcon,
+  LinkIcon,
 } from '@/components/icons';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -3262,6 +3263,335 @@ function EventTable({
 }
 
 /* ═══════════════════════════════════════════════════════════ */
+/*  OAuth2 Sections                                          */
+/* ═══════════════════════════════════════════════════════════ */
+
+function OAuth2IntroSection() {
+  return (
+    <div className="space-y-8">
+      <DocHeading
+        icon={LockIcon}
+        badge="OAuth2"
+        badgeColor="amber"
+        title="Introduction OAuth2"
+        subtitle="Intégrez AlfyChat dans vos applications tierces via le protocole OAuth2 Authorization Code Flow."
+      />
+
+      <DocSection title="Vue d'ensemble">
+        <p>
+          AlfyChat implémente le protocole <Strong>OAuth2 Authorization Code Flow</Strong> (RFC 6749).
+          Vos applications peuvent demander à un utilisateur AlfyChat l'autorisation d'accéder à son compte
+          — sans jamais connaître son mot de passe.
+        </p>
+        <p className="mt-3">
+          Chaque bot dispose d'un <Strong>Client ID</Strong> (son identifiant) et d'un <Strong>Client Secret</Strong>
+          (secret connu seulement de votre serveur). Le flow produit un <Strong>access_token</Strong> de 30 jours
+          que vous pouvez utiliser pour appeler l'API au nom de l'utilisateur.
+        </p>
+      </DocSection>
+
+      <DocSection title="Concepts clés">
+        <div className="space-y-3">
+          {[
+            { term: 'Client ID', def: "L'identifiant public de votre bot (son id). À inclure dans les redirections OAuth2." },
+            { term: 'Client Secret', def: 'Secret généré à la création, visible une seule fois. Ne doit jamais être exposé côté client.' },
+            { term: 'Redirect URI', def: "URL de callback enregistrée sur votre bot. L'utilisateur y est redirigé après autorisation." },
+            { term: 'Authorization Code', def: 'Code temporaire (10 min) généré après consentement. À échanger contre un access_token.' },
+            { term: 'Access Token', def: 'Jeton valide 30 jours, à inclure dans les requêtes API.' },
+            { term: 'Scopes', def: 'Permissions demandées : bot (ajouter à un serveur), identify (profil), guilds (liste des serveurs).' },
+          ].map(({ term, def }) => (
+            <div key={term} className="rounded-xl border border-border/40 bg-card/40 px-4 py-3">
+              <span className="font-mono text-[12px] font-bold text-accent">{term}</span>
+              <p className="mt-1 text-xs text-muted-foreground">{def}</p>
+            </div>
+          ))}
+        </div>
+      </DocSection>
+
+      <DocSection title="Enregistrement d'une Redirect URI">
+        <p className="mb-3">
+          Avant d'initier un flow OAuth2, ajoutez votre redirect URI dans la section <Strong>OAuth2</Strong> de la page de gestion de votre bot.
+          Les URIs doivent commencer par <code className="rounded bg-surface px-1 font-mono text-[11px]">https://</code> (ou <code className="rounded bg-surface px-1 font-mono text-[11px]">http://localhost</code> pour le développement). Maximum 5 URIs.
+        </p>
+        <CodeBlock lang="bash" code={`# Exemples d'URIs valides
+https://monapp.fr/callback
+https://api.monapp.fr/oauth/alfychat
+http://localhost:8080/callback`} />
+      </DocSection>
+
+      <DocSection title="Endpoints OAuth2">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border/60">
+                <th className="pb-2 text-left font-semibold text-foreground">Endpoint</th>
+                <th className="pb-2 text-left font-semibold text-foreground">Description</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30">
+              {[
+                { endpoint: 'GET /oauth2/authorize', desc: 'Page de consentement — redirigez l\'utilisateur ici' },
+                { endpoint: 'POST /api/oauth2/authorize', desc: 'Backend : génère le code d\'autorisation' },
+                { endpoint: 'POST /api/oauth2/token', desc: 'Backend : échange le code contre un access_token' },
+                { endpoint: 'GET /api/bots/:id/oauth2', desc: 'Config OAuth2 de votre bot (owner uniquement)' },
+                { endpoint: 'POST /api/bots/:id/oauth2/regenerate-secret', desc: 'Régénère le client_secret' },
+                { endpoint: 'PATCH /api/bots/:id/oauth2/redirect-uris', desc: 'Met à jour les redirect URIs' },
+              ].map(({ endpoint, desc }) => (
+                <tr key={endpoint}>
+                  <td className="py-2 pr-4 font-mono text-accent">{endpoint}</td>
+                  <td className="py-2 text-muted-foreground">{desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DocSection>
+    </div>
+  );
+}
+
+function OAuth2FlowsSection() {
+  return (
+    <div className="space-y-8">
+      <DocHeading
+        icon={LinkIcon}
+        badge="OAuth2"
+        badgeColor="amber"
+        title="Flows d'autorisation"
+        subtitle="Authorization Code Flow — le seul flow supporté par AlfyChat."
+      />
+
+      <DocSection title="Étape 1 — Rediriger l'utilisateur">
+        <p className="mb-3">
+          Construisez l'URL de la page de consentement avec les paramètres suivants :
+        </p>
+        <div className="mb-3 overflow-x-auto rounded-xl border border-border/40 bg-card/40 p-3">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border/40">
+                <th className="pb-2 text-left font-semibold">Paramètre</th>
+                <th className="pb-2 text-left font-semibold">Requis</th>
+                <th className="pb-2 text-left font-semibold">Description</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/20 text-muted-foreground">
+              {[
+                { param: 'client_id', req: 'Oui', desc: "L'id de votre bot" },
+                { param: 'redirect_uri', req: 'Oui', desc: 'URI de callback (doit être enregistrée)' },
+                { param: 'scope', req: 'Oui', desc: 'Scopes séparés par des espaces (ex: bot identify)' },
+                { param: 'permissions', req: 'Non', desc: 'Bitmask des permissions (si scope bot)' },
+                { param: 'state', req: 'Non', desc: 'Valeur aléatoire pour protection CSRF' },
+              ].map(({ param, req, desc }) => (
+                <tr key={param}>
+                  <td className="py-1.5 pr-3 font-mono text-accent">{param}</td>
+                  <td className="py-1.5 pr-3">{req}</td>
+                  <td className="py-1.5">{desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <CodeBlock lang="javascript" code={`const params = new URLSearchParams({
+  client_id: 'VOTRE_BOT_ID',
+  redirect_uri: 'https://monapp.fr/callback',
+  scope: 'bot identify',
+  permissions: '3',            // READ_MESSAGES | SEND_MESSAGES
+  state: crypto.randomUUID(),  // protection CSRF
+});
+
+const authUrl = \`https://alfychat.app/oauth2/authorize?\${params}\`;
+window.location.href = authUrl;`} />
+      </DocSection>
+
+      <DocSection title="Étape 2 — L'utilisateur autorise">
+        <p>
+          AlfyChat affiche une page de consentement listant les permissions demandées.
+          Si l'utilisateur accepte, il est redirigé vers votre <code className="rounded bg-surface px-1 font-mono text-[11px]">redirect_uri</code> avec un
+          paramètre <code className="rounded bg-surface px-1 font-mono text-[11px]">code</code> valide 10 minutes.
+        </p>
+        <CodeBlock lang="bash" code={`# Callback reçu
+https://monapp.fr/callback?code=abc123&state=votre-state`} />
+        <p className="mt-3 text-xs text-muted-foreground">
+          En cas de refus, le callback contient <code className="rounded bg-surface px-1 font-mono text-[11px]">?error=access_denied</code> à la place du code.
+        </p>
+      </DocSection>
+
+      <DocSection title="Étape 3 — Échanger le code">
+        <p className="mb-3">
+          Depuis votre <Strong>serveur</Strong> (jamais côté client), échangez le code contre un access_token :
+        </p>
+        <CodeBlock lang="bash" code={`POST https://gateway.alfychat.app/api/oauth2/token
+Content-Type: application/json
+
+{
+  "client_id": "VOTRE_BOT_ID",
+  "client_secret": "VOTRE_CLIENT_SECRET",
+  "code": "abc123",
+  "redirect_uri": "https://monapp.fr/callback"
+}`} />
+        <DocSection title="Réponse">
+          <CodeBlock lang="json" code={`{
+  "success": true,
+  "data": {
+    "access_token": "tok_xxxxxxxxxxxxxxxx",
+    "token_type": "Bot",
+    "expires_in": 2592000,
+    "scope": "bot identify"
+  }
+}`} />
+        </DocSection>
+      </DocSection>
+
+      <DocSection title="Étape 4 — Appeler l'API">
+        <p className="mb-3">
+          Utilisez l'access_token pour appeler l'API au nom de l'utilisateur :
+        </p>
+        <CodeBlock lang="bash" code={`GET https://gateway.alfychat.app/api/users/me
+Authorization: Bot tok_xxxxxxxxxxxxxxxx`} />
+        <CodeBlock lang="javascript" code={`const res = await fetch('https://gateway.alfychat.app/api/users/me', {
+  headers: { Authorization: \`Bot \${accessToken}\` },
+});
+const { data } = await res.json();
+console.log(data.user.username);`} />
+      </DocSection>
+
+      <DocSection title="Gestion des erreurs">
+        <div className="space-y-2">
+          {[
+            { code: 'access_denied', desc: "L'utilisateur a refusé l'autorisation." },
+            { code: 'invalid_client', desc: 'client_id ou client_secret incorrect.' },
+            { code: 'invalid_grant', desc: 'Code expiré (>10 min), déjà utilisé, ou redirect_uri incorrecte.' },
+            { code: 'invalid_redirect_uri', desc: "La redirect_uri n'est pas enregistrée sur votre bot." },
+          ].map(({ code, desc }) => (
+            <div key={code} className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5">
+              <code className="font-mono text-[11px] font-bold text-destructive shrink-0">{code}</code>
+              <span className="text-xs text-muted-foreground">{desc}</span>
+            </div>
+          ))}
+        </div>
+      </DocSection>
+    </div>
+  );
+}
+
+function OAuth2ScopesSection() {
+  return (
+    <div className="space-y-8">
+      <DocHeading
+        icon={ShieldCheckIcon}
+        badge="OAuth2"
+        badgeColor="amber"
+        title="Scopes"
+        subtitle="Les scopes définissent les accès que votre application demande à l'utilisateur."
+      />
+
+      <DocSection title="Référence des scopes">
+        <div className="space-y-4">
+          {[
+            {
+              name: 'bot',
+              color: 'violet',
+              summary: 'Ajouter le bot à un serveur',
+              desc: "Permet à votre bot d'être ajouté à un serveur AlfyChat. L'utilisateur doit être propriétaire ou administrateur du serveur cible. Le bot sera ajouté avec les permissions spécifiées dans le paramètre permissions (bitmask).",
+              example: 'scope=bot&permissions=3',
+              endpoints: [],
+            },
+            {
+              name: 'identify',
+              color: 'blue',
+              summary: 'Lire le profil de l\'utilisateur',
+              desc: "Permet de récupérer l'identifiant, le nom d'utilisateur, le displayName et l'avatar de l'utilisateur connecté. Aucune donnée sensible (email, téléphone) n'est exposée.",
+              example: 'scope=identify',
+              endpoints: ['GET /api/users/me'],
+            },
+            {
+              name: 'guilds',
+              color: 'emerald',
+              summary: 'Lister les serveurs de l\'utilisateur',
+              desc: "Permet de récupérer la liste des serveurs AlfyChat dont l'utilisateur est membre. Inclut : id, name, icon, memberCount, et le rôle de l'utilisateur dans chaque serveur.",
+              example: 'scope=guilds',
+              endpoints: ['GET /api/servers/me'],
+            },
+          ].map(({ name, color, summary, desc, example, endpoints }) => (
+            <div key={name} className="rounded-2xl border border-border/40 bg-card/40 overflow-hidden">
+              <div className={`flex items-center gap-3 px-5 py-3 border-b border-border/40 bg-${color}-500/5`}>
+                <span className={`font-mono text-sm font-bold text-${color}-400`}>{name}</span>
+                <span className="text-xs text-muted-foreground">{summary}</span>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Exemple</span>
+                  <CodeBlock lang="bash" code={`scope=${example}`} />
+                </div>
+                {endpoints.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Endpoints débloqués</span>
+                    <div className="mt-1.5 space-y-1">
+                      {endpoints.map(ep => (
+                        <div key={ep} className="font-mono text-xs text-accent">{ep}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </DocSection>
+
+      <DocSection title="Combiner les scopes">
+        <p className="mb-3">
+          Séparez les scopes par des espaces dans l'URL (encodés en <code className="rounded bg-surface px-1 font-mono text-[11px]">+</code> ou <code className="rounded bg-surface px-1 font-mono text-[11px]">%20</code>) :
+        </p>
+        <CodeBlock lang="javascript" code={`// Ajouter le bot + lire le profil + lister les serveurs
+const scope = ['bot', 'identify', 'guilds'].join(' ');
+const params = new URLSearchParams({ client_id, redirect_uri, scope });`} />
+      </DocSection>
+
+      <DocSection title="Permissions bitmask (scope bot)">
+        <p className="mb-3">
+          Quand le scope <code className="rounded bg-surface px-1 font-mono text-[11px]">bot</code> est demandé, le paramètre
+          <code className="rounded bg-surface px-1 font-mono text-[11px] ml-1">permissions</code> précise les droits accordés au bot sur le serveur.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border/60">
+                <th className="pb-2 text-left font-semibold">Permission</th>
+                <th className="pb-2 text-left font-semibold">Valeur</th>
+                <th className="pb-2 text-left font-semibold">Description</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30 text-muted-foreground">
+              {[
+                ['READ_MESSAGES',    '0x1',   'Lire le contenu des salons'],
+                ['SEND_MESSAGES',    '0x2',   'Poster dans les salons textuels'],
+                ['ADD_REACTIONS',    '0x4',   'Ajouter des réactions'],
+                ['MANAGE_MESSAGES',  '0x8',   'Supprimer et épingler des messages'],
+                ['KICK_MEMBERS',     '0x10',  'Exclure des membres'],
+                ['BAN_MEMBERS',      '0x20',  'Bannir des membres'],
+                ['ADMINISTRATOR',    '0x40',  'Accès complet (inclut toutes les permissions)'],
+                ['MANAGE_CHANNELS',  '0x80',  'Créer, modifier et supprimer des salons'],
+                ['MANAGE_ROLES',     '0x100', 'Créer, modifier et supprimer des rôles'],
+              ].map(([perm, val, desc]) => (
+                <tr key={perm}>
+                  <td className="py-1.5 pr-3 font-mono text-accent">{perm}</td>
+                  <td className="py-1.5 pr-3 font-mono">{val}</td>
+                  <td className="py-1.5">{desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <CodeBlock lang="javascript" code={`// READ_MESSAGES | SEND_MESSAGES | ADD_REACTIONS = 0x7
+const permissions = 0x1 | 0x2 | 0x4; // → 7`} />
+      </DocSection>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════ */
 /*  Map des sections                                          */
 /* ═══════════════════════════════════════════════════════════ */
 
@@ -3273,7 +3603,11 @@ const SECTIONS = {
   'bots-messages':      { title: 'Envoyer des messages', icon: MessageCircleIcon,Component: BotMessagesSection    },
   'bots-commands':      { title: 'Commandes',            icon: TerminalIcon,     Component: CommandsSection       },
   'bots-permissions':   { title: 'Permissions',          icon: ShieldCheckIcon,  Component: BotPermissionsSection },
-  'bots-certification': { title: 'Certification',        icon: TagIcon,          Component: CertificationSection  },
+  'bots-certification':    { title: 'Certification',          icon: TagIcon,          Component: CertificationSection  },
+  /* ── OAuth2 ────────────────────────────────────────────── */
+  'oauth2-introduction': { title: 'Introduction OAuth2',    icon: LockIcon,         Component: OAuth2IntroSection    },
+  'oauth2-flows':        { title: "Flows d'autorisation",   icon: LinkIcon,         Component: OAuth2FlowsSection    },
+  'oauth2-scopes':       { title: 'Scopes',                 icon: ShieldCheckIcon,  Component: OAuth2ScopesSection   },
   /* ── Gateway API ───────────────────────────────────────── */
   'gateway-overview':   { title: "Vue d'ensemble",       icon: GlobeIcon,        Component: GatewayOverviewSection},
   'gateway-auth':       { title: 'Authentification',     icon: LockIcon,         Component: GatewayAuthSection    },

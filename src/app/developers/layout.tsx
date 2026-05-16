@@ -6,7 +6,7 @@ import {
   BotIcon, BookOpenIcon, KeyIcon, ZapIcon, CodeIcon, ServerIcon,
   TerminalIcon, ShieldCheckIcon, TagIcon, ArrowLeftIcon,
   GlobeIcon, WifiIcon, AlertTriangleIcon, LockIcon,
-  MessageCircleIcon, UserPlusIcon, PlusIcon,
+  MessageCircleIcon, UserPlusIcon, PlusIcon, HomeIcon, LinkIcon,
 } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,14 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    label: 'OAUTH2',
+    items: [
+      { href: '/developers/docs/oauth2-introduction', icon: LockIcon,         label: 'Introduction' },
+      { href: '/developers/docs/oauth2-flows',        icon: LinkIcon,         label: 'Flows d\'autorisation' },
+      { href: '/developers/docs/oauth2-scopes',       icon: ShieldCheckIcon,  label: 'Scopes' },
+    ],
+  },
+  {
     label: 'GATEWAY API',
     items: [
       { href: '/developers/docs/gateway-overview',    icon: GlobeIcon,        label: 'Vue d\'ensemble' },
@@ -52,7 +60,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'DÉVELOPPEMENT',
     items: [
-      { href: '/developers/bots', icon: BotIcon, label: 'Mes Bots' },
+      { href: '/developers',          icon: HomeIcon,     label: 'Accueil' },
+      { href: '/developers/bots',     icon: BotIcon,      label: 'Mes Bots' },
+      { href: '/developers/bots/new', icon: PlusIcon,     label: 'Nouveau Bot' },
     ],
   },
 ];

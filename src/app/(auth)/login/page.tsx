@@ -13,7 +13,12 @@ import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import {
   InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot,
 } from '@/components/ui/input-otp';
@@ -314,20 +319,20 @@ export default function LoginPage() {
                       <label htmlFor="email" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                         {t.auth.login.email}
                       </label>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                          <MailIcon size={14} />
-                        </span>
-                        <Input
+                      <InputGroup className="h-9">
+                        <InputGroupInput
                           id="email"
                           type="email"
                           placeholder={t.auth.login.emailPlaceholder}
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="h-9 pl-8 text-sm"
+                          className="text-sm"
                         />
-                      </div>
+                        <InputGroupAddon align="inline-start">
+                          <MailIcon size={14} className="text-muted-foreground/50" />
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
 
                     {/* Mot de passe */}
@@ -343,28 +348,29 @@ export default function LoginPage() {
                           {t.auth.login.forgotPassword}
                         </Link>
                       </div>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                          <LockIcon size={14} />
-                        </span>
-                        <Input
+                      <InputGroup className="h-9">
+                        <InputGroupInput
                           id="password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder={t.auth.login.passwordPlaceholder}
                           required
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="h-9 pl-8 pr-9 text-sm"
+                          className="text-sm"
                         />
-                        <button
-                          type="button"
-                          className="ui-smooth absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"
-                          onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? t.auth.login.hidePassword : t.auth.login.showPassword}
-                        >
-                          {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
-                        </button>
-                      </div>
+                        <InputGroupAddon align="inline-start">
+                          <LockIcon size={14} className="text-muted-foreground/50" />
+                        </InputGroupAddon>
+                        <InputGroupAddon align="inline-end">
+                          <InputGroupButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? t.auth.login.hidePassword : t.auth.login.showPassword}
+                            size="icon-xs"
+                          >
+                            {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
+                          </InputGroupButton>
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
 
                     {/* Turnstile */}

@@ -881,6 +881,40 @@ class ApiService {
     });
   }
 
+  // Bot OAuth2
+  async getBotOAuth2Config(botId: string) {
+    return this.request(`/api/bots/${botId}/oauth2`);
+  }
+
+  async regenerateBotClientSecret(botId: string) {
+    return this.request(`/api/bots/${botId}/oauth2/regenerate-secret`, { method: 'POST' });
+  }
+
+  async updateBotRedirectUris(botId: string, redirectUris: string[]) {
+    return this.request(`/api/bots/${botId}/oauth2/redirect-uris`, {
+      method: 'PATCH',
+      body: JSON.stringify({ redirectUris }),
+    });
+  }
+
+  async getOAuth2Application(clientId: string) {
+    return this.request(`/api/oauth2/applications/${clientId}`);
+  }
+
+  async oauth2Authorize(data: {
+    clientId: string;
+    serverId?: string;
+    redirectUri: string;
+    scopes: string[];
+    permissions: number;
+    state?: string;
+  }) {
+    return this.request('/api/oauth2/authorize', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // ============ ADMIN ============
   
   // Stats

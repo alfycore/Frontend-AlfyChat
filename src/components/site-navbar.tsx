@@ -72,8 +72,8 @@ export function SiteNavbar({ links = NAV_LINKS }: { links?: { label: string; hre
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-heading text-sm shrink-0">
-          <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-5" />
+        <Link href="/" className="flex items-center gap-2 font-heading text-s shrink-0">
+          <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-8" />
           ALFYCHAT
         </Link>
 

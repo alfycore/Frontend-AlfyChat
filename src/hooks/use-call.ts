@@ -196,6 +196,7 @@ export function useCall(options: UseCallOptions = {}) {
   const remoteDescSetMapRef = useRef<Map<string, boolean>>(new Map());
   const makingOfferMapRef = useRef<Map<string, boolean>>(new Map());
   const settingRemoteMapRef = useRef<Map<string, boolean>>(new Map());
+  const iceRestartCountMapRef = useRef<Map<string, number>>(new Map());
   const cleaningUpRef = useRef(false);
   const callTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const acceptedCallIdRef = useRef<string | null>(null);
@@ -258,6 +259,7 @@ export function useCall(options: UseCallOptions = {}) {
       remoteDescSetMapRef.current.clear();
       makingOfferMapRef.current.clear();
       settingRemoteMapRef.current.clear();
+      iceRestartCountMapRef.current.clear();
 
       setState((prev) => ({
         ...prev,
@@ -388,6 +390,7 @@ export function useCall(options: UseCallOptions = {}) {
     remoteDescSetMapRef.current.clear();
     makingOfferMapRef.current.clear();
     settingRemoteMapRef.current.clear();
+    iceRestartCountMapRef.current.clear();
     pendingSfuProducersRef.current = [];
 
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
@@ -480,15 +483,24 @@ export function useCall(options: UseCallOptions = {}) {
     pc.onconnectionstatechange = () => {
       console.log(`[CALL] PC[${peerId}] state:`, pc.connectionState);
       if (pc.connectionState === 'connected') {
+        iceRestartCountMapRef.current.set(peerId, 0);
         setState((prev) => ({ ...prev, status: 'connected' }));
       } else if (pc.connectionState === 'failed') {
-        console.warn(`[CALL] PC[${peerId}] failed — ICE restart`);
-        pc.restartIce();
+        const attempts = (iceRestartCountMapRef.current.get(peerId) ?? 0) + 1;
+        iceRestartCountMapRef.current.set(peerId, attempts);
+        if (attempts <= 3) {
+          console.warn(`[CALL] PC[${peerId}] failed — ICE restart #${attempts}`);
+          setTimeout(() => {
+            if (pcsRef.current.get(peerId) === pc) pc.restartIce();
+          }, attempts * 2000);
+        } else {
+          console.error(`[CALL] PC[${peerId}] max ICE restarts reached — giving up`);
+        }
       }
     };
 
     pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'failed') pc.restartIce();
+      // Géré par onconnectionstatechange pour éviter les doubles redémarrages
     };
 
     pc.onnegotiationneeded = async () => {
@@ -518,6 +530,7 @@ export function useCall(options: UseCallOptions = {}) {
     pcsRef.current.set(peerId, pc);
     remoteDescSetMapRef.current.set(peerId, false);
     iceQueuesRef.current.set(peerId, []);
+    iceRestartCountMapRef.current.set(peerId, 0);
 
     return pc;
   }, [cleanup]);
@@ -531,6 +544,11 @@ export function useCall(options: UseCallOptions = {}) {
     const handleIncoming = (data: unknown) => {
       const p = parsePayload(data);
       console.log('[CALL] Incoming call:', p);
+      // Ignorer les appels entrants dont on est soi-même l'initiateur (multi-onglets)
+      if (p.initiatorId && p.initiatorId === userIdRef.current) {
+        console.log('[CALL] Ignoring self-initiated call (same account, other tab)');
+        return;
+      }
       setState((prev) => {
         if (prev.status !== 'idle') {
           console.warn('[CALL] Already in a call, ignoring incoming');

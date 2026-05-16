@@ -7,7 +7,11 @@ import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/mo
 import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 
 function Spinner({ className }: { className?: string }) {
@@ -123,11 +127,8 @@ export default function ForgotPasswordPage() {
                       <label htmlFor="email" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                         {t.auth.forgotPassword.email}
                       </label>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                          <MailIcon size={14} />
-                        </span>
-                        <Input
+                      <InputGroup className="h-9">
+                        <InputGroupInput
                           id="email"
                           type="email"
                           placeholder={t.auth.forgotPassword.emailPlaceholder}
@@ -135,9 +136,12 @@ export default function ForgotPasswordPage() {
                           autoFocus
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="h-9 pl-8 text-sm"
+                          className="text-sm"
                         />
-                      </div>
+                        <InputGroupAddon align="inline-start">
+                          <MailIcon size={14} className="text-muted-foreground/50" />
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
 
                     <Button type="submit" size="lg" className="w-full" disabled={isLoading || !email}>

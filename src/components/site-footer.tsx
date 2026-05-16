@@ -14,46 +14,46 @@ const COLUMNS = [
     title: 'Produit',
     links: [
       { label: 'Fonctionnalités', href: '/#features' },
-      { label: 'Sécurité',        href: '/#security' },
-      { label: 'Télécharger',     href: '/#download' },
-      { label: 'Changelog',       href: '/changelogs' },
-      { label: 'Support',         href: '/support' },
+      { label: 'Sécurité', href: '/#security' },
+      { label: 'Télécharger', href: '/#download' },
+      { label: 'Changelog', href: '/changelogs' },
+      { label: 'Support', href: '/support' },
     ],
   },
   {
     title: 'Développeurs',
     links: [
       { label: 'Documentation', href: '/developers/docs' },
-      { label: 'Bots',          href: '/developers/bots' },
-      { label: 'Portail',       href: '/developers' },
+      { label: 'Bots', href: '/developers/bots' },
+      { label: 'Portail', href: '/developers' },
     ],
   },
   {
     title: 'Légal',
     links: [
-      { label: 'CGU',              href: '/legal/cgu' },
-      { label: 'Confidentialité',  href: '/legal/privacy' },
-      { label: 'Cookies',          href: '/legal/cookies' },
+      { label: 'CGU', href: '/legal/cgu' },
+      { label: 'Confidentialité', href: '/legal/privacy' },
+      { label: 'Cookies', href: '/legal/cookies' },
       { label: 'Mentions légales', href: '/legal/mentions' },
-      { label: 'Contact',          href: 'mailto:contact@alfycore.org' },
+      { label: 'Contact', href: 'mailto:contact@alfycore.org' },
     ],
   },
   {
     title: 'Association',
     links: [
-      { label: 'À propos',  href: '/about' },
-      { label: 'Emplois',   href: '/jobs' },
-      { label: 'Brand',     href: '/brand' },
-      { label: 'Newsroom',  href: '/newsroom' },
+      { label: 'À propos', href: '/about' },
+      { label: 'Emplois', href: '/jobs' },
+      { label: 'Brand', href: '/brand' },
+      { label: 'Newsroom', href: '/newsroom' },
     ],
   },
 ];
 
 const PILLARS = [
-  { icon: LockIcon,   label: 'Chiffrement E2E' },
-  { icon: CodeIcon,   label: 'Code ouvert'     },
-  { icon: ShieldIcon, label: 'Vie privée'       },
-  { icon: ZapIcon,    label: 'Ultra-rapide'     },
+  { icon: LockIcon, label: 'Chiffrement E2E' },
+  { icon: CodeIcon, label: 'Code ouvert' },
+  { icon: ShieldIcon, label: 'Vie privée' },
+  { icon: ZapIcon, label: 'Ultra-rapide' },
 ];
 
 export function SiteFooter() {
@@ -65,8 +65,8 @@ export function SiteFooter() {
 
         {/* Brand + pillars */}
         <div className="mb-12 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="flex items-center gap-2 font-heading text-sm">
-            <img src="/logo/Alfychat.svg" alt="" className="size-5" />
+          <Link href="/" className="flex items-center gap-2 font-heading text-s shrink-0">
+            <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-8" />
             ALFYCHAT
           </Link>
           <div className="flex flex-wrap gap-2">
@@ -125,9 +125,9 @@ export function SiteFooter() {
               Tous les services opérationnels
             </Link>
             {[
-              { label: 'CGU',             href: '/legal/cgu' },
+              { label: 'CGU', href: '/legal/cgu' },
               { label: 'Confidentialité', href: '/legal/privacy' },
-              { label: 'alfycore.pro',    href: 'https://alfycore.pro' },
+              { label: 'alfycore.pro', href: 'https://alfycore.pro' },
             ].map((l) => (
               <Link key={l.label} href={l.href} className="text-[11px] transition-colors hover:text-foreground">
                 {l.label}

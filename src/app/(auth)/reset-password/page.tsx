@@ -8,7 +8,12 @@ import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/mo
 import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 
 function Spinner({ className }: { className?: string }) {
@@ -159,11 +164,8 @@ function ResetPasswordForm() {
                       <label htmlFor="password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                         {t.auth.resetPassword.password}
                       </label>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                          <LockIcon size={14} />
-                        </span>
-                        <Input
+                      <InputGroup className="h-9">
+                        <InputGroupInput
                           id="password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder={t.auth.resetPassword.passwordPlaceholder}
@@ -171,17 +173,21 @@ function ResetPasswordForm() {
                           autoFocus
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="h-9 pl-8 pr-9 text-sm"
+                          className="text-sm"
                         />
-                        <button
-                          type="button"
-                          className="ui-smooth absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"
-                          onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? t.auth.resetPassword.hidePassword : t.auth.resetPassword.showPassword}
-                        >
-                          {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
-                        </button>
-                      </div>
+                        <InputGroupAddon align="inline-start">
+                          <LockIcon size={14} className="text-muted-foreground/50" />
+                        </InputGroupAddon>
+                        <InputGroupAddon align="inline-end">
+                          <InputGroupButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? t.auth.resetPassword.hidePassword : t.auth.resetPassword.showPassword}
+                            size="icon-xs"
+                          >
+                            {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
+                          </InputGroupButton>
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
 
                     {/* Confirmation */}
@@ -189,20 +195,20 @@ function ResetPasswordForm() {
                       <label htmlFor="confirm-password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                         {t.auth.resetPassword.confirmPassword}
                       </label>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                          <LockIcon size={14} />
-                        </span>
-                        <Input
+                      <InputGroup className="h-9">
+                        <InputGroupInput
                           id="confirm-password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder={t.auth.resetPassword.confirmPlaceholder}
                           required
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="h-9 pl-8 text-sm"
+                          className="text-sm"
                         />
-                      </div>
+                        <InputGroupAddon align="inline-start">
+                          <LockIcon size={14} className="text-muted-foreground/50" />
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
 
                     <Button

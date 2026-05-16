@@ -253,6 +253,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isTypingRef = useRef(false);
   const hasInitialScrollRef = useRef(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const [kbHeight, setKbHeight] = useState(0);
+  const [bottomH, setBottomH] = useState(80);
 
   /** Resolve the actual scrollable viewport inside Radix ScrollArea */
   const getViewport = useCallback(() => {
@@ -440,6 +443,39 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     obs.observe(messagesContainerRef.current);
     return () => obs.disconnect();
   }, [scrollToBottom]);
+
+  // Hauteur du clavier virtuel via visualViewport — iOS/Android
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const update = () => setKbHeight(Math.max(0, window.innerHeight - vv.height));
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+
+  // Mesure la hauteur de la section basse (barre saisie + notices)
+  useEffect(() => {
+    if (!bottomRef.current) return;
+    const obs = new ResizeObserver(() => {
+      if (bottomRef.current) setBottomH(bottomRef.current.offsetHeight);
+    });
+    obs.observe(bottomRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  // Sur mobile : ajoute un padding-bottom dans le ScrollArea pour que le dernier
+  // message reste visible au-dessus de la barre de saisie (qui est absolue)
+  useEffect(() => {
+    if (!isMobile) return;
+    const vp = getViewport();
+    if (!vp) return;
+    vp.style.paddingBottom = `${bottomH}px`;
+    return () => { vp.style.paddingBottom = ''; };
+  }, [isMobile, bottomH, getViewport]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -788,8 +824,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   /* ══════════════════════════════════════════════════════════════════════════ */
 
   return (
-    <div data-tour="chat-area" className="flex h-full flex-1 overflow-hidden">
-      <div className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.contentBg}`}>
+    <div data-tour="chat-area" className="flex h-full min-h-0 flex-1 overflow-hidden">
+      <div className={cn('flex min-w-0 flex-1 flex-col overflow-x-hidden', isMobile ? 'relative' : 'overflow-y-hidden', ui.contentBg)}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className={`flex ${d.headerH} shrink-0 items-center justify-between px-3 md:px-4 ${ui.header}`}>
         <div className="flex min-w-0 items-center gap-2.5">
@@ -1017,6 +1053,17 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         )}
       </ScrollArea>
 
+      {/* ── Section basse — absolue sur mobile pour coller au-dessus du clavier ── */}
+      <div
+        ref={bottomRef}
+        className={cn(
+          isMobile
+            ? 'absolute inset-x-0 bottom-0 z-10'
+            : 'shrink-0',
+          ui.contentBg,
+        )}
+        style={isMobile && kbHeight > 0 ? { transform: `translateY(${-kbHeight}px)` } : undefined}
+      >
       {/* ── Typing indicator ───────────────────────────────────────────────── */}
       {typingUsers.length > 0 && (
         <div className="flex shrink-0 items-center gap-2 px-4 py-1.5">
@@ -1070,7 +1117,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
       )}
 
       {/* ── Input area ─────────────────────────────────────────────────────── */}
-      <form onSubmit={handleSendMessage} className="relative shrink-0 px-2 pb-2 pt-1">
+      <form onSubmit={handleSendMessage} className="relative shrink-0 px-2 pt-1" style={{ paddingBottom: 'max(0.5rem, calc(env(safe-area-inset-bottom) + var(--vk-offset, 0px)))' }}>
         <input
           ref={fileInputRef}
           type="file"
@@ -1206,7 +1253,8 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           </div>
         </div>
       </form>
-      </div>
+      </div>{/* end bottom section */}
+      </div>{/* end inner column */}
 
       {/* ── Search panel (right side) ──────────────────────────────────────── */}
       {searchOpen && (

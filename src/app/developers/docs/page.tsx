@@ -5,10 +5,11 @@ import {
   BotIcon, KeyIcon, ZapIcon, CodeIcon, ServerIcon, TerminalIcon,
   ShieldCheckIcon, TagIcon, GlobeIcon, WifiIcon, AlertTriangleIcon,
   LockIcon, MessageCircleIcon, PlusIcon, ArrowRightIcon, BookOpenIcon,
-  UserPlusIcon,
+  UserPlusIcon, LinkIcon,
 } from '@/components/icons';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
 
 /* ─────────────────────────────────────────────────────────── */
 
@@ -63,6 +64,28 @@ const BOT_DOCS: DocCard[] = [
     title: 'Certification',
     description: 'Obtenir le badge officiel ✅ : prérequis (100+ serveurs, conformité RGPD), processus de review et avantages techniques.',
     badge: 'Officiel',
+  },
+];
+
+const OAUTH2_DOCS: DocCard[] = [
+  {
+    href: '/developers/docs/oauth2-introduction',
+    icon: LockIcon,
+    title: 'Introduction OAuth2',
+    description: 'Vue d\'ensemble du système OAuth2 AlfyChat — authorization code flow, client_id/client_secret, scopes et redirect URIs.',
+    badge: 'Nouveau',
+  },
+  {
+    href: '/developers/docs/oauth2-flows',
+    icon: LinkIcon,
+    title: "Flows d'autorisation",
+    description: 'Authorization code flow pas-à-pas — redirect vers /oauth2/authorize, échange de code contre access_token et appels authentifiés.',
+  },
+  {
+    href: '/developers/docs/oauth2-scopes',
+    icon: ShieldCheckIcon,
+    title: 'Scopes',
+    description: 'Référence complète des scopes OAuth2 : bot (ajouter à un serveur), identify (profil utilisateur), guilds (liste des serveurs).',
   },
 ];
 
@@ -245,9 +268,33 @@ export default function DocsIndexPage() {
             <p className="text-xs text-muted-foreground">Créer et gérer des bots automatisés sur la plateforme</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {BOT_DOCS.map((card) => <DocCardItem key={card.href} card={card} />)}
+        <MotionStagger className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {BOT_DOCS.map((card) => (
+            <MotionStaggerItem key={card.href}>
+              <DocCardItem card={card} />
+            </MotionStaggerItem>
+          ))}
+        </MotionStagger>
+      </section>
+
+      {/* OAuth2 section */}
+      <section className="mb-12">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/15 ring-1 ring-amber-500/30">
+            <LockIcon size={15} className="text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold">OAuth2</h2>
+            <p className="text-xs text-muted-foreground">Intégrer AlfyChat dans vos applications tierces via le protocole OAuth2</p>
+          </div>
         </div>
+        <MotionStagger className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {OAUTH2_DOCS.map((card) => (
+            <MotionStaggerItem key={card.href}>
+              <DocCardItem card={card} />
+            </MotionStaggerItem>
+          ))}
+        </MotionStagger>
       </section>
 
       {/* Gateway section */}
@@ -261,9 +308,13 @@ export default function DocsIndexPage() {
             <p className="text-xs text-muted-foreground">API REST + WebSocket Socket.IO — point d&apos;entrée unique vers tous les microservices</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {GATEWAY_MAIN.map((card) => <DocCardItem key={card.href} card={card} />)}
-        </div>
+        <MotionStagger className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {GATEWAY_MAIN.map((card) => (
+            <MotionStaggerItem key={card.href}>
+              <DocCardItem card={card} />
+            </MotionStaggerItem>
+          ))}
+        </MotionStagger>
       </section>
 
       {/* REST sub-sections */}
@@ -277,9 +328,13 @@ export default function DocsIndexPage() {
             <p className="text-xs text-muted-foreground">Documentation détaillée endpoint par endpoint avec exemples de code</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {REST_SUBSECTIONS.map((card) => <DocCardItem key={card.href} card={card} />)}
-        </div>
+        <MotionStagger className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {REST_SUBSECTIONS.map((card) => (
+            <MotionStaggerItem key={card.href}>
+              <DocCardItem card={card} />
+            </MotionStaggerItem>
+          ))}
+        </MotionStagger>
       </section>
 
       {/* Compliance note */}

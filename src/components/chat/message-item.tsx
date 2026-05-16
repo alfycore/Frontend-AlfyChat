@@ -430,7 +430,7 @@ export const MessageItem = memo(function MessageItem({
               )
           )}
 
-          <div className={cn('flex max-w-[72%] flex-col gap-0.5', isMe ? 'items-end' : 'items-start')}>
+          <div className={cn('flex min-w-0 max-w-[85%] flex-col gap-0.5 sm:max-w-[72%]', isMe ? 'items-end' : 'items-start')}>
 
             {/* Nom expéditeur (autres, premier du groupe) */}
             {!isMe && !isGrouped && (
@@ -472,7 +472,7 @@ export const MessageItem = memo(function MessageItem({
               </div>
             ) : (
               <div className={cn(
-                'rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm',
+                'rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm [overflow-wrap:anywhere]',
                 isMe
                   ? 'rounded-br-sm bg-primary text-primary-foreground'
                   : 'rounded-bl-sm bg-[var(--surface-secondary)]/70 text-foreground',
@@ -682,7 +682,7 @@ export const MessageItem = memo(function MessageItem({
             ) : (() => {
               const { textContent, images, files } = parseAttachments(message.content ?? '');
               return (
-                <div className="mt-0.5 text-[13px] leading-relaxed text-foreground md:text-sm">
+                <div className="mt-0.5 text-[13px] leading-relaxed text-foreground md:text-sm [overflow-wrap:anywhere]">
                   {textContent && (
                     highlight
                       ? <HighlightText text={textContent} query={highlight} />
