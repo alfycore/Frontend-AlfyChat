@@ -1453,6 +1453,13 @@ class ApiService {
     });
   }
 
+  async subscribeExpoPush(token: string) {
+    return this.request('/api/users/push/expo-subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ token, userAgent: navigator.userAgent }),
+    });
+  }
+
   // ============ MÉTHODES GÉNÉRIQUES ============
   async get<T = unknown>(endpoint: string) {
     return this.request<T>(endpoint, { method: 'GET' });

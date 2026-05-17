@@ -26,6 +26,7 @@ import { VoiceControlBar } from '@/components/chat/voice-control-bar';
 import { IncomingCallDialog } from '@/components/chat/incoming-call-dialog';
 import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
 import { MobileNavDrawer } from '@/components/chat/mobile-nav-drawer';
+import { MobilePermissionPrompt } from '@/components/chat/mobile-permission-prompt';
 import { ServerSettingsDialog } from '@/components/chat/server-settings-dialog';
 import { SettingsDialog } from '@/components/chat/settings-dialog';
 import { cn } from '@/lib/utils';
@@ -436,6 +437,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
       {/* ── User settings dialog (mobile bottom nav) ── */}
       <SettingsDialog open={showSettings} onOpenChange={(open) => !open && closeSettings()} />
+
+      {/* ── Mobile permission prompt (notifications + micro) ── */}
+      {isMobile && <MobilePermissionPrompt />}
     </div>
   );
 }

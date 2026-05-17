@@ -503,6 +503,9 @@ export function ChannelList({
   const [customStatusMap, setCustomStatusMap] = useState<Map<string, string | null>>(new Map());
   const [emojiMap, setEmojiMap] = useState<Map<string, string | null>>(new Map());
 
+  const userRef = useRef(user);
+  useEffect(() => { userRef.current = user; }, [user]);
+
   const [serverName, setServerName] = useState('Serveur');
   const [serverBannerUrl, setServerBannerUrl] = useState<string | null>(null);
   const [serverBadges, setServerBadges] = useState<{ isCertified: boolean; isPartnered: boolean }>({
@@ -648,11 +651,18 @@ export function ChannelList({
       if (dmRecipientIds.length > 0) {
         socketService.requestBulkPresence(dmRecipientIds, (presence) => {
           if (!presence || presence.length === 0) return;
-          const finalPresence = new Map(initialPresence);
-          const finalCustomStatus = new Map(initialCustomStatus);
-          const finalEmoji = new Map<string, string | null>();
+          // Partir du store actuel (pas d'initialPresence) pour ne pas perdre les PRESENCE_UPDATE
+          // reçus pendant la requête. Ne pas écraser une clé si un événement temps-réel l'a déjà
+          // mise à jour (valeur store ≠ valeur initiale API).
+          const currentPresence = conversationsStore.getPresence();
+          const finalPresence = new Map(currentPresence);
+          const finalCustomStatus = new Map(conversationsStore.getCustomStatus());
+          const finalEmoji = new Map<string, string | null>(conversationsStore.getEmojiMap());
           presence.forEach((p) => {
-            finalPresence.set(p.userId, p.status);
+            // Appliquer le bulk seulement si aucun PRESENCE_UPDATE temps-réel n'a modifié ce user
+            if (currentPresence.get(p.userId) === initialPresence.get(p.userId)) {
+              finalPresence.set(p.userId, p.status);
+            }
             if (p.customStatus !== undefined) finalCustomStatus.set(p.userId, p.customStatus);
             if (p.emoji !== undefined) finalEmoji.set(p.userId, p.emoji);
           });
@@ -718,10 +728,11 @@ export function ChannelList({
         })
         .catch(() => {});
 
-      if (user) {
+      const currentUser = userRef.current;
+      if (currentUser) {
         const MANAGE_CHANNELS = 0x80;
         const ADMIN = 0x40;
-        const isOwner = s.ownerId === user.id || s.owner_id === user.id;
+        const isOwner = s.ownerId === currentUser.id || s.owner_id === currentUser.id;
         if (isOwner) {
           setCanManageChannels(true);
         } else {
@@ -729,7 +740,7 @@ export function ChannelList({
             const members = memberData?.members || [];
             socketService.requestRoles(serverId, (roleData: any) => {
               const roles = roleData?.roles || [];
-              const member = members.find((m: any) => m.userId === user.id || m.user_id === user.id);
+              const member = members.find((m: any) => m.userId === currentUser.id || m.user_id === currentUser.id);
               if (member) {
                 const roleIds: string[] = Array.isArray(member.roleIds || member.role_ids)
                   ? member.roleIds || member.role_ids
@@ -757,7 +768,7 @@ export function ChannelList({
         }
       }
     });
-  }, [serverId, user]);
+  }, [serverId]);
 
   useEffect(() => {
     if (serverId) {
