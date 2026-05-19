@@ -21,7 +21,8 @@ interface UsePresenceOptions {
  */
 export function usePresence({ chosenStatus, customStatus, emoji }: UsePresenceOptions): void {
   const lastActivityRef = useRef<number>(Date.now());
-  const isAutoIdleRef = useRef<boolean>(false);
+  // Treat an initially-idle status as auto-idle so first activity restores to online
+  const isAutoIdleRef = useRef<boolean>(chosenStatus === 'idle');
   const chosenStatusRef = useRef<SelectableStatus>(chosenStatus);
   const customStatusRef = useRef<string | null | undefined>(customStatus);
   const emojiRef = useRef<string | null | undefined>(emoji);
@@ -57,15 +58,11 @@ export function usePresence({ chosenStatus, customStatus, emoji }: UsePresenceOp
       // Informer les autres onglets qu'on est actif
       try { bc?.postMessage({ type: 'ACTIVITY', ts: now }); } catch { /* ignore */ }
 
-      // Si on était en auto-idle → restaurer le statut choisi
+      // Si on était en auto-idle → restaurer le statut online
       if (isAutoIdleRef.current) {
-        const cs = chosenStatusRef.current;
-        // Uniquement si le statut choisi était 'online'
-        if (cs === 'online') {
-          isAutoIdleRef.current = false;
-          socketService.updatePresence('online', customStatusRef.current ?? null, emojiRef.current ?? null);
-          socketService.sendHeartbeat(true);
-        }
+        isAutoIdleRef.current = false;
+        socketService.updatePresence('online', customStatusRef.current ?? null, emojiRef.current ?? null);
+        socketService.sendHeartbeat(true);
       }
     };
 
@@ -74,6 +71,12 @@ export function usePresence({ chosenStatus, customStatus, emoji }: UsePresenceOp
     for (const ev of ACTIVITY_EVENTS) {
       window.addEventListener(ev, handleActivity, { passive: true });
     }
+
+    // Retour sur l'onglet / focus fenêtre = activité
+    const handleVisibility = () => { if (document.visibilityState === 'visible') handleActivity(); };
+    const handleFocus = () => handleActivity();
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
 
     // Écouter les messages des autres onglets
     const handleBCMessage = (ev: MessageEvent) => {
@@ -103,6 +106,8 @@ export function usePresence({ chosenStatus, customStatus, emoji }: UsePresenceOp
       for (const ev of ACTIVITY_EVENTS) {
         window.removeEventListener(ev, handleActivity);
       }
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
       bc?.removeEventListener('message', handleBCMessage);
       try { bc?.close(); } catch { /* ignore */ }
       clearInterval(heartbeatInterval);

@@ -205,7 +205,7 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
     return () => clearTimeout(timer);
   }, [lastSeenAt]);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isAtBottomRef = useRef(true);
@@ -350,12 +350,19 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
     };
   }, [channelId, user?.id]);
 
-  /* Scroll tracking */
+  /* Scroll tracking — attached directly to the Radix viewport via useEffect */
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
     isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 80;
   }, []);
+
+  useEffect(() => {
+    const vp = scrollRef.current;
+    if (!vp) return;
+    vp.addEventListener('scroll', handleScroll, { passive: true });
+    return () => vp.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   /* Send */
   const handleSend = useCallback(() => {
@@ -579,7 +586,14 @@ export function ServerChatArea({ serverId, channelId, channelName, channelType }
       </div>
 
       {/* ── Messages ── */}
-      <ScrollArea className="min-h-0 flex-1" ref={scrollRef} onScroll={handleScroll}>
+      <ScrollArea
+        className="min-h-0 flex-1"
+        ref={(el: HTMLDivElement | null) => {
+          if (el) {
+            scrollRef.current = el.querySelector<HTMLDivElement>('[data-radix-scroll-area-viewport]') ?? null;
+          }
+        }}
+      >
         <div ref={messagesContainerRef}>
           {isLoading ? (
             <LoadingSkeleton />

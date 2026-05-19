@@ -309,18 +309,20 @@ export function GroupSettingsDialog({
                     <p className="mt-1 text-sm text-muted-foreground">{t.group.generalSettingsDesc}</p>
                   </div>
 
-                  {/* ── Avatar ── */}
+                  {/* ── Avatar (owner only) ── */}
                   <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
-                    <div className="relative cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                    <div className={`relative ${isOwner ? 'cursor-pointer' : 'cursor-default'}`} onClick={() => isOwner && avatarInputRef.current?.click()}>
                       <Avatar className="size-16 rounded-2xl ring-2 ring-border">
                         <AvatarImage src={avatarPreview || undefined} className="rounded-2xl" />
                         <AvatarFallback className="rounded-2xl bg-primary/15 text-2xl font-bold text-primary">
                           <UsersRoundIcon size={24} />
                         </AvatarFallback>
                       </Avatar>
-                      <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 opacity-0 transition-opacity hover:opacity-100">
-                        <CameraIcon size={18} className="text-white" />
-                      </div>
+                      {isOwner && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+                          <CameraIcon size={18} className="text-white" />
+                        </div>
+                      )}
                     </div>
                     <input
                       ref={avatarInputRef}
@@ -332,25 +334,27 @@ export function GroupSettingsDialog({
                     <div className="flex flex-col gap-1.5">
                       <p className="text-sm font-medium">{t.group.groupIcon}</p>
                       <p className="text-xs text-muted-foreground">{t.group.groupIconHint}</p>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => avatarInputRef.current?.click()}
-                          className="text-xs font-medium text-primary hover:underline"
-                        >
-                          {t.group.changeIcon}
-                        </button>
-                        {avatarPreview && (
+                      {isOwner && (
+                        <div className="flex gap-2">
                           <button
                             type="button"
-                            onClick={handleRemoveAvatar}
-                            disabled={isUploadingAvatar}
-                            className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
+                            onClick={() => avatarInputRef.current?.click()}
+                            className="text-xs font-medium text-primary hover:underline"
                           >
-                            {t.group.removeIcon}
+                            {t.group.changeIcon}
                           </button>
-                        )}
-                      </div>
+                          {avatarPreview && (
+                            <button
+                              type="button"
+                              onClick={handleRemoveAvatar}
+                              disabled={isUploadingAvatar}
+                              className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
+                            >
+                              {t.group.removeIcon}
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -361,13 +365,15 @@ export function GroupSettingsDialog({
                     <div className="flex gap-2">
                       <Input
                           value={groupName}
-                          onChange={(e) => setGroupName(e.target.value)}
+                          onChange={(e) => isOwner && setGroupName(e.target.value)}
                           placeholder={t.group.groupName}
                           className="flex-1"
+                          disabled={!isOwner}
+                          readOnly={!isOwner}
                         />
                       <Button
                         onClick={handleSaveName}
-                        disabled={isSaving || (groupName === group?.name && !avatarFile)}
+                        disabled={!isOwner || isSaving || (groupName === group?.name && !avatarFile)}
                         size="sm"
                         className="gap-1.5 rounded-xl"
                       >

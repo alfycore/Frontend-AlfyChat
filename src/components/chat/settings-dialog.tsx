@@ -267,7 +267,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [quietEnd, setQuietEnd] = useState('');
 
   /* Privacy */
-  const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [dmMode, setDmMode] = useState('everyone');
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -496,9 +495,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     socketService.updatePresence(dndEnabled ? 'dnd' : 'online');
   };
 
-  const savePrivacyPrefs = async (showOnline: boolean, dm: string) => {
+  const savePrivacyPrefs = async (dm: string) => {
     if (!user) return;
-    try { await api.updatePreferences(user.id, { privacyShowOnline: showOnline, privacyAllowDm: dm !== 'none' }); }
+    try { await api.updatePreferences(user.id, { privacyAllowDm: dm !== 'none' }); }
     catch { /* silent */ }
   };
 
@@ -987,15 +986,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
         {/* Visibility */}
         <SettingsCard>
-          <SettingsRow label={t.settings.showOnlineStatus} description={t.settings.showOnlineStatusDesc}>
-            <Switch checked={showOnlineStatus} onCheckedChange={(v) => { setShowOnlineStatus(v); savePrivacyPrefs(v, dmMode); }} />
-          </SettingsRow>
           <div className="px-5 py-4">
             <p className="text-[13px] font-medium text-foreground">{t.settings.allowDMs}</p>
             <p className="mt-0.5 mb-3 text-[12px] text-muted-foreground">{t.settings.allowDMsDesc}</p>
             <div className="flex gap-2">
               {[{ value: 'everyone', label: t.settings.dmEveryone }, { value: 'friends', label: t.settings.dmFriends }, { value: 'none', label: t.settings.dmNone }].map(({ value, label }) => (
-                <button key={value} type="button" onClick={() => { setDmMode(value); savePrivacyPrefs(showOnlineStatus, value); }}
+                <button key={value} type="button" onClick={() => { setDmMode(value); savePrivacyPrefs(value); }}
                   className={cn('flex-1 rounded-xl border px-3 py-2.5 text-[13px] transition-all', dmMode === value ? 'border-primary/50 bg-primary/10 font-semibold text-foreground' : 'border-border/40 text-muted-foreground hover:border-border hover:text-foreground')}>
                   {label}
                 </button>
@@ -1524,7 +1520,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className={cn(
+      <DialogContent
+        showCloseButton={false}
+        onInteractOutside={(e) => e.preventDefault()}
+        onFocusOutside={(e) => e.preventDefault()}
+        className={cn(
         'flex h-[88vh] w-full sm:max-w-5xl gap-0 overflow-hidden rounded-2xl border border-border/50 p-0 shadow-2xl shadow-black/30',
         'max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:rounded-none max-sm:border-0',
         ui.glassModal,

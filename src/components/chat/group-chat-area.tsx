@@ -35,6 +35,7 @@ import { CallPanel } from '@/components/chat/call-panel';
 
 import { UserProfilePopover } from '@/components/chat/user-profile-popover';
 import { GroupSettingsDialog } from '@/components/chat/group-settings-dialog';
+import { MentionPopover, type MentionUser } from '@/components/chat/mention-popover';
 import { getLastSeen } from '@/lib/notification-store';
 import { cn } from '@/lib/utils';
 import {
@@ -117,6 +118,9 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
       socketService.off('CALL_ACTIVE_ENDED', handleCallActiveEnded);
     };
   }, [groupId, activeGroupCall?.callId]);
+
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionVisible, setMentionVisible] = useState(false);
 
   // ── File attachments ──
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -497,6 +501,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mentionVisible && ['ArrowUp', 'ArrowDown', 'Tab', 'Enter', 'Escape'].includes(e.key)) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (messageInput.trim() || pendingAttachments.length > 0) handleSendMessage(e as unknown as React.FormEvent);
@@ -513,6 +518,29 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
       isTypingRef.current = false;
       stopTyping();
     }
+
+    const cursorPos = textareaRef.current?.selectionStart ?? value.length;
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const mentionMatch = textBeforeCursor.match(/(^|\s)@(\w*)$/);
+    if (mentionMatch) {
+      setMentionQuery(mentionMatch[2]);
+      setMentionVisible(true);
+    } else {
+      setMentionVisible(false);
+    }
+  };
+
+  const handleMentionSelect = (mentionUser: MentionUser) => {
+    const cursorPos = textareaRef.current?.selectionStart ?? messageInput.length;
+    const textBeforeCursor = messageInput.slice(0, cursorPos);
+    const textAfterCursor = messageInput.slice(cursorPos);
+    const mentionMatch = textBeforeCursor.match(/(^|\s)@(\w*)$/);
+    if (mentionMatch) {
+      const beforeMention = textBeforeCursor.slice(0, mentionMatch.index) + mentionMatch[1];
+      setMessageInput(`${beforeMention}@${mentionUser.username} ${textAfterCursor}`);
+      setMentionVisible(false);
+      textareaRef.current?.focus();
+    }
   };
 
   const handleLeaveGroup = () => {
@@ -522,6 +550,16 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
 
   const isOwner = user?.id === groupInfo?.ownerId;
   const myRole = groupInfo?.participants.find((p) => p.userId === user?.id)?.role;
+
+  const mentionUsersMemo = useMemo<MentionUser[]>(() => {
+    if (!groupInfo?.participants) return [];
+    return groupInfo.participants.map((p) => ({
+      id: p.userId,
+      username: p.username ?? p.userId,
+      displayName: p.displayName,
+      avatarUrl: p.avatarUrl,
+    }));
+  }, [groupInfo?.participants]);
   const canManageMembers = isOwner || myRole === 'admin';
 
   const handleOpenAddMembers = () => {
@@ -846,6 +884,15 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
             multiple
             accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv"
             onChange={handleFileSelect}
+          />
+
+          <MentionPopover
+            query={mentionQuery}
+            users={mentionUsersMemo}
+            visible={mentionVisible}
+            position={{ top: replyingTo ? 110 : 65, left: 16 }}
+            onSelect={handleMentionSelect}
+            onClose={() => setMentionVisible(false)}
           />
 
           {/* Reply preview */}

@@ -41,7 +41,7 @@ export function LanguageSwitcher({ className, variant = 'full', filter }: Langua
             'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors',
             systemActive
               ? 'bg-primary/10 text-primary'
-              : 'text-muted hover:bg-surface-secondary/70 hover:text-foreground',
+              : 'text-muted-foreground hover:bg-surface-secondary/70 hover:text-foreground',
           )}
         >
           <span className="text-base leading-none">🌐</span>
@@ -62,7 +62,7 @@ export function LanguageSwitcher({ className, variant = 'full', filter }: Langua
               'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors',
               active
                 ? 'bg-primary/10 text-primary'
-                : 'text-muted hover:bg-surface-secondary/70 hover:text-foreground',
+                : 'text-muted-foreground hover:bg-surface-secondary/70 hover:text-foreground',
             )}
           >
             <span className="text-base leading-none">{flag}</span>

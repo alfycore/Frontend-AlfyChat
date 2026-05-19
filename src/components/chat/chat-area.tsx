@@ -717,9 +717,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
     const cursorPos = textareaRef.current?.selectionStart ?? value.length;
     const textBeforeCursor = value.slice(0, cursorPos);
-    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    const mentionMatch = textBeforeCursor.match(/(^|\s)@(\w*)$/);
     if (mentionMatch) {
-      setMentionQuery(mentionMatch[1]);
+      setMentionQuery(mentionMatch[2]);
       setMentionVisible(true);
     } else {
       setMentionVisible(false);
@@ -730,9 +730,9 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
     const cursorPos = textareaRef.current?.selectionStart ?? messageInput.length;
     const textBeforeCursor = messageInput.slice(0, cursorPos);
     const textAfterCursor = messageInput.slice(cursorPos);
-    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    const mentionMatch = textBeforeCursor.match(/(^|\s)@(\w*)$/);
     if (mentionMatch) {
-      const beforeMention = textBeforeCursor.slice(0, mentionMatch.index);
+      const beforeMention = textBeforeCursor.slice(0, mentionMatch.index) + mentionMatch[1];
       setMessageInput(`${beforeMention}@${mentionUser.username} ${textAfterCursor}`);
       setMentionVisible(false);
       textareaRef.current?.focus();

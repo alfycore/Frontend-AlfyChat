@@ -79,7 +79,22 @@ export function MentionPopover({
     }
   }, [selectedIndex]);
 
-  if (!visible || filtered.length === 0) return null;
+  if (!visible) return null;
+
+  if (filtered.length === 0) {
+    if (!query) return null;
+    return (
+      <div
+        className="absolute z-50 w-64 rounded-2xl border border-border/50 bg-card/95 p-1.5 shadow-2xl shadow-black/20 backdrop-blur-xl"
+        style={{ bottom: position.top, left: position.left }}
+      >
+        <div className="flex items-center gap-2 px-2.5 py-2 text-[13px] text-destructive/80">
+          <span className="text-base leading-none">⚠️</span>
+          Utilisateur invalide
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

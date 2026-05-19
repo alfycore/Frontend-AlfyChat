@@ -61,9 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const handleProfileUpdate = (data: unknown) => {
       const payload = (data as { payload?: Record<string, unknown> })?.payload || data;
-      const p = payload as { id?: string; userId?: string; displayName?: string; avatarUrl?: string; bio?: string; status?: 'online' | 'idle' | 'dnd' | 'invisible' | 'offline'; username?: string; cardColor?: string };
+      const raw = payload as Record<string, unknown>;
+      // Normalise snake_case → camelCase pour les champs badges (retour du users service)
+      const p: Record<string, unknown> = { ...raw };
+      if ('show_badges' in raw) { p.showBadges = raw.show_badges; }
+      if ('hidden_badge_ids' in raw) {
+        try { p.hiddenBadgeIds = typeof raw.hidden_badge_ids === 'string' ? JSON.parse(raw.hidden_badge_ids as string) : raw.hidden_badge_ids; } catch { p.hiddenBadgeIds = []; }
+      }
       // Mise à jour de son propre profil (réponse du gateway) OU notification d'un autre client
-      const targetId = p?.id || p?.userId;
+      const targetId = (p?.id || p?.userId) as string | undefined;
       if (!targetId || targetId === user.id) {
         setUser((prev) => prev ? { ...prev, ...p } : prev);
       }
