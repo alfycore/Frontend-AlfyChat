@@ -267,6 +267,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [quietEnd, setQuietEnd] = useState('');
 
   /* Privacy */
+  const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [dmMode, setDmMode] = useState('everyone');
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
