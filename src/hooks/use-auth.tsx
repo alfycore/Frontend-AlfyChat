@@ -77,8 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (targetId) {
         userProfileCache.patchProfile(targetId, {
           username: (p as any).username,
-          displayName: p.displayName,
-          avatarUrl: p.avatarUrl,
+          displayName: p.displayName as string | null | undefined,
+          avatarUrl: p.avatarUrl as string | null | undefined,
         });
       }
     };
