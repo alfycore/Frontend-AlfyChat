@@ -47,6 +47,7 @@ interface GroupInfo {
   name: string;
   avatarUrl?: string;
   ownerId?: string;
+  isOpen?: boolean;
   participants: Participant[];
   participantIds: string[];
 }
@@ -84,6 +85,7 @@ export function GroupSettingsDialog({
   const { t } = useTranslation();
   const [section, setSection] = useState<'general' | 'members'>('general');
   const [groupName, setGroupName] = useState('');
+  const [groupIsOpen, setGroupIsOpen] = useState(true);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -99,6 +101,7 @@ export function GroupSettingsDialog({
   useEffect(() => {
     if (open && group) {
       setGroupName(group.name);
+      setGroupIsOpen(group.isOpen !== false);
       setAvatarFile(null);
       setAvatarPreview(group.avatarUrl ? (resolveMediaUrl(group.avatarUrl) ?? null) : null);
       setSection(initialSection || 'general');
@@ -168,14 +171,15 @@ export function GroupSettingsDialog({
     if (!group || !groupName.trim()) return;
     setIsSaving(true);
     try {
-      const update: { name?: string; avatarUrl?: string } = {};
+      const update: { name?: string; avatarUrl?: string; isOpen?: boolean } = {};
       if (groupName.trim() !== group.name) update.name = groupName.trim();
       if (avatarFile) {
         const r = await api.uploadImage(avatarFile, 'avatar');
         if (r.success && r.data) { update.avatarUrl = r.data.url; setAvatarFile(null); }
       }
+      if (groupIsOpen !== (group.isOpen !== false)) update.isOpen = groupIsOpen;
       if (Object.keys(update).length > 0) {
-        await api.updateConversation(group.id, update);
+        socketService.updateGroup({ groupId: group.id, ...update });
         onUpdate?.();
       }
     } catch (error) {
@@ -235,7 +239,8 @@ export function GroupSettingsDialog({
       f.username.toLowerCase().includes(friendSearch.toLowerCase()),
   );
 
-  const canManageMembers = isOwner || myRole === 'admin';
+  const canAddMembers = isOwner || groupIsOpen;
+  const canRemoveMembers = isOwner || myRole === 'admin';
 
   const SECTIONS = [
     { id: 'general' as const, label: t.group.general, icon: SettingsIcon },
@@ -373,13 +378,48 @@ export function GroupSettingsDialog({
                         />
                       <Button
                         onClick={handleSaveName}
-                        disabled={!isOwner || isSaving || (groupName === group?.name && !avatarFile)}
+                        disabled={!isOwner || isSaving || (groupName === group?.name && !avatarFile && groupIsOpen === (group?.isOpen !== false))}
                         size="sm"
                         className="gap-1.5 rounded-xl"
                       >
                         <PencilIcon size={14} />
                         {t.group.save}
                       </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
+                    <div>
+                      <span className="text-[11px] font-medium text-muted-foreground/50">{t.group.groupAccess}</span>
+                      <p className="mt-1 text-xs text-muted-foreground">{t.group.groupAccessDesc}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={!isOwner}
+                        onClick={() => isOwner && setGroupIsOpen(true)}
+                        className={cn(
+                          'flex flex-1 flex-col items-start gap-0.5 rounded-xl border-2 p-3 text-left transition-all',
+                          groupIsOpen ? 'border-primary bg-primary/10' : 'border-border/60',
+                          isOwner ? 'hover:border-border cursor-pointer' : 'cursor-default opacity-60',
+                        )}
+                      >
+                        <span className="text-sm font-medium">{t.group.groupAccessOpen}</span>
+                        <span className="text-xs text-muted-foreground">{t.group.groupAccessOpenDesc}</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!isOwner}
+                        onClick={() => isOwner && setGroupIsOpen(false)}
+                        className={cn(
+                          'flex flex-1 flex-col items-start gap-0.5 rounded-xl border-2 p-3 text-left transition-all',
+                          !groupIsOpen ? 'border-primary bg-primary/10' : 'border-border/60',
+                          isOwner ? 'hover:border-border cursor-pointer' : 'cursor-default opacity-60',
+                        )}
+                      >
+                        <span className="text-sm font-medium">{t.group.groupAccessClosed}</span>
+                        <span className="text-xs text-muted-foreground">{t.group.groupAccessClosedDesc}</span>
+                      </button>
                     </div>
                   </div>
 
@@ -422,7 +462,7 @@ export function GroupSettingsDialog({
                     </p>
                   </div>
 
-                  {canManageMembers && !showAddMembers && (
+                  {canAddMembers && !showAddMembers && (
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-2 rounded-xl"
@@ -556,7 +596,7 @@ export function GroupSettingsDialog({
                                 <p className="truncate text-xs text-muted-foreground">@{participant.username}</p>
                               </div>
 
-                              {canManageMembers &&
+                              {canRemoveMembers &&
                                 participant.userId !== user?.id &&
                                 participant.role !== 'owner' && (
                                   <Button

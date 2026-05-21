@@ -59,6 +59,7 @@ interface GroupInfo {
   name: string;
   avatarUrl?: string;
   ownerId?: string;
+  isOpen?: boolean;
   participants: Participant[];
   participantIds: string[];
 }
@@ -191,6 +192,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
           name: data.name || 'Groupe',
           avatarUrl: data.avatarUrl,
           ownerId: data.ownerId,
+          isOpen: data.isOpen !== false,
           participants: data.participants || [],
           participantIds: data.participantIds || [],
         });
@@ -560,6 +562,8 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
       avatarUrl: p.avatarUrl,
     }));
   }, [groupInfo?.participants]);
+  const groupIsOpen = groupInfo?.isOpen !== false;
+  const canAddMembers = isOwner || groupIsOpen;
   const canManageMembers = isOwner || myRole === 'admin';
 
   const handleOpenAddMembers = () => {
@@ -605,7 +609,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
           </div>
 
           <div className="flex items-center gap-1">
-            {canManageMembers && (
+            {canAddMembers && (
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>

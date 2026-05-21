@@ -107,6 +107,12 @@
     "groupIconHint": "Click to change the group icon",
     "changeIcon": "Change icon",
     "removeIcon": "Remove icon",
-    "uploadingIcon": "Uploading..."
+    "uploadingIcon": "Uploading...",
+    "groupAccess": "Who can add members?",
+    "groupAccessDesc": "Control who is allowed to add new members to this group.",
+    "groupAccessOpen": "Open",
+    "groupAccessOpenDesc": "Any member can add new people",
+    "groupAccessClosed": "Closed",
+    "groupAccessClosedDesc": "Only the group owner can add members"
   }
 }

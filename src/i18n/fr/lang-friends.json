@@ -107,6 +107,12 @@
     "groupIconHint": "Cliquez pour changer l'icône du groupe",
     "changeIcon": "Changer l'icône",
     "removeIcon": "Supprimer l'icône",
-    "uploadingIcon": "Envoi en cours..."
+    "uploadingIcon": "Envoi en cours...",
+    "groupAccess": "Qui peut ajouter des membres ?",
+    "groupAccessDesc": "Contrôlez qui peut ajouter de nouveaux membres à ce groupe.",
+    "groupAccessOpen": "Ouvert",
+    "groupAccessOpenDesc": "N'importe quel membre peut ajouter des personnes",
+    "groupAccessClosed": "Fermé",
+    "groupAccessClosedDesc": "Seul le propriétaire du groupe peut ajouter des membres"
   }
 }

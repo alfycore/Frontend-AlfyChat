@@ -41,6 +41,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [step, setStep] = useState<'select' | 'customize'>('select');
+  const [isOpen, setIsOpen] = useState(true);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -54,6 +55,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
       setGroupName('');
       setSearch('');
       setStep('select');
+      setIsOpen(true);
       setAvatarFile(null);
       setAvatarPreview(null);
     }
@@ -145,7 +147,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
         const r = await api.uploadImage(avatarFile, 'avatar');
         if (r.success && r.data) uploadedAvatarUrl = r.data.url;
       }
-      socketService.createGroup({ name: defaultName, participantIds: Array.from(selectedIds), avatarUrl: uploadedAvatarUrl });
+      socketService.createGroup({ name: defaultName, participantIds: Array.from(selectedIds), avatarUrl: uploadedAvatarUrl, isOpen });
     } catch (error) {
       console.error('Erreur création groupe:', error);
       socketService.off('GROUP_CREATE', handleGroupCreate);
@@ -171,13 +173,13 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="h-[70vh] w-full max-w-3xl sm:max-w-3xl overflow-hidden rounded-2xl p-0 shadow-2xl">
+      <DialogContent showCloseButton={false} className="h-[90vh] w-full max-w-full overflow-hidden rounded-2xl p-0 shadow-2xl sm:h-[70vh] sm:max-w-3xl">
           <DialogHeader className="sr-only">
             <DialogTitle>{t.group.newGroup}</DialogTitle>
           </DialogHeader>
           <div className="flex h-full">
-          {/* ── Left navigation ── */}
-          <aside className="flex w-52 shrink-0 flex-col border-r border-border/40 bg-background/80 py-6">
+          {/* ── Left navigation — hidden on mobile ── */}
+          <aside className="hidden w-52 shrink-0 flex-col border-r border-border/40 bg-background/80 py-6 sm:flex">
             <div className="mb-4 px-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                 {t.group.newGroup}
@@ -261,12 +263,37 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
 
           {/* ── Right content ── */}
           <div className="flex flex-1 flex-col overflow-hidden bg-surface/50">
-            <div className="flex-1 overflow-y-auto p-8">
+            {/* ── Mobile top bar ── */}
+            <div className="flex items-center justify-between border-b border-border/40 px-4 py-3 sm:hidden">
+              <div className="flex items-center gap-3">
+                {STEPS.map(({ id, icon: Icon }, idx) => (
+                  <div key={id} className="flex items-center gap-1.5">
+                    <div className={cn(
+                      'flex size-6 items-center justify-center rounded-lg text-[11px] font-semibold transition-colors',
+                      step === id ? 'bg-primary text-primary-foreground' : 'bg-surface-secondary/60 text-muted-foreground',
+                    )}>
+                      <Icon size={12} />
+                    </div>
+                    <span className={cn('text-xs font-medium', step === id ? 'text-foreground' : 'text-muted-foreground/50')}>
+                      {idx === 0 ? t.group.stepSelect : t.group.stepCustomize}
+                    </span>
+                    {idx === 0 && <span className="text-muted-foreground/30">›</span>}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="flex size-7 items-center justify-center rounded-lg bg-surface-secondary/60 text-muted-foreground hover:text-foreground"
+              >
+                <XIcon size={14} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8">
               {/* ── STEP 1: SELECT FRIENDS ── */}
               {step === 'select' && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold tracking-tight">{t.group.selectFriends}</h2>
+                    <h2 className="text-lg font-bold tracking-tight sm:text-xl">{t.group.selectFriends}</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {t.group.selectFriendsDesc}
                     </p>
@@ -310,7 +337,7 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                   </div>
 
                   <div className="rounded-2xl border border-border/60 bg-surface-secondary/30 p-2">
-                    <ScrollArea className="h-52">
+                    <ScrollArea className="h-40 sm:h-52">
                       <div className="space-y-0.5">
                         {isLoading ? (
                           <div className="flex items-center justify-center py-8">
@@ -374,16 +401,16 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
 
               {/* ── STEP 2: CUSTOMIZE ── */}
               {step === 'customize' && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <h2 className="text-xl font-bold tracking-tight">{t.group.customizeGroup}</h2>
+                    <h2 className="text-lg font-bold tracking-tight sm:text-xl">{t.group.customizeGroup}</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {t.group.customizeGroupDesc}
                     </p>
                   </div>
 
                   {/* ── Avatar upload ── */}
-                  <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
+                  <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-3 sm:gap-4 sm:p-5">
                     <div
                       className="relative cursor-pointer"
                       onClick={() => avatarInputRef.current?.click()}
@@ -452,6 +479,39 @@ export function GroupCreateDialog({ open, onOpenChange, onCreated }: GroupCreate
                           autoFocus
                         />
                       <p className="text-[11px] text-muted-foreground/70">{t.group.groupNameHint}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-2xl border border-border/60 bg-surface-secondary/30 p-5">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                        {t.group.groupAccess}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">{t.group.groupAccessDesc}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsOpen(true)}
+                        className={cn(
+                          'flex flex-1 flex-col items-start gap-0.5 rounded-xl border-2 p-3 text-left transition-all',
+                          isOpen ? 'border-primary bg-primary/10' : 'border-border/60 hover:border-border',
+                        )}
+                      >
+                        <span className="text-sm font-medium">{t.group.groupAccessOpen}</span>
+                        <span className="text-xs text-muted-foreground">{t.group.groupAccessOpenDesc}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsOpen(false)}
+                        className={cn(
+                          'flex flex-1 flex-col items-start gap-0.5 rounded-xl border-2 p-3 text-left transition-all',
+                          !isOpen ? 'border-primary bg-primary/10' : 'border-border/60 hover:border-border',
+                        )}
+                      >
+                        <span className="text-sm font-medium">{t.group.groupAccessClosed}</span>
+                        <span className="text-xs text-muted-foreground">{t.group.groupAccessClosedDesc}</span>
+                      </button>
                     </div>
                   </div>
 

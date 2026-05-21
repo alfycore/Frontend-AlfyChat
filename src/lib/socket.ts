@@ -673,12 +673,13 @@ class SocketService {
     bio?: string;
     cardColor?: string;
     showBadges?: boolean;
+    hiddenBadgeIds?: string[];
   }): void {
     this.socket?.emit('PROFILE_UPDATE', data);
   }
 
   // Groupes
-  createGroup(data: { name: string; participantIds: string[]; avatarUrl?: string }): void {
+  createGroup(data: { name: string; participantIds: string[]; avatarUrl?: string; isOpen?: boolean }): void {
     this.socket?.emit('GROUP_CREATE', data);
   }
 
@@ -688,6 +689,7 @@ class SocketService {
     avatarUrl?: string;
     addParticipants?: string[];
     removeParticipants?: string[];
+    isOpen?: boolean;
   }): void {
     this.socket?.emit('GROUP_UPDATE', data);
   }
