@@ -214,6 +214,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   const [hasContent, setHasContent] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editInput, setEditInput] = useState('');
+  const [messageInput, setMessageInput] = useState('');
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
     content: string;
