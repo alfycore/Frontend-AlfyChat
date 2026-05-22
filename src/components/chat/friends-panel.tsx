@@ -348,7 +348,7 @@ export function FriendsPanel({ onOpenDM }: FriendsPanelProps) {
         (u: any) => (u.username ?? '').toLowerCase() === username.toLowerCase(),
       );
       if (!found) {
-        notify.error(t.common.error, `Aucun utilisateur trouv\u00e9 avec le pseudo \u00ab ${username} \u00bb`);
+        notify.error(t.common.error, `Aucun utilisateur trouv\u00e9 avec le nom d\u2019utilisateur \u00ab ${username} \u00bb`);
         return;
       }
       const response = await api.sendFriendRequest(found.id);

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { MicIcon, MicOffIcon, HeadphonesIcon, SettingsIcon, CheckIcon, PencilIcon, SunIcon, MoonIcon, MonitorIcon } from '@/components/icons';
-import { SettingsDialog } from '@/components/chat/settings-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { useTheme } from 'next-themes';
@@ -16,6 +15,7 @@ import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
 import { useUIStyle } from '@/hooks/use-ui-style';
+import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { statusIcon, statusLabel, SELECTABLE_STATUSES, type UserStatus } from '@/lib/status';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useVoice } from '@/hooks/use-voice';
@@ -42,7 +42,7 @@ export function UserPanel({ user }: UserPanelProps) {
   const { prefs } = useLayoutPrefs();
   const d = densityCls(prefs.density);
   const ui = useUIStyle();
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { openSettings } = useMobileNav();
   const [editingCustomStatus, setEditingCustomStatus] = useState(false);
   const [customStatusDraft, setCustomStatusDraft] = useState(user.customStatus ?? '');
   const [emojiDraft, setEmojiDraft] = useState(user.emoji ?? '');
@@ -259,7 +259,7 @@ export function UserPanel({ user }: UserPanelProps) {
             <Button
               size="icon-sm" variant="ghost"
               className="size-7 rounded-lg text-muted-foreground/70 hover:bg-foreground/6 hover:text-foreground"
-              onClick={() => setSettingsOpen(true)}
+              onClick={() => openSettings()}
             >
               <SettingsIcon size={15} />
             </Button>
@@ -269,7 +269,6 @@ export function UserPanel({ user }: UserPanelProps) {
         </TooltipProvider>
       </div>
 
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }

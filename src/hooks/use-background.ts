@@ -54,11 +54,26 @@ function notifyAll() {
 // Samples the average luminance of the wallpaper.
 // For CSS gradients we skip detection (they vary too much).
 
+function hexLuminance(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
 function detectBrightness(wallpaper: string): Promise<'light' | 'dark'> {
   return new Promise((resolve) => {
-    // CSS gradient — too complex to sample reliably, default to dark
     if (wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient')) {
-      resolve('dark');
+      // Extract hex colors from gradient and average their perceived luminance.
+      // Threshold 160/255: covers clearly-light presets (Nacre ~234, Pêche ~217,
+      // Coucher ~177) while keeping medium/dark gradients in dark mode.
+      const hexColors = wallpaper.match(/#[0-9a-fA-F]{6}/g);
+      if (hexColors && hexColors.length > 0) {
+        const avg = hexColors.reduce((sum, h) => sum + hexLuminance(h), 0) / hexColors.length;
+        resolve(avg > 160 ? 'light' : 'dark');
+      } else {
+        resolve('dark');
+      }
       return;
     }
     const img = new Image();

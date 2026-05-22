@@ -8,7 +8,7 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
  * Version du singleton. Incrémenter à chaque ajout de méthode pour
  * forcer la recréation lors d'un HMR Next.js/Turbopack.
  */
-const SOCKET_VERSION = 6;
+const SOCKET_VERSION = 8;
 
 /**
  * Clé pour le singleton global sur window.
@@ -60,7 +60,7 @@ class InternalEventBus {
 class SocketService {
   private socket: Socket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 25;
 
   /** Version du singleton — doit correspondre à SOCKET_VERSION. */
   readonly _version = SOCKET_VERSION;
@@ -106,11 +106,27 @@ class SocketService {
           (typeof localStorage !== 'undefined' && localStorage.getItem('alfychat_token')) || token;
         cb({ token: freshToken });
       },
-      transports: ['websocket', 'polling'],
+      // Start with polling (works behind any reverse proxy), then upgrade to WebSocket.
+      // Starting with websocket directly fails when the proxy isn't configured for WS upgrades.
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: this.maxReconnectAttempts,
+    });
+
+    this.socket.io.on('reconnect_failed', () => {
+      console.error('[Socket] Reconnexion échouée après', this.maxReconnectAttempts, 'tentatives — vidage de la file d\'attente');
+      const queue = this.pendingEmits.splice(0);
+      for (const item of queue) {
+        // Map queued events to their error event so the UI can clear pending messages
+        if (item.event === 'message:send') {
+          this.bus.emit('message:error', { error: 'connection_failed', data: item.data });
+        } else if (item.event === 'SERVER_MESSAGE_SEND') {
+          this.bus.emit('SERVER_MESSAGE_ERROR', { error: 'connection_failed', data: item.data });
+        }
+      }
+      this.bus.emit('socket:reconnect_failed', {});
     });
 
     this.socket.on('connect', () => {
@@ -286,7 +302,6 @@ class SocketService {
     attachments?: string[];
     mentionedUserIds?: string[];
   }): void {
-    console.log('[Socket] Emission message:send:', data);
     this.emitOrQueue('message:send', data);
   }
 
