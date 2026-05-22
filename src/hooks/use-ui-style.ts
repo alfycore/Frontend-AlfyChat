@@ -7,9 +7,9 @@ import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
  * Switch between 'flat' and 'glass' via Settings → Mise en page → Style d'interface.
  *
  * Glass mode: Apple-inspired frosted-glass panels with blur.
- *   - Dark theme (dark wallpaper / no wallpaper): white-tinted glass, subtle highlights
- *   - Light theme (light wallpaper): white/opaque frosted glass, dark borders
- * Flat mode: Clean Notion-like panels with rounded corners + subtle shadows.
+ *   Single blur token: backdrop-blur-2xl (40px) across all elements.
+ *   Opacity hierarchy by depth:
+ *     floating/modal > input/sidebar > header/reply > content bg
  *
  * BackgroundProvider auto-switches the theme (light/dark) based on wallpaper
  * brightness, so Tailwind dark: variants are the correct adaptation mechanism.
@@ -39,16 +39,12 @@ export function useUIStyle() {
     dividerBottom: '',
 
     // ── Sidebar / panel background ─────────────────────────────────────────
-    // Light theme (light wallpaper): white/60 frosted glass, dark border
-    // Dark theme (dark wallpaper or no wallpaper): white/10 glass, white border
     sidebarBg: g
       ? [
-          'backdrop-blur-3xl',
-          // light theme
+          'backdrop-blur-2xl',
           'bg-white/[0.58]',
           'border border-black/[0.09]',
           'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.85),0_0_0_0.5px_rgba(0,0,0,0.06)]',
-          // dark theme
           'dark:bg-white/[0.09]',
           'dark:border-white/[0.10]',
           'dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.18),0_0_0_0.5px_rgba(255,255,255,0.08)]',
@@ -67,7 +63,7 @@ export function useUIStyle() {
     // ── Input bar ─────────────────────────────────────────────────────────
     inputBar: g
       ? [
-          'rounded-2xl backdrop-blur-3xl',
+          'rounded-2xl backdrop-blur-2xl',
           'border border-black/[0.10] bg-white/[0.65]',
           'shadow-[0_2px_12px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.90)]',
           'dark:border-white/[0.12] dark:bg-white/[0.10]',
@@ -100,7 +96,7 @@ export function useUIStyle() {
           'rounded-3xl backdrop-blur-2xl',
           'border border-black/[0.08] bg-white/[0.55]',
           'shadow-[0_8px_32px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.80)]',
-          'dark:border-white/[0.08] dark:bg-white/[0.05]',
+          'dark:border-white/[0.08] dark:bg-white/[0.07]',
           'dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)]',
         ].join(' ')
       : 'rounded-2xl border border-border/60 bg-sidebar shadow-sm',
@@ -108,7 +104,7 @@ export function useUIStyle() {
     // ── Date separator chip ────────────────────────────────────────────────
     chip: g
       ? [
-          'rounded-full backdrop-blur-xl',
+          'rounded-full backdrop-blur-2xl',
           'border border-black/[0.10] bg-white/[0.60]',
           'shadow-[0_1px_4px_rgba(0,0,0,0.05),inset_0_0.5px_0_rgba(255,255,255,0.80)]',
           'dark:border-white/[0.10] dark:bg-white/[0.08]',
@@ -118,7 +114,7 @@ export function useUIStyle() {
 
     // ── Announcement / info banner ─────────────────────────────────────────
     announcementBanner: g
-      ? 'rounded-2xl border border-amber-400/30 bg-amber-400/[0.15] backdrop-blur-xl dark:border-amber-400/20 dark:bg-amber-400/[0.08]'
+      ? 'rounded-2xl border border-amber-400/30 bg-amber-400/[0.15] backdrop-blur-2xl dark:border-amber-400/20 dark:bg-amber-400/[0.08]'
       : 'rounded-xl border border-amber-500/20 bg-amber-500/8',
 
     // ── Accent icon badge ──────────────────────────────────────────────────
@@ -136,18 +132,14 @@ export function useUIStyle() {
     mobilePanel: 'rounded-none sm:rounded-xl',
 
     // ── Chat/content panel background ─────────────────────────────────────
-    // Used by chat-area, group-chat-area, views, etc.
-    // Light: semi-opaque white frosted glass; Dark: subtle white tint
     contentBg: g
       ? 'bg-white/[0.50] backdrop-blur-2xl dark:bg-white/[0.08]'
       : '',
 
     // ── Settings / large modal background ─────────────────────────────────
-    // Light theme: white/75 frosted glass — visible and clean on bright bg
-    // Dark theme: dark translucent — maintains depth on dark bg
     glassModal: g
       ? [
-          'backdrop-blur-md',
+          'backdrop-blur-2xl',
           'bg-white/[0.75]',
           'dark:bg-[oklch(0.16_0.006_286/0.82)]',
         ].join(' ')
@@ -161,7 +153,7 @@ export function useUIStyle() {
     // ── Floating panels / context menus ───────────────────────────────────
     floatingPanel: g
       ? [
-          'rounded-2xl backdrop-blur-3xl',
+          'rounded-2xl backdrop-blur-2xl',
           'border border-black/[0.09] bg-white/[0.70]',
           'shadow-[0_12px_40px_rgba(0,0,0,0.10),inset_0_0.5px_0_rgba(255,255,255,0.90)]',
           'dark:border-white/[0.12] dark:bg-[oklch(0.18_0.006_286/0.72)]',
