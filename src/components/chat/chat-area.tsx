@@ -208,7 +208,10 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   const callPanelRef = useRef<HTMLDivElement>(null);
 
   /* ── Local state ── */
-  const [messageInput, setMessageInput] = useState('');
+  // Uncontrolled textarea — value lives in textareaRef.current.value to avoid re-rendering the
+  // entire component on every keystroke. Only hasContent (boolean) is kept as state so the
+  // send button updates when the user starts/stops typing.
+  const [hasContent, setHasContent] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editInput, setEditInput] = useState('');
   const [replyingTo, setReplyingTo] = useState<{
@@ -449,12 +452,12 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   }, [scrollToBottom]);
 
 
-  useEffect(() => {
+  const resizeTextarea = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${Math.min(el.scrollHeight, 110)}px`;
-  }, [messageInput]);
+  }, []);
 
   useEffect(() => {
     setSearchOpen(false);

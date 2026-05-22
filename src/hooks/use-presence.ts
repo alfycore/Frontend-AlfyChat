@@ -102,6 +102,16 @@ export function usePresence({ chosenStatus, customStatus, emoji }: UsePresenceOp
       }
     }, HEARTBEAT_INTERVAL_MS);
 
+    // Re-sync presence after socket reconnection (server loses state on disconnect)
+    const handleReconnect = () => {
+      const effectiveStatus = isAutoIdleRef.current
+        ? 'idle'
+        : (chosenStatusRef.current as 'online' | 'idle' | 'dnd' | 'invisible');
+      socketService.updatePresence(effectiveStatus, customStatusRef.current ?? null, emojiRef.current ?? null);
+      socketService.sendHeartbeat(!isAutoIdleRef.current);
+    };
+    socketService.on('socket:reconnected', handleReconnect);
+
     return () => {
       for (const ev of ACTIVITY_EVENTS) {
         window.removeEventListener(ev, handleActivity);
@@ -111,6 +121,7 @@ export function usePresence({ chosenStatus, customStatus, emoji }: UsePresenceOp
       bc?.removeEventListener('message', handleBCMessage);
       try { bc?.close(); } catch { /* ignore */ }
       clearInterval(heartbeatInterval);
+      socketService.off('socket:reconnected', handleReconnect);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps — refs are used intentionally
 }

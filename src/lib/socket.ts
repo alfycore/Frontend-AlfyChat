@@ -325,12 +325,23 @@ class SocketService {
 
   // Présence
   updatePresence(status: 'online' | 'idle' | 'dnd' | 'invisible', customStatus?: string | null, emoji?: string | null): void {
-    this.socket?.emit('PRESENCE_UPDATE', {
+    const payload = {
       status,
       customStatus: customStatus ?? null,
       text: customStatus ?? null,
       emoji: emoji ?? null,
-    });
+    };
+    if (this.socket?.connected) {
+      this.socket.emit('PRESENCE_UPDATE', payload);
+    } else {
+      // Queue for replay on reconnect, replacing any stale PRESENCE_UPDATE
+      const idx = this.pendingEmits.findIndex(e => e.event === 'PRESENCE_UPDATE');
+      if (idx >= 0) {
+        this.pendingEmits[idx] = { event: 'PRESENCE_UPDATE', data: payload };
+      } else {
+        this.pendingEmits.push({ event: 'PRESENCE_UPDATE', data: payload });
+      }
+    }
   }
 
   sendHeartbeat(active = true): void {
