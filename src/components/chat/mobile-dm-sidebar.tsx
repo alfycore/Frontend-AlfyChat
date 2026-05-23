@@ -406,10 +406,7 @@ export function MobileDMSidebar({ selectedChannel, onSelectChannel, onClose }: M
     <div className={cn('flex h-full w-full flex-col overflow-hidden', ui.sidebarBg)}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className={cn(
-        'flex h-14 shrink-0 items-center gap-3 border-b px-4',
-        'glass-blur glass-bg-header border-black/[0.07] shadow-[0_0.5px_0_rgba(255,255,255,0.65)] dark:border-white/[0.08] dark:shadow-[0_0.5px_0_rgba(255,255,255,0.06)]',
-      )}>
+      <div className={cn('flex h-14 shrink-0 items-center gap-3 border-b px-4', ui.header)}>
         {/* User avatar */}
         {user && (
           <Avatar className="size-8 shrink-0 rounded-full">

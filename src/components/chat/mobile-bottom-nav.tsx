@@ -9,6 +9,7 @@ import {
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useNotificationStore } from '@/lib/notification-store';
 import { cn } from '@/lib/utils';
+import { useUIStyle } from '@/hooks/use-ui-style';
 
 // ─── Onglets ──────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,7 @@ export function MobileBottomNav({ embedded = false }: { embedded?: boolean }) {
     closeSettings,
   } = useMobileNav();
 
+  const ui = useUIStyle();
   const notifStore = useNotificationStore();
 
   // Badge d'alertes non lues (tous types confondus, hors canal actif)
@@ -79,9 +81,8 @@ export function MobileBottomNav({ embedded = false }: { embedded?: boolean }) {
   return (
     <nav
       className={cn(
-        'flex items-stretch border-t backdrop-blur-2xl',
-        'glass-bg-sidebar border-black/[0.07] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.60)]',
-        'dark:border-white/[0.08] dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.06)]',
+        'flex items-stretch border-t',
+        ui.sidebarBg,
         embedded ? 'shrink-0' : 'fixed inset-x-0 bottom-0 z-50 md:hidden',
       )}
       style={{ height: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}

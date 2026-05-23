@@ -19,6 +19,7 @@ import { socketService } from '@/lib/socket';
 import { statusLabel, statusTextColor, statusIcon, isVisibleOnline, formatLastSeen, richStatusLabel } from '@/lib/status';
 import { sanitizeSvg } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
+import { useUIStyle } from '@/hooks/use-ui-style';
 import { useTranslation } from '@/components/locale-provider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -116,6 +117,7 @@ export function UserProfilePopover({
   onOpenChange: externalOnOpenChange,
 }: UserProfilePopoverProps) {
   const { user: me } = useAuth();
+  const ui = useUIStyle();
   const isMe = me?.id === userId;
 
   // ── Open state ────────────────────────────────────────────────────────────
@@ -288,7 +290,7 @@ export function UserProfilePopover({
       <PopoverContent
         side="left"
         sideOffset={10}
-        className="glass-blur glass-bg-float w-[340px] overflow-hidden rounded-2xl border border-black/[0.08] p-0 shadow-[0_20px_60px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.90)] dark:border-white/[0.11] dark:shadow-[0_20px_60px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.07)]"
+        className={cn(ui.floatingPanel, 'w-[340px] overflow-hidden p-0')}
       >
         {loading || !profile ? (
           <div className="flex flex-col">

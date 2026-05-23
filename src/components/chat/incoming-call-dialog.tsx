@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTranslation } from '@/components/locale-provider';
 import { resolveMediaUrl } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { useUIStyle } from '@/hooks/use-ui-style';
 
 interface IncomingCallDialogProps {
   open: boolean;
@@ -31,6 +33,7 @@ export function IncomingCallDialog({
   onDecline,
 }: IncomingCallDialogProps) {
   const { t } = useTranslation();
+  const ui = useUIStyle();
   const ctxRef = useRef<AudioContext | null>(null);
 
   // ── Ringtone: two-tone pulse (440 Hz + 480 Hz), 0.6s on / 1.2s off ──
@@ -94,7 +97,7 @@ export function IncomingCallDialog({
   if (isServerCall) {
     if (!open) return null;
     return (
-      <div className="glass-blur glass-bg-float pointer-events-auto flex items-center gap-3 rounded-xl border border-primary/20 px-4 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.90)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.07)]">
+      <div className={cn(ui.floatingPanel, 'pointer-events-auto flex items-center gap-3 border-primary/20 px-4 py-2.5')}>
         <span className="relative flex size-2 shrink-0">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-50" />
           <span className="relative inline-flex size-2 rounded-full bg-primary" />
@@ -124,7 +127,7 @@ export function IncomingCallDialog({
 
   return (
     <Dialog open={open}>
-      <DialogContent showCloseButton={false} className="glass-blur glass-bg-modal max-w-[320px] overflow-hidden rounded-3xl border border-black/[0.09] p-0 shadow-[0_24px_64px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] dark:border-white/[0.10] dark:shadow-[0_24px_64px_rgba(0,0,0,0.60),inset_0_1px_0_rgba(255,255,255,0.07)]">
+      <DialogContent showCloseButton={false} className={cn(ui.glassModal, 'max-w-[320px] overflow-hidden rounded-3xl p-0')}>
             <DialogHeader className="sr-only">
               <DialogTitle>
                 {callType === 'video' ? t.calls.incomingVideo : t.calls.incomingVoice}

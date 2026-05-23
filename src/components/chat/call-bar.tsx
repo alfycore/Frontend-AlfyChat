@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
+import { useUIStyle } from '@/hooks/use-ui-style';
 
 export function CallBar() {
   const {
@@ -28,6 +29,7 @@ export function CallBar() {
   } = useCallContext();
   const router = useRouter();
   const { t } = useTranslation();
+  const ui = useUIStyle();
 
   if (callStatus === 'idle' || callStatus === 'ended') return null;
 
@@ -61,10 +63,11 @@ export function CallBar() {
 
   return (
     <div className={cn(
-      'shrink-0 border-t px-2 py-2 glass-blur',
+      'shrink-0 border-t px-2 py-2',
+      ui.isGlass && 'glass-blur',
       isConnected
         ? 'border-success/20 bg-success/[0.08] dark:bg-success/[0.06] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.60)] dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.06)]'
-        : 'glass-bg-header border-black/[0.07] dark:border-white/[0.08]',
+        : ui.header,
     )}>
       {/* Status row */}
       <div
