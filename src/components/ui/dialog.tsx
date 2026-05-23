@@ -40,7 +40,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/25 duration-150 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 z-[199] bg-black/25 duration-150 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -63,7 +63,7 @@ function DialogContent({
         data-slot="dialog-content"
         aria-describedby={undefined}
         className={cn(
-          "fixed inset-0 z-[51] grid m-auto h-fit w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl p-4 text-sm text-popover-foreground outline-none duration-150 sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 relative bg-popover/95 backdrop-blur-2xl ring-1 ring-black/[0.08] shadow-xl shadow-black/10 dark:ring-white/[0.10] dark:shadow-black/40",
+          "fixed inset-0 z-[200] grid m-auto h-fit w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl p-4 text-sm text-popover-foreground outline-none duration-150 sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 relative overflow-hidden bg-popover/90 ring-1 ring-black/[0.08] shadow-xl shadow-black/10 dark:ring-white/[0.10] dark:shadow-black/40 before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-xl before:backdrop-blur-2xl before:content-['']",
           className
         )}
         {...props}
