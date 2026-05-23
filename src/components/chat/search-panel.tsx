@@ -200,9 +200,9 @@ export function SearchPanel({
   }, [query, isDM, searchLocal, searchServer]);
 
   return (
-    <div className="flex h-full w-80 shrink-0 flex-col border-l border-border bg-card">
+    <div className="glass-blur glass-bg-sidebar flex h-full w-80 shrink-0 flex-col border-l border-black/[0.08] dark:border-white/[0.09]">
       {/* Header */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-3">
+      <div className="glass-bg-header flex h-14 shrink-0 items-center justify-between border-b border-black/[0.07] px-3 shadow-[0_0.5px_0_rgba(255,255,255,0.65)] dark:border-white/[0.08] dark:shadow-[0_0.5px_0_rgba(255,255,255,0.06)]">
         <div className="flex items-center gap-2">
           <SearchIcon size={15} className="text-muted-foreground" />
           <span className="text-sm font-semibold text-foreground">{t.search.title}</span>
