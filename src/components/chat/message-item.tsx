@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { memo, useState, useEffect, useRef, useSyncExternalStore, type Dispatch, type SetStateAction } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { createPortal } from 'react-dom';
 import {
   ReplyIcon, CopyIcon, PinIcon, Trash2Icon, PencilIcon, SmileIcon, MoreHorizontalIcon, ClockIcon, AlertCircleIcon,
@@ -541,6 +542,7 @@ export const MessageItem = memo(function MessageItem({
   const d = densityCls(prefs.density);
   const ui = useUIStyle();
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   // S'abonner au cache de profils pour re-rendre quand un avatar/nom change
   useSyncExternalStore(userProfileCache.subscribe, userProfileCache.getSnapshot, userProfileCache.getServerSnapshot);
@@ -744,7 +746,7 @@ export const MessageItem = memo(function MessageItem({
         </div>
       </div>
       </MessageGestureWrapper>
-      <MobileMessageSheet
+      {isMobile && <MobileMessageSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         isMe={isMe}
@@ -753,7 +755,7 @@ export const MessageItem = memo(function MessageItem({
         onCopy={() => onCopy(message.content)}
         onEdit={() => onStartEdit(message.id, message.content)}
         onDelete={() => onDelete(message.id)}
-      />
+      />}
     </>
     );
   }
@@ -962,7 +964,7 @@ export const MessageItem = memo(function MessageItem({
       </div>
     </div>
     </MessageGestureWrapper>
-    <MobileMessageSheet
+    {isMobile && <MobileMessageSheet
       open={sheetOpen}
       onOpenChange={setSheetOpen}
       isMe={isMe}
@@ -971,7 +973,7 @@ export const MessageItem = memo(function MessageItem({
       onCopy={() => onCopy(message.content)}
       onEdit={() => onStartEdit(message.id, message.content)}
       onDelete={() => onDelete(message.id)}
-    />
+    />}
     </>
   );
 });
