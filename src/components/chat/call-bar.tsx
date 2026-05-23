@@ -61,10 +61,10 @@ export function CallBar() {
 
   return (
     <div className={cn(
-      'shrink-0 border-t px-2 py-2 backdrop-blur-sm',
+      'shrink-0 border-t px-2 py-2 glass-blur',
       isConnected
-        ? 'border-success/25 bg-success/[0.06]'
-        : 'border-border/40 bg-card/60',
+        ? 'border-success/20 bg-success/[0.08] dark:bg-success/[0.06] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.60)] dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.06)]'
+        : 'glass-bg-header border-black/[0.07] dark:border-white/[0.08]',
     )}>
       {/* Status row */}
       <div

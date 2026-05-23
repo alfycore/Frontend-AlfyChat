@@ -43,15 +43,11 @@ export function MobileNavDrawer({
         ref={sidebarRef as React.RefObject<HTMLDivElement>}
         className={cn(
           'fixed left-0 top-0 z-50 flex flex-col will-change-transform md:hidden',
-          ui.isGlass
-            ? 'overflow-hidden border-r border-black/8 bg-white/45 shadow-[8px_0_40px_rgba(0,0,0,0.20),inset_0_0.5px_0_rgba(255,255,255,0.90)] backdrop-blur-3xl dark:border-white/10 dark:bg-[oklch(0.20_0.006_286/0.68)] dark:shadow-[8px_0_40px_rgba(0,0,0,0.45)]'
-            : 'shadow-[4px_0_32px_rgba(0,0,0,0.25)]',
+          'overflow-hidden border-r border-black/8 bg-white/45 shadow-[8px_0_40px_rgba(0,0,0,0.20),inset_0_0.5px_0_rgba(255,255,255,0.90)] backdrop-blur-3xl dark:border-white/10 dark:bg-[oklch(0.20_0.006_286/0.68)] dark:shadow-[8px_0_40px_rgba(0,0,0,0.45)]',
         )}
         style={{ width, top: 0, bottom: 0, transform: `translateX(-${width}px)` }}
       >
-        {ui.isGlass && (
-          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.55),transparent_34%),radial-gradient(circle_at_95%_85%,rgba(255,255,255,0.20),transparent_38%)] dark:bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_95%_85%,rgba(255,255,255,0.07),transparent_38%)]" />
-        )}
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.55),transparent_34%),radial-gradient(circle_at_95%_85%,rgba(255,255,255,0.20),transparent_38%)] dark:bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_95%_85%,rgba(255,255,255,0.07),transparent_38%)]" />
 
         {/* ── Main area (server rail + content) ─────────────────────── */}
         <div className="relative z-10 flex min-h-0 flex-1 overflow-hidden">
@@ -68,10 +64,10 @@ export function MobileNavDrawer({
           </div>
 
           {/* Separator */}
-          <div className={cn('w-px shrink-0', ui.isGlass ? 'bg-black/9 dark:bg-white/10' : 'bg-border/40')} />
+          <div className="w-px shrink-0 bg-black/9 dark:bg-white/10" />
 
           {/* Content — DM list or channel list */}
-          <div className={cn('flex min-w-0 flex-1 flex-col overflow-hidden', !ui.isGlass && 'bg-sidebar')}>
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             {!activeServerId ? (
               <MobileDMSidebar
                 selectedChannel={selectedChannel}

@@ -30,7 +30,7 @@ const DEFAULT_PREFS: LayoutPrefs = {
   serverListPosition: 'top',
   memberListSide: 'right',
   compactServerList: false,
-  uiStyle: 'flat',
+  uiStyle: 'glass',
   density: 'default',
   msgStyle: 'discord',
   glassBlur: 40,

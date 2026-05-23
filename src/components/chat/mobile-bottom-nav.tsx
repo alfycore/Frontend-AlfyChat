@@ -79,7 +79,9 @@ export function MobileBottomNav({ embedded = false }: { embedded?: boolean }) {
   return (
     <nav
       className={cn(
-        'flex items-stretch border-t border-border/40 bg-sidebar/95 backdrop-blur-xl',
+        'flex items-stretch border-t backdrop-blur-2xl',
+        'glass-bg-sidebar border-black/[0.07] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.60)]',
+        'dark:border-white/[0.08] dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.06)]',
         embedded ? 'shrink-0' : 'fixed inset-x-0 bottom-0 z-50 md:hidden',
       )}
       style={{ height: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}

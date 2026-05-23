@@ -407,8 +407,8 @@ export function MobileDMSidebar({ selectedChannel, onSelectChannel, onClose }: M
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className={cn(
-        'flex h-14 shrink-0 items-center gap-3 border-b border-border/40 px-4',
-        ui.isGlass ? 'bg-background/60' : 'bg-sidebar',
+        'flex h-14 shrink-0 items-center gap-3 border-b px-4',
+        'glass-blur glass-bg-header border-black/[0.07] shadow-[0_0.5px_0_rgba(255,255,255,0.65)] dark:border-white/[0.08] dark:shadow-[0_0.5px_0_rgba(255,255,255,0.06)]',
       )}>
         {/* User avatar */}
         {user && (

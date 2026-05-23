@@ -583,7 +583,7 @@ export function GroupChatArea({ groupId, onLeave }: GroupChatAreaProps) {
       {/* ── Zone de chat principale ── */}
       <div data-tour="chat-area" className={`flex min-w-0 flex-1 flex-col overflow-hidden ${ui.contentBg}`}>
         {/* ── Header ── */}
-        <div className={`flex ${d.headerH} shrink-0 items-center gap-3 px-4 ${ui.isGlass ? 'border-b border-white/15 bg-white/10 dark:border-white/8' : 'border-b border-border/30 bg-surface/60'}`}>
+        <div className={`flex ${d.headerH} shrink-0 items-center gap-3 px-4 glass-blur glass-bg-header border-b border-black/[0.07] shadow-[0_0.5px_0_rgba(255,255,255,0.65)] dark:border-white/[0.08] dark:shadow-[0_0.5px_0_rgba(255,255,255,0.06)]`}>
           {isMobile && (
             <Button size="icon-sm" variant="ghost" onClick={toggleSidebar}>
               <MenuIcon size={20} />

@@ -288,7 +288,7 @@ export function UserProfilePopover({
       <PopoverContent
         side="left"
         sideOffset={10}
-        className="w-[340px] overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl shadow-black/20 backdrop-blur-xl"
+        className="glass-blur glass-bg-float w-[340px] overflow-hidden rounded-2xl border border-black/[0.08] p-0 shadow-[0_20px_60px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.90)] dark:border-white/[0.11] dark:shadow-[0_20px_60px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.07)]"
       >
         {loading || !profile ? (
           <div className="flex flex-col">

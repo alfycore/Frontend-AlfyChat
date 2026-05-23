@@ -65,17 +65,29 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
+    <div
+      className="dark relative flex min-h-svh items-center justify-center p-4 sm:p-6"
+      data-ui-style="glass"
+    >
+      {/* ── Fond plein écran ── */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <img
+          src="/backgrounds/defaut.jpg"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
 
-      {/* ── Colonne gauche : formulaire ── */}
-      <div className="flex flex-col bg-background">
+      {/* ── Carte glass ── */}
+      <div className="glass-blur glass-bg-modal w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl">
 
         {/* Logo */}
-        <div className="p-8 pb-0">
+        <div className="px-8 pt-8 pb-3">
           <MotionFade direction="down" distance={6} duration={0.3}>
             <Link href="/" className="inline-flex items-center gap-2.5 ui-smooth opacity-80 hover:opacity-100">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-                <img src="/logo/Alfychat.svg" alt="" className="size-4.5" />
+              <div className="flex size-8 items-center justify-center rounded-lg">
+                <img src="/logo/Alfychat.svg" alt="" className="size-16" />
               </div>
               <span className="font-(family-name:--font-krona) text-sm font-medium tracking-wide text-foreground">
                 ALFYCHAT
@@ -84,171 +96,160 @@ function ResetPasswordForm() {
           </MotionFade>
         </div>
 
+        {/* Séparateur */}
+        <div className="mx-8 h-px bg-white/10" />
+
         {/* Contenu */}
-        <div className="flex flex-1 items-center justify-center px-8 py-12">
-          <div className="w-full max-w-xs">
+        <div className="px-8 py-6">
 
-            {success ? (
-              /* ── Vue : succès ── */
-              <MotionStagger className="flex flex-col gap-6">
-                <MotionStaggerItem className="flex flex-col items-start gap-3">
-                  <div className="flex size-11 items-center justify-center rounded-xl border border-success/20 bg-success/10">
-                    <CheckCircleIcon size={18} className="text-success" />
-                  </div>
-                  <div>
-                    <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
-                      {t.auth.resetPassword.successTitle}
-                    </h1>
-                    <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-                      {t.auth.resetPassword.successDesc}
-                    </p>
-                  </div>
-                </MotionStaggerItem>
-                <MotionStaggerItem>
-                  <Link href="/login">
-                    <Button size="lg" className="w-full">
-                      {t.auth.resetPassword.loginNow}
-                    </Button>
-                  </Link>
-                </MotionStaggerItem>
-              </MotionStagger>
-
-            ) : !token ? (
-              /* ── Vue : lien invalide ── */
-              <MotionStagger className="flex flex-col gap-6">
-                <MotionStaggerItem className="flex flex-col items-start gap-3">
-                  <div className="flex size-11 items-center justify-center rounded-xl border border-destructive/20 bg-destructive/10">
-                    <XCircleIcon size={18} className="text-destructive" />
-                  </div>
-                  <div>
-                    <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
-                      {t.auth.resetPassword.invalidLinkTitle}
-                    </h1>
-                    <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-                      {t.auth.resetPassword.invalidLinkDesc}
-                    </p>
-                  </div>
-                </MotionStaggerItem>
-                <MotionStaggerItem>
-                  <Link href="/forgot-password">
-                    <Button variant="outline" size="lg" className="w-full gap-1.5">
-                      <ArrowLeftIcon size={13} />
-                      {t.auth.resetPassword.requestNew}
-                    </Button>
-                  </Link>
-                </MotionStaggerItem>
-              </MotionStagger>
-
-            ) : (
-              /* ── Vue : formulaire ── */
-              <MotionStagger className="flex flex-col gap-6">
-                <MotionStaggerItem className="flex flex-col gap-1">
+          {success ? (
+            /* ── Vue : succès ── */
+            <MotionStagger className="flex flex-col gap-6">
+              <MotionStaggerItem className="flex flex-col items-start gap-3">
+                <div className="flex size-11 items-center justify-center rounded-xl border border-success/20 bg-success/10">
+                  <CheckCircleIcon size={18} className="text-success" />
+                </div>
+                <div>
                   <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
-                    {t.auth.resetPassword.heading}
+                    {t.auth.resetPassword.successTitle}
                   </h1>
-                  <p className="text-[13px] text-muted-foreground">
-                    {t.auth.resetPassword.subtitle}
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+                    {t.auth.resetPassword.successDesc}
                   </p>
-                </MotionStaggerItem>
+                </div>
+              </MotionStaggerItem>
+              <MotionStaggerItem>
+                <Link href="/login">
+                  <Button size="lg" className="w-full">
+                    {t.auth.resetPassword.loginNow}
+                  </Button>
+                </Link>
+              </MotionStaggerItem>
+            </MotionStagger>
 
-                <MotionStaggerItem>
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    {error && (
-                      <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
-                        {error}
-                      </div>
-                    )}
-
-                    {/* Nouveau mot de passe */}
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                        {t.auth.resetPassword.password}
-                      </label>
-                      <InputGroup className="h-9">
-                        <InputGroupInput
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder={t.auth.resetPassword.passwordPlaceholder}
-                          required
-                          autoFocus
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="text-sm"
-                        />
-                        <InputGroupAddon align="inline-start">
-                          <LockIcon size={14} className="text-muted-foreground/50" />
-                        </InputGroupAddon>
-                        <InputGroupAddon align="inline-end">
-                          <InputGroupButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? t.auth.resetPassword.hidePassword : t.auth.resetPassword.showPassword}
-                            size="icon-xs"
-                          >
-                            {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
-                          </InputGroupButton>
-                        </InputGroupAddon>
-                      </InputGroup>
-                    </div>
-
-                    {/* Confirmation */}
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="confirm-password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                        {t.auth.resetPassword.confirmPassword}
-                      </label>
-                      <InputGroup className="h-9">
-                        <InputGroupInput
-                          id="confirm-password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder={t.auth.resetPassword.confirmPlaceholder}
-                          required
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="text-sm"
-                        />
-                        <InputGroupAddon align="inline-start">
-                          <LockIcon size={14} className="text-muted-foreground/50" />
-                        </InputGroupAddon>
-                      </InputGroup>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full"
-                      disabled={isLoading || !password || !confirmPassword}
-                    >
-                      {isLoading && <Spinner className="size-4" />}
-                      {isLoading ? t.auth.resetPassword.submitting : t.auth.resetPassword.submit}
-                    </Button>
-                  </form>
-                </MotionStaggerItem>
-
-                <MotionStaggerItem>
-                  <Link
-                    href="/forgot-password"
-                    className="text-[13px] text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-                  >
+          ) : !token ? (
+            /* ── Vue : lien invalide ── */
+            <MotionStagger className="flex flex-col gap-6">
+              <MotionStaggerItem className="flex flex-col items-start gap-3">
+                <div className="flex size-11 items-center justify-center rounded-xl border border-destructive/20 bg-destructive/10">
+                  <XCircleIcon size={18} className="text-destructive" />
+                </div>
+                <div>
+                  <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
+                    {t.auth.resetPassword.invalidLinkTitle}
+                  </h1>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+                    {t.auth.resetPassword.invalidLinkDesc}
+                  </p>
+                </div>
+              </MotionStaggerItem>
+              <MotionStaggerItem>
+                <Link href="/forgot-password">
+                  <Button variant="outline" size="lg" className="w-full gap-1.5">
+                    <ArrowLeftIcon size={13} />
                     {t.auth.resetPassword.requestNew}
-                  </Link>
-                </MotionStaggerItem>
-              </MotionStagger>
-            )}
+                  </Button>
+                </Link>
+              </MotionStaggerItem>
+            </MotionStagger>
 
-          </div>
+          ) : (
+            /* ── Vue : formulaire ── */
+            <MotionStagger className="flex flex-col gap-6">
+              <MotionStaggerItem className="flex flex-col gap-1">
+                <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
+                  {t.auth.resetPassword.heading}
+                </h1>
+                <p className="text-[13px] text-muted-foreground">
+                  {t.auth.resetPassword.subtitle}
+                </p>
+              </MotionStaggerItem>
+
+              <MotionStaggerItem>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  {error && (
+                    <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Nouveau mot de passe */}
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t.auth.resetPassword.password}
+                    </label>
+                    <InputGroup className="h-9">
+                      <InputGroupInput
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder={t.auth.resetPassword.passwordPlaceholder}
+                        required
+                        autoFocus
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="text-sm"
+                      />
+                      <InputGroupAddon align="inline-start">
+                        <LockIcon size={14} className="text-muted-foreground/50" />
+                      </InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? t.auth.resetPassword.hidePassword : t.auth.resetPassword.showPassword}
+                          size="icon-xs"
+                        >
+                          {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
+                        </InputGroupButton>
+                      </InputGroupAddon>
+                    </InputGroup>
+                  </div>
+
+                  {/* Confirmation */}
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="confirm-password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t.auth.resetPassword.confirmPassword}
+                    </label>
+                    <InputGroup className="h-9">
+                      <InputGroupInput
+                        id="confirm-password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder={t.auth.resetPassword.confirmPlaceholder}
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="text-sm"
+                      />
+                      <InputGroupAddon align="inline-start">
+                        <LockIcon size={14} className="text-muted-foreground/50" />
+                      </InputGroupAddon>
+                    </InputGroup>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full"
+                    disabled={isLoading || !password || !confirmPassword}
+                  >
+                    {isLoading && <Spinner className="size-4" />}
+                    {isLoading ? t.auth.resetPassword.submitting : t.auth.resetPassword.submit}
+                  </Button>
+                </form>
+              </MotionStaggerItem>
+
+              <MotionStaggerItem>
+                <Link
+                  href="/forgot-password"
+                  className="text-[13px] text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                >
+                  {t.auth.resetPassword.requestNew}
+                </Link>
+              </MotionStaggerItem>
+            </MotionStagger>
+          )}
+
         </div>
       </div>
-
-      {/* ── Colonne droite : image ── */}
-      <div className="hidden bg-background p-4 lg:block">
-        <div className="relative h-full overflow-hidden rounded-2xl">
-          <img
-            src="/backgrounds/defaut.jpg"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
-      </div>
-
     </div>
   );
 }

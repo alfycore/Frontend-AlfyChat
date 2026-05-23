@@ -1063,7 +1063,7 @@ export function ChannelList({
         <div className={cn(
           'flex shrink-0 items-center gap-2 border-b border-border/40 px-3',
           d.headerH,
-          ui.isGlass ? 'bg-background/60' : 'bg-sidebar',
+          'glass-blur glass-bg-header',
         )}>
           {/* Home mark */}
           <div className="flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-foreground text-background">

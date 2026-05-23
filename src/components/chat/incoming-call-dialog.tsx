@@ -94,7 +94,7 @@ export function IncomingCallDialog({
   if (isServerCall) {
     if (!open) return null;
     return (
-      <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-primary/20 bg-card/90 px-4 py-2.5 shadow-lg shadow-black/20 backdrop-blur-sm">
+      <div className="glass-blur glass-bg-float pointer-events-auto flex items-center gap-3 rounded-xl border border-primary/20 px-4 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.90)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.07)]">
         <span className="relative flex size-2 shrink-0">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-50" />
           <span className="relative inline-flex size-2 rounded-full bg-primary" />
@@ -124,7 +124,7 @@ export function IncomingCallDialog({
 
   return (
     <Dialog open={open}>
-      <DialogContent showCloseButton={false} className="max-w-[320px] overflow-hidden rounded-3xl border border-border/40 bg-card/95 p-0 shadow-2xl shadow-black/30 backdrop-blur-xl">
+      <DialogContent showCloseButton={false} className="glass-blur glass-bg-modal max-w-[320px] overflow-hidden rounded-3xl border border-black/[0.09] p-0 shadow-[0_24px_64px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] dark:border-white/[0.10] dark:shadow-[0_24px_64px_rgba(0,0,0,0.60),inset_0_1px_0_rgba(255,255,255,0.07)]">
             <DialogHeader className="sr-only">
               <DialogTitle>
                 {callType === 'video' ? t.calls.incomingVideo : t.calls.incomingVoice}

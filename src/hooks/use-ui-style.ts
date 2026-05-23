@@ -15,8 +15,8 @@ import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
  * brightness, so Tailwind dark: variants are the correct adaptation mechanism.
  */
 export function useUIStyle() {
-  const { prefs } = useLayoutPrefs();
-  const g = prefs.uiStyle === 'glass';
+  useLayoutPrefs(); // keep subscription for re-renders
+  const g = true; // glass-first: always render the glass aesthetic
 
   return {
     isGlass: g,
@@ -26,12 +26,12 @@ export function useUIStyle() {
 
     // ── Panel wrapper — for content & member list ──────────────────────────
     panelWrapper: g
-      ? 'rounded-2xl overflow-hidden'
+      ? 'rounded-2xl overflow-hidden ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
       : 'rounded-xl bg-card overflow-hidden border border-border/40 shadow-sm',
 
     // ── Sidebar wrapper ────────────────────────────────────────────────────
     sidebarWrapper: g
-      ? 'rounded-2xl overflow-hidden'
+      ? 'rounded-2xl overflow-hidden ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
       : 'rounded-xl overflow-hidden',
 
     dividerRight: '',
@@ -42,10 +42,10 @@ export function useUIStyle() {
     sidebarBg: g
       ? [
           'glass-blur glass-bg-sidebar',
-          'border border-black/[0.09]',
-          'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.85),0_0_0_0.5px_rgba(0,0,0,0.06)]',
-          'dark:border-white/[0.10]',
-          'dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.18),0_0_0_0.5px_rgba(255,255,255,0.08)]',
+          'border border-black/[0.08]',
+          'shadow-[inset_0_1px_0_rgba(255,255,255,0.90),0_0_0_0.5px_rgba(0,0,0,0.05),0_4px_24px_rgba(0,0,0,0.04)]',
+          'dark:border-white/[0.09]',
+          'dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_0_0.5px_rgba(255,255,255,0.07),0_4px_24px_rgba(0,0,0,0.30)]',
         ].join(' ')
       : 'bg-sidebar',
 
@@ -53,8 +53,10 @@ export function useUIStyle() {
     header: g
       ? [
           'glass-blur glass-bg-header',
-          'border-b border-black/[0.07]',
-          'dark:border-white/[0.08]',
+          'border-b border-black/[0.06]',
+          'shadow-[0_0.5px_0_rgba(255,255,255,0.70)]',
+          'dark:border-white/[0.07]',
+          'dark:shadow-[0_0.5px_0_rgba(255,255,255,0.06)]',
         ].join(' ')
       : 'border-b border-border/50 bg-sidebar',
 
@@ -62,10 +64,10 @@ export function useUIStyle() {
     inputBar: g
       ? [
           'rounded-2xl glass-blur glass-bg-input',
-          'border border-black/[0.10]',
-          'shadow-[0_2px_12px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.90)]',
-          'dark:border-white/[0.12]',
-          'dark:shadow-[0_2px_12px_rgba(0,0,0,0.30),inset_0_0.5px_0_rgba(255,255,255,0.08)]',
+          'border border-black/[0.09]',
+          'shadow-[0_4px_20px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.95)]',
+          'dark:border-white/[0.11]',
+          'dark:shadow-[0_4px_20px_rgba(0,0,0,0.40),inset_0_1px_0_rgba(255,255,255,0.07)]',
         ].join(' ')
       : 'rounded-xl border border-border/60 bg-background/80',
 
@@ -73,8 +75,8 @@ export function useUIStyle() {
     replyBar: g
       ? [
           'rounded-t-2xl border border-b-0 glass-blur glass-bg-reply',
-          'border-black/[0.08]',
-          'dark:border-white/[0.10]',
+          'border-black/[0.07]',
+          'dark:border-white/[0.09]',
         ].join(' ')
       : 'rounded-t-xl border border-b-0 border-border/60 bg-sidebar',
 
@@ -82,9 +84,10 @@ export function useUIStyle() {
     row: g
       ? [
           'rounded-xl border border-transparent transition-all duration-200',
-          'bg-black/[0.03] hover:bg-black/[0.08] hover:border-black/[0.08]',
-          'hover:shadow-[0_1px_6px_rgba(0,0,0,0.05)]',
-          'dark:bg-white/[0.03] dark:hover:bg-white/[0.09] dark:hover:border-white/[0.10]',
+          'hover:bg-black/[0.07] hover:border-black/[0.06]',
+          'hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.70)]',
+          'dark:hover:bg-white/[0.08] dark:hover:border-white/[0.09]',
+          'dark:hover:shadow-[0_2px_8px_rgba(0,0,0,0.25)]',
         ].join(' ')
       : 'rounded-xl hover:bg-foreground/[0.055] transition-colors duration-150',
 
@@ -92,10 +95,10 @@ export function useUIStyle() {
     emptyCard: g
       ? [
           'rounded-3xl glass-blur glass-bg-empty',
-          'border border-black/[0.08]',
-          'shadow-[0_8px_32px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.80)]',
-          'dark:border-white/[0.08]',
-          'dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)]',
+          'border border-black/[0.07]',
+          'shadow-[0_12px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.85)]',
+          'dark:border-white/[0.07]',
+          'dark:shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]',
         ].join(' ')
       : 'rounded-2xl border border-border/60 bg-sidebar shadow-sm',
 
@@ -103,24 +106,24 @@ export function useUIStyle() {
     chip: g
       ? [
           'rounded-full glass-blur glass-bg-chip',
-          'border border-black/[0.10]',
-          'shadow-[0_1px_4px_rgba(0,0,0,0.05),inset_0_0.5px_0_rgba(255,255,255,0.80)]',
-          'dark:border-white/[0.10]',
-          'dark:shadow-[0_1px_4px_rgba(0,0,0,0.10),inset_0_0.5px_0_rgba(255,255,255,0.06)]',
+          'border border-black/[0.08]',
+          'shadow-[0_2px_8px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.85)]',
+          'dark:border-white/[0.09]',
+          'dark:shadow-[0_2px_8px_rgba(0,0,0,0.20),inset_0_0.5px_0_rgba(255,255,255,0.06)]',
         ].join(' ')
       : 'rounded-full border border-border/50 bg-background',
 
     // ── Announcement / info banner ─────────────────────────────────────────
     announcementBanner: g
-      ? 'rounded-2xl border border-amber-400/30 bg-amber-400/[0.15] glass-blur dark:border-amber-400/20 dark:bg-amber-400/[0.08]'
+      ? 'rounded-2xl border border-amber-400/25 bg-amber-400/[0.12] glass-blur shadow-[inset_0_0.5px_0_rgba(255,255,255,0.60)] dark:border-amber-400/18 dark:bg-amber-400/[0.07]'
       : 'rounded-xl border border-amber-500/20 bg-amber-500/8',
 
     // ── Accent icon badge ──────────────────────────────────────────────────
-    iconBadge: 'rounded-2xl bg-[var(--accent)] shadow-lg',
+    iconBadge: 'rounded-2xl bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/20',
 
     // ── Message hover highlight ────────────────────────────────────────────
     msgHover: g
-      ? 'hover:bg-black/[0.04] dark:hover:bg-white/[0.05] rounded-xl transition-colors duration-200'
+      ? 'hover:bg-black/[0.035] dark:hover:bg-white/[0.04] rounded-xl transition-colors duration-200'
       : 'hover:bg-foreground/[0.04] rounded-xl transition-colors duration-150',
 
     // ── Panel transitions ──────────────────────────────────────────────────
@@ -131,12 +134,15 @@ export function useUIStyle() {
 
     // ── Chat/content panel background ─────────────────────────────────────
     contentBg: g
-      ? 'glass-bg-content glass-blur dark:glass-bg-content'
+      ? 'glass-bg-content glass-blur'
       : '',
 
     // ── Settings / large modal background ─────────────────────────────────
     glassModal: g
-      ? 'glass-blur glass-bg-modal'
+      ? [
+          'glass-blur glass-bg-modal',
+          'ring-1 ring-black/[0.07] dark:ring-white/[0.09]',
+        ].join(' ')
       : 'bg-card',
 
     // ── Settings modal sidebar ─────────────────────────────────────────────
@@ -148,10 +154,10 @@ export function useUIStyle() {
     floatingPanel: g
       ? [
           'rounded-2xl glass-blur glass-bg-float',
-          'border border-black/[0.09]',
-          'shadow-[0_12px_40px_rgba(0,0,0,0.10),inset_0_0.5px_0_rgba(255,255,255,0.90)]',
-          'dark:border-white/[0.12]',
-          'dark:shadow-[0_12px_40px_rgba(0,0,0,0.45)]',
+          'border border-black/[0.08]',
+          'shadow-[0_16px_48px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.92)]',
+          'dark:border-white/[0.11]',
+          'dark:shadow-[0_16px_48px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.07)]',
         ].join(' ')
       : 'rounded-2xl border border-border/60 bg-background shadow-lg',
   };
