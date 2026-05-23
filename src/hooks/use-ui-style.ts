@@ -15,8 +15,8 @@ import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
  * brightness, so Tailwind dark: variants are the correct adaptation mechanism.
  */
 export function useUIStyle() {
-  useLayoutPrefs(); // keep subscription for re-renders
-  const g = true; // glass-first: always render the glass aesthetic
+  const { prefs } = useLayoutPrefs();
+  const g = prefs.uiStyle === 'glass';
 
   return {
     isGlass: g,
