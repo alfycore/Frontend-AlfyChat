@@ -138,7 +138,7 @@ export function useUIStyle() {
       : '',
 
     // ── Settings / large modal background ─────────────────────────────────
-    glassModal: 'bg-popover backdrop-blur-2xl ring-1 ring-black/[0.08] dark:ring-white/[0.10] shadow-2xl shadow-black/20',
+    glassModal: 'glass-blur glass-bg-modal ring-1 ring-black/[0.08] dark:ring-white/[0.10] shadow-2xl shadow-black/20',
 
     // ── Settings modal sidebar ─────────────────────────────────────────────
     glassModalSidebar: g
