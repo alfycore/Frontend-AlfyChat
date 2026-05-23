@@ -138,11 +138,12 @@ export function useUIStyle() {
       : '',
 
     // ── Settings / large modal background ─────────────────────────────────
-    // Use a nearly-opaque card background so the modal is visible on all wallpapers
-    glassModal: 'bg-card/[0.97] backdrop-blur-2xl ring-1 ring-black/[0.07] dark:ring-white/[0.09] shadow-2xl shadow-black/20',
+    glassModal: 'bg-popover backdrop-blur-2xl ring-1 ring-black/[0.08] dark:ring-white/[0.10] shadow-2xl shadow-black/20',
 
     // ── Settings modal sidebar ─────────────────────────────────────────────
-    glassModalSidebar: 'bg-foreground/[0.03] dark:bg-white/[0.04]',
+    glassModalSidebar: g
+      ? 'bg-black/[0.04] dark:bg-white/[0.04]'
+      : 'bg-muted/30',
 
     // ── Floating panels / context menus ───────────────────────────────────
     floatingPanel: g

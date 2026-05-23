@@ -30,7 +30,7 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 rounded-lg p-2.5 text-sm text-popover-foreground shadow-xl outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 ui-smooth ui-apple-ease relative bg-card/[0.96] backdrop-blur-2xl ring-1 ring-black/[0.07] shadow-[0_12px_36px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.90)] dark:ring-white/[0.10] dark:shadow-[0_12px_36px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.07)]",
+          "z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 rounded-lg p-2.5 text-sm text-popover-foreground shadow-xl outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 ui-smooth ui-apple-ease relative bg-popover backdrop-blur-2xl ring-1 ring-black/[0.08] shadow-[0_12px_36px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.90)] dark:ring-white/[0.10] dark:shadow-[0_12px_36px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.07)]",
           className
         )}
         {...props}
