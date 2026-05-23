@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { socketService } from '@/lib/socket';
 import { resolveMediaUrl } from '@/lib/api';
 import { useLayoutPrefs, densityCls } from '@/hooks/use-layout-prefs';
+import { cn } from '@/lib/utils';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { statusIcon, statusLabel, SELECTABLE_STATUSES, type UserStatus } from '@/lib/status';
