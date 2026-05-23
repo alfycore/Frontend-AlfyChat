@@ -63,7 +63,7 @@ function DialogContent({
         data-slot="dialog-content"
         aria-describedby={undefined}
         className={cn(
-          "fixed inset-0 z-50 grid m-auto h-fit w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl p-4 text-sm text-popover-foreground shadow-2xl outline-none duration-150 sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 relative bg-popover/80 before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:backdrop-blur-2xl before:backdrop-saturate-180 ring-1 ring-foreground/8 dark:ring-white/10",
+          "fixed inset-0 z-50 grid m-auto h-fit w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl p-4 text-sm text-popover-foreground shadow-2xl outline-none duration-150 sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 relative bg-card/[0.97] backdrop-blur-2xl ring-1 ring-black/[0.07] shadow-xl shadow-black/10 dark:ring-white/[0.09] dark:shadow-black/40",
           className
         )}
         {...props}
