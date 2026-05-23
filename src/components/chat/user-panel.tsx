@@ -100,7 +100,12 @@ export function UserPanel({ user }: UserPanelProps) {
   };
 
   return (
-    <div data-tour="user-panel" className={`flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t px-1.5 md:gap-1 md:px-2 glass-blur glass-bg-user-panel border-black/[0.08] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.85)] dark:border-white/[0.10] dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.07)]`}>
+    <div data-tour="user-panel" className={cn(
+      `flex ${d.panelH} shrink-0 items-center gap-1 overflow-hidden border-t px-1.5 md:gap-1 md:px-2`,
+      ui.isGlass
+        ? 'glass-blur glass-bg-user-panel border-black/[0.08] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.85)] dark:border-white/[0.10] dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.07)]'
+        : 'bg-sidebar border-border/50',
+    )}>
       {/* Avatar + user info */}
       <div className="min-w-0 flex-1">
       <DropdownMenu>

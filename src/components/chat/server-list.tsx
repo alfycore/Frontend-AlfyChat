@@ -369,7 +369,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
         aria-label="Serveurs"
         className={cn(
           'relative flex shrink-0 items-center',
-          'glass-blur glass-bg-sidebar',
+          ui.isGlass ? 'glass-blur glass-bg-sidebar' : 'bg-sidebar',
           horizontal
             ? 'h-12 w-full flex-row gap-1 px-3'
             : cn('h-full flex-col gap-2 py-3', prefs.density === 'compact' ? 'w-15' : prefs.density === 'comfortable' ? 'w-19' : 'w-17'),
