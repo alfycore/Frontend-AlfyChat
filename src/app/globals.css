@@ -349,6 +349,98 @@
   --sidebar-foreground: oklch(0.985 0 0);
 }
 
+/* ── Glass CSS variable defaults (overridden at runtime by useLayoutPrefs) ── */
+:root {
+  --glass-blur: 40px;
+  --glass-opacity: 0.58;
+  --glass-tint-color: transparent;
+}
+
+/* ── Glass blur utility (replaces Tailwind backdrop-blur-2xl) ───────────── */
+.glass-blur {
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+/*
+ * Glass background utility classes.
+ * Each element type has a fixed ratio vs the sidebar base (0.58).
+ * Ratios are pre-computed so all panels scale proportionally with the
+ * user-chosen --glass-opacity.
+ */
+
+/* Sidebar — ratio 1.0 (base reference) */
+.glass-bg-sidebar {
+  background: var(--glass-tint-color), rgba(255, 255, 255, var(--glass-opacity));
+}
+.dark .glass-bg-sidebar {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.9, calc(var(--glass-opacity) * 0.155)));
+}
+
+/* Header — ratio 0.60 (0.35 / 0.58) */
+.glass-bg-header {
+  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.60));
+}
+.dark .glass-bg-header {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.9, calc(var(--glass-opacity) * 0.086)));
+}
+
+/* Input bar — ratio 1.12 (0.65 / 0.58) */
+.glass-bg-input {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.12)));
+}
+.dark .glass-bg-input {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.9, calc(var(--glass-opacity) * 0.172)));
+}
+
+/* Reply bar — ratio 0.86 (0.50 / 0.58) */
+.glass-bg-reply {
+  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.86));
+}
+.dark .glass-bg-reply {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.9, calc(var(--glass-opacity) * 0.103)));
+}
+
+/* Floating panels / context menus — ratio 1.21 (0.70 / 0.58) */
+.glass-bg-float {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.21)));
+}
+.dark .glass-bg-float {
+  background: var(--glass-tint-color), oklch(0.18 0.006 286 / min(0.95, calc(var(--glass-opacity) * 1.241)));
+}
+
+/* Content/chat area — ratio 0.86 (0.50 / 0.58) */
+.glass-bg-content {
+  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.86));
+}
+.dark .glass-bg-content {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.9, calc(var(--glass-opacity) * 0.138)));
+}
+
+/* Settings / large modal — ratio 1.29 (0.75 / 0.58) */
+.glass-bg-modal {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.29)));
+}
+.dark .glass-bg-modal {
+  background: var(--glass-tint-color), oklch(0.16 0.006 286 / min(0.95, calc(var(--glass-opacity) * 1.414)));
+}
+
+/* Date chip — ratio 1.03 (0.60 / 0.58) */
+.glass-bg-chip {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.03)));
+}
+.dark .glass-bg-chip {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.9, calc(var(--glass-opacity) * 0.138)));
+}
+
+/* Empty-state cards — ratio 0.95 (0.55 / 0.58) */
+.glass-bg-empty {
+  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.95));
+}
+.dark .glass-bg-empty {
+  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.9, calc(var(--glass-opacity) * 0.121)));
+}
+
 /* ── Apple-like easing & helper classes for smooth UI animations ───────── */
 .ui-apple-ease {
   transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);

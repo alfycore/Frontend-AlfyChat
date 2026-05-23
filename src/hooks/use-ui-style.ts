@@ -7,9 +7,9 @@ import { useLayoutPrefs } from '@/hooks/use-layout-prefs';
  * Switch between 'flat' and 'glass' via Settings → Mise en page → Style d'interface.
  *
  * Glass mode: Apple-inspired frosted-glass panels with blur.
- *   Single blur token: backdrop-blur-2xl (40px) across all elements.
- *   Opacity hierarchy by depth:
- *     floating/modal > input/sidebar > header/reply > content bg
+ *   Blur intensity and panel opacity are controlled by CSS variables set at
+ *   runtime from layout prefs (--glass-blur, --glass-opacity).
+ *   Tint color is layered via --glass-tint-color.
  *
  * BackgroundProvider auto-switches the theme (light/dark) based on wallpaper
  * brightness, so Tailwind dark: variants are the correct adaptation mechanism.
@@ -41,11 +41,9 @@ export function useUIStyle() {
     // ── Sidebar / panel background ─────────────────────────────────────────
     sidebarBg: g
       ? [
-          'backdrop-blur-2xl',
-          'bg-white/[0.58]',
+          'glass-blur glass-bg-sidebar',
           'border border-black/[0.09]',
           'shadow-[inset_0_0.5px_0_rgba(255,255,255,0.85),0_0_0_0.5px_rgba(0,0,0,0.06)]',
-          'dark:bg-white/[0.09]',
           'dark:border-white/[0.10]',
           'dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.18),0_0_0_0.5px_rgba(255,255,255,0.08)]',
         ].join(' ')
@@ -54,19 +52,19 @@ export function useUIStyle() {
     // ── Header bars (inside panels) ────────────────────────────────────────
     header: g
       ? [
-          'backdrop-blur-2xl',
-          'border-b border-black/[0.07] bg-white/[0.35]',
-          'dark:border-white/[0.08] dark:bg-white/[0.05]',
+          'glass-blur glass-bg-header',
+          'border-b border-black/[0.07]',
+          'dark:border-white/[0.08]',
         ].join(' ')
       : 'border-b border-border/50 bg-sidebar',
 
     // ── Input bar ─────────────────────────────────────────────────────────
     inputBar: g
       ? [
-          'rounded-2xl backdrop-blur-2xl',
-          'border border-black/[0.10] bg-white/[0.65]',
+          'rounded-2xl glass-blur glass-bg-input',
+          'border border-black/[0.10]',
           'shadow-[0_2px_12px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.90)]',
-          'dark:border-white/[0.12] dark:bg-white/[0.10]',
+          'dark:border-white/[0.12]',
           'dark:shadow-[0_2px_12px_rgba(0,0,0,0.30),inset_0_0.5px_0_rgba(255,255,255,0.08)]',
         ].join(' ')
       : 'rounded-xl border border-border/60 bg-background/80',
@@ -74,9 +72,9 @@ export function useUIStyle() {
     // ── Reply bar (above input) ────────────────────────────────────────────
     replyBar: g
       ? [
-          'rounded-t-2xl border border-b-0 backdrop-blur-2xl',
-          'border-black/[0.08] bg-white/[0.50]',
-          'dark:border-white/[0.10] dark:bg-white/[0.06]',
+          'rounded-t-2xl border border-b-0 glass-blur glass-bg-reply',
+          'border-black/[0.08]',
+          'dark:border-white/[0.10]',
         ].join(' ')
       : 'rounded-t-xl border border-b-0 border-border/60 bg-sidebar',
 
@@ -93,10 +91,10 @@ export function useUIStyle() {
     // ── Empty-state / info cards ───────────────────────────────────────────
     emptyCard: g
       ? [
-          'rounded-3xl backdrop-blur-2xl',
-          'border border-black/[0.08] bg-white/[0.55]',
+          'rounded-3xl glass-blur glass-bg-empty',
+          'border border-black/[0.08]',
           'shadow-[0_8px_32px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.80)]',
-          'dark:border-white/[0.08] dark:bg-white/[0.07]',
+          'dark:border-white/[0.08]',
           'dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)]',
         ].join(' ')
       : 'rounded-2xl border border-border/60 bg-sidebar shadow-sm',
@@ -104,17 +102,17 @@ export function useUIStyle() {
     // ── Date separator chip ────────────────────────────────────────────────
     chip: g
       ? [
-          'rounded-full backdrop-blur-2xl',
-          'border border-black/[0.10] bg-white/[0.60]',
+          'rounded-full glass-blur glass-bg-chip',
+          'border border-black/[0.10]',
           'shadow-[0_1px_4px_rgba(0,0,0,0.05),inset_0_0.5px_0_rgba(255,255,255,0.80)]',
-          'dark:border-white/[0.10] dark:bg-white/[0.08]',
+          'dark:border-white/[0.10]',
           'dark:shadow-[0_1px_4px_rgba(0,0,0,0.10),inset_0_0.5px_0_rgba(255,255,255,0.06)]',
         ].join(' ')
       : 'rounded-full border border-border/50 bg-background',
 
     // ── Announcement / info banner ─────────────────────────────────────────
     announcementBanner: g
-      ? 'rounded-2xl border border-amber-400/30 bg-amber-400/[0.15] backdrop-blur-2xl dark:border-amber-400/20 dark:bg-amber-400/[0.08]'
+      ? 'rounded-2xl border border-amber-400/30 bg-amber-400/[0.15] glass-blur dark:border-amber-400/20 dark:bg-amber-400/[0.08]'
       : 'rounded-xl border border-amber-500/20 bg-amber-500/8',
 
     // ── Accent icon badge ──────────────────────────────────────────────────
@@ -133,16 +131,12 @@ export function useUIStyle() {
 
     // ── Chat/content panel background ─────────────────────────────────────
     contentBg: g
-      ? 'bg-white/[0.50] backdrop-blur-2xl dark:bg-white/[0.08]'
+      ? 'glass-bg-content glass-blur dark:glass-bg-content'
       : '',
 
     // ── Settings / large modal background ─────────────────────────────────
     glassModal: g
-      ? [
-          'backdrop-blur-2xl',
-          'bg-white/[0.75]',
-          'dark:bg-[oklch(0.16_0.006_286/0.82)]',
-        ].join(' ')
+      ? 'glass-blur glass-bg-modal'
       : 'bg-card',
 
     // ── Settings modal sidebar ─────────────────────────────────────────────
@@ -153,10 +147,10 @@ export function useUIStyle() {
     // ── Floating panels / context menus ───────────────────────────────────
     floatingPanel: g
       ? [
-          'rounded-2xl backdrop-blur-2xl',
-          'border border-black/[0.09] bg-white/[0.70]',
+          'rounded-2xl glass-blur glass-bg-float',
+          'border border-black/[0.09]',
           'shadow-[0_12px_40px_rgba(0,0,0,0.10),inset_0_0.5px_0_rgba(255,255,255,0.90)]',
-          'dark:border-white/[0.12] dark:bg-[oklch(0.18_0.006_286/0.72)]',
+          'dark:border-white/[0.12]',
           'dark:shadow-[0_12px_40px_rgba(0,0,0,0.45)]',
         ].join(' ')
       : 'rounded-2xl border border-border/60 bg-background shadow-lg',

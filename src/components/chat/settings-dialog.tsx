@@ -91,19 +91,19 @@ const FONTS = [
 ];
 
 const WALLPAPER_PRESETS = [
-  { label: 'Aurore',   value: 'linear-gradient(135deg, #667eea 0%, #764ba2 40%, #f093fb 100%)' },
-  { label: 'Océan',    value: 'linear-gradient(135deg, #0f2027 0%, #203a43 40%, #2c5364 100%)' },
-  { label: 'Coucher',  value: 'linear-gradient(135deg, #f7971e 0%, #ffd200 50%, #f7971e 100%)' },
-  { label: 'Rose',     value: 'linear-gradient(135deg, #fc5c7d 0%, #6a3093 100%)' },
-  { label: 'Forêt',    value: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)' },
-  { label: 'Nuit',     value: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 100%)' },
-  { label: 'Pêche',    value: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
-  { label: 'Minuit',   value: 'linear-gradient(135deg, #2d3561 0%, #c05c7e 50%, #f3826f 100%)' },
-  { label: 'Jade',     value: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' },
-  { label: 'Braise',   value: 'linear-gradient(135deg, #c31432 0%, #240b36 100%)' },
-  { label: 'Azur',     value: 'linear-gradient(135deg, #1a6dff 0%, #c822ff 100%)' },
-  { label: 'Nacre',    value: 'linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 40%, #e8e8e8 100%)' },
-] as const;
+  { label: 'Aurore',   value: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=80&fit=crop' },
+  { label: 'Océan',    value: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80&fit=crop' },
+  { label: 'Coucher',  value: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80&fit=crop' },
+  { label: 'Rose',     value: 'https://images.unsplash.com/photo-1490750967868-88df5691cc9a?w=1920&q=80&fit=crop' },
+  { label: 'Forêt',    value: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=80&fit=crop' },
+  { label: 'Nuit',     value: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80&fit=crop' },
+  { label: 'Pêche',    value: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=80&fit=crop' },
+  { label: 'Minuit',   value: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=80&fit=crop' },
+  { label: 'Forêt V', value: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80&fit=crop' },
+  { label: 'Braise',   value: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1920&q=80&fit=crop' },
+  { label: 'Azur',     value: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80&fit=crop' },
+  { label: 'Plage',    value: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80&fit=crop' },
+];
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
@@ -1272,6 +1272,120 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </div>
         </SettingsCard>
 
+        {/* Glass customisation — visible only in glass mode */}
+        {layoutPrefs.uiStyle === 'glass' && (
+          <SettingsCard>
+            <div className="p-5 space-y-5">
+              <p className="text-[13px] font-semibold text-foreground">Personnalisation du verre</p>
+
+              {/* Blur */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] text-muted-foreground">Intensité du flou</p>
+                  <span className="text-[12px] font-medium text-foreground tabular-nums">{layoutPrefs.glassBlur} px</span>
+                </div>
+                <Slider
+                  min={0} max={80} step={4}
+                  value={[layoutPrefs.glassBlur]}
+                  onValueChange={([v]) => updateLayoutPrefs({ glassBlur: v })}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>Transparent</span><span>Intense</span>
+                </div>
+              </div>
+
+              {/* Opacity */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] text-muted-foreground">Opacité des panneaux</p>
+                  <span className="text-[12px] font-medium text-foreground tabular-nums">{layoutPrefs.glassOpacity} %</span>
+                </div>
+                <Slider
+                  min={10} max={90} step={2}
+                  value={[layoutPrefs.glassOpacity]}
+                  onValueChange={([v]) => updateLayoutPrefs({ glassOpacity: v })}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>Translucide</span><span>Opaque</span>
+                </div>
+              </div>
+
+              {/* Tint color + opacity */}
+              <div className="space-y-3">
+                <p className="text-[12px] text-muted-foreground">Teinte de couleur</p>
+                <div className="flex items-center gap-3">
+                  {/* Color swatches */}
+                  <div className="flex gap-1.5 flex-wrap">
+                    {[
+                      { color: '', label: 'Aucune' },
+                      { color: '#8b5cf6', label: 'Violet' },
+                      { color: '#3b82f6', label: 'Bleu' },
+                      { color: '#10b981', label: 'Vert' },
+                      { color: '#f59e0b', label: 'Ambre' },
+                      { color: '#ef4444', label: 'Rouge' },
+                      { color: '#ec4899', label: 'Rose' },
+                      { color: '#06b6d4', label: 'Cyan' },
+                    ].map(({ color, label }) => (
+                      <button
+                        key={label}
+                        type="button"
+                        title={label}
+                        onClick={() => updateLayoutPrefs({ glassTintColor: color, glassTintOpacity: color ? (layoutPrefs.glassTintOpacity || 15) : 0 })}
+                        className={cn(
+                          'size-6 rounded-full border-2 transition-all',
+                          layoutPrefs.glassTintColor === color
+                            ? 'border-primary scale-110 shadow-md'
+                            : 'border-border/40 hover:scale-105',
+                        )}
+                        style={color ? { backgroundColor: color } : { background: 'linear-gradient(135deg, #e5e7eb 50%, #fff 50%)', border: '2px solid hsl(var(--border))' }}
+                      />
+                    ))}
+                    {/* Custom color picker */}
+                    <label title="Couleur personnalisée" className={cn(
+                      'size-6 rounded-full border-2 cursor-pointer flex items-center justify-center overflow-hidden transition-all',
+                      layoutPrefs.glassTintColor && !['', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'].includes(layoutPrefs.glassTintColor)
+                        ? 'border-primary scale-110 shadow-md'
+                        : 'border-dashed border-border/60 hover:scale-105',
+                    )}>
+                      <input type="color" className="opacity-0 absolute size-0"
+                        value={layoutPrefs.glassTintColor || '#8b5cf6'}
+                        onChange={(e) => updateLayoutPrefs({ glassTintColor: e.target.value, glassTintOpacity: layoutPrefs.glassTintOpacity || 15 })}
+                      />
+                      <span className="text-[8px] text-muted-foreground select-none">+</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Tint opacity slider — only if a color is chosen */}
+                {layoutPrefs.glassTintColor && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[12px] text-muted-foreground">Intensité de la teinte</p>
+                      <span className="text-[12px] font-medium text-foreground tabular-nums">{layoutPrefs.glassTintOpacity} %</span>
+                    </div>
+                    <Slider
+                      min={0} max={50} step={1}
+                      value={[layoutPrefs.glassTintOpacity]}
+                      onValueChange={([v]) => updateLayoutPrefs({ glassTintOpacity: v })}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Live preview chip */}
+              <div
+                className="h-10 w-full rounded-xl glass-blur glass-bg-sidebar border border-black/[0.09] dark:border-white/[0.10] flex items-center justify-center text-[11px] text-foreground/70"
+                style={{ backdropFilter: `blur(${layoutPrefs.glassBlur}px) saturate(180%)` }}
+              >
+                Aperçu en temps réel
+              </div>
+            </div>
+          </SettingsCard>
+        )}
+
         {/* Wallpaper — glass mode only */}
         {layoutPrefs.uiStyle === 'glass' && (
           <SettingsCard>
@@ -1281,7 +1395,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 {WALLPAPER_PRESETS.map(({ label, value }) => (
                   <button key={label} type="button" title={label} onClick={() => setWallpaper(value)}
                     className={cn('relative h-12 w-full overflow-hidden rounded-xl border-2 transition-all', wallpaper === value ? 'scale-105 border-primary shadow-md' : 'border-transparent hover:scale-105 hover:border-border/50')}
-                    style={{ background: value }}>
+                    style={value.includes('gradient') ? { background: value } : { backgroundImage: `url(${value})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                     {wallpaper === value && <div className="absolute inset-0 flex items-center justify-center"><CheckIcon size={14} className="text-white drop-shadow" /></div>}
                   </button>
                 ))}

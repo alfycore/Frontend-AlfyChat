@@ -18,6 +18,10 @@ export type LayoutPrefs = {
   uiStyle: UIStyle;
   density: UIDensity;
   msgStyle: 'bubble' | 'discord';
+  glassBlur: number;         // px, 0–80, default 40
+  glassOpacity: number;      // %, 10–90, default 58 (maps to 0.58)
+  glassTintColor: string;    // hex e.g. '#8b5cf6', '' = none
+  glassTintOpacity: number;  // %, 0–50, default 0
 };
 
 const STORAGE_KEY = 'alfychat_layout_prefs';
@@ -29,7 +33,34 @@ const DEFAULT_PREFS: LayoutPrefs = {
   uiStyle: 'flat',
   density: 'default',
   msgStyle: 'discord',
+  glassBlur: 40,
+  glassOpacity: 58,
+  glassTintColor: '',
+  glassTintOpacity: 0,
 };
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? [parseInt(r[1], 16), parseInt(r[2], 16), parseInt(r[3], 16)] : null;
+}
+
+function applyGlassCssVars(prefs: LayoutPrefs) {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  root.style.setProperty('--glass-blur', `${prefs.glassBlur}px`);
+  root.style.setProperty('--glass-opacity', String(prefs.glassOpacity / 100));
+  if (prefs.glassTintColor && prefs.glassTintOpacity > 0) {
+    const rgb = hexToRgb(prefs.glassTintColor);
+    if (rgb) {
+      const [r, g, b] = rgb;
+      root.style.setProperty('--glass-tint-color', `rgba(${r},${g},${b},${prefs.glassTintOpacity / 100})`);
+    } else {
+      root.style.setProperty('--glass-tint-color', 'transparent');
+    }
+  } else {
+    root.style.setProperty('--glass-tint-color', 'transparent');
+  }
+}
 
 /**
  * Density-aware size tokens.
@@ -94,6 +125,7 @@ let _prefs: LayoutPrefs = DEFAULT_PREFS;
 const _listeners = new Set<() => void>();
 
 function _notify() {
+  applyGlassCssVars(_prefs);
   _listeners.forEach(fn => fn());
 }
 
@@ -109,6 +141,7 @@ export function useLayoutPrefs() {
     // Load from localStorage on first client render
     const loaded = loadFromStorage();
     _prefs = loaded;
+    applyGlassCssVars(_prefs);
     _notify();
 
     // Subscribe so this component re-renders whenever any instance updates
