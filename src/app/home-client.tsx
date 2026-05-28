@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   ShieldIcon, LockIcon, ArrowRightIcon, CheckIcon,
@@ -84,27 +85,9 @@ const DOWNLOADS = [
   { Icon: LinuxIcon, label: 'Linux',       sub: 'AppImage universel',  ext: '.AppImage', href: 'https://github.com/alfycore/desktop-alfychat/releases/download/dev-build/AlfyChat-1.0.1-Beta.AppImage' },
 ] as const;
 
-const STATS = [
-  { n: '70+',    label: 'Serveurs actifs'  },
-  { n: '2 000+', label: 'Utilisateurs'     },
-  { n: '320 k+', label: 'Messages / jour'  },
-  { n: '99,9 %', label: 'Disponibilité'    },
-] as const;
-
 const TRUST = ['Chiffrement E2E', 'Hébergé en France', 'RGPD', 'Gratuit'] as const;
 
 /* ─── Petites primitives ─────────────────────────────────────────────────── */
-
-/** Image avec fondu bas (et optionnel haut). Hauteur TOUJOURS fixe en px. */
-function Img({ src, h, top = false, className }: { src: string; h: string; top?: boolean; className?: string }) {
-  return (
-    <div className={cn('relative overflow-hidden rounded-2xl', className)}>
-      <img src={src} alt="" className={cn('w-full object-cover object-center', h)} />
-      {top  && <div className="pointer-events-none absolute inset-x-0 top-0    h-24 bg-linear-to-b from-background/60 to-transparent" />}
-      <div   className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-background/75 to-transparent" />
-    </div>
-  );
-}
 
 function Rule() {
   return <div className="h-px bg-border/60" />;
@@ -120,6 +103,28 @@ function Label({ children }: { children: React.ReactNode }) {
 export function HomeClient() {
   const { t } = useTranslation();
   const L = t.landing;
+
+  const [liveStats, setLiveStats] = useState<{
+    totalUsers:   number | null;
+    onlineUsers:  number | null;
+    totalServers: number | null;
+    connectedWS:  number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/home-stats')
+      .then(r => r.json())
+      .then(d => setLiveStats(d))
+      .catch(() => {});
+  }, []);
+
+  const STATS = [
+    { n: liveStats?.totalServers != null ? String(liveStats.totalServers)  : '70+',  label: 'Serveurs'      },
+    { n: liveStats?.totalUsers   != null ? String(liveStats.totalUsers)    : '20+',  label: 'Utilisateurs'  },
+    { n: liveStats?.onlineUsers  != null ? String(liveStats.onlineUsers)   : '—',    label: 'En ligne'      },
+    { n: liveStats?.connectedWS  != null ? String(liveStats.connectedWS)   : '—',    label: 'Connectés WS'  },
+  ];
+
   return (
     <div className="bg-background text-foreground">
       <SiteNavbar />
@@ -291,47 +296,33 @@ export function HomeClient() {
       <Rule />
 
       {/* ╔══════════════════════════════════════════════════════════════════╗
-          ║  APERÇU  —  texte gauche · image droite h-[380px] fixe         ║
+          ║  APERÇU                                                         ║
           ╚══════════════════════════════════════════════════════════════════╝ */}
       <section className="mx-auto max-w-6xl px-6 py-20">
-        <div className="grid items-center gap-12 md:grid-cols-2">
-
-          <MotionFade>
-            <Label>Aperçu</Label>
-            <h2 className="font-(family-name:--font-krona) mt-2 text-2xl font-bold tracking-tight md:text-3xl">
-              Conçu pour la<br />vraie productivité
-            </h2>
-            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
-              Une interface qui disparaît derrière vos échanges. Pas de distraction, pas de publicité.
-            </p>
-            <ul className="mt-7 flex flex-col gap-3">
-              {PREVIEW_BULLETS.map(({ Icon, text }) => (
-                <li key={text} className="flex items-center gap-3">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
-                    <Icon size={13} className="text-primary" />
-                  </div>
-                  <span className="text-[13px] text-foreground/80">{text}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-7">
-              <Link href="/register">
-                <Button className="gap-2 px-6">Essayer maintenant <ArrowRightIcon size={13} /></Button>
-              </Link>
-            </div>
-          </MotionFade>
-
-          <MotionFade direction="left" delay={0.1}>
-            <div className="relative">
-              <Img src="/backgrounds/defaut.jpg" h="h-[380px]" top />
-              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
-                <span className="size-1.5 animate-pulse rounded-full bg-success" />
-                <span className="text-[11px] font-medium text-muted-foreground">Chiffré · En ligne</span>
-              </div>
-            </div>
-          </MotionFade>
-
-        </div>
+        <MotionFade>
+          <Label>Aperçu</Label>
+          <h2 className="font-(family-name:--font-krona) mt-2 text-2xl font-bold tracking-tight md:text-3xl">
+            Conçu pour la<br />vraie productivité
+          </h2>
+          <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+            Une interface qui disparaît derrière vos échanges. Pas de distraction, pas de publicité.
+          </p>
+          <ul className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {PREVIEW_BULLETS.map(({ Icon, text }) => (
+              <li key={text} className="flex items-center gap-3">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
+                  <Icon size={13} className="text-primary" />
+                </div>
+                <span className="text-[13px] text-foreground/80">{text}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-7">
+            <Link href="/register">
+              <Button className="gap-2 px-6">Essayer maintenant <ArrowRightIcon size={13} /></Button>
+            </Link>
+          </div>
+        </MotionFade>
       </section>
 
       <Rule />
@@ -353,9 +344,6 @@ export function HomeClient() {
             <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
               Chaque couche est conçue pour garantir votre confidentialité, même si le serveur est compromis.
             </p>
-            <div className="mt-6">
-              <Img src="/backgrounds/defaut.jpg" h="h-[190px]" top />
-            </div>
           </MotionFade>
 
           <MotionStagger className="flex flex-col gap-2.5 md:pt-14">
@@ -469,18 +457,6 @@ export function HomeClient() {
           ))}
         </MotionStagger>
 
-        {/* Bannière image desktop — h fixe, fondu propre */}
-        <MotionFade delay={0.15} className="mt-4 hidden md:block">
-          <div className="relative overflow-hidden rounded-2xl">
-            <img src="/backgrounds/defaut.jpg" alt="" className="h-[180px] w-full object-cover object-center" />
-            <div className="pointer-events-none absolute inset-x-0 top-0    h-16 bg-linear-to-b from-background/60 to-transparent" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background/85 to-transparent" />
-            <div className="absolute bottom-5 left-6">
-              <p className="font-(family-name:--font-krona) text-sm font-bold">AlfyChat Desktop</p>
-              <p className="mt-0.5 text-[12px] text-muted-foreground">{"L'expérience complète sur votre ordinateur"}</p>
-            </div>
-          </div>
-        </MotionFade>
       </section>
 
       <Rule />
@@ -490,15 +466,8 @@ export function HomeClient() {
           ╚══════════════════════════════════════════════════════════════════╝ */}
       <section className="mx-auto max-w-6xl px-6 py-20">
         <MotionFade>
-          <div className="relative overflow-hidden rounded-2xl border border-border">
-            <img
-              src="/backgrounds/defaut.jpg"
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover object-center opacity-[0.07]"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-background/55" />
-
-            <div className="relative flex flex-col items-center gap-6 px-6 py-20 text-center md:px-12">
+          <div className="rounded-2xl border border-border">
+            <div className="flex flex-col items-center gap-6 px-6 py-20 text-center md:px-12">
               <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-1.5 backdrop-blur-md">
                 <span className="size-1.5 animate-pulse rounded-full bg-success" />
                 <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
