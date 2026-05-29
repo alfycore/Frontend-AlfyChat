@@ -17,7 +17,7 @@ export function HomeHero() {
   return (
     <section
       className="relative overflow-hidden flex items-center bg-[#F7F6F3] dark:bg-[#09090b]"
-      style={{ minHeight: 'calc(100dvh - 3.5rem)' }}
+      style={{ minHeight: '90dvh' }}
     >
       <div
         className="pointer-events-none absolute inset-0"

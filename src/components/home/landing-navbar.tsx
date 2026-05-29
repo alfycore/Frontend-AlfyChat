@@ -24,7 +24,8 @@ export function LandingNavbar() {
   return (
     <>
       {/* ── Floating island pill ──────────────────────────────── */}
-      <nav className="fixed top-5 left-1/2 -translate-x-1/2 z-50 max-w-[calc(100vw-2rem)]">
+      <header className="relative z-50 flex justify-center px-4 pt-5 pb-2">
+      <nav className="w-fit max-w-[calc(100vw-2rem)]">
         <div
           className="flex items-center gap-1 rounded-[12px] px-2 py-[5px]"
           style={{
@@ -158,6 +159,7 @@ export function LandingNavbar() {
           </div>
         </div>
       </nav>
+      </header>
 
       {/* ── Mobile full-screen overlay ────────────────────────── */}
       <AnimatePresence>
