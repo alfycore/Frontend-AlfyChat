@@ -64,32 +64,12 @@ export function HomeSecurity() {
         <div className="grid grid-cols-1 gap-16 md:grid-cols-2 md:items-center">
 
           {/* Left: photo */}
-          <Reveal delay={0.04} className="relative rounded-[12px] overflow-hidden min-h-[380px] order-2 md:order-1 border border-[#EAEAEA] dark:border-[#27272a]">
+          <Reveal delay={0.04} className="order-2 md:order-1">
             <img
               src="https://picsum.photos/seed/alfychat-privacy-security/800/600"
               alt="Sécurité et confidentialité AlfyChat"
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: 'saturate(0.45) sepia(0.1)' }}
+              className="w-full rounded-[12px] object-cover"
             />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(240,238,232,0.35) 0%, rgba(250,248,244,0.75) 100%)' }} />
-
-            {/* Audit badge */}
-            <div className="absolute bottom-5 left-5 right-5 z-10">
-              <div
-                className="rounded-[12px] bg-white dark:bg-[#18181b] border border-[#EAEAEA] dark:border-[#27272a] p-4"
-                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
-              >
-                <div className="flex items-center gap-2 mb-1.5">
-                  <ShieldCheckIcon size={12} className="text-[#346538] dark:text-[#4ade80]" />
-                  <span className="text-[11.5px] font-semibold text-[#111111] dark:text-[#fafafa]">
-                    Audit de sécurité indépendant
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#787774] dark:text-[#71717a] leading-relaxed">
-                  Notre code est ouvert et vérifiable par n'importe qui. La transparence est notre seule garantie.
-                </p>
-              </div>
-            </div>
           </Reveal>
 
           {/* Right: content */}

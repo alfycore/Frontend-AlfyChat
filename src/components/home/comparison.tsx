@@ -49,14 +49,16 @@ function Reveal({
 function Check({ highlight }: { highlight: boolean }) {
   return (
     <div
-      className={`inline-flex size-6 items-center justify-center rounded-full ${
-        highlight ? 'bg-[#EDF3EC] dark:bg-[#14532d]/30' : 'bg-[#F5F5F3] dark:bg-[#27272a]'
-      }`}
+      className={`inline-flex size-6 items-center justify-center rounded-full`}
+      style={highlight
+        ? { background: 'rgba(118,39,255,0.12)' }
+        : { background: 'var(--check-bg, #F5F5F3)' }
+      }
     >
       <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden>
         <path
           d="M2 5.5L4.5 8L9 3"
-          stroke={highlight ? '#346538' : '#AAAAAA'}
+          stroke={highlight ? '#7627FF' : '#AAAAAA'}
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -136,7 +138,7 @@ export function HomeComparison() {
                       {name}
                     </p>
                     {highlight && (
-                      <span className="mt-1 inline-flex items-center rounded-full bg-[#EDF3EC] dark:bg-[#14532d]/30 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.06em] text-[#346538] dark:text-[#4ade80]">
+                      <span className="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.06em]" style={{ background: 'rgba(118,39,255,0.12)', color: '#7627FF' }}>
                         Recommandé
                       </span>
                     )}

@@ -123,12 +123,16 @@ export function HomeFeatures() {
               {/* diagram */}
               <E2EDiagram />
 
-              {/* bottom badge */}
-              <div className="relative z-10 mt-auto pt-5 flex items-center gap-2">
+              {/* bottom badges */}
+              <div className="relative z-10 mt-auto pt-5 flex items-center gap-2 flex-wrap">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EDF3EC] dark:bg-[#14532d]/25 border border-[#C9E0CA] dark:border-[#166534]/40 px-3 py-1 text-[10.5px] font-medium text-[#2d6a31] dark:text-[#4ade80]"
                   style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
                   <span className="size-1.5 rounded-full bg-[#4ade80] inline-block animate-pulse" />
                   Audité · Open source
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10.5px] font-medium"
+                  style={{ fontFamily: 'var(--font-geist-mono), monospace', background: 'rgba(118,39,255,0.08)', border: '1px solid rgba(118,39,255,0.18)', color: '#7627FF' }}>
+                  🇪🇺 Données en Europe · RGPD
                 </span>
               </div>
             </div>
@@ -142,18 +146,17 @@ export function HomeFeatures() {
                 <div className="size-[260px] rounded-full border border-white/[0.035] absolute animate-[ping_4s_ease-in-out_infinite] opacity-0" />
                 <div className="size-[220px] rounded-full border border-white/[0.04] absolute" />
                 <div className="size-[165px] rounded-full border border-white/[0.055] absolute" />
-                <div className="size-[110px] rounded-full border border-indigo-500/15 absolute" />
-                <div className="size-[62px] rounded-full bg-indigo-950/80 border border-indigo-500/30 absolute flex items-center justify-center shadow-[0_0_24px_rgba(99,102,241,0.3)]">
-                  <ZapIcon size={22} className="text-indigo-400" />
+                <div className="size-[110px] rounded-full border border-[#7627FF]/15 absolute" />
+                <div className="size-[62px] rounded-full border absolute flex items-center justify-center" style={{ background: 'rgba(118,39,255,0.25)', borderColor: 'rgba(118,39,255,0.4)', boxShadow: '0 0 24px rgba(118,39,255,0.35)' }}>
+                  <ZapIcon size={22} className="text-[#b77fff]" />
                 </div>
               </div>
               {/* glow */}
-              <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 55%, rgba(99,102,241,0.15) 0%, transparent 70%)' }} aria-hidden />
+              <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 55%, rgba(118,39,255,0.15) 0%, transparent 70%)' }} aria-hidden />
 
               {/* top */}
               <div className="relative z-10 flex justify-end">
-                <span className="rounded-full bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 text-[9.5px] text-indigo-300/80 font-medium"
-                  style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>HD · E2E · P2P</span>
+                <span className="rounded-full px-2.5 py-1 text-[9.5px] font-medium" style={{ background: 'rgba(118,39,255,0.12)', border: '1px solid rgba(118,39,255,0.25)', color: 'rgba(183,127,255,0.9)', fontFamily: 'var(--font-geist-mono), monospace' }}>HD · E2E · P2P</span>
               </div>
 
               {/* bottom */}

@@ -3,10 +3,10 @@
 import { motion, useReducedMotion } from 'motion/react';
 
 const STATS = [
-  { value: '100%', label: 'Open source', desc: 'Code public sur GitHub' },
+  { value: '< 30s', label: 'Inscription', desc: "Créer un compte, sans carte bancaire" },
   { value: 'E2E', label: 'Chiffrement', desc: 'Bout en bout, toujours actif' },
-  { value: 'France', label: 'Hébergement', desc: 'Données sur serveurs français' },
-  { value: '0', label: 'Publicité', desc: 'Ni tracking, ni revente' },
+  { value: 'P2P', label: 'Appels HD', desc: 'Pair-à-pair, aucun serveur relais' },
+  { value: '0', label: 'Publicité', desc: 'Ni tracking, ni revente de données' },
 ];
 
 export function HomeStats() {
@@ -26,8 +26,8 @@ export function HomeStats() {
               className="px-8 py-12 flex flex-col gap-1.5"
             >
               <p
-                className="text-[2.4rem] leading-none tracking-[-0.02em] text-[#111111] dark:text-[#fafafa] font-bold"
-                style={{ fontFamily: 'var(--font-krona), sans-serif' }}
+                className="text-[2.4rem] leading-none tracking-[-0.02em] font-bold"
+                style={{ fontFamily: 'var(--font-krona), sans-serif', color: '#7627FF' }}
               >
                 {value}
               </p>

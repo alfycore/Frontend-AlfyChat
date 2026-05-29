@@ -28,9 +28,9 @@ export function HomeClient() {
 
       <LandingNavbar />
       <HomeHero />
+
       <HomeFeatures />
       <HomeHowItWorks />
-      <HomeSecurity />
       <HomeComparison />
       <HomeStats />
       <HomeFaq />

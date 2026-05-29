@@ -34,13 +34,14 @@ export function HomeCta() {
           </h2>
 
           <p className="text-[15px] text-[#787774] dark:text-[#71717a] leading-relaxed max-w-sm mx-auto mb-10">
-            Gratuit, open source et hébergé en France. Rejoignez AlfyChat dès aujourd'hui.
+            Rejoignez AlfyChat dès aujourd'hui. Gratuit, sans engagement, sans numéro de téléphone.
           </p>
 
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/register">
               <button
-                className="inline-flex items-center gap-2 rounded-[6px] bg-[#111111] dark:bg-white px-7 py-3 text-[14px] font-medium text-white dark:text-[#0a0a0a] transition-all duration-200 hover:bg-[#333333] dark:hover:bg-white/90 active:scale-[0.98]">
+                className="inline-flex items-center gap-2 rounded-[6px] bg-[#7627FF] hover:bg-[#6020dd] px-7 py-3 text-[14px] font-medium text-white transition-all duration-200 active:scale-[0.98]"
+              >
                 Créer un compte gratuit
                 <ArrowRightIcon size={13} />
               </button>
