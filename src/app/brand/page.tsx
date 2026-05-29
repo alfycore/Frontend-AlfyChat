@@ -25,7 +25,7 @@ import {
   ForumIcon, GalleryIcon, MegaphoneIcon,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { SiteNavbar } from '@/components/site-navbar';
+import { LandingNavbar } from '@/components/site-navbar';
 import { SiteFooter } from '@/components/site-footer';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -470,14 +470,7 @@ export default function BrandPage() {
       <div className="min-h-screen bg-background text-foreground">
 
         {/* Header */}
-        <SiteNavbar links={[
-          { label: 'Logo',         href: '#logo' },
-          { label: 'Typographie',  href: '#typographie' },
-          { label: 'Couleurs',     href: '#couleurs' },
-          { label: 'Composants',   href: '#composants' },
-          { label: 'Chat',         href: '#chat' },
-          { label: 'Contextes',    href: '#contextes' },
-        ]} />
+        <LandingNavbar />
 
         <main className="mx-auto max-w-5xl space-y-16 px-8 py-12">
 

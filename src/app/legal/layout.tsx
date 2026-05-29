@@ -9,7 +9,7 @@ import {
   ScaleIcon,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { SiteNavbar } from '@/components/site-navbar';
+import { LandingNavbar } from '@/components/site-navbar';
 import { SiteFooter } from '@/components/site-footer';
 
 const NAV = [
@@ -24,7 +24,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <SiteNavbar />
+      <LandingNavbar />
 
       <div className="flex min-h-0 flex-1">
 

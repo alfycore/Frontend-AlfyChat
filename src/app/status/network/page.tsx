@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { SiteNavbar } from '@/components/site-navbar';
+import { LandingNavbar } from '@/components/site-navbar';
 import { SiteFooter } from '@/components/site-footer';
 import {
   ArrowLeftIcon,
@@ -150,7 +150,7 @@ export default function NetworkStatusPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
 
       {/* ── Header ── */}
-      <SiteNavbar />
+      <LandingNavbar />
 
       <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-10 space-y-10">
 

@@ -18,7 +18,7 @@ import {
   XIcon,
 } from '@/components/icons';
 import { useTranslation } from '@/components/locale-provider';
-import { SiteNavbar } from '@/components/site-navbar';
+import { LandingNavbar } from '@/components/site-navbar';
 import { SiteFooter } from '@/components/site-footer';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ export default function StatusPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <SiteNavbar />
+      <LandingNavbar />
 
       <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-12 space-y-10">
 

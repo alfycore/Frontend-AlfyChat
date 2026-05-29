@@ -1,4 +1,4 @@
-import { SiteNavbar } from '@/components/site-navbar';
+import { LandingNavbar } from '@/components/site-navbar';
 import { SiteFooter } from '@/components/site-footer';
 
 export default function StaticLayout({
@@ -8,7 +8,7 @@ export default function StaticLayout({
 }) {
   return (
     <div data-no-wallpaper className="min-h-screen text-[var(--foreground)]">
-      <SiteNavbar />
+      <LandingNavbar />
       {children}
       <SiteFooter />
     </div>
