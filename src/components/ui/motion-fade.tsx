@@ -5,7 +5,7 @@ import { forwardRef } from 'react';
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'none';
 
-interface MotionFadeProps extends Omit<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'exit' | 'transition'> {
+interface MotionFadeProps extends Omit<HTMLMotionProps<'div'>, 'initial' | 'whileInView' | 'exit' | 'transition'> {
   delay?: number;
   duration?: number;
   direction?: Direction;
@@ -23,15 +23,16 @@ const offsetFor = (d: Direction, px: number) => {
 };
 
 export const MotionFade = forwardRef<HTMLDivElement, MotionFadeProps>(function MotionFade(
-  { delay = 0, duration = 0.4, direction = 'up', distance = 12, children, ...rest },
+  { delay = 0, duration = 0.6, direction = 'up', distance = 12, children, ...rest },
   ref,
 ) {
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, ...offsetFor(direction, distance) }}
-      animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration, delay, ease: [0.16, 1, 0.3, 1] }}
       {...rest}
     >
       {children}
@@ -39,7 +40,7 @@ export const MotionFade = forwardRef<HTMLDivElement, MotionFadeProps>(function M
   );
 });
 
-interface StaggerProps extends Omit<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'variants' | 'transition'> {
+interface StaggerProps extends Omit<HTMLMotionProps<'div'>, 'initial' | 'whileInView' | 'variants' | 'transition'> {
   delay?: number;
   stagger?: number;
 }
@@ -52,7 +53,8 @@ export const MotionStagger = forwardRef<HTMLDivElement, StaggerProps>(function M
     <motion.div
       ref={ref}
       initial="hidden"
-      animate="show"
+      whileInView="show"
+      viewport={{ once: true, margin: '-60px' }}
       variants={{
         hidden: {},
         show: { transition: { staggerChildren: stagger, delayChildren: delay } },
@@ -78,7 +80,7 @@ export const MotionStaggerItem = forwardRef<HTMLDivElement, StaggerItemProps>(fu
       ref={ref}
       variants={{
         hidden: { opacity: 0, ...offsetFor(direction, distance) },
-        show:   { opacity: 1, x: 0, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+        show:   { opacity: 1, x: 0, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
       }}
       {...rest}
     >

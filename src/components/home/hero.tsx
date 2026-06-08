@@ -1,133 +1,111 @@
 'use client';
 
-import Link from 'next/link';
+import NextLink from 'next/link';
+import { Fragment } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowRightIcon, CheckCircleIcon } from '@/components/icons';
+import { ArrowRightIcon } from '@/components/icons';
+import { Button, Card, Chip, Separator, Typography } from '@heroui/react';
 
-/* ── Hero ───────────────────────────────────────────────────── */
+const TRUST_TAGS = ['Auto-hébergeable', 'Open source', 'Sans numéro de tél.'];
+
+const DISPLAY = {
+  fontFamily: 'var(--font-krona), sans-serif',
+  fontSize: 'clamp(2.6rem, 4.5vw, 5.5rem)',
+  lineHeight: 1.04,
+  letterSpacing: '-0.035em',
+} as const;
+
 export function HomeHero() {
   const reduce = useReducedMotion();
 
   const f = (delay = 0) => ({
-    initial: reduce ? (false as const) : ({ opacity: 0, y: 12 } as const),
-    animate: { opacity: 1, y: 0 } as const,
-    transition: { duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] as const },
+    initial: reduce ? false : { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.7, delay, ease: [0.25, 0.46, 0.45, 0.94] as const },
   });
 
   return (
-    <section
-      className="relative overflow-hidden flex items-center bg-[#F7F6F3] dark:bg-[#09090b]"
-      style={{ minHeight: '90dvh' }}
-    >
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background: 'radial-gradient(ellipse 70% 60% at 60% 40%, rgba(118,39,255,0.05) 0%, transparent 70%)',
-        }}
-      />
+    <section className="relative min-h-dvh bg-background">
+      <div className="mx-auto grid min-h-dvh max-w-screen-2xl grid-cols-1 items-center gap-0 md:grid-cols-2">
 
-      <div className="mx-auto grid max-w-7xl w-full grid-cols-1 items-center gap-10 px-8 pb-20 pt-16 md:grid-cols-[1fr_1.3fr] md:gap-8 lg:gap-12">
+        {/* ── Left — text (bord gauche aligné sur la navbar : px-6 lg:px-12) ── */}
+        <div className="flex flex-col gap-7 px-6 py-28 lg:px-12">
 
-        {/* Left: editorial copy ─────────────────────────────── */}
-        <div className="flex flex-col gap-8">
-
-          {/* Badge */}
           <motion.div {...f(0)}>
-            <div
-              className="inline-flex items-center gap-2 rounded-full border border-[#EAEAEA] dark:border-[#27272a] bg-white dark:bg-[#18181b] px-3.5 py-1.5"
-              style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
-            >
-              <span className="text-[13px]" aria-hidden>🇪🇺</span>
-              <span
-                className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#787774] dark:text-[#71717a]"
-                style={{ fontFamily: 'var(--font-geist-mono), monospace' }}
-              >
-                Conforme RGPD · Données en Europe
-              </span>
-            </div>
+            <Chip color="accent" variant="soft" size="sm">
+              <Chip.Label>Messagerie privée</Chip.Label>
+            </Chip>
           </motion.div>
 
-          {/* Editorial serif headline */}
-          <motion.h1
-            {...f(0.06)}
-            className="leading-[1.08] tracking-[-0.025em] text-[#111111] dark:text-[#fafafa] font-bold"
-            style={{
-              fontFamily: 'var(--font-krona), sans-serif',
-              fontSize: 'clamp(1.6rem, 3.5vw, 3.2rem)',
-            }}
-          >
-            La messagerie
-            <br />
-            qui respecte
-            <br />
-            <span
-              style={{
-                background: 'linear-gradient(135deg, #a855f7 0%, #7627FF 60%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              votre vie
-              <br />
-              privée.
-            </span>
-          </motion.h1>
+          <div className="flex flex-col">
+            <motion.div {...f(0.08)}>
+              <Typography type="h1" weight="bold" style={DISPLAY} className="text-foreground">
+                La messagerie
+              </Typography>
+            </motion.div>
+            <motion.div {...f(0.15)}>
+              <Typography type="h1" weight="bold" style={{ ...DISPLAY, color: 'var(--accent)' }}>
+                qui vous protège.
+              </Typography>
+            </motion.div>
+          </div>
 
-          {/* Subtext */}
-          <motion.p
-            {...f(0.13)}
-            className="text-[16px] text-[#787774] dark:text-[#71717a] leading-relaxed max-w-[400px]"
-            style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}
-          >
-            Chiffrement de bout en bout, aucun suivi, serveurs en France. Vos conversations n'appartiennent qu'à vous.
-          </motion.p>
-
-          {/* CTAs */}
-          <motion.div {...f(0.2)} className="flex flex-wrap gap-3">
-            <Link href="/register">
-              <button
-                className="inline-flex items-center gap-2 rounded-[6px] bg-[#7627FF] px-6 py-3 text-[14px] font-medium text-white transition-all duration-200 hover:bg-[#6020dd] active:scale-[0.98]"
-              >
-                Créer un compte gratuit
-              </button>
-            </Link>
-            <Link href="#features">
-              <button
-                className="inline-flex items-center gap-2 rounded-[6px] border border-[#EAEAEA] dark:border-[#27272a] bg-white dark:bg-[#18181b] px-5 py-3 text-[14px] font-medium text-[#111111] dark:text-[#fafafa] transition-all duration-200 hover:bg-[#F7F6F3] dark:hover:bg-[#27272a] active:scale-[0.98]"
-              >
-                Découvrir les fonctions
-                <ArrowRightIcon size={12} />
-              </button>
-            </Link>
+          <motion.div {...f(0.23)} className="max-w-sm">
+            <Typography type="body" color="muted">
+              Chiffrement de bout en bout, aucun suivi, serveurs en France.
+              Vos conversations n'appartiennent qu'à vous.
+            </Typography>
           </motion.div>
 
-          {/* Trust line */}
-          <motion.div {...f(0.27)} className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            {['Auto-hébergeable', 'Open source', 'Sans numéro de tél.'].map((tag) => (
-              <span key={tag} className="flex items-center gap-1.5 text-[12px] text-[#787774] dark:text-[#71717a]">
-                <CheckCircleIcon size={10} className="text-[#7627FF] shrink-0" />
-                {tag}
-              </span>
+          <motion.div {...f(0.3)} className="flex flex-wrap items-center gap-4">
+            <Button size="lg" render={(props) => <NextLink {...props} href="/register" />}>
+              Commencer gratuitement
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              render={(props) => <NextLink {...props} href="#features" />}
+            >
+              En savoir plus
+              <ArrowRightIcon size={13} />
+            </Button>
+          </motion.div>
+
+          <motion.div {...f(0.37)} className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {TRUST_TAGS.map((tag, i) => (
+              <Fragment key={tag}>
+                <Typography type="body-xs" color="muted">{tag}</Typography>
+                {i < TRUST_TAGS.length - 1 && (
+                  <Separator orientation="vertical" className="h-3" />
+                )}
+              </Fragment>
             ))}
           </motion.div>
         </div>
 
-        {/* Right: hero image ───────────────────── */}
+        {/* ── Right — image inside HeroUI Card ── */}
         <motion.div
-          initial={reduce ? false : { opacity: 0, y: 20, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.75, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-          className="relative hidden md:block"
+          initial={reduce ? false : { opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="flex items-center justify-center px-8 py-16 lg:px-12"
         >
-          <img
-            src="/heroimg.png"
-            alt="AlfyChat aperçu"
-            className="w-full select-none"
-            draggable={false}
-          />
+          <Card
+            className="overflow-hidden p-0"
+            style={{
+              maxWidth: 720,
+              boxShadow: '0 40px 100px color-mix(in oklch, black 22%, transparent)',
+            }}
+          >
+            <img
+              src="/heroimg.png"
+              alt="Interface AlfyChat"
+              className="w-full select-none"
+              draggable={false}
+            />
+          </Card>
         </motion.div>
+
       </div>
     </section>
   );

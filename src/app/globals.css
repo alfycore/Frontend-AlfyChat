@@ -1,469 +1,112 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "@heroui/styles";
 
+/* Class-based dark mode (next-themes sets `class="dark"` on <html>). */
 @custom-variant dark (&:is(.dark *));
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-
-  /* ── Base surface values (overridable by custom theme inline) ── */
-  --surface: oklch(1 0 0);
-  --surface-foreground: oklch(0.141 0.005 285.823);
-  --surface-secondary: oklch(0.967 0.001 286.375);
-  --surface-secondary-foreground: oklch(0.21 0.006 285.885);
-  --surface-tertiary: oklch(0.94 0.002 286.32);
-  --surface-tertiary-foreground: oklch(0.141 0.005 285.823);
-  --overlay: oklch(1 0 0);
-  --overlay-foreground: oklch(0.141 0.005 285.823);
-
-  /* ── Shadcn aliases → derive from base surfaces ── */
-  --card: var(--surface);
-  --card-foreground: var(--surface-foreground);
-  --popover: var(--overlay);
-  --popover-foreground: var(--overlay-foreground);
-  --secondary: var(--surface-secondary);
-  --secondary-foreground: var(--surface-secondary-foreground);
-  --muted: var(--surface-secondary);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-
-  /* ── Brand accent (purple) ── */
-  --primary: oklch(0.457 0.24 277.023);
-  --primary-foreground: oklch(0.962 0.018 272.314);
-  --accent: oklch(0.457 0.24 277.023);
-  --accent-foreground: oklch(0.985 0 0);
-
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
-  --chart-1: oklch(0.785 0.115 274.713);
-  --chart-2: oklch(0.585 0.233 277.117);
-  --chart-3: oklch(0.511 0.262 276.966);
-  --chart-4: oklch(0.457 0.24 277.023);
-  --chart-5: oklch(0.398 0.195 277.366);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.511 0.262 276.966);
-  --sidebar-primary-foreground: oklch(0.962 0.018 272.314);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
-
-  /* Legacy extras */
-  --danger: var(--destructive);
-  --danger-foreground: oklch(0.985 0 0);
-  --success: oklch(0.70 0.20 152);
-  --success-foreground: oklch(0.20 0.006 152);
-  --warning: oklch(0.78 0.17 75);
-  --warning-foreground: oklch(0.20 0.006 75);
-  --scrollbar: oklch(0.87 0.004 286.32);
-  --separator: var(--border);
-  --field-background: var(--background);
-  --field-foreground: var(--foreground);
-  --field-placeholder: var(--muted-foreground);
-  --field-radius: var(--radius);
-  --focus: var(--ring);
-  --segment: var(--secondary);
-  --segment-foreground: var(--secondary-foreground);
-  --default: var(--secondary);
-  --default-foreground: var(--secondary-foreground);
-  --color-1: oklch(66.2% 0.225 25.9);
-  --color-2: oklch(60.4% 0.26 302);
-  --color-3: oklch(69.6% 0.165 251);
-  --color-4: oklch(80.2% 0.134 225);
-  --color-5: oklch(90.7% 0.231 133);
-}
-
-.dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-
-  /* ── Base surface values (overridable by custom theme inline) ── */
-  --surface: oklch(0.21 0.006 285.885);
-  --surface-foreground: oklch(0.985 0 0);
-  --surface-secondary: oklch(0.274 0.006 286.033);
-  --surface-secondary-foreground: oklch(0.985 0 0);
-  --surface-tertiary: oklch(0.25 0.006 286.033);
-  --surface-tertiary-foreground: oklch(0.985 0 0);
-  --overlay: oklch(0.21 0.006 285.885);
-  --overlay-foreground: oklch(0.985 0 0);
-
-  /* ── Shadcn aliases → derive from base surfaces ── */
-  --card: var(--surface);
-  --card-foreground: var(--surface-foreground);
-  --popover: var(--overlay);
-  --popover-foreground: var(--overlay-foreground);
-  --secondary: var(--surface-secondary);
-  --secondary-foreground: var(--surface-secondary-foreground);
-  --muted: var(--surface-secondary);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-
-  /* ── Brand accent (purple) ── */
-  --primary: oklch(0.541 0.281 293);
-  --primary-foreground: oklch(0.985 0 0);
-  --accent: oklch(0.541 0.281 293);
-  --accent-foreground: oklch(0.985 0 0);
-
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
-  --chart-1: oklch(0.785 0.115 274.713);
-  --chart-2: oklch(0.585 0.233 277.117);
-  --chart-3: oklch(0.511 0.262 276.966);
-  --chart-4: oklch(0.457 0.24 277.023);
-  --chart-5: oklch(0.398 0.195 277.366);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.585 0.233 277.117);
-  --sidebar-primary-foreground: oklch(0.962 0.018 272.314);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
-
-  /* Legacy extras */
-  --danger: var(--destructive);
-  --danger-foreground: oklch(0.985 0 0);
-  --scrollbar: oklch(0.55 0.010 286.033);
-  --separator: var(--border);
-  --field-background: oklch(0.18 0.006 285.823);
-  --field-foreground: var(--foreground);
-  --field-placeholder: var(--muted-foreground);
-  --focus: var(--ring);
-  --segment: var(--secondary);
-  --segment-foreground: var(--secondary-foreground);
-  --default: var(--secondary);
-  --default-foreground: var(--secondary-foreground);
-  --color-1: oklch(66.2% 0.225 25.9);
-  --color-2: oklch(60.4% 0.26 302);
-  --color-3: oklch(69.6% 0.165 251);
-  --color-4: oklch(80.2% 0.134 225);
-  --color-5: oklch(90.7% 0.231 133);
-}
-
+/* Project fonts — Geist for body, Krona One for headings. */
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-heading: var(--font-krona);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
-
-  /* Surface / overlay / semantic colors */
-  --color-surface: var(--surface);
-  --color-surface-foreground: var(--surface-foreground);
-  --color-surface-secondary: var(--surface-secondary);
-  --color-surface-secondary-foreground: var(--surface-secondary-foreground);
-  --color-surface-tertiary: var(--surface-tertiary);
-  --color-surface-tertiary-foreground: var(--surface-tertiary-foreground);
-  --color-overlay: var(--overlay);
-  --color-overlay-foreground: var(--overlay-foreground);
-  --color-danger: var(--danger);
-  --color-danger-foreground: var(--danger-foreground);
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-separator: var(--separator);
-  --color-scrollbar: var(--scrollbar);
-
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-  --animate-gradient: gradient 8s linear infinite;
-  @keyframes gradient {
-  to {
-    background-position: var(--bg-size, 300%) 0;
-    }
-  }
-  --animate-marquee: marquee var(--duration) infinite linear;
-  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite
-;
-  @keyframes marquee {
-  from {
-    transform: translateX(0);
-    }
-  to {
-    transform: translateX(calc(-100% - var(--gap)));
-    }
-  }
-  @keyframes marquee-vertical {
-  from {
-    transform: translateY(0);
-    }
-  to {
-    transform: translateY(calc(-100% - var(--gap)));
-    }
-  }
-  --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
-  --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
-  @keyframes shimmer-slide {
-  to {
-    transform: translate(calc(100cqw - 100%), 0);
-    }
-  }
-  @keyframes spin-around {
-  0% {
-    transform: translateZ(0) rotate(0);
-    }
-  15%, 35% {
-    transform: translateZ(0) rotate(90deg);
-    }
-  65%, 85% {
-    transform: translateZ(0) rotate(270deg);
-    }
-  100% {
-    transform: translateZ(0) rotate(360deg);
-    }
-  }
-  --animate-orbit: orbit calc(var(--duration)*1s) linear infinite;
-  @keyframes orbit {
-  0% {
-    transform: rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
-    }
-  100% {
-    transform: rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc((var(--angle) * -1deg) - 360deg));
-    }
-  }
-  --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
-  --color-color-5: var(--color-5);
-  --color-color-4: var(--color-4);
-  --color-color-3: var(--color-3);
-  --color-color-2: var(--color-2);
-  --color-color-1: var(--color-1);
-  @keyframes rainbow {
-  0% {
-    background-position: 0%;
-    }
-  100% {
-    background-position: 200%;
-    }
-  }}
-
-@keyframes heartPop {
-  0%   { transform: scale(0.2) translateY(0);    opacity: 1; }
-  40%  { transform: scale(1.5) translateY(-8px);  opacity: 1; }
-  70%  { transform: scale(1.1) translateY(-16px); opacity: 0.8; }
-  100% { transform: scale(0.9) translateY(-32px); opacity: 0; }
-}
-.animate-heart-pop {
-  animation: heartPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground font-sans;
-  }
-  html {
-    @apply font-sans;
-  }
+  * { @apply border-border outline-focus/50; }
+  body { @apply bg-background text-foreground font-sans; }
+  html { @apply font-sans; }
 }
 
-/* ── Glass panels need stacking context ─────────────────────────────────── */
-[data-ui-style="glass"] {
-  isolation: isolate;
-}
 
 /*
- * Glass mode: color variables adapt to light/dark theme.
- * BackgroundProvider auto-switches the theme (light ↔ dark) based on
- * wallpaper brightness, so :root (light) and .dark are the right hooks.
- *
- * Light theme glass — dark text, dark borders, visible on bright wallpapers.
+ * HeroUI Theme Customization
+ * Add this to your global.css after importing @heroui/styles
+ * Only includes variables users need to customize
+ * @see https://heroui.com/docs/react/getting-started/theming
  */
-:root [data-ui-style="glass"] {
-  --foreground: oklch(0.12 0.005 285.823);
-  --surface-foreground: oklch(0.12 0.005 285.823);
-  --muted-foreground: oklch(0.42 0.016 285.938);
-  --border: oklch(0 0 0 / 10%);
-  --sidebar-foreground: oklch(0.12 0.005 285.823);
-}
 
 /*
- * Dark theme glass — light text, white borders, visible on dark wallpapers.
- */
-.dark [data-ui-style="glass"] {
-  --foreground: oklch(0.985 0 0);
-  --surface-foreground: oklch(0.985 0 0);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --border: oklch(1 0 0 / 12%);
-  --sidebar-foreground: oklch(0.985 0 0);
-}
-
-/*
- * Fallback: data-wallpaper-brightness is set by useBackground on <html>.
- * These selectors override theme-level variables when brightness is known.
- */
-[data-wallpaper-brightness="light"] [data-ui-style="glass"] {
-  --foreground: oklch(0.12 0.005 285.823);
-  --surface-foreground: oklch(0.12 0.005 285.823);
-  --muted-foreground: oklch(0.42 0.016 285.938);
-  --border: oklch(0 0 0 / 10%);
-  --sidebar-foreground: oklch(0.12 0.005 285.823);
-}
-
-[data-wallpaper-brightness="dark"] [data-ui-style="glass"] {
-  --foreground: oklch(0.985 0 0);
-  --surface-foreground: oklch(0.985 0 0);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --border: oklch(1 0 0 / 12%);
-  --sidebar-foreground: oklch(0.985 0 0);
-}
-
-/* ── Glass CSS variable defaults (overridden at runtime by useLayoutPrefs) ── */
-:root {
-  --glass-blur: 48px;
-  --glass-opacity: 0.62;
-  --glass-tint-color: transparent;
-}
-
-/* ── Glass blur utility (replaces Tailwind backdrop-blur-2xl) ───────────── */
-.glass-blur {
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(190%) brightness(1.02);
-  backdrop-filter: blur(var(--glass-blur)) saturate(190%) brightness(1.02);
-}
-
-/* ── Glass user-panel — slightly more opaque than sidebar ───────────────── */
-.glass-bg-user-panel {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.08)));
-}
-.dark .glass-bg-user-panel {
-  background: var(--glass-tint-color), oklch(0.19 0.006 286 / 0.80);
-}
-
-/*
- * Glass background utility classes — light mode uses white tint, dark mode
- * uses dark-tinted panels (like macOS dark glass) so panels are visible on
- * dark wallpapers. Dark mode opacities are tuned independently.
+ * Vibrant Palette: Add data-vibrant-palette="true" to your <html> element
+ * for more saturated soft foreground colors (less accessible contrast).
+ * Example: <html data-vibrant-palette="true">
  */
 
-/* Sidebar */
-.glass-bg-sidebar {
-  background: var(--glass-tint-color), rgba(255, 255, 255, var(--glass-opacity));
-}
-.dark .glass-bg-sidebar {
-  background: var(--glass-tint-color), oklch(0.18 0.006 286 / 0.78);
+:root,
+.light,
+.default,
+[data-theme="light"],
+[data-theme="default"] {
+  /* Theme Colors (Light Mode) */
+  --accent: oklch(53.54% 0.2791 289.47);
+  --accent-foreground: oklch(99.11% 0 0);
+  --background: oklch(97.02% 0.0094 289.47);
+  --border: oklch(90.00% 0.0094 289.47);
+  --danger: oklch(65.32% 0.2372 30.02);
+  --danger-foreground: oklch(99.11% 0 0);
+  --default: oklch(94.00% 0.0094 289.47);
+  --default-foreground: oklch(21.03% 0.0059 289.47);
+  --field-background: oklch(100.00% 0.0047 289.47);
+  --field-border: transparent;
+  --field-foreground: oklch(21.03% 0.0094 289.47);
+  --field-placeholder: oklch(55.17% 0.0188 289.47);
+  --focus: oklch(53.54% 0.2791 289.47);
+  --foreground: oklch(21.03% 0.0094 289.47);
+  --muted: oklch(55.17% 0.0188 289.47);
+  --overlay: oklch(100.00% 0.0028 289.47);
+  --overlay-foreground: oklch(21.03% 0.0094 289.47);
+  --scrollbar: oklch(87.10% 0.0094 289.47);
+  --segment: oklch(100.00% 0.0094 289.47);
+  --segment-foreground: oklch(21.03% 0.0094 289.47);
+  --separator: oklch(92.00% 0.0094 289.47);
+  --success: oklch(73.29% 0.1971 155.09);
+  --success-foreground: oklch(21.03% 0.0059 155.09);
+  --surface: oklch(100.00% 0.0047 289.47);
+  --surface-foreground: oklch(21.03% 0.0094 289.47);
+  --surface-secondary: oklch(95.24% 0.0075 289.47);
+  --surface-secondary-foreground: oklch(21.03% 0.0094 289.47);
+  --surface-tertiary: oklch(93.73% 0.0075 289.47);
+  --surface-tertiary-foreground: oklch(21.03% 0.0094 289.47);
+  --warning: oklch(78.19% 0.1615 76.61);
+  --warning-foreground: oklch(21.03% 0.0059 76.61);
+
+  /* Border Radius */
+  --radius: 0.25rem;
+  --field-radius: 0.75rem;
+
 }
 
-/* Header */
-.glass-bg-header {
-  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.60));
-}
-.dark .glass-bg-header {
-  background: var(--glass-tint-color), oklch(0.15 0.006 286 / 0.72);
-}
-
-/* Input bar */
-.glass-bg-input {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.12)));
-}
-.dark .glass-bg-input {
-  background: var(--glass-tint-color), oklch(0.21 0.006 286 / 0.82);
-}
-
-/* Reply bar */
-.glass-bg-reply {
-  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.86));
-}
-.dark .glass-bg-reply {
-  background: var(--glass-tint-color), oklch(0.20 0.006 286 / 0.78);
-}
-
-/* Floating panels / context menus */
-.glass-bg-float {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.21)));
-}
-.dark .glass-bg-float {
-  background: var(--glass-tint-color), oklch(0.17 0.006 286 / 0.88);
-}
-
-/* Content/chat area */
-.glass-bg-content {
-  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.86));
-}
-.dark .glass-bg-content {
-  background: var(--glass-tint-color), oklch(0.16 0.006 286 / 0.72);
-}
-
-/* Settings / large modal */
-.glass-bg-modal {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.29)));
-}
-.dark .glass-bg-modal {
-  background: var(--glass-tint-color), oklch(0.17 0.006 286 / 0.92);
-}
-
-/* Date chip */
-.glass-bg-chip {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.03)));
-}
-.dark .glass-bg-chip {
-  background: var(--glass-tint-color), oklch(0.20 0.006 286 / 0.78);
-}
-
-/* Empty-state cards */
-.glass-bg-empty {
-  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.95));
-}
-.dark .glass-bg-empty {
-  background: var(--glass-tint-color), oklch(0.19 0.006 286 / 0.76);
-}
-
-/* ── Apple-like easing & helper classes for smooth UI animations ───────── */
-.ui-apple-ease {
-  transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
-}
-
-.ui-smooth {
-  transition-property: transform, opacity, background-color, color;
-  transition-duration: 280ms;
-  transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-apple-ease,
-  .ui-smooth {
-    transition: none !important;
-  }
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+  /* Theme Colors (Dark Mode) */
+  --accent: oklch(53.54% 0.2791 289.47);
+  --accent-foreground: oklch(99.11% 0 0);
+  --background: oklch(12.00% 0.0094 289.47);
+  --border: oklch(28.00% 0.0094 289.47);
+  --danger: oklch(59.40% 0.2004 28.91);
+  --danger-foreground: oklch(99.11% 0 0);
+  --default: oklch(27.40% 0.0094 289.47);
+  --default-foreground: oklch(99.11% 0 0);
+  --field-background: oklch(21.03% 0.0188 289.47);
+  --field-border: transparent;
+  --field-foreground: oklch(99.11% 0.0094 289.47);
+  --field-placeholder: oklch(70.50% 0.0188 289.47);
+  --focus: oklch(53.54% 0.2791 289.47);
+  --foreground: oklch(99.11% 0.0094 289.47);
+  --muted: oklch(70.50% 0.0188 289.47);
+  --overlay: oklch(21.03% 0.0188 289.47);
+  --overlay-foreground: oklch(99.11% 0.0094 289.47);
+  --scrollbar: oklch(70.50% 0.0094 289.47);
+  --segment: oklch(39.64% 0.0094 289.47);
+  --segment-foreground: oklch(99.11% 0.0094 289.47);
+  --separator: oklch(25.00% 0.0094 289.47);
+  --success: oklch(73.29% 0.1971 155.09);
+  --success-foreground: oklch(21.03% 0.0059 155.09);
+  --surface: oklch(21.03% 0.0188 289.47);
+  --surface-foreground: oklch(99.11% 0.0094 289.47);
+  --surface-secondary: oklch(25.70% 0.0141 289.47);
+  --surface-secondary-foreground: oklch(99.11% 0.0094 289.47);
+  --surface-tertiary: oklch(27.21% 0.0141 289.47);
+  --surface-tertiary-foreground: oklch(99.11% 0.0094 289.47);
+  --warning: oklch(82.03% 0.1414 80.62);
+  --warning-foreground: oklch(21.03% 0.0059 80.62);
 }

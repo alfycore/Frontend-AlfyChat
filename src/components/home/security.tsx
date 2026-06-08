@@ -1,36 +1,37 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
+import { Card, Chip, Separator, Typography } from '@heroui/react';
 import { LockIcon, ShieldCheckIcon, GlobeIcon, CodeIcon } from '@/components/icons';
 
-const POINTS = [
+const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
+
+type Tone = 'accent' | 'success' | 'warning';
+
+const POINTS: { icon: typeof LockIcon; tone: Tone; label: string; desc: string }[] = [
   {
     icon: LockIcon,
+    tone: 'success',
     label: 'Protocole Signal',
     desc: 'Standard de référence pour la messagerie chiffrée, audité en indépendance.',
-    accent: 'bg-[#EDF3EC] dark:bg-[#14532d]/30',
-    iconColor: 'text-[#346538] dark:text-[#4ade80]',
   },
   {
     icon: ShieldCheckIcon,
+    tone: 'success',
     label: 'Zéro tracking',
     desc: 'Aucune publicité, aucun suivi comportemental, aucune revente de données.',
-    accent: 'bg-[#EDF3EC] dark:bg-[#14532d]/30',
-    iconColor: 'text-[#346538] dark:text-[#4ade80]',
   },
   {
     icon: GlobeIcon,
+    tone: 'accent',
     label: 'Données en France',
     desc: 'Serveurs hébergés sur le territoire français, soumis au droit européen.',
-    accent: 'bg-[#E1F3FE] dark:bg-[#1e3a5f]/30',
-    iconColor: 'text-[#1F6C9F] dark:text-[#60a5fa]',
   },
   {
     icon: CodeIcon,
+    tone: 'warning',
     label: 'Code auditable',
     desc: 'Source ouverte, vérifiable et contribuable par toute la communauté.',
-    accent: 'bg-[#FBF3DB] dark:bg-[#78350f]/30',
-    iconColor: 'text-[#956400] dark:text-[#fbbf24]',
   },
 ];
 
@@ -47,10 +48,10 @@ function Reveal({
   return (
     <motion.div
       className={className}
-      initial={reduce ? false : { opacity: 0, y: 12 }}
+      initial={reduce ? false : { opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
       {children}
     </motion.div>
@@ -59,48 +60,56 @@ function Reveal({
 
 export function HomeSecurity() {
   return (
-    <section id="security" className="py-28 bg-[#F7F6F3] dark:bg-[#0a0a0a] border-t border-[#EAEAEA] dark:border-[#27272a]">
-      <div className="mx-auto max-w-6xl px-8">
+    <section id="security" className="border-t border-border bg-background py-28">
+      <div className="mx-auto max-w-6xl px-6 lg:px-12">
         <div className="grid grid-cols-1 gap-16 md:grid-cols-2 md:items-center">
 
-          {/* Left: photo */}
+          {/* Left — image inside HeroUI Card */}
           <Reveal delay={0.04} className="order-2 md:order-1">
-            <img
-              src="https://picsum.photos/seed/alfychat-privacy-security/800/600"
-              alt="Sécurité et confidentialité AlfyChat"
-              className="w-full rounded-[12px] object-cover"
-            />
+            <Card className="overflow-hidden p-0">
+              <img
+                src="https://picsum.photos/seed/alfychat-privacy-security/800/600"
+                alt="Sécurité et confidentialité AlfyChat"
+                className="w-full select-none object-cover"
+                draggable={false}
+              />
+            </Card>
           </Reveal>
 
-          {/* Right: content */}
-          <div className="order-1 md:order-2">
-            <Reveal>
-              <h2
-                className="text-[2.2rem] leading-[1.1] tracking-[-0.02em] text-[#111111] dark:text-[#fafafa] font-bold"
-                style={{ fontFamily: 'var(--font-krona), sans-serif' }}
+          {/* Right — content */}
+          <div className="order-1 flex flex-col md:order-2">
+            <Reveal className="flex flex-col gap-4">
+              <Chip color="accent" variant="soft" size="sm" className="w-fit">
+                <Chip.Label>Sécurité</Chip.Label>
+              </Chip>
+              <Typography
+                type="h2"
+                weight="bold"
+                className="text-foreground"
+                style={{ ...KRONA, fontSize: 'clamp(1.9rem, 3vw, 2.6rem)', lineHeight: 1.1, letterSpacing: '-0.025em' }}
               >
-                La vie privée n'est
-                <br />
-                <em className="not-italic text-[#787774] dark:text-[#71717a]">pas une option.</em>
-              </h2>
-              <p className="mt-4 text-[15px] text-[#787774] dark:text-[#71717a] leading-relaxed max-w-md">
-                AlfyChat est construit autour d'une conviction: vos conversations vous appartiennent. Chaque choix technique garantit cette promesse.
-              </p>
+                La vie privée n'est pas une option.
+              </Typography>
+              <Typography type="body" color="muted" className="max-w-md">
+                AlfyChat est construit autour d'une conviction : vos conversations vous appartiennent.
+                Chaque choix technique garantit cette promesse.
+              </Typography>
             </Reveal>
 
-            {/* Divider-style list — protocol §5 Accordions */}
-            <div className="mt-10">
-              {POINTS.map(({ icon: Icon, label, desc, accent, iconColor }, i) => (
+            <div className="mt-9 flex flex-col">
+              {POINTS.map(({ icon: Icon, tone, label, desc }, i) => (
                 <Reveal key={label} delay={0.06 + i * 0.07}>
-                  <div
-                    className={`flex items-start gap-4 py-5 ${i < POINTS.length - 1 ? 'border-b border-[#EAEAEA] dark:border-[#27272a]' : ''}`}
-                  >
-                    <div className={`flex size-9 shrink-0 items-center justify-center rounded-[8px] ${accent}`}>
-                      <Icon size={14} className={iconColor} />
+                  {i > 0 && <Separator />}
+                  <div className="flex items-start gap-4 py-5">
+                    <div
+                      className="flex size-9 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: `color-mix(in oklch, var(--${tone}) 13%, transparent)` }}
+                    >
+                      <Icon size={14} style={{ color: `var(--${tone})` }} />
                     </div>
-                    <div className="space-y-0.5 min-w-0">
-                      <p className="text-[13.5px] font-semibold text-[#111111] dark:text-[#fafafa]">{label}</p>
-                      <p className="text-[12px] text-[#787774] dark:text-[#71717a] leading-relaxed">{desc}</p>
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <Typography type="body-sm" weight="semibold" className="text-foreground">{label}</Typography>
+                      <Typography type="body-xs" color="muted">{desc}</Typography>
                     </div>
                   </div>
                 </Reveal>

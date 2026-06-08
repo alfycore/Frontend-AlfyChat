@@ -16,7 +16,8 @@ export default function NotFound() {
       <div className="relative z-10 flex w-full max-w-md flex-col items-center px-6 text-center">
         {/* Logo */}
         <Link href="/" className="mb-10 flex items-center gap-2.5 opacity-80 transition-opacity hover:opacity-100">
-          <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={24} height={24} />
+          <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={24} height={24} className="dark:hidden" />
+          <Image src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" width={24} height={24} className="hidden dark:block" />
           <span className="font-heading text-base text-foreground">AlfyChat</span>
         </Link>
 
@@ -58,4 +59,3 @@ export default function NotFound() {
     </div>
   );
 }
-

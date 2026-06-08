@@ -1,18 +1,15 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
+import { Chip, Table, Typography } from '@heroui/react';
+import { CheckIcon } from '@/components/icons';
 
-const APPS = [
-  { name: 'AlfyChat',  highlight: true  },
-  { name: 'Stoat',     highlight: false },
-  { name: 'Signal',    highlight: false },
-  { name: 'Telegram',  highlight: false },
-  { name: 'Discord',   highlight: false },
-  { name: 'WhatsApp',  highlight: false },
-];
+const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
+const MONO = { fontFamily: 'var(--font-geist-mono, monospace)' } as const;
+
+const APPS = ['AlfyChat', 'Stoat', 'Signal', 'Telegram', 'Discord', 'WhatsApp'];
 
 const FEATURES: { label: string; values: boolean[] }[] = [
-  // label                              Alfy   Stoat  Signal  Telegram Discord WhatsApp
   { label: 'Chiffrement E2E par défaut',  values: [true,  false, true,  false, false, true]  },
   { label: 'Code source ouvert',          values: [true,  true,  true,  true,  false, false] },
   { label: 'Données hébergées en Europe', values: [true,  true,  false, false, false, false] },
@@ -22,6 +19,27 @@ const FEATURES: { label: string; values: boolean[] }[] = [
   { label: 'Serveurs communautaires',     values: [true,  true,  false, false, true,  false] },
   { label: 'API ouverte pour bots',       values: [true,  true,  false, true,  true,  false] },
 ];
+
+function Cell({ on, primary }: { on: boolean; primary: boolean }) {
+  if (!on) {
+    return (
+      <span
+        className="inline-block h-px w-3 rounded-full"
+        style={{ background: 'var(--muted)', opacity: 0.4 }}
+        aria-label="non"
+      />
+    );
+  }
+  return (
+    <span
+      className="inline-flex size-6 items-center justify-center rounded-full"
+      style={{ background: `color-mix(in oklch, var(--${primary ? 'accent' : 'success'}) 14%, transparent)` }}
+      aria-label="oui"
+    >
+      <CheckIcon size={11} style={{ color: `var(--${primary ? 'accent' : 'success'})` }} />
+    </span>
+  );
+}
 
 function Reveal({
   children,
@@ -36,156 +54,89 @@ function Reveal({
   return (
     <motion.div
       className={className}
-      initial={reduce ? false : { opacity: 0, y: 12 }}
+      initial={reduce ? false : { opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.08 }}
-      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
       {children}
     </motion.div>
   );
 }
 
-function Check({ highlight }: { highlight: boolean }) {
-  return (
-    <div
-      className={`inline-flex size-6 items-center justify-center rounded-full`}
-      style={highlight
-        ? { background: 'rgba(118,39,255,0.12)' }
-        : { background: 'var(--check-bg, #F5F5F3)' }
-      }
-    >
-      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden>
-        <path
-          d="M2 5.5L4.5 8L9 3"
-          stroke={highlight ? '#7627FF' : '#AAAAAA'}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  );
-}
-
-function Cross() {
-  return (
-    <div className="inline-flex size-6 items-center justify-center rounded-full bg-[#F5F5F3] dark:bg-[#27272a]">
-      <svg width="9" height="9" viewBox="0 0 9 9" fill="none" aria-hidden>
-        <path
-          d="M2 2L7 7M7 2L2 7"
-          stroke="#CCCCCC"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
-  );
-}
-
 export function HomeComparison() {
-  /* column template: feature label + 6 app columns */
-  const cols = `minmax(200px, 1fr) repeat(${APPS.length}, 110px)`;
-
   return (
-    <section className="py-28 bg-[#F7F6F3] dark:bg-[#0a0a0a] border-t border-[#EAEAEA] dark:border-[#27272a]">
-      <div className="mx-auto max-w-6xl px-8">
+    <section className="border-t border-border bg-background py-28">
+      <div className="mx-auto max-w-6xl px-6 lg:px-12">
 
-        {/* Header */}
-        <Reveal className="mb-14 max-w-xl">
-          <span
-            className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#787774] dark:text-[#71717a]"
-            style={{ fontFamily: 'var(--font-geist-mono, monospace)' }}
+        <Reveal className="mb-14 flex max-w-xl flex-col gap-4">
+          <Chip color="accent" variant="soft" size="sm" className="w-fit">
+            <Chip.Label>Comparaison</Chip.Label>
+          </Chip>
+          <Typography
+            type="h2"
+            weight="bold"
+            className="text-foreground"
+            style={{ ...KRONA, fontSize: 'clamp(1.9rem, 3vw, 2.6rem)', lineHeight: 1.1, letterSpacing: '-0.025em' }}
           >
-            Comparaison
-          </span>
-          <h2
-            className="mt-3 text-[2.2rem] leading-[1.1] tracking-[-0.02em] text-[#111111] dark:text-[#fafafa] font-bold"
-            style={{ fontFamily: 'var(--font-krona), sans-serif' }}
-          >
-            Pourquoi choisir
-            <br />
-            AlfyChat plutôt qu'une autre ?
-          </h2>
-          <p className="mt-4 text-[15px] text-[#787774] dark:text-[#71717a] leading-relaxed">
+            Pourquoi choisir AlfyChat plutôt qu'une autre ?
+          </Typography>
+          <Typography type="body" color="muted">
             La plupart des messageries populaires font des compromis sur votre vie privée. AlfyChat n'en fait aucun.
-          </p>
+          </Typography>
         </Reveal>
 
-        {/* Scrollable table wrapper */}
         <Reveal delay={0.06}>
-          <div className="overflow-x-auto -mx-2 px-2">
-            <div
-              className="rounded-[12px] bg-white dark:bg-[#18181b] border border-[#EAEAEA] dark:border-[#27272a] overflow-hidden"
-              style={{ minWidth: 780, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
-            >
-              {/* Column headers */}
-              <div className="grid border-b border-[#EAEAEA] dark:border-[#27272a]" style={{ gridTemplateColumns: cols }}>
-                <div className="px-6 py-5" />
-                {APPS.map(({ name, highlight }) => (
-                  <div
-                    key={name}
-                    className={`px-2 py-5 text-center border-l border-[#EAEAEA] dark:border-[#27272a] ${
-                      highlight ? 'bg-[#FBFBFA] dark:bg-[#1a1a1e]' : ''
-                    }`}
-                  >
-                    <p
-                      className={`text-[12px] font-semibold leading-tight ${
-                        highlight ? 'text-[#111111] dark:text-[#fafafa]' : 'text-[#787774] dark:text-[#71717a]'
-                      }`}
-                      style={{ fontFamily: 'var(--font-krona), sans-serif' }}
-                    >
-                      {name}
-                    </p>
-                    {highlight && (
-                      <span className="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.06em]" style={{ background: 'rgba(118,39,255,0.12)', color: '#7627FF' }}>
-                        Recommandé
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Feature rows */}
-              {FEATURES.map(({ label, values }, rowIdx) => (
-                <motion.div
-                  key={label}
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.35, delay: rowIdx * 0.04, ease: 'easeOut' }}
-                  className={`grid border-b border-[#EAEAEA] dark:border-[#27272a] last:border-b-0 ${
-                    rowIdx % 2 === 1 ? 'bg-[#FBFBFA] dark:bg-[#0f0f11]' : 'bg-white dark:bg-[#18181b]'
-                  }`}
-                  style={{ gridTemplateColumns: cols }}
-                >
-                  <div className="px-6 py-4 flex items-center">
-                    <span className="text-[13px] text-[#111111] dark:text-[#e4e4e7]">{label}</span>
-                  </div>
-                  {values.map((val, colIdx) => (
-                    <div
-                      key={colIdx}
-                      className={`px-2 py-4 flex items-center justify-center border-l border-[#EAEAEA] dark:border-[#27272a] ${
-                        colIdx === 0 ? 'bg-[#FBFBFA] dark:bg-[#0f0f11]' : ''
-                      }`}
-                    >
-                      {val ? <Check highlight={colIdx === 0} /> : <Cross />}
-                    </div>
+          <Table>
+            <Table.ScrollContainer>
+              <Table.Content aria-label="Comparaison des messageries" className="min-w-190">
+                <Table.Header>
+                  <Table.Column isRowHeader>Fonctionnalité</Table.Column>
+                  {APPS.map((app, i) => (
+                    <Table.Column key={app}>
+                      <div className="flex flex-col items-center gap-1">
+                        <Typography
+                          type="body-sm"
+                          weight={i === 0 ? 'bold' : 'medium'}
+                          className={i === 0 ? 'text-accent' : 'text-muted'}
+                          style={KRONA}
+                        >
+                          {app}
+                        </Typography>
+                        {i === 0 && (
+                          <Chip color="accent" variant="soft" size="sm">
+                            <Chip.Label>Recommandé</Chip.Label>
+                          </Chip>
+                        )}
+                      </div>
+                    </Table.Column>
                   ))}
-                </motion.div>
-              ))}
-            </div>
-          </div>
+                </Table.Header>
+                <Table.Body>
+                  {FEATURES.map(({ label, values }) => (
+                    <Table.Row key={label}>
+                      <Table.Cell>
+                        <Typography type="body-sm" className="text-foreground">{label}</Typography>
+                      </Table.Cell>
+                      {values.map((v, colIdx) => (
+                        <Table.Cell key={colIdx}>
+                          <div className="flex items-center justify-center">
+                            <Cell on={v} primary={colIdx === 0} />
+                          </div>
+                        </Table.Cell>
+                      ))}
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
+          </Table>
         </Reveal>
 
-        {/* Bottom note */}
         <Reveal delay={0.1}>
-          <p
-            className="mt-5 text-[11px] text-[#AAAAAA] dark:text-[#52525b]"
-            style={{ fontFamily: 'var(--font-geist-mono, monospace)' }}
-          >
+          <Typography type="body-xs" color="muted" className="mt-5 block" style={MONO}>
             Comparaison basée sur les politiques de confidentialité publiques — mai 2026.
-          </p>
+          </Typography>
         </Reveal>
 
       </div>

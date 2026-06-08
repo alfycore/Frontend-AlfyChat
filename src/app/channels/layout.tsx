@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { Button } from '@heroui/react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useLayoutPrefs, useLayoutPrefsSync } from '@/hooks/use-layout-prefs';
@@ -31,39 +34,44 @@ import { ServerSettingsDialog } from '@/components/chat/server-settings-dialog';
 import { SettingsDialog } from '@/components/chat/settings-dialog';
 import { cn } from '@/lib/utils';
 
-// ── Resize handle ─────────────────────────────────────────────────────────────
+// ── Resize grip — Apple flat, borderless ───────────────────────────────────
 
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
   return (
     <div
       onMouseDown={onMouseDown}
-      className="group relative z-10 flex w-1 shrink-0 cursor-col-resize items-center justify-center bg-transparent transition-colors hover:bg-primary/5"
+      className="group relative z-10 flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-transparent"
     >
-      <div className="h-8 w-0.5 rounded-full bg-border transition-all group-hover:h-12 group-hover:bg-primary/40 group-active:bg-primary" />
+      <div className="h-9 w-1 rounded-full bg-muted/20 transition-all duration-200 group-hover:h-14 group-hover:bg-accent/40 group-active:bg-accent" />
     </div>
   );
 }
 
-// ── Loading screen ────────────────────────────────────────────────────────────
+// ── Loading screen ──────────────────────────────────────────────────────────
 
 function LoadingScreen() {
+  const reduce = useReducedMotion();
   return (
-    <div className="relative flex h-dvh items-center justify-center overflow-hidden bg-background">
-      
-      <div className="relative z-10 flex flex-col items-center gap-4">
-        <div className="flex size-16 animate-pulse items-center justify-center ">
+    <div className="flex h-dvh items-center justify-center bg-background">
+      <motion.div
+        initial={reduce ? false : { opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="flex flex-col items-center gap-4"
+      >
+        <div className="flex size-16 animate-pulse items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo/Alfychat.svg" alt="AlfyChat" className="dark:hidden" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" className="hidden dark:block" />
         </div>
-        <p className="text-sm text-muted-foreground">Chargement…</p>
-      </div>
+        <p className="text-sm text-muted">Chargement…</p>
+      </motion.div>
     </div>
   );
 }
 
-// ── Inner layout ──────────────────────────────────────────────────────────────
+// ── Inner layout ─────────────────────────────────────────────────────────────
 
 function LayoutInner({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -82,7 +90,10 @@ function LayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { isMobile, showSidebar, showMemberList, showSettings, memberListDesktopVisible, openSidebar, closeSidebar, closeSettings, closeAll } = useMobileNav();
+  const {
+    isMobile, showSidebar, showMemberList, showSettings, memberListDesktopVisible,
+    openSidebar, closeSidebar, closeSettings, closeAll,
+  } = useMobileNav();
   const { prefs: layoutPrefs } = useLayoutPrefs();
   useLayoutPrefsSync();
   const ui = useUIStyle();
@@ -105,8 +116,21 @@ function LayoutInner({ children }: { children: ReactNode }) {
     ?? (activeGroupId ? `group:${activeGroupId}` : null)
     ?? (pathname === '/channels/me' || pathname === '/channels/me/' ? 'friends' : null);
 
-  // ── Server settings ────────────────────────────────────────────────────────
+  // ── Server settings ──────────────────────────────────────────────────────
   const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
+
+  // ── Collapsible sidebar (Linear/Notion style, persisted) ────────────────────
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try { if (localStorage.getItem('alfychat_sidebar_collapsed') === '1') setCollapsed(true); } catch {}
+  }, []);
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((c) => {
+      const next = !c;
+      try { localStorage.setItem('alfychat_sidebar_collapsed', next ? '1' : '0'); } catch {}
+      return next;
+    });
+  }, []);
 
   // ── Incoming call ──────────────────────────────────────────────────────────
   const { callType, callStatus, callerName, callerAvatar, isGroup, callCategory, acceptCall, joinCall, declineCall } = useCallContext();
@@ -211,7 +235,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
     else if (activeServerId) router.push(`/channels/server/${activeServerId}/${ch}`);
   }, [router, activeServerId]);
 
-  // ── Prefetch initial data (servers + conversations) before revealing UI ─────
+  // ── Prefetch initial data before revealing UI ──────────────────────────────
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -228,64 +252,67 @@ function LayoutInner({ children }: { children: ReactNode }) {
     if (!isLoading && !isAuthenticated) router.push('/login');
   }, [isLoading, isAuthenticated, router]);
 
-  // ── Close mobile sidebar on navigate ──────────────────────────────────────
+  // ── Close mobile sidebar on navigate ───────────────────────────────────────
   useEffect(() => { if (isMobile) closeAll(); }, [pathname, isMobile, closeAll]);
 
   if (!mounted || isLoading || !user || !layoutReady) return <LoadingScreen />;
 
-  // ── Glass wallpaper ────────────────────────────────────────────────────────
+  // ── Glass wallpaper ─────────────────────────────────────────────────────────
   const glassBg = wallpaper
     ? (wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient') ? wallpaper : `url(${resolveMediaUrl(wallpaper) ?? wallpaper})`)
     : 'radial-gradient(ellipse 90% 70% at 15% 5%, oklch(0.80 0.14 290 / 55%) 0%, transparent 55%), radial-gradient(ellipse 70% 55% at 85% 85%, oklch(0.75 0.16 230 / 45%) 0%, transparent 55%), radial-gradient(ellipse 55% 45% at 55% 45%, oklch(0.82 0.11 320 / 30%) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 30% 75%, oklch(0.78 0.13 180 / 25%) 0%, transparent 50%)';
 
-  const isTopBottom = layoutPrefs.serverListPosition === 'top' || layoutPrefs.serverListPosition === 'bottom';
+  const showMembers = memberListDesktopVisible && !!activeServerId;
 
-  // ── Sidebar panels ─────────────────────────────────────────────────────────
-  const serverListPanel = (
-    <div data-layout="server-list" className={cn(
-      'shrink-0',
-      !isTopBottom && 'h-full',
-      ui.sidebarWrapper,
-      ui.sidebarTransition,
-    )}>
-      <ServerList
-        selectedServer={activeServerId}
-        onSelectServer={handleSelectServer}
-        horizontal={isTopBottom}
-      />
+  // ── Server rail — always visible icon column + collapse toggle ──────────────
+  const serverRail = (
+    <div className="flex h-full shrink-0 flex-col items-center">
+      <div className={cn('min-h-0 flex-1 overflow-hidden', ui.sidebarWrapper)}>
+        <ServerList selectedServer={activeServerId} onSelectServer={handleSelectServer} />
+      </div>
+      <Button
+        isIconOnly
+        size="sm"
+        variant="ghost"
+        onPress={toggleCollapsed}
+        aria-label={collapsed ? 'Déplier la sidebar' : 'Replier la sidebar'}
+        className="mt-1 shrink-0 text-muted hover:text-foreground"
+      >
+        {collapsed ? <ChevronRightIcon size={15} /> : <ChevronLeftIcon size={15} />}
+      </Button>
     </div>
   );
 
-  const channelListPanel = (
-    <div
-      data-layout="sidebar"
-      style={!isTopBottom ? { width: channelListWidth } : undefined}
-      className={cn(
-        'flex shrink-0 flex-col',
-        !isTopBottom && 'h-full',
-        ui.sidebarWrapper,
-        ui.sidebarTransition,
+  // ── Channel panel — collapses to width 0 ────────────────────────────────────
+  const channelPanel = (
+    <AnimatePresence initial={false}>
+      {!collapsed && (
+        <motion.aside
+          key="channels"
+          data-layout="sidebar"
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: channelListWidth + 8, opacity: 1 }}
+          exit={{ width: 0, opacity: 0 }}
+          transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="h-full shrink-0 overflow-hidden pl-2"
+        >
+          <div
+            style={{ width: channelListWidth }}
+            className={cn('flex h-full flex-col overflow-hidden', ui.sidebarWrapper, ui.sidebarBg)}
+          >
+            <div className="min-h-0 flex-1">
+              <ChannelList
+                serverId={activeServerId}
+                selectedChannel={selectedChannel}
+                onSelectChannel={handleSelectChannel}
+                onOpenSettings={() => setServerSettingsOpen(true)}
+              />
+            </div>
+            <VoiceControlBar />
+          </div>
+        </motion.aside>
       )}
-    >
-      <ChannelList
-        serverId={activeServerId}
-        selectedChannel={selectedChannel}
-        onSelectChannel={handleSelectChannel}
-        onOpenSettings={() => setServerSettingsOpen(true)}
-      />
-      <VoiceControlBar />
-    </div>
-  );
-
-  // ── Member list ────────────────────────────────────────────────────────────
-  const memberListPanel = memberListDesktopVisible && activeServerId && (
-    <div
-      data-layout="member-list"
-      style={{ width: memberListWidth }}
-      className={cn('h-full shrink-0', ui.panelWrapper, ui.panelTransition)}
-    >
-      <MemberList serverId={activeServerId} />
-    </div>
+    </AnimatePresence>
   );
 
   return (
@@ -293,10 +320,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
       data-layout="root"
       data-ui-style={layoutPrefs.uiStyle}
       className={cn(
-        'flex h-dvh overflow-hidden',
+        'relative flex h-dvh flex-row overflow-hidden',
         !ui.isGlass && 'bg-background',
         !isMobile && ui.rootPadding,
-        isTopBottom ? 'flex-col' : 'flex-row',
       )}
       style={ui.isGlass ? { backgroundImage: glassBg, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
     >
@@ -311,76 +337,53 @@ function LayoutInner({ children }: { children: ReactNode }) {
         onDecline={declineCall}
       />
 
-      {/* ── MOBILE: member list backdrop ── */}
+      {/* MOBILE — member list backdrop */}
       {isMobile && showMemberList && (
         <div className="fixed inset-0 z-40 bg-black/60" onClick={closeAll} />
       )}
 
-      {/* ── MOBILE: swipe backdrop ── */}
-      {/* Géré directement dans MobileNavDrawer via backdropRef */}
-
-      {/* ── DESKTOP: top server list ── */}
-      {!isMobile && layoutPrefs.serverListPosition === 'top' && serverListPanel}
-
-      {/* ── DESKTOP: main row ── */}
+      {/* DESKTOP — collapsible sidebar + content + floating members */}
       {!isMobile && (
-        <div className={cn('flex min-w-0 gap-2', isTopBottom ? 'min-h-0 flex-1 flex-row' : 'h-full w-full flex-row')}>
+        <div className="flex h-full w-full min-w-0 flex-row gap-2">
+          {/* Sidebar group : server rail + collapsible channels */}
+          <div className="flex h-full shrink-0 flex-row">
+            {serverRail}
+            {channelPanel}
+          </div>
 
-          {/* Member list LEFT */}
-          {memberListDesktopVisible && layoutPrefs.memberListSide === 'left' && activeServerId && (
-            <>
-              <div data-layout="member-list" style={{ width: memberListWidth }} className={cn('h-full shrink-0', ui.panelWrapper)}>
-                <MemberList serverId={activeServerId} />
-              </div>
-              <ResizeHandle onMouseDown={onMemberResize} />
-            </>
-          )}
+          {!collapsed && <ResizeHandle onMouseDown={onChannelResize} />}
 
-          {/* Server list LEFT */}
-          {layoutPrefs.serverListPosition === 'left' && serverListPanel}
-
-          {/* Channel list (left of content, unless right position) */}
-          {layoutPrefs.serverListPosition !== 'right' && (
-            <>
-              {channelListPanel}
-              {ui.isGlass && <ResizeHandle onMouseDown={onChannelResize} />}
-            </>
-          )}
-
-          {/* ── Content ── */}
-          <div data-layout="content" className={cn('flex min-w-0 flex-1 flex-col', !ui.isGlass && 'bg-card', ui.panelWrapper, ui.panelTransition)}>
+          {/* Content */}
+          <div data-layout="content" className={cn('relative flex min-w-0 flex-1 flex-col', ui.panelWrapper, ui.panelTransition)}>
             {children}
           </div>
 
-          {/* Channel list RIGHT */}
-          {layoutPrefs.serverListPosition === 'right' && (
-            <>
-              <ResizeHandle onMouseDown={onChannelResize} />
-              {channelListPanel}
-            </>
-          )}
-
-          {/* Server list RIGHT */}
-          {layoutPrefs.serverListPosition === 'right' && serverListPanel}
-
-          {/* Member list RIGHT (default) */}
-          {memberListDesktopVisible && layoutPrefs.memberListSide !== 'left' && activeServerId && (
-            <>
-              <ResizeHandle onMouseDown={onMemberResize} />
-              <div data-layout="member-list" style={{ width: memberListWidth }} className={cn('h-full shrink-0', ui.panelWrapper)}>
-                <MemberList serverId={activeServerId} />
-              </div>
-            </>
+          {/* Member list — floating overlay (slides from the right) */}
+          {activeServerId && (
+            <motion.div
+              data-layout="member-list"
+              style={{ width: memberListWidth }}
+              initial={false}
+              animate={{
+                x: showMembers ? 0 : 24,
+                opacity: showMembers ? 1 : 0,
+              }}
+              transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className={cn(
+                'absolute inset-y-2 right-2 z-40 overflow-hidden shadow-2xl shadow-black/20',
+                !showMembers && 'pointer-events-none',
+                ui.panelWrapper,
+                ui.panelTransition,
+              )}
+            >
+              <MemberList serverId={activeServerId} />
+            </motion.div>
           )}
         </div>
       )}
 
-      {/* ── DESKTOP: bottom server list ── */}
-      {!isMobile && layoutPrefs.serverListPosition === 'bottom' && serverListPanel}
-
-      {/* ── MOBILE: content ── */}
+      {/* MOBILE — content + bottom nav */}
       {isMobile && (() => {
-        // Show bottom nav when not in the sidebar AND on home/friends/settings (no active chat)
         const showNav = !showSidebar && (showSettings || (!activeDmId && !activeGroupId && !activeChannelId));
         return (
           <>
@@ -396,7 +399,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         );
       })()}
 
-      {/* ── MOBILE: tiroir navigation (serveurs + channels) ── */}
+      {/* MOBILE — nav drawer (servers + channels) */}
       {isMobile && (
         <MobileNavDrawer
           sidebarRef={sidebarRef}
@@ -411,8 +414,8 @@ function LayoutInner({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* ── MOBILE: member list overlay (slide depuis la droite) ── */}
-        {isMobile && activeServerId && (
+      {/* MOBILE — member list slide-over */}
+      {isMobile && activeServerId && (
         <div
           className={cn(
             'fixed inset-y-0 right-0 z-50 w-[82vw] max-w-xs overflow-hidden shadow-2xl',
@@ -425,7 +428,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* ── Server settings dialog ── */}
+      {/* Server settings dialog */}
       {serverSettingsOpen && activeServerId && (
         <ServerSettingsDialog
           serverId={activeServerId}
@@ -435,10 +438,10 @@ function LayoutInner({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* ── User settings dialog (mobile bottom nav) ── */}
+      {/* User settings dialog */}
       <SettingsDialog open={showSettings} onOpenChange={(open) => !open && closeSettings()} />
 
-      {/* ── Mobile permission prompt (notifications + micro) ── */}
+      {/* Mobile permission prompt */}
       {isMobile && <MobilePermissionPrompt />}
     </div>
   );

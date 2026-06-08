@@ -1,6 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+import {
+  Card,
+  Chip,
+  Alert,
+  Tabs,
+  Modal,
+  Skeleton,
+  Separator,
+  ProgressBar,
+  Button,
+} from '@heroui/react';
 import {
   GlobeIcon,
   UserIcon,
@@ -11,15 +23,8 @@ import {
   ServerIcon,
   WifiIcon,
   ImageIcon,
-  CheckCircleIcon,
-  AlertTriangleIcon,
-  XCircleIcon,
-  HelpCircleIcon,
-  XIcon,
 } from '@/components/icons';
 import { useTranslation } from '@/components/locale-provider';
-import { LandingNavbar } from '@/components/site-navbar';
-import { SiteFooter } from '@/components/site-footer';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -51,7 +56,7 @@ interface Incident {
   start_date_time: number;
   end_date_time: number | null;
   state: string;
-  status: string;          // human-readable current status message from Kener
+  status: string;
   incident_type: string;
   incident_source: string;
   monitors: IncidentMonitor[];
@@ -61,7 +66,7 @@ interface IncidentComment {
   id: number;
   incident_id: number;
   comment: string;
-  created_at: number; // unix seconds
+  created_at: number;
   state?: string;
 }
 
@@ -80,22 +85,32 @@ interface MinutePoint {
   latency: number;
 }
 
-// ── Gradient bar style ───────────────────────────────────────────────────────
+// ── HeroUI semantic colors (themed via CSS variables) ─────────────────────────
+
+const COLOR = {
+  up:    'color-mix(in oklab, var(--success) 78%, transparent)',
+  deg:   'color-mix(in oklab, var(--warning) 82%, transparent)',
+  down:  'color-mix(in oklab, var(--danger) 85%, transparent)',
+  maint: 'color-mix(in oklab, var(--accent) 62%, transparent)',
+  none:  'color-mix(in oklab, var(--muted) 28%, transparent)',
+};
+
+// ── Gradient bar style ────────────────────────────────────────────────────────
 
 function getBarStyle(d: DayBucket): React.CSSProperties {
   const total = d.up + d.degraded + d.down;
   const maintFrac = Math.min(1, d.maintenanceMinutes / 1440);
 
-  if (total === 0 && d.maintenanceMinutes === 0) return { background: 'rgba(100,116,139,0.25)' };
-  if (total === 0 && d.maintenanceMinutes > 0)   return { background: 'rgba(59,130,246,0.6)' };
+  if (total === 0 && d.maintenanceMinutes === 0) return { background: COLOR.none };
+  if (total === 0 && d.maintenanceMinutes > 0)   return { background: COLOR.maint };
 
   const dataFrac = 1 - maintFrac;
   const upFrac   = (d.up      / total) * dataFrac;
   const degFrac  = (d.degraded / total) * dataFrac;
   const downFrac = (d.down    / total) * dataFrac;
 
-  if (downFrac === 0 && degFrac === 0 && maintFrac === 0) return { background: 'rgba(34,197,94,0.72)' };
-  if (upFrac   === 0 && degFrac === 0 && maintFrac === 0) return { background: 'rgba(239,68,68,0.8)' };
+  if (downFrac === 0 && degFrac === 0 && maintFrac === 0) return { background: COLOR.up };
+  if (upFrac   === 0 && degFrac === 0 && maintFrac === 0) return { background: COLOR.down };
 
   const stops: string[] = [];
   let pos = 0;
@@ -105,10 +120,10 @@ function getBarStyle(d: DayBucket): React.CSSProperties {
     stops.push(`${color} ${pos.toFixed(2)}% ${end}%`);
     pos = end;
   };
-  push('rgba(59,130,246,0.65)', maintFrac);
-  push('rgba(34,197,94,0.75)',  upFrac);
-  push('rgba(245,158,11,0.82)', degFrac);
-  push('rgba(239,68,68,0.85)',  downFrac);
+  push(COLOR.maint, maintFrac);
+  push(COLOR.up,    upFrac);
+  push(COLOR.deg,   degFrac);
+  push(COLOR.down,  downFrac);
 
   if (stops.length === 1) return { background: stops[0].split(' ')[0] };
   return { background: `linear-gradient(to top, ${stops.join(', ')})` };
@@ -195,31 +210,27 @@ export default function StatusPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <LandingNavbar />
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <SiteHeader />
 
-      <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-12 space-y-10">
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-10 px-6 py-12">
 
-        <div className="text-center space-y-3">
-          <h1 className="text-4xl font-extrabold tracking-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
-            {s.heading}
-          </h1>
-          <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
-            {s.subtitle}
-          </p>
+        <div className="space-y-3 text-center">
+          <h1 className="font-heading text-4xl tracking-tight">{s.heading}</h1>
+          <p className="mx-auto max-w-md text-sm leading-relaxed text-muted">{s.subtitle}</p>
         </div>
 
         <OverallBanner overall={data?.overall ?? null} error={error} s={s} />
 
         <section className="space-y-3">
           <SectionHeader title={s.sectionIncidents} />
-          {!data && !error && <SkeletonCard />}
+          {!data && !error && <Skeleton className="h-20 rounded-2xl" />}
           {data &&
             activeIncidents.length === 0 &&
             pastIncidents.length === 0 &&
             activeMaintenances.length === 0 &&
             pastMaintenances.length === 0 && (
-              <p className="text-sm text-muted-foreground/70 italic px-1">{s.noIncidents}</p>
+              <p className="px-1 text-sm italic text-muted">{s.noIncidents}</p>
             )}
           {activeMaintenances.map((e: any) => (
             <MaintenanceCard key={e.id} event={e} monitors={data?.monitors ?? []} now={now} />
@@ -243,47 +254,85 @@ export default function StatusPage() {
               <MonitorRow key={m.tag} m={m} s={s} onDayClick={handleDayClick} />
             ))}
           </div>
-          <div className="flex items-center gap-3 text-[10px] text-muted-foreground/50 mt-2 flex-wrap">
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm bg-emerald-500/70 inline-block" /> Opérationnel</span>
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm bg-amber-500/80 inline-block" /> Dégradé</span>
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm bg-rose-500/80 inline-block" /> En panne</span>
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm bg-blue-500/65 inline-block" /> Maintenance</span>
-            <span className="flex items-center gap-1"><span className="size-2 rounded-sm bg-muted/50 inline-block" /> Pas de données</span>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-muted">
+            <LegendDot color={COLOR.up} label="Opérationnel" />
+            <LegendDot color={COLOR.deg} label="Dégradé" />
+            <LegendDot color={COLOR.down} label="En panne" />
+            <LegendDot color={COLOR.maint} label="Maintenance" />
+            <LegendDot color={COLOR.none} label="Pas de données" />
           </div>
-          <p className="text-[11px] text-muted-foreground/40 text-center pt-1">
-            {s.attribution}
-          </p>
+          <p className="pt-1 text-center text-[11px] text-muted/70">{s.attribution}</p>
         </section>
 
       </main>
 
       <SiteFooter />
 
-      {selectedDay && (
-        <DayDetailModal
-          monitorTag={selectedDay.monitorTag}
-          monitorName={selectedDay.monitorName}
-          date={selectedDay.date}
-          incidents={data?.incidents ?? []}
-          maintenanceEvents={data?.maintenanceEvents ?? []}
-          monitors={data?.monitors ?? []}
-          s={s}
-          onClose={() => setSelectedDay(null)}
-        />
-      )}
+      <DayDetailModal
+        open={!!selectedDay}
+        monitorTag={selectedDay?.monitorTag ?? ''}
+        monitorName={selectedDay?.monitorName ?? ''}
+        date={selectedDay?.date ?? ''}
+        incidents={data?.incidents ?? []}
+        maintenanceEvents={data?.maintenanceEvents ?? []}
+        monitors={data?.monitors ?? []}
+        s={s}
+        onClose={() => setSelectedDay(null)}
+      />
     </div>
+  );
+}
+
+// ── Site chrome (HeroUI only) ─────────────────────────────────────────────────
+
+function SiteHeader() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-separator bg-surface/80 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-3">
+        <a href="/" className="flex items-center gap-2.5" aria-label="AlfyChat — accueil">
+          <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={28} height={28} priority />
+          <span className="font-heading text-base tracking-tight">AlfyChat</span>
+        </a>
+        <Button
+          size="sm"
+          variant="tertiary"
+          render={(props) => <a {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)} href="/" />}
+        >
+          Retour au site
+        </Button>
+      </div>
+    </header>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="border-t border-separator">
+      <div className="mx-auto w-full max-w-5xl px-6 py-6 text-center text-xs text-muted">
+        © {new Date().getFullYear()} AlfyChat · AlfyCore
+      </div>
+    </footer>
   );
 }
 
 // ── Subcomponents ───────────────────────────────────────────────────────────
 
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1">
+      <span className="inline-block size-2 rounded-sm" style={{ background: color }} />
+      {label}
+    </span>
+  );
+}
+
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+      <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-widest text-muted">
         {title}
       </h2>
-      <div className="h-px flex-1 bg-border/30" />
+      <Separator className="flex-1" />
     </div>
   );
 }
@@ -295,36 +344,29 @@ function OverallBanner({
   error: string | null;
   s: any;
 }) {
-  if (error)              return <Banner tone="red"   Icon={XCircleIcon}       title={s.loadError} subtitle={error} />;
-  if (!overall)           return <Banner tone="muted" Icon={HelpCircleIcon}    title={s.loading} />;
-  if (overall === 'UP')   return <Banner tone="green" Icon={CheckCircleIcon}   title={s.overallUp} />;
-  if (overall === 'DEGRADED') return <Banner tone="amber" Icon={AlertTriangleIcon} title={s.overallDegraded} />;
-  if (overall === 'DOWN') return <Banner tone="red"   Icon={XCircleIcon}       title={s.overallDown} />;
-  return <Banner tone="muted" Icon={HelpCircleIcon} title={s.overallUnknown} />;
+  if (error)                  return <Banner status="danger"  title={s.loadError} subtitle={error} />;
+  if (!overall)               return <Banner status="default" title={s.loading} />;
+  if (overall === 'UP')       return <Banner status="success" title={s.overallUp} />;
+  if (overall === 'DEGRADED') return <Banner status="warning" title={s.overallDegraded} />;
+  if (overall === 'DOWN')     return <Banner status="danger"  title={s.overallDown} />;
+  return <Banner status="default" title={s.overallUnknown} />;
 }
 
 function Banner({
-  tone, Icon, title, subtitle,
+  status, title, subtitle,
 }: {
-  tone: 'green' | 'amber' | 'red' | 'muted';
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
+  status: 'success' | 'warning' | 'danger' | 'default';
   title: string;
   subtitle?: string;
 }) {
-  const palette = {
-    green: 'border-emerald-500/25 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400',
-    amber: 'border-amber-500/30  bg-amber-500/5  text-amber-600  dark:text-amber-400',
-    red:   'border-rose-500/30   bg-rose-500/5   text-rose-600   dark:text-rose-400',
-    muted: 'border-border/40     bg-muted/20     text-muted-foreground',
-  }[tone];
   return (
-    <div className={`rounded-2xl border ${palette} px-5 py-4 flex items-center gap-3 shadow-sm`}>
-      <Icon size={18} />
-      <div className="min-w-0">
-        <p className="text-sm font-semibold">{title}</p>
-        {subtitle && <p className="text-xs opacity-70 mt-0.5">{subtitle}</p>}
-      </div>
-    </div>
+    <Alert status={status}>
+      <Alert.Indicator />
+      <Alert.Content>
+        <Alert.Title>{title}</Alert.Title>
+        {subtitle && <Alert.Description>{subtitle}</Alert.Description>}
+      </Alert.Content>
+    </Alert>
   );
 }
 
@@ -338,34 +380,30 @@ function MonitorRow({
   const Icon = TAG_TO_ICON[m.tag] ?? ServerIcon;
   const currentTone = statusTone(m.current);
   return (
-    <div className="group rounded-2xl border border-border/40 bg-card shadow-sm hover:shadow-md hover:border-border/70 transition-all">
-      <div className="flex items-center justify-between gap-3 px-5 pt-3.5 pb-2">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <Icon size={14} className="text-muted-foreground" />
-          <span className="text-[13px] font-semibold tracking-tight text-foreground/90 truncate">
-            {m.name}
-          </span>
+    <Card className="gap-0 transition-shadow hover:shadow-md">
+      <div className="flex items-center justify-between gap-3 pb-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Icon size={14} className="text-muted" />
+          <span className="truncate text-[13px] font-semibold tracking-tight">{m.name}</span>
           <StatusDot tone={currentTone} />
         </div>
-        <div className="flex items-center gap-4 text-[11px] text-muted-foreground/80 shrink-0">
+        <div className="flex shrink-0 items-center gap-4 text-[11px] text-muted">
           {m.uptime !== null && (
-            <span>{s.uptimeLabel}: <span className="font-medium text-foreground/80">{(m.uptime * 100).toFixed(2)}%</span></span>
+            <span>{s.uptimeLabel}: <span className="font-medium text-foreground">{(m.uptime * 100).toFixed(2)}%</span></span>
           )}
           {m.avgLatency !== null && (
-            <span className="hidden sm:inline">{s.latencyLabel}: <span className="font-medium text-foreground/80">{m.avgLatency}ms</span></span>
+            <span className="hidden sm:inline">{s.latencyLabel}: <span className="font-medium text-foreground">{m.avgLatency}ms</span></span>
           )}
         </div>
       </div>
-      <div className="px-5 pb-3">
-        <UptimeBars days={m.days} monitorTag={m.tag} monitorName={m.name} onDayClick={onDayClick} />
-        {m.days.length > 0 && (
-          <div className="flex justify-between text-[9px] text-muted-foreground/35 font-mono mt-1.5 px-0.5">
-            <span>{m.days[0].date}</span>
-            <span>{m.days[m.days.length - 1].date}</span>
-          </div>
-        )}
-      </div>
-    </div>
+      <UptimeBars days={m.days} monitorTag={m.tag} monitorName={m.name} onDayClick={onDayClick} />
+      {m.days.length > 0 && (
+        <div className="mt-1.5 flex justify-between px-0.5 font-mono text-[9px] text-muted/60">
+          <span>{m.days[0].date}</span>
+          <span>{m.days[m.days.length - 1].date}</span>
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -378,15 +416,15 @@ function UptimeBars({
   onDayClick: (date: string, tag: string, name: string) => void;
 }) {
   return (
-    <div className="flex items-end gap-0.5 h-9 w-full">
+    <div className="flex h-9 w-full items-end gap-0.5">
       {days.map((d) => (
         <button
           key={d.date}
           type="button"
           title={d.date}
           onClick={() => onDayClick(d.date, monitorTag, monitorName)}
-          className="flex-1 rounded-sm transition-all cursor-pointer outline-none hover:brightness-125 hover:scale-y-110 origin-bottom"
-          style={{ height: '100%', ...getBarStyle(d) }}
+          className="h-full flex-1 origin-bottom cursor-pointer rounded-sm outline-none transition-all hover:scale-y-110 hover:brightness-125 focus-visible:ring-2 focus-visible:ring-focus"
+          style={getBarStyle(d)}
         />
       ))}
     </div>
@@ -395,11 +433,10 @@ function UptimeBars({
 
 // ── Day Detail Modal ─────────────────────────────────────────────────────────
 
-type ModalTab = 'status' | 'latency' | 'incidents' | 'maintenances';
-
 function DayDetailModal({
-  monitorTag, monitorName, date, incidents, maintenanceEvents, monitors, s, onClose,
+  open, monitorTag, monitorName, date, incidents, maintenanceEvents, monitors, s, onClose,
 }: {
+  open: boolean;
   monitorTag: string;
   monitorName: string;
   date: string;
@@ -409,12 +446,12 @@ function DayDetailModal({
   s: any;
   onClose: () => void;
 }) {
-  const [tab, setTab]               = useState<ModalTab>('status');
   const [minutes, setMinutes]       = useState<MinutePoint[] | null>(null);
   const [loading, setLoading]       = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!open || !date) return;
     setLoading(true); setFetchError(null); setMinutes(null);
     const dayStart = Math.floor(new Date(date + 'T00:00:00Z').getTime() / 1000);
     const dayEnd   = dayStart + 86400;
@@ -425,15 +462,9 @@ function DayDetailModal({
         setLoading(false);
       })
       .catch(e => { setFetchError(e.message); setLoading(false); });
-  }, [monitorTag, date]);
+  }, [monitorTag, date, open]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const dayStart = Math.floor(new Date(date + 'T00:00:00Z').getTime() / 1000);
+  const dayStart = date ? Math.floor(new Date(date + 'T00:00:00Z').getTime() / 1000) : 0;
   const dayEnd   = dayStart + 86400;
 
   const dayIncidents = useMemo(() =>
@@ -455,75 +486,48 @@ function DayDetailModal({
     return (minutes.filter(p => p.status === 'UP').length / minutes.length) * 100;
   }, [minutes]);
 
-  const dateFormatted = new Date(date + 'T12:00:00Z').toLocaleDateString(undefined, {
-    year: 'numeric', month: 'long', day: 'numeric',
-  });
-
-  const TABS: { id: ModalTab; label: string }[] = [
-    { id: 'status',       label: s.tabStatus },
-    { id: 'latency',      label: s.tabLatency },
-    { id: 'incidents',    label: s.tabIncidents },
-    { id: 'maintenances', label: s.tabMaintenances },
-  ];
+  const dateFormatted = date
+    ? new Date(date + 'T12:00:00Z').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-2xl bg-popover rounded-2xl border border-border/50 shadow-2xl flex flex-col max-h-[90vh]"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-border/30 shrink-0">
-          <div>
-            <p className="text-xs text-muted-foreground font-medium mb-0.5">{monitorName}</p>
-            <h2 className="text-lg font-bold tracking-tight">{dateFormatted}</h2>
-            <p className="text-xs text-muted-foreground/50 mt-0.5">{s.dayDetailSubtitle}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors mt-0.5"
-          >
-            <XIcon size={14} />
-          </button>
-        </div>
+    <Modal.Backdrop variant="blur" isOpen={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <Modal.Container size="lg">
+        <Modal.Dialog className="max-h-[90vh]">
+          <Modal.CloseTrigger />
+          <Modal.Header>
+            <p className="mb-0.5 text-xs font-medium text-muted">{monitorName}</p>
+            <Modal.Heading>{dateFormatted}</Modal.Heading>
+            <p className="mt-0.5 text-xs text-muted/70">{s.dayDetailSubtitle}</p>
+          </Modal.Header>
+          <Modal.Body>
+            <Tabs defaultSelectedKey="status" className="w-full">
+              <Tabs.ListContainer>
+                <Tabs.List aria-label={s.dayDetailSubtitle}>
+                  <Tabs.Tab id="status">{s.tabStatus}<Tabs.Indicator /></Tabs.Tab>
+                  <Tabs.Tab id="latency">{s.tabLatency}<Tabs.Indicator /></Tabs.Tab>
+                  <Tabs.Tab id="incidents">{s.tabIncidents}<Tabs.Indicator /></Tabs.Tab>
+                  <Tabs.Tab id="maintenances">{s.tabMaintenances}<Tabs.Indicator /></Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
 
-        {/* Tabs */}
-        <div className="flex border-b border-border/30 shrink-0 px-3">
-          {TABS.map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
-                tab === id
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground/70'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5 min-h-0">
-          {tab === 'status' && (
-            <StatusTab minutes={minutes} loading={loading} error={fetchError} uptime={uptime} s={s} />
-          )}
-          {tab === 'latency' && (
-            <LatencyTab minutes={minutes} loading={loading} error={fetchError} s={s} />
-          )}
-          {tab === 'incidents' && (
-            <IncidentsDayTab incidents={dayIncidents} s={s} />
-          )}
-          {tab === 'maintenances' && (
-            <MaintenancesDayTab events={dayMaintenances} monitors={monitors} now={Math.floor(Date.now() / 1000)} s={s} />
-          )}
-        </div>
-      </div>
-    </div>
+              <Tabs.Panel id="status" className="pt-4">
+                <StatusTab minutes={minutes} loading={loading} error={fetchError} uptime={uptime} s={s} />
+              </Tabs.Panel>
+              <Tabs.Panel id="latency" className="pt-4">
+                <LatencyTab minutes={minutes} loading={loading} error={fetchError} s={s} />
+              </Tabs.Panel>
+              <Tabs.Panel id="incidents" className="pt-4">
+                <IncidentsDayTab incidents={dayIncidents} s={s} />
+              </Tabs.Panel>
+              <Tabs.Panel id="maintenances" className="pt-4">
+                <MaintenancesDayTab events={dayMaintenances} monitors={monitors} now={Math.floor(Date.now() / 1000)} s={s} />
+              </Tabs.Panel>
+            </Tabs>
+          </Modal.Body>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
   );
 }
 
@@ -538,10 +542,10 @@ function StatusTab({
   uptime: number | null;
   s: any;
 }) {
-  if (loading) return <div className="h-48 animate-pulse bg-muted/30 rounded-xl" />;
-  if (error)   return <p className="text-sm text-rose-500">{error}</p>;
+  if (loading) return <Skeleton className="h-48 rounded-xl" />;
+  if (error)   return <p className="text-sm text-danger">{error}</p>;
   if (!minutes || minutes.length === 0) {
-    return <p className="text-sm text-muted-foreground/60 italic">{s.noDataForDay}</p>;
+    return <p className="text-sm italic text-muted">{s.noDataForDay}</p>;
   }
 
   const minuteMap = new Map<number, 'UP' | 'DEGRADED' | 'DOWN'>();
@@ -557,29 +561,27 @@ function StatusTab({
     { label: '18:00 – 23:59', start: 1080 },
   ];
 
-  const cellCls = (status: 'UP' | 'DEGRADED' | 'DOWN' | undefined) => {
-    if (status === 'UP')       return 'bg-emerald-500/75';
-    if (status === 'DEGRADED') return 'bg-amber-500/80';
-    if (status === 'DOWN')     return 'bg-rose-500/85';
-    return 'bg-muted/25';
+  const cellColor = (status: 'UP' | 'DEGRADED' | 'DOWN' | undefined) => {
+    if (status === 'UP')       return COLOR.up;
+    if (status === 'DEGRADED') return COLOR.deg;
+    if (status === 'DOWN')     return COLOR.down;
+    return COLOR.none;
   };
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted">
           {s.perMinuteStatus}
         </span>
         {uptime !== null && (
-          <span className="text-sm font-bold text-foreground/90">
-            ↗ {uptime.toFixed(4)}%
-          </span>
+          <span className="text-sm font-bold">↗ {uptime.toFixed(4)}%</span>
         )}
       </div>
 
       {rows.map(({ label, start }) => (
         <div key={label} className="space-y-1.5">
-          <p className="text-[10px] text-muted-foreground/50 font-mono">{label}</p>
+          <p className="font-mono text-[10px] text-muted/70">{label}</p>
           <div className="flex flex-wrap gap-[1.5px]">
             {Array.from({ length: 360 }, (_, i) => {
               const idx    = start + i;
@@ -590,7 +592,8 @@ function StatusTab({
                 <div
                   key={i}
                   title={`${h}:${m} — ${status ?? 'No data'}`}
-                  className={`size-[7px] rounded-[1px] ${cellCls(status)}`}
+                  className="size-1.75 rounded-xs"
+                  style={{ background: cellColor(status) }}
                 />
               );
             })}
@@ -611,15 +614,14 @@ function LatencyTab({
   error: string | null;
   s: any;
 }) {
-  if (loading) return <div className="h-48 animate-pulse bg-muted/30 rounded-xl" />;
-  if (error)   return <p className="text-sm text-rose-500">{error}</p>;
+  if (loading) return <Skeleton className="h-48 rounded-xl" />;
+  if (error)   return <p className="text-sm text-danger">{error}</p>;
 
   const withLatency = minutes?.filter(p => p.latency > 0) ?? [];
   if (withLatency.length === 0) {
-    return <p className="text-sm text-muted-foreground/60 italic">{s.noDataForDay}</p>;
+    return <p className="text-sm italic text-muted">{s.noDataForDay}</p>;
   }
 
-  // Hourly aggregates: avg latency + worst status for bar coloring
   const hourly = Array.from({ length: 24 }, (_, h) => {
     const pts = withLatency.filter(p => new Date(p.timestamp * 1000).getUTCHours() === h);
     if (!pts.length) return { hour: h, avg: null as number | null, worst: null as null | 'UP' | 'DEGRADED' | 'DOWN' };
@@ -638,12 +640,10 @@ function LatencyTab({
     return sorted[Math.floor(sorted.length * 0.95)]?.latency ?? maxVal;
   })();
 
-  // Smart Y range starting near actual min
   const yMin   = Math.max(0, Math.floor(minVal * 0.82));
   const yMax   = Math.ceil(maxVal * 1.08);
   const yRange = yMax - yMin || 1;
 
-  // SVG layout constants
   const W = 560, H = 115, PAD_L = 40, PAD_B = 20;
   const chartW = W - PAD_L;
   const chartH = H - PAD_B;
@@ -651,14 +651,12 @@ function LatencyTab({
   const barGap = 2.5;
 
   const fmtMs = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}s` : `${v}ms`;
-
-  // 4 Y-axis ticks evenly spaced
   const yTicks = [yMin, yMin + yRange * 0.33, yMin + yRange * 0.66, yMax].map(Math.round);
 
   const barFill = (worst: string | null) => {
-    if (worst === 'DOWN')     return 'rgba(239,68,68,0.72)';
-    if (worst === 'DEGRADED') return 'rgba(245,158,11,0.72)';
-    return 'rgba(99,102,241,0.55)';
+    if (worst === 'DOWN')     return COLOR.down;
+    if (worst === 'DEGRADED') return COLOR.deg;
+    return 'color-mix(in oklab, var(--accent) 55%, transparent)';
   };
 
   const yPx = (val: number) => chartH - ((val - yMin) / yRange) * chartH;
@@ -667,25 +665,18 @@ function LatencyTab({
 
   return (
     <div className="space-y-3">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted">
           {s.latencyChart}
         </span>
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground/60">
-          <span>moy: <span className="font-medium text-foreground/80">{globalAvg} ms</span></span>
-          <span>p95: <span className="font-medium text-foreground/80">{p95} ms</span></span>
-          <span>max: <span className="font-medium text-foreground/80">{maxVal} ms</span></span>
+        <div className="flex items-center gap-3 text-[11px] text-muted">
+          <span>moy: <span className="font-medium text-foreground">{globalAvg} ms</span></span>
+          <span>p95: <span className="font-medium text-foreground">{p95} ms</span></span>
+          <span>max: <span className="font-medium text-foreground">{maxVal} ms</span></span>
         </div>
       </div>
 
-      {/* SVG chart */}
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
-        style={{ height: 150 }}
-      >
-        {/* Horizontal grid lines + Y labels */}
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full text-foreground" style={{ height: 150 }}>
         {yTicks.map((tick, i) => {
           const y = yPx(tick);
           return (
@@ -700,7 +691,6 @@ function LatencyTab({
           );
         })}
 
-        {/* Bars */}
         {hourly.map(({ hour, avg, worst }) => {
           if (avg === null) return null;
           const x      = PAD_L + hour * barW + barGap / 2;
@@ -708,30 +698,25 @@ function LatencyTab({
           const y      = chartH - barH;
           return (
             <g key={hour}>
-              <rect x={x} y={y} width={barW - barGap} height={barH} rx="2"
-                fill={barFill(worst)} />
+              <rect x={x} y={y} width={barW - barGap} height={barH} rx="2" fill={barFill(worst)} />
               <title>{`${hour.toString().padStart(2, '0')}:00 — ${avg} ms`}</title>
             </g>
           );
         })}
 
-        {/* Average dashed line */}
         {globalAvg >= yMin && globalAvg <= yMax && (
           <line x1={PAD_L} y1={avgY} x2={W} y2={avgY}
-            stroke="rgba(255,255,255,0.3)" strokeWidth="1" strokeDasharray="4 3" />
+            stroke="currentColor" strokeOpacity="0.4" strokeWidth="1" strokeDasharray="4 3" />
         )}
 
-        {/* p95 dashed line (only if distinct from avg) */}
         {p95 !== globalAvg && p95 >= yMin && p95 <= yMax && (
           <line x1={PAD_L} y1={p95Y} x2={W} y2={p95Y}
-            stroke="rgba(245,158,11,0.35)" strokeWidth="0.8" strokeDasharray="3 3" />
+            stroke={COLOR.deg} strokeWidth="0.8" strokeDasharray="3 3" />
         )}
 
-        {/* Baseline */}
         <line x1={PAD_L} y1={chartH} x2={W} y2={chartH}
           stroke="currentColor" strokeOpacity="0.18" strokeWidth="0.6" />
 
-        {/* X-axis labels */}
         {[0, 3, 6, 9, 12, 15, 18, 21, 23].map(h => (
           <text key={h}
             x={PAD_L + h * barW + barW / 2} y={H - 4}
@@ -741,23 +726,16 @@ function LatencyTab({
         ))}
       </svg>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 text-[10px] text-muted-foreground/45 flex-wrap">
-        <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-sm bg-indigo-500/55 inline-block" /> Opérationnel
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-sm bg-amber-500/72 inline-block" /> Dégradé
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-sm bg-rose-500/72 inline-block" /> En panne
-        </span>
+      <div className="flex flex-wrap items-center gap-4 text-[10px] text-muted">
+        <LegendDot color="color-mix(in oklab, var(--accent) 55%, transparent)" label="Opérationnel" />
+        <LegendDot color={COLOR.deg} label="Dégradé" />
+        <LegendDot color={COLOR.down} label="En panne" />
         <span className="ml-auto flex items-center gap-3">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-5 border-t border-dashed border-white/30" /> moy.
+            <span className="inline-block w-5 border-t border-dashed border-foreground/40" /> moy.
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-5 border-t border-dashed border-amber-500/35" /> p95
+            <span className="inline-block w-5 border-t border-dashed border-warning/50" /> p95
           </span>
         </span>
       </div>
@@ -769,7 +747,7 @@ function LatencyTab({
 
 function IncidentsDayTab({ incidents, s }: { incidents: Incident[]; s: any }) {
   if (incidents.length === 0) {
-    return <p className="text-sm text-muted-foreground/60 italic">{s.noIncidentsForDay}</p>;
+    return <p className="text-sm italic text-muted">{s.noIncidentsForDay}</p>;
   }
   return (
     <div className="space-y-3">
@@ -785,8 +763,7 @@ function IncidentWithComments({ inc, s }: { inc: Incident; s: any }) {
     fetch(`/api/status/incidents/${inc.id}/comments`)
       .then(r => r.json())
       .then(d => {
-        const sorted = ((d.comments ?? []) as IncidentComment[])
-          .sort((a, b) => b.created_at - a.created_at);
+        const sorted = ((d.comments ?? []) as IncidentComment[]).sort((a, b) => b.created_at - a.created_at);
         setComments(sorted);
       })
       .catch(() => setComments([]));
@@ -799,53 +776,45 @@ function IncidentWithComments({ inc, s }: { inc: Incident; s: any }) {
     (({ INVESTIGATING: s.stateInvestigating, IDENTIFIED: s.stateIdentified, MONITORING: s.stateMonitoring, RESOLVED: s.stateResolved } as Record<string, string>)[state] ?? state);
 
   return (
-    <div className={`rounded-xl border ${active ? 'border-amber-500/30' : 'border-border/40'} bg-card/50 p-3.5 space-y-2`}>
-      {/* Header */}
+    <Card variant="secondary" className="gap-2">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-semibold">{inc.title}</p>
-        <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-          active ? 'bg-amber-500/10 text-amber-500' : 'bg-muted/40 text-muted-foreground'
-        }`}>
-          {stateLabel(inc.state)}
-        </span>
+        <Chip size="sm" color={active ? 'warning' : 'default'} variant="soft">
+          <Chip.Label>{stateLabel(inc.state)}</Chip.Label>
+        </Chip>
       </div>
 
-      {/* Current status message */}
       {inc.status && (
-        <p className="text-[12px] text-foreground/75 bg-muted/20 rounded-lg px-3 py-2 leading-relaxed">
+        <p className="rounded-lg bg-surface-secondary px-3 py-2 text-[12px] leading-relaxed text-foreground/80">
           {inc.status}
         </p>
       )}
 
-      {/* Timestamps */}
-      <p className="text-[11px] text-muted-foreground/50">
+      <p className="text-[11px] text-muted">
         {started.toLocaleString()}{ended ? ` → ${ended.toLocaleString()}` : ''}
       </p>
 
-      {/* Comments timeline */}
       {comments !== null && comments.length > 0 && (
-        <div className="border-t border-border/20 pt-2.5 space-y-2">
+        <div className="space-y-2 border-t border-separator pt-2.5">
           {comments.map((c, i) => (
             <div key={c.id} className="flex gap-2.5">
-              <div className="flex flex-col items-center shrink-0 pt-1">
-                <div className="size-1.5 rounded-full bg-muted-foreground/30" />
-                {i < comments.length - 1 && <div className="w-px flex-1 min-h-3 bg-border/25 mt-1" />}
+              <div className="flex shrink-0 flex-col items-center pt-1">
+                <div className="size-1.5 rounded-full bg-muted/50" />
+                {i < comments.length - 1 && <div className="mt-1 min-h-3 w-px flex-1 bg-separator" />}
               </div>
               <div className="pb-1">
-                <p className="text-[10px] text-muted-foreground/45 mb-0.5">
+                <p className="mb-0.5 text-[10px] text-muted/70">
                   {new Date(c.created_at * 1000).toLocaleString()}
                   {c.state && ` · ${stateLabel(c.state)}`}
                 </p>
-                <p className="text-[12px] text-foreground/75 leading-relaxed">{c.comment}</p>
+                <p className="text-[12px] leading-relaxed text-foreground/80">{c.comment}</p>
               </div>
             </div>
           ))}
         </div>
       )}
-      {comments === null && (
-        <div className="h-3 w-24 bg-muted/25 rounded animate-pulse" />
-      )}
-    </div>
+      {comments === null && <Skeleton className="h-3 w-24 rounded" />}
+    </Card>
   );
 }
 
@@ -860,7 +829,7 @@ function MaintenancesDayTab({
   s: any;
 }) {
   if (events.length === 0) {
-    return <p className="text-sm text-muted-foreground/60 italic">{s.noMaintenanceForDay}</p>;
+    return <p className="text-sm italic text-muted">{s.noMaintenanceForDay}</p>;
   }
 
   return (
@@ -885,56 +854,45 @@ function MaintenancesDayTab({
           ? Math.round((e.end_date_time - e.start_date_time) / 3600)
           : null;
 
-        const border     = isOngoing ? 'border-blue-500/30' : isScheduled ? 'border-indigo-500/25' : 'border-border/40';
-        const labelColor = isOngoing ? 'text-blue-400' : isScheduled ? 'text-indigo-400' : 'text-muted-foreground/60';
         const badgeLabel = isOngoing ? 'En cours' : isScheduled ? 'Planifiée' : 'Terminée';
-        const badgeCls   = isOngoing ? 'bg-blue-500/10 text-blue-400' : isScheduled ? 'bg-indigo-500/10 text-indigo-400' : 'bg-muted/40 text-muted-foreground';
 
         return (
-          <div key={e.id} className={`rounded-xl border ${border} bg-card/50 p-3.5 space-y-2.5`}>
-            {/* Header */}
+          <Card key={e.id} variant="secondary" className="gap-2.5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 space-y-1">
-                <span className={`text-[9px] uppercase tracking-widest font-bold ${labelColor}`}>{badgeLabel}</span>
                 <p className="text-sm font-bold">{title}</p>
                 {description && (
-                  <p className="text-[11px] text-muted-foreground/70 leading-relaxed">{description}</p>
+                  <p className="text-[11px] leading-relaxed text-muted">{description}</p>
                 )}
                 {impacted.length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-0.5">
                     {impacted.map(name => (
-                      <span key={name} className="text-[10px] text-blue-400/80 underline decoration-blue-400/30 underline-offset-2">
-                        {name}
-                      </span>
+                      <Chip key={name} size="sm" color="accent" variant="soft"><Chip.Label>{name}</Chip.Label></Chip>
                     ))}
                   </div>
                 )}
               </div>
-              <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full shrink-0 ${badgeCls}`}>
-                {badgeLabel}
-              </span>
+              <Chip size="sm" color={isOngoing ? 'accent' : isScheduled ? 'accent' : 'default'} variant="soft">
+                <Chip.Label>{badgeLabel}</Chip.Label>
+              </Chip>
             </div>
 
-            {/* Progress bar */}
             {progressPct !== null && (
-              <div className="h-1 rounded-full bg-muted/30 overflow-hidden">
-                <div className="h-full rounded-full bg-blue-500/60 transition-all" style={{ width: `${progressPct}%` }} />
-              </div>
+              <ProgressBar aria-label={badgeLabel} color="accent" value={progressPct} className="w-full">
+                <ProgressBar.Track><ProgressBar.Fill /></ProgressBar.Track>
+              </ProgressBar>
             )}
 
-            {/* Timeline */}
-            <div className="flex items-center justify-between text-[10px] text-muted-foreground/50">
+            <div className="flex items-center justify-between text-[10px] text-muted">
               <span>{started.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
               {durationH !== null && (
-                <span className="text-muted-foreground/35">
-                  {durationH < 24 ? `${durationH}h` : `${Math.round(durationH / 24)}j`}
-                </span>
+                <span className="text-muted/60">{durationH < 24 ? `${durationH}h` : `${Math.round(durationH / 24)}j`}</span>
               )}
               {ended && (
                 <span>{ended.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
               )}
             </div>
-          </div>
+          </Card>
         );
       })}
     </div>
@@ -957,13 +915,10 @@ function MaintenanceCard({
   const impacted: string[] = (event.maintenance?.monitors ?? [])
     .map((m: any) => monitors.find(x => x.tag === m.monitor_tag)?.name || m.monitor_tag);
 
-  // Use Kener event_status first, fallback to timestamp comparison
   const statusRaw = (event.event_status as string | undefined)?.toUpperCase();
   const isOngoing  = statusRaw === 'ONGOING'  || (!statusRaw && event.start_date_time <= now && event.end_date_time >= now);
   const isScheduled = statusRaw === 'SCHEDULED' || (!statusRaw && event.start_date_time > now);
-  const isCompleted = statusRaw === 'COMPLETED' || (!statusRaw && event.end_date_time < now);
 
-  // Progress % for ongoing maintenance
   const progressPct = isOngoing && event.end_date_time
     ? Math.min(100, Math.round(((now - event.start_date_time) / (event.end_date_time - event.start_date_time)) * 100))
     : null;
@@ -972,58 +927,46 @@ function MaintenanceCard({
     ? Math.round((event.end_date_time - event.start_date_time) / 3600)
     : null;
 
-  const border     = isOngoing ? 'border-blue-500/30' : isScheduled ? 'border-indigo-500/25' : 'border-border/40';
-  const badgeCls   = isOngoing  ? 'bg-blue-500/10 text-blue-400'
-    : isScheduled ? 'bg-indigo-500/10 text-indigo-400'
-    : 'bg-muted/40 text-muted-foreground';
   const badgeLabel = isOngoing ? 'En cours' : isScheduled ? 'Planifiée' : 'Terminée';
 
   return (
-    <div className={`rounded-2xl border ${border} bg-card shadow-sm p-4 space-y-2.5`}>
+    <Card className="gap-2.5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <span className={`text-[9px] uppercase tracking-widest font-bold ${isOngoing ? 'text-blue-400' : isScheduled ? 'text-indigo-400' : 'text-muted-foreground/60'}`}>
-            {badgeLabel}
-          </span>
-          <p className="text-sm font-bold truncate">{title}</p>
+          <p className="truncate text-sm font-bold">{title}</p>
           {description && (
-            <p className="text-[11px] text-muted-foreground/70 mt-0.5 line-clamp-2 leading-relaxed">{description}</p>
+            <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted">{description}</p>
           )}
           {impacted.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-0.5">
               {impacted.map(name => (
-                <span key={name} className="text-[10px] text-blue-400/80 underline decoration-blue-400/30 underline-offset-2">
-                  {name}
-                </span>
+                <Chip key={name} size="sm" color="accent" variant="soft"><Chip.Label>{name}</Chip.Label></Chip>
               ))}
             </div>
           )}
         </div>
-        <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full shrink-0 ${badgeCls}`}>
-          {badgeLabel}
-        </span>
+        <Chip size="sm" color={isOngoing || isScheduled ? 'accent' : 'default'} variant="soft">
+          <Chip.Label>{badgeLabel}</Chip.Label>
+        </Chip>
       </div>
 
-      {/* Timeline bar */}
       <div className="space-y-1">
         {progressPct !== null && (
-          <div className="h-1 rounded-full bg-muted/30 overflow-hidden">
-            <div className="h-full rounded-full bg-blue-500/60 transition-all" style={{ width: `${progressPct}%` }} />
-          </div>
+          <ProgressBar aria-label={badgeLabel} color="accent" value={progressPct} className="w-full">
+            <ProgressBar.Track><ProgressBar.Fill /></ProgressBar.Track>
+          </ProgressBar>
         )}
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground/50">
+        <div className="flex items-center justify-between text-[10px] text-muted">
           <span>{started.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
           {durationH !== null && (
-            <span className="text-muted-foreground/35">
-              {durationH < 24 ? `${durationH}h` : `${Math.round(durationH / 24)}j`}
-            </span>
+            <span className="text-muted/60">{durationH < 24 ? `${durationH}h` : `${Math.round(durationH / 24)}j`}</span>
           )}
           {ended && (
             <span>{ended.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -1050,37 +993,34 @@ function IncidentCard({
     RESOLVED:      s.stateResolved,
   } as Record<string, string>)[incident.state]) ?? incident.state;
 
-  const border = active ? 'border-amber-500/30' : 'border-border/40';
-  const badge  = active
-    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-    : 'bg-muted/40 text-muted-foreground';
-
   return (
-    <div className={`rounded-2xl border ${border} bg-card shadow-sm p-4 space-y-2`}>
+    <Card className="gap-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold truncate">{incident.title}</p>
+          <p className="truncate text-sm font-semibold">{incident.title}</p>
           {incident.status && (
-            <p className="text-[11px] text-muted-foreground/75 mt-1 line-clamp-2 leading-relaxed">{incident.status}</p>
+            <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted">{incident.status}</p>
           )}
-          {impacted && <p className="text-[11px] text-muted-foreground/50 mt-0.5">{impacted}</p>}
+          {impacted && <p className="mt-0.5 text-[11px] text-muted/70">{impacted}</p>}
         </div>
-        <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full shrink-0 ${badge}`}>
-          {stateLabel}
-        </span>
+        <Chip size="sm" color={active ? 'warning' : 'default'} variant="soft">
+          <Chip.Label>{stateLabel}</Chip.Label>
+        </Chip>
       </div>
-      <div className="text-[11px] text-muted-foreground/60 flex flex-wrap gap-x-3 gap-y-1">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
         <span>{started.toLocaleString()}</span>
         {ended && <span>&rarr; {ended.toLocaleString()}</span>}
       </div>
-    </div>
+    </Card>
   );
 }
 
 // ── Misc ─────────────────────────────────────────────────────────────────────
 
 function StatusDot({ tone }: { tone: 'up' | 'degraded' | 'down' | 'nodata' }) {
-  const cls = { up: 'bg-emerald-500', degraded: 'bg-amber-500', down: 'bg-rose-500', nodata: 'bg-muted-foreground/40' }[tone];
+  const cls = {
+    up: 'bg-success', degraded: 'bg-warning', down: 'bg-danger', nodata: 'bg-muted/50',
+  }[tone];
   return <span className={`size-1.5 rounded-full ${cls}`} />;
 }
 
@@ -1091,19 +1031,11 @@ function statusTone(s: PointStatus): 'up' | 'degraded' | 'down' | 'nodata' {
   return 'nodata';
 }
 
-function SkeletonCard() {
-  return <div className="rounded-2xl border border-border/40 bg-card shadow-sm h-20 animate-pulse" />;
-}
-
 function SkeletonRow() {
   return (
-    <div className="rounded-2xl border border-border/40 bg-card shadow-sm overflow-hidden">
-      <div className="px-5 pt-3.5 pb-2">
-        <div className="h-3 w-32 bg-muted/50 rounded animate-pulse" />
-      </div>
-      <div className="px-5 pb-4">
-        <div className="h-9 bg-muted/30 rounded animate-pulse" />
-      </div>
-    </div>
+    <Card className="gap-3">
+      <Skeleton className="h-3 w-32 rounded" />
+      <Skeleton className="h-9 w-full rounded" />
+    </Card>
   );
 }

@@ -1,65 +1,67 @@
 'use client';
 
-import Link from 'next/link';
+import NextLink from 'next/link';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'motion/react';
+import { Button, Card, Typography } from '@heroui/react';
 import { ArrowRightIcon, ShieldCheckIcon } from '@/components/icons';
+
+const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
 
 export function HomeCta() {
   const reduce = useReducedMotion();
 
   return (
-    <section id="download" className="py-28 bg-[#F7F6F3] dark:bg-[#0a0a0a] border-t border-[#EAEAEA] dark:border-[#27272a]">
-      <div className="mx-auto max-w-4xl px-8">
+    <section id="download" className="border-t border-border bg-background py-28">
+      <div className="mx-auto max-w-4xl px-6 lg:px-12">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-[12px] border border-[#EAEAEA] dark:border-[#27272a] bg-white dark:bg-[#18181b] px-10 py-20 text-center"
-          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <div className="flex size-14 items-center justify-center rounded-[12px] border border-[#EAEAEA] dark:border-[#27272a] bg-[#F7F6F3] dark:bg-[#27272a]">
-              <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={32} height={32} />
+          <Card className="flex flex-col items-center gap-6 px-10 py-20 text-center">
+            {/* Logo tile */}
+            <div
+              className="flex size-14 items-center justify-center rounded-2xl"
+              style={{ background: 'var(--surface-secondary)' }}
+            >
+              <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={30} height={30} className="dark:hidden" />
+              <Image src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" width={30} height={30} className="hidden dark:block" />
             </div>
-          </div>
 
-          <h2
-            className="text-[2rem] md:text-[2.4rem] leading-[1.1] tracking-[-0.02em] text-[#111111] dark:text-[#fafafa] font-bold mb-4"
-            style={{ fontFamily: 'var(--font-krona), sans-serif' }}
-          >
-            Prêt à reprendre le contrôle ?
-          </h2>
+            <Typography
+              type="h2"
+              weight="bold"
+              className="text-foreground"
+              style={{ ...KRONA, fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', lineHeight: 1.1, letterSpacing: '-0.025em' }}
+            >
+              Prêt à reprendre le contrôle ?
+            </Typography>
 
-          <p className="text-[15px] text-[#787774] dark:text-[#71717a] leading-relaxed max-w-sm mx-auto mb-10">
-            Rejoignez AlfyChat dès aujourd'hui. Gratuit, sans engagement, sans numéro de téléphone.
-          </p>
+            <Typography type="body" color="muted" className="max-w-sm">
+              Rejoignez AlfyChat dès aujourd'hui. Gratuit, sans engagement, sans numéro de téléphone.
+            </Typography>
 
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/register">
-              <button
-                className="inline-flex items-center gap-2 rounded-[6px] bg-[#7627FF] hover:bg-[#6020dd] px-7 py-3 text-[14px] font-medium text-white transition-all duration-200 active:scale-[0.98]"
-              >
+            <div className="mt-2 flex flex-wrap justify-center gap-3">
+              <Button size="lg" render={(props) => <NextLink {...props} href="/register" />}>
                 Créer un compte gratuit
                 <ArrowRightIcon size={13} />
-              </button>
-            </Link>
-            <Link href="/about">
-              <button
-                className="inline-flex items-center gap-2 rounded-[6px] border border-[#EAEAEA] dark:border-[#27272a] bg-white dark:bg-transparent px-6 py-3 text-[14px] font-medium text-[#111111] dark:text-[#fafafa] transition-all duration-200 hover:bg-[#F7F6F3] dark:hover:bg-[#27272a] active:scale-[0.98]">
+              </Button>
+              <Button
+                variant="tertiary"
+                size="lg"
+                render={(props) => <NextLink {...props} href="/about" />}
+              >
                 En savoir plus
-              </button>
-            </Link>
-          </div>
-
-          <div className="flex justify-center mt-8">
-            <div className="flex items-center gap-2 text-[11.5px] text-[#787774]">
-              <ShieldCheckIcon size={11} className="text-[#346538]" />
-              Sans carte bancaire, sans engagement
+              </Button>
             </div>
-          </div>
+
+            <div className="mt-2 flex items-center gap-2">
+              <ShieldCheckIcon size={12} style={{ color: 'var(--success)' }} />
+              <Typography type="body-xs" color="muted">Sans carte bancaire, sans engagement</Typography>
+            </div>
+          </Card>
         </motion.div>
       </div>
     </section>

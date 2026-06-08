@@ -40,7 +40,7 @@ export function LandingNavbar() {
             href="/"
             className="flex items-center gap-2 px-3 py-1.5 rounded-[12px] transition-all duration-300 hover:bg-white/[0.05] shrink-0"
           >
-            <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-5" />
+            <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" className="size-5" />
             <span
               className="text-[12.5px] font-bold text-white/90 tracking-widest hidden sm:block"
               style={{ fontFamily: 'var(--font-krona)' }}

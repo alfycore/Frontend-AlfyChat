@@ -1,218 +1,209 @@
 'use client';
 
-import Link from 'next/link';
-import { useState } from 'react';
+import NextLink from 'next/link';
+import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/use-auth';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MenuIcon, XIcon, MessageCircleIcon, SunIcon, MoonIcon } from '@/components/icons';
+import { motion, useReducedMotion } from 'motion/react';
+import {
+  Avatar,
+  Button,
+  Drawer,
+  Separator,
+  Skeleton,
+  Switch,
+} from '@heroui/react';
+import { SunIcon, MoonIcon, MenuIcon, MessageCircleIcon } from '@/components/icons';
 
 const NAV_LINKS = [
   { label: 'Fonctionnalités', href: '/#features' },
   { label: 'Sécurité',        href: '/#security'  },
-  { label: 'Développeurs',    href: '/developers'  },
-  { label: 'À propos',        href: '/about'       },
+  { label: 'Développeurs',    href: '/developers' },
+  { label: 'À propos',        href: '/about'      },
 ];
 
 export function LandingNavbar() {
   const { user, isLoading } = useAuth();
-  const [open, setOpen] = useState(false);
-  const reduce = useReducedMotion();
   const { theme, setTheme } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const reduce = useReducedMotion();
+
+  useEffect(() => {
+    setMounted(true);
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const isDark = mounted && theme === 'dark';
 
   return (
-    <>
-      {/* ── Floating island pill ──────────────────────────────── */}
-      <header className="relative z-50 flex justify-center px-4 pt-5 pb-2">
-      <nav className="w-fit max-w-[calc(100vw-2rem)]">
-        <div
-          className="flex items-center gap-1 rounded-[12px] px-2 py-[5px]"
-          style={{
-            background: 'rgba(10,10,10,0.88)',
-            backdropFilter: 'blur(28px)',
-            WebkitBackdropFilter: 'blur(28px)',
-            border: '1px solid rgba(255,255,255,0.09)',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)',
-          }}
-        >
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-[12px] transition-all duration-300 hover:bg-white/[0.05] shrink-0"
+    <motion.header
+      initial={reduce ? false : { opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="fixed inset-x-0 top-0 z-50 transition-all duration-300"
+      style={{
+        background: scrolled
+          ? 'color-mix(in oklch, var(--background) 80%, transparent)'
+          : 'transparent',
+        backdropFilter: scrolled ? 'blur(20px)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
+        borderBottom: `1px solid ${scrolled ? 'var(--border)' : 'transparent'}`,
+      }}
+    >
+      <div className="mx-auto flex h-18 max-w-screen-2xl items-center justify-between px-6 lg:px-12">
+
+        {/* Logo — pas d'équivalent HeroUI */}
+        <NextLink href="/" className="flex shrink-0 items-center gap-3">
+          <img
+            src="/logo/Alfychatlogowihte.svg"
+            alt="AlfyChat"
+            className="size-6 invert dark:invert-0"
+          />
+          <span
+            className="hidden text-[13px] font-bold tracking-[0.18em] text-foreground sm:block"
+            style={{ fontFamily: 'var(--font-krona)' }}
           >
-            <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-5" />
-            <span
-              className="text-[12.5px] font-bold text-white/90 tracking-widest hidden sm:block"
-              style={{ fontFamily: 'var(--font-krona)' }}
+            ALFYCHAT
+          </span>
+        </NextLink>
+
+        {/* Desktop nav — Button ghost rendant NextLink */}
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
+          {NAV_LINKS.map((l) => (
+            <Button
+              key={l.href}
+              variant="ghost"
+              size="md"
+              render={(props) => <NextLink {...props} href={l.href} />}
             >
-              ALFYCHAT
-            </span>
-          </Link>
+              {l.label}
+            </Button>
+          ))}
+        </nav>
 
-          {/* Separator */}
-          <div className="w-px h-4 bg-white/[0.08] mx-0.5 hidden md:block" />
+        {/* Right side */}
+        <div className="flex items-center gap-2">
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center">
-            {NAV_LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="px-3 py-1.5 rounded-[12px] text-[12.5px] font-medium text-white/45 hover:text-white/90 hover:bg-white/[0.06] transition-all duration-300"
-              >
-                {l.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* Separator */}
-          <div className="w-px h-4 bg-white/[0.08] mx-0.5 hidden md:block" />
-
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="relative size-7 flex items-center justify-center rounded-[12px] text-white/45 hover:text-white/90 hover:bg-white/[0.06] transition-all duration-300"
+          {/* Theme toggle — Switch sun/moon */}
+          <Switch
+            size="md"
+            isSelected={isDark}
+            onChange={(v) => setTheme(v ? 'dark' : 'light')}
             aria-label="Changer le thème"
           >
-            <AnimatePresence mode="wait" initial={false}>
-              {theme === 'dark' ? (
-                <motion.span
-                  key="sun"
-                  initial={reduce ? false : { opacity: 0, rotate: -30, scale: 0.8 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: 30, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute"
-                >
-                  <SunIcon size={13} />
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="moon"
-                  initial={reduce ? false : { opacity: 0, rotate: 30, scale: 0.8 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: -30, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute"
-                >
-                  <MoonIcon size={13} />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
+            <Switch.Control>
+              <Switch.Thumb>
+                <Switch.Icon>
+                  {isDark ? <MoonIcon size={11} /> : <SunIcon size={11} />}
+                </Switch.Icon>
+              </Switch.Thumb>
+            </Switch.Control>
+          </Switch>
 
-          {/* Separator */}
-          <div className="w-px h-4 bg-white/[0.08] mx-0.5 hidden md:block" />
+          <Separator orientation="vertical" className="" />
 
           {/* Auth */}
-          <div className="flex items-center gap-1 pr-[3px]">
-            {isLoading ? (
-              <div className="size-7 rounded-[12px] bg-white/[0.06] animate-pulse" />
-            ) : user ? (
-              <Link
-                href="/channels/me"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-[12px] hover:bg-white/[0.06] transition-all duration-300 group"
-              >
-                <Avatar size="sm" className="size-6">
-                  {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName || user.username} />}
-                  <AvatarFallback className="text-[9px] font-bold bg-white/10 text-white/80">
-                    {(user.displayName || user.username || '?').slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <MessageCircleIcon size={11} className="text-white/30 group-hover:text-white/60 transition-colors hidden sm:block" />
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="hidden sm:block">
-                  <button className="px-3 py-1.5 rounded-[12px] text-[12.5px] text-white/45 hover:text-white/80 hover:bg-white/[0.06] transition-all duration-300">
-                    Connexion
-                  </button>
-                </Link>
-                <Link href="/register">
-                  <button
-                    className="px-4 py-1.5 rounded-[12px] text-[12.5px] font-semibold bg-white text-[#0a0a0a] transition-all duration-500 hover:bg-white/90 active:scale-[0.97]"
-                    style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
-                  >
-                    Créer un compte
-                  </button>
-                </Link>
-              </>
-            )}
-
-            {/* Mobile toggle */}
-            <button
-              onClick={() => setOpen((v) => !v)}
-              className="md:hidden relative size-7 flex items-center justify-center rounded-[12px] text-white/45 hover:text-white/90 hover:bg-white/[0.06] transition-all duration-300 ml-1"
-              aria-label={open ? 'Fermer' : 'Menu'}
+          {!mounted || isLoading ? (
+            <Skeleton className="h-10 w-32" />
+          ) : user ? (
+            <NextLink
+              href="/channels/me"
+              className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-surface"
             >
-              {/* Morphing hamburger lines */}
-              <span
-                className="absolute block w-3.5 h-px bg-current transition-all duration-300"
-                style={{ transform: open ? 'translateY(0) rotate(45deg)' : 'translateY(-3px)', transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
-              />
-              <span
-                className="absolute block w-3.5 h-px bg-current transition-all duration-300"
-                style={{ transform: open ? 'translateY(0) rotate(-45deg)' : 'translateY(3px)', transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
-              />
-            </button>
+              <Avatar size="sm">
+                {user.avatarUrl && (
+                  <Avatar.Image src={user.avatarUrl} alt={user.displayName || user.username} />
+                )}
+                <Avatar.Fallback>
+                  {(user.displayName || user.username || '?').slice(0, 2).toUpperCase()}
+                </Avatar.Fallback>
+              </Avatar>
+              <MessageCircleIcon size={11} className="hidden text-muted sm:block" />
+            </NextLink>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden sm:inline-flex"
+                render={(props) => <NextLink {...props} href="/login" />}
+              >
+                Connexion
+              </Button>
+              <Button
+                size="sm"
+                className="hidden sm:inline-flex"
+                render={(props) => <NextLink {...props} href="/register" />}
+              >
+                Créer un compte
+              </Button>
+            </>
+          )}
+
+          {/* Mobile — Drawer HeroUI */}
+          <div className="md:hidden">
+            <Drawer>
+              <Button isIconOnly variant="ghost" size="sm" aria-label="Menu">
+                <MenuIcon size={16} />
+              </Button>
+              <Drawer.Backdrop variant="blur">
+                <Drawer.Content placement="top">
+                  <Drawer.Dialog>
+                    <Drawer.CloseTrigger />
+                    <Drawer.Header>
+                      <Drawer.Heading>
+                        <span style={{ fontFamily: 'var(--font-krona)' }} className="text-sm tracking-[0.18em]">
+                          ALFYCHAT
+                        </span>
+                      </Drawer.Heading>
+                    </Drawer.Header>
+                    <Drawer.Body>
+                      <nav className="flex flex-col gap-1">
+                        {NAV_LINKS.map((l, i) => (
+                          <motion.div
+                            key={l.href}
+                            initial={reduce ? false : { opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.05 + i * 0.05, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                          >
+                            <Button
+                              variant="ghost"
+                              fullWidth
+                              className="justify-start text-lg"
+                              render={(props) => <NextLink {...props} href={l.href} />}
+                            >
+                              {l.label}
+                            </Button>
+                          </motion.div>
+                        ))}
+                      </nav>
+                    </Drawer.Body>
+                    <Drawer.Footer>
+                      <Button
+                        variant="tertiary"
+                        fullWidth
+                        render={(props) => <NextLink {...props} href="/login" />}
+                      >
+                        Connexion
+                      </Button>
+                      <Button
+                        fullWidth
+                        render={(props) => <NextLink {...props} href="/register" />}
+                      >
+                        Créer un compte
+                      </Button>
+                    </Drawer.Footer>
+                  </Drawer.Dialog>
+                </Drawer.Content>
+              </Drawer.Backdrop>
+            </Drawer>
           </div>
         </div>
-      </nav>
-      </header>
-
-      {/* ── Mobile full-screen overlay ────────────────────────── */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="overlay"
-            initial={reduce ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="fixed inset-0 z-40 md:hidden flex flex-col items-center justify-center"
-            style={{ background: 'rgba(5,5,5,0.96)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)' }}
-          >
-            {NAV_LINKS.map((l, i) => (
-              <motion.div
-                key={l.href}
-                initial={reduce ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={{ delay: 0.04 + i * 0.06, duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-              >
-                <Link
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className="block py-3 text-[2rem] font-bold text-white/60 hover:text-white transition-colors duration-200 text-center"
-                  style={{ fontFamily: 'var(--font-krona)' }}
-                >
-                  {l.label}
-                </Link>
-              </motion.div>
-            ))}
-
-            <motion.div
-              initial={reduce ? false : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 0.3, duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-              className="flex gap-3 mt-10"
-            >
-              <Link href="/login" onClick={() => setOpen(false)}>
-                <button className="px-6 py-3 rounded-[12px] border border-white/15 text-white/60 hover:text-white hover:border-white/30 transition-all duration-300 text-[14px]">
-                  Connexion
-                </button>
-              </Link>
-              <Link href="/register" onClick={() => setOpen(false)}>
-                <button className="px-6 py-3 rounded-[12px] bg-white text-[#0a0a0a] font-semibold text-[14px] hover:bg-white/90 transition-all duration-300">
-                  Créer un compte
-                </button>
-              </Link>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+      </div>
+    </motion.header>
   );
 }

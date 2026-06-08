@@ -185,7 +185,8 @@ export default function LoginPage() {
           <MotionFade direction="down" distance={6} duration={0.3}>
             <Link href="/" className="inline-flex items-center gap-2.5 ui-smooth opacity-80 hover:opacity-100">
               <div className="flex size-8 items-center justify-center rounded-lg">
-                <img src="/logo/Alfychat.svg" alt="" className="size-16" />
+                <img src="/logo/Alfychat.svg" alt="" className="size-16 dark:hidden" />
+                <img src="/logo/Alfychatlogowihte.svg" alt="" className="size-16 hidden dark:block" />
               </div>
               <span className="font-(family-name:--font-krona) text-sm font-medium tracking-wide text-foreground">
                 ALFYCHAT
