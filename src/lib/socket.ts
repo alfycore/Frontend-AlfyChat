@@ -2,7 +2,7 @@
 
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
+const SOCKET_URL = process.env.NEXT_PUBLIC_WS_URL || 'https://gateway.alfychat.app';
 
 /**
  * Version du singleton. Incrémenter à chaque ajout de méthode pour

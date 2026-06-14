@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const GATEWAY = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/$/, '');
+const GATEWAY = (process.env.NEXT_PUBLIC_API_URL || 'https://gateway.alfychat.app').replace(/\/$/, '');
 
 export const revalidate = 60;
 
