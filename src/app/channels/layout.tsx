@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { Button } from '@heroui/react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons';
+import {
+  motion,
+  AnimatePresence,
+  useAnimationControls,
+  useReducedMotion,
+} from 'motion/react';
+import { Button, Spinner } from '@heroui/react';
+import { ChevronLeftIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
-import { useMobileNav } from '@/hooks/use-mobile-nav';
+import { useMobileNav, MobileNavProvider } from '@/hooks/use-mobile-nav';
 import { useLayoutPrefs, useLayoutPrefsSync } from '@/hooks/use-layout-prefs';
 import { useUIStyle } from '@/hooks/use-ui-style';
 import { useBackground } from '@/hooks/use-background';
@@ -15,7 +20,6 @@ import { useResizablePanel } from '@/hooks/use-resizable-panel';
 import { useSwipeDrawer } from '@/hooks/use-swipe-drawer';
 import { CallProvider, useCallContext } from '@/hooks/use-call-context';
 import { GlobalCallAudio } from '@/components/chat/global-call-audio';
-import { MobileNavProvider } from '@/hooks/use-mobile-nav';
 import { VoiceProvider } from '@/hooks/use-voice';
 import { usePresence } from '@/hooks/use-presence';
 import { setActiveDM, setActiveGroup, setActiveChannel, clearUnread } from '@/lib/notification-store';
@@ -34,97 +38,48 @@ import { ServerSettingsDialog } from '@/components/chat/server-settings-dialog';
 import { SettingsDialog } from '@/components/chat/settings-dialog';
 import { cn } from '@/lib/utils';
 
-// ── Resize grip — Apple flat, borderless ───────────────────────────────────
+/* ════════════════════════════════════════════════════════════════════════
+   Constantes d'animation — une seule courbe, partout
+   ════════════════════════════════════════════════════════════════════════ */
 
-function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
-  return (
-    <div
-      onMouseDown={onMouseDown}
-      className="group relative z-10 flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-transparent"
-    >
-      <div className="h-9 w-1 rounded-full bg-muted/20 transition-all duration-200 group-hover:h-14 group-hover:bg-accent/40 group-active:bg-accent" />
-    </div>
-  );
+const EASE = [0.25, 0.46, 0.45, 0.94] as const;
+const SPRING = { type: 'spring' as const, stiffness: 380, damping: 36 };
+
+/* ════════════════════════════════════════════════════════════════════════
+   Hooks internes — chaque responsabilité isolée
+   ════════════════════════════════════════════════════════════════════════ */
+
+/** Analyse l'URL active : serveur, canal, DM, groupe, page amis. */
+function useActiveRoute(pathname: string) {
+  return useMemo(() => {
+    const serverMatch = pathname.match(/\/channels\/server\/([^/]+)/);
+    const channelMatch = pathname.match(/\/channels\/server\/[^/]+\/([^/]+)/);
+    const dmMatch = pathname.match(/\/channels\/me\/([^/]+)/);
+    const groupMatch = pathname.match(/\/channels\/(?:me\/g|groups)\/([^/]+)/);
+
+    const activeServerId = serverMatch?.[1] ?? null;
+    const activeChannelId = channelMatch?.[1] ?? null;
+    const activeDmId = dmMatch?.[1] ?? null;
+    const activeGroupId = groupMatch?.[1] ?? null;
+
+    const selectedChannel = activeChannelId
+      ?? (activeDmId ? `dm:${activeDmId}` : null)
+      ?? (activeGroupId ? `group:${activeGroupId}` : null)
+      ?? (pathname === '/channels/me' || pathname === '/channels/me/' ? 'friends' : null);
+
+    return { activeServerId, activeChannelId, activeDmId, activeGroupId, selectedChannel };
+  }, [pathname]);
 }
 
-// ── Loading screen ──────────────────────────────────────────────────────────
-
-function LoadingScreen() {
-  const reduce = useReducedMotion();
-  return (
-    <div className="flex h-dvh items-center justify-center bg-background">
-      <motion.div
-        initial={reduce ? false : { opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="flex flex-col items-center gap-4"
-      >
-        <div className="flex size-16 animate-pulse items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/Alfychat.svg" alt="AlfyChat" className="dark:hidden" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" className="hidden dark:block" />
-        </div>
-        <p className="text-sm text-muted">Chargement…</p>
-      </motion.div>
-    </div>
-  );
-}
-
-// ── Inner layout ─────────────────────────────────────────────────────────────
-
-function LayoutInner({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const [layoutReady, setLayoutReady] = useState(false);
-
-  const { user, isLoading, isAuthenticated } = useAuth();
-
-  usePresence({
-    chosenStatus: (user?.status as 'online' | 'idle' | 'dnd' | 'invisible') ?? 'online',
-    customStatus: user?.customStatus,
-    emoji: user?.emoji,
-  });
-
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const {
-    isMobile, showSidebar, showMemberList, showSettings, memberListDesktopVisible,
-    openSidebar, closeSidebar, closeSettings, closeAll,
-  } = useMobileNav();
-  const { prefs: layoutPrefs } = useLayoutPrefs();
-  useLayoutPrefsSync();
-  const ui = useUIStyle();
-  const { wallpaper } = useBackground();
-  useNotification();
-
-  // ── Parse active route ─────────────────────────────────────────────────────
-  const serverMatch = pathname.match(/\/channels\/server\/([^/]+)/);
-  const channelMatch = pathname.match(/\/channels\/server\/[^/]+\/([^/]+)/);
-  const dmMatch = pathname.match(/\/channels\/me\/([^/]+)/);
-  const groupMatch = pathname.match(/\/channels\/(?:me\/g|groups)\/([^/]+)/);
-
-  const activeServerId = serverMatch?.[1] ?? null;
-  const activeChannelId = channelMatch?.[1] ?? null;
-  const activeDmId = dmMatch?.[1] ?? null;
-  const activeGroupId = groupMatch?.[1] ?? null;
-
-  const selectedChannel = activeChannelId
-    ?? (activeDmId ? `dm:${activeDmId}` : null)
-    ?? (activeGroupId ? `group:${activeGroupId}` : null)
-    ?? (pathname === '/channels/me' || pathname === '/channels/me/' ? 'friends' : null);
-
-  // ── Server settings ──────────────────────────────────────────────────────
-  const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
-
-  // ── Collapsible sidebar (Linear/Notion style, persisted) ────────────────────
+/** Sidebar repliable, persistée dans localStorage. */
+function useCollapsedSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+
   useEffect(() => {
     try { if (localStorage.getItem('alfychat_sidebar_collapsed') === '1') setCollapsed(true); } catch {}
   }, []);
-  const toggleCollapsed = useCallback(() => {
+
+  const toggle = useCallback(() => {
     setCollapsed((c) => {
       const next = !c;
       try { localStorage.setItem('alfychat_sidebar_collapsed', next ? '1' : '0'); } catch {}
@@ -132,57 +87,18 @@ function LayoutInner({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // ── Incoming call ──────────────────────────────────────────────────────────
-  const { callType, callStatus, callerName, callerAvatar, isGroup, callCategory, acceptCall, joinCall, declineCall } = useCallContext();
-  const [incomingCall, setIncomingCall] = useState<{ callerName: string; callerAvatar?: string; callType: 'voice' | 'video'; isGroup: boolean; isServerCall: boolean } | null>(null);
+  return { collapsed, toggle };
+}
+
+/** Synchronise la conversation active avec le store de notifications. */
+function useNotificationSync(
+  route: ReturnType<typeof useActiveRoute>,
+  pathname: string,
+) {
+  const { activeGroupId, activeDmId, activeChannelId, activeServerId } = route;
+
   useEffect(() => {
-    if (callStatus === 'ringing') {
-      setIncomingCall({ callerName: callerName || 'Utilisateur', callerAvatar, callType: callType || 'voice', isGroup: !!isGroup, isServerCall: callCategory === 'server' });
-    } else {
-      setIncomingCall(null);
-    }
-  }, [callStatus, callType, callerName, callerAvatar, isGroup, callCategory]);
-
-  // ── Resizable channel list ─────────────────────────────────────────────────
-  const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
-    storageKey: 'alfychat_sidebar_width',
-    defaultWidth: 240,
-    minWidth: 160,
-    maxWidth: 400,
-    side: 'right',
-    disabled: isMobile,
-  });
-
-  // ── Resizable member list ──────────────────────────────────────────────────
-  const { width: memberListWidth, onMouseDown: onMemberResize } = useResizablePanel({
-    storageKey: 'alfychat_memberlist_width',
-    defaultWidth: 224,
-    minWidth: 160,
-    maxWidth: 360,
-    side: 'left',
-    disabled: isMobile,
-  });
-
-  // ── Mobile swipe drawer ────────────────────────────────────────────────────
-  const [sidebarWidth, setSidebarWidth] = useState(320);
-  useEffect(() => {
-    const update = () => setSidebarWidth(window.innerWidth);
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
-  const { sidebarRef, backdropRef } = useSwipeDrawer({
-    open: showSidebar,
-    onOpen: openSidebar,
-    onClose: closeSidebar,
-    width: sidebarWidth,
-    enabled: isMobile,
-  });
-
-  // ── Notification sync ──────────────────────────────────────────────────────
-  useEffect(() => {
-    const syncNotifications = async () => {
+    const sync = async () => {
       try {
         if (activeGroupId) {
           setActiveGroup(activeGroupId);
@@ -214,12 +130,173 @@ function LayoutInner({ children }: { children: ReactNode }) {
         console.error('Notification sync error:', error);
       }
     };
-    syncNotifications();
+    sync();
   }, [activeGroupId, activeDmId, activeChannelId, activeServerId, pathname]);
 
+  // Reset à la sortie du layout
   useEffect(() => () => { setActiveDM(null); setActiveGroup(null); setActiveChannel(null); }, []);
+}
 
-  // ── Navigate handlers ──────────────────────────────────────────────────────
+/** Dérive l'appel entrant depuis le contexte d'appel. */
+function useIncomingCall() {
+  const { callType, callStatus, callerName, callerAvatar, isGroup, callCategory, acceptCall, joinCall, declineCall } = useCallContext();
+
+  const incomingCall = useMemo(() => {
+    if (callStatus !== 'ringing') return null;
+    return {
+      callerName: callerName || 'Utilisateur',
+      callerAvatar,
+      callType: callType || ('voice' as const),
+      isGroup: !!isGroup,
+      isServerCall: callCategory === 'server',
+    };
+  }, [callStatus, callType, callerName, callerAvatar, isGroup, callCategory]);
+
+  return { incomingCall, acceptCall, joinCall, declineCall };
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Sous-composants visuels
+   ════════════════════════════════════════════════════════════════════════ */
+
+/** Écran de chargement — logo + spinner, fondu doux. */
+function LoadingScreen() {
+  const reduce = useReducedMotion();
+  return (
+    <div className="flex h-dvh items-center justify-center bg-background">
+      <motion.div
+        initial={reduce ? false : { opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: EASE }}
+        className="flex flex-col items-center gap-5"
+      >
+        <div className="flex size-16 items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/Alfychat.svg" alt="AlfyChat" className="dark:hidden" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" className="hidden dark:block" />
+        </div>
+        <div className="flex items-center gap-2.5 text-muted">
+          <Spinner size="sm" />
+          <p className="text-sm">Chargement…</p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/** Poignée de redimensionnement — grandit au survol, accent au drag. */
+function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      className="group relative z-10 flex w-1.5 shrink-0 cursor-col-resize items-center justify-center bg-transparent"
+    >
+      <div className="h-9 w-1 rounded-full bg-muted/20 transition-all duration-200 group-hover:h-14 group-hover:bg-accent/40 group-active:h-16 group-active:bg-accent" />
+    </div>
+  );
+}
+
+/** Bouton replier/déplier — chevron qui pivote. */
+function CollapseToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  return (
+    <Button
+      isIconOnly
+      size="sm"
+      variant="ghost"
+      onPress={onToggle}
+      aria-label={collapsed ? 'Déplier la sidebar' : 'Replier la sidebar'}
+      className="mt-1 shrink-0 text-muted hover:text-foreground"
+    >
+      <motion.span
+        animate={{ rotate: collapsed ? 180 : 0 }}
+        transition={{ duration: 0.3, ease: EASE }}
+        className="flex"
+      >
+        <ChevronLeftIcon size={15} />
+      </motion.span>
+    </Button>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Layout interne
+   ════════════════════════════════════════════════════════════════════════ */
+
+function LayoutInner({ children }: { children: ReactNode }) {
+  const reduce = useReducedMotion();
+
+  // ── Hydratation & préchargement ──────────────────────────────────────────
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const [layoutReady, setLayoutReady] = useState(false);
+
+  // ── Auth & présence ──────────────────────────────────────────────────────
+  const { user, isLoading, isAuthenticated } = useAuth();
+  usePresence({
+    chosenStatus: (user?.status as 'online' | 'idle' | 'dnd' | 'invisible') ?? 'online',
+    customStatus: user?.customStatus,
+    emoji: user?.emoji,
+  });
+
+  // ── Navigation & route active ────────────────────────────────────────────
+  const router = useRouter();
+  const pathname = usePathname();
+  const route = useActiveRoute(pathname);
+  const { activeServerId, activeChannelId, activeDmId, activeGroupId, selectedChannel } = route;
+
+  // ── UI : préférences, style, fond, notifications ─────────────────────────
+  const {
+    isMobile, showSidebar, showMemberList, showSettings, memberListDesktopVisible,
+    openSidebar, closeSidebar, closeSettings, closeAll,
+  } = useMobileNav();
+  const { prefs: layoutPrefs } = useLayoutPrefs();
+  useLayoutPrefsSync();
+  const ui = useUIStyle();
+  const { wallpaper } = useBackground();
+  useNotification();
+  useNotificationSync(route, pathname);
+
+  // ── États locaux ─────────────────────────────────────────────────────────
+  const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
+  const { collapsed, toggle: toggleCollapsed } = useCollapsedSidebar();
+  const { incomingCall, acceptCall, joinCall, declineCall } = useIncomingCall();
+
+  // ── Panneaux redimensionnables ───────────────────────────────────────────
+  const { width: channelListWidth, onMouseDown: onChannelResize } = useResizablePanel({
+    storageKey: 'alfychat_sidebar_width',
+    defaultWidth: 240,
+    minWidth: 160,
+    maxWidth: 400,
+    side: 'right',
+    disabled: isMobile,
+  });
+  const { width: memberListWidth } = useResizablePanel({
+    storageKey: 'alfychat_memberlist_width',
+    defaultWidth: 224,
+    minWidth: 160,
+    maxWidth: 360,
+    side: 'left',
+    disabled: isMobile,
+  });
+
+  // ── Drawer mobile (swipe) ────────────────────────────────────────────────
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  useEffect(() => {
+    const update = () => setSidebarWidth(window.innerWidth);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  const { sidebarRef, backdropRef } = useSwipeDrawer({
+    open: showSidebar,
+    onOpen: openSidebar,
+    onClose: closeSidebar,
+    width: sidebarWidth,
+    enabled: isMobile,
+  });
+
+  // ── Handlers de navigation ───────────────────────────────────────────────
   const handleSelectServer = useCallback((id: string | null) => {
     if (!id) router.push('/channels/me');
     else if (id === 'groups') router.push('/channels/groups');
@@ -235,7 +312,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
     else if (activeServerId) router.push(`/channels/server/${activeServerId}/${ch}`);
   }, [router, activeServerId]);
 
-  // ── Prefetch initial data before revealing UI ──────────────────────────────
+  // ── Préchargement des données avant affichage ────────────────────────────
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -245,45 +322,50 @@ function LayoutInner({ children }: { children: ReactNode }) {
       if (!cancelled) { clearTimeout(timer); setLayoutReady(true); }
     });
     return () => { cancelled = true; clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // ── Auth guard ─────────────────────────────────────────────────────────────
+  // ── Garde d'authentification ─────────────────────────────────────────────
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push('/login');
   }, [isLoading, isAuthenticated, router]);
 
-  // ── Close mobile sidebar on navigate ───────────────────────────────────────
+  // ── Fermer la nav mobile à chaque navigation ─────────────────────────────
   useEffect(() => { if (isMobile) closeAll(); }, [pathname, isMobile, closeAll]);
+
+  // ── Micro-fondu du contenu à chaque changement de route ──────────────────
+  const contentControls = useAnimationControls();
+  useEffect(() => {
+    if (reduce) return;
+    contentControls.set({ opacity: 0.5, y: 6 });
+    contentControls.start({ opacity: 1, y: 0, transition: { duration: 0.28, ease: EASE } });
+  }, [pathname, contentControls, reduce]);
 
   if (!mounted || isLoading || !user || !layoutReady) return <LoadingScreen />;
 
-  // ── Glass wallpaper ─────────────────────────────────────────────────────────
+  // ── Fond du mode verre ───────────────────────────────────────────────────
   const glassBg = wallpaper
     ? (wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient') ? wallpaper : `url(${resolveMediaUrl(wallpaper) ?? wallpaper})`)
     : 'radial-gradient(ellipse 90% 70% at 15% 5%, oklch(0.80 0.14 290 / 55%) 0%, transparent 55%), radial-gradient(ellipse 70% 55% at 85% 85%, oklch(0.75 0.16 230 / 45%) 0%, transparent 55%), radial-gradient(ellipse 55% 45% at 55% 45%, oklch(0.82 0.11 320 / 30%) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 30% 75%, oklch(0.78 0.13 180 / 25%) 0%, transparent 50%)';
 
   const showMembers = memberListDesktopVisible && !!activeServerId;
 
-  // ── Server rail — always visible icon column + collapse toggle ──────────────
+  /* ── Rail des serveurs — colonne d'icônes toujours visible ─────────────── */
   const serverRail = (
-    <div className="flex h-full shrink-0 flex-col items-center">
+    <motion.div
+      initial={reduce ? false : { opacity: 0, x: -14 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.45, ease: EASE }}
+      className="flex h-full shrink-0 flex-col items-center"
+    >
       <div className={cn('min-h-0 flex-1 overflow-hidden', ui.sidebarWrapper)}>
         <ServerList selectedServer={activeServerId} onSelectServer={handleSelectServer} />
       </div>
-      <Button
-        isIconOnly
-        size="sm"
-        variant="ghost"
-        onPress={toggleCollapsed}
-        aria-label={collapsed ? 'Déplier la sidebar' : 'Replier la sidebar'}
-        className="mt-1 shrink-0 text-muted hover:text-foreground"
-      >
-        {collapsed ? <ChevronRightIcon size={15} /> : <ChevronLeftIcon size={15} />}
-      </Button>
-    </div>
+      <CollapseToggle collapsed={collapsed} onToggle={toggleCollapsed} />
+    </motion.div>
   );
 
-  // ── Channel panel — collapses to width 0 ────────────────────────────────────
+  /* ── Panneau des canaux — se replie en largeur 0 (ressort) ─────────────── */
   const channelPanel = (
     <AnimatePresence initial={false}>
       {!collapsed && (
@@ -293,7 +375,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
           initial={{ width: 0, opacity: 0 }}
           animate={{ width: channelListWidth + 8, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
-          transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={reduce ? { duration: 0 } : SPRING}
           className="h-full shrink-0 overflow-hidden pl-2"
         >
           <div
@@ -326,6 +408,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
       )}
       style={ui.isGlass ? { backgroundImage: glassBg, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
     >
+      {/* Appel entrant */}
       <IncomingCallDialog
         open={!!incomingCall}
         callerName={incomingCall?.callerName || ''}
@@ -337,15 +420,9 @@ function LayoutInner({ children }: { children: ReactNode }) {
         onDecline={declineCall}
       />
 
-      {/* MOBILE — member list backdrop */}
-      {isMobile && showMemberList && (
-        <div className="fixed inset-0 z-40 bg-black/60" onClick={closeAll} />
-      )}
-
-      {/* DESKTOP — collapsible sidebar + content + floating members */}
+      {/* ════════ DESKTOP — rail + canaux repliables + contenu + membres ════ */}
       {!isMobile && (
         <div className="flex h-full w-full min-w-0 flex-row gap-2">
-          {/* Sidebar group : server rail + collapsible channels */}
           <div className="flex h-full shrink-0 flex-row">
             {serverRail}
             {channelPanel}
@@ -353,22 +430,24 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
           {!collapsed && <ResizeHandle onMouseDown={onChannelResize} />}
 
-          {/* Content */}
-          <div data-layout="content" className={cn('relative flex min-w-0 flex-1 flex-col', ui.panelWrapper, ui.panelTransition)}>
+          {/* Contenu — micro-fondu à chaque navigation */}
+          <motion.div
+            data-layout="content"
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={contentControls}
+            className={cn('relative flex min-w-0 flex-1 flex-col', ui.panelWrapper, ui.panelTransition)}
+          >
             {children}
-          </div>
+          </motion.div>
 
-          {/* Member list — floating overlay (slides from the right) */}
+          {/* Liste des membres — panneau flottant (glisse depuis la droite) */}
           {activeServerId && (
             <motion.div
               data-layout="member-list"
               style={{ width: memberListWidth }}
               initial={false}
-              animate={{
-                x: showMembers ? 0 : 24,
-                opacity: showMembers ? 1 : 0,
-              }}
-              transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+              animate={{ x: showMembers ? 0 : 24, opacity: showMembers ? 1 : 0 }}
+              transition={reduce ? { duration: 0 } : SPRING}
               className={cn(
                 'absolute inset-y-2 right-2 z-40 overflow-hidden shadow-2xl shadow-black/20',
                 !showMembers && 'pointer-events-none',
@@ -382,7 +461,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* MOBILE — content + bottom nav */}
+      {/* ════════ MOBILE — contenu + nav basse + drawers ════════ */}
       {isMobile && (() => {
         const showNav = !showSidebar && (showSettings || (!activeDmId && !activeGroupId && !activeChannelId));
         return (
@@ -399,7 +478,21 @@ function LayoutInner({ children }: { children: ReactNode }) {
         );
       })()}
 
-      {/* MOBILE — nav drawer (servers + channels) */}
+      {/* MOBILE — fond assombri derrière la liste des membres */}
+      <AnimatePresence>
+        {isMobile && showMemberList && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/60"
+            onClick={closeAll}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* MOBILE — drawer de navigation (serveurs + canaux) */}
       {isMobile && (
         <MobileNavDrawer
           sidebarRef={sidebarRef}
@@ -414,7 +507,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* MOBILE — member list slide-over */}
+      {/* MOBILE — liste des membres en slide-over */}
       {isMobile && activeServerId && (
         <div
           className={cn(
@@ -428,7 +521,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* Server settings dialog */}
+      {/* Dialogues */}
       {serverSettingsOpen && activeServerId && (
         <ServerSettingsDialog
           serverId={activeServerId}
@@ -437,17 +530,17 @@ function LayoutInner({ children }: { children: ReactNode }) {
           onServerUpdated={() => setServerSettingsOpen(false)}
         />
       )}
-
-      {/* User settings dialog */}
       <SettingsDialog open={showSettings} onOpenChange={(open) => !open && closeSettings()} />
 
-      {/* Mobile permission prompt */}
+      {/* Permissions mobiles */}
       {isMobile && <MobilePermissionPrompt />}
     </div>
   );
 }
 
-// ── Root export ───────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════════════
+   Export racine — providers globaux
+   ════════════════════════════════════════════════════════════════════════ */
 
 export default function ChannelsLayout({ children }: { children: ReactNode }) {
   return (

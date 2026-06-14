@@ -7,7 +7,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {
   MessageCircleIcon, ShieldCheckIcon, SmileIcon, SendIcon, HashIcon,
-  XIcon, PhoneIcon, VideoIcon, ArrowLeftIcon, BanIcon,
+  XIcon, PhoneIcon, VideoIcon, ArrowLeftIcon, BanIcon, ChevronDownIcon,
   SearchIcon, PaperclipIcon, FileTextIcon, MenuIcon, Maximize2Icon,
 } from '@/components/icons';
 import { useTranslation } from '@/components/locale-provider';
@@ -29,7 +29,6 @@ import {
   Button,
   Chip,
   ScrollShadow,
-  Separator,
   Skeleton,
   Spinner,
   Surface,
@@ -47,6 +46,7 @@ import {
 /* ── Motion easing ──────────────────────────────────────────────────────── */
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
+const SPRING = { type: 'spring' as const, stiffness: 420, damping: 32 };
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -311,22 +311,25 @@ const MessageList = memo(function MessageList({
         return (
           <div key={msg.id}>
             {showDivider && (
-              <div className="my-4 flex items-center gap-3 px-4">
-                <div className="h-px flex-1 bg-danger/20" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, ease: EASE }}
+                className="my-4 flex justify-center px-4"
+              >
                 <Chip color="danger" variant="soft" size="sm">
                   <Chip.Label className="text-[10px] font-semibold uppercase tracking-widest">
                     {t.chat.newMessages}
                   </Chip.Label>
                 </Chip>
-                <div className="h-px flex-1 bg-danger/20" />
-              </div>
+              </motion.div>
             )}
 
             <div
               className={[
                 'transition-all duration-500',
                 isHighlighted && 'animate-pulse rounded-xl bg-accent/10',
-                isUnread && !isHighlighted && 'border-l-2 border-accent/30 bg-accent/[0.03]',
+                isUnread && !isHighlighted && 'rounded-xl bg-accent/[0.045]',
               ].filter(Boolean).join(' ')}
             >
               <MessageItem
@@ -420,10 +423,8 @@ function SplitContextPanel({
           </motion.div>
         )}
 
-        <Separator variant="secondary" />
-
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
           className="w-full justify-start gap-2 text-muted hover:text-foreground"
           onPress={onSearch}
@@ -434,7 +435,6 @@ function SplitContextPanel({
 
         {sharedMedia.length > 0 && (
           <>
-            <Separator variant="secondary" />
             <div>
               <div className="mb-2.5 flex items-center justify-between">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted/60">
@@ -454,7 +454,7 @@ function SplitContextPanel({
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.04 }}
                         transition={{ duration: 0.2, ease: EASE }}
-                        className="group block aspect-square overflow-hidden rounded-lg ring-1 ring-separator/30 transition-shadow duration-200 hover:ring-accent/40"
+                        className="group block aspect-square overflow-hidden rounded-xl bg-surface-secondary"
                       >
                         <img
                           src={url}
@@ -473,10 +473,8 @@ function SplitContextPanel({
           </>
         )}
 
-        <Separator variant="secondary" />
-
         <Surface variant="secondary" className="flex items-center gap-3 rounded-2xl p-3.5">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent ring-1 ring-accent/20">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
             <MessageCircleIcon size={16} />
           </span>
           <div className="min-w-0">
@@ -524,6 +522,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   const [e2eeDismissed, setE2eeDismissed]   = useState(false);
   const [mentionQuery, setMentionQuery]     = useState('');
   const [mentionVisible, setMentionVisible] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
   const [lastSeenAt, setLastSeenAt]         = useState<string | null>(
     () => (recipientId ? getLastSeen(recipientId) : null),
   );
@@ -606,7 +605,11 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
   const checkAtBottom = useCallback(() => {
     const el = scrollRef.current;
-    if (el) atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    if (el) {
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+      atBottomRef.current = atBottom;
+      setShowScrollDown(!atBottom);
+    }
   }, []);
 
   useEffect(() => {
@@ -616,6 +619,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
   useEffect(() => {
     atBottomRef.current = true;
     initScrollRef.current = false;
+    setShowScrollDown(false);
     requestAnimationFrame(() => { scrollToBottom(); requestAnimationFrame(scrollToBottom); });
   }, [channelId, recipientId, scrollToBottom]);
 
@@ -913,9 +917,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           transition={{ duration: 0.6, ease: EASE }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="flex size-24 items-center justify-center rounded-3xl bg-surface-secondary shadow-sm">
-            <MessageCircleIcon size={36} className="text-muted/40" />
-          </div>
+          <motion.div
+            initial={reduce ? false : { scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={SPRING}
+            className="flex size-24 items-center justify-center rounded-[2rem] bg-accent/10"
+          >
+            <MessageCircleIcon size={36} className="text-accent" />
+          </motion.div>
           <div className="space-y-1.5">
             <p className="font-heading text-base font-semibold tracking-tight text-foreground">
               {t.chat.welcomeHeading}
@@ -986,7 +995,13 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
 
         {/* Header */}
         <header className={`flex shrink-0 items-center justify-between px-3 md:px-4 ${d.headerH} ${ui.header}`}>
-          <div className="flex min-w-0 items-center gap-2.5">
+          <motion.div
+            key={recipientId ?? channelId ?? 'chat'}
+            initial={reduce ? false : { opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35, ease: EASE }}
+            className="flex min-w-0 items-center gap-2.5"
+          >
             {isMobile && (
               <Button isIconOnly size="sm" variant="ghost" onPress={openSidebar} className="shrink-0 md:hidden">
                 <ArrowLeftIcon size={16} />
@@ -1002,7 +1017,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               />
             ) : (
               <>
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent/10 ring-1 ring-accent/20">
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent/10">
                   <HashIcon size={14} className="text-accent" />
                 </div>
                 <span className="truncate text-[13px] font-semibold tracking-tight text-foreground">
@@ -1010,7 +1025,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 </span>
               </>
             )}
-          </div>
+          </motion.div>
 
           {recipientId && (
             <div data-tour="call-buttons" className="flex shrink-0 items-center gap-0.5">
@@ -1027,7 +1042,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                 <Tooltip.Content><p>{t.chat.searchTooltip}</p></Tooltip.Content>
               </Tooltip>
 
-              <Separator orientation="vertical" className="mx-1 h-4" />
+              <span className="mx-1" />
 
               <Tooltip delay={0}>
                 <Button
@@ -1067,7 +1082,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               return (
                 <Surface
                   variant="tertiary"
-                  className="fixed bottom-4 right-4 z-60 w-36 cursor-pointer overflow-hidden rounded-2xl shadow-overlay ring-1 ring-separator"
+                  className="fixed bottom-4 right-4 z-60 w-36 cursor-pointer overflow-hidden rounded-2xl shadow-overlay"
                   onClick={() => setCallMinimized(false)}
                 >
                   <div className="relative aspect-video">
@@ -1153,6 +1168,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
         )}
 
         {/* Messages scroll area */}
+        <div className="relative flex min-h-0 flex-1 flex-col">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-1 py-2 md:px-2 md:py-4">
           {isLoading ? (
             <MessageSkeletons />
@@ -1163,9 +1179,14 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
               transition={{ duration: 0.5, ease: EASE }}
               className="flex h-full flex-col items-center justify-center gap-4 px-4 text-center"
             >
-              <Surface variant="secondary" className="flex size-16 items-center justify-center rounded-3xl">
-                <MessageCircleIcon size={26} className="text-muted" />
-              </Surface>
+              <motion.div
+                initial={reduce ? false : { scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={SPRING}
+                className="flex size-16 items-center justify-center rounded-3xl bg-accent/10"
+              >
+                <MessageCircleIcon size={26} className="text-accent" />
+              </motion.div>
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold text-foreground">{t.chat.noMessages}</p>
                 <p className="text-xs text-muted">{t.chat.beFirst}</p>
@@ -1196,20 +1217,53 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
           )}
         </div>
 
+        {/* Bouton retour en bas */}
+        <AnimatePresence>
+          {showScrollDown && !isLoading && (
+            <motion.div
+              initial={reduce ? false : { opacity: 0, scale: 0.8, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 8 }}
+              transition={SPRING}
+              className="absolute bottom-3 right-4 z-10"
+            >
+              <Button
+                isIconOnly
+                size="sm"
+                variant="secondary"
+                aria-label="Revenir aux derniers messages"
+                className="rounded-full shadow-lg shadow-black/10"
+                onPress={() => { atBottomRef.current = true; setShowScrollDown(false); scrollToBottom(); }}
+              >
+                <ChevronDownIcon size={15} />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        </div>
+
         {/* Bottom bar */}
         <div className="shrink-0 backdrop-blur-xl">
 
           {/* Typing indicator */}
-          {typingUsers.length > 0 && (
-            <div className="flex items-center gap-2 px-3 pt-1.5">
-              <TypingDots />
-              <span className="text-xs text-muted">
-                {typingUsers.length > 1
-                  ? tx(t.chat.typingPlural, { names: typingUsers.map((u) => u.username).join(', ') })
-                  : tx(t.chat.typing, { names: typingUsers[0]?.username ?? '' })}
-              </span>
-            </div>
-          )}
+          <AnimatePresence>
+            {typingUsers.length > 0 && (
+              <motion.div
+                initial={reduce ? false : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.2, ease: EASE }}
+                className="flex items-center gap-2 px-3 pt-1.5"
+              >
+                <TypingDots />
+                <span className="text-xs text-muted">
+                  {typingUsers.length > 1
+                    ? tx(t.chat.typingPlural, { names: typingUsers.map((u) => u.username).join(', ') })
+                    : tx(t.chat.typing, { names: typingUsers[0]?.username ?? '' })}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Cooldown */}
           <AnimatePresence>
@@ -1289,7 +1343,7 @@ export function ChatArea({ channelId, recipientId, recipientName }: ChatAreaProp
                     transition={{ duration: 0.22, ease: EASE }}
                     className="overflow-hidden"
                   >
-                    <div className={`mb-1.5 flex items-center gap-2.5 rounded-xl px-3 py-2 ring-1 ring-accent/12 ${ui.replyBar || 'bg-accent/4'}`}>
+                    <div className={`mb-1.5 flex items-center gap-2.5 rounded-xl px-3 py-2 ${ui.replyBar || 'bg-accent/5'}`}>
                       <div className="h-5 w-0.5 shrink-0 self-stretch rounded-full bg-accent/50" />
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-accent/70">{replyingTo.authorName}</p>
