@@ -1,7 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import Link from 'next/link';
+import { motion } from 'motion/react';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion';
+import { ArrowRightIcon } from '@/components/icons';
+import { Eyebrow, SectionTitle, EASE } from './section';
 
 const ITEMS = [
   {
@@ -18,7 +26,7 @@ const ITEMS = [
   },
   {
     q: "Comment fonctionne l'auto-hébergement ?",
-    a: "Vous pouvez déployer votre propre noeud AlfyChat sur votre serveur ou votre PC. Vos données restent chez vous. La configuration prend quelques minutes via notre CLI : alfychat-server start --server-id=X --token=Y.",
+    a: 'Vous pouvez déployer votre propre nœud AlfyChat sur votre serveur ou votre PC. Vos données restent chez vous. La configuration prend quelques minutes via notre CLI : alfychat-server start --server-id=X --token=Y.',
   },
   {
     q: 'Le code source est-il vraiment ouvert ?',
@@ -30,114 +38,58 @@ const ITEMS = [
   },
 ];
 
-function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
-  const [open, setOpen] = useState(false);
-  const reduce = useReducedMotion();
-
-  return (
-    <motion.div
-      initial={reduce ? false : { opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.5, delay: index * 0.06, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <button
-        className="w-full flex items-start justify-between gap-6 py-6 text-left group"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-      >
-        <span
-          className="text-[15px] font-medium text-[#111111] dark:text-[#fafafa] leading-snug group-hover:text-[#333333] dark:group-hover:text-white transition-colors duration-150"
-          style={{ fontFamily: 'var(--font-krona), sans-serif' }}
-        >
-          {question}
-        </span>
-
-        {/* +/- toggle — protocol §5 Accordions */}
-        <span
-          className="shrink-0 mt-0.5 size-5 flex items-center justify-center text-[#787774] dark:text-[#71717a] text-[18px] leading-none font-light transition-transform duration-200"
-          aria-hidden
-          style={{ transform: open ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 200ms ease' }}
-        >
-          +
-        </span>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="answer"
-            initial={reduce ? false : { opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            style={{ overflow: 'hidden' }}
-          >
-            <p className="pb-6 text-[14px] text-[#787774] dark:text-[#71717a] leading-relaxed max-w-2xl">
-              {answer}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Divider — strips container boxes per protocol */}
-      <div className="border-b border-[#EAEAEA] dark:border-[#27272a]" />
-    </motion.div>
-  );
-}
-
 export function HomeFaq() {
   return (
-    <section className="py-28 bg-[#FBFBFA] dark:bg-[#09090b] border-t border-[#EAEAEA] dark:border-[#27272a]">
+    <section className="border-t border-border bg-muted/30 py-28">
       <div className="mx-auto max-w-6xl px-8">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-[1fr_1.6fr] lg:items-start">
 
-          {/* Left: sticky label */}
+          {/* Colonne gauche — sticky */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, ease: EASE }}
             className="lg:sticky lg:top-24"
           >
-            <span
-              className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#787774] dark:text-[#71717a]"
-              style={{ fontFamily: 'var(--font-geist-mono, monospace)' }}
-            >
-              Questions fréquentes
-            </span>
-            <h2
-              className="mt-3 text-[2.2rem] leading-[1.1] tracking-[-0.02em] text-[#111111] dark:text-[#fafafa] font-bold"
-              style={{ fontFamily: 'var(--font-krona), sans-serif' }}
-            >
+            <Eyebrow>Questions fréquentes</Eyebrow>
+            <SectionTitle>
               Des réponses
               <br />
               directes.
-            </h2>
-            <p className="mt-4 text-[14px] text-[#787774] dark:text-[#71717a] leading-relaxed">
-              Vous avez d'autres questions ? Notre documentation est disponible en ligne ou contactez-nous directement.
+            </SectionTitle>
+            <p className="mt-4 text-[14px] leading-relaxed text-muted-foreground">
+              Vous avez d&apos;autres questions ? Notre documentation est disponible en ligne ou contactez-nous directement.
             </p>
-            <a
+            <Link
               href="/developers/docs"
-              className="mt-6 inline-flex items-center gap-2 text-[13px] text-[#111111] dark:text-[#fafafa] font-medium border-b border-[#EAEAEA] dark:border-[#27272a] pb-0.5 hover:border-[#111111] dark:hover:border-white transition-colors duration-150"
+              className="group mt-6 inline-flex items-center gap-1.5 border-b border-border pb-0.5 text-[13px] font-medium text-foreground transition-colors duration-150 hover:border-foreground"
             >
               Lire la documentation
-            </a>
+              <ArrowRightIcon size={12} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+            </Link>
           </motion.div>
 
-          {/* Right: accordion — no container boxes per protocol §5 */}
-          <div>
-            {/* Top divider */}
-            <div className="border-t border-[#EAEAEA] dark:border-[#27272a]" />
-            {ITEMS.map((item, i) => (
-              <FAQItem
-                key={item.q}
-                question={item.q}
-                answer={item.a}
-                index={i}
-              />
-            ))}
-          </div>
+          {/* Colonne droite — accordéon shadcn */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.6, delay: 0.05, ease: EASE }}
+          >
+            <Accordion type="single" collapsible className="border-t border-border">
+              {ITEMS.map((item, i) => (
+                <AccordionItem key={item.q} value={`item-${i}`} className="border-border">
+                  <AccordionTrigger className="gap-6 py-6 font-heading text-[15px] font-medium text-foreground no-underline hover:no-underline">
+                    {item.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="max-w-2xl pb-6 text-[14px] leading-relaxed text-muted-foreground">
+                    {item.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </motion.div>
 
         </div>
       </div>

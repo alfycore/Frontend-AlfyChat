@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { socketService } from '@/lib/socket';
-import { ServerChatArea } from '@/components/chat/server-chat-area';
+import { ServerChatArea } from '@/components/chat/chat-area';
 
 export default function ServerChannelPage() {
   const params = useParams();

@@ -198,7 +198,7 @@ export default function StatusPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <LandingNavbar />
 
-      <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-12 space-y-10">
+      <main className="flex-1 mx-auto w-full max-w-5xl px-6 pt-24 pb-12 space-y-10">
 
         <div className="text-center space-y-3">
           <h1 className="text-4xl font-extrabold tracking-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
@@ -544,17 +544,24 @@ function StatusTab({
     return <p className="text-sm text-muted-foreground/60 italic">{s.noDataForDay}</p>;
   }
 
-  const minuteMap = new Map<number, 'UP' | 'DEGRADED' | 'DOWN'>();
+  // 5-minute resolution → 288 slots/day, indexed by floor(minuteOfDay / 5).
+  const SLOTS_PER_DAY = 288;
+  const SLOTS_PER_ROW = 72; // 6 h per row
+  const slotMap = new Map<number, 'UP' | 'DEGRADED' | 'DOWN'>();
   for (const p of minutes) {
     const dt = new Date(p.timestamp * 1000);
-    minuteMap.set(dt.getUTCHours() * 60 + dt.getUTCMinutes(), p.status);
+    const slot = Math.floor((dt.getUTCHours() * 60 + dt.getUTCMinutes()) / 5);
+    // Keep the worst status if several points fall in the same 5-min slot.
+    const prev = slotMap.get(slot);
+    const rank = { UP: 0, DEGRADED: 1, DOWN: 2 } as const;
+    if (!prev || rank[p.status] > rank[prev]) slotMap.set(slot, p.status);
   }
 
   const rows = [
     { label: '00:00 – 05:59', start: 0 },
-    { label: '06:00 – 11:59', start: 360 },
-    { label: '12:00 – 17:59', start: 720 },
-    { label: '18:00 – 23:59', start: 1080 },
+    { label: '06:00 – 11:59', start: SLOTS_PER_ROW },
+    { label: '12:00 – 17:59', start: SLOTS_PER_ROW * 2 },
+    { label: '18:00 – 23:59', start: SLOTS_PER_ROW * 3 },
   ];
 
   const cellCls = (status: 'UP' | 'DEGRADED' | 'DOWN' | undefined) => {
@@ -580,17 +587,18 @@ function StatusTab({
       {rows.map(({ label, start }) => (
         <div key={label} className="space-y-1.5">
           <p className="text-[10px] text-muted-foreground/50 font-mono">{label}</p>
-          <div className="flex flex-wrap gap-[1.5px]">
-            {Array.from({ length: 360 }, (_, i) => {
-              const idx    = start + i;
-              const status = minuteMap.get(idx);
-              const h      = Math.floor(idx / 60).toString().padStart(2, '0');
-              const m      = (idx % 60).toString().padStart(2, '0');
+          <div className="flex gap-[2px]">
+            {Array.from({ length: SLOTS_PER_ROW }, (_, i) => {
+              const slot   = start + i;
+              const status = slotMap.get(slot);
+              const mins   = slot * 5;
+              const h      = Math.floor(mins / 60).toString().padStart(2, '0');
+              const m      = (mins % 60).toString().padStart(2, '0');
               return (
                 <div
                   key={i}
                   title={`${h}:${m} — ${status ?? 'No data'}`}
-                  className={`size-[7px] rounded-[1px] ${cellCls(status)}`}
+                  className={`h-3.5 flex-1 rounded-[2px] ${cellCls(status)}`}
                 />
               );
             })}
@@ -614,56 +622,54 @@ function LatencyTab({
   if (loading) return <div className="h-48 animate-pulse bg-muted/30 rounded-xl" />;
   if (error)   return <p className="text-sm text-rose-500">{error}</p>;
 
-  const withLatency = minutes?.filter(p => p.latency > 0) ?? [];
-  if (withLatency.length === 0) {
+  // 5-min resolution points projected onto the day timeline (minute-of-day, UTC).
+  const series = (minutes ?? [])
+    .filter(p => p.latency > 0)
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .map(p => {
+      const dt = new Date(p.timestamp * 1000);
+      return { mod: dt.getUTCHours() * 60 + dt.getUTCMinutes(), latency: p.latency, status: p.status };
+    });
+
+  if (series.length === 0) {
     return <p className="text-sm text-muted-foreground/60 italic">{s.noDataForDay}</p>;
   }
 
-  // Hourly aggregates: avg latency + worst status for bar coloring
-  const hourly = Array.from({ length: 24 }, (_, h) => {
-    const pts = withLatency.filter(p => new Date(p.timestamp * 1000).getUTCHours() === h);
-    if (!pts.length) return { hour: h, avg: null as number | null, worst: null as null | 'UP' | 'DEGRADED' | 'DOWN' };
-    const avg   = Math.round(pts.reduce((a, p) => a + p.latency, 0) / pts.length);
-    const worst = pts.some(p => p.status === 'DOWN') ? 'DOWN'
-      : pts.some(p => p.status === 'DEGRADED') ? 'DEGRADED' : 'UP';
-    return { hour: h, avg, worst };
-  });
-
-  const validAvgs = hourly.filter(h => h.avg !== null).map(h => h.avg!);
-  const globalAvg = Math.round(withLatency.reduce((a, p) => a + p.latency, 0) / withLatency.length);
-  const maxVal    = Math.max(...validAvgs);
-  const minVal    = Math.min(...validAvgs);
+  const lats      = series.map(p => p.latency);
+  const globalAvg = Math.round(lats.reduce((a, v) => a + v, 0) / lats.length);
+  const maxVal    = Math.max(...lats);
+  const minVal    = Math.min(...lats);
   const p95       = (() => {
-    const sorted = [...withLatency].sort((a, b) => a.latency - b.latency);
-    return sorted[Math.floor(sorted.length * 0.95)]?.latency ?? maxVal;
+    const sorted = [...lats].sort((a, b) => a - b);
+    return sorted[Math.floor(sorted.length * 0.95)] ?? maxVal;
   })();
 
   // Smart Y range starting near actual min
   const yMin   = Math.max(0, Math.floor(minVal * 0.82));
-  const yMax   = Math.ceil(maxVal * 1.08);
+  const yMax   = Math.max(yMin + 1, Math.ceil(maxVal * 1.08));
   const yRange = yMax - yMin || 1;
 
-  // SVG layout constants
-  const W = 560, H = 115, PAD_L = 40, PAD_B = 20;
+  // SVG layout
+  const W = 560, H = 130, PAD_L = 40, PAD_B = 20;
   const chartW = W - PAD_L;
   const chartH = H - PAD_B;
-  const barW   = chartW / 24;
-  const barGap = 2.5;
 
   const fmtMs = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}s` : `${v}ms`;
-
-  // 4 Y-axis ticks evenly spaced
+  const xPx = (mod: number) => PAD_L + (mod / 1440) * chartW;
+  const yPx = (v: number) => chartH - ((v - yMin) / yRange) * chartH;
   const yTicks = [yMin, yMin + yRange * 0.33, yMin + yRange * 0.66, yMax].map(Math.round);
 
-  const barFill = (worst: string | null) => {
-    if (worst === 'DOWN')     return 'rgba(239,68,68,0.72)';
-    if (worst === 'DEGRADED') return 'rgba(245,158,11,0.72)';
-    return 'rgba(99,102,241,0.55)';
-  };
+  // Line + area paths
+  const pts = series.map(p => ({ x: xPx(p.mod), y: yPx(p.latency), status: p.status }));
+  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaPath =
+    `M ${pts[0].x.toFixed(1)} ${chartH} ` +
+    pts.map(p => `L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') +
+    ` L ${pts[pts.length - 1].x.toFixed(1)} ${chartH} Z`;
 
-  const yPx = (val: number) => chartH - ((val - yMin) / yRange) * chartH;
-  const avgY = yPx(globalAvg);
-  const p95Y = yPx(Math.min(p95, yMax));
+  const avgY = yPx(Math.min(Math.max(globalAvg, yMin), yMax));
+  const p95Y = yPx(Math.min(Math.max(p95, yMin), yMax));
+  const dotColor = (st: string) => st === 'DOWN' ? 'rgb(239,68,68)' : 'rgb(245,158,11)';
 
   return (
     <div className="space-y-3">
@@ -679,12 +685,15 @@ function LatencyTab({
         </div>
       </div>
 
-      {/* SVG chart */}
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
-        style={{ height: 150 }}
-      >
+      {/* SVG line chart */}
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 160 }}>
+        <defs>
+          <linearGradient id="lat-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="rgb(99,102,241)" stopOpacity="0.30" />
+            <stop offset="100%" stopColor="rgb(99,102,241)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
         {/* Horizontal grid lines + Y labels */}
         {yTicks.map((tick, i) => {
           const y = yPx(tick);
@@ -700,31 +709,24 @@ function LatencyTab({
           );
         })}
 
-        {/* Bars */}
-        {hourly.map(({ hour, avg, worst }) => {
-          if (avg === null) return null;
-          const x      = PAD_L + hour * barW + barGap / 2;
-          const barH   = Math.max(2, ((avg - yMin) / yRange) * chartH);
-          const y      = chartH - barH;
-          return (
-            <g key={hour}>
-              <rect x={x} y={y} width={barW - barGap} height={barH} rx="2"
-                fill={barFill(worst)} />
-              <title>{`${hour.toString().padStart(2, '0')}:00 — ${avg} ms`}</title>
-            </g>
-          );
-        })}
+        {/* Area + response-time line */}
+        <path d={areaPath} fill="url(#lat-area)" />
+        <path d={linePath} fill="none" stroke="rgb(99,102,241)" strokeWidth="1.5"
+          strokeLinejoin="round" strokeLinecap="round" />
+
+        {/* Degraded / down markers */}
+        {pts.map((p, i) => p.status !== 'UP' ? (
+          <circle key={i} cx={p.x} cy={p.y} r="2.4" fill={dotColor(p.status)} />
+        ) : null)}
 
         {/* Average dashed line */}
-        {globalAvg >= yMin && globalAvg <= yMax && (
-          <line x1={PAD_L} y1={avgY} x2={W} y2={avgY}
-            stroke="rgba(255,255,255,0.3)" strokeWidth="1" strokeDasharray="4 3" />
-        )}
+        <line x1={PAD_L} y1={avgY} x2={W} y2={avgY}
+          stroke="currentColor" strokeOpacity="0.35" strokeWidth="1" strokeDasharray="4 3" />
 
         {/* p95 dashed line (only if distinct from avg) */}
-        {p95 !== globalAvg && p95 >= yMin && p95 <= yMax && (
+        {p95 !== globalAvg && (
           <line x1={PAD_L} y1={p95Y} x2={W} y2={p95Y}
-            stroke="rgba(245,158,11,0.35)" strokeWidth="0.8" strokeDasharray="3 3" />
+            stroke="rgba(245,158,11,0.45)" strokeWidth="0.8" strokeDasharray="3 3" />
         )}
 
         {/* Baseline */}
@@ -733,8 +735,7 @@ function LatencyTab({
 
         {/* X-axis labels */}
         {[0, 3, 6, 9, 12, 15, 18, 21, 23].map(h => (
-          <text key={h}
-            x={PAD_L + h * barW + barW / 2} y={H - 4}
+          <text key={h} x={xPx(h * 60)} y={H - 4}
             textAnchor="middle" fontSize="8" fill="currentColor" fillOpacity="0.32" fontFamily="monospace">
             {h.toString().padStart(2, '0')}h
           </text>
@@ -744,20 +745,20 @@ function LatencyTab({
       {/* Legend */}
       <div className="flex items-center gap-4 text-[10px] text-muted-foreground/45 flex-wrap">
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-sm bg-indigo-500/55 inline-block" /> Opérationnel
+          <span className="inline-block w-5 border-t-2 border-indigo-500/70" /> Temps de réponse
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-sm bg-amber-500/72 inline-block" /> Dégradé
+          <span className="size-2 rounded-full bg-amber-500/80 inline-block" /> Dégradé
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-sm bg-rose-500/72 inline-block" /> En panne
+          <span className="size-2 rounded-full bg-rose-500/80 inline-block" /> En panne
         </span>
         <span className="ml-auto flex items-center gap-3">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-5 border-t border-dashed border-white/30" /> moy.
+            <span className="inline-block w-5 border-t border-dashed border-foreground/40" /> moy.
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-5 border-t border-dashed border-amber-500/35" /> p95
+            <span className="inline-block w-5 border-t border-dashed border-amber-500/40" /> p95
           </span>
         </span>
       </div>

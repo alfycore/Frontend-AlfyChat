@@ -3,63 +3,64 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'motion/react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ArrowRightIcon, ShieldCheckIcon } from '@/components/icons';
+import { EASE } from './section';
 
 export function HomeCta() {
   const reduce = useReducedMotion();
 
   return (
-    <section id="download" className="py-28 bg-[#F7F6F3] dark:bg-[#0a0a0a] border-t border-[#EAEAEA] dark:border-[#27272a]">
+    <section id="download" className="border-t border-border bg-background py-28">
       <div className="mx-auto max-w-4xl px-8">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-[12px] border border-[#EAEAEA] dark:border-[#27272a] bg-white dark:bg-[#18181b] px-10 py-20 text-center"
-          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}
+          transition={{ duration: 0.6, ease: EASE }}
         >
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <div className="flex size-14 items-center justify-center rounded-[12px] border border-[#EAEAEA] dark:border-[#27272a] bg-[#F7F6F3] dark:bg-[#27272a]">
+          <Card className="relative items-center gap-0 overflow-hidden rounded-2xl px-10 py-20 text-center">
+            {/* halo de marque */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-40"
+              aria-hidden
+              style={{
+                background:
+                  'radial-gradient(ellipse 50% 100% at 50% 0%, color-mix(in oklch, var(--primary) 12%, transparent), transparent 70%)',
+              }}
+            />
+
+            {/* Logo */}
+            <div className="relative mb-8 flex size-14 items-center justify-center rounded-2xl border border-border bg-muted">
               <Image src="/logo/Alfychat.svg" alt="AlfyChat" width={32} height={32} />
             </div>
-          </div>
 
-          <h2
-            className="text-[2rem] md:text-[2.4rem] leading-[1.1] tracking-[-0.02em] text-[#111111] dark:text-[#fafafa] font-bold mb-4"
-            style={{ fontFamily: 'var(--font-krona), sans-serif' }}
-          >
-            Prêt à reprendre le contrôle ?
-          </h2>
+            <h2 className="relative mb-4 font-heading text-[2rem] leading-[1.1] font-bold tracking-[-0.02em] text-foreground md:text-[2.4rem]">
+              Prêt à reprendre le contrôle ?
+            </h2>
 
-          <p className="text-[15px] text-[#787774] dark:text-[#71717a] leading-relaxed max-w-sm mx-auto mb-10">
-            Rejoignez AlfyChat dès aujourd'hui. Gratuit, sans engagement, sans numéro de téléphone.
-          </p>
+            <p className="relative mx-auto mb-10 max-w-sm text-[15px] leading-relaxed text-muted-foreground">
+              Rejoignez AlfyChat dès aujourd&apos;hui. Gratuit, sans engagement, sans numéro de téléphone.
+            </p>
 
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/register">
-              <button
-                className="inline-flex items-center gap-2 rounded-[6px] bg-[#7627FF] hover:bg-[#6020dd] px-7 py-3 text-[14px] font-medium text-white transition-all duration-200 active:scale-[0.98]"
-              >
-                Créer un compte gratuit
-                <ArrowRightIcon size={13} />
-              </button>
-            </Link>
-            <Link href="/about">
-              <button
-                className="inline-flex items-center gap-2 rounded-[6px] border border-[#EAEAEA] dark:border-[#27272a] bg-white dark:bg-transparent px-6 py-3 text-[14px] font-medium text-[#111111] dark:text-[#fafafa] transition-all duration-200 hover:bg-[#F7F6F3] dark:hover:bg-[#27272a] active:scale-[0.98]">
-                En savoir plus
-              </button>
-            </Link>
-          </div>
+            <div className="relative flex flex-wrap justify-center gap-3">
+              <Button asChild className="group h-11 rounded-lg px-7 text-[14px]">
+                <Link href="/register">
+                  Créer un compte gratuit
+                  <ArrowRightIcon size={13} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-11 rounded-lg px-6 text-[14px]">
+                <Link href="/about">En savoir plus</Link>
+              </Button>
+            </div>
 
-          <div className="flex justify-center mt-8">
-            <div className="flex items-center gap-2 text-[11.5px] text-[#787774]">
-              <ShieldCheckIcon size={11} className="text-[#346538]" />
+            <div className="relative mt-8 flex items-center justify-center gap-2 text-[11.5px] text-muted-foreground">
+              <ShieldCheckIcon size={11} className="text-success" />
               Sans carte bancaire, sans engagement
             </div>
-          </div>
+          </Card>
         </motion.div>
       </div>
     </section>

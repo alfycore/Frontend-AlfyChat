@@ -93,10 +93,10 @@ export default function ChangelogsPublicPage() {
   } as Record<string, string>)[type] ?? type;
 
   return (
-    <div className="flex min-h-0 flex-col bg-background">
+    <div className="flex min-h-0 flex-col bg-background pt-16">
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/95 px-3 backdrop-blur-sm sm:h-14 sm:gap-2.5 sm:px-4">
+      <header className="sticky top-16 z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/95 px-3 backdrop-blur-sm sm:h-14 sm:gap-2.5 sm:px-4">
         <Button variant="ghost" size="icon" className="size-7 shrink-0 text-muted-foreground sm:size-8" onClick={() => router.back()}>
           <ArrowLeftIcon size={14} />
         </Button>

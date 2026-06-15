@@ -4,7 +4,9 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ShieldIcon, MailIcon, CheckIcon, AlertTriangleIcon } from '@/components/icons';
 import { api } from '@/lib/api';
-import { Button, Card, Spinner } from '@heroui/react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { useTranslation } from '@/components/locale-provider';
 
 function VerifyEmailContent() {
@@ -60,7 +62,7 @@ function VerifyEmailContent() {
                 <h1 className="text-xl font-bold text-[var(--foreground)]">{s.verifiedTitle}</h1>
                 <p className="mt-2 text-sm text-[var(--muted)]">{message}</p>
               </div>
-              <Button onPress={() => router.push('/channels/me')}>
+              <Button onClick={() => router.push('/channels/me')}>
                 {s.goToApp}
               </Button>
             </>
@@ -76,7 +78,7 @@ function VerifyEmailContent() {
                 <p className="mt-2 text-sm text-[var(--muted)]">{message}</p>
               </div>
               <div className="flex flex-col gap-2 w-full">
-                <Button onPress={() => router.push('/login')}>
+                <Button onClick={() => router.push('/login')}>
                   {s.backToLogin}
                 </Button>
               </div>

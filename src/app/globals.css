@@ -362,91 +362,63 @@
   backdrop-filter: blur(var(--glass-blur)) saturate(190%) brightness(1.02);
 }
 
-/* ── Glass user-panel — slightly more opaque than sidebar ───────────────── */
-.glass-bg-user-panel {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.08)));
-}
-.dark .glass-bg-user-panel {
-  background: var(--glass-tint-color), oklch(0.19 0.006 286 / 0.80);
-}
-
 /*
  * Glass background utility classes — light mode uses white tint, dark mode
  * uses dark-tinted panels (like macOS dark glass) so panels are visible on
  * dark wallpapers. Dark mode opacities are tuned independently.
+ *
+ * IMPORTANT : on sépare `background-color` (couleur de panneau, TOUJOURS valide)
+ * de `background-image` (tint optionnel). Le tint est appliqué via un dégradé
+ * (`linear-gradient`) — un vrai <image> — car `--glass-tint-color` peut valoir
+ * `transparent`. Un `background: transparent, <color>` (multi-couches dont la
+ * 1ʳᵉ couche est une couleur) est INVALIDE en CSS et était ignoré par le
+ * navigateur (Firefox strict), rendant les panneaux totalement transparents.
+ * Le dégradé transparent est un no-op valide ; quand un tint est défini il se
+ * superpose proprement au-dessus de la couleur de fond.
  */
+[class*="glass-bg-"] {
+  background-image: linear-gradient(var(--glass-tint-color), var(--glass-tint-color));
+}
+
+/* Glass user-panel — slightly more opaque than sidebar */
+.glass-bg-user-panel      { background-color: rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.08))); }
+.dark .glass-bg-user-panel { background-color: oklch(0.19 0.006 286 / 0.80); }
 
 /* Sidebar */
-.glass-bg-sidebar {
-  background: var(--glass-tint-color), rgba(255, 255, 255, var(--glass-opacity));
-}
-.dark .glass-bg-sidebar {
-  background: var(--glass-tint-color), oklch(0.18 0.006 286 / 0.78);
-}
+.glass-bg-sidebar      { background-color: rgba(255, 255, 255, var(--glass-opacity)); }
+.dark .glass-bg-sidebar { background-color: oklch(0.18 0.006 286 / 0.78); }
 
 /* Header */
-.glass-bg-header {
-  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.60));
-}
-.dark .glass-bg-header {
-  background: var(--glass-tint-color), oklch(0.15 0.006 286 / 0.72);
-}
+.glass-bg-header      { background-color: rgba(255, 255, 255, calc(var(--glass-opacity) * 0.60)); }
+.dark .glass-bg-header { background-color: oklch(0.15 0.006 286 / 0.72); }
 
 /* Input bar */
-.glass-bg-input {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.12)));
-}
-.dark .glass-bg-input {
-  background: var(--glass-tint-color), oklch(0.21 0.006 286 / 0.82);
-}
+.glass-bg-input      { background-color: rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.12))); }
+.dark .glass-bg-input { background-color: oklch(0.21 0.006 286 / 0.82); }
 
 /* Reply bar */
-.glass-bg-reply {
-  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.86));
-}
-.dark .glass-bg-reply {
-  background: var(--glass-tint-color), oklch(0.20 0.006 286 / 0.78);
-}
+.glass-bg-reply      { background-color: rgba(255, 255, 255, calc(var(--glass-opacity) * 0.86)); }
+.dark .glass-bg-reply { background-color: oklch(0.20 0.006 286 / 0.78); }
 
 /* Floating panels / context menus */
-.glass-bg-float {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.21)));
-}
-.dark .glass-bg-float {
-  background: var(--glass-tint-color), oklch(0.17 0.006 286 / 0.88);
-}
+.glass-bg-float      { background-color: rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.21))); }
+.dark .glass-bg-float { background-color: oklch(0.17 0.006 286 / 0.88); }
 
 /* Content/chat area */
-.glass-bg-content {
-  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.86));
-}
-.dark .glass-bg-content {
-  background: var(--glass-tint-color), oklch(0.16 0.006 286 / 0.72);
-}
+.glass-bg-content      { background-color: rgba(255, 255, 255, calc(var(--glass-opacity) * 0.86)); }
+.dark .glass-bg-content { background-color: oklch(0.16 0.006 286 / 0.72); }
 
 /* Settings / large modal */
-.glass-bg-modal {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.29)));
-}
-.dark .glass-bg-modal {
-  background: var(--glass-tint-color), oklch(0.17 0.006 286 / 0.92);
-}
+.glass-bg-modal      { background-color: rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.29))); }
+.dark .glass-bg-modal { background-color: oklch(0.17 0.006 286 / 0.92); }
 
 /* Date chip */
-.glass-bg-chip {
-  background: var(--glass-tint-color), rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.03)));
-}
-.dark .glass-bg-chip {
-  background: var(--glass-tint-color), oklch(0.20 0.006 286 / 0.78);
-}
+.glass-bg-chip      { background-color: rgba(255, 255, 255, min(0.95, calc(var(--glass-opacity) * 1.03))); }
+.dark .glass-bg-chip { background-color: oklch(0.20 0.006 286 / 0.78); }
 
 /* Empty-state cards */
-.glass-bg-empty {
-  background: var(--glass-tint-color), rgba(255, 255, 255, calc(var(--glass-opacity) * 0.95));
-}
-.dark .glass-bg-empty {
-  background: var(--glass-tint-color), oklch(0.19 0.006 286 / 0.76);
-}
+.glass-bg-empty      { background-color: rgba(255, 255, 255, calc(var(--glass-opacity) * 0.95)); }
+.dark .glass-bg-empty { background-color: oklch(0.19 0.006 286 / 0.76); }
 
 /* ── Apple-like easing & helper classes for smooth UI animations ───────── */
 .ui-apple-ease {

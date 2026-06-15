@@ -1,167 +1,258 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { useAuth } from '@/hooks/use-auth';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { useAuth } from '@/hooks/use-auth';
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MenuIcon, XIcon, MessageCircleIcon, SunIcon, MoonIcon } from '@/components/icons';
+import { SunIcon, MoonIcon, MessageCircleIcon, ArrowRightIcon } from '@/components/icons';
 
 const NAV_LINKS = [
   { label: 'Fonctionnalités', href: '/#features' },
   { label: 'Sécurité',        href: '/#security'  },
-  { label: 'Développeurs',    href: '/developers'  },
-  { label: 'À propos',        href: '/about'       },
+  { label: 'Développeurs',    href: '/developers' },
+  { label: 'À propos',        href: '/about'      },
 ];
 
-export function LandingNavbar() {
+const EASE = [0.32, 0.72, 0, 1] as const;
+
+function isActive(pathname: string, href: string) {
+  const path = href.split('#')[0] || '/';
+  if (path === '/') return false; // ancres sur la home — pas d'état actif
+  return pathname === path || pathname.startsWith(path + '/');
+}
+
+/**
+ * Île de navigation flottante, entièrement pilotée par les variables de thème
+ * (globals.css) → s'adapte automatiquement clair / sombre.
+ *
+ * variant="flow"  → dans le flux (pousse le contenu), pour la home.
+ * variant="fixed" → flotte au-dessus du contenu, pour les pages statiques.
+ */
+export function NavbarIsland({ variant = 'flow' }: { variant?: 'flow' | 'fixed' }) {
   const { user, isLoading } = useAuth();
-  const [open, setOpen] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
+  const pathname = usePathname();
   const reduce = useReducedMotion();
-  const { theme, setTheme } = useTheme();
+
+  const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  // Évite tout mismatch d'hydratation : le thème/l'auth ne sont connus
+  // qu'après montage côté client.
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Verrouille le scroll du body quand le menu mobile est ouvert.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  const isDark = resolvedTheme === 'dark';
+  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark');
+
+  const Shell = variant === 'fixed' ? 'div' : 'header';
+  const shellClass = variant === 'fixed'
+    ? 'pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4'
+    : 'relative z-50 flex justify-center px-4 pt-5 pb-2';
 
   return (
     <>
-      {/* ── Floating island pill ──────────────────────────────── */}
-      <header className="relative z-50 flex justify-center px-4 pt-5 pb-2">
-      <nav className="w-fit max-w-[calc(100vw-2rem)]">
-        <div
-          className="flex items-center gap-1 rounded-[12px] px-2 py-[5px]"
-          style={{
-            background: 'rgba(10,10,10,0.88)',
-            backdropFilter: 'blur(28px)',
-            WebkitBackdropFilter: 'blur(28px)',
-            border: '1px solid rgba(255,255,255,0.09)',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)',
+      <Shell className={shellClass}>
+        <motion.nav
+          layout
+          initial={reduce ? false : { y: -18, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{
+            duration: 0.6,
+            ease: EASE,
+            layout: reduce ? { duration: 0 } : { duration: 0.55, ease: EASE },
           }}
+          className={cn(
+            'pointer-events-auto',
+            // En haut : pleine largeur (barre). Au scroll : se rétracte en pilule.
+            scrolled ? 'w-fit max-w-[calc(100vw-2rem)]' : 'w-full max-w-6xl',
+          )}
         >
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-[12px] transition-all duration-300 hover:bg-white/[0.05] shrink-0"
+          <motion.div
+            layout
+            className={cn(
+              'relative flex items-center rounded-2xl backdrop-blur-2xl',
+              'transition-[box-shadow,background-color,border-color,padding] duration-500 ease-out',
+              // léger reflet en haut de l'île
+              "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:bg-gradient-to-b before:from-foreground/[0.05] before:to-transparent before:content-['']",
+              scrolled
+                ? 'gap-3 border border-border bg-background/85 px-4 py-2.5 shadow-[0_12px_44px_-12px_rgba(0,0,0,0.35)] dark:shadow-[0_14px_48px_rgba(0,0,0,0.6)]'
+                : 'w-full gap-2 border border-transparent bg-background/40 px-5 py-2.5 shadow-none',
+            )}
           >
-            <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-5" />
-            <span
-              className="text-[12.5px] font-bold text-white/90 tracking-widest hidden sm:block"
-              style={{ fontFamily: 'var(--font-krona)' }}
+            {/* Logo */}
+            <Link
+              href="/"
+              className="group flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-foreground/[0.06]"
             >
-              ALFYCHAT
-            </span>
-          </Link>
-
-          {/* Separator */}
-          <div className="w-px h-4 bg-white/[0.08] mx-0.5 hidden md:block" />
-
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center">
-            {NAV_LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="px-3 py-1.5 rounded-[12px] text-[12.5px] font-medium text-white/45 hover:text-white/90 hover:bg-white/[0.06] transition-all duration-300"
+              <img
+                src="/logo/Alfychat.svg"
+                alt="AlfyChat"
+                className="size-7 transition-transform duration-500 ease-out group-hover:rotate-[10deg]"
+                style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
+              />
+              <span
+                className="hidden text-[12.5px] font-bold tracking-[0.2em] text-foreground/90 sm:block"
+                style={{ fontFamily: 'var(--font-krona)' }}
               >
-                {l.label}
-              </Link>
-            ))}
-          </div>
+                ALFYCHAT
+              </span>
+            </Link>
 
-          {/* Separator */}
-          <div className="w-px h-4 bg-white/[0.08] mx-0.5 hidden md:block" />
+            <div className={cn('mx-1.5 hidden h-4 w-px bg-border', scrolled && 'md:block')} />
 
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="relative size-7 flex items-center justify-center rounded-[12px] text-white/45 hover:text-white/90 hover:bg-white/[0.06] transition-all duration-300"
-            aria-label="Changer le thème"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {theme === 'dark' ? (
-                <motion.span
-                  key="sun"
-                  initial={reduce ? false : { opacity: 0, rotate: -30, scale: 0.8 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: 30, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute"
-                >
-                  <SunIcon size={13} />
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="moon"
-                  initial={reduce ? false : { opacity: 0, rotate: 30, scale: 0.8 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: -30, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute"
-                >
-                  <MoonIcon size={13} />
-                </motion.span>
+            {/* Liens desktop — surlignage glissant */}
+            <div
+              className={cn(
+                'relative hidden items-center md:flex',
+                // En pleine largeur, les liens occupent le centre.
+                !scrolled && 'flex-1 justify-center',
               )}
-            </AnimatePresence>
-          </button>
+              onMouseLeave={() => setHovered(null)}
+            >
+              {NAV_LINKS.map((l) => {
+                const active = mounted && isActive(pathname, l.href);
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    onMouseEnter={() => setHovered(l.href)}
+                    className={cn(
+                      'relative rounded-xl px-3 py-1.5 text-[12.5px] font-medium transition-colors duration-200',
+                      active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {hovered === l.href && (
+                      <motion.span
+                        layoutId="nav-hover"
+                        className="absolute inset-0 rounded-xl bg-foreground/[0.07]"
+                        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                      />
+                    )}
+                    <span className="relative z-10">{l.label}</span>
+                    {active && (
+                      <span className="absolute inset-x-3 -bottom-px h-px rounded-full bg-primary/70" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
 
-          {/* Separator */}
-          <div className="w-px h-4 bg-white/[0.08] mx-0.5 hidden md:block" />
+            <div className={cn('mx-1.5 hidden h-4 w-px bg-border', scrolled && 'md:block')} />
 
-          {/* Auth */}
-          <div className="flex items-center gap-1 pr-[3px]">
-            {isLoading ? (
-              <div className="size-7 rounded-[12px] bg-white/[0.06] animate-pulse" />
-            ) : user ? (
-              <Link
-                href="/channels/me"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-[12px] hover:bg-white/[0.06] transition-all duration-300 group"
-              >
-                <Avatar size="sm" className="size-6">
-                  {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName || user.username} />}
-                  <AvatarFallback className="text-[9px] font-bold bg-white/10 text-white/80">
-                    {(user.displayName || user.username || '?').slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <MessageCircleIcon size={11} className="text-white/30 group-hover:text-white/60 transition-colors hidden sm:block" />
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="hidden sm:block">
-                  <button className="px-3 py-1.5 rounded-[12px] text-[12.5px] text-white/45 hover:text-white/80 hover:bg-white/[0.06] transition-all duration-300">
-                    Connexion
-                  </button>
+            {/* Toggle thème */}
+            <button
+              onClick={toggleTheme}
+              className={cn(
+                'relative flex size-7 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground',
+                // pousse le groupe de droite quand les liens sont masqués (mobile, pleine largeur)
+                !scrolled && 'ml-auto md:ml-0',
+              )}
+              aria-label="Changer le thème"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {mounted && (
+                  <motion.span
+                    key={isDark ? 'sun' : 'moon'}
+                    initial={reduce ? false : { opacity: 0, rotate: -40, scale: 0.6 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={reduce ? { opacity: 0 } : { opacity: 0, rotate: 40, scale: 0.6 }}
+                    transition={{ duration: 0.22, ease: EASE }}
+                    className="absolute"
+                  >
+                    {isDark ? <SunIcon size={13} /> : <MoonIcon size={13} />}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+
+            <div className="mx-0.5 hidden h-4 w-px bg-border md:block" />
+
+            {/* Auth */}
+            <div className="flex items-center gap-1 px-0.5">
+              {!mounted || isLoading ? (
+                <div className="size-7 animate-pulse rounded-xl bg-foreground/[0.06]" />
+              ) : user ? (
+                <Link
+                  href="/channels/me"
+                  className="group flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-foreground/[0.06]"
+                >
+                  <Avatar size="sm" className="size-6">
+                    {user.avatarUrl && (
+                      <AvatarImage src={user.avatarUrl} alt={user.displayName || user.username} />
+                    )}
+                    <AvatarFallback className="bg-primary/15 text-[9px] font-bold text-primary">
+                      {(user.displayName || user.username || '?').slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <MessageCircleIcon
+                    size={11}
+                    className="hidden text-muted-foreground transition-colors group-hover:text-foreground sm:block"
+                  />
                 </Link>
-                <Link href="/register">
-                  <button
-                    className="px-4 py-1.5 rounded-[12px] text-[12.5px] font-semibold bg-white text-[#0a0a0a] transition-all duration-500 hover:bg-white/90 active:scale-[0.97]"
-                    style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
+              ) : (
+                <>
+                  <Link href="/login" className="hidden sm:block">
+                    <span className="block rounded-xl px-3 py-1.5 text-[12.5px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground">
+                      Connexion
+                    </span>
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="group flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-[12.5px] font-semibold text-primary-foreground shadow-sm shadow-primary/25 transition-all duration-300 hover:bg-primary/90 active:scale-[0.97]"
+                    style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
                   >
                     Créer un compte
-                  </button>
-                </Link>
-              </>
-            )}
+                    <ArrowRightIcon
+                      size={12}
+                      className="transition-transform duration-300 group-hover:translate-x-0.5"
+                    />
+                  </Link>
+                </>
+              )}
 
-            {/* Mobile toggle */}
-            <button
-              onClick={() => setOpen((v) => !v)}
-              className="md:hidden relative size-7 flex items-center justify-center rounded-[12px] text-white/45 hover:text-white/90 hover:bg-white/[0.06] transition-all duration-300 ml-1"
-              aria-label={open ? 'Fermer' : 'Menu'}
-            >
-              {/* Morphing hamburger lines */}
-              <span
-                className="absolute block w-3.5 h-px bg-current transition-all duration-300"
-                style={{ transform: open ? 'translateY(0) rotate(45deg)' : 'translateY(-3px)', transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
-              />
-              <span
-                className="absolute block w-3.5 h-px bg-current transition-all duration-300"
-                style={{ transform: open ? 'translateY(0) rotate(-45deg)' : 'translateY(3px)', transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
-              />
-            </button>
-          </div>
-        </div>
-      </nav>
-      </header>
+              {/* Hamburger mobile (morphing) */}
+              <button
+                onClick={() => setOpen((v) => !v)}
+                className="relative ml-0.5 flex size-7 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground md:hidden"
+                aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+                aria-expanded={open}
+              >
+                <span
+                  className="absolute block h-px w-3.5 bg-current transition-transform duration-300"
+                  style={{ transform: open ? 'rotate(45deg)' : 'translateY(-3px)', transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
+                />
+                <span
+                  className="absolute block h-px w-3.5 bg-current transition-transform duration-300"
+                  style={{ transform: open ? 'rotate(-45deg)' : 'translateY(3px)', transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
+                />
+              </button>
+            </div>
+          </motion.div>
+        </motion.nav>
+      </Shell>
 
-      {/* ── Mobile full-screen overlay ────────────────────────── */}
+      {/* Overlay mobile plein écran */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -170,8 +261,7 @@ export function LandingNavbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
-            className="fixed inset-0 z-40 md:hidden flex flex-col items-center justify-center"
-            style={{ background: 'rgba(5,5,5,0.96)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)' }}
+            className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-background/95 backdrop-blur-2xl md:hidden"
           >
             {NAV_LINKS.map((l, i) => (
               <motion.div
@@ -179,12 +269,12 @@ export function LandingNavbar() {
                 initial={reduce ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
-                transition={{ delay: 0.04 + i * 0.06, duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+                transition={{ delay: 0.04 + i * 0.06, duration: 0.5, ease: EASE }}
               >
                 <Link
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="block py-3 text-[2rem] font-bold text-white/60 hover:text-white transition-colors duration-200 text-center"
+                  className="block py-3 text-center text-[2rem] font-bold text-foreground/60 transition-colors duration-200 hover:text-foreground"
                   style={{ fontFamily: 'var(--font-krona)' }}
                 >
                   {l.label}
@@ -196,18 +286,18 @@ export function LandingNavbar() {
               initial={reduce ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ delay: 0.3, duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-              className="flex gap-3 mt-10"
+              transition={{ delay: 0.3, duration: 0.5, ease: EASE }}
+              className="mt-10 flex gap-3"
             >
               <Link href="/login" onClick={() => setOpen(false)}>
-                <button className="px-6 py-3 rounded-[12px] border border-white/15 text-white/60 hover:text-white hover:border-white/30 transition-all duration-300 text-[14px]">
+                <span className="block rounded-xl border border-border px-6 py-3 text-[14px] text-foreground/70 transition-colors duration-300 hover:border-foreground/30 hover:text-foreground">
                   Connexion
-                </button>
+                </span>
               </Link>
               <Link href="/register" onClick={() => setOpen(false)}>
-                <button className="px-6 py-3 rounded-[12px] bg-white text-[#0a0a0a] font-semibold text-[14px] hover:bg-white/90 transition-all duration-300">
+                <span className="block rounded-xl bg-primary px-6 py-3 text-[14px] font-semibold text-primary-foreground transition-colors duration-300 hover:bg-primary/90">
                   Créer un compte
-                </button>
+                </span>
               </Link>
             </motion.div>
           </motion.div>
@@ -215,4 +305,8 @@ export function LandingNavbar() {
       </AnimatePresence>
     </>
   );
+}
+
+export function LandingNavbar() {
+  return <NavbarIsland variant="fixed" />;
 }

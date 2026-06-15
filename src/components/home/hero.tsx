@@ -2,7 +2,10 @@
 
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ArrowRightIcon, CheckCircleIcon } from '@/components/icons';
+import { EASE } from './section';
 
 /* ── Hero ───────────────────────────────────────────────────── */
 export function HomeHero() {
@@ -11,114 +14,91 @@ export function HomeHero() {
   const f = (delay = 0) => ({
     initial: reduce ? (false as const) : ({ opacity: 0, y: 12 } as const),
     animate: { opacity: 1, y: 0 } as const,
-    transition: { duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] as const },
+    transition: { duration: 0.6, delay, ease: EASE },
   });
 
   return (
     <section
-      className="relative overflow-hidden flex items-center bg-[#F7F6F3] dark:bg-[#09090b]"
+      className="relative flex items-center overflow-hidden bg-background"
       style={{ minHeight: '90dvh' }}
     >
+      {/* Halo radial dérivé de la couleur de marque */}
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
         style={{
-          background: 'radial-gradient(ellipse 70% 60% at 60% 40%, rgba(118,39,255,0.05) 0%, transparent 70%)',
+          background:
+            'radial-gradient(ellipse 70% 60% at 60% 40%, color-mix(in oklch, var(--primary) 10%, transparent), transparent 70%)',
         }}
       />
 
-      <div className="mx-auto grid max-w-7xl w-full grid-cols-1 items-center gap-10 px-8 pb-20 pt-16 md:grid-cols-[1fr_1.3fr] md:gap-8 lg:gap-12">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-8 pt-16 pb-20 md:grid-cols-[1fr_1.3fr] md:gap-8 lg:gap-12">
 
-        {/* Left: editorial copy ─────────────────────────────── */}
+        {/* Colonne gauche — copie éditoriale */}
         <div className="flex flex-col gap-8">
 
-          {/* Badge */}
           <motion.div {...f(0)}>
-            <div
-              className="inline-flex items-center gap-2 rounded-full border border-[#EAEAEA] dark:border-[#27272a] bg-white dark:bg-[#18181b] px-3.5 py-1.5"
-              style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+            <Badge
+              variant="outline"
+              className="h-auto gap-2 rounded-full border-border bg-card px-3.5 py-1.5 shadow-sm"
             >
               <span className="text-[13px]" aria-hidden>🇪🇺</span>
-              <span
-                className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#787774] dark:text-[#71717a]"
-                style={{ fontFamily: 'var(--font-geist-mono), monospace' }}
-              >
+              <span className="font-mono text-[11px] font-medium tracking-[0.06em] text-muted-foreground normal-case">
                 Conforme RGPD · Données en Europe
               </span>
-            </div>
+            </Badge>
           </motion.div>
 
-          {/* Editorial serif headline */}
           <motion.h1
             {...f(0.06)}
-            className="leading-[1.08] tracking-[-0.025em] text-[#111111] dark:text-[#fafafa] font-bold"
-            style={{
-              fontFamily: 'var(--font-krona), sans-serif',
-              fontSize: 'clamp(1.6rem, 3.5vw, 3.2rem)',
-            }}
+            className="font-heading font-bold leading-[1.08] tracking-[-0.025em] text-foreground"
+            style={{ fontSize: 'clamp(1.6rem, 3.5vw, 3.2rem)' }}
           >
             La messagerie
             <br />
             qui respecte
             <br />
-            <span
-              style={{
-                background: 'linear-gradient(135deg, #a855f7 0%, #7627FF 60%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
+            <span className="bg-linear-to-br from-primary to-fuchsia-500 bg-clip-text text-transparent">
               votre vie
               <br />
               privée.
             </span>
           </motion.h1>
 
-          {/* Subtext */}
           <motion.p
             {...f(0.13)}
-            className="text-[16px] text-[#787774] dark:text-[#71717a] leading-relaxed max-w-[400px]"
-            style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}
+            className="max-w-[400px] text-[16px] leading-relaxed text-muted-foreground"
           >
-            Chiffrement de bout en bout, aucun suivi, serveurs en France. Vos conversations n'appartiennent qu'à vous.
+            Chiffrement de bout en bout, aucun suivi, serveurs en France. Vos conversations n&apos;appartiennent qu&apos;à vous.
           </motion.p>
 
-          {/* CTAs */}
           <motion.div {...f(0.2)} className="flex flex-wrap gap-3">
-            <Link href="/register">
-              <button
-                className="inline-flex items-center gap-2 rounded-[6px] bg-[#7627FF] px-6 py-3 text-[14px] font-medium text-white transition-all duration-200 hover:bg-[#6020dd] active:scale-[0.98]"
-              >
-                Créer un compte gratuit
-              </button>
-            </Link>
-            <Link href="#features">
-              <button
-                className="inline-flex items-center gap-2 rounded-[6px] border border-[#EAEAEA] dark:border-[#27272a] bg-white dark:bg-[#18181b] px-5 py-3 text-[14px] font-medium text-[#111111] dark:text-[#fafafa] transition-all duration-200 hover:bg-[#F7F6F3] dark:hover:bg-[#27272a] active:scale-[0.98]"
-              >
+            <Button asChild className="h-11 rounded-lg px-6 text-[14px]">
+              <Link href="/register">Créer un compte gratuit</Link>
+            </Button>
+            <Button asChild variant="outline" className="group h-11 rounded-lg px-5 text-[14px]">
+              <Link href="#features">
                 Découvrir les fonctions
-                <ArrowRightIcon size={12} />
-              </button>
-            </Link>
+                <ArrowRightIcon size={12} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+              </Link>
+            </Button>
           </motion.div>
 
-          {/* Trust line */}
           <motion.div {...f(0.27)} className="flex flex-wrap items-center gap-x-5 gap-y-2">
             {['Auto-hébergeable', 'Open source', 'Sans numéro de tél.'].map((tag) => (
-              <span key={tag} className="flex items-center gap-1.5 text-[12px] text-[#787774] dark:text-[#71717a]">
-                <CheckCircleIcon size={10} className="text-[#7627FF] shrink-0" />
+              <span key={tag} className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                <CheckCircleIcon size={10} className="shrink-0 text-primary" />
                 {tag}
               </span>
             ))}
           </motion.div>
         </div>
 
-        {/* Right: hero image ───────────────────── */}
+        {/* Colonne droite — visuel */}
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 20, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.75, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.75, delay: 0.16, ease: EASE }}
           className="relative hidden md:block"
         >
           <img

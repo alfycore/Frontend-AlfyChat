@@ -339,12 +339,20 @@ class SocketService {
   }
 
   // Présence
-  updatePresence(status: 'online' | 'idle' | 'dnd' | 'invisible', customStatus?: string | null, emoji?: string | null): void {
+  updatePresence(
+    status: 'online' | 'idle' | 'dnd' | 'invisible',
+    customStatus?: string | null,
+    emoji?: string | null,
+    opts?: { auto?: boolean },
+  ): void {
     const payload = {
       status,
       customStatus: customStatus ?? null,
       text: customStatus ?? null,
       emoji: emoji ?? null,
+      // `auto: true` → transition automatique (auto-idle / retour) : le gateway
+      // ne touchera pas au statut choisi par l'utilisateur ni à la DB.
+      auto: opts?.auto ?? false,
     };
     if (this.socket?.connected) {
       this.socket.emit('PRESENCE_UPDATE', payload);

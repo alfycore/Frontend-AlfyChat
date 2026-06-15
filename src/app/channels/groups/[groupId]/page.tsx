@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { GroupChatArea } from '@/components/chat/group-chat-area';
+import { GroupChatArea } from '@/components/chat/chat-area';
 
 export default function GroupPage() {
   const router = useRouter();

@@ -51,19 +51,21 @@ export function usePresence({ chosenStatus, customStatus, emoji }: UsePresenceOp
       const now = Date.now();
       lastActivityRef.current = now;
 
+      // Retour d'activité après une auto-absence → restaurer online IMMÉDIATEMENT,
+      // même dans la fenêtre de throttle (sinon on peut rester bloqué en "absent").
+      // `auto: true` pour ne pas écraser le statut choisi côté serveur.
+      if (isAutoIdleRef.current) {
+        isAutoIdleRef.current = false;
+        socketService.updatePresence('online', customStatusRef.current ?? null, emojiRef.current ?? null, { auto: true });
+        socketService.sendHeartbeat(true);
+      }
+
       // Throttle : ne pas émettre trop souvent
       if (now - lastActivityEmitRef.current < ACTIVITY_THROTTLE_MS) return;
       lastActivityEmitRef.current = now;
 
       // Informer les autres onglets qu'on est actif
       try { bc?.postMessage({ type: 'ACTIVITY', ts: now }); } catch { /* ignore */ }
-
-      // Si on était en auto-idle → restaurer le statut online
-      if (isAutoIdleRef.current) {
-        isAutoIdleRef.current = false;
-        socketService.updatePresence('online', customStatusRef.current ?? null, emojiRef.current ?? null);
-        socketService.sendHeartbeat(true);
-      }
     };
 
     // Listener des events d'activité
@@ -98,17 +100,27 @@ export function usePresence({ chosenStatus, customStatus, emoji }: UsePresenceOp
       const cs = chosenStatusRef.current;
       if (!isAutoIdleRef.current && cs === 'online' && timeSinceActivity >= IDLE_TIMEOUT_MS) {
         isAutoIdleRef.current = true;
-        socketService.updatePresence('idle', customStatusRef.current ?? null, emojiRef.current ?? null);
+        // `auto: true` → absence automatique, ne pas écraser le statut choisi.
+        socketService.updatePresence('idle', customStatusRef.current ?? null, emojiRef.current ?? null, { auto: true });
       }
     }, HEARTBEAT_INTERVAL_MS);
 
     // Re-sync presence after socket reconnection (server loses state on disconnect)
     const handleReconnect = () => {
-      const effectiveStatus = isAutoIdleRef.current
-        ? 'idle'
-        : (chosenStatusRef.current as 'online' | 'idle' | 'dnd' | 'invisible');
-      socketService.updatePresence(effectiveStatus, customStatusRef.current ?? null, emojiRef.current ?? null);
-      socketService.sendHeartbeat(!isAutoIdleRef.current);
+      // Auto-absence → réémettre 'idle' en mode auto (préserve le statut choisi).
+      // Sinon → réaffirmer le statut explicite de l'utilisateur (le serveur a
+      // perdu son état à la déconnexion).
+      if (isAutoIdleRef.current) {
+        socketService.updatePresence('idle', customStatusRef.current ?? null, emojiRef.current ?? null, { auto: true });
+        socketService.sendHeartbeat(false);
+      } else {
+        socketService.updatePresence(
+          chosenStatusRef.current as 'online' | 'idle' | 'dnd' | 'invisible',
+          customStatusRef.current ?? null,
+          emojiRef.current ?? null,
+        );
+        socketService.sendHeartbeat(true);
+      }
     };
     socketService.on('socket:reconnected', handleReconnect);
 
