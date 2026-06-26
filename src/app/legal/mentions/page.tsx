@@ -25,7 +25,7 @@ export default function MentionsPage() {
                 <li><strong>Pays d'établissement :</strong> France</li>
                 <li><strong>Objet statutaire :</strong> Concevoir, distribuer, maintenir et promouvoir des outils numériques libres, souverains et respectueux de la vie privée des utilisateurs</li>
                 <li><strong>Adresse e-mail de contact :</strong> contact@alfycore.org</li>
-                <li><strong>Site institutionnel de l'association :</strong> alfycore.pro</li>
+                <li><strong>Site institutionnel de l'association :</strong> alfycore.org</li>
                 <li><strong>Plateforme exploitée :</strong> alfychat.app</li>
               </ul>
               <p>
@@ -77,7 +77,7 @@ export default function MentionsPage() {
               <h3 className="text-[12px] font-semibold text-foreground">3.1 Contact général</h3>
               <ul>
                 <li><strong>Adresse e-mail générale :</strong> contact@alfycore.org</li>
-                <li><strong>Site institutionnel :</strong> alfycore.pro</li>
+                <li><strong>Site institutionnel :</strong> alfycore.org</li>
                 <li><strong>Accès à la plateforme :</strong> alfychat.app</li>
               </ul>
               <h3 className="mt-3 text-[12px] font-semibold text-foreground">3.2 Demandes relatives aux données personnelles (RGPD)</h3>
@@ -185,7 +185,7 @@ export default function MentionsPage() {
               </p>
               <ul>
                 <li>La marque « AlfyChat » et « AlfyCore » et leurs déclinaisons</li>
-                <li>Les noms de domaine alfychat.app et alfycore.pro et leurs sous-domaines</li>
+                <li>Les noms de domaine alfychat.app et alfycore.org et leurs sous-domaines</li>
                 <li>L'infrastructure technique opérée par AlfyCore pour le service officiel</li>
                 <li>Les données personnelles des utilisateurs inscrits sur l'instance officielle</li>
                 <li>Les contenus éditoriaux, documentations et supports de communication d'AlfyCore</li>

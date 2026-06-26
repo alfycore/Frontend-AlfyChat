@@ -24,7 +24,7 @@ export default function PrivacyPage() {
                 <li><strong>Forme juridique :</strong> Association à but non lucratif, constituée conformément à la loi du 1er juillet 1901 relative au contrat d'association</li>
                 <li><strong>Pays d'établissement :</strong> France</li>
                 <li><strong>Contact :</strong> contact@alfycore.org</li>
-                <li><strong>Site de l'association :</strong> alfycore.pro</li>
+                <li><strong>Site de l'association :</strong> alfycore.org</li>
                 <li><strong>Plateforme gérée :</strong> alfychat.app</li>
               </ul>
               <p>

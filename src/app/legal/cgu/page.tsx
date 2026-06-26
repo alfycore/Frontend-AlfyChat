@@ -26,7 +26,7 @@ export default function CguPage() {
                 distribuer et maintenir des outils numériques libres, souverains et respectueux de la vie privée.
               </p>
               <ul>
-                <li>Site de l'association : <strong>alfycore.pro</strong></li>
+                <li>Site de l'association : <strong>alfycore.org</strong></li>
                 <li>Plateforme AlfyChat : <strong>alfychat.app</strong></li>
                 <li>Contact : <strong>contact@alfycore.org</strong></li>
               </ul>
@@ -571,7 +571,7 @@ export default function CguPage() {
               <ul>
                 <li><strong>AlfyCore</strong> — Association loi 1901, France</li>
                 <li><strong>E-mail général :</strong> contact@alfycore.org</li>
-                <li><strong>Site institutionnel :</strong> alfycore.pro</li>
+                <li><strong>Site institutionnel :</strong> alfycore.org</li>
                 <li><strong>Plateforme :</strong> alfychat.app</li>
               </ul>
               <h3 className="mt-3 text-[12px] font-semibold text-foreground">20.1 Délais de traitement</h3>

@@ -127,7 +127,7 @@ export function SiteFooter() {
             {[
               { label: 'CGU', href: '/legal/cgu' },
               { label: 'Confidentialité', href: '/legal/privacy' },
-              { label: 'alfycore.pro', href: 'https://alfycore.pro' },
+              { label: 'alfycore.org', href: 'https://alfycore.org' },
             ].map((l) => (
               <Link key={l.label} href={l.href} className="text-[11px] transition-colors hover:text-foreground">
                 {l.label}
