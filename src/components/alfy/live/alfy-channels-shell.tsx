@@ -235,9 +235,9 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
         </aside>
       )}
 
-      {/* Contenu réel des pages */}
-      <main className="relative flex min-w-0 flex-1 flex-col bg-surface">
-        {!isMobile && <AlfyActiveCall />}
+      {/* Contenu réel des pages — rendu unique, quel que soit l'appareil */}
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-surface">
+        <AlfyActiveCall />
         {children}
       </main>
 
@@ -248,14 +248,9 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* Mobile : contenu plein écran + nav / membres en slide-over */}
+      {/* Mobile : nav / membres en slide-over par-dessus le contenu */}
       {isMobile && (
         <>
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-surface">
-            <AlfyActiveCall />
-            {children}
-          </div>
-
           {/* Fond semi-transparent commun aux deux panneaux mobiles */}
           {(showSidebar || showMemberList) && (
             <div

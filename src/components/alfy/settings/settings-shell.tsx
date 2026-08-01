@@ -69,7 +69,7 @@ export function SettingsShell({ title, subtitle, groups, onClose, navFooter }: S
       {/* Colonne navigation — fond distinct, nav collée au contenu */}
       <div
         className={[
-          'grow justify-end border-r border-separator bg-surface sm:flex sm:shrink-0',
+          'grow justify-end border-r border-separator bg-surface sm:flex sm:w-auto sm:shrink-0',
           showNavOnMobile ? 'flex w-full' : 'hidden',
         ].join(' ')}
       >

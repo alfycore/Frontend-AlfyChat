@@ -291,10 +291,13 @@ export function Composer({
       </div>
 
       {encrypted && (
-        <p className="mt-1.5 flex items-center gap-1 text-[10px] text-muted">
-          <Lock className="size-2.5 text-(--alfy-e2e)" aria-hidden />
-          Chiffré de bout en bout — markdown, <kbd className="font-sans">/</kbd> commandes,{' '}
-          <kbd className="font-sans">@</kbd> mentions, <kbd className="font-sans">#</kbd> salons
+        <p className="mt-1.5 flex items-center gap-1 truncate text-[10px] text-muted">
+          <Lock className="size-2.5 shrink-0 text-(--alfy-e2e)" aria-hidden />
+          <span className="truncate">Chiffré de bout en bout</span>
+          <span className="hidden shrink-0 items-center gap-1 sm:flex">
+            — markdown, <kbd className="font-sans">/</kbd> commandes,{' '}
+            <kbd className="font-sans">@</kbd> mentions, <kbd className="font-sans">#</kbd> salons
+          </span>
         </p>
       )}
     </div>
