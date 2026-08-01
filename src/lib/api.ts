@@ -984,6 +984,87 @@ class ApiService {
     });
   }
 
+  // ============ MODÉRATION GLOBALE ============
+
+  async getModerationStats() {
+    return this.request('/api/admin/moderation/stats');
+  }
+
+  async getModerationSanctions(params: {
+    userId?: string;
+    type?: 'warn' | 'mute' | 'kick' | 'ban';
+    activeOnly?: boolean;
+    limit?: number;
+    offset?: number;
+  } = {}) {
+    const qs = new URLSearchParams();
+    if (params.userId) qs.set('userId', params.userId);
+    if (params.type) qs.set('type', params.type);
+    if (params.activeOnly) qs.set('activeOnly', 'true');
+    qs.set('limit', String(params.limit ?? 100));
+    qs.set('offset', String(params.offset ?? 0));
+    return this.request(`/api/admin/moderation/sanctions?${qs.toString()}`);
+  }
+
+  /** Dossier de modération d'un compte : statut courant + historique */
+  async getUserModeration(userId: string) {
+    return this.request(`/api/admin/moderation/users/${userId}`);
+  }
+
+  /** durationMinutes null/absent = permanent (ban, mute) */
+  async sanctionUser(
+    userId: string,
+    data: {
+      type: 'warn' | 'mute' | 'kick' | 'ban';
+      reason: string;
+      durationMinutes?: number | null;
+    },
+  ) {
+    return this.request(`/api/admin/moderation/users/${userId}/sanctions`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async revokeSanction(sanctionId: string, reason?: string) {
+    return this.request(`/api/admin/moderation/sanctions/${sanctionId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async unbanUser(userId: string, reason?: string) {
+    return this.request(`/api/admin/moderation/users/${userId}/unban`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async unmuteUser(userId: string, reason?: string) {
+    return this.request(`/api/admin/moderation/users/${userId}/unmute`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  // Termes interdits du filtre de pseudos
+  async getModerationTerms() {
+    return this.request('/api/admin/moderation/terms');
+  }
+
+  async addModerationTerm(term: string, matchType: 'substring' | 'word' | 'exact' = 'word') {
+    return this.request('/api/admin/moderation/terms', {
+      method: 'POST',
+      body: JSON.stringify({ term, matchType }),
+    });
+  }
+
+  async deleteModerationTerm(termId: string) {
+    return this.request(`/api/admin/moderation/terms/${termId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Attribution de badges aux utilisateurs
   async assignBadgeToUser(userId: string, badgeId: string) {
     return this.request(`/api/admin/users/${userId}/badges/${badgeId}`, {

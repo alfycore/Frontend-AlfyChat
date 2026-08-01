@@ -20,6 +20,7 @@ import {
   Trash2Icon,
   UserPlusIcon,
   XIcon,
+  ZapIcon,
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -30,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ImageCropperDialog } from '@/components/chat/image-cropper-dialog';
+import { BoostServerModal } from '@/components/boost-server-modal';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
@@ -188,6 +190,7 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
+  const [boostOpen, setBoostOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState('');
   const [cropperMode, setCropperMode] = useState<'icon' | 'banner'>('icon');
   const handleSsdCropDone = (file: File, previewUrl: string) => {
@@ -401,6 +404,15 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
         <SettingsCard>
           <SettingsRow label={ss.general.publicServer} description={ss.general.publicServerDesc} border={false}>
             <Switch checked={isPublic} onCheckedChange={(v) => { setIsPublic(v); setRequireInvite(!v); }} />
+          </SettingsRow>
+        </SettingsCard>
+
+        <SettingsCard>
+          <SettingsRow label="Booster le serveur" description="Débloquez icône animée, bannière, emojis et stickers personnalisés en boostant ce serveur." border={false}>
+            <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={() => setBoostOpen(true)}>
+              <ZapIcon size={14} />
+              Booster
+            </Button>
           </SettingsRow>
         </SettingsCard>
       </div>
@@ -705,6 +717,12 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
       aspectRatio={cropperMode === 'icon' ? 1 : 3}
       shape={cropperMode === 'icon' ? 'rect' : 'rect'}
       onCrop={handleSsdCropDone}
+    />
+
+    <BoostServerModal
+      serverId={serverId}
+      open={boostOpen}
+      onClose={() => setBoostOpen(false)}
     />
     </>
   );

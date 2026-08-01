@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import {
   ShieldIcon, SettingsIcon, ServerIcon, HelpCircleIcon,
-  ArrowLeftIcon, ClockIcon, EyeIcon, PinIcon,
+  ArrowLeftIcon, ArrowRightIcon, ClockIcon, EyeIcon, PinIcon,
 } from '@/components/icons';
 import { useTranslation } from '@/components/locale-provider';
 
@@ -34,54 +34,64 @@ export function ArticleClient({
     <div className="min-h-screen bg-background">
 
       {/* Header */}
-      <div className="relative border-b border-border/50"
-        style={{ background: `linear-gradient(135deg, ${color}10 0%, transparent 60%)` }}>
-        <div className="mx-auto max-w-3xl px-6 py-10">
+      <div className="border-b border-border/50">
+        <div className="mx-auto max-w-3xl px-6 pt-10 pb-10">
 
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
-            <Link href="/support" className="hover:text-foreground transition-colors">{s.helpCenterLabel}</Link>
-            <span>/</span>
+          <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-8 flex-wrap">
+            <Link href="/support" className="hover:text-foreground transition-colors">
+              {s.helpCenterLabel}
+            </Link>
+            <span className="text-border">/</span>
             {category && (
               <>
-                <Link href={`/support/${catSlug}`} className="hover:text-foreground transition-colors flex items-center gap-1">
+                <Link href={`/support/${catSlug}`}
+                  className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors">
                   <Icon size={11} style={{ color }} />
                   {category.title}
                 </Link>
-                <span>/</span>
+                <span className="text-border">/</span>
               </>
             )}
-            <span className="text-foreground font-medium truncate max-w-50">{article.title}</span>
+            <span className="text-foreground/70 font-medium truncate max-w-48">{article.title}</span>
           </nav>
 
-          {/* Titre + métadonnées */}
-          <div className="flex items-start gap-2 mb-3">
-            {article.isPinned && (
-              <span className="shrink-0 mt-1 flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5"
-                style={{ background: color + '20', color }}>
+          {/* Pinned badge */}
+          {article.isPinned && (
+            <div className="mb-3">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-0.5"
+                style={{ background: color + '18', color }}>
                 <PinIcon size={10} /> {s.pinnedBadge}
               </span>
-            )}
-          </div>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold leading-tight mb-3">{article.title}</h1>
-          {article.summary && (
-            <p className="text-muted-foreground text-base leading-relaxed mb-4">{article.summary}</p>
+            </div>
           )}
-          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <EyeIcon size={11} /> {s.viewsCount.replace('{n}', article.viewCount.toLocaleString(locale))}
+
+          {/* Title */}
+          <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight leading-tight mb-4">
+            {article.title}
+          </h1>
+          {article.summary && (
+            <p className="text-muted-foreground leading-relaxed mb-5 text-base">{article.summary}</p>
+          )}
+
+          {/* Metadata */}
+          <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground/60">
+            <span className="flex items-center gap-1.5">
+              <EyeIcon size={11} />
+              {s.viewsCount.replace('{n}', article.viewCount.toLocaleString(locale))}
             </span>
-            <span className="flex items-center gap-1">
-              <ClockIcon size={11} /> {s.updatedAt.replace('{date}', new Date(article.updatedAt).toLocaleDateString(locale))}
+            <span className="flex items-center gap-1.5">
+              <ClockIcon size={11} />
+              {s.updatedAt.replace('{date}', new Date(article.updatedAt).toLocaleDateString(locale))}
             </span>
           </div>
 
           {/* Tags */}
           {article.tags.length > 0 && (
-            <div className="flex gap-1.5 mt-4 flex-wrap">
+            <div className="flex gap-1.5 mt-5 flex-wrap">
               {article.tags.map(tag => (
                 <span key={tag} className="text-xs rounded-full px-2.5 py-0.5 font-medium"
-                  style={{ background: color + '15', color }}>
+                  style={{ background: color + '12', color }}>
                   {tag}
                 </span>
               ))}
@@ -90,36 +100,42 @@ export function ArticleClient({
         </div>
       </div>
 
-      {/* Contenu */}
+      {/* Content */}
       <div className="mx-auto max-w-3xl px-6 py-10">
         {article.content ? (
           <article className="prose prose-sm max-w-none dark:prose-invert
-            prose-headings:font-heading prose-headings:font-bold
-            prose-h2:text-lg prose-h3:text-base
-            prose-a:text-primary prose-a:underline prose-a:underline-offset-2
-            prose-code:rounded prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
-            prose-blockquote:border-l-4 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground
-            prose-img:rounded-xl prose-img:border prose-img:border-border
-            prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
-            [&_h2]:mt-8 [&_h3]:mt-6"
+            prose-headings:font-heading prose-headings:font-bold prose-headings:tracking-tight
+            prose-h2:text-xl prose-h3:text-base
+            prose-a:text-primary prose-a:no-underline prose-a:font-medium hover:prose-a:underline
+            prose-code:rounded-lg prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
+            prose-pre:rounded-xl prose-pre:border prose-pre:border-border prose-pre:bg-muted
+            prose-blockquote:border-l-[3px] prose-blockquote:pl-4 prose-blockquote:not-italic prose-blockquote:text-muted-foreground
+            prose-img:rounded-2xl prose-img:border prose-img:border-border
+            prose-ul:my-2 prose-ol:my-2 prose-li:my-1
+            [&_h2]:mt-10 [&_h2]:mb-4 [&_h3]:mt-7 [&_h3]:mb-3"
             style={{ '--tw-prose-bullets': color, '--tw-prose-counters': color } as React.CSSProperties}>
             <MarkdownContent content={article.content} />
           </article>
         ) : (
-          <p className="text-muted-foreground text-center py-12">{s.contentPending}</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="size-12 rounded-2xl bg-muted flex items-center justify-center mb-4">
+              <Icon size={20} className="text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">{s.contentPending}</p>
+          </div>
         )}
 
-        {/* Navigation bas de page */}
-        <div className="mt-12 pt-6 border-t border-border flex items-center justify-between gap-4">
+        {/* Bottom nav */}
+        <div className="mt-14 pt-7 border-t border-border flex items-center justify-between gap-4 flex-wrap">
           <Link href={`/support/${catSlug}`}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeftIcon size={14} />
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+            <ArrowLeftIcon size={13} className="group-hover:-translate-x-0.5 transition-transform" />
             {category?.title ?? catSlug}
           </Link>
           <Link href="/support/contact"
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition-all"
             style={{ background: color }}>
-            {s.contactCTA}
+            {s.contactCTA} <ArrowRightIcon size={13} />
           </Link>
         </div>
       </div>
@@ -158,9 +174,7 @@ function MarkdownContent({ content }: { content: string }) {
         i++;
       }
       elements.push(<pre key={i}><code>{codeLines.join('\n')}</code></pre>);
-    } else if (line.trim() === '') {
-      // empty line — skip
-    } else {
+    } else if (line.trim() !== '') {
       elements.push(<p key={i}>{line}</p>);
     }
     i++;
