@@ -1,9 +1,9 @@
-'use client';
+import { AdminShell } from '@/components/alfy/admin/admin-shell';
+
+export const metadata = {
+  title: 'Console admin — AlfyChat',
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="h-screen bg-background">
-      {children}
-    </div>
-  );
+  return <AdminShell>{children}</AdminShell>;
 }

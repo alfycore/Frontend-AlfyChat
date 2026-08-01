@@ -4,7 +4,7 @@ import NextLink from 'next/link';
 import { Fragment } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRightIcon } from '@/components/icons';
-import { Button, Card, Chip, Separator, Typography } from '@heroui/react';
+import { Button, Card, Chip, Separator, Typography, buttonVariants } from '@heroui/react';
 
 const TRUST_TAGS = ['Auto-hébergeable', 'Open source', 'Sans numéro de tél.'];
 
@@ -58,17 +58,16 @@ export function HomeHero() {
           </motion.div>
 
           <motion.div {...f(0.3)} className="flex flex-wrap items-center gap-4">
-            <Button size="lg" render={(props) => <NextLink {...props} href="/register" />}>
+            <NextLink href="/register" className={buttonVariants({ size: 'lg' })}>
               Commencer gratuitement
-            </Button>
-            <Button
-              variant="ghost"
-              size="lg"
-              render={(props) => <NextLink {...props} href="#features" />}
+            </NextLink>
+            <NextLink
+              href="#features"
+              className={buttonVariants({ variant: 'ghost', size: 'lg' })}
             >
               En savoir plus
               <ArrowRightIcon size={13} />
-            </Button>
+            </NextLink>
           </motion.div>
 
           <motion.div {...f(0.37)} className="flex flex-wrap items-center gap-x-3 gap-y-2">

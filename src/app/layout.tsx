@@ -4,10 +4,12 @@ import { Geist, Geist_Mono, Krona_One, Raleway, Inter } from "next/font/google";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeScript } from "@/components/atelier/theme/ThemeScript";
 import { LocaleProvider } from "@/components/locale-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 import { BackgroundProvider } from "@/components/background-provider";
 import { PrefetchDMs } from "@/components/prefetch-dms";
+import { PrefsSync } from "@/components/prefs-sync";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { ChunkErrorHandler } from "@/components/chunk-error-handler";
@@ -62,6 +64,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning className={cn(geistSans.variable, geistMono.variable, kronaOne.variable, ralewayHeading.variable, inter.variable)}>
       <head>
+        <ThemeScript />
         <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/4.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css" />
         <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/4.0.0/uicons-brands/css/uicons-brands.css" />
       </head>
@@ -74,6 +77,7 @@ export default function RootLayout({
           <LocaleProvider>
             <AuthProvider>
               <PrefetchDMs />
+              <PrefsSync />
               <BackgroundProvider>
                 {children}
               </BackgroundProvider>

@@ -3,7 +3,7 @@
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'motion/react';
-import { Button, Card, Typography } from '@heroui/react';
+import { Card, Typography, buttonVariants } from '@heroui/react';
 import { ArrowRightIcon, ShieldCheckIcon } from '@/components/icons';
 
 const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
@@ -44,17 +44,16 @@ export function HomeCta() {
             </Typography>
 
             <div className="mt-2 flex flex-wrap justify-center gap-3">
-              <Button size="lg" render={(props) => <NextLink {...props} href="/register" />}>
+              <NextLink href="/register" className={buttonVariants({ size: 'lg' })}>
                 Créer un compte gratuit
                 <ArrowRightIcon size={13} />
-              </Button>
-              <Button
-                variant="tertiary"
-                size="lg"
-                render={(props) => <NextLink {...props} href="/about" />}
+              </NextLink>
+              <NextLink
+                href="/about"
+                className={buttonVariants({ variant: 'tertiary', size: 'lg' })}
               >
                 En savoir plus
-              </Button>
+              </NextLink>
             </div>
 
             <div className="mt-2 flex items-center gap-2">

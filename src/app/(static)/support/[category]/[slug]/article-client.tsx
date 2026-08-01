@@ -6,6 +6,7 @@ import {
   ArrowLeftIcon, ClockIcon, EyeIcon, PinIcon,
 } from '@/components/icons';
 import { useTranslation } from '@/components/locale-provider';
+import { MotionFade } from '@/components/ui/motion-fade';
 
 export interface Article {
   id: string; slug: string; title: string; summary: string | null;
@@ -36,7 +37,7 @@ export function ArticleClient({
       {/* Header */}
       <div className="relative border-b border-border/50"
         style={{ background: `linear-gradient(135deg, ${color}10 0%, transparent 60%)` }}>
-        <div className="mx-auto max-w-3xl px-6 py-10">
+        <MotionFade direction="down" distance={12} duration={0.6} className="mx-auto max-w-3xl px-6 py-10">
 
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
@@ -87,11 +88,11 @@ export function ArticleClient({
               ))}
             </div>
           )}
-        </div>
+        </MotionFade>
       </div>
 
       {/* Contenu */}
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <MotionFade direction="up" distance={12} duration={0.6} delay={0.1} className="mx-auto max-w-3xl px-6 py-10">
         {article.content ? (
           <article className="prose prose-sm max-w-none dark:prose-invert
             prose-headings:font-heading prose-headings:font-bold
@@ -122,7 +123,7 @@ export function ArticleClient({
             {s.contactCTA}
           </Link>
         </div>
-      </div>
+      </MotionFade>
     </div>
   );
 }

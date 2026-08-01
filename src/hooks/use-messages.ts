@@ -747,6 +747,9 @@ export function useMessages(channelId?: string, recipientId?: string) {
         );
 
         setHasMoreMessages(rawMessages.length >= 50);
+        // Réalimente le cache (ciphertext) avec l'état frais → la prochaine ouverture
+        // de cette conversation (dans les 24h) affiche instantanément depuis le cache.
+        if (cacheKey) dmPrefetchCache.setMessages(cacheKey, rawMessages);
         if (!servedFromCache) setIsLoading(false);
       } else {
         if (!servedFromCache) setIsLoading(false);

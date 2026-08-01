@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { socketService } from '@/lib/socket';
-import { ServerChatArea } from '@/components/chat/server-chat-area';
+import { AlfyViewSwitch } from '@/components/alfy/live/alfy-view-switch';
 
 export default function ServerChannelPage() {
   const params = useParams();
@@ -41,7 +41,7 @@ export default function ServerChannelPage() {
   }, [channelId]);
 
   return (
-    <ServerChatArea
+    <AlfyViewSwitch
       serverId={serverId}
       channelId={channelId}
       channelName={channelName}

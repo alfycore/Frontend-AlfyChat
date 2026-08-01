@@ -1,9 +1,23 @@
 'use client';
 
-import React, { memo, useId, useState, useEffect, useCallback } from 'react';
+import React, { createContext, memo, useContext, useId, useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { twemojify } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
+
+// ── Options de rendu ──────────────────────────────────────────────────────────
+// Passées par contexte : les règles inline sont de simples fonctions, elles ne
+// peuvent pas lire un hook. Les composants feuilles (Spoiler, MdImage) le font.
+
+interface MarkdownOptions {
+  /** Les spoilers sont révélés d'emblée (préférence « Afficher les spoilers »). */
+  revealSpoilers: boolean;
+  /** Afficher les médias postés sous forme de lien plutôt qu'un simple lien. */
+  showLinkedMedia: boolean;
+}
+
+const DEFAULT_OPTIONS: MarkdownOptions = { revealSpoilers: false, showLinkedMedia: true };
+const OptionsContext = createContext<MarkdownOptions>(DEFAULT_OPTIONS);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -75,7 +89,9 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
 // ── Spoiler ───────────────────────────────────────────────────────────────────
 
 function Spoiler({ children }: { children: React.ReactNode }) {
-  const [shown, setShown] = useState(false);
+  const { revealSpoilers } = useContext(OptionsContext);
+  const [shown, setShown] = useState(revealSpoilers);
+  useEffect(() => setShown(revealSpoilers), [revealSpoilers]);
   return (
     <span
       role="button"
@@ -88,6 +104,36 @@ function Spoiler({ children }: { children: React.ReactNode }) {
     >
       {children}
     </span>
+  );
+}
+
+// ── Image ─────────────────────────────────────────────────────────────────────
+// Respecte « Afficher les médias envoyés comme liens » : sinon on retombe sur
+// un lien cliquable, jamais sur du vide.
+
+function MdImage({ src, alt, onImg }: { src: string; alt?: string; onImg?: (src: string) => void }) {
+  const { showLinkedMedia } = useContext(OptionsContext);
+  if (!showLinkedMedia) {
+    return (
+      <a
+        href={src}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline underline-offset-2 hover:opacity-80"
+      >
+        {alt || src}
+      </a>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt ?? ''}
+      className="my-1 max-h-48 max-w-full cursor-zoom-in rounded-lg shadow"
+      loading="lazy"
+      onClick={() => onImg?.(src)}
+      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+    />
   );
 }
 
@@ -136,17 +182,7 @@ function renderInline(text: string, pfx: string, kg: KG, onImg?: (s: string) => 
     // Image ![alt](url)
     [/!\[([^\]]*)\]\(([^)"'\s]+)(?:\s+"[^"]*")?\)/, (m) => {
       const src = sanitizeUrl(resolveImg(m[2]));
-      return (
-        <img
-          key={k()}
-          src={src}
-          alt={m[1]}
-          className="my-1 max-h-48 max-w-full cursor-zoom-in rounded-lg shadow"
-          loading="lazy"
-          onClick={() => onImg?.(src)}
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-        />
-      );
+      return <MdImage key={k()} src={src} alt={m[1]} onImg={onImg} />;
     }],
     // Link [text](url)
     [/\[([^\]]+)\]\(([^)]+)\)/, (m) => (
@@ -474,12 +510,24 @@ function renderList(
 
 export interface MarkdownRendererProps {
   content: string;
+  /** Spoilers révélés d'emblée — préférence « Afficher les spoilers ». */
+  revealSpoilers?: boolean;
+  /** Rendre les médias postés en lien ; sinon, lien cliquable simple. */
+  showLinkedMedia?: boolean;
 }
 
-export const MarkdownRenderer = memo(function MarkdownRenderer({ content }: MarkdownRendererProps) {
+export const MarkdownRenderer = memo(function MarkdownRenderer({
+  content,
+  revealSpoilers = false,
+  showLinkedMedia = true,
+}: MarkdownRendererProps) {
   const uid = useId();
   const [lightbox, setLightbox] = useState<string | null>(null);
   const onImg = useCallback((src: string) => setLightbox(src), []);
+  const options = React.useMemo<MarkdownOptions>(
+    () => ({ revealSpoilers, showLinkedMedia }),
+    [revealSpoilers, showLinkedMedia],
+  );
 
   const trimmed = content.trim();
   const isBareImg =
@@ -489,6 +537,18 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({ content }: Mark
 
   if (isBareImg) {
     const src = sanitizeUrl(resolveImg(trimmed));
+    if (!showLinkedMedia) {
+      return (
+        <a
+          href={src}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline underline-offset-2 hover:opacity-80"
+        >
+          {trimmed}
+        </a>
+      );
+    }
     return (
       <>
         <img
@@ -508,9 +568,9 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({ content }: Mark
   const rendered = renderBlocks(tokens, uid, kg, onImg);
 
   return (
-    <>
+    <OptionsContext.Provider value={options}>
       <div className="markdown-body min-w-0 wrap-anywhere leading-relaxed">{rendered}</div>
       {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
-    </>
+    </OptionsContext.Provider>
   );
 });

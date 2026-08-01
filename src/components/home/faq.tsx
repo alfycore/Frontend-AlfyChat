@@ -2,7 +2,7 @@
 
 import NextLink from 'next/link';
 import { motion } from 'motion/react';
-import { Accordion, Button, Chip, Typography } from '@heroui/react';
+import { Accordion, Chip, Typography, buttonVariants } from '@heroui/react';
 import { PlusIcon, ArrowRightIcon } from '@/components/icons';
 
 const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
@@ -62,15 +62,13 @@ export function HomeFaq() {
             <Typography type="body" color="muted" className="max-w-sm">
               Vous avez d'autres questions ? Notre documentation est disponible en ligne ou contactez-nous directement.
             </Typography>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-2 w-fit"
-              render={(props) => <NextLink {...props} href="/developers/docs" />}
+            <NextLink
+              href="/developers/docs"
+              className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'mt-2 w-fit' })}
             >
               Lire la documentation
               <ArrowRightIcon size={13} />
-            </Button>
+            </NextLink>
           </motion.div>
 
           {/* Right — HeroUI Accordion */}

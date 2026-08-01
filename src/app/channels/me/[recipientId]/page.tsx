@@ -1,73 +1,70 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { MessageCircleIcon, UserXIcon, ArrowLeftIcon } from '@/components/icons';
 import Link from 'next/link';
+import { ArrowLeft, UserX } from 'lucide-react';
+
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
-import { ChatArea } from '@/components/chat/chat-area';
 import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
 import { useTranslation } from '@/components/locale-provider';
+import { AlfyDmChat } from '@/components/alfy/live/alfy-dm-chat';
 
 export default function DMPage() {
   const { user, isLoading: authLoading } = useAuth();
   const params = useParams();
-  const recipientId = params.recipientId as string;
+  const recipientId = params?.recipientId as string;
   const { t } = useTranslation();
   const c = t.chat;
 
-  // Initialiser depuis le cache si disponible → affichage instantané
   const cached = recipientId ? dmPrefetchCache.getUser(recipientId) : null;
-  const [recipientName, setRecipientName] = useState(cached?.displayName ?? '');
   const [error, setError] = useState(false);
 
+  // Rafraîchit le cache de profil en arrière-plan (affichage instantané).
   useEffect(() => {
-    // Attendre que l'auth soit prête ET que l'utilisateur soit connecté
-    if (authLoading || !user) return;
-    if (!recipientId) return;
+    if (authLoading || !user || !recipientId) return;
+    api
+      .getUser(recipientId)
+      .then((res) => {
+        if (res.success && res.data) {
+          const u = res.data as Record<string, unknown>;
+          dmPrefetchCache.setUser(recipientId, {
+            id: u.id as string,
+            username: u.username as string,
+            displayName: (u.displayName as string) || (u.username as string),
+            avatarUrl: u.avatarUrl as string | undefined,
+            bannerUrl: u.bannerUrl as string | undefined,
+            bio: u.bio as string | undefined,
+            status: u.status as string | undefined,
+            customStatus: (u.customStatus as string) ?? null,
+          });
+        } else if (!cached) {
+          setError(true);
+        }
+      })
+      .catch(() => {
+        if (!cached) setError(true);
+      });
+  }, [recipientId, user, authLoading, cached]);
 
-    // Rafraîchir le nom en arrière-plan (cache ou fetch) — sans spinner
-    api.getUser(recipientId).then((res) => {
-      if (res.success && res.data) {
-        const u = res.data as any;
-        const name = u.displayName || u.username;
-        setRecipientName(name);
-        dmPrefetchCache.setUser(recipientId, {
-          id: u.id,
-          username: u.username,
-          displayName: name,
-          avatarUrl: u.avatarUrl,
-          bannerUrl: u.bannerUrl,
-          bio: u.bio,
-          status: u.status,
-          customStatus: u.customStatus ?? null,
-        });
-      } else if (!cached) {
-        setError(true);
-      }
-    }).catch(() => { if (!cached) setError(true); });
-  }, [recipientId, user, authLoading]);
-
-  /* ── Error state ── */
+  /* Destinataire introuvable */
   if (error) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[var(--background)]/50">
-        <div className="flex flex-col items-center gap-5 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-          <div className="flex size-16 items-center justify-center rounded-2xl border border-destructive/30 bg-[var(--surface)]/80 shadow-2xl">
-              <UserXIcon size={28} className="text-red-500/70" />
-            </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <p className="text-sm font-semibold text-[var(--foreground)]/80">{c.userNotFound}</p>
-            <p className="max-w-xs text-center text-[12px] leading-relaxed text-[var(--muted)]/60">
-              {c.userLoadError}
-            </p>
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="alfy-enter flex flex-col items-center gap-4 text-center">
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-danger/12 text-danger">
+            <UserX className="size-6" aria-hidden />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">{c.userNotFound}</p>
+            <p className="mt-1 max-w-xs text-xs leading-relaxed text-muted">{c.userLoadError}</p>
           </div>
           <Link
             href="/channels/me"
-            className="mt-2 flex items-center gap-2 rounded-xl border border-[var(--border)]/60 bg-[var(--surface)]/60 px-5 py-2.5 text-sm font-medium text-[var(--foreground)]/80 shadow-lg transition-all duration-200 hover:bg-[var(--surface)]/80 hover:shadow-xl"
+            className="mt-1 flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-surface-secondary"
           >
-            <ArrowLeftIcon size={16} />
+            <ArrowLeft className="size-4" />
             {c.backToMessages}
           </Link>
         </div>
@@ -75,22 +72,8 @@ export default function DMPage() {
     );
   }
 
-  /* ── Non authentifié (ne devrait pas arriver — le layout redirige) ── */
-  if (!user) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-[var(--background)]/50">
-        <div className="flex size-16 items-center justify-center rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/80 shadow-2xl">
-          <MessageCircleIcon size={28} className="text-[var(--muted)]" />
-        </div>
-      </div>
-    );
-  }
+  // Le layout gère la redirection vers /login.
+  if (authLoading || !user || !recipientId) return null;
 
-  /* ── Chat ── */
-  return (
-    <div className="flex h-full w-full flex-col animate-in fade-in-0 duration-300">
-      <ChatArea key={recipientId} recipientId={recipientId} recipientName={recipientName} />
-    </div>
-  );
+  return <AlfyDmChat key={recipientId} recipientId={recipientId} />;
 }
-

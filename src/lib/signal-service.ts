@@ -682,6 +682,26 @@ class SignalService {
   }
 
   /**
+   * Importe un bundle privé DÉJÀ DÉCHIFFRÉ, sans mot de passe.
+   *
+   * Utilisé par la connexion par QR code : le téléphone transmet le bundle
+   * chiffré vers la clé éphémère du navigateur, qui le déchiffre lui-même. On
+   * arrive donc ici avec du clair, sans jamais avoir eu le mot de passe.
+   */
+  async importDecryptedPrivateBundle(bundleData: PrivateBundleData): Promise<void> {
+    await signalStore.importPrivateBundle(bundleData);
+    this.selfKey = null;
+    this.initialized = true;
+
+    try {
+      const exported = await signalStore.exportPrivateBundle();
+      sessionStorage.setItem('alfychat_signal_private_bundle', JSON.stringify(exported));
+    } catch {
+      // Non bloquant : juste une optimisation de session
+    }
+  }
+
+  /**
    * Retourne le prochain ID disponible pour les one-time prekeys.
    */
   async getNextPreKeyId(): Promise<number> {

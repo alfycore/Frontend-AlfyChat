@@ -12,6 +12,7 @@ import {
   Separator,
   Skeleton,
   Switch,
+  buttonVariants,
 } from '@heroui/react';
 import { SunIcon, MoonIcon, MenuIcon, MessageCircleIcon } from '@/components/icons';
 
@@ -74,14 +75,13 @@ export function LandingNavbar() {
         {/* Desktop nav — Button ghost rendant NextLink */}
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
           {NAV_LINKS.map((l) => (
-            <Button
+            <NextLink
               key={l.href}
-              variant="ghost"
-              size="md"
-              render={(props) => <NextLink {...props} href={l.href} />}
+              href={l.href}
+              className={buttonVariants({ variant: 'ghost', size: 'md' })}
             >
               {l.label}
-            </Button>
+            </NextLink>
           ))}
         </nav>
 
@@ -126,21 +126,18 @@ export function LandingNavbar() {
             </NextLink>
           ) : (
             <>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hidden sm:inline-flex"
-                render={(props) => <NextLink {...props} href="/login" />}
+              <NextLink
+                href="/login"
+                className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'hidden sm:inline-flex' })}
               >
                 Connexion
-              </Button>
-              <Button
-                size="sm"
-                className="hidden sm:inline-flex"
-                render={(props) => <NextLink {...props} href="/register" />}
+              </NextLink>
+              <NextLink
+                href="/register"
+                className={buttonVariants({ size: 'sm', className: 'hidden sm:inline-flex' })}
               >
                 Créer un compte
-              </Button>
+              </NextLink>
             </>
           )}
 
@@ -170,32 +167,29 @@ export function LandingNavbar() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.05 + i * 0.05, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
                           >
-                            <Button
-                              variant="ghost"
-                              fullWidth
-                              className="justify-start text-lg"
-                              render={(props) => <NextLink {...props} href={l.href} />}
+                            <NextLink
+                              href={l.href}
+                              className={buttonVariants({ variant: 'ghost', fullWidth: true, className: 'justify-start text-lg' })}
                             >
                               {l.label}
-                            </Button>
+                            </NextLink>
                           </motion.div>
                         ))}
                       </nav>
                     </Drawer.Body>
                     <Drawer.Footer>
-                      <Button
-                        variant="tertiary"
-                        fullWidth
-                        render={(props) => <NextLink {...props} href="/login" />}
+                      <NextLink
+                        href="/login"
+                        className={buttonVariants({ variant: 'tertiary', fullWidth: true })}
                       >
                         Connexion
-                      </Button>
-                      <Button
-                        fullWidth
-                        render={(props) => <NextLink {...props} href="/register" />}
+                      </NextLink>
+                      <NextLink
+                        href="/register"
+                        className={buttonVariants({ fullWidth: true })}
                       >
                         Créer un compte
-                      </Button>
+                      </NextLink>
                     </Drawer.Footer>
                   </Drawer.Dialog>
                 </Drawer.Content>

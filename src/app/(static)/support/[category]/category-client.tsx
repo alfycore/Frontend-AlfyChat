@@ -6,6 +6,7 @@ import {
   ArrowLeftIcon, ArrowRightIcon, BookOpenIcon, PinIcon,
 } from '@/components/icons';
 import { useTranslation } from '@/components/locale-provider';
+import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
 
 export interface Category {
   id: string; slug: string; title: string; description: string | null;
@@ -35,7 +36,7 @@ export function CategoryClient({ cat }: { cat: CategoryWithArticles }) {
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-border/50"
         style={{ background: `linear-gradient(135deg, ${cat.color}12 0%, transparent 60%)` }}>
-        <div className="mx-auto max-w-4xl px-6 py-16">
+        <MotionFade direction="down" distance={12} duration={0.6} className="mx-auto max-w-4xl px-6 py-16">
           <Link href="/support" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
             <ArrowLeftIcon size={14} /> {s.backToHelp}
           </Link>
@@ -55,7 +56,7 @@ export function CategoryClient({ cat }: { cat: CategoryWithArticles }) {
             <span style={{ color: cat.color }} className="font-semibold">{cat.articles.length}</span>{' '}
             {s.articlesAvailable.replace('{n}', '').trim()}
           </p>
-        </div>
+        </MotionFade>
       </div>
 
       <div className="mx-auto max-w-4xl px-6 py-10 space-y-10">
@@ -66,12 +67,14 @@ export function CategoryClient({ cat }: { cat: CategoryWithArticles }) {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4 flex items-center gap-2">
               <PinIcon size={13} /> {s.pinnedArticles}
             </h2>
-            <div className="rounded-xl border overflow-hidden" style={{ borderColor: cat.color + '40' }}>
+            <MotionStagger stagger={0.05} className="rounded-xl border overflow-hidden" style={{ borderColor: cat.color + '40' }}>
               {pinned.map((art, i) => (
-                <ArticleCard key={art.id} art={art} catSlug={cat.slug} color={cat.color}
-                  border={i < pinned.length - 1} locale={locale} viewsLabel={s.viewsCount} />
+                <MotionStaggerItem key={art.id} direction="up" distance={8}>
+                  <ArticleCard art={art} catSlug={cat.slug} color={cat.color}
+                    border={i < pinned.length - 1} locale={locale} viewsLabel={s.viewsCount} />
+                </MotionStaggerItem>
               ))}
-            </div>
+            </MotionStagger>
           </section>
         )}
 
@@ -83,12 +86,14 @@ export function CategoryClient({ cat }: { cat: CategoryWithArticles }) {
                 <BookOpenIcon size={13} /> {s.allArticles}
               </h2>
             )}
-            <div className="rounded-xl border border-border overflow-hidden">
+            <MotionStagger stagger={0.05} className="rounded-xl border border-border overflow-hidden">
               {regular.map((art, i) => (
-                <ArticleCard key={art.id} art={art} catSlug={cat.slug} color={cat.color}
-                  border={i < regular.length - 1} locale={locale} viewsLabel={s.viewsCount} />
+                <MotionStaggerItem key={art.id} direction="up" distance={8}>
+                  <ArticleCard art={art} catSlug={cat.slug} color={cat.color}
+                    border={i < regular.length - 1} locale={locale} viewsLabel={s.viewsCount} />
+                </MotionStaggerItem>
               ))}
-            </div>
+            </MotionStagger>
           </section>
         )}
 
