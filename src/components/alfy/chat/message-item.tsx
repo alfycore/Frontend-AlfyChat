@@ -7,7 +7,6 @@ import { memo, useState } from 'react';
 import type { AlfyMessage, AlfyRole } from '@/components/alfy/mock/types';
 import { useUserById } from '@/components/alfy/user-directory';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
-import { E2eBadge } from '@/components/alfy/primitives/e2e-badge';
 import { Attachment } from '@/components/alfy/chat/attachment';
 import { InviteEmbed } from '@/components/alfy/chat/invite-embed';
 import { LinkPreview } from '@/components/alfy/chat/link-preview';
@@ -93,7 +92,7 @@ export const MessageItem = memo(function MessageItem({
   return (
     <div
       className={cn(
-        'alfy-msg-row group/msg relative px-4',
+        'alfy-msg-row alfy-enter group/msg relative px-4',
         compact ? 'py-0' : 'py-0.5',
         showHeader && (compact ? 'mt-1' : 'mt-3'),
         pinned && 'bg-warning/[0.04]',
@@ -156,7 +155,6 @@ export const MessageItem = memo(function MessageItem({
                   <p>{fullFmt.format(date)}</p>
                 </Tooltip.Content>
               </Tooltip>
-              {message.encrypted && <E2eBadge />}
             </div>
           )}
           {editing ? (
@@ -208,7 +206,6 @@ export const MessageItem = memo(function MessageItem({
                 </UserPopover>
               )}
               <AlfyMarkdown content={content} mentions={message.mentions} isModerator={isModerator} />
-              {(!showHeader || !withAvatar) && message.encrypted && <E2eBadge className="mt-1" />}
               {edited && <span className="ml-1 text-[10px] text-muted">(modifié)</span>}
             </div>
           )}

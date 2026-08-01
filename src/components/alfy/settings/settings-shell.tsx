@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Header, Label, ListBox, ScrollShadow, Tooltip } from '@heroui/react';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -46,8 +46,13 @@ export function SettingsShell({ title, subtitle, groups, onClose, navFooter }: S
   const allTabs = groups.flatMap((g) => g.items);
   const [selectedId, setSelectedId] = useState(allTabs[0]?.id);
   const selected = allTabs.find((t) => t.id === selectedId) ?? allTabs[0];
+  // Sur mobile, une seule colonne à la fois : liste des onglets ou contenu.
+  const [showNavOnMobile, setShowNavOnMobile] = useState(true);
 
-  const goTo = useCallback((tabId: string) => setSelectedId(tabId), []);
+  const goTo = useCallback((tabId: string) => {
+    setSelectedId(tabId);
+    setShowNavOnMobile(false);
+  }, []);
   const nav = useMemo(() => ({ goTo }), [goTo]);
 
   useEffect(() => {
@@ -62,14 +67,31 @@ export function SettingsShell({ title, subtitle, groups, onClose, navFooter }: S
     <SettingsNavContext.Provider value={nav}>
     <div className="alfy-enter flex h-full bg-background">
       {/* Colonne navigation — fond distinct, nav collée au contenu */}
-      <div className="flex shrink-0 grow justify-end border-r border-separator bg-surface">
-        <ScrollShadow className="h-full overflow-y-auto">
-          <div className="flex h-full w-57 flex-col px-3 py-12">
-            <div className="mb-4 px-2.5">
-              <p className="truncate text-[11px] font-semibold tracking-wider text-muted uppercase">
-                {subtitle}
-              </p>
-              <h1 className="truncate text-sm font-bold">{title}</h1>
+      <div
+        className={[
+          'grow justify-end border-r border-separator bg-surface sm:flex sm:shrink-0',
+          showNavOnMobile ? 'flex w-full' : 'hidden',
+        ].join(' ')}
+      >
+        <ScrollShadow className="h-full w-full overflow-y-auto sm:w-auto">
+          <div className="flex h-full w-full flex-col px-3 py-6 sm:w-57 sm:py-12">
+            <div className="mb-4 flex items-center justify-between gap-2 px-2.5">
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-semibold tracking-wider text-muted uppercase">
+                  {subtitle}
+                </p>
+                <h1 className="truncate text-sm font-bold">{title}</h1>
+              </div>
+              <Button
+                isIconOnly
+                variant="ghost"
+                size="sm"
+                aria-label="Fermer les paramètres"
+                className="shrink-0 sm:hidden"
+                onPress={onClose}
+              >
+                <X className="size-4.5" />
+              </Button>
             </div>
 
             <ListBox
@@ -79,7 +101,7 @@ export function SettingsShell({ title, subtitle, groups, onClose, navFooter }: S
               selectedKeys={selectedId ? [selectedId] : []}
               onSelectionChange={(keys) => {
                 const id = [...keys][0];
-                if (id) setSelectedId(String(id));
+                if (id) goTo(String(id));
               }}
               className="flex w-full flex-col gap-1 border-0 bg-transparent p-0 shadow-none"
             >
@@ -118,11 +140,30 @@ export function SettingsShell({ title, subtitle, groups, onClose, navFooter }: S
       </div>
 
       {/* Colonne contenu */}
-      <div className="flex min-w-0 grow-[2] basis-0">
+      <div
+        className={[
+          'min-w-0 grow-2 basis-0 sm:flex',
+          showNavOnMobile ? 'hidden' : 'flex w-full',
+        ].join(' ')}
+      >
         <div className="min-w-0 flex-1">
-          <ScrollShadow className="h-full overflow-y-auto">
+          {/* Barre mobile : retour vers la liste + titre de l'onglet */}
+          <div className="flex items-center gap-2 border-b border-separator px-3 py-3 sm:hidden">
+            <Button
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              aria-label="Retour aux paramètres"
+              onPress={() => setShowNavOnMobile(true)}
+            >
+              <ChevronLeft className="size-4.5" />
+            </Button>
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold">{selected?.label}</p>
+          </div>
+
+          <ScrollShadow className="h-[calc(100%-3.25rem)] overflow-y-auto sm:h-full">
             {/* key = remonte l'animation d'entrée à chaque changement d'onglet */}
-            <div key={selected?.id} className="alfy-enter max-w-180 px-10 py-12">
+            <div key={selected?.id} className="alfy-enter max-w-180 px-4 py-6 sm:px-10 sm:py-12">
               {selected?.content}
             </div>
           </ScrollShadow>

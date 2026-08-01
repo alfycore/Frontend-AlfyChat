@@ -206,8 +206,10 @@ export function toAlfyMessage(raw: Raw, currentUserId: string, channelId: string
     pick<string>(raw, 'authorId', 'author_id', 'senderId', 'sender_id') ??
     pick<string>(sender, 'id') ??
     '';
+  // `updatedAt` est un timestamp générique (bouge aussi sur réactions, pin…) :
+  // seul le flag explicite `isEdited` doit décider de l'affichage « (modifié) ».
+  const isEdited = Boolean(pick(raw, 'isEdited', 'is_edited'));
   const editedAt = pick<string>(raw, 'updatedAt', 'updated_at', 'editedAt');
-  const isEdited = Boolean(pick(raw, 'isEdited', 'is_edited')) || Boolean(editedAt);
   const id = pick<string>(raw, 'id') ?? '';
   const { text, attachments } = extractAttachments(pick<string>(raw, 'content') ?? '', id);
 

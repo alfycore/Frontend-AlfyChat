@@ -143,9 +143,11 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
 
   const {
     isMobile,
+    showSidebar,
     showMemberList,
     showSettings,
     memberListDesktopVisible,
+    closeSidebar,
     openSettings,
     closeSettings,
     closeAll,
@@ -246,13 +248,49 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* Mobile : contenu plein écran + liste des membres en slide-over */}
+      {/* Mobile : contenu plein écran + nav / membres en slide-over */}
       {isMobile && (
         <>
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-surface">
             <AlfyActiveCall />
             {children}
           </div>
+
+          {/* Fond semi-transparent commun aux deux panneaux mobiles */}
+          {(showSidebar || showMemberList) && (
+            <div
+              className="fixed inset-0 z-40 bg-black/50"
+              onClick={closeAll}
+              aria-hidden
+            />
+          )}
+
+          {/* Rail serveurs + salons/DM, en slide-over depuis la gauche */}
+          <div
+            className={
+              'fixed inset-y-0 left-0 z-50 flex h-full w-[85vw] max-w-sm overflow-hidden bg-surface transition-transform duration-300 ease-out ' +
+              (showSidebar ? 'translate-x-0' : '-translate-x-full')
+            }
+          >
+            <AlfyServerRail activeServerId={activeServerId} />
+            <div className="min-w-0 flex-1 overflow-hidden border-l border-separator">
+              <AlfySidebar
+                serverId={activeServerId}
+                activeChannelId={activeChannelId}
+                activeDmId={activeDmId}
+                friendsActive={selectedChannel === 'friends'}
+                onOpenServerSettings={() => {
+                  closeSidebar();
+                  setServerSettingsOpen(true);
+                }}
+                onOpenUserSettings={() => {
+                  closeSidebar();
+                  openSettings();
+                }}
+              />
+            </div>
+          </div>
+
           {activeServerId && (
             <div
               className={

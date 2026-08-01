@@ -14,6 +14,7 @@ import {
   Languages,
   LayoutTemplate,
   Lock,
+  LogOut,
   MessagesSquare,
   Mic,
   MonitorSmartphone,
@@ -21,6 +22,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
@@ -60,9 +62,16 @@ export function AlfyUserSettings({
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
+  const router = useRouter();
   const [sessions, setSessions] = useState<AlfySession[] | undefined>(undefined);
   const [loadingSessions, setLoadingSessions] = useState(false);
+
+  const handleLogout = useCallback(async () => {
+    onOpenChange(false);
+    await logout();
+    router.push('/login');
+  }, [logout, onOpenChange, router]);
 
   const alfyUser = useMemo(
     () => toAlfyUser(user as Record<string, unknown> | null, user?.id ?? 'me'),
@@ -128,6 +137,16 @@ export function AlfyUserSettings({
         title={alfyUser.displayName}
         subtitle="Paramètres du compte"
         onClose={() => onOpenChange(false)}
+        navFooter={
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-danger transition-colors duration-100 hover:bg-danger/10"
+          >
+            <LogOut className="size-4 shrink-0 opacity-80" aria-hidden />
+            Se déconnecter
+          </button>
+        }
         groups={[
           {
             label: 'Compte',
