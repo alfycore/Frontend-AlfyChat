@@ -1,15 +1,11 @@
 'use client';
 
-import Link from 'next/link';
+import NextLink from 'next/link';
 import { motion } from 'motion/react';
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion';
-import { ArrowRightIcon } from '@/components/icons';
-import { Eyebrow, SectionTitle, EASE } from './section';
+import { Accordion, Chip, Typography, buttonVariants } from '@heroui/react';
+import { PlusIcon, ArrowRightIcon } from '@/components/icons';
+
+const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
 
 const ITEMS = [
   {
@@ -26,7 +22,7 @@ const ITEMS = [
   },
   {
     q: "Comment fonctionne l'auto-hébergement ?",
-    a: 'Vous pouvez déployer votre propre nœud AlfyChat sur votre serveur ou votre PC. Vos données restent chez vous. La configuration prend quelques minutes via notre CLI : alfychat-server start --server-id=X --token=Y.',
+    a: "Vous pouvez déployer votre propre nœud AlfyChat sur votre serveur ou votre PC. Vos données restent chez vous. La configuration prend quelques minutes via notre CLI : alfychat-server start --server-id=X --token=Y.",
   },
   {
     q: 'Le code source est-il vraiment ouvert ?',
@@ -40,53 +36,65 @@ const ITEMS = [
 
 export function HomeFaq() {
   return (
-    <section className="border-t border-border bg-muted/30 py-28">
-      <div className="mx-auto max-w-6xl px-8">
+    <section className="border-t border-border bg-background py-28">
+      <div className="mx-auto max-w-6xl px-6 lg:px-12">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-[1fr_1.6fr] lg:items-start">
 
-          {/* Colonne gauche — sticky */}
+          {/* Left — sticky intro */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6, ease: EASE }}
-            className="lg:sticky lg:top-24"
+            transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="flex flex-col gap-4 lg:sticky lg:top-24"
           >
-            <Eyebrow>Questions fréquentes</Eyebrow>
-            <SectionTitle>
-              Des réponses
-              <br />
-              directes.
-            </SectionTitle>
-            <p className="mt-4 text-[14px] leading-relaxed text-muted-foreground">
-              Vous avez d&apos;autres questions ? Notre documentation est disponible en ligne ou contactez-nous directement.
-            </p>
-            <Link
+            <Chip color="accent" variant="soft" size="sm" className="w-fit">
+              <Chip.Label>Questions fréquentes</Chip.Label>
+            </Chip>
+            <Typography
+              type="h2"
+              weight="bold"
+              className="text-foreground"
+              style={{ ...KRONA, fontSize: 'clamp(1.9rem, 3vw, 2.6rem)', lineHeight: 1.1, letterSpacing: '-0.025em' }}
+            >
+              Des réponses directes.
+            </Typography>
+            <Typography type="body" color="muted" className="max-w-sm">
+              Vous avez d'autres questions ? Notre documentation est disponible en ligne ou contactez-nous directement.
+            </Typography>
+            <NextLink
               href="/developers/docs"
-              className="group mt-6 inline-flex items-center gap-1.5 border-b border-border pb-0.5 text-[13px] font-medium text-foreground transition-colors duration-150 hover:border-foreground"
+              className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'mt-2 w-fit' })}
             >
               Lire la documentation
-              <ArrowRightIcon size={12} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-            </Link>
+              <ArrowRightIcon size={13} />
+            </NextLink>
           </motion.div>
 
-          {/* Colonne droite — accordéon shadcn */}
+          {/* Right — HeroUI Accordion */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.6, delay: 0.05, ease: EASE }}
+            transition={{ duration: 0.6, delay: 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <Accordion type="single" collapsible className="border-t border-border">
-              {ITEMS.map((item, i) => (
-                <AccordionItem key={item.q} value={`item-${i}`} className="border-border">
-                  <AccordionTrigger className="gap-6 py-6 font-heading text-[15px] font-medium text-foreground no-underline hover:no-underline">
-                    {item.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="max-w-2xl pb-6 text-[14px] leading-relaxed text-muted-foreground">
-                    {item.a}
-                  </AccordionContent>
-                </AccordionItem>
+            <Accordion className="w-full">
+              {ITEMS.map((item) => (
+                <Accordion.Item key={item.q}>
+                  <Accordion.Heading>
+                    <Accordion.Trigger>
+                      <span style={KRONA} className="text-[15px] font-medium">{item.q}</span>
+                      <Accordion.Indicator>
+                        <PlusIcon size={14} />
+                      </Accordion.Indicator>
+                    </Accordion.Trigger>
+                  </Accordion.Heading>
+                  <Accordion.Panel>
+                    <Accordion.Body>
+                      <Typography type="body-sm" color="muted">{item.a}</Typography>
+                    </Accordion.Body>
+                  </Accordion.Panel>
+                </Accordion.Item>
               ))}
             </Accordion>
           </motion.div>

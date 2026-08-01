@@ -48,10 +48,8 @@ import {
   pruneUnread,
 } from '@/lib/notification-store';
 import { conversationsStore } from '@/lib/conversations-store';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Avatar, Button, Input, Spinner } from '@heroui/react';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -94,7 +92,6 @@ import {
 } from '@/components/ui/command';
 import { serverListStore } from '@/lib/server-list-store';
 import { Separator } from '@/components/ui/separator';
-import { Spinner } from '@/components/ui/spinner';
 import {
   Tooltip, TooltipTrigger, TooltipContent, TooltipProvider,
 } from '@/components/ui/tooltip';
@@ -319,7 +316,7 @@ function VoiceChannelRow({
         <div className="ml-6 mt-0.5 space-y-0.5 pb-1">
           {participants.map((p) => (
             <div key={p.userId} className="flex items-center gap-1.5 px-1.5 py-0.5">
-              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-success/25 to-success/10 text-[8px] font-bold text-success ring-1 ring-success/20">
+              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-success/15 text-[8px] font-bold text-success">
                 {p.username?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <span className="flex-1 truncate text-[11px] text-muted-foreground">{p.username}</span>
@@ -365,13 +362,11 @@ function SectionHeader({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                isIconOnly
                 variant="ghost"
-                size="icon-sm"
-                className="size-4 min-w-0 rounded p-0 text-muted-foreground/40 opacity-0 transition-opacity hover:text-muted-foreground group-hover:opacity-100"
-                onClick={(e: any) => {
-                  e?.stopPropagation?.();
-                  onAdd();
-                }}
+                size="sm"
+                className="size-4 min-w-0 p-0 text-muted-foreground/40 opacity-0 transition-opacity hover:text-muted-foreground group-hover:opacity-100"
+                onPress={() => onAdd()}
               >
                 <PlusIcon size={13} />
               </Button>
@@ -1249,15 +1244,15 @@ export function ChannelList({
                           isActive
                             ? 'bg-primary/10 text-primary'
                             : 'text-foreground hover:bg-foreground/6',
-                          !isGroup && dragOverDmId === conv.recipientId && 'ring-1 ring-primary/30',
+                          !isGroup && dragOverDmId === conv.recipientId && 'bg-primary/8',
                         )}
                       >
                         <div className="relative shrink-0">
                           <Avatar className={cn(d.rowAvatar, isGroup ? 'rounded-xl' : 'rounded-full')}>
-                            <AvatarImage src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
-                            <AvatarFallback className={cn('text-[11px] font-bold bg-muted text-muted-foreground', isGroup ? 'rounded-xl' : 'rounded-full')}>
+                            <Avatar.Image src={conv.recipientAvatar ? resolveMediaUrl(conv.recipientAvatar) : undefined} />
+                            <Avatar.Fallback className={cn('text-[11px] font-bold bg-muted text-muted-foreground', isGroup ? 'rounded-xl' : 'rounded-full')}>
                               {conv.recipientName?.[0]?.toUpperCase() || '?'}
-                            </AvatarFallback>
+                            </Avatar.Fallback>
                           </Avatar>
                           {!isGroup && (
                             <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-sidebar ring-2 ring-sidebar">
@@ -1317,10 +1312,9 @@ export function ChannelList({
 
       {/* Server name header — workspace chip */}
       <div className={cn(
-        'flex shrink-0 items-center gap-2 border-b border-border/40 px-3',
+        'flex shrink-0 items-center gap-2 px-3',
         d.headerH,
         ui.isGlass ? 'bg-background/60' : 'bg-sidebar',
-        serverBannerUrl ? 'border-t-0' : '',
       )}>
         {/* Server mark */}
         <div
@@ -1392,7 +1386,7 @@ export function ChannelList({
 
       {/* Node offline banner */}
       {nodeOnline === false && (
-        <div className="mx-3 mb-1.5 flex items-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/8 px-2.5 py-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+        <div className="mx-3 mb-1.5 flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-2.5 py-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
           <WifiOffIcon size={11} className="shrink-0" />
           {t.channelList.nodeOffline}
         </div>
@@ -1487,8 +1481,9 @@ export function ChannelList({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full gap-1 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground"
-                  onClick={() => openCreate('category')}
+                  fullWidth
+                  className="mt-3 gap-1 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground"
+                  onPress={() => openCreate('category')}
                 >
                   <PlusIcon size={11} />
                   {t.channelList.newCategory}
@@ -1549,8 +1544,9 @@ export function ChannelList({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full gap-1 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground"
-                  onClick={() => openCreate('category')}
+                  fullWidth
+                  className="mt-3 gap-1 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground"
+                  onPress={() => openCreate('category')}
                 >
                   <PlusIcon size={11} />
                   {t.channelList.newCategory}
@@ -1581,11 +1577,11 @@ export function ChannelList({
               </DialogTitle>
             </DialogHeader>
             {/* Header */}
-            <div className="flex items-start gap-3 border-b border-border/20 px-6 py-5 pr-12">
+            <div className="flex items-start gap-3 px-6 py-5 pr-12">
               {(() => {
                 const m = TYPE_META[createType] ?? TYPE_META.text;
                 return (
-                  <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-border/30', m.activeBg)}>
+                  <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl', m.activeBg)}>
                     <m.icon size={18} className={m.activeCls} />
                   </span>
                 );
@@ -1621,10 +1617,10 @@ export function ChannelList({
                           type="button"
                           onClick={() => setCreateType(typeId as ChannelType)}
                           className={cn(
-                            'flex items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-all duration-150',
+                            'flex items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all duration-150',
                             isSelected
-                              ? cn('border-transparent', m.activeBg)
-                              : 'border-border/40 bg-foreground/[0.02] hover:border-foreground/10 hover:bg-foreground/5',
+                              ? m.activeBg
+                              : 'bg-foreground/3 hover:bg-foreground/6',
                           )}
                         >
                           <span className={cn(
@@ -1673,12 +1669,12 @@ export function ChannelList({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 border-t border-border/30 bg-foreground/[0.02] px-6 py-4">
-              <Button variant="secondary" onClick={() => setShowCreateChannel(false)}>
+            <div className="flex items-center justify-end gap-2 bg-foreground/3 px-6 py-4">
+              <Button variant="secondary" onPress={() => setShowCreateChannel(false)}>
                 {t.common.cancel}
               </Button>
-              <Button onClick={handleCreateChannel} disabled={isCreating || !createName.trim()}>
-                {isCreating && <Spinner size="sm" />}
+              <Button onPress={handleCreateChannel} isDisabled={isCreating || !createName.trim()}>
+                {isCreating && <Spinner size="sm" color="current" />}
                 {isCreating ? t.common.creating : t.common.create}
               </Button>
             </div>
@@ -1703,8 +1699,8 @@ export function ChannelList({
             />
           </div>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setEditingChannel(null)}>Annuler</Button>
-            <Button onClick={handleRenameChannel} disabled={!editChannelName.trim()}>Renommer</Button>
+            <Button variant="secondary" onPress={() => setEditingChannel(null)}>Annuler</Button>
+            <Button onPress={handleRenameChannel} isDisabled={!editChannelName.trim()}>Renommer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
-import { RefreshCwIcon, HomeIcon } from '@/components/icons';
-import { Button } from '@/components/ui/button';
-import { FullErrorScreen } from '@/components/error-screens';
+import { useRouter } from 'next/navigation';
+import { Button } from '@heroui/react';
+import { House, MessageCircle, RotateCcw } from 'lucide-react';
+
+import { ErrorPageShell, ErrorScreen } from '@/components/alfy/errors/error-screen';
 
 export default function Error({
   error,
@@ -13,28 +14,43 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     console.error('Erreur AlfyChat:', error);
   }, [error]);
 
   return (
-    <FullErrorScreen
-      code="500"
-      tone="destructive"
-      title="Erreur inattendue"
-      description="Quelque chose s'est mal passé de notre côté. Vous pouvez réessayer ou revenir à l'accueil."
-      digest={error.digest}
-    >
-      <Button size="lg" variant="destructive" onClick={reset} className="w-full sm:w-auto">
-        <RefreshCwIcon size={15} />
-        Réessayer
-      </Button>
-      <Link href="/" className="sm:w-auto">
-        <Button size="lg" variant="outline" className="w-full sm:w-auto">
-          <HomeIcon size={15} />
-          Accueil
-        </Button>
-      </Link>
-    </FullErrorScreen>
+    <ErrorPageShell>
+      <ErrorScreen
+        code="500"
+        channel="incident"
+        tone="danger"
+        title="Quelque chose a lâché de notre côté"
+        message={
+          <>
+            Ce n’est pas vous. La page n’a pas pu être construite, et l’incident
+            est remonté à l’équipe. Réessayer suffit la plupart du temps.
+          </>
+        }
+        reference={error.digest}
+        actions={
+          <>
+            <Button size="sm" variant="danger" onPress={reset}>
+              <RotateCcw className="size-3.5" aria-hidden />
+              Réessayer
+            </Button>
+            <Button size="sm" variant="secondary" onPress={() => router.push('/')}>
+              <House className="size-3.5" aria-hidden />
+              Accueil
+            </Button>
+            <Button size="sm" variant="ghost" onPress={() => router.push('/channels/me')}>
+              <MessageCircle className="size-3.5" aria-hidden />
+              Mes messages
+            </Button>
+          </>
+        }
+      />
+    </ErrorPageShell>
   );
 }

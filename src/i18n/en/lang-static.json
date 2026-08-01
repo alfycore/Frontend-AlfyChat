@@ -557,7 +557,7 @@
       "subtitle": "Real-time monitoring of AlfyChat infrastructure",
       "sectionIncidents": "Incidents & Maintenance",
       "sectionMonitors": "Services · last 60 days",
-      "attribution": "Monitoring data provided by Phare.io",
+      "attribution": "Data provided by status.alfychat.app",
       "footerBrand": "AlfyChat — Secure messaging",
       "navHome": "Home",
       "navApp": "Application",
@@ -574,7 +574,7 @@
       "stateIdentified": "Identified",
       "stateMonitoring": "Monitoring",
       "stateResolved": "Resolved",
-      "dayDetailSubtitle": "5-minute status data for this day",
+      "dayDetailSubtitle": "Minute-by-minute status data for this day",
       "tabStatus": "Status",
       "tabLatency": "Latency",
       "tabIncidents": "Incidents",
@@ -582,7 +582,7 @@
       "noDataForDay": "No data available for this day.",
       "noIncidentsForDay": "No incidents for this day.",
       "noMaintenanceForDay": "No scheduled maintenance for this day.",
-      "perMinuteStatus": "Per-5-minute status",
+      "perMinuteStatus": "Per-Minute Status",
       "latencyChart": "Response Time"
     }
   },

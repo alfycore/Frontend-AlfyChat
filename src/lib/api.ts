@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://gateway.alfychat.app';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 /**
  * Résout une URL média relative (/uploads/...) en URL complète
@@ -20,6 +20,59 @@ interface ApiResponse<T = unknown> {
   message?: string;
   /** Code HTTP (0 = erreur réseau/absence de réponse) */
   status?: number;
+}
+
+// ── Modération globale ───────────────────────────────────────────────────────
+
+export type AdminRole =
+  | 'user' | 'moderator' | 'admin' | 'support_l1' | 'support_l2' | 'technician';
+
+export type SanctionType = 'warn' | 'mute' | 'kick' | 'ban';
+export type TermMatchType = 'substring' | 'word' | 'exact';
+
+export interface Sanction {
+  id: string;
+  userId: string;
+  username?: string;
+  displayName?: string;
+  type: SanctionType;
+  reason: string;
+  /** null = permanent */
+  expiresAt: string | null;
+  issuedBy: string | null;
+  issuedByUsername: string | null;
+  revoked: boolean;
+  revokedBy: string | null;
+  revokedAt: string | null;
+  revokeReason: string | null;
+  createdAt: string;
+  /** Sanction toujours en vigueur (ni levée, ni expirée) */
+  active: boolean;
+}
+
+export interface ModerationStatus {
+  banned: boolean;
+  bannedUntil: string | null;
+  banReason: string | null;
+  muted: boolean;
+  mutedUntil: string | null;
+  muteReason: string | null;
+  warnings: number;
+}
+
+export interface ModerationStats {
+  activeBans: number;
+  activeMutes: number;
+  warnings30d: number;
+  totalSanctions: number;
+}
+
+export interface ModerationTerm {
+  id: string;
+  term: string;
+  matchType: TermMatchType;
+  createdBy: string | null;
+  createdAt: string;
 }
 
 class ApiService {
@@ -584,6 +637,16 @@ class ApiService {
     return this.request(`/api/friends/block-status/${recipientId}`);
   }
 
+  async getMutualFriends(otherId: string): Promise<{
+    success: boolean;
+    data?: {
+      mutualFriends: { id: string; username: string; displayName: string | null; avatarUrl: string | null; status: string; isOnline: boolean }[];
+      friendState: 'none' | 'friends' | 'pending_sent' | 'pending_received';
+    };
+  }> {
+    return this.request(`/api/friends/mutual/${otherId}`);
+  }
+
   async uploadDocument(file: File): Promise<{ success: boolean; error?: string; data?: { url: string; filename: string; size: number; mimeType: string; isImage: boolean } }> {
     const token = this.getToken();
     const formData = new FormData();
@@ -977,7 +1040,7 @@ class ApiService {
     return this.request(`/api/admin/users/search?q=${encodeURIComponent(query)}`);
   }
 
-  async updateUserRole(userId: string, role: 'user' | 'moderator' | 'admin') {
+  async updateUserRole(userId: string, role: AdminRole) {
     return this.request(`/api/admin/users/${userId}/role`, {
       method: 'PATCH',
       body: JSON.stringify({ role }),
@@ -987,12 +1050,12 @@ class ApiService {
   // ============ MODÉRATION GLOBALE ============
 
   async getModerationStats() {
-    return this.request('/api/admin/moderation/stats');
+    return this.request<ModerationStats>('/api/admin/moderation/stats');
   }
 
   async getModerationSanctions(params: {
     userId?: string;
-    type?: 'warn' | 'mute' | 'kick' | 'ban';
+    type?: SanctionType;
     activeOnly?: boolean;
     limit?: number;
     offset?: number;
@@ -1003,24 +1066,22 @@ class ApiService {
     if (params.activeOnly) qs.set('activeOnly', 'true');
     qs.set('limit', String(params.limit ?? 100));
     qs.set('offset', String(params.offset ?? 0));
-    return this.request(`/api/admin/moderation/sanctions?${qs.toString()}`);
+    return this.request<Sanction[]>(`/api/admin/moderation/sanctions?${qs.toString()}`);
   }
 
-  /** Dossier de modération d'un compte : statut courant + historique */
+  /** Dossier de modération d'un compte : statut courant + historique complet */
   async getUserModeration(userId: string) {
-    return this.request(`/api/admin/moderation/users/${userId}`);
+    return this.request<{ status: ModerationStatus; history: Sanction[] }>(
+      `/api/admin/moderation/users/${userId}`,
+    );
   }
 
-  /** durationMinutes null/absent = permanent (ban, mute) */
+  /** durationMinutes null/absent = permanent (ban, mute) ou sans objet (warn, kick) */
   async sanctionUser(
     userId: string,
-    data: {
-      type: 'warn' | 'mute' | 'kick' | 'ban';
-      reason: string;
-      durationMinutes?: number | null;
-    },
+    data: { type: SanctionType; reason: string; durationMinutes?: number | null },
   ) {
-    return this.request(`/api/admin/moderation/users/${userId}/sanctions`, {
+    return this.request<Sanction>(`/api/admin/moderation/users/${userId}/sanctions`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -1047,12 +1108,12 @@ class ApiService {
     });
   }
 
-  // Termes interdits du filtre de pseudos
+  // Termes interdits alimentant le filtre de pseudos
   async getModerationTerms() {
-    return this.request('/api/admin/moderation/terms');
+    return this.request<ModerationTerm[]>('/api/admin/moderation/terms');
   }
 
-  async addModerationTerm(term: string, matchType: 'substring' | 'word' | 'exact' = 'word') {
+  async addModerationTerm(term: string, matchType: TermMatchType = 'word') {
     return this.request('/api/admin/moderation/terms', {
       method: 'POST',
       body: JSON.stringify({ term, matchType }),
@@ -1060,9 +1121,7 @@ class ApiService {
   }
 
   async deleteModerationTerm(termId: string) {
-    return this.request(`/api/admin/moderation/terms/${termId}`, {
-      method: 'DELETE',
-    });
+    return this.request(`/api/admin/moderation/terms/${termId}`, { method: 'DELETE' });
   }
 
   // Attribution de badges aux utilisateurs

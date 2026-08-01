@@ -1,107 +1,155 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import { EASE } from './section';
+import { Card, Chip, Separator, Typography } from '@heroui/react';
+import { LockIcon, ZapIcon, UsersIcon, ServerIcon, BotIcon } from '@/components/icons';
 
-const CHANGES = [
+const MONO = { fontFamily: 'var(--font-geist-mono, monospace)' } as const;
+const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
+
+type Tone = 'accent' | 'success' | 'warning';
+
+function IconTile({ icon: Icon, tone }: { icon: typeof LockIcon; tone: Tone }) {
+  return (
+    <div
+      className="flex size-11 items-center justify-center rounded-xl"
+      style={{ background: `color-mix(in oklch, var(--${tone}) 13%, transparent)` }}
+    >
+      <Icon size={19} style={{ color: `var(--${tone})` }} />
+    </div>
+  );
+}
+
+function Reveal({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduce ? false : { opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* Bottom meta row: label → value, separated, mono */
+function Spec({ items }: { items: [string, string][] }) {
+  return (
+    <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 pt-6">
+      {items.map(([label, value], i) => (
+        <span key={label} className="flex items-center gap-3">
+          <span className="flex items-baseline gap-1.5">
+            <Typography type="body-xs" color="muted" style={MONO} className="uppercase tracking-wide">
+              {label}
+            </Typography>
+            <Typography type="body-xs" className="text-foreground" style={MONO}>
+              {value}
+            </Typography>
+          </span>
+          {i < items.length - 1 && <Separator orientation="vertical" className="h-3" />}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+type Feature = {
+  icon: typeof LockIcon;
+  tone: Tone;
+  title: string;
+  desc: string;
+  specs: [string, string][];
+  span?: boolean;
+};
+
+const FEATURES: Feature[] = [
   {
-    n: '01',
-    headline: 'Vos messages ne lisent personne d autre que vos proches.',
-    body: 'Chaque message est chiffré sur votre appareil avant d atteindre nos serveurs. Nous ne pouvons pas lire ce que vous partagez. Personne entre vous et votre interlocuteur ne peut le faire non plus.',
-    visual: (
-      <div className="font-mono text-[11px] leading-[2] text-muted-foreground/60 select-none" aria-hidden>
-        <div>Alice <span className="text-foreground/20">──────────</span> [<span className="text-primary/80">████████████</span>] <span className="text-foreground/20">──────────</span> Bob</div>
-        <div className="mt-3 text-muted-foreground/30">Protocole Signal · AES-256-GCM · E2E activé par défaut</div>
-      </div>
-    ),
+    icon: LockIcon,
+    tone: 'success',
+    title: 'Chiffrement de bout en bout',
+    desc: "Chaque message, fichier et appel est chiffré sur votre appareil avant l'envoi. Nos serveurs ne voient que des données illisibles.",
+    specs: [['Protocole', 'Signal'], ['Chiffrement', 'AES-256'], ['Audit', 'Public']],
+    span: true,
   },
   {
-    n: '02',
-    headline: 'Vous n avez pas besoin d être un numéro de téléphone.',
-    body: 'Inscription en 30 secondes avec un nom d utilisateur. Aucun numéro, aucune carte bancaire, aucune vérification d identité. Vous choisissez qui vous êtes.',
-    visual: (
-      <div className="font-mono text-[11px] leading-[2] text-muted-foreground/60 select-none" aria-hidden>
-        <div className="inline-block rounded-lg border border-foreground/[0.08] px-3 py-2 text-foreground">
-          @votre_pseudo
-        </div>
-        <div className="mt-3 text-muted-foreground/30">Pas de numéro  ·  Pas de carte  ·  Pas de vérification</div>
-      </div>
-    ),
+    icon: ZapIcon,
+    tone: 'accent',
+    title: 'Appels HD instantanés',
+    desc: 'Voix et vidéo haute qualité, chiffrés de bout en bout, en pair-à-pair.',
+    specs: [['Vidéo', '1080p'], ['Latence', '< 50ms']],
   },
   {
-    n: '03',
-    headline: 'Votre communauté reste la vôtre, même si nous disparaissons.',
-    body: 'Hébergez votre propre nœud AlfyChat sur votre serveur ou votre PC. Vos données ne quittent jamais votre infrastructure. Vous n'êtes dépendant de personne.',
-    visual: (
-      <div className="font-mono text-[11px] leading-[2] text-muted-foreground/60 select-none" aria-hidden>
-        <div><span className="text-primary/60">$</span> alfychat-server start</div>
-        <div className="text-muted-foreground/40">  --server-id=<span className="text-foreground/60">42</span> --token=<span className="text-foreground/60">••••••••</span></div>
-        <div className="mt-1 text-emerald-500/70">  ✓ Votre nœud est en ligne</div>
-      </div>
-    ),
+    icon: UsersIcon,
+    tone: 'accent',
+    title: 'Serveurs communautaires',
+    desc: 'Salons, rôles et permissions configurables à volonté pour vos communautés.',
+    specs: [['Rôles', 'Illimités'], ['Salons', 'Texte · Voix']],
+  },
+  {
+    icon: ServerIcon,
+    tone: 'warning',
+    title: 'Auto-hébergement',
+    desc: 'Déployez votre propre nœud en une commande. Vos données restent chez vous.',
+    specs: [['Déploiement', 'Docker'], ['Contrôle', 'Total']],
+  },
+  {
+    icon: BotIcon,
+    tone: 'warning',
+    title: 'API ouverte',
+    desc: 'Créez des bots et intégrations via notre API REST documentée.',
+    specs: [['API', 'REST'], ['Webhooks', 'Natifs']],
   },
 ];
 
 export function HomeFeatures() {
-  const reduce = useReducedMotion();
-
   return (
-    <section id="changes" className="bg-background py-28">
-      <div className="mx-auto max-w-6xl px-8">
+    <section id="features" className="border-t border-border bg-background py-28">
+      <div className="mx-auto max-w-6xl px-6 lg:px-12">
 
-        <motion.p
-          initial={reduce ? false : { opacity: 0, y: 14 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6, ease: EASE }}
-          className="mb-20 font-mono text-[11px] uppercase tracking-[0.09em] text-muted-foreground"
-        >
-          Ce qui change pour vous
-        </motion.p>
+        {/* Header */}
+        <Reveal className="mb-14 flex max-w-xl flex-col gap-4">
+          <Chip color="accent" variant="soft" size="sm" className="w-fit">
+            <Chip.Label>Fonctionnalités</Chip.Label>
+          </Chip>
+          <Typography
+            type="h2"
+            weight="bold"
+            className="text-foreground"
+            style={{ ...KRONA, fontSize: 'clamp(1.9rem, 3vw, 2.6rem)', lineHeight: 1.1, letterSpacing: '-0.025em' }}
+          >
+            Tout ce qu'il vous faut, rien de superflu.
+          </Typography>
+          <Typography type="body" color="muted">
+            Messagerie privée, appels HD, communautés et auto-hébergement dans une seule application.
+          </Typography>
+        </Reveal>
 
-        <div className="space-y-0 divide-y divide-foreground/[0.06]">
-          {CHANGES.map(({ n, headline, body, visual }, i) => (
-            <div
-              key={n}
-              className="grid grid-cols-1 gap-10 py-16 lg:grid-cols-2 lg:gap-24 lg:items-start"
-            >
-              {/* Gauche */}
-              <motion.div
-                initial={reduce ? false : { opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.7, delay: i * 0.04, ease: EASE }}
-              >
-                <span className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground/40">
-                  {n}
-                </span>
-                <h3
-                  className="mt-4 font-heading font-bold leading-[1.1] tracking-[-0.025em] text-foreground"
-                  style={{ fontSize: 'clamp(1.4rem, 2.5vw, 2rem)' }}
-                >
-                  {headline}
-                </h3>
-                <p className="mt-5 max-w-[440px] text-[14.5px] leading-[1.75] text-muted-foreground">
-                  {body}
-                </p>
-              </motion.div>
-
-              {/* Droite — visuel éditorial */}
-              <motion.div
-                initial={reduce ? false : { opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.7, delay: i * 0.04 + 0.08, ease: EASE }}
-                className="flex items-center lg:justify-end"
-              >
-                <div className="rounded-2xl border border-foreground/[0.06] bg-muted/30 px-8 py-7">
-                  {visual}
-                </div>
-              </motion.div>
-            </div>
+        {/* Bento grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map((f, i) => (
+            <Reveal key={f.title} delay={i * 0.06} className={f.span ? 'sm:col-span-2' : undefined}>
+              <Card className="flex h-full min-h-56 flex-col p-7 transition-transform duration-300 hover:-translate-y-0.5">
+                <IconTile icon={f.icon} tone={f.tone} />
+                <Card.Header className="mt-5">
+                  <Card.Title style={KRONA}>{f.title}</Card.Title>
+                  <Card.Description className="max-w-md">{f.desc}</Card.Description>
+                </Card.Header>
+                <Spec items={f.specs} />
+              </Card>
+            </Reveal>
           ))}
         </div>
-
       </div>
     </section>
   );

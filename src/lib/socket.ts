@@ -2,7 +2,7 @@
 
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_WS_URL || 'https://gateway.alfychat.app';
+const SOCKET_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
 
 /**
  * Version du singleton. Incrémenter à chaque ajout de méthode pour
@@ -339,20 +339,12 @@ class SocketService {
   }
 
   // Présence
-  updatePresence(
-    status: 'online' | 'idle' | 'dnd' | 'invisible',
-    customStatus?: string | null,
-    emoji?: string | null,
-    opts?: { auto?: boolean },
-  ): void {
+  updatePresence(status: 'online' | 'idle' | 'dnd' | 'invisible', customStatus?: string | null, emoji?: string | null): void {
     const payload = {
       status,
       customStatus: customStatus ?? null,
       text: customStatus ?? null,
       emoji: emoji ?? null,
-      // `auto: true` → transition automatique (auto-idle / retour) : le gateway
-      // ne touchera pas au statut choisi par l'utilisateur ni à la DB.
-      auto: opts?.auto ?? false,
     };
     if (this.socket?.connected) {
       this.socket.emit('PRESENCE_UPDATE', payload);

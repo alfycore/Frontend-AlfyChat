@@ -86,7 +86,8 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
         {/* Logo */}
         <div className="flex items-center gap-2 border-b border-border/60 px-4 py-4 shrink-0">
           <Link href="/" className="flex items-center gap-2 no-underline">
-            <img src="/logo/Alfychat.svg" alt="AlfyChat" width={20} height={20} />
+            <img src="/logo/Alfychat.svg" alt="AlfyChat" width={20} height={20} className="dark:hidden" />
+            <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" width={20} height={20} className="hidden dark:block" />
             <span className="font-(family-name:--font-krona) text-xs text-foreground">AlfyChat</span>
           </Link>
           <Separator orientation="vertical" className="mx-1 h-4" />
@@ -142,7 +143,8 @@ export default function DevelopersLayout({ children }: { children: React.ReactNo
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border/40 bg-background px-4 py-3 md:hidden">
           <Link href="/" className="flex items-center gap-1.5 no-underline">
-            <img src="/logo/Alfychat.svg" alt="AlfyChat" width={18} height={18} />
+            <img src="/logo/Alfychat.svg" alt="AlfyChat" width={18} height={18} className="dark:hidden" />
+            <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" width={18} height={18} className="hidden dark:block" />
           </Link>
           <div className="flex flex-1 gap-1 overflow-x-auto">
             {NAV_SECTIONS.flatMap((s) => s.items).map((item) => (

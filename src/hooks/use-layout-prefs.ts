@@ -17,7 +17,7 @@ export type LayoutPrefs = {
   compactServerList: boolean;
   uiStyle: UIStyle;
   density: UIDensity;
-  msgStyle: 'bubble' | 'discord';
+  msgStyle: 'bubble' | 'discord' | 'split';
   glassBlur: number;         // px, 0–80, default 40
   glassOpacity: number;      // %, 10–90, default 58 (maps to 0.58)
   glassTintColor: string;    // hex e.g. '#8b5cf6', '' = none

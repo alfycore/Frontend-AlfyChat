@@ -1,128 +1,287 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Alert, Button, Chip } from '@heroui/react';
 import {
-  UsersIcon, BarChart3Icon, ShieldIcon, ServerIcon,
-  CompassIcon, CheckCircle2Icon, AwardIcon, SettingsIcon,
-  ShieldAlertIcon, FileTextIcon, ShieldCheckIcon,
-} from '@/components/icons';
-import { api } from '@/lib/api';
+  Activity, Ban, Gavel, LifeBuoy, RotateCcw, Server, ShieldAlert, UserCog,
+  Users, Wifi,
+} from 'lucide-react';
 
-function StatCard({
-  label, value, color, icon: Icon, suffix,
-}: {
-  label: string;
-  value: number | undefined;
-  color: string;
-  icon: React.ElementType;
-  suffix?: string;
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-          <p className={`mt-2 text-3xl font-bold tabular-nums tracking-tight ${color}`}>
-            {(value ?? 0).toLocaleString('fr-FR')}
-            {suffix && <span className="ml-1 text-base font-normal text-muted-foreground">{suffix}</span>}
-          </p>
-        </div>
-        <div className={`rounded-lg p-2.5 ${color.includes('green') ? 'bg-green-500/10' : color.includes('primary') || color.includes('purple') ? 'bg-primary/10' : color.includes('orange') ? 'bg-orange-500/10' : 'bg-muted'}`}>
-          <Icon className={`size-5 ${color}`} />
-        </div>
-      </div>
-    </div>
-  );
+import { api, type ModerationStats } from '@/lib/api';
+import {
+  EmptyState, LoadBar, PageHeader, SectionCard, StatCard, StatusDot, TableShell,
+  Td, Th, Tr,
+} from '@/components/alfy/admin/primitives';
+
+interface AdminStats {
+  totalUsers: number;
+  onlineUsers: number;
+  admins: number;
+  moderators: number;
 }
 
-const QUICK = [
-  { href: '/admin/users',      label: 'Utilisateurs',  icon: UsersIcon,        color: 'text-primary',     bg: 'bg-primary/10',     desc: 'Gérer les comptes' },
-  { href: '/admin/monitoring', label: 'Monitoring',    icon: BarChart3Icon,    color: 'text-blue-500',    bg: 'bg-blue-500/10',    desc: 'Métriques temps réel' },
-  { href: '/admin/status',     label: 'Status public', icon: CheckCircle2Icon, color: 'text-green-500',   bg: 'bg-green-500/10',   desc: 'Incidents & services' },
-  { href: '/admin/security',   label: 'Sécurité',      icon: ShieldAlertIcon,  color: 'text-destructive', bg: 'bg-destructive/10', desc: 'IPs bannies & RL' },
-  { href: '/admin/discovery',  label: 'Découverte',    icon: CompassIcon,      color: 'text-cyan-500',    bg: 'bg-cyan-500/10',    desc: 'Candidatures serveurs' },
-  { href: '/admin/badges',     label: 'Badges',        icon: AwardIcon,        color: 'text-amber-500',   bg: 'bg-amber-500/10',   desc: 'Créer & attribuer' },
-  { href: '/admin/services',   label: 'Services',      icon: ServerIcon,       color: 'text-violet-500',  bg: 'bg-violet-500/10',  desc: 'Registre des instances' },
-  { href: '/admin/helpdesk',   label: 'Helpdesk',      icon: ShieldCheckIcon,  color: 'text-teal-500',    bg: 'bg-teal-500/10',    desc: 'Tickets support' },
-  { href: '/admin/changelogs', label: 'Changelogs',    icon: FileTextIcon,     color: 'text-indigo-500',  bg: 'bg-indigo-500/10',  desc: 'Notes de version' },
-  { href: '/admin/settings',   label: 'Paramètres',    icon: SettingsIcon,     color: 'text-muted-foreground', bg: 'bg-muted', desc: 'Config plateforme' },
+interface ServiceInstance {
+  id: string;
+  serviceType: string;
+  endpoint: string;
+  location: string;
+  healthy: boolean;
+  enabled: boolean;
+  degraded?: boolean;
+  lastHeartbeat: string;
+  metrics?: { ramUsage: number; ramMax: number; cpuUsage: number; cpuMax: number };
+}
+
+/** Raccourcis vers les sections où l'on agit le plus souvent. */
+const SHORTCUTS = [
+  { href: '/admin/users',      label: 'Utilisateurs',   hint: 'Rôles et badges',        icon: UserCog },
+  { href: '/admin/moderation', label: 'Modération',     hint: 'Sanctions et filtres',   icon: Gavel },
+  { href: '/admin/monitoring', label: 'Monitoring',     hint: 'Charge et disponibilité', icon: Activity },
+  { href: '/admin/helpdesk',   label: 'Helpdesk',       hint: 'Tickets en attente',     icon: LifeBuoy },
 ];
 
-export default function AdminOverviewPage() {
-  const [stats, setStats]   = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [time, setTime]     = useState('');
+function healthTone(s: ServiceInstance): 'success' | 'warning' | 'danger' | 'muted' {
+  if (!s.enabled) return 'muted';
+  if (s.degraded || !s.healthy) return 'danger';
+  const elapsed = Date.now() - new Date(s.lastHeartbeat).getTime();
+  if (elapsed > 600_000) return 'danger';
+  if (elapsed > 90_000) return 'warning';
+  return 'success';
+}
 
-  useEffect(() => {
-    api.getAdminStats().then(r => {
-      if (r.success) setStats(r.data);
-      setLoading(false);
-    });
-    const fmt = () => setTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
-    fmt();
-    const t = setInterval(fmt, 30_000);
-    return () => clearInterval(t);
+function healthLabel(tone: ReturnType<typeof healthTone>): string {
+  return { success: 'En ligne', warning: 'Inactif', danger: 'Hors ligne', muted: 'Désactivé' }[tone];
+}
+
+export default function AdminOverviewPage() {
+  const [stats, setStats]       = useState<AdminStats | null>(null);
+  const [moderation, setModeration] = useState<ModerationStats | null>(null);
+  const [services, setServices] = useState<ServiceInstance[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const [statsRes, modRes, svcRes] = await Promise.all([
+      api.getAdminStats(),
+      api.getModerationStats(),
+      api.getAdminServices(),
+    ]);
+
+    if (statsRes.success && statsRes.data) setStats(statsRes.data as AdminStats);
+    else setError(statsRes.error ?? 'Impossible de charger les statistiques.');
+
+    if (modRes.success && modRes.data) setModeration(modRes.data);
+    if (svcRes.success && svcRes.data) {
+      setServices(((svcRes.data as { instances?: ServiceInstance[] }).instances ?? []));
+    }
+
+    setLoading(false);
   }, []);
 
+  useEffect(() => { load(); }, [load]);
+
+  const unhealthy = services.filter((s) => s.enabled && healthTone(s) !== 'success');
+
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
-      {/* Header */}
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Vue d&apos;ensemble</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">Tableau de bord de la plateforme AlfyChat.</p>
-        </div>
-        {time && (
-          <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex size-2 rounded-full bg-green-500" />
-            </span>
-            <span className="text-xs text-muted-foreground">Mis à jour à {time}</span>
-          </div>
-        )}
+    <>
+      <PageHeader
+        title="Vue d'ensemble"
+        description="L'état de la plateforme en un écran : population, modération, infrastructure."
+      >
+        <Button size="sm" variant="secondary" onPress={load} isPending={loading}>
+          <RotateCcw className="size-3.5" aria-hidden />
+          Actualiser
+        </Button>
+      </PageHeader>
+
+      {error && (
+        <Alert status="danger" className="mb-5">
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+
+      {/* Alerte remontée quand une instance décroche */}
+      {!loading && unhealthy.length > 0 && (
+        <Alert status="warning" className="mb-5">
+          <Alert.Content>
+            <Alert.Title>
+              {unhealthy.length} instance{unhealthy.length > 1 ? 's' : ''} en difficulté
+            </Alert.Title>
+            <Alert.Description>
+              {unhealthy.map((s) => s.id).join(', ')} — voir la section Services pour
+              restaurer ou désactiver.
+            </Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+
+      {/* ── Population ── */}
+      <div className="admin-stagger mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Comptes"
+          value={stats?.totalUsers ?? 0}
+          icon={Users}
+          loading={loading && !stats}
+        />
+        <StatCard
+          label="En ligne"
+          value={stats?.onlineUsers ?? 0}
+          hint={
+            stats && stats.totalUsers > 0
+              ? `${Math.round((stats.onlineUsers / stats.totalUsers) * 100)} % de la population`
+              : undefined
+          }
+          icon={Wifi}
+          tone="success"
+          loading={loading && !stats}
+        />
+        <StatCard
+          label="Administrateurs"
+          value={stats?.admins ?? 0}
+          icon={ShieldAlert}
+          tone="accent"
+          loading={loading && !stats}
+        />
+        <StatCard
+          label="Modérateurs"
+          value={stats?.moderators ?? 0}
+          icon={Gavel}
+          tone="warning"
+          loading={loading && !stats}
+        />
       </div>
 
-      {/* Stats */}
-      {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-26 animate-pulse rounded-xl border border-border bg-muted/40" />
-          ))}
-        </div>
-      ) : stats ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Utilisateurs"    value={stats.totalUsers}  color="text-foreground"  icon={UsersIcon} />
-          <StatCard label="En ligne"        value={stats.onlineUsers} color="text-green-500"   icon={BarChart3Icon} />
-          <StatCard label="Administrateurs" value={stats.admins}      color="text-primary"     icon={ShieldIcon} />
-          <StatCard label="Modérateurs"     value={stats.moderators}  color="text-orange-500"  icon={ShieldIcon} />
-        </div>
-      ) : null}
-
-      {/* Quick links */}
-      <div>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Accès rapide
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {QUICK.map(({ href, label, icon: Icon, color, bg, desc }) => (
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* ── Modération ── */}
+        <SectionCard
+          title="Modération"
+          description="Sanctions en vigueur"
+          className="lg:col-span-1"
+          actions={
             <Link
-              key={href}
-              href={href}
-              className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md"
+              href="/admin/moderation"
+              className="rounded-md px-2 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent/10"
             >
-              <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${bg} transition-transform duration-150 group-hover:scale-110`}>
-                <Icon className={`size-4 ${color}`} />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{label}</p>
-                <p className="truncate text-xs text-muted-foreground">{desc}</p>
-              </div>
+              Ouvrir
             </Link>
-          ))}
-        </div>
+          }
+        >
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm text-muted">
+                <Ban className="size-4 text-danger" aria-hidden />
+                Bannissements actifs
+              </span>
+              <span className="font-heading text-lg tabular-nums text-foreground">
+                {moderation?.activeBans ?? 0}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm text-muted">
+                <Gavel className="size-4 text-accent" aria-hidden />
+                Comptes réduits au silence
+              </span>
+              <span className="font-heading text-lg tabular-nums text-foreground">
+                {moderation?.activeMutes ?? 0}
+              </span>
+            </div>
+            <div className="flex items-center justify-between border-t border-separator pt-3">
+              <span className="text-sm text-muted">Avertissements (30 j)</span>
+              <span className="text-sm tabular-nums text-foreground">
+                {moderation?.warnings30d ?? 0}
+              </span>
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* ── Infrastructure ── */}
+        <SectionCard
+          flush
+          title="Instances de service"
+          description={`${services.length} enregistrée${services.length > 1 ? 's' : ''}`}
+          className="lg:col-span-2"
+        >
+          {services.length === 0 ? (
+            <EmptyState
+              icon={Server}
+              title="Aucune instance enregistrée"
+              description="Ajoutez une instance depuis la section Services."
+            />
+          ) : (
+            <TableShell
+              minWidth={560}
+              head={
+                <>
+                  <Th>Instance</Th>
+                  <Th>Type</Th>
+                  <Th>État</Th>
+                  <Th>RAM</Th>
+                  <Th>CPU</Th>
+                </>
+              }
+            >
+              {services.slice(0, 8).map((s) => {
+                const tone = healthTone(s);
+                return (
+                  <Tr key={s.id}>
+                    <Td>
+                      <p className="truncate text-sm font-medium">{s.id}</p>
+                      <p className="truncate text-xs text-muted">{s.endpoint}</p>
+                    </Td>
+                    <Td>
+                      <Chip size="sm" variant="soft">
+                        <Chip.Label>{s.serviceType}</Chip.Label>
+                      </Chip>
+                    </Td>
+                    <Td>
+                      <StatusDot tone={tone} label={healthLabel(tone)} pulse={tone === 'success'} />
+                    </Td>
+                    <Td>
+                      {s.metrics ? (
+                        <LoadBar value={s.metrics.ramUsage} max={s.metrics.ramMax} />
+                      ) : (
+                        <span className="text-xs text-muted">—</span>
+                      )}
+                    </Td>
+                    <Td>
+                      {s.metrics ? (
+                        <LoadBar value={s.metrics.cpuUsage} max={s.metrics.cpuMax} />
+                      ) : (
+                        <span className="text-xs text-muted">—</span>
+                      )}
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </TableShell>
+          )}
+        </SectionCard>
       </div>
-    </div>
+
+      {/* ── Raccourcis ── */}
+      <div className="admin-stagger mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {SHORTCUTS.map(({ href, label, hint, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group flex items-center gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-accent/40 hover:bg-surface-secondary"
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent transition-transform duration-200 group-hover:scale-105">
+              <Icon className="size-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-medium">{label}</span>
+              <span className="block truncate text-xs text-muted">{hint}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }

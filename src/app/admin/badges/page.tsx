@@ -1,245 +1,397 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input }  from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
-} from '@/components/ui/dialog';
-import { PlusIcon, Edit2Icon, Trash2Icon } from '@/components/icons';
-import { api } from '@/lib/api';
-import { sanitizeSvg } from '@/lib/sanitize';
-import { UICONS_LIST, renderBadgeIcon } from '../_shared';
+  Alert, Button, Chip, Input, Label, ListBox, Modal, NumberField, Select,
+  TextArea, TextField,
+} from '@heroui/react';
+import { Award, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 
-const DEFAULT_FORM = {
-  name: '', description: '',
-  iconType: 'bootstrap' as 'bootstrap' | 'svg' | 'flaticon',
-  iconValue: '', color: '#5865F2', displayOrder: 999,
+import { api } from '@/lib/api';
+import {
+  EmptyState, PageHeader, SectionCard, TableShell, TableSkeleton, Td, Th, Toggle, Tr,
+} from '@/components/alfy/admin/primitives';
+import { renderBadgeIcon, UICONS_LIST } from '@/components/alfy/admin/badge-icon';
+
+type IconType = 'bootstrap' | 'svg' | 'flaticon';
+
+interface Badge {
+  id: string;
+  name: string;
+  description?: string;
+  iconType: IconType;
+  iconValue: string;
+  color: string;
+  displayOrder: number;
+  isActive: boolean;
+}
+
+const ICON_TYPES: { key: IconType; label: string; hint: string }[] = [
+  { key: 'bootstrap', label: 'Uicons',   hint: 'Jeu intégré, choix guidé' },
+  { key: 'flaticon',  label: 'Flaticon', hint: 'Classe CSS complète' },
+  { key: 'svg',       label: 'SVG',      hint: 'Balisage assaini avant affichage' },
+];
+
+const EMPTY_FORM = {
+  name: '',
+  description: '',
+  iconType: 'bootstrap' as IconType,
+  iconValue: 'star',
+  color: '#8b5cf6',
+  displayOrder: 999,
 };
 
 export default function AdminBadgesPage() {
-  const [badges, setBadges]   = useState<any[]>([]);
+  const [badges, setBadges]   = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm]       = useState({ ...DEFAULT_FORM });
+  const [error, setError]     = useState<string | null>(null);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Badge | null>(null);
+  const [form, setForm]       = useState(EMPTY_FORM);
   const [iconSearch, setIconSearch] = useState('');
+  const [saving, setSaving]   = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const r = await api.getAdminBadges();
-    if (r.success && r.data) setBadges(r.data as any[]);
+    const res = await api.getAdminBadges();
+    if (res.success && res.data) setBadges(res.data as Badge[]);
+    else setError(res.error ?? 'Impossible de charger les badges.');
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const reset = () => { setForm({ ...DEFAULT_FORM }); setEditing(null); setIconSearch(''); };
+  const openCreate = () => {
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setIconSearch('');
+    setDialogOpen(true);
+  };
 
-  const openEdit = (b: any) => {
-    setEditing(b);
-    setForm({ name: b.name, description: b.description || '', iconType: b.iconType, iconValue: b.iconValue, color: b.color, displayOrder: b.displayOrder });
-    setShowDialog(true);
+  const openEdit = (badge: Badge) => {
+    setEditing(badge);
+    setForm({
+      name: badge.name,
+      description: badge.description ?? '',
+      iconType: badge.iconType,
+      iconValue: badge.iconValue,
+      color: badge.color,
+      displayOrder: badge.displayOrder,
+    });
+    setIconSearch('');
+    setDialogOpen(true);
   };
 
   const save = async () => {
-    if (editing) await api.updateBadge(editing.id, form);
-    else         await api.createBadge(form);
-    setShowDialog(false); reset(); load();
+    if (!form.name.trim() || !form.iconValue.trim()) {
+      setError('Le nom et l’icône sont obligatoires.');
+      return;
+    }
+    setSaving(true);
+    const res = editing
+      ? await api.updateBadge(editing.id, form)
+      : await api.createBadge(form);
+    setSaving(false);
+
+    if (!res.success) {
+      setError(res.error ?? 'Le badge n’a pas pu être enregistré.');
+      return;
+    }
+    setDialogOpen(false);
+    load();
   };
 
-  const filtered = UICONS_LIST.filter(i =>
-    i.label.toLowerCase().includes(iconSearch.toLowerCase()) ||
-    i.value.toLowerCase().includes(iconSearch.toLowerCase())
+  const remove = async (badge: Badge) => {
+    const res = await api.deleteBadge(badge.id);
+    if (res.success) load();
+  };
+
+  const toggle = async (badge: Badge, isActive: boolean) => {
+    setBadges((prev) => prev.map((b) => (b.id === badge.id ? { ...b, isActive } : b)));
+    await api.toggleBadgeStatus(badge.id, isActive);
+  };
+
+  const visibleIcons = UICONS_LIST.filter(
+    (i) =>
+      i.label.toLowerCase().includes(iconSearch.toLowerCase()) ||
+      i.value.toLowerCase().includes(iconSearch.toLowerCase()),
   );
 
   return (
-    <div className="mx-auto max-w-7xl">
-      {/* Header */}
-      <div className="mb-6 flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Badges</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {loading ? '…' : `${badges.length} badge${badges.length !== 1 ? 's' : ''}`}
-          </p>
-        </div>
-        <Button size="sm" onClick={() => { reset(); setShowDialog(true); }}>
-          <PlusIcon className="size-4" /> Créer un badge
+    <>
+      <PageHeader
+        title="Badges"
+        description="Distinctions attribuables aux comptes depuis la section Utilisateurs."
+      >
+        <Button size="sm" variant="secondary" onPress={load} isPending={loading}>
+          <RotateCcw className="size-3.5" aria-hidden />
+          Actualiser
         </Button>
-      </div>
+        <Button size="sm" onPress={openCreate}>
+          <Plus className="size-3.5" aria-hidden />
+          Créer un badge
+        </Button>
+      </PageHeader>
 
-      {loading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />)}
-        </div>
-      ) : badges.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-24 text-center">
-          <div className="mb-3 flex size-14 items-center justify-center rounded-full bg-muted">
-            <i className="fi fi-br-badge text-2xl text-muted-foreground" />
-          </div>
-          <p className="font-medium">Aucun badge</p>
-          <p className="mt-0.5 text-sm text-muted-foreground">Créez votre premier badge pour récompenser les utilisateurs.</p>
-          <Button size="sm" className="mt-4" onClick={() => { reset(); setShowDialog(true); }}>
-            <PlusIcon className="size-4" /> Créer un badge
-          </Button>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {badges.map(b => (
-            <div
-              key={b.id}
-              className="group relative flex items-center gap-4 overflow-hidden rounded-xl border border-border bg-card p-4 transition-all duration-150 hover:shadow-sm"
-            >
-              {/* Icon */}
-              <div
-                className="flex size-14 shrink-0 items-center justify-center rounded-xl text-2xl"
-                style={{ backgroundColor: b.color + '18', border: `2px solid ${b.color}30` }}
-              >
-                {renderBadgeIcon(b.iconType, b.iconValue, b.color, 'text-2xl')}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="truncate font-semibold">{b.name}</p>
-                  <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-                    style={{ backgroundColor: b.color + '18', color: b.color }}>
-                    #{b.displayOrder}
-                  </span>
-                </div>
-                {b.description && (
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{b.description}</p>
-                )}
-                <div className="mt-2 flex items-center gap-2">
-                  <Switch
-                    checked={b.isActive}
-                    onCheckedChange={() => api.toggleBadgeStatus(b.id, !b.isActive).then(load)}
-                  />
-                  <span className="text-xs text-muted-foreground">{b.isActive ? 'Actif' : 'Inactif'}</span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                <button
-                  onClick={() => openEdit(b)}
-                  className="flex size-7 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Edit2Icon className="size-3.5" />
-                </button>
-                <button
-                  onClick={() => confirm('Supprimer ce badge ?') && api.deleteBadge(b.id).then(load)}
-                  className="flex size-7 items-center justify-center rounded-md border border-destructive/20 bg-background text-destructive transition-colors hover:bg-destructive/10"
-                >
-                  <Trash2Icon className="size-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+      {error && (
+        <Alert status="danger" className="mb-5">
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
       )}
 
-      {/* Dialog */}
-      <Dialog open={showDialog} onOpenChange={o => { setShowDialog(o); if (!o) reset(); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editing ? 'Modifier le badge' : 'Créer un badge'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* Preview */}
-            <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4">
-              <div className="flex size-16 shrink-0 items-center justify-center rounded-xl text-3xl"
-                style={{ backgroundColor: form.color + '18', border: `2px solid ${form.color}30` }}>
-                {renderBadgeIcon(form.iconType, form.iconValue, form.color, 'text-3xl')}
-              </div>
-              <div>
-                <p className="font-bold">{form.name || 'Nom du badge'}</p>
-                <p className="text-sm text-muted-foreground">{form.description || 'Description'}</p>
-              </div>
-            </div>
+      <SectionCard
+        flush
+        title="Catalogue"
+        description={`${badges.length} badge${badges.length > 1 ? 's' : ''}`}
+      >
+        {loading ? (
+          <TableSkeleton rows={5} cols={4} />
+        ) : badges.length === 0 ? (
+          <EmptyState
+            icon={Award}
+            title="Aucun badge"
+            description="Créez un premier badge pour distinguer des membres de la communauté."
+            action={
+              <Button size="sm" onPress={openCreate}>
+                <Plus className="size-3.5" aria-hidden />
+                Créer un badge
+              </Button>
+            }
+          />
+        ) : (
+          <TableShell
+            minWidth={720}
+            head={
+              <>
+                <Th>Badge</Th>
+                <Th>Source</Th>
+                <Th>Ordre</Th>
+                <Th>Actif</Th>
+                <Th align="right">Actions</Th>
+              </>
+            }
+          >
+            {badges.map((b) => (
+              <Tr key={b.id}>
+                <Td>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex size-10 shrink-0 items-center justify-center rounded-lg"
+                      style={{
+                        backgroundColor: `${b.color}22`,
+                        border: `1px solid ${b.color}44`,
+                      }}
+                    >
+                      {renderBadgeIcon(b.iconType, b.iconValue, b.color, 'text-lg')}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{b.name}</p>
+                      {b.description && (
+                        <p className="truncate text-xs text-muted">{b.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </Td>
+                <Td>
+                  <Chip size="sm" variant="soft">
+                    <Chip.Label>
+                      {ICON_TYPES.find((t) => t.key === b.iconType)?.label ?? b.iconType}
+                    </Chip.Label>
+                  </Chip>
+                </Td>
+                <Td><span className="text-sm tabular-nums">{b.displayOrder}</span></Td>
+                <Td>
+                  <Toggle
+                    isSelected={b.isActive}
+                    onChange={(v) => toggle(b, v)}
+                    label={`Activer ${b.name}`}
+                  />
+                </Td>
+                <Td align="right">
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      isIconOnly
+                      aria-label={`Modifier ${b.name}`}
+                      onPress={() => openEdit(b)}
+                    >
+                      <Pencil className="size-4" aria-hidden />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      isIconOnly
+                      aria-label={`Supprimer ${b.name}`}
+                      className="text-danger hover:bg-danger/10"
+                      onPress={() => remove(b)}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </Button>
+                  </div>
+                </Td>
+              </Tr>
+            ))}
+          </TableShell>
+        )}
+      </SectionCard>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Nom *</label>
-                <Input placeholder="Développeur officiel" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Ordre</label>
-                <Input type="number" value={form.displayOrder} onChange={e => setForm(p => ({ ...p, displayOrder: parseInt(e.target.value) || 999 }))} />
-              </div>
-            </div>
+      {/* ── Formulaire ── */}
+      <Modal.Backdrop isOpen={dialogOpen} onOpenChange={setDialogOpen}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[520px]">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Icon className="bg-accent/12 text-accent">
+                <Award className="size-5" aria-hidden />
+              </Modal.Icon>
+              <Modal.Heading>
+                {editing ? `Modifier « ${editing.name} »` : 'Créer un badge'}
+              </Modal.Heading>
+            </Modal.Header>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                className="w-full resize-none rounded-lg border border-input bg-background p-2.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                rows={2} placeholder="Description" value={form.description}
-                onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Type d&apos;icône</label>
-                <select className="h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm"
-                  value={form.iconType} onChange={e => setForm(p => ({ ...p, iconType: e.target.value as any, iconValue: '' }))}>
-                  <option value="bootstrap">Bootstrap (uicons)</option>
-                  <option value="flaticon">Flaticon (CSS)</option>
-                  <option value="svg">SVG personnalisé</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Couleur</label>
-                <div className="flex gap-2">
-                  <input type="color" value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))}
-                    className="h-9 w-12 cursor-pointer rounded-lg border border-border bg-background" />
-                  <Input value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))} />
+            <Modal.Body className="space-y-4">
+              {/* Aperçu en direct */}
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-surface-secondary p-3">
+                <span
+                  className="flex size-11 shrink-0 items-center justify-center rounded-lg"
+                  style={{
+                    backgroundColor: `${form.color}22`,
+                    border: `1px solid ${form.color}44`,
+                  }}
+                >
+                  {renderBadgeIcon(form.iconType, form.iconValue, form.color, 'text-xl')}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {form.name || 'Nom du badge'}
+                  </p>
+                  <p className="truncate text-xs text-muted">
+                    {form.description || 'Aperçu en direct'}
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {form.iconType === 'bootstrap' && (
-              <div className="space-y-2">
-                <Input placeholder="Rechercher une icône…" value={iconSearch} onChange={e => setIconSearch(e.target.value)} />
-                <div className="h-48 overflow-y-auto rounded-lg border border-border p-2">
-                  <div className="grid grid-cols-6 gap-1.5">
-                    {filtered.map(icon => (
-                      <button key={icon.value} type="button"
-                        className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2.5 transition-all ${form.iconValue === icon.value ? 'border-primary bg-primary/10' : 'border-transparent hover:border-border'}`}
-                        onClick={() => setForm(p => ({ ...p, iconValue: icon.value }))}>
-                        <i className={`fi fi-br-${icon.value} text-xl`} style={{ color: form.color }} />
-                        <span className="text-center text-[9px] leading-tight text-muted-foreground">{icon.label}</span>
+              <TextField
+                value={form.name}
+                onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+                isRequired
+              >
+                <Label>Nom</Label>
+                <Input placeholder="Bêta-testeur" />
+              </TextField>
+
+              <TextField
+                value={form.description}
+                onChange={(v) => setForm((f) => ({ ...f, description: v }))}
+              >
+                <Label>Description</Label>
+                <TextArea rows={2} placeholder="A participé à la phase de test fermée" />
+              </TextField>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Select
+                  selectedKey={form.iconType}
+                  onSelectionChange={(k) =>
+                    setForm((f) => ({ ...f, iconType: k as IconType, iconValue: '' }))
+                  }
+                >
+                  <Label>Source de l’icône</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {ICON_TYPES.map((t) => (
+                        <ListBox.Item key={t.key} id={t.key} textValue={t.label}>
+                          <Label>{t.label}</Label>
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-sm">Couleur</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={form.color}
+                      onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
+                      aria-label="Couleur du badge"
+                      className="size-9 shrink-0 cursor-pointer rounded-md border border-border bg-transparent"
+                    />
+                    <code className="text-xs text-muted">{form.color}</code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Choix de l'icône selon la source */}
+              {form.iconType === 'bootstrap' ? (
+                <div>
+                  <Label className="mb-1.5 block text-sm">Icône</Label>
+                  <TextField value={iconSearch} onChange={setIconSearch} className="mb-2">
+                    <Input placeholder="Filtrer les icônes…" />
+                  </TextField>
+                  <div className="grid max-h-44 grid-cols-6 gap-1.5 overflow-y-auto rounded-md border border-border p-2">
+                    {visibleIcons.map((icon) => (
+                      <button
+                        key={icon.value}
+                        type="button"
+                        aria-label={icon.label}
+                        aria-pressed={form.iconValue === icon.value}
+                        onClick={() => setForm((f) => ({ ...f, iconValue: icon.value }))}
+                        className={
+                          'flex aspect-square items-center justify-center rounded-md border transition-colors ' +
+                          (form.iconValue === icon.value
+                            ? 'border-accent bg-accent/10'
+                            : 'border-transparent hover:bg-surface-secondary')
+                        }
+                      >
+                        {renderBadgeIcon('bootstrap', icon.value, form.color, 'text-base')}
                       </button>
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
+              ) : (
+                <TextField
+                  value={form.iconValue}
+                  onChange={(v) => setForm((f) => ({ ...f, iconValue: v }))}
+                  isRequired
+                >
+                  <Label>{form.iconType === 'svg' ? 'Balisage SVG' : 'Classe CSS'}</Label>
+                  {form.iconType === 'svg' ? (
+                    <TextArea rows={3} placeholder="<svg viewBox='0 0 24 24'>…</svg>" />
+                  ) : (
+                    <Input placeholder="fi fi-rr-star" />
+                  )}
+                </TextField>
+              )}
 
-            {form.iconType === 'flaticon' && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Classe CSS</label>
-                <Input placeholder="fi fi-rr-heart" value={form.iconValue} onChange={e => setForm(p => ({ ...p, iconValue: e.target.value }))} />
-              </div>
-            )}
+              <NumberField
+                value={form.displayOrder}
+                onChange={(v) => setForm((f) => ({ ...f, displayOrder: v }))}
+                minValue={0}
+              >
+                <Label>Ordre d’affichage</Label>
+                <Input />
+              </NumberField>
+            </Modal.Body>
 
-            {form.iconType === 'svg' && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Fichier SVG</label>
-                <input type="file" accept=".svg" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = () => setForm(p => ({ ...p, iconValue: r.result as string })); r.readAsText(f); } }} />
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button variant="outline">Annuler</Button></DialogClose>
-            <Button onClick={save} disabled={!form.name || !form.iconValue}>
-              {editing ? 'Mettre à jour' : 'Créer'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+            <Modal.Footer>
+              <Button slot="close" variant="tertiary" isDisabled={saving}>Annuler</Button>
+              <Button onPress={save} isPending={saving}>
+                {editing ? 'Enregistrer' : 'Créer'}
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </>
   );
 }

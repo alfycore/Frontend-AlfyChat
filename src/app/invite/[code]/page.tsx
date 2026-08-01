@@ -5,8 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { UsersIcon, HashIcon, Loader2Icon, ShieldCheckIcon, ArrowRightIcon, LogInIcon } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Avatar, Button } from '@heroui/react';
 
 interface InviteInfo {
   server: {
@@ -114,7 +113,7 @@ export default function InvitePage() {
             <h1 className="mb-1.5 text-[22px] font-bold tracking-tight">Invitation invalide</h1>
             <p className="max-w-sm text-[13px] text-muted/60">{error}</p>
           </div>
-          <Button variant="outline" onClick={() => router.push('/')} className="rounded-lg border-border/40">
+          <Button variant="outline" onPress={() => router.push('/')} className="rounded-lg border-border/40">
             Retour à l&apos;accueil
           </Button>
         </div>
@@ -147,10 +146,10 @@ export default function InvitePage() {
           {/* Server icon — overlaps banner */}
           <div className="-mt-7 mb-3">
             <Avatar className="size-14 rounded-xl ring-4 ring-card">
-              <AvatarImage src={resolveMediaUrl(server?.iconUrl)} className="rounded-xl object-cover" />
-              <AvatarFallback className="rounded-xl text-lg font-bold">
+              <Avatar.Image src={resolveMediaUrl(server?.iconUrl)} className="object-cover" />
+              <Avatar.Fallback className="rounded-xl text-lg font-bold">
                 {server?.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
+              </Avatar.Fallback>
             </Avatar>
           </div>
 
@@ -206,8 +205,8 @@ export default function InvitePage() {
             <Button
               size="lg"
               className="w-full gap-2 rounded-lg text-[14px] font-semibold"
-              onClick={handleJoin}
-              disabled={isJoining}
+              onPress={handleJoin}
+              isDisabled={isJoining}
             >
               {isJoining ? (
                 <Loader2Icon size={17} className="animate-spin" />
@@ -221,7 +220,7 @@ export default function InvitePage() {
             <Button
               variant="ghost"
               className="w-full rounded-lg text-[13px] text-muted/60"
-              onClick={() => router.push('/')}
+              onPress={() => router.push('/')}
             >
               Pas maintenant
             </Button>

@@ -1,11 +1,7 @@
 ﻿'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
+import { Button, Popover, ScrollShadow, Spinner } from '@heroui/react';
 import { Twemoji, emojiToTwemojiUrl } from '@/lib/twemoji';
 import { ClockIcon, SearchIcon, SmileIcon, StarIcon } from '@/components/icons';
 import { useUIStyle } from '@/hooks/use-ui-style';
@@ -1618,71 +1614,61 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
     : 'border-border/30';
 
   const inputCls = g
-    ? 'border-white/[0.16] bg-white/20 backdrop-blur-xl placeholder:text-muted-foreground/40 dark:border-white/[0.08] dark:bg-white/[0.06]'
-    : 'border-border/40 bg-background/60 placeholder:text-muted-foreground/40';
+    ? 'border-white/[0.16] bg-white/20 backdrop-blur-xl placeholder:text-muted/40 dark:border-white/[0.08] dark:bg-white/[0.06]'
+    : 'border-separator bg-surface-secondary placeholder:text-muted/40';
+
+  const popoverCls = g
+    ? 'border border-white/[0.16] bg-white/30 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.12),inset_0_0.5px_0_rgba(255,255,255,0.35)] dark:border-white/[0.10] dark:bg-[oklch(0.16_0.006_289/0.72)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
+    : 'border border-separator bg-overlay shadow-overlay';
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        {children || (
-          <Button size="icon-sm" variant="ghost">
-            <SmileIcon size={16} />
-          </Button>
-        )}
-      </PopoverTrigger>
-
-      <PopoverContent
-        align="end"
-        side="top"
-        className={`w-[340px] overflow-hidden rounded-2xl p-0 text-popover-foreground ${
-          g
-            ? 'border border-white/[0.16] bg-white/30 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.12),inset_0_0.5px_0_rgba(255,255,255,0.35)] dark:border-white/[0.10] dark:bg-[oklch(0.16_0.006_286/0.72)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
-            : 'border border-border/40 bg-popover shadow-[0_20px_60px_rgba(0,0,0,0.12)]'
-        }`}
+    <Popover isOpen={open} onOpenChange={setOpen}>
+      {children || (
+        <Button isIconOnly size="sm" variant="ghost">
+          <SmileIcon size={16} />
+        </Button>
+      )}
+      <Popover.Content
+        placement="top end"
+        className={`w-90 overflow-hidden rounded-3xl p-0 text-foreground ${popoverCls}`}
       >
+      <Popover.Dialog className="p-0">
 
-        {/* ── Header: tab switcher ── */}
-        <div className={`flex items-center justify-between border-b px-3 py-2 ${border}`}>
-          <div className={`flex items-center gap-0.5 rounded-lg p-0.5 ${g ? 'bg-white/[0.10] dark:bg-white/[0.05]' : 'bg-foreground/[0.05]'}`}>
+        {/* ── Tab bar ── */}
+        <div className={`flex items-center gap-1 border-b px-3 py-2.5 ${border}`}>
+          <div className={`flex flex-1 items-center gap-0.5 rounded-xl p-0.5 ${g ? 'bg-white/10 dark:bg-white/5' : 'bg-foreground/5'}`}>
             {(['emoji', 'gif', 'sticker'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => { setActiveTab(tab); setSearch(''); }}
-                className={`rounded-md px-2.5 py-1 text-[12px] font-semibold tracking-wide transition-all duration-150 ${
+              <button key={tab} type="button" onClick={() => { setActiveTab(tab); setSearch(''); }}
+                className={`flex-1 rounded-lg py-1.5 text-[12px] font-semibold tracking-wide transition-all duration-150 ${
                   activeTab === tab
                     ? g
-                      ? 'bg-white/[0.22] text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:bg-white/[0.12] dark:shadow-none'
+                      ? 'bg-white/20 text-foreground shadow-sm dark:bg-white/12'
                       : 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
+                    : 'text-muted hover:text-foreground'
+                }`}>
                 {TAB_LABELS[tab]}
               </button>
             ))}
           </div>
         </div>
 
-        {/* ══════════════════════ EMOJI TAB ══════════════════════ */}
+        {/* ══ EMOJI TAB ══ */}
         {activeTab === 'emoji' && (
           <>
             {/* Search */}
             <div className={`border-b px-3 py-2 ${border}`}>
               <div className="relative">
-                <SearchIcon size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-                <Input
+                <SearchIcon size={13} className="pointer-events-none absolute left-2.5 top-1/2 z-10 -translate-y-1/2 text-muted/50" />
+                <input
                   ref={searchInputRef}
                   placeholder="Rechercher un emoji…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className={`h-8 rounded-lg pl-8 pr-3 text-[13px] text-foreground ${inputCls}`}
+                  className={`h-8 w-full rounded-xl border pl-8 pr-8 text-[13px] text-foreground outline-none transition-colors ${inputCls}`}
                 />
                 {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-                  >
+                  <button type="button" onClick={() => setSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted/40 transition-colors hover:text-muted">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
@@ -1691,168 +1677,127 @@ export function EmojiPicker({ onSelect, onGifSelect, children }: EmojiPickerProp
               </div>
             </div>
 
-            {/* Category nav — horizontal scroll */}
+            {/* Category nav */}
             {!search && (
-              <div
-                ref={categoryNavRef}
-                className={`flex items-center gap-0.5 overflow-x-auto border-b px-2 py-1.5 [&::-webkit-scrollbar]:hidden ${border}`}
-              >
+              <div ref={categoryNavRef}
+                className={`flex items-center gap-0.5 overflow-x-auto border-b px-2 py-1.5 [&::-webkit-scrollbar]:hidden ${border}`}>
                 {navTabs.map((tab) => (
-                  <button
-                    key={`nav-${tab.index}`}
-                    type="button"
-                    onClick={() => scrollToCategory(tab.index)}
-                    title={tab.name}
-                    className={`flex shrink-0 size-[30px] items-center justify-center rounded-lg transition-all duration-150 ${
+                  <button key={`nav-${tab.index}`} type="button"
+                    onClick={() => scrollToCategory(tab.index)} title={tab.name}
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-xl transition-all duration-150 ${
                       activeCategory === tab.index
-                        ? g
-                          ? 'bg-white/[0.20] text-foreground dark:bg-white/[0.12]'
-                          : 'bg-foreground/[0.10] text-foreground'
-                        : g
-                          ? 'text-foreground/40 hover:bg-white/[0.12] hover:text-foreground dark:text-foreground/30 dark:hover:bg-white/[0.07]'
-                          : 'text-muted-foreground/60 hover:bg-foreground/[0.06] hover:text-foreground'
-                    }`}
-                  >
-                    {tab.name === 'Récents' ? (
-                      <ClockIcon size={14} />
-                    ) : tab.index === 0 && recentEmojis.length === 0 ? (
-                      <StarIcon size={14} />
-                    ) : (
-                      <Twemoji emoji={tab.icon} size={15} />
-                    )}
+                        ? g ? 'bg-white/20 dark:bg-white/12' : 'bg-foreground/10'
+                        : g ? 'text-foreground/35 hover:bg-white/10 hover:text-foreground dark:hover:bg-white/7' : 'text-muted/55 hover:bg-foreground/6 hover:text-foreground'
+                    }`}>
+                    {tab.name === 'Récents' ? <ClockIcon size={14} />
+                      : tab.index === 0 && recentEmojis.length === 0 ? <StarIcon size={14} />
+                      : <Twemoji emoji={tab.icon} size={15} />}
                   </button>
                 ))}
               </div>
             )}
 
             {/* Emoji grid */}
-            <ScrollArea className="h-[230px]">
+            <ScrollShadow className="h-52 overflow-y-auto" size={20}>
               <div className="px-2 py-2">
                 {visibleCategories.length === 0 ? (
                   <div className="flex h-44 flex-col items-center justify-center gap-2">
                     <span className="text-3xl">🔍</span>
-                    <p className="text-[12px] text-muted-foreground/60">Aucun emoji trouvé</p>
+                    <p className="text-[12px] text-muted/60">Aucun emoji trouvé</p>
                   </div>
-                ) : (
-                  visibleCategories.map((category, catIndex) => (
-                    <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2 last:mb-0">
-                      <div className={`sticky top-0 z-10 mb-1 pt-0.5 pb-1 ${g ? 'bg-white/[0.35] backdrop-blur-xl dark:bg-[oklch(0.16_0.006_286/0.85)]' : 'bg-popover/95 backdrop-blur-sm'}`}>
-                        <p className="px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-                          {category.name}
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-9 gap-0.5">
-                        {category.emojis.map((emoji, i) => (
-                          <button
-                            key={`${catIndex}-${i}`}
-                            type="button"
-                            onClick={() => handleSelect(emoji)}
-                            onMouseEnter={() => setHoveredEmoji({ emoji, name: EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji })}
-                            onMouseLeave={() => setHoveredEmoji(null)}
-                            className={`flex aspect-square items-center justify-center rounded-lg transition-all duration-100 hover:scale-110 active:scale-95 ${
-                              g
-                                ? 'hover:bg-white/[0.18] dark:hover:bg-white/[0.10]'
-                                : 'hover:bg-foreground/[0.07]'
-                            }`}
-                          >
-                            <Twemoji emoji={emoji} size={22} />
-                          </button>
-                        ))}
-                      </div>
+                ) : visibleCategories.map((category, catIndex) => (
+                  <div key={`cat-${catIndex}-${category.name}`} id={`emoji-cat-${catIndex}`} className="mb-2 last:mb-0">
+                    <div className={`sticky top-0 z-10 mb-1 pb-1 pt-0.5 ${g ? 'bg-white/30 backdrop-blur-xl dark:bg-[oklch(0.16_0.006_289/0.82)]' : 'bg-overlay/95 backdrop-blur-sm'}`}>
+                      <p className="px-1 text-[10px] font-semibold uppercase tracking-widest text-muted/45">
+                        {category.name}
+                      </p>
                     </div>
-                  ))
-                )}
+                    <div className="grid grid-cols-9 gap-px">
+                      {category.emojis.map((emoji, i) => (
+                        <button key={`${catIndex}-${i}`} type="button"
+                          onClick={() => handleSelect(emoji)}
+                          onMouseEnter={() => setHoveredEmoji({ emoji, name: EMOJI_SEARCH_NAMES[emoji]?.split(' ')[0] || emoji })}
+                          onMouseLeave={() => setHoveredEmoji(null)}
+                          className={`flex aspect-square items-center justify-center rounded-xl transition-transform duration-100 hover:scale-125 active:scale-95 ${
+                            g ? 'hover:bg-white/18 dark:hover:bg-white/10' : 'hover:bg-foreground/7'
+                          }`}>
+                          <Twemoji emoji={emoji} size={22} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </ScrollArea>
+            </ScrollShadow>
 
             {/* Preview bar */}
-            <div className={`flex h-9 shrink-0 items-center gap-2 border-t px-3 ${border} ${g ? 'bg-white/[0.06] dark:bg-black/[0.06]' : 'bg-foreground/[0.02]'}`}>
+            <div className={`flex h-9 shrink-0 items-center gap-2 border-t px-3 ${border} ${g ? 'bg-white/5 dark:bg-black/5' : 'bg-foreground/2'}`}>
               {hoveredEmoji ? (
                 <>
                   <Twemoji emoji={hoveredEmoji.emoji} size={16} />
-                  <p className="truncate text-[11px] font-medium text-foreground/70">
-                    :{hoveredEmoji.name}:
-                  </p>
+                  <p className="truncate text-[11px] font-medium text-foreground/65">:{hoveredEmoji.name}:</p>
                 </>
               ) : (
-                <p className="text-[11px] text-muted-foreground/40">Survolez un emoji…</p>
+                <p className="text-[11px] text-muted/35">Survolez un emoji…</p>
               )}
             </div>
           </>
         )}
 
-        {/* ══════════════════════ GIF TAB ══════════════════════ */}
+        {/* ══ GIF TAB ══ */}
         {activeTab === 'gif' && (
           <>
             <div className={`border-b px-3 py-2 ${border}`}>
               <div className="relative">
-                <SearchIcon size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
-                <Input
-                  placeholder="Rechercher un GIF…"
-                  value={gifSearch}
+                <SearchIcon size={13} className="pointer-events-none absolute left-2.5 top-1/2 z-10 -translate-y-1/2 text-muted/50" />
+                <input placeholder="Rechercher un GIF…" value={gifSearch}
                   onChange={(e) => setGifSearch(e.target.value)}
-                  className={`h-8 rounded-lg pl-8 pr-3 text-[13px] text-foreground ${inputCls}`}
-                />
+                  className={`h-8 w-full rounded-xl border pl-8 pr-3 text-[13px] text-foreground outline-none ${inputCls}`} />
               </div>
             </div>
-
-            <ScrollArea className="h-[280px]">
+            <ScrollShadow className="h-72 overflow-y-auto" size={20}>
               {isLoadingGifs ? (
-                <div className="flex h-[280px] items-center justify-center">
-                  <Spinner size="sm" />
-                </div>
+                <div className="flex h-72 items-center justify-center"><Spinner size="sm" /></div>
               ) : gifs.length === 0 ? (
-                <div className="flex h-[280px] flex-col items-center justify-center gap-2">
+                <div className="flex h-72 flex-col items-center justify-center gap-2">
                   <span className="text-3xl">🎞️</span>
-                  <p className="text-[12px] text-muted-foreground/50">Aucun GIF trouvé</p>
+                  <p className="text-[12px] text-muted/50">Aucun GIF trouvé</p>
                 </div>
               ) : (
-                <div className="columns-2 gap-1.5 px-2 pt-2 pb-2">
+                <div className="columns-2 gap-1.5 px-2 pb-2 pt-2">
                   {gifs.map((gif) => (
-                    <button
-                      key={gif.id}
-                      type="button"
-                      onClick={() => handleGifSelect(gif)}
-                      className={`mb-1.5 block w-full overflow-hidden rounded-xl transition-all duration-150 hover:opacity-80 hover:scale-[1.01] active:scale-[0.98] ${
-                        g ? 'ring-1 ring-white/[0.10] dark:ring-white/[0.06]' : 'ring-1 ring-border/20'
-                      }`}
-                    >
-                      <img
-                        src={gif.previewUrl || gif.url}
-                        alt={gif.title}
-                        className="w-full object-cover"
-                        loading="lazy"
-                      />
+                    <button key={gif.id} type="button" onClick={() => handleGifSelect(gif)}
+                      className={`mb-1.5 block w-full overflow-hidden rounded-2xl transition-all duration-150 hover:opacity-80 hover:scale-[1.01] active:scale-[0.98] ${
+                        g ? 'ring-1 ring-white/10 dark:ring-white/6' : 'ring-1 ring-separator/20'
+                      }`}>
+                      <img src={gif.previewUrl || gif.url} alt={gif.title}
+                        className="w-full object-cover" loading="lazy" />
                     </button>
                   ))}
                   <div ref={gifSentinelRef} className="h-2 w-full" />
-                  {isLoadingMoreGifs && (
-                    <div className="flex justify-center py-3">
-                      <Spinner size="sm" />
-                    </div>
-                  )}
+                  {isLoadingMoreGifs && <div className="flex justify-center py-3"><Spinner size="sm" /></div>}
                 </div>
               )}
-            </ScrollArea>
-
+            </ScrollShadow>
             <div className={`border-t px-3 py-1.5 ${border}`}>
-              <p className="text-[10px] text-muted-foreground/35 text-center">Powered by Tenor</p>
+              <p className="text-center text-[10px] text-muted/30">Powered by Tenor</p>
             </div>
           </>
         )}
 
-        {/* ══════════════════════ STICKER TAB ══════════════════════ */}
+        {/* ══ STICKER TAB ══ */}
         {activeTab === 'sticker' && (
-          <div className="flex h-[300px] flex-col items-center justify-center gap-3">
+          <div className="flex h-72 flex-col items-center justify-center gap-3">
             <span className="text-4xl">🧩</span>
             <div className="text-center">
               <p className="text-[13px] font-semibold text-foreground/80">Autocollants</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground/50">Bientôt disponible</p>
+              <p className="mt-0.5 text-[11px] text-muted/45">Bientôt disponible</p>
             </div>
           </div>
         )}
 
-      </PopoverContent>
+      </Popover.Dialog>
+      </Popover.Content>
     </Popover>
   );
 }

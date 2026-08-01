@@ -66,7 +66,8 @@ export function SiteFooter() {
         {/* Brand + pillars */}
         <div className="mb-12 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="flex items-center gap-2 font-heading text-s shrink-0">
-            <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-8" />
+            <img src="/logo/Alfychat.svg" alt="AlfyChat" className="size-8 dark:hidden" />
+            <img src="/logo/Alfychatlogowihte.svg" alt="AlfyChat" className="size-8 hidden dark:block" />
             ALFYCHAT
           </Link>
           <div className="flex flex-wrap gap-2">

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { api } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { userProfileCache } from '@/lib/user-profile-cache';
+import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
 import { signalService } from '@/lib/signal-service';
 import {
   generateKeypair,
@@ -12,8 +13,16 @@ import {
   encryptPrivateKey,
   decryptPrivateKey,
 } from '@/lib/e2ee';
+import type { PrivateBundlePayload } from '@/lib/remote-auth';
 
 const E2EE_SESSION_KEY = 'alfychat_e2ee_private_key';
+
+/** Résultat approuvé d'une connexion par QR code. */
+export interface RemoteApproved {
+  tokens: { accessToken: string; refreshToken: string; expiresIn: number; sessionId: string };
+  user: Record<string, unknown>;
+  bundle: PrivateBundlePayload | null;
+}
 
 interface User {
   id: string;
@@ -37,6 +46,8 @@ interface AuthContextType {
   signalKeysReady: boolean;
   login: (email: string, password: string, turnstileToken?: string) => Promise<{ success: boolean; error?: string; twoFactorRequired?: boolean; twoFactorToken?: string; emailNotVerified?: boolean }>;
   loginWith2FA: (twoFactorToken: string, code: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  /** Connexion validée par QR depuis un appareil déjà authentifié. */
+  completeRemoteLogin: (result: RemoteApproved) => Promise<{ success: boolean; error?: string }>;
   register: (data: { email: string; username: string; password: string; displayName?: string; inviteCode?: string; turnstileToken?: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateUser: (data: Partial<User>) => void;
@@ -427,6 +438,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return login(data.email, data.password);
   };
 
+  /**
+   * Finalise une connexion approuvée depuis le téléphone (QR code).
+   *
+   * Aucun mot de passe n'est disponible ici : le matériel E2EE arrive déjà
+   * déchiffré, transféré par le téléphone via une clé éphémère propre à cet
+   * onglet. Si le bundle manque ou est illisible, on ouvre quand même la
+   * session mais on NE RÉGÉNÈRE SURTOUT PAS de clés — cela rendrait tous les
+   * messages passés illisibles sur l'ensemble des appareils.
+   */
+  const completeRemoteLogin = async (result: RemoteApproved) => {
+    const { accessToken, refreshToken, sessionId } = result.tokens;
+    if (!accessToken || !refreshToken || !result.user) {
+      return { success: false, error: 'Données de connexion invalides' };
+    }
+
+    localStorage.setItem('alfychat_token', accessToken);
+    localStorage.setItem('alfychat_refresh_token', refreshToken);
+    if (sessionId) localStorage.setItem('alfychat_session_id', sessionId);
+
+    setUser(result.user as unknown as User);
+    socketService.connect(accessToken);
+
+    if (result.bundle) {
+      try {
+        await signalService.importDecryptedPrivateBundle(
+          result.bundle as Parameters<typeof signalService.importDecryptedPrivateBundle>[0],
+        );
+        setSignalKeysReady(true);
+      } catch (err) {
+        console.error('[RemoteAuth] Import du bundle E2EE impossible:', err);
+      }
+    } else {
+      console.warn('[RemoteAuth] Session ouverte sans matériel E2EE — messages chiffrés illisibles');
+    }
+
+    return { success: true };
+  };
+
   const logout = async () => {
     await api.logout();
     localStorage.removeItem('alfychat_token');
@@ -439,6 +488,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     socketService.disconnect();
     // Effacer les clés Signal de cet appareil
     await signalService.reset().catch(() => {});
+    // Vider le cache de messages persisté (localStorage) — évite qu'un autre
+    // compte ouvert sur ce navigateur hérite du cache du compte précédent.
+    dmPrefetchCache.clear();
     setUser(null);
     setPrivateKey(null);
     setSignalKeysReady(false);
@@ -621,6 +673,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signalKeysReady,
         login,
         loginWith2FA,
+        completeRemoteLogin,
         register,
         logout,
         updateUser,

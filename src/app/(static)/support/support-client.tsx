@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   ShieldIcon, SettingsIcon, ServerIcon, HelpCircleIcon,
   MessageSquareIcon, BookOpenIcon, ArrowRightIcon,
-  ZapIcon, CheckCircle2Icon, ClockIcon, InboxIcon, AlertTriangleIcon,
+  ZapIcon, CheckCircle2Icon, ClockIcon, InboxIcon,
 } from '@/components/icons';
+import { Badge } from '@/components/ui/badge';
 import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
 import { useTranslation } from '@/components/locale-provider';
 
@@ -16,16 +16,17 @@ export interface Announcement { id: string; type: string; title: string; summary
 export interface KnownIssue   { id: string; title: string; description: string | null; status: string; categoryLabel: string | null; updatedAt: string; }
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  shield: ShieldIcon, settings: SettingsIcon, server: ServerIcon, 'circle-help': HelpCircleIcon,
+  shield: ShieldIcon, settings: SettingsIcon, server: ServerIcon,
+  'circle-help': HelpCircleIcon,
 };
-
-const ANN_COLOR: Record<string, string> = {
-  incident: '#ef4444', maintenance: '#f59e0b', news: '#22c55e',
-};
-
-const ISSUE_COLOR: Record<string, string> = {
-  investigating: '#f59e0b', in_progress: '#8b5cf6', resolved: '#22c55e',
-};
+function CategoryIcon({ name, color }: { name: string; color: string }) {
+  const Icon = ICON_MAP[name] ?? HelpCircleIcon;
+  return (
+    <div className="shrink-0 size-10 rounded-xl flex items-center justify-center" style={{ background: color + '20' }}>
+      <Icon size={18} style={{ color }} />
+    </div>
+  );
+}
 
 interface Props {
   categories: Category[];
@@ -37,211 +38,190 @@ interface Props {
 export function SupportClient({ categories, popularArticles, announcements, knownIssues }: Props) {
   const { t, tx, locale } = useTranslation();
   const s = t.static.support;
-  const [query, setQuery] = useState('');
 
-  const searchResults = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return popularArticles.filter(a =>
-      a.title.toLowerCase().includes(q) || (a.summary ?? '').toLowerCase().includes(q)
-    ).slice(0, 6);
-  }, [query, popularArticles]);
+  const issueStatusFor = (status: string) => {
+    const colors: Record<string, string> = { investigating: '#f59e0b', in_progress: '#8b5cf6', resolved: '#22c55e' };
+    const labels: Record<string, string> = {
+      investigating: s.status.investigating,
+      in_progress: s.status.inProgress,
+      resolved: s.status.resolved,
+    };
+    return { label: labels[status] ?? labels.investigating, color: colors[status] ?? colors.investigating };
+  };
 
-  const activeIncidents = announcements.filter(a => !a.isResolved && a.type === 'incident');
-  const openIssues = knownIssues.filter(i => i.status !== 'resolved');
-  const hasAlert = activeIncidents.length > 0 || openIssues.length > 0;
-
-  const annTypeLabel = (type: string) =>
-    (s.announceType as Record<string, string>)[type] ?? type;
-  const issueStatusLabel = (status: string) => {
-    const m = s.status as Record<string, string>;
-    return m[status === 'in_progress' ? 'inProgress' : status] ?? status;
+  const announceTypeFor = (type: string) => {
+    const colors: Record<string, { color: string; bg: string }> = {
+      incident:    { color: '#ef4444', bg: '#ef444415' },
+      maintenance: { color: '#f59e0b', bg: '#f59e0b15' },
+      news:        { color: '#22c55e', bg: '#22c55e15' },
+    };
+    const labels: Record<string, string> = {
+      incident: s.announceType.incident,
+      maintenance: s.announceType.maintenance,
+      news: s.announceType.news,
+    };
+    const cfg = colors[type] ?? colors.news;
+    return { label: labels[type] ?? labels.news, ...cfg };
   };
 
   return (
     <div className="min-h-screen bg-background">
-
-      {/* Incident banner */}
-      {hasAlert && (
-        <div className="border-b border-amber-500/20 bg-amber-500/5">
-          <div className="mx-auto max-w-6xl px-6 py-2.5 flex items-center gap-3">
-            <AlertTriangleIcon size={13} className="text-amber-500 shrink-0" />
-            <p className="text-xs font-medium text-amber-600 dark:text-amber-400 truncate">
-              {activeIncidents[0]?.title ?? openIssues[0]?.title}
-            </p>
-            <Link href="/status"
-              className="ml-auto shrink-0 text-xs font-medium text-amber-500 hover:underline underline-offset-2">
-              {s.viewStatus}
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ── HERO ── */}
+      {/* Hero */}
       <div className="relative overflow-hidden border-b border-border/50">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 -right-32 size-125 rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute top-1/2 right-1/4 size-64 rounded-full bg-primary/3 blur-2xl" />
-        </div>
-
-        <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-14">
-          <MotionFade direction="up" distance={14} duration={0.45}>
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 items-start">
-
-              {/* Left: heading + search */}
-              <div>
-                <div className="mb-5 inline-flex items-center gap-2">
-                  <span className="size-1.5 rounded-full bg-green-500" />
-                  <span className="text-xs text-muted-foreground">{s.badge}</span>
-                </div>
-                <h1 className="font-heading text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-4 max-w-xl">
-                  {s.heading}
-                </h1>
-                <p className="text-muted-foreground leading-relaxed mb-8 max-w-md">{s.intro}</p>
-
-                {/* Search */}
-                <div className="relative max-w-md">
-                  <div className="flex items-center gap-3 h-12 rounded-xl border border-border bg-card px-4 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/50 transition-all">
-                    <BookOpenIcon size={15} className="text-muted-foreground/50 shrink-0" />
-                    <input
-                      type="text"
-                      value={query}
-                      onChange={e => setQuery(e.target.value)}
-                      placeholder="Rechercher un article..."
-                      className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
-                    />
-                    {query && (
-                      <button onClick={() => setQuery('')}
-                        className="text-muted-foreground/50 hover:text-foreground transition-colors text-xs">
-                        ×
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Search dropdown */}
-                  {query.trim() && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 rounded-xl border border-border bg-card shadow-xl overflow-hidden z-20">
-                      {searchResults.length > 0 ? (
-                        searchResults.map((art, i) => (
-                          <Link key={art.id}
-                            href={`/support/${art.categorySlug ?? 'general'}/${art.slug}`}
-                            onClick={() => setQuery('')}
-                            className={`group flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors ${i < searchResults.length - 1 ? 'border-b border-border/60' : ''}`}>
-                            <BookOpenIcon size={13} className="text-muted-foreground shrink-0" />
-                            <span className="text-sm flex-1 min-w-0 truncate group-hover:text-primary transition-colors">{art.title}</span>
-                            <ArrowRightIcon size={12} className="text-muted-foreground shrink-0" />
-                          </Link>
-                        ))
-                      ) : (
-                        <div className="px-4 py-4 text-center text-sm text-muted-foreground">
-                          Aucun résultat
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: quick actions */}
-              <div className="space-y-2.5 pt-1 lg:pt-14">
-                {[
-                  { href: '/support/contact',     icon: MessageSquareIcon, color: 'text-primary', bg: 'bg-primary/10',    title: s.contactCTA,    sub: 'Ouvrir un ticket' },
-                  { href: '/support/mes-tickets', icon: InboxIcon,         color: 'text-blue-500', bg: 'bg-blue-500/10',   title: s.myTickets,     sub: 'Vos demandes' },
-                  { href: '/status',              icon: ZapIcon,           color: 'text-amber-500',bg: 'bg-amber-500/10',  title: s.serviceStatus, sub: "État des services" },
-                ].map(({ href, icon: Icon, color, bg, title, sub }) => (
-                  <Link key={href} href={href}
-                    className="group flex items-center gap-3.5 rounded-xl border border-border bg-card/60 px-4 py-3.5 hover:bg-card hover:shadow-sm hover:border-border/80 transition-all">
-                    <div className={`size-9 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
-                      <Icon size={17} className={color} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold leading-none mb-0.5">{title}</p>
-                      <p className="text-[11px] text-muted-foreground">{sub}</p>
-                    </div>
-                    <ArrowRightIcon size={13} className="text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </Link>
-                ))}
-              </div>
-            </div>
+        <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center relative">
+          <MotionFade direction="down" distance={12} duration={0.5}>
+            <Badge variant="outline" className="mb-4 text-[10px] font-mono">{s.badge}</Badge>
+            <h1 className="font-heading text-4xl font-bold leading-tight mb-4">{s.heading}</h1>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8">{s.intro}</p>
           </MotionFade>
+          <MotionStagger stagger={0.06} className="flex gap-3 justify-center flex-wrap">
+            <MotionStaggerItem>
+              <Link href="/support/contact"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                <MessageSquareIcon size={16} /> {s.contactCTA}
+              </Link>
+            </MotionStaggerItem>
+            <MotionStaggerItem>
+              <Link href="/support/mes-tickets"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium hover:bg-muted transition-colors">
+                <InboxIcon size={16} /> {s.myTickets}
+              </Link>
+            </MotionStaggerItem>
+            <MotionStaggerItem>
+              <Link href="/status"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium hover:bg-muted transition-colors">
+                <ZapIcon size={16} /> {s.serviceStatus}
+              </Link>
+            </MotionStaggerItem>
+          </MotionStagger>
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-6 pt-14 pb-20 space-y-16">
-
-        {/* ── Categories ── */}
-        <MotionFade direction="up" distance={12} duration={0.5}>
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-base font-bold tracking-tight">{s.browseByTheme}</h2>
-            </div>
-            <MotionStagger stagger={0.04} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map(cat => {
-                const Icon = ICON_MAP[cat.iconName] ?? HelpCircleIcon;
-                return (
-                  <MotionStaggerItem key={cat.slug}>
-                    <Link href={`/support/${cat.slug}`}
-                      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:border-transparent h-full">
-                      {/* Colored top accent on hover */}
-                      <div className="absolute top-0 inset-x-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ background: cat.color }} />
-                      <div className="p-5 flex flex-col flex-1">
-                        <div className="flex items-start gap-3.5 mb-3">
-                          <div className="size-10 rounded-xl flex items-center justify-center shrink-0"
-                            style={{ background: cat.color + '18' }}>
-                            <Icon size={18} style={{ color: cat.color }} />
+      <div className="mx-auto max-w-5xl px-6 py-12 space-y-16">
+        {/* Annonces */}
+        {announcements.length > 0 && (
+          <MotionFade direction="up" distance={14} duration={0.5}>
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold">{s.announcements}</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">{s.announcementsDesc}</p>
+                </div>
+                <Link href="/status" className="text-xs text-primary flex items-center gap-1 hover:underline">
+                  {s.viewStatus} <ArrowRightIcon size={12} />
+                </Link>
+              </div>
+              <MotionStagger stagger={0.05} className="space-y-3">
+                {announcements.map(ann => {
+                  const cfg = announceTypeFor(ann.type);
+                  return (
+                    <MotionStaggerItem key={ann.id}>
+                      <div className="rounded-xl border border-border bg-card p-4 flex gap-4 items-start">
+                        <span className="shrink-0 mt-0.5 rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: cfg.bg, color: cfg.color }}>
+                          {cfg.label}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium text-sm leading-snug">{ann.title}</p>
+                            {ann.isResolved && (
+                              <span className="shrink-0 flex items-center gap-1 text-xs text-green-500 font-medium">
+                                <CheckCircle2Icon size={12} /> {s.resolvedLabel}
+                              </span>
+                            )}
                           </div>
-                          <div className="flex-1 min-w-0 pt-0.5">
-                            <div className="flex items-center justify-between gap-1">
-                              <p className="font-semibold text-sm leading-tight">{cat.title}</p>
-                              <ArrowRightIcon size={13}
-                                className="text-muted-foreground/30 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
-                            </div>
-                          </div>
-                        </div>
-                        {cat.description && (
-                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 flex-1">
-                            {cat.description}
+                          {ann.summary && <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{ann.summary}</p>}
+                          <p className="text-xs text-muted-foreground/60 mt-1.5 flex items-center gap-1">
+                            <ClockIcon size={10} /> {new Date(ann.publishedAt).toLocaleDateString(locale)}
                           </p>
-                        )}
-                        <div className="mt-3 pt-3 border-t border-border/50">
-                          <span className="text-[11px] font-semibold"
-                            style={{ color: cat.color + 'cc' }}>
-                            {tx(s.articlesCount, { n: cat.articleCount ?? 0 })}
-                          </span>
                         </div>
                       </div>
-                    </Link>
-                  </MotionStaggerItem>
-                );
-              })}
+                    </MotionStaggerItem>
+                  );
+                })}
+              </MotionStagger>
+            </section>
+          </MotionFade>
+        )}
+
+        {/* Problèmes connus */}
+        {knownIssues.length > 0 && (
+          <MotionFade direction="up" distance={14} duration={0.5}>
+            <section>
+              <h2 className="text-xl font-bold mb-2">{s.knownIssues}</h2>
+              <p className="text-sm text-muted-foreground mb-6">{s.knownIssuesDesc}</p>
+              <div className="rounded-xl border border-border overflow-hidden">
+                {knownIssues.map((issue, i) => {
+                  const st = issueStatusFor(issue.status);
+                  return (
+                    <div key={issue.id}
+                      className={'flex items-center gap-4 px-5 py-4' + (i < knownIssues.length - 1 ? ' border-b border-border' : '')}>
+                      <span className="shrink-0 size-2 rounded-full" style={{ background: st.color }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-snug">{issue.title}</p>
+                        {issue.categoryLabel && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{issue.categoryLabel}</p>
+                        )}
+                      </div>
+                      <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: st.color + '20', color: st.color }}>
+                        {st.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </MotionFade>
+        )}
+
+        {/* Catégories */}
+        <MotionFade direction="up" distance={14} duration={0.5}>
+          <section>
+            <h2 className="text-xl font-bold mb-2">{s.browseByTheme}</h2>
+            <p className="text-sm text-muted-foreground mb-6">{s.browseByThemeDesc}</p>
+            <MotionStagger stagger={0.05} className="grid gap-4 md:grid-cols-2">
+              {categories.map(cat => (
+                <MotionStaggerItem key={cat.slug}>
+                  <Link href={`/support/${cat.slug}`}
+                    className="group rounded-xl border border-border bg-card p-5 flex gap-4 items-start hover:border-primary/40 hover:bg-primary/5 transition-all h-full"
+                    style={{ borderLeftColor: cat.color, borderLeftWidth: 3 }}>
+                    <CategoryIcon name={cat.iconName} color={cat.color} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-sm">{cat.title}</p>
+                        <ArrowRightIcon size={14} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                      {cat.description && (
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{cat.description}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground/60 mt-2">{tx(s.articlesCount, { n: cat.articleCount ?? 0 })}</p>
+                    </div>
+                  </Link>
+                </MotionStaggerItem>
+              ))}
             </MotionStagger>
           </section>
         </MotionFade>
 
-        {/* ── Popular Articles ── */}
+        {/* Articles populaires */}
         {popularArticles.length > 0 && (
-          <MotionFade direction="up" distance={12} duration={0.5}>
+          <MotionFade direction="up" distance={14} duration={0.5}>
             <section>
-              <h2 className="text-base font-bold tracking-tight mb-6">{s.popularArticles}</h2>
-              <div className="grid gap-x-12 md:grid-cols-2">
+              <h2 className="text-xl font-bold mb-2">{s.popularArticles}</h2>
+              <p className="text-sm text-muted-foreground mb-6">{s.popularArticlesDesc}</p>
+              <div className="rounded-xl border border-border overflow-hidden">
                 {popularArticles.map((art, i) => (
-                  <Link key={art.id}
-                    href={`/support/${art.categorySlug ?? 'general'}/${art.slug}`}
-                    className="group flex items-center gap-4 py-3.5 border-b border-border/50 hover:border-primary/20 transition-colors last:border-0">
-                    <span className="text-3xl font-black font-mono text-muted-foreground/10 group-hover:text-primary/20 transition-colors shrink-0 w-9 text-right leading-none tabular-nums select-none">
-                      {i + 1}
-                    </span>
+                  <Link key={art.id} href={`/support/${art.categorySlug ?? 'general'}/${art.slug}`}
+                    className={'flex items-center gap-4 px-5 py-4 hover:bg-muted/40 transition-colors group' + (i < popularArticles.length - 1 ? ' border-b border-border' : '')}>
+                    <BookOpenIcon size={16} className="text-muted-foreground shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium group-hover:text-primary transition-colors leading-snug line-clamp-1">
-                        {art.title}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground/60 mt-0.5">
-                        {tx(s.viewsCount, { n: art.viewCount.toLocaleString(locale) })}
-                      </p>
+                      <p className="text-sm font-medium group-hover:text-primary transition-colors">{art.title}</p>
+                      {art.summary && <p className="text-xs text-muted-foreground mt-0.5 truncate">{art.summary}</p>}
                     </div>
-                    <ArrowRightIcon size={12}
-                      className="text-muted-foreground/20 group-hover:text-primary/60 group-hover:translate-x-0.5 transition-all shrink-0" />
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {tx(s.viewsCount, { n: art.viewCount.toLocaleString(locale) })}
+                    </span>
+                    <ArrowRightIcon size={12} className="text-muted-foreground group-hover:text-primary shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -249,101 +229,27 @@ export function SupportClient({ categories, popularArticles, announcements, know
           </MotionFade>
         )}
 
-        {/* ── Active Announcements ── */}
-        {announcements.filter(a => !a.isResolved).length > 0 && (
-          <MotionFade direction="up" distance={12} duration={0.5}>
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold tracking-tight">{s.announcements}</h2>
-                <Link href="/status" className="text-xs text-primary hover:underline underline-offset-2">
-                  {s.viewStatus}
-                </Link>
-              </div>
-              <div className="space-y-2">
-                {announcements.filter(a => !a.isResolved).map(ann => {
-                  const color = ANN_COLOR[ann.type] ?? ANN_COLOR.news;
-                  return (
-                    <div key={ann.id}
-                      className="flex gap-4 items-start rounded-xl border border-border bg-card px-5 py-4"
-                      style={{ borderLeftColor: color, borderLeftWidth: 3 }}>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5"
-                            style={{ background: color + '18', color }}>
-                            {annTypeLabel(ann.type)}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium">{ann.title}</p>
-                        {ann.summary && (
-                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{ann.summary}</p>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-muted-foreground/50 shrink-0 flex items-center gap-1 mt-0.5">
-                        <ClockIcon size={10} />
-                        {new Date(ann.publishedAt).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </MotionFade>
-        )}
-
-        {/* ── Known Issues ── */}
-        {openIssues.length > 0 && (
-          <MotionFade direction="up" distance={12} duration={0.5}>
-            <section>
-              <h2 className="text-base font-bold tracking-tight mb-4">{s.knownIssues}</h2>
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                {openIssues.map((issue, i) => {
-                  const color = ISSUE_COLOR[issue.status] ?? ISSUE_COLOR.investigating;
-                  return (
-                    <div key={issue.id}
-                      className={`flex items-center gap-4 px-5 py-3.5 ${i < openIssues.length - 1 ? 'border-b border-border/60' : ''}`}>
-                      <span className="relative flex size-2 shrink-0">
-                        <span className="animate-ping absolute inset-0 rounded-full opacity-50"
-                          style={{ background: color }} />
-                        <span className="relative rounded-full size-2" style={{ background: color }} />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-snug">{issue.title}</p>
-                        {issue.categoryLabel && (
-                          <p className="text-xs text-muted-foreground">{issue.categoryLabel}</p>
-                        )}
-                      </div>
-                      <span className="shrink-0 text-[11px] font-medium rounded-full px-2.5 py-0.5"
-                        style={{ background: color + '15', color }}>
-                        {issueStatusLabel(issue.status)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </MotionFade>
-        )}
-
-        {/* ── CTA strip ── */}
-        <MotionFade direction="up" distance={12} duration={0.5}>
-          <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 rounded-2xl border border-border bg-card/50 px-7 py-6">
-            <div>
-              <p className="font-semibold text-sm leading-tight mb-1">{s.notFoundTitle}</p>
-              <p className="text-xs text-muted-foreground">{s.notFoundBody}</p>
+        {/* CTA */}
+        <MotionFade direction="up" distance={14} duration={0.5}>
+          <section className="rounded-2xl border border-primary/20 bg-primary/5 p-8 text-center">
+            <div className="size-12 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-4">
+              <MessageSquareIcon size={22} className="text-primary" />
             </div>
+            <h2 className="text-xl font-bold mb-2">{s.notFoundTitle}</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">{s.notFoundBody}</p>
             <Link href="/support/contact"
-              className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all">
-              <MessageSquareIcon size={14} /> {s.openTicket}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              <MessageSquareIcon size={15} /> {s.openTicket}
             </Link>
           </section>
         </MotionFade>
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border/50">
-        <div className="mx-auto max-w-6xl px-6 py-7 flex flex-wrap gap-4 justify-between items-center text-xs text-muted-foreground">
+      <div className="border-t border-border/50 mt-8">
+        <div className="mx-auto max-w-5xl px-6 py-8 flex flex-wrap gap-4 justify-between items-center text-xs text-muted-foreground">
           <span>{t.static.common.footerCopyright}</span>
-          <div className="flex gap-5">
+          <div className="flex gap-4">
             <Link href="/legal/privacy" className="hover:text-foreground transition-colors">{t.static.common.legalPrivacy}</Link>
             <Link href="/legal/terms" className="hover:text-foreground transition-colors">{t.static.common.legalTerms}</Link>
             <Link href="/legal/rgpd" className="hover:text-foreground transition-colors">{t.static.common.legalRgpd}</Link>

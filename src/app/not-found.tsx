@@ -1,30 +1,44 @@
 'use client';
 
-import Link from 'next/link';
-import { HomeIcon, MessageCircleIcon } from '@/components/icons';
-import { Button } from '@/components/ui/button';
-import { FullErrorScreen } from '@/components/error-screens';
+import { useRouter } from 'next/navigation';
+import { Button } from '@heroui/react';
+import { ArrowLeft, House, MessageCircle } from 'lucide-react';
+
+import { ErrorPageShell, ErrorScreen } from '@/components/alfy/errors/error-screen';
 
 export default function NotFound() {
+  const router = useRouter();
+
   return (
-    <FullErrorScreen
-      code="404"
-      tone="primary"
-      title="Page introuvable"
-      description="La page que vous cherchez n'existe pas, a été déplacée ou n'a jamais existé."
-    >
-      <Link href="/" className="sm:w-auto">
-        <Button size="lg" className="w-full sm:w-auto">
-          <HomeIcon size={15} />
-          Accueil
-        </Button>
-      </Link>
-      <Link href="/channels/me" className="sm:w-auto">
-        <Button size="lg" variant="outline" className="w-full sm:w-auto">
-          <MessageCircleIcon size={15} />
-          Ouvrir AlfyChat
-        </Button>
-      </Link>
-    </FullErrorScreen>
+    <ErrorPageShell>
+      <ErrorScreen
+        code="404"
+        channel="introuvable"
+        tone="accent"
+        title="Cette page n’existe pas"
+        message={
+          <>
+            L’adresse est peut-être mal orthographiée, ou la page a été déplacée
+            depuis que le lien a été partagé.
+          </>
+        }
+        actions={
+          <>
+            <Button size="sm" onPress={() => router.push('/')}>
+              <House className="size-3.5" aria-hidden />
+              Accueil
+            </Button>
+            <Button size="sm" variant="secondary" onPress={() => router.push('/channels/me')}>
+              <MessageCircle className="size-3.5" aria-hidden />
+              Ouvrir AlfyChat
+            </Button>
+            <Button size="sm" variant="ghost" onPress={() => router.back()}>
+              <ArrowLeft className="size-3.5" aria-hidden />
+              Retour
+            </Button>
+          </>
+        }
+      />
+    </ErrorPageShell>
   );
 }

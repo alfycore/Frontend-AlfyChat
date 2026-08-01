@@ -1,184 +1,260 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { BanIcon, ShieldAlertIcon, ShieldCheckIcon, ShieldIcon } from '@/components/icons';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Button, Input, Label, Modal, TextField } from '@heroui/react';
+import { Ban, Gauge, RotateCcw, ShieldAlert, ShieldOff, Trash2 } from 'lucide-react';
+
 import { api } from '@/lib/api';
+import {
+  DateText, EmptyState, PageHeader, SectionCard, StatCard, TableShell,
+  TableSkeleton, Td, Th, Tr,
+} from '@/components/alfy/admin/primitives';
+
+interface BannedIP {
+  ip: string;
+  reason?: string;
+  bannedAt?: string;
+  hits?: number;
+}
+
+interface RateLimitStats {
+  blocked?: number;
+  tracked?: number;
+  topOffenders?: { ip: string; count: number }[];
+}
+
+interface RateLimitConfig {
+  anon?: number;
+  user?: number;
+  admin?: number;
+  windowSeconds?: number;
+}
 
 export default function AdminSecurityPage() {
-  const [bannedIPs, setBannedIPs] = useState<any[]>([]);
-  const [rlStats, setRlStats]     = useState<any>(null);
-  const [rlConfig, setRlConfig]   = useState<any>(null);
-  const [banIP, setBanIP]         = useState('');
-  const [banReason, setBanReason] = useState('');
-  const [loading, setLoading]     = useState(true);
-  const [banning, setBanning]     = useState(false);
+  const [bannedIPs, setBannedIPs] = useState<BannedIP[]>([]);
+  const [stats, setStats]   = useState<RateLimitStats | null>(null);
+  const [config, setConfig] = useState<RateLimitConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState<string | null>(null);
+
+  const [banOpen, setBanOpen] = useState(false);
+  const [ip, setIp]           = useState('');
+  const [reason, setReason]   = useState('');
+  const [saving, setSaving]   = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const r = await api.getGatewayStats();
-    if (r.success && r.data) {
-      const d = r.data as any;
-      setBannedIPs(d.bannedIPs || []);
-      setRlStats(d.rateLimitStats || null);
-      setRlConfig(d.config || null);
+    const res = await api.getGatewayStats();
+    if (res.success && res.data) {
+      const d = res.data as {
+        bannedIPs?: BannedIP[];
+        rateLimitStats?: RateLimitStats;
+        config?: RateLimitConfig;
+      };
+      setBannedIPs(d.bannedIPs ?? []);
+      setStats(d.rateLimitStats ?? null);
+      setConfig(d.config ?? null);
+    } else {
+      setError(res.error ?? 'Impossible de charger les données de sécurité.');
     }
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const handleBan = async () => {
-    if (!banIP.trim()) return;
-    setBanning(true);
-    try {
-      await api.banIP(banIP.trim(), banReason.trim() || undefined);
-      setBanIP(''); setBanReason('');
-      await load();
-    } finally { setBanning(false); }
+  const ban = async () => {
+    if (!ip.trim()) {
+      setError('L’adresse IP est obligatoire.');
+      return;
+    }
+    setSaving(true);
+    const res = await api.banIP(ip.trim(), reason.trim() || undefined);
+    setSaving(false);
+
+    if (!res.success) {
+      setError(res.error ?? 'L’adresse n’a pas pu être bannie.');
+      return;
+    }
+    setBanOpen(false);
+    setIp('');
+    setReason('');
+    load();
   };
 
-  if (loading) return (
-    <div className="mx-auto max-w-7xl space-y-4">
-      <div className="h-8 w-36 animate-pulse rounded-lg bg-muted" />
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[...Array(3)].map((_, i) => <div key={i} className="h-28 animate-pulse rounded-xl bg-muted" />)}
-      </div>
-    </div>
-  );
+  const unban = async (entry: BannedIP) => {
+    const res = await api.unbanIP(entry.ip);
+    if (res.success) load();
+  };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Sécurité</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">IPs bannies et protection rate limiting.</p>
+    <>
+      <PageHeader
+        title="Sécurité"
+        description="Bannissements d’adresses IP au niveau du gateway et limitation de débit."
+      >
+        <Button size="sm" variant="secondary" onPress={load} isPending={loading}>
+          <RotateCcw className="size-3.5" aria-hidden />
+          Actualiser
+        </Button>
+        <Button size="sm" variant="danger" onPress={() => setBanOpen(true)}>
+          <Ban className="size-3.5" aria-hidden />
+          Bannir une IP
+        </Button>
+      </PageHeader>
+
+      {error && (
+        <Alert status="danger" className="mb-5">
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+
+      <div className="admin-stagger mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="IP bannies"
+          value={bannedIPs.length}
+          icon={ShieldOff}
+          tone="danger"
+          loading={loading}
+        />
+        <StatCard
+          label="Requêtes bloquées"
+          value={stats?.blocked?.toLocaleString('fr-FR') ?? '—'}
+          hint="Par la limitation de débit"
+          icon={ShieldAlert}
+          tone="warning"
+          loading={loading}
+        />
+        <StatCard
+          label="Clients suivis"
+          value={stats?.tracked?.toLocaleString('fr-FR') ?? '—'}
+          icon={Gauge}
+          loading={loading}
+        />
+        <StatCard
+          label="Fenêtre"
+          value={config?.windowSeconds != null ? `${config.windowSeconds} s` : '—'}
+          hint={
+            config
+              ? `anon ${config.anon ?? '—'} · user ${config.user ?? '—'} · admin ${config.admin ?? '—'}`
+              : undefined
+          }
+          icon={Gauge}
+          tone="accent"
+          loading={loading}
+        />
       </div>
 
-      {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">IPs bannies</p>
-              <p className="mt-2 text-3xl font-bold tabular-nums text-destructive">{bannedIPs.length}</p>
-            </div>
-            <div className="rounded-lg bg-destructive/10 p-2.5">
-              <BanIcon className="size-5 text-destructive" />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Bloquées</p>
-              <p className="mt-2 text-3xl font-bold tabular-nums text-amber-500">{rlStats?.totalBlocked ?? 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">requêtes bloquées</p>
-            </div>
-            <div className="rounded-lg bg-amber-500/10 p-2.5">
-              <ShieldAlertIcon className="size-5 text-amber-500" />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rate limit</p>
-              <p className="mt-2 text-xl font-bold">
-                {rlConfig ? `${rlConfig.max} req/${rlConfig.window}s` : '—'}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">{rlStats?.activeWindows ?? 0} fenêtres actives</p>
-            </div>
-            <div className="rounded-lg bg-muted p-2.5">
-              <ShieldIcon className="size-5 text-muted-foreground" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Ban form */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="border-b border-border px-5 py-3.5">
-          <div className="flex items-center gap-2">
-            <BanIcon className="size-4 text-destructive" />
-            <p className="font-semibold">Bannir une IP</p>
-          </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">L&apos;IP sera bloquée immédiatement au niveau du gateway.</p>
-        </div>
-        <div className="p-5">
-          <div className="flex flex-wrap gap-2">
-            <Input
-              className="h-9 w-48 font-mono"
-              placeholder="192.168.1.1"
-              value={banIP}
-              onChange={e => setBanIP(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleBan()}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <SectionCard
+          flush
+          title="Adresses bannies"
+          description={`${bannedIPs.length} adresse${bannedIPs.length > 1 ? 's' : ''}`}
+          className="lg:col-span-2"
+        >
+          {loading ? (
+            <TableSkeleton rows={4} cols={3} />
+          ) : bannedIPs.length === 0 ? (
+            <EmptyState
+              icon={ShieldOff}
+              title="Aucune adresse bannie"
+              description="Le gateway ne bloque actuellement aucune adresse IP."
             />
-            <Input
-              className="h-9 flex-1 min-w-48"
-              placeholder="Raison (optionnel)"
-              value={banReason}
-              onChange={e => setBanReason(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleBan()}
-            />
-            <Button
-              variant="destructive"
-              size="sm"
-              className="h-9"
-              disabled={!banIP.trim() || banning}
-              onClick={handleBan}
+          ) : (
+            <TableShell
+              minWidth={560}
+              head={
+                <>
+                  <Th>Adresse</Th>
+                  <Th>Motif</Th>
+                  <Th>Depuis</Th>
+                  <Th align="right">Action</Th>
+                </>
+              }
             >
-              <BanIcon className="size-4" />
-              {banning ? 'Bannissement…' : 'Bannir'}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* IP list */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-          <div className="flex items-center gap-2">
-            <ShieldAlertIcon className="size-4 text-amber-500" />
-            <p className="font-semibold">IPs bannies</p>
-          </div>
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">{bannedIPs.length}</span>
-        </div>
-
-        {bannedIPs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <ShieldCheckIcon className="mb-3 size-10 text-green-500/40" />
-            <p className="font-medium">Aucune IP bannie</p>
-            <p className="mt-0.5 text-sm text-muted-foreground">Le gateway n&apos;a pas d&apos;IPs bloquées.</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] border-b border-border bg-muted/20 px-5 py-2.5">
-              {['IP', 'Raison', 'Banni par', 'Date', ''].map(h => (
-                <span key={h} className="text-xs font-medium text-muted-foreground">{h}</span>
+              {bannedIPs.map((entry) => (
+                <Tr key={entry.ip}>
+                  <Td><code className="font-mono text-xs">{entry.ip}</code></Td>
+                  <Td>
+                    <span className="text-sm text-muted">{entry.reason || '—'}</span>
+                  </Td>
+                  <Td><DateText value={entry.bannedAt} withTime /></Td>
+                  <Td align="right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      isIconOnly
+                      aria-label={`Débannir ${entry.ip}`}
+                      onPress={() => unban(entry)}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </Button>
+                  </Td>
+                </Tr>
               ))}
-            </div>
-            <div className="divide-y divide-border">
-              {bannedIPs.map(b => (
-                <div key={b.ip} className="grid grid-cols-[1fr_1fr_auto_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/20">
-                  <span className="font-mono text-sm">{b.ip}</span>
-                  <span className="truncate text-sm text-muted-foreground">{b.reason || '—'}</span>
-                  <span className="text-xs text-muted-foreground">{b.bannedBy || 'Système'}</span>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {b.bannedAt ? new Date(b.bannedAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+            </TableShell>
+          )}
+        </SectionCard>
+
+        <SectionCard title="Adresses les plus actives" description="Sur la fenêtre courante">
+          {!stats?.topOffenders?.length ? (
+            <p className="py-8 text-center text-xs text-muted">Aucune donnée disponible.</p>
+          ) : (
+            <ul className="space-y-2">
+              {stats.topOffenders.slice(0, 10).map((o) => (
+                <li key={o.ip} className="flex items-center justify-between gap-3">
+                  <code className="truncate font-mono text-xs">{o.ip}</code>
+                  <span className="shrink-0 text-xs tabular-nums text-muted">
+                    {o.count.toLocaleString('fr-FR')}
                   </span>
-                  <button
-                    onClick={() => api.unbanIP(b.ip).then(() => setBannedIPs(p => p.filter(x => x.ip !== b.ip)))}
-                    className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
-                  >
-                    <ShieldCheckIcon className="size-3.5" /> Débannir
-                  </button>
-                </div>
+                </li>
               ))}
-            </div>
-          </>
-        )}
+            </ul>
+          )}
+        </SectionCard>
       </div>
-    </div>
+
+      {/* ── Bannissement ── */}
+      <Modal.Backdrop isOpen={banOpen} onOpenChange={setBanOpen}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[420px]">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Icon className="bg-danger/12 text-danger">
+                <Ban className="size-5" aria-hidden />
+              </Modal.Icon>
+              <Modal.Heading>Bannir une adresse IP</Modal.Heading>
+            </Modal.Header>
+
+            <Modal.Body className="space-y-4">
+              <Alert status="warning">
+                <Alert.Content>
+                  <Alert.Description>
+                    Le blocage s’applique au niveau du gateway : toutes les connexions
+                    depuis cette adresse sont refusées, sessions comprises.
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert>
+
+              <TextField value={ip} onChange={setIp} isRequired>
+                <Label>Adresse IP</Label>
+                <Input placeholder="203.0.113.42" autoComplete="off" />
+              </TextField>
+
+              <TextField value={reason} onChange={setReason}>
+                <Label>Motif</Label>
+                <Input placeholder="Tentatives d’authentification répétées" autoComplete="off" />
+              </TextField>
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button slot="close" variant="tertiary" isDisabled={saving}>Annuler</Button>
+              <Button variant="danger" onPress={ban} isPending={saving}>Bannir</Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </>
   );
 }

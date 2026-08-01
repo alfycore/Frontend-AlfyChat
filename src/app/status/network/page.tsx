@@ -152,7 +152,7 @@ export default function NetworkStatusPage() {
       {/* ── Header ── */}
       <LandingNavbar />
 
-      <main className="flex-1 mx-auto w-full max-w-5xl px-6 pt-24 pb-10 space-y-10">
+      <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-10 space-y-10">
 
         {/* ── Hero ── */}
         <div className="text-center space-y-2">

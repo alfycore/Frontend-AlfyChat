@@ -2,51 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import {
-  MailIcon, EyeIcon, EyeOffIcon, LockIcon, UserIcon,
-} from '@/components/icons';
-import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
+import NextLink from 'next/link';
+import { Button, Checkbox, Form, InputGroup, Label, Link, Spinner, TextField } from '@heroui/react';
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from '@/components/ui/input-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
-
-function Spinner({ className }: { className?: string }) {
-  return (
-    <svg className={cn('animate-spin', className)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-    </svg>
-  );
-}
-
-function ErrorBanner({ message }: { message: string }) {
-  return (
-    <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
-      {message}
-    </div>
-  );
-}
-
-function InfoBanner({ message, variant = 'warning' }: { message: string; variant?: 'warning' | 'success' }) {
-  const cls = variant === 'success'
-    ? 'border-success/20 bg-success/10 text-success'
-    : 'border-warning/20 bg-warning/10 text-warning';
-  return (
-    <div className={cn('rounded-lg border px-4 py-3 text-[13px]', cls)}>
-      {message}
-    </div>
-  );
-}
+import { AlfyAuthShell, AlfyAuthHeading, AlfyAuthBanner } from '@/components/alfy/auth/alfy-auth-shell';
 
 export default function RegisterPage() {
   return (
@@ -84,7 +47,7 @@ function RegisterContent() {
   useEffect(() => {
     api.getRegisterSettings().then((res) => {
       if (res.success && res.data) {
-        const data = res.data as any;
+        const data = res.data as { registrationEnabled?: boolean; turnstileEnabled?: boolean; turnstileSiteKey?: string };
         setRegistrationEnabled(data.registrationEnabled !== false);
         setTurnstileEnabled(data.turnstileEnabled === true);
         setTurnstileSiteKey(data.turnstileSiteKey || null);
@@ -94,27 +57,25 @@ function RegisterContent() {
   }, []);
 
   const renderTurnstile = useCallback(() => {
+    const w = window as unknown as { turnstile?: { render: (el: HTMLElement, o: unknown) => string; reset: (id: string) => void } };
     if (!turnstileEnabled || !turnstileSiteKey || !turnstileRef.current) return;
-    if (turnstileWidgetId.current && (window as any).turnstile) {
-      (window as any).turnstile.reset(turnstileWidgetId.current);
-      return;
-    }
-    if ((window as any).turnstile) {
-      turnstileWidgetId.current = (window as any).turnstile.render(turnstileRef.current, {
+    if (turnstileWidgetId.current && w.turnstile) { w.turnstile.reset(turnstileWidgetId.current); return; }
+    if (w.turnstile) {
+      turnstileWidgetId.current = w.turnstile.render(turnstileRef.current, {
         sitekey: turnstileSiteKey,
         callback: (token: string) => setTurnstileToken(token),
         'expired-callback': () => setTurnstileToken(null),
         'error-callback': () => setTurnstileToken(null),
-        theme: 'dark',
+        theme: 'auto',
       });
     }
   }, [turnstileEnabled, turnstileSiteKey]);
 
   useEffect(() => {
     if (!turnstileEnabled || !turnstileSiteKey) return;
-    if ((window as any).turnstile) { renderTurnstile(); return; }
-    const existingScript = document.querySelector('script[src*="turnstile"]');
-    if (existingScript) return;
+    const w = window as unknown as { turnstile?: unknown };
+    if (w.turnstile) { renderTurnstile(); return; }
+    if (document.querySelector('script[src*="turnstile"]')) return;
     const script = document.createElement('script');
     script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
     script.async = true;
@@ -137,16 +98,12 @@ function RegisterContent() {
         ...(inviteCode && { inviteCode }),
         ...(turnstileToken && { turnstileToken }),
       });
-      if (result.success) {
-        router.push('/channels/gotostart');
-      } else if ((result as any).emailNotVerified) {
-        router.push('/login?emailVerification=1&email=' + encodeURIComponent(email));
-      } else {
+      if (result.success) router.push('/channels/gotostart');
+      else if ((result as { emailNotVerified?: boolean }).emailNotVerified) router.push('/login?emailVerification=1&email=' + encodeURIComponent(email));
+      else {
         setError(result.error || t.auth.register.registerError);
-        if (turnstileWidgetId.current && (window as any).turnstile) {
-          (window as any).turnstile.reset(turnstileWidgetId.current);
-          setTurnstileToken(null);
-        }
+        const w = window as unknown as { turnstile?: { reset: (id: string) => void } };
+        if (turnstileWidgetId.current && w.turnstile) { w.turnstile.reset(turnstileWidgetId.current); setTurnstileToken(null); }
       }
     } finally {
       setIsLoading(false);
@@ -154,230 +111,96 @@ function RegisterContent() {
   };
 
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
+    <AlfyAuthShell>
+      <div className="alfy-enter flex flex-col gap-6">
+        <AlfyAuthHeading title={t.auth.register.heading} subtitle={t.auth.register.subtitle} />
 
-      {/* ── Colonne gauche : formulaire ── */}
-      <div className="flex flex-col bg-background">
+        <Form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && <AlfyAuthBanner message={error} />}
+          {!registrationEnabled && !inviteCode && settingsLoaded && <AlfyAuthBanner variant="warning" message={t.auth.register.closedDesc} />}
+          {inviteCode && <AlfyAuthBanner variant="success" message={t.auth.register.inviteDesc} />}
 
-        {/* Logo */}
-   <div className="p-8 pb-0">
-          <MotionFade direction="down" distance={6} duration={0.3}>
-            <Link href="/" className="inline-flex items-center gap-2.5 ui-smooth opacity-80 hover:opacity-100">
-              <div className="flex size-8 items-center justify-center rounded-lg">
-                <img src="/logo/Alfychat.svg" alt="" className="size-16" />
-              </div>
-              <span className="font-(family-name:--font-krona) text-sm font-medium tracking-wide text-foreground">
-                ALFYCHAT
-              </span>
-            </Link>
-          </MotionFade>
-        </div>
+          <TextField name="email" value={email} onChange={setEmail} isRequired>
+            <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">{t.auth.register.email}</Label>
+            <InputGroup>
+              <InputGroup.Prefix><Mail className="size-4 text-muted" aria-hidden /></InputGroup.Prefix>
+              <InputGroup.Input type="email" placeholder={t.auth.register.emailPlaceholder} autoComplete="email" />
+            </InputGroup>
+          </TextField>
 
-        {/* Formulaire */}
-        <div className="flex flex-1 items-center justify-center px-8 py-10">
-          <div className="w-full max-w-xs">
-            <MotionStagger className="flex flex-col gap-6">
-
-              <MotionStaggerItem className="flex flex-col gap-1">
-                <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
-                  {t.auth.register.heading}
-                </h1>
-                <p className="text-[13px] text-muted-foreground">{t.auth.register.subtitle}</p>
-              </MotionStaggerItem>
-
-              <MotionStaggerItem>
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-                  {error && <ErrorBanner message={error} />}
-                  {!registrationEnabled && !inviteCode && settingsLoaded && (
-                    <InfoBanner message={t.auth.register.closedDesc} variant="warning" />
-                  )}
-                  {inviteCode && (
-                    <InfoBanner message={t.auth.register.inviteDesc} variant="success" />
-                  )}
-
-                  {/* Email */}
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="email" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      {t.auth.register.email}
-                    </label>
-                    <InputGroup className="h-9">
-                      <InputGroupInput
-                        id="email"
-                        type="email"
-                        placeholder={t.auth.register.emailPlaceholder}
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="text-sm"
-                      />
-                      <InputGroupAddon align="inline-start">
-                        <MailIcon size={14} className="text-muted-foreground/50" />
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </div>
-
-                  {/* Identifiant + Nom affiché */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="username" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                        {t.auth.register.username}
-                      </label>
-                      <InputGroup className="h-9">
-                        <InputGroupInput
-                          id="username"
-                          type="text"
-                          placeholder={t.auth.register.usernamePlaceholder}
-                          required
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                          className="text-sm"
-                        />
-                        <InputGroupAddon align="inline-start">
-                          <UserIcon size={14} className="text-muted-foreground/50" />
-                        </InputGroupAddon>
-                      </InputGroup>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="displayName" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                        {t.auth.register.displayName}
-                      </label>
-                      <InputGroup className="h-9">
-                        <InputGroupInput
-                          id="displayName"
-                          type="text"
-                          placeholder={t.auth.register.displayNamePlaceholder}
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          className="text-sm"
-                        />
-                      </InputGroup>
-                    </div>
-                  </div>
-
-                  {/* Mot de passe */}
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="password" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      {t.auth.register.password}
-                    </label>
-                    <InputGroup className="h-9">
-                      <InputGroupInput
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder={t.auth.register.passwordDesc}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="text-sm"
-                      />
-                      <InputGroupAddon align="inline-start">
-                        <LockIcon size={14} className="text-muted-foreground/50" />
-                      </InputGroupAddon>
-                      <InputGroupAddon align="inline-end">
-                        <InputGroupButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? t.auth.register.hide : t.auth.register.show}
-                          size="icon-xs"
-                        >
-                          {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
-                        </InputGroupButton>
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </div>
-
-                  {/* Confirmation */}
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="confirmPassword" className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      {t.auth.register.confirmPassword}
-                    </label>
-                    <InputGroup className="h-9">
-                      <InputGroupInput
-                        id="confirmPassword"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder={t.auth.register.confirmPlaceholder}
-                        required
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="text-sm"
-                      />
-                      <InputGroupAddon align="inline-start">
-                        <LockIcon size={14} className="text-muted-foreground/50" />
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </div>
-
-                  {/* CGU */}
-                  <div className="flex items-start gap-2.5">
-                    <Checkbox
-                      id="terms"
-                      checked={acceptTerms}
-                      onCheckedChange={(checked) => setAcceptTerms(checked === true)}
-                      className="mt-0.5 shrink-0"
-                    />
-                    <label htmlFor="terms" className="text-[13px] leading-relaxed text-muted-foreground select-none">
-                      {t.auth.register.accept}{' '}
-                      <Link href="/terms" className="text-foreground underline underline-offset-4 hover:text-primary">
-                        {t.auth.register.termsOf}
-                      </Link>
-                      {' '}{t.auth.register.and}{' '}
-                      <Link href="/privacy" className="text-foreground underline underline-offset-4 hover:text-primary">
-                        {t.auth.register.privacyPolicy}
-                      </Link>
-                    </label>
-                  </div>
-
-                  {/* Turnstile */}
-                  {turnstileEnabled && turnstileSiteKey && (
-                    <div className="flex">
-                      <div ref={turnstileRef} />
-                    </div>
-                  )}
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    size="lg"
-                    disabled={isLoading || (!registrationEnabled && !inviteCode)}
-                  >
-                    {isLoading && <Spinner className="size-4" />}
-                    {isLoading ? t.auth.register.creating : t.auth.register.createAccount}
-                  </Button>
-                </form>
-              </MotionStaggerItem>
-
-              {/* Lien connexion */}
-              <MotionStaggerItem className="flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-border" />
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50">
-                    {t.auth.login.or}
-                  </span>
-                  <div className="h-px flex-1 bg-border" />
-                </div>
-                <p className="text-[13px] text-muted-foreground">
-                  {t.auth.register.alreadyAccount}{' '}
-                  <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
-                    {t.auth.register.logIn}
-                  </Link>
-                </p>
-              </MotionStaggerItem>
-
-            </MotionStagger>
+          <div className="grid grid-cols-2 gap-3">
+            <TextField name="username" value={username} onChange={(v) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))} isRequired>
+              <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">{t.auth.register.username}</Label>
+              <InputGroup>
+                <InputGroup.Prefix><User className="size-4 text-muted" aria-hidden /></InputGroup.Prefix>
+                <InputGroup.Input placeholder={t.auth.register.usernamePlaceholder} autoComplete="username" />
+              </InputGroup>
+            </TextField>
+            <TextField name="displayName" value={displayName} onChange={setDisplayName}>
+              <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">{t.auth.register.displayName}</Label>
+              <InputGroup>
+                <InputGroup.Input placeholder={t.auth.register.displayNamePlaceholder} />
+              </InputGroup>
+            </TextField>
           </div>
+
+          <TextField name="password" value={password} onChange={setPassword} isRequired>
+            <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">{t.auth.register.password}</Label>
+            <InputGroup>
+              <InputGroup.Prefix><Lock className="size-4 text-muted" aria-hidden /></InputGroup.Prefix>
+              <InputGroup.Input type={showPassword ? 'text' : 'password'} placeholder={t.auth.register.passwordDesc} autoComplete="new-password" />
+              <InputGroup.Suffix className="pr-0">
+                <Button isIconOnly size="sm" variant="ghost" aria-label={showPassword ? t.auth.register.hide : t.auth.register.show} onPress={() => setShowPassword((v) => !v)}>
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
+              </InputGroup.Suffix>
+            </InputGroup>
+          </TextField>
+
+          <TextField name="confirmPassword" value={confirmPassword} onChange={setConfirmPassword} isRequired>
+            <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">{t.auth.register.confirmPassword}</Label>
+            <InputGroup>
+              <InputGroup.Prefix><Lock className="size-4 text-muted" aria-hidden /></InputGroup.Prefix>
+              <InputGroup.Input type={showPassword ? 'text' : 'password'} placeholder={t.auth.register.confirmPlaceholder} autoComplete="new-password" />
+            </InputGroup>
+          </TextField>
+
+          <div className="flex items-start gap-2.5">
+            <Checkbox isSelected={acceptTerms} onChange={setAcceptTerms} aria-label={t.auth.register.accept}>
+              <Checkbox.Content>
+                <Checkbox.Control className="mt-0.5">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+              </Checkbox.Content>
+            </Checkbox>
+            <p className="text-[13px] leading-relaxed text-muted select-none">
+              {t.auth.register.accept}{' '}
+              <NextLink href="/terms" className="text-foreground underline underline-offset-4 hover:text-accent">{t.auth.register.termsOf}</NextLink>
+              {' '}{t.auth.register.and}{' '}
+              <NextLink href="/privacy" className="text-foreground underline underline-offset-4 hover:text-accent">{t.auth.register.privacyPolicy}</NextLink>
+            </p>
+          </div>
+
+          {turnstileEnabled && turnstileSiteKey && <div ref={turnstileRef} />}
+
+          <Button type="submit" size="lg" className="w-full gap-2" isDisabled={isLoading || (!registrationEnabled && !inviteCode)}>
+            {isLoading && <Spinner size="sm" color="current" />}
+            {isLoading ? t.auth.register.creating : t.auth.register.createAccount}
+          </Button>
+        </Form>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-separator" />
+            <span className="text-[10px] tracking-wider text-muted uppercase">{t.auth.login.or}</span>
+            <div className="h-px flex-1 bg-separator" />
+          </div>
+          <p className="text-[13px] text-muted">
+            {t.auth.register.alreadyAccount}{' '}
+            <Link href="/login" className="font-medium text-accent hover:underline">{t.auth.register.logIn}</Link>
+          </p>
         </div>
       </div>
-
-      {/* ── Colonne droite : image ── */}
-      <div className="hidden bg-background p-4 lg:block">
-        <div className="relative h-full overflow-hidden rounded-2xl">
-          <img
-            src="/backgrounds/defaut.jpg"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
-      </div>
-
-    </div>
+    </AlfyAuthShell>
   );
 }

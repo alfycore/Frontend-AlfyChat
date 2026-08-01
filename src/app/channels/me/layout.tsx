@@ -2,7 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { GroupChatArea } from '@/components/chat/chat-area';
+import { GroupChatArea } from '@/components/chat/group-chat-area';
 
 /**
  * Layout /channels/me — délègue la sidebar au parent channels/layout.tsx.

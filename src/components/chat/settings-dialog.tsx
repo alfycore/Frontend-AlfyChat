@@ -1377,7 +1377,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
               {/* Live preview chip */}
               <div
-                className="h-10 w-full rounded-xl glass-blur glass-bg-sidebar border border-black/[0.09] dark:border-white/[0.10] flex items-center justify-center text-[11px] text-foreground/70"
+                className="h-10 w-full rounded-xl glass-blur glass-bg-sidebar border border-black/9 dark:border-white/10 flex items-center justify-center text-[11px] text-foreground/70"
                 style={{ backdropFilter: `blur(${layoutPrefs.glassBlur}px) saturate(180%)` }}
               >
                 Aperçu en temps réel
@@ -1418,22 +1418,136 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
         {/* Message style */}
         <SettingsCard>
-          <div className="p-5 space-y-3">
-            <p className="text-[13px] font-semibold text-foreground">Style des messages</p>
-            <div className="grid grid-cols-2 gap-3">
-              {[{
-                id: 'bubble' as const, label: 'Bulles', desc: 'iMessage · WhatsApp',
-                preview: <div className="flex w-full flex-col gap-1 rounded-lg border border-border/20 bg-background/50 p-2"><div className="flex justify-start"><div className="h-5 w-16 rounded-2xl rounded-bl-sm bg-muted/60" /></div><div className="flex justify-end"><div className="h-5 w-20 rounded-2xl rounded-br-sm bg-primary/60" /></div><div className="flex justify-start"><div className="h-5 w-12 rounded-2xl rounded-bl-sm bg-muted/60" /></div></div>,
-              }, {
-                id: 'discord' as const, label: 'Plat', desc: 'Discord · Slack',
-                preview: <div className="flex w-full flex-col gap-1.5 rounded-lg border border-border/20 bg-background/50 p-2">{[1, 2].map((i) => <div key={i} className="flex items-start gap-1.5"><div className="size-4 shrink-0 rounded-full bg-muted/60" /><div className="flex flex-1 flex-col gap-0.5"><div className="h-1.5 w-10 rounded bg-primary/40" /><div className="h-2 w-full rounded bg-muted/50" /></div></div>)}</div>,
-              }].map(({ id, label, desc, preview }) => (
-                <button key={id} type="button" onClick={() => updateLayoutPrefs({ msgStyle: id })}
-                  className={cn('flex flex-col items-center gap-2 rounded-xl border-2 p-2.5 text-[12px] font-medium transition-all', layoutPrefs.msgStyle === id ? 'border-primary bg-primary/10 text-primary' : 'border-border/30 bg-muted/20 text-muted-foreground hover:border-border/60')}>
-                  {preview}
-                  <div className="text-center"><span className="block">{label}</span><span className="block text-[10px] font-normal text-muted-foreground">{desc}</span></div>
-                </button>
-              ))}
+          <div className="p-5 space-y-4">
+            <div>
+              <p className="text-[13px] font-semibold text-foreground">Style des messages</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">Choisissez l&apos;apparence de vos conversations</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+
+              {/* ── Bulles ── */}
+              <button type="button" onClick={() => updateLayoutPrefs({ msgStyle: 'bubble' })}
+                className={cn(
+                  'group relative flex flex-col overflow-hidden rounded-2xl border-2 transition-all duration-200 active:scale-[0.97]',
+                  layoutPrefs.msgStyle === 'bubble'
+                    ? 'border-primary shadow-lg shadow-primary/15'
+                    : 'border-transparent hover:border-border/40 hover:shadow-md',
+                )}>
+                <div className="relative flex h-32 w-full flex-col justify-end gap-2 overflow-hidden bg-linear-to-b from-muted/10 to-muted/30 p-3">
+                  <div className="flex items-end gap-1.5 justify-start">
+                    <div className="size-5 shrink-0 rounded-full bg-muted/60 ring-1 ring-border/20" />
+                    <div className="rounded-2xl rounded-bl-sm bg-muted/60 px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
+                      <div className="h-1.5 w-16 rounded-full bg-foreground/20" />
+                      <div className="mt-1 h-1.5 w-10 rounded-full bg-foreground/12" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <div className="rounded-2xl rounded-br-sm bg-primary/75 px-2.5 py-1.5 shadow-sm">
+                      <div className="h-1.5 w-20 rounded-full bg-white/50" />
+                    </div>
+                  </div>
+                  <div className="flex items-end gap-1.5 justify-start">
+                    <div className="size-5 shrink-0 rounded-full opacity-0" />
+                    <div className="rounded-2xl rounded-bl-sm bg-muted/60 px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
+                      <div className="h-1.5 w-12 rounded-full bg-foreground/20" />
+                    </div>
+                  </div>
+                  {layoutPrefs.msgStyle === 'bubble' && (
+                    <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary shadow-sm">
+                      <CheckIcon size={11} className="text-white" />
+                    </span>
+                  )}
+                </div>
+                <div className={cn('px-3 py-2.5 text-left transition-colors', layoutPrefs.msgStyle === 'bubble' ? 'bg-primary/8' : 'bg-muted/15')}>
+                  <p className={cn('text-[12px] font-semibold', layoutPrefs.msgStyle === 'bubble' ? 'text-primary' : 'text-foreground')}>Bulles</p>
+                  <p className="text-[10px] text-muted-foreground">iMessage · WhatsApp</p>
+                </div>
+              </button>
+
+              {/* ── Compact ── */}
+              <button type="button" onClick={() => updateLayoutPrefs({ msgStyle: 'discord' })}
+                className={cn(
+                  'group relative flex flex-col overflow-hidden rounded-2xl border-2 transition-all duration-200 active:scale-[0.97]',
+                  layoutPrefs.msgStyle === 'discord'
+                    ? 'border-primary shadow-lg shadow-primary/15'
+                    : 'border-transparent hover:border-border/40 hover:shadow-md',
+                )}>
+                <div className="relative flex h-32 w-full flex-col justify-end gap-2.5 overflow-hidden bg-linear-to-b from-muted/10 to-muted/30 p-3">
+                  {[{ name: 'w-14', msgs: ['w-full', 'w-4/5'] }, { name: 'w-12', msgs: ['w-3/5'] }].map((row, i) => (
+                    <div key={i} className="flex items-start gap-1.5">
+                      <div className="mt-0.5 size-5 shrink-0 rounded-full bg-muted/60 ring-1 ring-border/20" />
+                      <div className="flex flex-1 flex-col gap-1">
+                        <div className={`h-1.5 ${row.name} rounded-full bg-primary/50`} />
+                        {row.msgs.map((w, j) => (
+                          <div key={j} className={`h-1.5 ${w} rounded-full bg-foreground/15`} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {layoutPrefs.msgStyle === 'discord' && (
+                    <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary shadow-sm">
+                      <CheckIcon size={11} className="text-white" />
+                    </span>
+                  )}
+                </div>
+                <div className={cn('px-3 py-2.5 text-left transition-colors', layoutPrefs.msgStyle === 'discord' ? 'bg-primary/8' : 'bg-muted/15')}>
+                  <p className={cn('text-[12px] font-semibold', layoutPrefs.msgStyle === 'discord' ? 'text-primary' : 'text-foreground')}>Compact</p>
+                  <p className="text-[10px] text-muted-foreground">Discord · Slack</p>
+                </div>
+              </button>
+
+              {/* ── Split ── */}
+              <button type="button" onClick={() => updateLayoutPrefs({ msgStyle: 'split' })}
+                className={cn(
+                  'group relative flex flex-col overflow-hidden rounded-2xl border-2 transition-all duration-200 active:scale-[0.97]',
+                  layoutPrefs.msgStyle === 'split'
+                    ? 'border-primary shadow-lg shadow-primary/15'
+                    : 'border-transparent hover:border-border/40 hover:shadow-md',
+                )}>
+                <div className="relative flex h-32 w-full overflow-hidden bg-linear-to-b from-muted/10 to-muted/30">
+                  {/* Chat side */}
+                  <div className="flex flex-1 flex-col justify-end gap-1.5 p-2.5">
+                    <div className="flex items-end gap-1">
+                      <div className="size-4 shrink-0 rounded-full bg-muted/60" />
+                      <div className="rounded-xl rounded-bl-sm bg-muted/55 px-2 py-1">
+                        <div className="h-1.5 w-10 rounded-full bg-foreground/18" />
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <div className="rounded-xl rounded-br-sm bg-primary/70 px-2 py-1">
+                        <div className="h-1.5 w-12 rounded-full bg-white/45" />
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-1">
+                      <div className="size-4 opacity-0 shrink-0 rounded-full" />
+                      <div className="rounded-xl rounded-bl-sm bg-muted/55 px-2 py-1">
+                        <div className="h-1.5 w-8 rounded-full bg-foreground/18" />
+                      </div>
+                    </div>
+                  </div>
+                  {/* Divider */}
+                  <div className="w-px self-stretch bg-border/25" />
+                  {/* Info panel */}
+                  <div className="flex w-10.5 flex-col items-center gap-1.5 pt-3">
+                    <div className="size-7 rounded-full bg-muted/60 ring-1 ring-border/20" />
+                    <div className="h-1 w-8 rounded-full bg-muted/50" />
+                    <div className="h-1 w-5 rounded-full bg-muted/35" />
+                    <div className="mt-0.5 grid grid-cols-2 gap-0.5">
+                      {[0,1,2,3].map(k => <div key={k} className="size-3 rounded-sm bg-muted/40" />)}
+                    </div>
+                  </div>
+                  {layoutPrefs.msgStyle === 'split' && (
+                    <span className="absolute right-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-primary shadow-sm">
+                      <CheckIcon size={11} className="text-white" />
+                    </span>
+                  )}
+                </div>
+                <div className={cn('px-3 py-2.5 text-left transition-colors', layoutPrefs.msgStyle === 'split' ? 'bg-primary/8' : 'bg-muted/15')}>
+                  <p className={cn('text-[12px] font-semibold', layoutPrefs.msgStyle === 'split' ? 'text-primary' : 'text-foreground')}>Split</p>
+                  <p className="text-[10px] text-muted-foreground">Profil · Médias</p>
+                </div>
+              </button>
+
             </div>
           </div>
         </SettingsCard>

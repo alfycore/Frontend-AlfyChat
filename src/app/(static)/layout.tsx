@@ -9,9 +9,7 @@ export default function StaticLayout({
   return (
     <div data-no-wallpaper className="min-h-screen text-[var(--foreground)]">
       <LandingNavbar />
-      <div className="pt-20">
-        {children}
-      </div>
+      {children}
       <SiteFooter />
     </div>
   );

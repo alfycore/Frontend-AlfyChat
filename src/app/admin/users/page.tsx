@@ -1,273 +1,543 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button }    from '@/components/ui/button';
-import { Badge }     from '@/components/ui/badge';
-import { Input }     from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
-} from '@/components/ui/dialog';
-import { SearchIcon, AwardIcon, XIcon, UserPlusIcon } from '@/components/icons';
-import { api } from '@/lib/api';
-import { renderBadgeIcon } from '../_shared';
+  Alert, Button, Chip, Input, Label, ListBox, Modal, SearchField, Select, Separator,
+} from '@heroui/react';
+import {
+  Award, Ban, Gavel, Plus, RotateCcw, ShieldCheck, Users, VolumeX, X,
+} from 'lucide-react';
 
-const ROLES: Record<string, { label: string; color: string }> = {
-  admin:       { label: 'Admin',       color: 'bg-purple-500/15 text-purple-500 border-purple-500/25' },
-  moderator:   { label: 'Modérateur',  color: 'bg-blue-500/15 text-blue-500 border-blue-500/25' },
-  support_l1:  { label: 'Support N1',  color: 'bg-teal-500/15 text-teal-500 border-teal-500/25' },
-  support_l2:  { label: 'Support N2',  color: 'bg-cyan-500/15 text-cyan-500 border-cyan-500/25' },
-  technician:  { label: 'Technicien',  color: 'bg-amber-500/15 text-amber-500 border-amber-500/25' },
-  user:        { label: 'Utilisateur', color: 'bg-muted text-muted-foreground border-border' },
-};
+import { api, type AdminRole, type ModerationStatus, type Sanction } from '@/lib/api';
+import {
+  DateText, EmptyState, InitialAvatar, PageHeader, SectionCard, StatusDot,
+  TableShell, TableSkeleton, Td, Th, Tr,
+} from '@/components/alfy/admin/primitives';
+import { SANCTION_META, SanctionDialog, type SanctionTarget } from '@/components/alfy/admin/sanction-dialog';
+import { renderBadgeIcon } from '@/components/alfy/admin/badge-icon';
 
-function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
-  const colors = [
-    'bg-purple-500/20 text-purple-600',
-    'bg-blue-500/20 text-blue-600',
-    'bg-green-500/20 text-green-600',
-    'bg-amber-500/20 text-amber-600',
-    'bg-red-500/20 text-red-600',
-    'bg-teal-500/20 text-teal-600',
-    'bg-indigo-500/20 text-indigo-600',
-    'bg-pink-500/20 text-pink-600',
-  ];
-  const color = colors[(name.charCodeAt(0) || 0) % colors.length];
-  const dim = size === 'sm' ? 'size-7 text-[11px]' : 'size-9 text-sm';
-  return (
-    <div className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${dim} ${color}`}>
-      {name[0]?.toUpperCase() ?? '?'}
-    </div>
-  );
+interface AdminUser {
+  id: string;
+  username: string;
+  displayName: string;
+  email: string;
+  role: AdminRole;
+  badges: BadgeSnapshot[];
+  isOnline: boolean;
+  createdAt: string;
 }
 
+interface BadgeSnapshot {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  iconType?: string;
+  iconValue?: string;
+  color?: string;
+  isActive?: boolean;
+}
+
+const ROLES: { key: AdminRole; label: string; color: 'accent' | 'danger' | 'success' | 'warning' | 'default' }[] = [
+  { key: 'user',       label: 'Utilisateur', color: 'default' },
+  { key: 'moderator',  label: 'Modérateur',  color: 'accent' },
+  { key: 'support_l1', label: 'Support N1',  color: 'success' },
+  { key: 'support_l2', label: 'Support N2',  color: 'success' },
+  { key: 'technician', label: 'Technicien',  color: 'warning' },
+  { key: 'admin',      label: 'Admin',       color: 'danger' },
+];
+
+const ROLE_BY_KEY = Object.fromEntries(ROLES.map((r) => [r.key, r]));
+
 export default function AdminUsersPage() {
-  const [users, setUsers]     = useState<any[]>([]);
-  const [badges, setBadges]   = useState<any[]>([]);
+  const [users, setUsers]     = useState<AdminUser[]>([]);
+  const [badges, setBadges]   = useState<BadgeSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
-  const [showAssign, setShowAssign] = useState(false);
-  const [selected, setSelected]     = useState<any>(null);
-  const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [error, setError]     = useState<string | null>(null);
+
+  // Dossier de modération ouvert
+  const [fileUser, setFileUser]     = useState<AdminUser | null>(null);
+  const [fileStatus, setFileStatus] = useState<ModerationStatus | null>(null);
+  const [fileHistory, setFileHistory] = useState<Sanction[]>([]);
+  const [fileLoading, setFileLoading] = useState(false);
+
+  // Dialogues
+  const [sanctionTarget, setSanctionTarget] = useState<SanctionTarget | null>(null);
+  const [badgeUser, setBadgeUser] = useState<AdminUser | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [ur, br] = await Promise.all([api.getAdminUsers(100, 0), api.getAdminBadges()]);
-    if (ur.success && ur.data) setUsers(ur.data as any[]);
-    if (br.success && br.data) setBadges(br.data as any[]);
+    setError(null);
+
+    const [usersRes, badgesRes] = await Promise.all([
+      api.getAdminUsers(200, 0),
+      api.getAdminBadges(),
+    ]);
+
+    if (usersRes.success && usersRes.data) setUsers(usersRes.data as AdminUser[]);
+    else setError(usersRes.error ?? 'Impossible de charger les comptes.');
+
+    if (badgesRes.success && badgesRes.data) setBadges(badgesRes.data as BadgeSnapshot[]);
+
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const handleSearch = async (q: string) => {
+  // La recherche passe par l'API — la liste peut dépasser la page chargée
+  const runSearch = async (q: string) => {
     setSearch(q);
     if (!q.trim()) { load(); return; }
-    const r = await api.searchAdminUsers(q);
-    if (r.success && r.data) setUsers(r.data as any[]);
+    const res = await api.searchAdminUsers(q);
+    if (res.success && res.data) setUsers(res.data as AdminUser[]);
+  };
+
+  const changeRole = async (user: AdminUser, role: AdminRole) => {
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role } : u)));
+    const res = await api.updateUserRole(user.id, role);
+    if (!res.success) {
+      setError(res.error ?? 'Le rôle n’a pas pu être modifié.');
+      load();
+    }
+  };
+
+  const openFile = async (user: AdminUser) => {
+    setFileUser(user);
+    setFileLoading(true);
+    setFileStatus(null);
+    setFileHistory([]);
+
+    const res = await api.getUserModeration(user.id);
+    if (res.success && res.data) {
+      setFileStatus(res.data.status);
+      setFileHistory(res.data.history);
+    }
+    setFileLoading(false);
+  };
+
+  const refreshFile = async () => {
+    if (fileUser) await openFile(fileUser);
+  };
+
+  const lift = async (kind: 'ban' | 'mute') => {
+    if (!fileUser) return;
+    const res = kind === 'ban'
+      ? await api.unbanUser(fileUser.id)
+      : await api.unmuteUser(fileUser.id);
+    if (res.success) refreshFile();
+  };
+
+  const toggleBadge = async (user: AdminUser, badge: BadgeSnapshot, has: boolean) => {
+    const res = has
+      ? await api.removeBadgeFromUser(user.id, badge.id)
+      : await api.assignBadgeToUser(user.id, badge.id);
+    if (!res.success) return;
+
+    const next = has
+      ? user.badges.filter((b) => b.id !== badge.id)
+      : [...user.badges, badge];
+
+    setBadgeUser({ ...user, badges: next });
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, badges: next } : u)));
   };
 
   return (
-    <div className="mx-auto max-w-7xl">
-      {/* Header */}
-      <div className="mb-6 flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Utilisateurs</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {loading ? '…' : `${users.length} compte${users.length !== 1 ? 's' : ''}`}
-          </p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title="Utilisateurs"
+        description="Rôles, badges et dossier de modération de chaque compte."
+      >
+        <Button size="sm" variant="secondary" onPress={load} isPending={loading}>
+          <RotateCcw className="size-3.5" aria-hidden />
+          Actualiser
+        </Button>
+      </PageHeader>
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          className="pl-9 h-10"
-          placeholder="Rechercher par nom, username ou email…"
-          value={search}
-          onChange={e => handleSearch(e.target.value)}
-        />
-      </div>
+      {error && (
+        <Alert status="danger" className="mb-5">
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <SectionCard
+        flush
+        title="Comptes"
+        description={`${users.length} résultat${users.length > 1 ? 's' : ''}`}
+        actions={
+          <SearchField
+            aria-label="Rechercher un compte"
+            value={search}
+            onChange={runSearch}
+            className="w-full sm:w-72"
+          >
+            <Input placeholder="Nom, pseudo ou adresse e-mail…" />
+          </SearchField>
+        }
+      >
         {loading ? (
-          <div className="divide-y divide-border">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-5 py-3.5">
-                <div className="size-9 animate-pulse rounded-full bg-muted" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3.5 w-32 animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-48 animate-pulse rounded bg-muted" />
-                </div>
-                <div className="h-6 w-20 animate-pulse rounded-full bg-muted" />
-                <div className="h-6 w-24 animate-pulse rounded bg-muted" />
-              </div>
-            ))}
-          </div>
+          <TableSkeleton rows={8} cols={5} />
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <SearchIcon className="mb-3 size-8 text-muted-foreground/40" />
-            <p className="text-sm font-medium">Aucun utilisateur trouvé</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Essayez un autre terme de recherche.</p>
-          </div>
+          <EmptyState
+            icon={Users}
+            title="Aucun compte trouvé"
+            description={search ? 'Aucun compte ne correspond à cette recherche.' : undefined}
+          />
         ) : (
-          <>
-            {/* Header row */}
-            <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] items-center gap-4 border-b border-border bg-muted/30 px-5 py-2.5">
-              <div className="size-9" />
-              <span className="text-xs font-medium text-muted-foreground">Utilisateur</span>
-              <span className="text-xs font-medium text-muted-foreground w-28 text-center">Statut</span>
-              <span className="text-xs font-medium text-muted-foreground w-32">Rôle</span>
-              <span className="hidden text-xs font-medium text-muted-foreground sm:block w-20">Inscrit</span>
-              <span className="w-8" />
-            </div>
-            <div className="divide-y divide-border">
-              {users.map(u => {
-                const role = ROLES[u.role || 'user'] ?? ROLES.user;
-                return (
-                  <div
-                    key={u.id}
-                    className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/20"
-                  >
-                    <Avatar name={u.displayName || u.username || '?'} />
-
+          <TableShell
+            minWidth={900}
+            head={
+              <>
+                <Th>Compte</Th>
+                <Th>Badges</Th>
+                <Th>Présence</Th>
+                <Th>Rôle</Th>
+                <Th>Inscrit</Th>
+                <Th align="right">Actions</Th>
+              </>
+            }
+          >
+            {users.map((u) => (
+              <Tr key={u.id}>
+                <Td>
+                  <div className="flex items-center gap-2.5">
+                    <InitialAvatar name={u.displayName || u.username} />
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-medium">{u.displayName}</p>
-                        {/* badges preview */}
-                        {(u.badges || []).slice(0, 3).map((b: any, i: number) => (
-                          <span
-                            key={i}
-                            className="flex size-5 items-center justify-center rounded"
-                            style={{ backgroundColor: (b.color || '#5865F2') + '22' }}
-                            title={b.name}
-                          >
-                            {renderBadgeIcon(b.iconType || 'bootstrap', b.iconValue || b.icon, b.color || '#5865F2', 'text-[11px]')}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="truncate text-xs text-muted-foreground">@{u.username} · {u.email}</p>
+                      <p className="truncate text-sm font-medium">{u.displayName}</p>
+                      <p className="truncate text-xs text-muted">
+                        @{u.username} · {u.email}
+                      </p>
                     </div>
-
-                    {/* Online status */}
-                    <div className="flex w-28 justify-center">
-                      {u.isOnline ? (
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-green-500">
-                          <span className="relative flex size-2">
-                            <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
-                            <span className="relative inline-flex size-2 rounded-full bg-green-500" />
-                          </span>
-                          En ligne
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Hors ligne</span>
-                      )}
-                    </div>
-
-                    {/* Role selector */}
-                    <div className="w-32">
-                      <div className="relative">
-                        <select
-                          className={`h-7 w-full cursor-pointer appearance-none rounded-full border px-2.5 text-xs font-medium transition-colors ${role.color}`}
-                          value={u.role || 'user'}
-                          onChange={e => api.updateUserRole(u.id, e.target.value as any).then(load)}
-                        >
-                          {Object.entries(ROLES).map(([v, { label }]) => (
-                            <option key={v} value={v}>{label}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Date */}
-                    <span className="hidden w-20 text-xs text-muted-foreground sm:block">
-                      {new Date(u.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-                    </span>
-
-                    {/* Actions */}
-                    <button
-                      title="Gérer les badges"
-                      onClick={() => { setSelected(u); setUserBadges(u.badges || []); setShowAssign(true); }}
-                      className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      <AwardIcon className="size-4" />
-                    </button>
                   </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+                </Td>
 
-      {/* Badge assign dialog */}
-      <Dialog open={showAssign} onOpenChange={setShowAssign}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2.5">
-              {selected && <Avatar name={selected.displayName || '?'} size="sm" />}
-              Badges de {selected?.displayName}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Attribués</p>
-              {userBadges.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-                  Aucun badge attribué
-                </p>
-              ) : (
-                <div className="space-y-1.5">
-                  {userBadges.map((b: any) => (
-                    <div key={b.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5">
-                      <div className="flex size-8 items-center justify-center rounded-lg" style={{ backgroundColor: (b.color || '#5865F2') + '22' }}>
-                        {renderBadgeIcon(b.iconType || 'bootstrap', b.iconValue || b.icon, b.color || '#5865F2', 'text-sm')}
-                      </div>
-                      <span className="flex-1 text-sm font-medium">{b.name}</span>
-                      <button
-                        onClick={() => api.removeBadgeFromUser(selected.id, b.id).then(() => { setUserBadges(p => p.filter((x: any) => x.id !== b.id)); load(); })}
-                        className="text-muted-foreground transition-colors hover:text-destructive"
+                <Td>
+                  <div className="flex items-center gap-1">
+                    {(u.badges ?? []).slice(0, 4).map((b, i) => (
+                      <span
+                        key={b.id ?? i}
+                        className="flex size-5 items-center justify-center rounded"
+                        style={{ backgroundColor: `${b.color ?? '#8b5cf6'}22` }}
                       >
-                        <XIcon className="size-4" />
-                      </button>
-                    </div>
-                  ))}
+                        {renderBadgeIcon(
+                          b.iconType ?? 'bootstrap',
+                          b.iconValue ?? b.icon ?? '',
+                          b.color ?? '#8b5cf6',
+                          'text-[10px]',
+                        )}
+                      </span>
+                    ))}
+                    {(u.badges?.length ?? 0) > 4 && (
+                      <span className="text-xs text-muted">+{u.badges.length - 4}</span>
+                    )}
+                    {(u.badges?.length ?? 0) === 0 && (
+                      <span className="text-xs text-muted">—</span>
+                    )}
+                  </div>
+                </Td>
+
+                <Td>
+                  <StatusDot
+                    tone={u.isOnline ? 'success' : 'muted'}
+                    label={u.isOnline ? 'En ligne' : 'Hors ligne'}
+                    pulse={u.isOnline}
+                  />
+                </Td>
+
+                <Td>
+                  <Select
+                    aria-label={`Rôle de ${u.displayName}`}
+                    selectedKey={u.role ?? 'user'}
+                    onSelectionChange={(k) => changeRole(u, k as AdminRole)}
+                    className="w-36"
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {ROLES.map((r) => (
+                          <ListBox.Item key={r.key} id={r.key} textValue={r.label}>
+                            <Label>{r.label}</Label>
+                            <ListBox.ItemIndicator />
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </Td>
+
+                <Td><DateText value={u.createdAt} /></Td>
+
+                <Td align="right">
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      isIconOnly
+                      aria-label={`Badges de ${u.displayName}`}
+                      onPress={() => setBadgeUser(u)}
+                    >
+                      <Award className="size-4" aria-hidden />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      isIconOnly
+                      aria-label={`Dossier de modération de ${u.displayName}`}
+                      onPress={() => openFile(u)}
+                    >
+                      <Gavel className="size-4" aria-hidden />
+                    </Button>
+                  </div>
+                </Td>
+              </Tr>
+            ))}
+          </TableShell>
+        )}
+      </SectionCard>
+
+      {/* ── Dossier de modération ── */}
+      <Modal.Backdrop isOpen={fileUser !== null} onOpenChange={(o) => !o && setFileUser(null)}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[560px]">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Icon className="bg-accent/12 text-accent">
+                <Gavel className="size-5" aria-hidden />
+              </Modal.Icon>
+              <Modal.Heading>Dossier de modération</Modal.Heading>
+            </Modal.Header>
+
+            <Modal.Body className="space-y-4">
+              {fileUser && (
+                <div className="flex items-center gap-3">
+                  <InitialAvatar name={fileUser.displayName || fileUser.username} size="lg" />
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{fileUser.displayName}</p>
+                    <p className="truncate text-xs text-muted">@{fileUser.username}</p>
+                  </div>
+                  <Chip
+                    size="sm"
+                    variant="soft"
+                    color={ROLE_BY_KEY[fileUser.role ?? 'user']?.color ?? 'default'}
+                    className="ml-auto"
+                  >
+                    <Chip.Label>{ROLE_BY_KEY[fileUser.role ?? 'user']?.label}</Chip.Label>
+                  </Chip>
                 </div>
               )}
-            </div>
-            <Separator />
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Disponibles</p>
-              <div className="space-y-1.5">
-                {badges
-                  .filter(b => b.isActive !== false && !userBadges.some((x: any) => x.id === b.id))
-                  .map(badge => (
-                    <div key={badge.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:bg-muted/30">
-                      <div className="flex size-8 items-center justify-center rounded-lg" style={{ backgroundColor: badge.color + '22' }}>
-                        {renderBadgeIcon(badge.iconType, badge.iconValue, badge.color, 'text-sm')}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{badge.name}</p>
-                        {badge.description && <p className="text-xs text-muted-foreground truncate">{badge.description}</p>}
-                      </div>
-                      <button
-                        onClick={() => api.assignBadgeToUser(selected.id, badge.id).then(() => { setUserBadges(p => [...p, badge]); load(); })}
-                        className="flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
-                      >
-                        <UserPlusIcon className="size-3.5" /> Ajouter
-                      </button>
+
+              {/* Statut courant */}
+              {fileLoading ? (
+                <p className="py-6 text-center text-sm text-muted">Chargement du dossier…</p>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    {fileStatus?.banned && (
+                      <Alert status="danger">
+                        <Alert.Content>
+                          <Alert.Title>
+                            Compte banni
+                            {fileStatus.bannedUntil
+                              ? ` jusqu'au ${new Date(fileStatus.bannedUntil).toLocaleString('fr-FR')}`
+                              : ' définitivement'}
+                          </Alert.Title>
+                          <Alert.Description>
+                            Motif : {fileStatus.banReason ?? 'non précisé'}
+                          </Alert.Description>
+                        </Alert.Content>
+                      </Alert>
+                    )}
+                    {fileStatus?.muted && (
+                      <Alert status="warning">
+                        <Alert.Content>
+                          <Alert.Title>
+                            Réduit au silence
+                            {fileStatus.mutedUntil
+                              ? ` jusqu'au ${new Date(fileStatus.mutedUntil).toLocaleString('fr-FR')}`
+                              : ' de façon permanente'}
+                          </Alert.Title>
+                          <Alert.Description>
+                            Motif : {fileStatus.muteReason ?? 'non précisé'}
+                          </Alert.Description>
+                        </Alert.Content>
+                      </Alert>
+                    )}
+                    {fileStatus && !fileStatus.banned && !fileStatus.muted && (
+                      <Alert status="success">
+                        <Alert.Content>
+                          <Alert.Description>
+                            Aucune sanction en vigueur
+                            {fileStatus.warnings > 0
+                              ? ` — ${fileStatus.warnings} avertissement${fileStatus.warnings > 1 ? 's' : ''} au dossier.`
+                              : '.'}
+                          </Alert.Description>
+                        </Alert.Content>
+                      </Alert>
+                    )}
+                  </div>
+
+                  {/* Actions de levée */}
+                  {(fileStatus?.banned || fileStatus?.muted) && (
+                    <div className="flex flex-wrap gap-2">
+                      {fileStatus.banned && (
+                        <Button size="sm" variant="secondary" onPress={() => lift('ban')}>
+                          <ShieldCheck className="size-3.5" aria-hidden />
+                          Débannir
+                        </Button>
+                      )}
+                      {fileStatus.muted && (
+                        <Button size="sm" variant="secondary" onPress={() => lift('mute')}>
+                          <VolumeX className="size-3.5" aria-hidden />
+                          Rendre la parole
+                        </Button>
+                      )}
                     </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button>Fermer</Button></DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* Historique */}
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-muted">
+                      Historique ({fileHistory.length})
+                    </p>
+                    {fileHistory.length === 0 ? (
+                      <p className="rounded-md border border-dashed border-border px-3 py-6 text-center text-xs text-muted">
+                        Aucune sanction enregistrée pour ce compte.
+                      </p>
+                    ) : (
+                      <ul className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
+                        {fileHistory.map((s) => {
+                          const Icon = SANCTION_META[s.type].icon;
+                          return (
+                            <li
+                              key={s.id}
+                              className="flex items-start gap-2.5 rounded-md border border-border px-3 py-2"
+                            >
+                              <Icon
+                                className={`mt-0.5 size-3.5 shrink-0 ${s.active ? 'text-danger' : 'text-muted'}`}
+                                aria-hidden
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium">
+                                  {SANCTION_META[s.type].label}
+                                  {s.revoked && ' · levée'}
+                                </p>
+                                <p className="truncate text-xs text-muted" title={s.reason}>
+                                  {s.reason}
+                                </p>
+                              </div>
+                              <DateText value={s.createdAt} />
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </>
+              )}
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button slot="close" variant="tertiary">Fermer</Button>
+              <Button
+                variant="danger"
+                onPress={() => {
+                  if (!fileUser) return;
+                  setSanctionTarget({
+                    id: fileUser.id,
+                    username: fileUser.username,
+                    displayName: fileUser.displayName,
+                  });
+                }}
+              >
+                <Ban className="size-3.5" aria-hidden />
+                Sanctionner
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+
+      {/* ── Badges d'un compte ── */}
+      <Modal.Backdrop isOpen={badgeUser !== null} onOpenChange={(o) => !o && setBadgeUser(null)}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[440px]">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Icon className="bg-accent/12 text-accent">
+                <Award className="size-5" aria-hidden />
+              </Modal.Icon>
+              <Modal.Heading>Badges de {badgeUser?.displayName}</Modal.Heading>
+            </Modal.Header>
+
+            <Modal.Body>
+              {badges.filter((b) => b.isActive !== false).length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted">
+                  Aucun badge n’a encore été créé.
+                </p>
+              ) : (
+                <ul className="max-h-80 space-y-1.5 overflow-y-auto pr-1">
+                  {badges
+                    .filter((b) => b.isActive !== false)
+                    .map((badge) => {
+                      const has = !!badgeUser?.badges?.some((b) => b.id === badge.id);
+                      return (
+                        <li
+                          key={badge.id}
+                          className="flex items-center gap-3 rounded-md border border-border px-3 py-2.5"
+                        >
+                          <span
+                            className="flex size-8 shrink-0 items-center justify-center rounded-md"
+                            style={{ backgroundColor: `${badge.color ?? '#8b5cf6'}22` }}
+                          >
+                            {renderBadgeIcon(
+                              badge.iconType ?? 'bootstrap',
+                              badge.iconValue ?? '',
+                              badge.color ?? '#8b5cf6',
+                              'text-sm',
+                            )}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{badge.name}</p>
+                            {badge.description && (
+                              <p className="truncate text-xs text-muted">{badge.description}</p>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={has ? 'ghost' : 'secondary'}
+                            onPress={() => badgeUser && toggleBadge(badgeUser, badge, has)}
+                            className={has ? 'text-danger hover:bg-danger/10' : undefined}
+                          >
+                            {has ? <X className="size-3.5" aria-hidden /> : <Plus className="size-3.5" aria-hidden />}
+                            {has ? 'Retirer' : 'Ajouter'}
+                          </Button>
+                        </li>
+                      );
+                    })}
+                </ul>
+              )}
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button slot="close" variant="tertiary">Fermer</Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+
+      <SanctionDialog
+        isOpen={sanctionTarget !== null}
+        onOpenChange={(o) => !o && setSanctionTarget(null)}
+        target={sanctionTarget}
+        onApplied={() => { setSanctionTarget(null); refreshFile(); }}
+      />
+    </>
   );
 }

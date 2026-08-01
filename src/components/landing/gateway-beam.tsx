@@ -58,7 +58,7 @@ export function GatewayBeam({ className }: { className?: string }) {
       {/* Gateway (centre) */}
       <div className="flex flex-col items-center justify-center gap-1">
         <Circle ref={gatewayRef} className="size-14 border-primary/40 bg-primary shadow-md">
-          <img src="/logo/Alfychat.svg" alt="Gateway" className="size-7" />
+          <img src="/logo/Alfychatlogowihte.svg" alt="Gateway" className="size-7" />
         </Circle>
         <span className="text-[9px] font-semibold text-primary">Gateway</span>
       </div>

@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar } from '@heroui/react';
 import { resolveMediaUrl } from '@/lib/api';
 
 export interface MentionUser {
@@ -39,20 +39,17 @@ export function MentionPopover({
     );
   }).slice(0, 8);
 
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
+  useEffect(() => { setSelectedIndex(0); }, [query]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!visible || filtered.length === 0) return;
-
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % filtered.length);
+        setSelectedIndex((p) => (p + 1) % filtered.length);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
+        setSelectedIndex((p) => (p - 1 + filtered.length) % filtered.length);
       } else if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
         e.stopPropagation();
@@ -62,7 +59,7 @@ export function MentionPopover({
         onClose();
       }
     },
-    [visible, filtered, selectedIndex, onSelect, onClose]
+    [visible, filtered, selectedIndex, onSelect, onClose],
   );
 
   useEffect(() => {
@@ -81,14 +78,14 @@ export function MentionPopover({
 
   if (!visible) return null;
 
+  const panelCls =
+    'absolute z-50 w-64 overflow-hidden rounded-2xl border border-separator bg-overlay shadow-overlay backdrop-blur-xl';
+
   if (filtered.length === 0) {
     if (!query) return null;
     return (
-      <div
-        className="absolute z-50 w-64 rounded-2xl border border-border/50 bg-card/95 p-1.5 shadow-2xl shadow-black/20 backdrop-blur-xl"
-        style={{ bottom: position.top, left: position.left }}
-      >
-        <div className="flex items-center gap-2 px-2.5 py-2 text-[13px] text-destructive/80">
+      <div className={panelCls} style={{ bottom: position.top, left: position.left }}>
+        <div className="flex items-center gap-2 px-3 py-2.5 text-[13px] text-danger/80">
           <span className="text-base leading-none">⚠️</span>
           Utilisateur invalide
         </div>
@@ -99,37 +96,37 @@ export function MentionPopover({
   return (
     <div
       ref={listRef}
-      className="absolute z-50 max-h-56 w-64 overflow-y-auto rounded-2xl border border-border/50 bg-card/95 p-1.5 shadow-2xl shadow-black/20 backdrop-blur-xl"
+      className={`${panelCls} max-h-56 overflow-y-auto`}
       style={{ bottom: position.top, left: position.left }}
     >
-      <div className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground/50">
+      <div className="px-3 py-1.5 text-[11px] font-medium text-muted/70">
         Membres — {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
       </div>
       {filtered.map((user, idx) => (
         <button
           key={user.id}
           data-mention-item
-          className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm transition-all duration-150 ${
+          className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-sm transition-colors duration-150 ${
             idx === selectedIndex
-              ? 'bg-linear-to-r from-primary/15 to-primary/5 text-primary shadow-sm shadow-primary/10'
-              : 'hover:bg-foreground/6'
+              ? 'bg-accent/10 text-accent'
+              : 'hover:bg-foreground/[0.06]'
           }`}
           onMouseEnter={() => setSelectedIndex(idx)}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onSelect(user);
-          }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelect(user); }}
         >
-          <Avatar className="size-7 rounded-lg">
-            <AvatarImage src={resolveMediaUrl(user.avatarUrl)} alt={user.username} />
-            <AvatarFallback className="rounded-lg bg-muted text-[10px] font-bold text-muted-foreground">
+          <Avatar size="sm" className="shrink-0 rounded-lg">
+            <Avatar.Image src={resolveMediaUrl(user.avatarUrl) ?? undefined} alt={user.username} />
+            <Avatar.Fallback className="rounded-lg text-[10px] font-bold">
               {(user.displayName || user.username)[0]?.toUpperCase()}
-            </AvatarFallback>
+            </Avatar.Fallback>
           </Avatar>
           <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-[13px] font-medium leading-tight">{user.displayName || user.username}</p>
-            <p className="truncate font-mono text-[10px] text-muted-foreground/70 leading-tight">@{user.username}</p>
+            <p className="truncate text-[13px] font-medium leading-tight text-foreground">
+              {user.displayName || user.username}
+            </p>
+            <p className="truncate font-mono text-[10px] leading-tight text-muted">
+              @{user.username}
+            </p>
           </div>
         </button>
       ))}

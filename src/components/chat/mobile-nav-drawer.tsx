@@ -1,7 +1,7 @@
 'use client';
 
-import { ServerList } from '@/components/chat/server-list';
-import { ChannelList } from '@/components/chat/channel-list';
+import { RedesignServerList as ServerList } from '@/components/redesign/chrome/RedesignServerList';
+import { RedesignChannelList as ChannelList } from '@/components/redesign/chrome/RedesignChannelList';
 import { MobileDMSidebar } from '@/components/chat/mobile-dm-sidebar';
 import { MobileBottomNav } from '@/components/chat/mobile-bottom-nav';
 import { VoiceControlBar } from '@/components/chat/voice-control-bar';

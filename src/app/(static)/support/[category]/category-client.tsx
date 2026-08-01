@@ -5,8 +5,8 @@ import {
   ShieldIcon, SettingsIcon, ServerIcon, HelpCircleIcon,
   ArrowLeftIcon, ArrowRightIcon, BookOpenIcon, PinIcon,
 } from '@/components/icons';
-import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
 import { useTranslation } from '@/components/locale-provider';
+import { MotionFade, MotionStagger, MotionStaggerItem } from '@/components/ui/motion-fade';
 
 export interface Category {
   id: string; slug: string; title: string; description: string | null;
@@ -34,134 +34,102 @@ export function CategoryClient({ cat }: { cat: CategoryWithArticles }) {
     <div className="min-h-screen bg-background">
 
       {/* Hero */}
-      <div className="border-b border-border/50">
-        <div className="mx-auto max-w-4xl px-6 pt-10 pb-12">
-          <MotionFade direction="up" distance={12} duration={0.4}>
-            <Link href="/support"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-8 group">
-              <ArrowLeftIcon size={12} className="group-hover:-translate-x-0.5 transition-transform" />
-              {s.backToHelp}
-            </Link>
-            <div className="flex items-center gap-5">
-              <div className="shrink-0 size-14 rounded-2xl flex items-center justify-center"
-                style={{ background: cat.color + '18' }}>
-                <Icon size={26} style={{ color: cat.color }} />
-              </div>
-              <div>
-                <h1 className="font-heading text-3xl font-bold leading-tight tracking-tight">{cat.title}</h1>
-                {cat.description && (
-                  <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">{cat.description}</p>
-                )}
-              </div>
+      <div className="relative overflow-hidden border-b border-border/50"
+        style={{ background: `linear-gradient(135deg, ${cat.color}12 0%, transparent 60%)` }}>
+        <MotionFade direction="down" distance={12} duration={0.6} className="mx-auto max-w-4xl px-6 py-16">
+          <Link href="/support" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+            <ArrowLeftIcon size={14} /> {s.backToHelp}
+          </Link>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="size-14 rounded-2xl flex items-center justify-center shrink-0"
+              style={{ background: cat.color + '20' }}>
+              <Icon size={24} style={{ color: cat.color }} />
             </div>
-            <div className="mt-5 flex items-center gap-3">
-              <span className="text-xs font-semibold rounded-full px-3 py-1"
-                style={{ background: cat.color + '14', color: cat.color }}>
-                {cat.articles.length} {s.articlesAvailable.replace('{n}', '').trim()}
-              </span>
+            <div>
+              <h1 className="font-heading text-3xl font-bold">{cat.title}</h1>
+              {cat.description && (
+                <p className="text-muted-foreground mt-1">{cat.description}</p>
+              )}
             </div>
-          </MotionFade>
-        </div>
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            <span style={{ color: cat.color }} className="font-semibold">{cat.articles.length}</span>{' '}
+            {s.articlesAvailable.replace('{n}', '').trim()}
+          </p>
+        </MotionFade>
       </div>
 
-      <div className="mx-auto max-w-4xl px-6 py-10">
+      <div className="mx-auto max-w-4xl px-6 py-10 space-y-10">
 
-        {/* Empty state */}
-        {cat.articles.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="size-14 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: cat.color + '14' }}>
-              <BookOpenIcon size={24} style={{ color: cat.color + 'aa' }} />
-            </div>
-            <p className="font-medium text-muted-foreground">{s.noArticlesInCategory}</p>
-          </div>
-        )}
-
-        {/* Pinned */}
+        {/* Épinglés */}
         {pinned.length > 0 && (
-          <MotionFade direction="up" distance={10} duration={0.4}>
-            <section className="mb-10">
-              <div className="flex items-center gap-2 mb-3">
-                <PinIcon size={11} className="text-muted-foreground/60" />
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-                  {s.pinnedArticles}
-                </span>
-              </div>
-              <div className="rounded-2xl overflow-hidden border"
-                style={{ borderColor: cat.color + '30' }}>
-                <MotionStagger stagger={0.04}>
-                  {pinned.map((art, i) => (
-                    <MotionStaggerItem key={art.id}>
-                      <ArticleRow art={art} catSlug={cat.slug} color={cat.color}
-                        border={i < pinned.length - 1} locale={locale}
-                        viewsLabel={s.viewsCount} />
-                    </MotionStaggerItem>
-                  ))}
-                </MotionStagger>
-              </div>
-            </section>
-          </MotionFade>
+          <section>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4 flex items-center gap-2">
+              <PinIcon size={13} /> {s.pinnedArticles}
+            </h2>
+            <MotionStagger stagger={0.05} className="rounded-xl border overflow-hidden" style={{ borderColor: cat.color + '40' }}>
+              {pinned.map((art, i) => (
+                <MotionStaggerItem key={art.id} direction="up" distance={8}>
+                  <ArticleCard art={art} catSlug={cat.slug} color={cat.color}
+                    border={i < pinned.length - 1} locale={locale} viewsLabel={s.viewsCount} />
+                </MotionStaggerItem>
+              ))}
+            </MotionStagger>
+          </section>
         )}
 
-        {/* Regular */}
+        {/* Tous les articles */}
         {regular.length > 0 && (
-          <MotionFade direction="up" distance={10} duration={0.4}>
-            <section>
-              {pinned.length > 0 && (
-                <div className="flex items-center gap-2 mb-3">
-                  <BookOpenIcon size={11} className="text-muted-foreground/60" />
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-                    {s.allArticles}
-                  </span>
-                </div>
-              )}
-              <div className="rounded-2xl border border-border overflow-hidden">
-                <MotionStagger stagger={0.04}>
-                  {regular.map((art, i) => (
-                    <MotionStaggerItem key={art.id}>
-                      <ArticleRow art={art} catSlug={cat.slug} color={cat.color}
-                        border={i < regular.length - 1} locale={locale}
-                        viewsLabel={s.viewsCount} />
-                    </MotionStaggerItem>
-                  ))}
-                </MotionStagger>
-              </div>
-            </section>
-          </MotionFade>
+          <section>
+            {pinned.length > 0 && (
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4 flex items-center gap-2">
+                <BookOpenIcon size={13} /> {s.allArticles}
+              </h2>
+            )}
+            <MotionStagger stagger={0.05} className="rounded-xl border border-border overflow-hidden">
+              {regular.map((art, i) => (
+                <MotionStaggerItem key={art.id} direction="up" distance={8}>
+                  <ArticleCard art={art} catSlug={cat.slug} color={cat.color}
+                    border={i < regular.length - 1} locale={locale} viewsLabel={s.viewsCount} />
+                </MotionStaggerItem>
+              ))}
+            </MotionStagger>
+          </section>
+        )}
+
+        {cat.articles.length === 0 && (
+          <div className="text-center py-16 text-muted-foreground">
+            <BookOpenIcon size={32} className="mx-auto mb-3 opacity-40" />
+            <p>{s.noArticlesInCategory}</p>
+          </div>
         )}
 
         {/* Footer nav */}
-        {cat.articles.length > 0 && (
-          <div className="flex items-center justify-between pt-10 mt-10 border-t border-border flex-wrap gap-3">
-            <Link href="/support"
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
-              <ArrowLeftIcon size={13} className="group-hover:-translate-x-0.5 transition-transform" />
-              {s.helpCenterLabel}
-            </Link>
-            <Link href="/support/contact"
-              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition-all"
-              style={{ background: cat.color }}>
-              {s.contactCTA} <ArrowRightIcon size={13} />
-            </Link>
-          </div>
-        )}
+        <div className="flex justify-between items-center pt-4 border-t border-border">
+          <Link href="/support" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeftIcon size={14} /> {s.helpCenterLabel}
+          </Link>
+          <Link href="/support/contact"
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+            style={{ background: cat.color }}>
+            {s.contactCTA} <ArrowRightIcon size={14} />
+          </Link>
+        </div>
       </div>
     </div>
   );
 }
 
-function ArticleRow({
+function ArticleCard({
   art, catSlug, color, border, locale, viewsLabel,
 }: {
   art: Article; catSlug: string; color: string; border: boolean;
   locale: string; viewsLabel: string;
 }) {
   return (
-    <Link
-      href={`/support/${catSlug}/${art.slug}`}
-      className={`group flex items-start gap-4 px-5 py-4 hover:bg-muted/40 transition-colors${border ? ' border-b border-border/60' : ''}`}
-      style={{ borderLeftColor: color, borderLeftWidth: 3 }}
-    >
+    <Link href={`/support/${catSlug}/${art.slug}`}
+      className={'flex items-start gap-4 px-5 py-4 hover:bg-muted/40 transition-colors group' + (border ? ' border-b border-border' : '')}
+      style={{ borderLeftColor: color, borderLeftWidth: 3 }}>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium group-hover:text-primary transition-colors leading-snug">{art.title}</p>
         {art.summary && (
@@ -171,7 +139,7 @@ function ArticleRow({
           <div className="flex gap-1 mt-2 flex-wrap">
             {art.tags.slice(0, 3).map(tag => (
               <span key={tag} className="text-[10px] rounded-full px-2 py-0.5 font-medium"
-                style={{ background: color + '12', color }}>
+                style={{ background: color + '15', color }}>
                 {tag}
               </span>
             ))}
@@ -179,11 +147,10 @@ function ArticleRow({
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0 mt-0.5">
-        <span className="text-[11px] text-muted-foreground/60 tabular-nums">
+        <span className="text-xs text-muted-foreground">
           {viewsLabel.replace('{n}', art.viewCount.toLocaleString(locale))}
         </span>
-        <ArrowRightIcon size={12}
-          className="text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+        <ArrowRightIcon size={12} className="text-muted-foreground group-hover:text-primary transition-colors" />
       </div>
     </Link>
   );

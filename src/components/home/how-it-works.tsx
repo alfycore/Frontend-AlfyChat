@@ -1,7 +1,9 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Reveal, Eyebrow, SectionTitle } from './section';
+import { motion, useReducedMotion } from 'motion/react';
+import { Chip, Separator, Typography } from '@heroui/react';
+
+const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
 
 const STEPS = [
   {
@@ -9,62 +11,92 @@ const STEPS = [
     title: 'Créer un compte',
     desc: "Inscription en 30 secondes. Sans numéro de téléphone, sans carte bancaire, sans vérification d'identité.",
     tag: 'Gratuit',
-    tagClass: 'border-success/30 bg-success/10 text-success',
+    tone: 'success' as const,
   },
   {
     number: '02',
     title: 'Inviter vos contacts',
     desc: "Partagez un lien ou cherchez directement par nom d'utilisateur. Aucune importation de carnet d'adresses.",
-    tag: 'Aucune donnée collectée',
-    tagClass: 'border-sky-500/25 bg-sky-500/10 text-sky-600 dark:text-sky-400',
+    tag: 'Zéro donnée collectée',
+    tone: 'accent' as const,
   },
   {
     number: '03',
     title: 'Discuter en privé',
-    desc: "Chaque message est chiffré sur votre appareil avant d'être envoyé. Même nos serveurs ne peuvent pas lire vos échanges.",
+    desc: "Chaque message est chiffré sur votre appareil avant l'envoi. Même nos serveurs ne peuvent pas lire vos échanges.",
     tag: 'Chiffrement E2E',
-    tagClass: 'border-amber-500/25 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    tone: 'warning' as const,
   },
 ];
 
+function Reveal({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduce ? false : { opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{ duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function HomeHowItWorks() {
   return (
-    <section className="relative overflow-hidden border-t border-border bg-background py-28">
-      {/* profondeur ambiante */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 50% at 50% 100%, color-mix(in oklch, var(--foreground) 4%, transparent), transparent 70%)',
-        }}
-      />
+    <section className="border-t border-border bg-background py-28">
+      <div className="mx-auto max-w-6xl px-6 lg:px-12">
 
-      <div className="relative mx-auto max-w-6xl px-8">
-        <Reveal className="mb-16 max-w-xl">
-          <Eyebrow>Processus</Eyebrow>
-          <SectionTitle>
-            Simple à utiliser,
-            <br />
-            impossible à espionner.
-          </SectionTitle>
+        <Reveal className="mb-16 flex max-w-xl flex-col gap-4">
+          <Chip color="accent" variant="soft" size="sm" className="w-fit">
+            <Chip.Label>Processus</Chip.Label>
+          </Chip>
+          <Typography
+            type="h2"
+            weight="bold"
+            className="text-foreground"
+            style={{ ...KRONA, fontSize: 'clamp(1.9rem, 3vw, 2.6rem)', lineHeight: 1.1, letterSpacing: '-0.025em' }}
+          >
+            Simple à utiliser, impossible à espionner.
+          </Typography>
         </Reveal>
 
-        <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-3 md:divide-x md:divide-y-0">
-          {STEPS.map(({ number, title, desc, tag, tagClass }, i) => (
-            <Reveal key={number} delay={i * 0.1} className="px-0 py-10 first:pl-0 last:pr-0 md:px-10 md:py-0">
-              <p className="mb-6 select-none font-heading text-[3.5rem] leading-none font-bold text-foreground/10" aria-hidden>
+        <div className="grid grid-cols-1 md:grid-cols-3">
+          {STEPS.map(({ number, title, desc, tag, tone }, i) => (
+            <Reveal key={number} delay={i * 0.1} className="relative px-0 py-8 md:px-10 md:py-0">
+              {i > 0 && (
+                <Separator orientation="vertical" className="absolute left-0 top-0 hidden h-full md:block" />
+              )}
+
+              <Typography
+                weight="bold"
+                aria-hidden
+                style={{ ...KRONA, color: 'color-mix(in oklch, var(--foreground) 12%, transparent)', fontSize: '3.5rem', lineHeight: 1 }}
+                className="mb-6 select-none"
+              >
                 {number}
-              </p>
+              </Typography>
 
-              <Badge variant="outline" className={`uppercase tracking-[0.06em] ${tagClass}`}>
-                {tag}
-              </Badge>
+              <Chip color={tone} variant="soft" size="sm" className="mb-3">
+                <Chip.Label>{tag}</Chip.Label>
+              </Chip>
 
-              <h3 className="mt-3 font-heading text-[17px] leading-snug font-semibold text-foreground">
+              <Typography type="h5" weight="bold" className="mt-1 text-foreground" style={KRONA}>
                 {title}
-              </h3>
-              <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{desc}</p>
+              </Typography>
+              <Typography type="body-sm" color="muted" className="mt-2 block">
+                {desc}
+              </Typography>
             </Reveal>
           ))}
         </div>
