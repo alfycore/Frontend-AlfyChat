@@ -14,6 +14,7 @@ export interface RoomParticipant {
   isLocal?: boolean;
   muted?: boolean;
   screenSharing?: boolean;
+  handRaised?: boolean;
 }
 
 interface VoiceRoomProps {
@@ -26,6 +27,8 @@ interface VoiceRoomProps {
   onToggleVideo: () => void;
   isScreenSharing?: boolean;
   onToggleScreenShare?: () => void;
+  handRaised?: boolean;
+  onToggleHand?: () => void;
   onLeave?: () => void;
 }
 
@@ -62,6 +65,7 @@ export function VoiceRoom({
             isLocal={p.isLocal}
             muted={p.muted}
             screenSharing={p.screenSharing}
+            handRaised={p.handRaised}
           />
         ))}
       </div>

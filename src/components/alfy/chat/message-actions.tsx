@@ -1,6 +1,9 @@
 'use client';
 
 import { Button, Dropdown, Label, Separator, toast, Tooltip } from '@heroui/react';
+import { useState } from 'react';
+
+import { cn } from '@/lib/utils';
 import {
   Copy,
   CornerUpRight,
@@ -48,6 +51,8 @@ export function MessageActions({
   onQuote,
   onForward,
 }: MessageActionsProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const handle = (key: React.Key) => {
     switch (key) {
       case 'copy':
@@ -82,7 +87,16 @@ export function MessageActions({
   };
 
   return (
-    <div className="absolute -top-3 right-4 hidden items-center gap-0.5 rounded-md border border-border bg-overlay p-0.5 shadow-sm group-hover/msg:flex group-focus-within/msg:flex">
+    <div
+      className={cn(
+        'absolute -top-3 right-4 items-center gap-0.5 rounded-md border border-border bg-overlay p-0.5 shadow-sm',
+        // Tant que le menu est ouvert la barre doit rester affichée : en la
+        // masquant dès que la souris quitte le message, son bouton déclencheur
+        // passait en display:none et le menu, privé d'ancre, se repositionnait
+        // dans le coin haut gauche de la fenêtre.
+        menuOpen ? 'flex' : 'hidden group-hover/msg:flex group-focus-within/msg:flex',
+      )}
+    >
       <Tooltip delay={400}>
         <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onReact} aria-label="Réagir">
           <SmilePlus className="size-4" />
@@ -107,7 +121,7 @@ export function MessageActions({
           <p>Créer un fil</p>
         </Tooltip.Content>
       </Tooltip>
-      <Dropdown>
+      <Dropdown isOpen={menuOpen} onOpenChange={setMenuOpen}>
         <Dropdown.Trigger
           aria-label="Plus d'actions"
           className="flex size-7 cursor-pointer items-center justify-center rounded-sm text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"

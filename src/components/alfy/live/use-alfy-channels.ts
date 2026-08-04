@@ -8,6 +8,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
+import { resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { serverListStore } from '@/lib/server-list-store';
 import * as notif from '@/lib/notification-store';
@@ -17,9 +18,15 @@ import type { AlfyCategory, AlfyServer } from '@/components/alfy/mock/types';
 interface ServerInfo {
   name: string;
   iconUrl?: string;
+  bannerUrl?: string;
+  description?: string;
+  isPublic: boolean;
   nodeOnline: boolean | null;
   selfHosted: boolean;
   ownerId?: string;
+  hostingType?: 'platform' | 'self_hosted' | 'certified_host';
+  hostingCategory?: 'standard' | 'community';
+  maxMembers?: number;
 }
 
 /**
@@ -29,7 +36,7 @@ interface ServerInfo {
  */
 export function useAlfyChannels(serverId: string | null): AlfyServer | null {
   const [raw, setRaw] = useState<RawChannel[]>([]);
-  const [info, setInfo] = useState<ServerInfo>({ name: 'Serveur', nodeOnline: null, selfHosted: false });
+  const [info, setInfo] = useState<ServerInfo>({ name: 'Serveur', isPublic: false, nodeOnline: null, selfHosted: false });
   const notifState = useSyncExternalStore(notif.subscribe, notif.getSnapshot, notif.getSnapshot);
 
   /* Chargement initial */
@@ -52,13 +59,19 @@ export function useAlfyChannels(serverId: string | null): AlfyServer | null {
       if (d?.error) return;
       setInfo({
         name: d.name ?? 'Serveur',
-        iconUrl: d.iconUrl ?? d.icon_url ?? undefined,
+        iconUrl: resolveMediaUrl(d.iconUrl ?? d.icon_url ?? undefined),
+        bannerUrl: resolveMediaUrl(d.bannerUrl ?? d.banner_url ?? undefined),
+        description: d.description ?? undefined,
+        isPublic: Boolean(d.isPublic ?? d.is_public),
         nodeOnline:
           typeof (d.nodeOnline ?? d.node_online) === 'boolean'
             ? Boolean(d.nodeOnline ?? d.node_online)
             : null,
         selfHosted: Boolean(d.selfHosted ?? d.self_hosted ?? d.nodeToken ?? d.node_token),
         ownerId: d.ownerId ?? d.owner_id,
+        hostingType: d.hostingType ?? d.hosting_type,
+        hostingCategory: d.category,
+        maxMembers: d.maxMembers ?? d.max_members,
       });
     });
   }, [serverId]);
@@ -141,10 +154,15 @@ export function useAlfyChannels(serverId: string | null): AlfyServer | null {
       id: serverId,
       name: info.name,
       iconUrl: info.iconUrl,
-      isPublic: true,
+      bannerUrl: info.bannerUrl,
+      description: info.description,
+      isPublic: info.isPublic,
       ownerId: info.ownerId ?? '',
       nodeOnline: info.nodeOnline ?? true,
       selfHosted: info.selfHosted,
+      hostingType: info.hostingType,
+      hostingCategory: info.hostingCategory,
+      maxMembers: info.maxMembers,
       categories,
       channels,
       roles: [],

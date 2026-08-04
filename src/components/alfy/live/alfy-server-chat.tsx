@@ -31,10 +31,18 @@ export function AlfyServerChat({ serverId, channelId, channelName, channelType }
     useMobileNav();
   const base = useAlfyChannels(serverId);
   const { members, roles, users } = useAlfyMembers(serverId);
-  const { messages, isLoading, typingNames, send, edit, remove, toggleReaction } = useAlfyServerMessages(
-    serverId,
-    channelId,
-  );
+  const {
+    messages,
+    isLoading,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+    typingNames,
+    send,
+    edit,
+    remove,
+    toggleReaction,
+  } = useAlfyServerMessages(serverId, channelId);
 
   const resolver = useMemo(() => {
     const table = new Map(users);
@@ -72,6 +80,9 @@ export function AlfyServerChat({ serverId, channelId, channelName, channelType }
         currentUserId={user?.id ?? ''}
         typingNames={typingNames}
         isLoading={isLoading}
+        hasMoreMessages={hasMore}
+        isLoadingMoreMessages={isLoadingMore}
+        onLoadMore={loadMore}
         onSend={(content) => send(content)}
         onToggleReaction={toggleReaction}
         onEditMessage={edit}

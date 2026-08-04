@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { MicOff, MonitorUp } from 'lucide-react';
+import { Hand, MicOff, MonitorUp } from 'lucide-react';
 
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { cn } from '@/lib/utils';
@@ -15,11 +15,12 @@ interface CallTileProps {
   isLocal?: boolean;
   muted?: boolean;
   screenSharing?: boolean;
+  handRaised?: boolean;
   /** Grande tuile (appel 1:1) ou compacte (salon vocal). */
   size?: 'lg' | 'md';
 }
 
-export function CallTile({ name, avatarUrl, stream, isLocal, muted, screenSharing, size = 'md' }: CallTileProps) {
+export function CallTile({ name, avatarUrl, stream, isLocal, muted, screenSharing, handRaised, size = 'md' }: CallTileProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasVideo = !!stream && stream.getVideoTracks().some((t) => t.enabled);
 
@@ -35,7 +36,7 @@ export function CallTile({ name, avatarUrl, stream, isLocal, muted, screenSharin
       className={cn(
         'relative flex items-center justify-center overflow-hidden rounded-lg bg-surface-secondary',
         'transition-shadow duration-150',
-        size === 'lg' ? 'aspect-video' : 'aspect-[4/3]',
+        size === 'lg' ? 'aspect-video' : 'aspect-4/3',
       )}
     >
       {hasVideo ? (
@@ -49,6 +50,16 @@ export function CallTile({ name, avatarUrl, stream, isLocal, muted, screenSharin
         />
       ) : (
         <AlfyAvatar name={name} avatarUrl={avatarUrl} size="lg" />
+      )}
+
+      {handRaised && (
+        <span
+          className="at-pop absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-sm"
+          aria-label={`${name} a levé la main`}
+          title={`${name} a levé la main`}
+        >
+          <Hand className="size-3.5" aria-hidden />
+        </span>
       )}
 
       <div className="absolute right-2 bottom-2 left-2 flex items-center justify-between gap-2">

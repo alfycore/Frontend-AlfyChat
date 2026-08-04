@@ -4,6 +4,7 @@ import { Button, Chip, Input, SearchField, Tabs, TextField, Tooltip, toast } fro
 import { Ban, Check, MessageCircle, Phone, UserPlus, Users, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { useCallContext } from '@/hooks/use-call-context';
 import { BLOCKED_USER_IDS, PENDING_FRIENDS, USERS, userById } from '@/components/alfy/mock/data';
 import type { AlfyUser } from '@/components/alfy/mock/types';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
@@ -39,11 +40,13 @@ interface FriendsViewProps {
   blocked?: AlfyUser[];
   onAccept?: (requestId: string) => void;
   onDecline?: (requestId: string) => void;
-  onAddFriend?: (username: string) => void;
+  /** Renvoie si la demande a bien été envoyée — pilote le toast de retour. */
+  onAddFriend?: (username: string) => Promise<boolean> | void;
   onUnblock?: (userId: string) => void;
 }
 
 function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: string) => void }) {
+  const { initiateCall } = useCallContext();
   return (
     <div className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-secondary">
       <AlfyAvatar
@@ -82,6 +85,7 @@ function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: strin
             variant="ghost"
             aria-label={`Appeler ${user.displayName}`}
             className="rounded-full bg-surface-tertiary text-muted hover:text-foreground"
+            onPress={() => initiateCall(user.id, 'voice', undefined, user.displayName)}
           >
             <Phone className="size-4" />
           </Button>
@@ -124,6 +128,7 @@ export function FriendsView({
 
   const [tab, setTab] = useState('online');
   const [addName, setAddName] = useState('');
+  const [sending, setSending] = useState(false);
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-surface">
@@ -306,20 +311,33 @@ export function FriendsView({
             </p>
             <form
               className="mt-4 flex items-start gap-2"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                if (!addName.trim()) return;
-                onAddFriend?.(addName);
-                toast('Demande envoyée', { description: `@${addName.replace(/^@/, '')}` });
-                setAddName('');
+                const pseudo = addName.trim();
+                if (!pseudo || sending) return;
+                setSending(true);
+                try {
+                  // `add` peut échouer (pseudo introuvable, déjà amis…) : le
+                  // toast doit refléter ce qui s'est réellement passé, pas
+                  // s'afficher en succès inconditionnel dès la soumission.
+                  const ok = await onAddFriend?.(pseudo);
+                  if (ok === false) {
+                    toast.danger('Demande impossible', { description: `@${pseudo.replace(/^@/, '')} est introuvable, ou déjà en attente.` });
+                  } else {
+                    toast('Demande envoyée', { description: `@${pseudo.replace(/^@/, '')}` });
+                    setAddName('');
+                  }
+                } finally {
+                  setSending(false);
+                }
               }}
             >
               <TextField value={addName} onChange={setAddName} className="flex-1">
                 <Input placeholder="pseudo" autoComplete="off" />
               </TextField>
-              <Button type="submit" isDisabled={!addName.trim()}>
+              <Button type="submit" isDisabled={!addName.trim() || sending}>
                 <UserPlus className="size-3.5" />
-                Envoyer
+                {sending ? 'Envoi…' : 'Envoyer'}
               </Button>
             </form>
           </div>

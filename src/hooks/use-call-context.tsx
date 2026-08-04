@@ -20,6 +20,8 @@ interface CallContextValue {
   tierLabel: string;
   participantCount: number;
   handRaised: boolean;
+  /** Identifiants des AUTRES participants ayant levé la main. */
+  raisedHands: Set<string>;
   localStream: MediaStream | null;
   remoteStreams: Map<string, MediaStream>;
   isMuted: boolean;
@@ -68,6 +70,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
     tierLabel,
     participantCount,
     handRaised,
+    raisedHands,
     localStream,
     remoteStreams,
     isMuted,
@@ -123,6 +126,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         tierLabel,
         participantCount,
         handRaised,
+        raisedHands,
         localStream,
         remoteStreams,
         isMuted,

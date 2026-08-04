@@ -120,13 +120,19 @@ export function AlfyUserSettings({
   }, [sessions, loadSessions]);
 
   const saveProfile = useCallback(
-    async (data: AccountProfilePatch) => {
+    async (data: AccountProfilePatch): Promise<boolean> => {
       // `customStatus` ne fait pas partie du profil côté API : il est porté par
       // la présence. On le garde uniquement dans l'état local, sinon le prochain
       // battement de `usePresence` réémettrait l'ancienne valeur.
       const { customStatus, ...profil } = data;
-      await api.updateProfile(profil).catch(() => null);
+      const res = await api.updateProfile(profil).catch(() => ({ success: false }) as const);
+      // N'appliquer l'état local que si l'écriture a réellement réussi : sinon
+      // le panneau affichait "Profil enregistré" et gardait les nouvelles
+      // valeurs à l'écran même quand la requête avait échoué (rien de persisté
+      // côté serveur, mais aucune indication à l'utilisateur).
+      if (!res.success) return false;
       updateUser({ ...profil, customStatus: customStatus || null });
+      return true;
     },
     [updateUser],
   );
@@ -155,7 +161,7 @@ export function AlfyUserSettings({
                 id: 'account',
                 label: 'Mon compte',
                 icon: UserRound,
-                content: <AccountPanel user={alfyUser} onSave={(d) => void saveProfile(d)} />,
+                content: <AccountPanel user={alfyUser} onSave={saveProfile} />,
               },
               { id: 'privacy', label: 'Confidentialité', icon: Eye, content: <PrivacyPanel /> },
             ],

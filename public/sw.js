@@ -39,8 +39,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'AlfyChat';
   const options = {
     body: data.body || '',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: '/logoicon/Logomark.png',
+    badge: '/logoicon/Logomark-1.png',
     data: {
       url: data.url || '/',
       conversationKey: data.conversationKey || '',

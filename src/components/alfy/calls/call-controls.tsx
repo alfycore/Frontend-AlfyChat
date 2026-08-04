@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, ToggleButton, Toolbar, Tooltip } from '@heroui/react';
-import { Mic, MicOff, MonitorUp, PhoneOff, Video, VideoOff } from 'lucide-react';
+import { Hand, Mic, MicOff, MonitorUp, PhoneOff, Video, VideoOff } from 'lucide-react';
 
 interface CallControlsProps {
   isMuted: boolean;
@@ -10,6 +10,9 @@ interface CallControlsProps {
   onToggleVideo: () => void;
   isScreenSharing?: boolean;
   onToggleScreenShare?: () => void;
+  /** Absent = pas de bouton « lever la main » (appels 1:1, sans salon commun). */
+  handRaised?: boolean;
+  onToggleHand?: () => void;
   onHangUp?: () => void;
 }
 
@@ -21,6 +24,8 @@ export function CallControls({
   onToggleVideo,
   isScreenSharing,
   onToggleScreenShare,
+  handRaised,
+  onToggleHand,
   onHangUp,
 }: CallControlsProps) {
   return (
@@ -51,6 +56,22 @@ export function CallControls({
           </ToggleButton>
           <Tooltip.Content>
             <p>Partager l&apos;écran</p>
+          </Tooltip.Content>
+        </Tooltip>
+      )}
+      {onToggleHand && (
+        <Tooltip delay={300}>
+          <ToggleButton
+            isIconOnly
+            isSelected={!!handRaised}
+            onChange={onToggleHand}
+            aria-label={handRaised ? 'Baisser la main' : 'Lever la main'}
+            className="rounded-full"
+          >
+            <Hand className="size-4.5" />
+          </ToggleButton>
+          <Tooltip.Content>
+            <p>{handRaised ? 'Baisser la main' : 'Lever la main'}</p>
           </Tooltip.Content>
         </Tooltip>
       )}

@@ -42,7 +42,7 @@ import {
   type AlfyUser,
 } from '@/components/alfy/mock/types';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
-import { PRESENCE_LABELS } from '@/components/alfy/primitives/status-dot';
+import { PRESENCE_LABELS, StatusDot } from '@/components/alfy/primitives/status-dot';
 import { UserBadges } from '@/components/alfy/members/user-badges';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -73,14 +73,6 @@ function fakeSafetyNumber(seed: string): string {
 
 const initials = (name: string) =>
   name.split(/\s+/).filter((p) => /\w/.test(p)).map((p) => p[0]).slice(0, 2).join('').toUpperCase();
-
-const STATUS_COLOR = {
-  online: 'var(--success)',
-  idle: 'var(--warning)',
-  dnd: 'var(--danger)',
-  invisible: 'var(--muted)',
-  offline: 'var(--muted)',
-} as const;
 
 const FRIEND_ACTION: Record<AlfyFriendState, { icon: typeof UserPlus; tip: string }> = {
   none: { icon: UserPlus, tip: 'Ajouter en ami' },
@@ -166,6 +158,7 @@ export function UserPopover({
     () => friendStateProp ?? friendStateOf(user.id),
   );
   const [keysVerified, setKeysVerified] = useState(false);
+  const [iBlocked, setIBlocked] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [banOpen, setBanOpen] = useState(false);
   const [banReason, setBanReason] = useState('');
@@ -182,9 +175,13 @@ export function UserPopover({
     Promise.all([
       api.getUser(user.id).catch(() => null),
       api.getMutualFriends(user.id).catch(() => null),
+      api.getBlockStatus(user.id).catch(() => null),
     ])
-      .then(([profileRes, mutualRes]) => {
-        const p = (profileRes as any)?.data;
+      .then(([profileRes, mutualRes, blockRes]) => {
+        if (blockRes?.success) {
+          setIBlocked(Boolean(blockRes.data?.iBlockedThem));
+        }
+        const p = (profileRes as any)?.success ? (profileRes as any).data : null;
         if (p) {
           setDetails({
             bio: p.bio ?? undefined,
@@ -205,7 +202,7 @@ export function UserPopover({
           });
         }
 
-        const m = mutualRes?.data;
+        const m = mutualRes?.success ? mutualRes.data : null;
         if (m) {
           setRealMutualFriends(
             (m.mutualFriends ?? []).map((f) => ({
@@ -276,6 +273,26 @@ export function UserPopover({
     }
   };
 
+  const toggleBlock = async () => {
+    const prevBlocked = iBlocked;
+    const prevFriendState = friendState;
+    // Bloquer supprime toujours la relation d'amitié côté serveur — refléter
+    // ça localement pour ne pas laisser affiché un état d'ami périmé.
+    setIBlocked(!prevBlocked);
+    if (!prevBlocked) setFriendState('none');
+    try {
+      if (prevBlocked) await api.unblockUser(user.id);
+      else await api.blockUser(user.id);
+      toast(prevBlocked ? 'Utilisateur·rice débloqué·e' : 'Utilisateur·rice bloqué·e', {
+        description: user.displayName,
+      });
+    } catch {
+      setIBlocked(prevBlocked);
+      setFriendState(prevFriendState);
+      toast.danger('Action impossible', { description: 'Réessayez plus tard.' });
+    }
+  };
+
   const handleMenu = (key: React.Key) => {
     switch (key) {
       case 'copy-id':
@@ -286,7 +303,7 @@ export function UserPopover({
         setVerifyOpen(true);
         break;
       case 'block':
-        toast('Utilisateur·rice bloqué·e', { description: user.displayName });
+        void toggleBlock();
         break;
       case 'report':
         toast('Signalement envoyé', { description: 'Notre équipe va l’examiner.' });
@@ -370,9 +387,9 @@ export function UserPopover({
                                 <Label>Vérifier la clé de chiffrement</Label>
                               </Dropdown.Item>
                             )}
-                            <Dropdown.Item id="block" textValue="Bloquer" variant="danger">
+                            <Dropdown.Item id="block" textValue={iBlocked ? 'Débloquer' : 'Bloquer'} variant="danger">
                               <Ban className="size-4" />
-                              <Label>Bloquer</Label>
+                              <Label>{iBlocked ? 'Débloquer' : 'Bloquer'}</Label>
                             </Dropdown.Item>
                             <Dropdown.Item id="report" textValue="Signaler" variant="danger">
                               <Flag className="size-4" />
@@ -414,7 +431,7 @@ export function UserPopover({
                   size="lg"
                   status={user.status}
                   statusRingClass="ring-overlay"
-                  className="rounded-full ring-4 ring-overlay"
+                  className=" ring-overlay"
                 />
               </div>
 
@@ -437,11 +454,7 @@ export function UserPopover({
                 </div>
                 <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
                   <span className="truncate">@{user.username}</span>
-                  <span
-                    aria-hidden
-                    className="size-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: STATUS_COLOR[user.status] }}
-                  />
+                  <StatusDot status={user.status} size="xs" ring={false} />
                   <span className="truncate text-foreground/70">
                     {user.statusEmoji ? `${user.statusEmoji} ` : ''}
                     {user.customStatus || PRESENCE_LABELS[user.status]}

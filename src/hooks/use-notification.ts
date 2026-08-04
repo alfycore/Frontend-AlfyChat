@@ -191,8 +191,8 @@ export function useNotification() {
     try {
       const n = new Notification(title, {
         body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
+        icon: '/logoicon/Logomark.png',
+        badge: '/logoicon/Logomark-1.png',
         tag: isMention ? 'alfychat-mention' : 'alfychat-msg',
         requireInteraction: isMention,
       } as NotificationOptions);

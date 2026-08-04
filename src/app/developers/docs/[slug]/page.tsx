@@ -257,7 +257,7 @@ const socket = io('https://gateway.alfychat.app', {
 socket.on('connect',    () => console.log('🤖 Bot connecté !'));
 socket.on('disconnect', () => console.log('❌ Déconnecté'));
 
-socket.on('NEW_MESSAGE', async ({ content, channelId }) => {
+socket.on('SERVER_MESSAGE_NEW', async ({ payload: { content, channelId } }) => {
   if (content === '!ping') {
     await fetch(\`\${API_BASE}/messages\`, {
       method: 'POST',
@@ -278,7 +278,7 @@ interface Message {
   id: string;
   content: string;
   channelId: string;
-  authorId: string;
+  senderId: string;
 }
 
 const socket: Socket = io('https://gateway.alfychat.app', {
@@ -288,7 +288,7 @@ const socket: Socket = io('https://gateway.alfychat.app', {
 socket.on('connect',    () => console.log('🤖 Bot connecté !'));
 socket.on('disconnect', () => console.log('❌ Déconnecté'));
 
-socket.on('NEW_MESSAGE', async (msg: Message) => {
+socket.on('SERVER_MESSAGE_NEW', async ({ payload: msg }: { payload: Message }) => {
   if (msg.content === '!ping') {
     await fetch(\`\${API_BASE}/messages\`, {
       method: 'POST',
@@ -314,14 +314,15 @@ async def connect():
 async def disconnect():
     print('❌ Déconnecté')
 
-@sio.on('NEW_MESSAGE')
+@sio.on('SERVER_MESSAGE_NEW')
 async def on_message(data):
-    if data.get('content') == '!ping':
+    msg = data['payload']
+    if msg.get('content') == '!ping':
         async with aiohttp.ClientSession() as session:
             await session.post(
                 f'{API_BASE}/messages',
                 headers={'Authorization': f'Bot {BOT_TOKEN}'},
-                json={'channelId': data['channelId'], 'content': '🏓 Pong !'},
+                json={'channelId': msg['channelId'], 'content': '🏓 Pong !'},
             )
 
 async def main():
@@ -354,8 +355,8 @@ public class AlfyBot {
         socket.on(Socket.EVENT_CONNECT, a ->
             System.out.println("🤖 Bot connecté !"));
 
-        socket.on("NEW_MESSAGE", args2 -> {
-            JSONObject msg = (JSONObject) args2[0];
+        socket.on("SERVER_MESSAGE_NEW", args2 -> {
+            JSONObject msg = ((JSONObject) args2[0]).getJSONObject("payload");
             try {
                 if ("!ping".equals(msg.getString("content"))) {
                     sendMessage(msg.getString("channelId"), "🏓 Pong !");
@@ -1612,14 +1613,14 @@ function WebSocketSection() {
             <span>Payload principal</span>
           </div>
           {[
-            { event: 'NEW_MESSAGE',      desc: 'Nouveau message',          payload: 'id, content, authorId, channelId' },
-            { event: 'MESSAGE_UPDATED',  desc: 'Message modifié',          payload: 'id, content, channelId' },
-            { event: 'MESSAGE_DELETED',  desc: 'Message supprimé',         payload: 'id, channelId' },
-            { event: 'TYPING_INDICATOR', desc: "Frappe en cours",          payload: 'userId, channelId, isTyping' },
-            { event: 'PRESENCE_UPDATE',  desc: 'Statut de présence',       payload: 'userId, status, isOnline' },
-            { event: 'MEMBER_JOINED',    desc: 'Nouveau membre serveur',   payload: 'serverId, userId, username' },
-            { event: 'MEMBER_LEFT',      desc: 'Membre quitté',            payload: 'serverId, userId' },
-            { event: 'BOT_ADDED',        desc: 'Bot ajouté à un serveur',  payload: 'botId, serverId' },
+            { event: 'SERVER_MESSAGE_NEW',     desc: 'Nouveau message',          payload: 'id, content, senderId, channelId' },
+            { event: 'SERVER_MESSAGE_EDITED',  desc: 'Message modifié',          payload: 'id, content, channelId' },
+            { event: 'SERVER_MESSAGE_DELETED', desc: 'Message supprimé',         payload: 'id, channelId' },
+            { event: 'SERVER_TYPING_START',    desc: "Début de frappe",          payload: 'userId, channelId' },
+            { event: 'SERVER_TYPING_STOP',     desc: "Fin de frappe",            payload: 'userId, channelId' },
+            { event: 'PRESENCE_UPDATE',        desc: 'Statut de présence',       payload: 'userId, status, customStatus' },
+            { event: 'MEMBER_JOIN',            desc: 'Nouveau membre serveur',   payload: 'serverId, member: { userId, username, roles[] }' },
+            { event: 'MEMBER_LEAVE',           desc: 'Membre quitté',            payload: 'serverId, userId' },
           ].map((e, i) => (
             <div key={e.event} className={cn('grid grid-cols-3 px-4 py-2.5', i % 2 === 0 ? 'bg-background/20' : 'bg-surface/20')}>
               <code className="text-[11px] font-semibold text-emerald-400">{e.event}</code>
@@ -1631,13 +1632,17 @@ function WebSocketSection() {
       </div>
 
       <SectionTitle>Écouter les messages et répondre</SectionTitle>
+      <p className="text-[13px] text-muted">
+        Les événements serveur arrivent enveloppés (<code>{'{ type, payload, timestamp }'}</code>) :
+        le contenu utile est toujours dans <code>payload</code>.
+      </p>
       <MultiCodeBlock
-        title="Écouter NEW_MESSAGE et répondre"
+        title="Écouter SERVER_MESSAGE_NEW et répondre"
         examples={{
-          js: `socket.on('NEW_MESSAGE', async (msg) => {\n  // Ignorer les messages du bot lui-même\n  if (msg.authorType === 'bot') return;\n\n  if (msg.content === '!info') {\n    await sendMessage(msg.channelId, [\n      '🤖 **MonBot v1.0**',\n      'Préfixe : !',\n      'Serveurs : ' + serverCount,\n    ].join('\\n'));\n  }\n});\n\nsocket.on('MEMBER_JOINED', async ({ serverId, username }) => {\n  const welcomeChannel = getWelcomeChannel(serverId);\n  if (welcomeChannel) {\n    await sendMessage(welcomeChannel, \`👋 Bienvenue, **\${username}** !\`);\n  }\n});`,
-          ts: `socket.on('NEW_MESSAGE', async (msg: Message) => {\n  if (msg.authorType === 'bot') return;\n\n  if (msg.content === '!info') {\n    await sendMessage(msg.channelId, '🤖 MonBot v1.0');\n  }\n});\n\nsocket.on('MEMBER_JOINED', async (data: { serverId: string; username: string }) => {\n  const ch = getWelcomeChannel(data.serverId);\n  if (ch) await sendMessage(ch, \`👋 Bienvenue, **\${data.username}** !\`);\n});`,
-          python: `@sio.on('NEW_MESSAGE')\nasync def on_message(data):\n    if data.get('authorType') == 'bot':\n        return\n    if data['content'] == '!info':\n        await send_message(data['channelId'], '🤖 MonBot v1.0')\n\n@sio.on('MEMBER_JOINED')\nasync def on_joined(data):\n    ch = get_welcome_channel(data['serverId'])\n    if ch:\n        await send_message(ch, f"👋 Bienvenue, **{data['username']}** !")`,
-          java: `socket.on("NEW_MESSAGE", args -> {\n    JSONObject msg = (JSONObject) args[0];\n    if ("bot".equals(msg.optString("authorType"))) return;\n    try {\n        if ("!info".equals(msg.getString("content"))) {\n            sendMessage(msg.getString("channelId"), "🤖 MonBot v1.0");\n        }\n    } catch (Exception e) { e.printStackTrace(); }\n});\n\nsocket.on("MEMBER_JOINED", args -> {\n    JSONObject data = (JSONObject) args[0];\n    String ch = getWelcomeChannel(data.optString("serverId"));\n    if (ch != null) {\n        try { sendMessage(ch, "👋 Bienvenue, **" + data.getString("username") + "** !"); }\n        catch (Exception e) { e.printStackTrace(); }\n    }\n});`,
+          js: `socket.on('SERVER_MESSAGE_NEW', async ({ payload: msg }) => {\n  // Ignorer les messages du bot lui-même\n  if (msg.senderId === myBotUserId) return;\n\n  if (msg.content === '!info') {\n    await sendMessage(msg.channelId, [\n      '🤖 **MonBot v1.0**',\n      'Préfixe : !',\n      'Serveurs : ' + serverCount,\n    ].join('\\n'));\n  }\n});\n\nsocket.on('MEMBER_JOIN', async ({ payload }) => {\n  const welcomeChannel = getWelcomeChannel(payload.serverId);\n  if (welcomeChannel) {\n    await sendMessage(welcomeChannel, \`👋 Bienvenue, **\${payload.member.username}** !\`);\n  }\n});`,
+          ts: `socket.on('SERVER_MESSAGE_NEW', async ({ payload: msg }: { payload: Message }) => {\n  if (msg.senderId === myBotUserId) return;\n\n  if (msg.content === '!info') {\n    await sendMessage(msg.channelId, '🤖 MonBot v1.0');\n  }\n});\n\nsocket.on('MEMBER_JOIN', async ({ payload }: { payload: { serverId: string; member: { username: string } } }) => {\n  const ch = getWelcomeChannel(payload.serverId);\n  if (ch) await sendMessage(ch, \`👋 Bienvenue, **\${payload.member.username}** !\`);\n});`,
+          python: `@sio.on('SERVER_MESSAGE_NEW')\nasync def on_message(data):\n    msg = data['payload']\n    if msg.get('senderId') == my_bot_user_id:\n        return\n    if msg['content'] == '!info':\n        await send_message(msg['channelId'], '🤖 MonBot v1.0')\n\n@sio.on('MEMBER_JOIN')\nasync def on_joined(data):\n    payload = data['payload']\n    ch = get_welcome_channel(payload['serverId'])\n    if ch:\n        await send_message(ch, f"👋 Bienvenue, **{payload['member']['username']}** !")`,
+          java: `socket.on("SERVER_MESSAGE_NEW", args -> {\n    JSONObject msg = ((JSONObject) args[0]).getJSONObject("payload");\n    if (myBotUserId.equals(msg.optString("senderId"))) return;\n    try {\n        if ("!info".equals(msg.getString("content"))) {\n            sendMessage(msg.getString("channelId"), "🤖 MonBot v1.0");\n        }\n    } catch (Exception e) { e.printStackTrace(); }\n});\n\nsocket.on("MEMBER_JOIN", args -> {\n    JSONObject payload = ((JSONObject) args[0]).getJSONObject("payload");\n    String ch = getWelcomeChannel(payload.optString("serverId"));\n    if (ch != null) {\n        try { sendMessage(ch, "👋 Bienvenue, **" + payload.getJSONObject("member").getString("username") + "** !"); }\n        catch (Exception e) { e.printStackTrace(); }\n    }\n});`,
         }}
       />
     </div>

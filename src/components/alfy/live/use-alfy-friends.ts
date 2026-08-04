@@ -5,12 +5,12 @@
  * Porté depuis atelier/people/FriendsHome.tsx.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/lib/api';
 import { socketService } from '@/lib/socket';
-import { toAlfyUser } from '@/components/alfy/live/map';
-import type { AlfyUser } from '@/components/alfy/mock/types';
+import { toAlfyUser, toPresence, unwrap } from '@/components/alfy/live/map';
+import type { AlfyPresence, AlfyUser } from '@/components/alfy/mock/types';
 
 export interface AlfyFriendRequest {
   /** Identifiant de la demande (nécessaire pour accepter/refuser). */
@@ -37,10 +37,20 @@ const list = (res: unknown): Record<string, unknown>[] => {
 };
 
 export function useAlfyFriends(): AlfyFriendsData {
-  const [friends, setFriends] = useState<AlfyUser[]>([]);
+  const [rawFriends, setRawFriends] = useState<AlfyUser[]>([]);
+  // `/api/friends` renvoie un `status` lu depuis une colonne DB figée (dernier
+  // statut explicitement enregistré, jamais mis à jour pour les transitions
+  // auto-idle/déconnexion) — pas la présence réelle. Sans ce recouvrement,
+  // presque tout le monde restait affiché "en ligne" indéfiniment.
+  const [presence, setPresence] = useState<Map<string, AlfyPresence>>(new Map());
   const [pending, setPending] = useState<AlfyFriendRequest[]>([]);
   const [blocked, setBlocked] = useState<AlfyUser[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const friends = useMemo(
+    () => rawFriends.map((u) => ({ ...u, status: presence.get(u.id) ?? u.status })),
+    [rawFriends, presence],
+  );
 
   const reload = useCallback(() => {
     void (async () => {
@@ -51,28 +61,42 @@ export function useAlfyFriends(): AlfyFriendsData {
           api.getBlockedUsers().catch(() => null),
         ]);
 
-        setFriends(list(fRes).map((u) => toAlfyUser(u, (u.id as string) ?? '')));
+        const friendUsers = list(fRes).map((u) => toAlfyUser(u, (u.id as string) ?? ''));
+        setRawFriends(friendUsers);
         setBlocked(list(bRes).map((u) => toAlfyUser(u, (u.id as string) ?? '')));
 
-        // Les demandes portent l'utilisateur soit à plat, soit imbriqué.
-        setPending(
-          list(rRes).map((r) => {
-            const nested = (r.user ?? r.sender ?? r.requester ?? r.recipient) as
-              | Record<string, unknown>
-              | undefined;
-            const raw = nested ?? r;
-            const incoming =
-              r.direction === 'incoming' ||
-              r.type === 'incoming' ||
-              Boolean(r.senderId ?? r.sender_id) ||
-              !(r.direction || r.type);
-            return {
-              requestId: (r.id as string) ?? (raw.id as string) ?? '',
-              user: toAlfyUser(raw, (raw.id as string) ?? ''),
-              direction: incoming ? 'incoming' : 'outgoing',
-            } satisfies AlfyFriendRequest;
-          }),
-        );
+        const ids = friendUsers.map((u) => u.id).filter(Boolean);
+        if (ids.length) {
+          socketService.requestBulkPresence(ids, (entries: unknown) => {
+            const next = new Map<string, AlfyPresence>();
+            (entries as { userId?: string; id?: string; status?: string }[] | undefined)?.forEach((e) => {
+              const id = e.userId ?? e.id;
+              if (id) next.set(id, toPresence(e.status));
+            });
+            setPresence((prev) => new Map([...prev, ...next]));
+          });
+        }
+
+        // GET /api/friends/requests répond { received: [...], sent: [...] }
+        // (chaque entrée porte les champs utilisateur à plat + `id` = id de la
+        // ligne friends, `userId` = l'autre personne) — PAS un tableau brut.
+        // `list()` attend un tableau et retombait donc silencieusement sur []
+        // pour cette réponse : les demandes en attente n'apparaissaient jamais.
+        const reqData = ((rRes as { data?: unknown })?.data ?? rRes) as
+          | { received?: Record<string, unknown>[]; sent?: Record<string, unknown>[] }
+          | undefined;
+        const toEntry = (direction: 'incoming' | 'outgoing') => (r: Record<string, unknown>) => ({
+          requestId: (r.id as string) ?? '',
+          // `r.id` est l'id de la ligne de demande, pas de l'utilisateur — et
+          // toAlfyUser() priorise justement `id` sur `userId`. Sans l'écraser
+          // ici, chaque demande se serait résolue vers un profil inexistant.
+          user: toAlfyUser({ ...r, id: r.userId }, (r.userId as string) ?? ''),
+          direction,
+        } satisfies AlfyFriendRequest);
+        setPending([
+          ...(reqData?.received ?? []).map(toEntry('incoming')),
+          ...(reqData?.sent ?? []).map(toEntry('outgoing')),
+        ]);
       } finally {
         setLoading(false);
       }
@@ -95,6 +119,18 @@ export function useAlfyFriends(): AlfyFriendsData {
       socketService.off('FRIEND_DECLINE', refresh);
     };
   }, [reload]);
+
+  /* Temps réel : présence des amis */
+  useEffect(() => {
+    const onPresence = (data: unknown) => {
+      const d = unwrap(data);
+      const id = (d?.userId ?? d?.id) as string | undefined;
+      if (!id) return;
+      setPresence((prev) => new Map(prev).set(id, toPresence(d.status)));
+    };
+    socketService.on('PRESENCE_UPDATE', onPresence);
+    return () => socketService.off('PRESENCE_UPDATE', onPresence);
+  }, []);
 
   const accept = useCallback(
     async (requestId: string) => {

@@ -330,12 +330,17 @@ class SocketService {
   }
 
   // Typing
-  startTyping(channelId?: string, recipientId?: string): void {
-    this.socket?.emit('typing:start', { channelId, recipientId });
+  // La passerelle n'écoute que TYPING_START/TYPING_STOP et diffuse sur la room
+  // `conversation:<conversationId>` : les anciens `typing:start`/`typing:stop`
+  // en minuscules ne déclenchaient rien côté serveur.
+  startTyping(conversationId?: string): void {
+    if (!conversationId) return;
+    this.socket?.emit('TYPING_START', { conversationId });
   }
 
-  stopTyping(channelId?: string, recipientId?: string): void {
-    this.socket?.emit('typing:stop', { channelId, recipientId });
+  stopTyping(conversationId?: string): void {
+    if (!conversationId) return;
+    this.socket?.emit('TYPING_STOP', { conversationId });
   }
 
   // Présence
@@ -802,8 +807,12 @@ class SocketService {
   onMessageError(callback: (data: unknown) => void): void {
     this.on('message:error', callback);
   }
-  onTyping(callback: (data: unknown) => void): void {
-    this.on('typing:update', callback);
+  /** La passerelle diffuse un début/fin par utilisateur, pas une liste agrégée. */
+  onTypingStart(callback: (data: unknown) => void): void {
+    this.on('TYPING_START', callback);
+  }
+  onTypingStop(callback: (data: unknown) => void): void {
+    this.on('TYPING_STOP', callback);
   }
   onReactionAdd(callback: (data: unknown) => void): void {
     this.on('REACTION_ADD', callback);

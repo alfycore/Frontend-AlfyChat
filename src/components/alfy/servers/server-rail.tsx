@@ -1,7 +1,7 @@
 'use client';
 
-import { Button, ScrollShadow, Separator, Tooltip } from '@heroui/react';
-import { Compass, PanelLeft, PanelTop, Plus } from 'lucide-react';
+import { Button, Dropdown, Label, ScrollShadow, Separator, Tooltip } from '@heroui/react';
+import { Compass, Link2, PanelLeft, PanelTop, Plus, Rocket } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import type { AlfyServer } from '@/components/alfy/mock/types';
@@ -19,6 +19,8 @@ interface ServerRailProps {
   orientation?: 'vertical' | 'horizontal';
   onToggleOrientation?: () => void;
   onDiscover?: () => void;
+  onCreate?: () => void;
+  onJoin?: () => void;
 }
 
 export function ServerRail({
@@ -29,6 +31,8 @@ export function ServerRail({
   orientation = 'vertical',
   onToggleOrientation,
   onDiscover,
+  onCreate,
+  onJoin,
 }: ServerRailProps) {
   const horizontal = orientation === 'horizontal';
 
@@ -104,22 +108,34 @@ export function ServerRail({
           />
         ))}
 
-        <Tooltip delay={150}>
-          <Button
-            isIconOnly
-            variant="ghost"
+        <Dropdown>
+          <Dropdown.Trigger
             aria-label="Créer ou rejoindre un serveur"
             className={cn(
-              'size-11 shrink-0 rounded-full bg-surface text-success transition-colors hover:bg-success/15',
+              'flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-surface text-success outline-none transition-colors hover:bg-success/15 focus-visible:ring-2 focus-visible:ring-focus',
               !horizontal && 'mt-1',
             )}
           >
             <Plus className="size-5" />
-          </Button>
-          <Tooltip.Content placement={horizontal ? 'bottom' : 'right'}>
-            <p>Créer ou rejoindre un serveur</p>
-          </Tooltip.Content>
-        </Tooltip>
+          </Dropdown.Trigger>
+          <Dropdown.Popover className="min-w-52" placement={horizontal ? 'bottom' : 'right top'}>
+            <Dropdown.Menu
+              onAction={(key) => {
+                if (key === 'create') onCreate?.();
+                else if (key === 'join') onJoin?.();
+              }}
+            >
+              <Dropdown.Item id="create" textValue="Créer un serveur">
+                <Rocket className="size-4" aria-hidden />
+                <Label>Créer un serveur</Label>
+              </Dropdown.Item>
+              <Dropdown.Item id="join" textValue="Rejoindre un serveur">
+                <Link2 className="size-4" aria-hidden />
+                <Label>Rejoindre un serveur</Label>
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown>
       </ScrollShadow>
 
       <Tooltip delay={150}>

@@ -40,6 +40,12 @@ const kronaOne = Krona_One({
 export const metadata: Metadata = {
   title: "AlfyChat",
   description: "Messagerie sécurisée française — chiffrement de bout en bout",
+  // Icône par défaut au premier rendu. Une fois l'app montée, use-app-prefs
+  // remplace ce lien par l'icône choisie dans les réglages d'apparence.
+  icons: {
+    icon: [{ url: "/logoicon/Logomark.png", type: "image/png" }],
+    apple: [{ url: "/logoicon/Logomark.png", sizes: "180x180", type: "image/png" }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

@@ -35,11 +35,21 @@ export function IncomingCall({ caller, callType, isOpen, onOpenChange, onAccept,
               </p>
             </AlertDialog.Body>
             <AlertDialog.Footer className="justify-center gap-3">
-              <Button slot="close" variant="danger" onPress={onDecline}>
+              {/*
+                Pas de `slot="close"` ici : sur ces composants React Aria, tout
+                enfant portant ce slot ferme le dialogue tout seul, ce qui
+                déclenche `onOpenChange(false)` → `declineCall()` en plus du
+                bouton pressé. Cliquer « Accepter » envoyait donc CALL_ACCEPT
+                *et* CALL_REJECT en même temps — le refus gagnait la course
+                côté serveur et l'appel raccrochait aussitôt. La fermeture du
+                dialogue vient maintenant uniquement du changement de
+                `callStatus` déclenché par onAccept/onDecline.
+              */}
+              <Button variant="danger" onPress={onDecline}>
                 <PhoneOff className="size-4" />
                 Refuser
               </Button>
-              <Button slot="close" className="bg-success text-[color:var(--success-foreground)]" onPress={onAccept}>
+              <Button className="bg-success text-(--success-foreground)" onPress={onAccept}>
                 {callType === 'video' ? <Video className="size-4" /> : <Phone className="size-4" />}
                 Accepter
               </Button>

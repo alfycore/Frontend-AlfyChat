@@ -127,12 +127,33 @@ export const APP_ICONS: AppIconMeta[] = [
   { id: 'vapeur', nom: 'Vapeur', from: '#c084fc', to: '#f472b6', glyph: '#1b0730' },
 ];
 
+/**
+ * Logomark AlfyChat — tracés repris tels quels de `public/logo/Alfychat.svg`
+ * (viewBox d'origine 717×626), aplatis en une seule couleur pour servir de
+ * glyphe. Garder ces `d` synchronisés avec le SVG de marque si celui-ci évolue.
+ */
+const LOGOMARK_PATHS = [
+  'M716.999 134.548V494.491H675.726L667.918 489.406C635.339 468.244 600.365 451.873 563.718 440.718C561.421 440.029 559.092 439.372 556.697 438.684C541.539 434.254 526.086 430.809 510.437 428.283C510.437 427.463 510.502 426.643 510.437 425.823C510.502 425.002 510.502 424.182 510.502 423.362V363.847C526.349 366.078 541.999 369.228 557.451 373.034C559.748 373.526 562.143 374.182 564.472 374.805C595.148 382.843 624.873 393.998 653.449 408.073V134.548C653.449 95.4401 621.625 63.6158 582.583 63.6158H206.498V0H582.517C656.665 0 716.999 60.4006 716.999 134.548Z',
+  'M270.114 288.158V198.82H510.502V135.204H270.114H206.498V198.82V288.158C206.498 362.371 266.833 422.706 340.98 422.706H392.916V359.09H340.98C301.938 359.09 270.114 327.266 270.114 288.158Z',
+  'M557.385 373.001V423.362C557.385 425.823 557.319 428.185 557.221 430.58C557.089 433.27 556.925 436.026 556.696 438.684C541.505 434.287 526.02 430.777 510.436 428.25C510.501 426.61 510.501 425.035 510.501 423.395V363.847C526.315 366.078 541.965 369.195 557.385 373.001Z',
+  'M510.469 291.11V423.329C510.469 424.412 510.469 425.494 510.403 426.61C510.403 427.168 510.403 427.627 510.337 428.185C507.811 500.134 448.493 557.91 375.986 557.91H273.624C193.702 557.91 116.077 580.974 49.0816 624.577L48.327 625.069H0V269.752C0 195.539 60.335 135.237 134.482 135.237H206.53V198.82H134.482C95.3745 198.82 63.6158 230.579 63.6158 269.752V543.244C128.708 511.059 200.329 494.261 273.656 494.261H376.019C415.127 494.261 446.886 462.437 446.886 423.329V291.11H510.469Z',
+];
+
+/* Le logomark fait 717×626 : on le ramène à 72px de large, centré dans 128×128. */
+const GLYPH_SCALE = 72 / 717;
+const GLYPH_X = (128 - 72) / 2;
+const GLYPH_Y = (128 - 626 * GLYPH_SCALE) / 2;
+
 /** SVG de l'icône, encodé en data-URI (grille des réglages + favicon). */
 export function appIconDataUri(id: string): string {
   const icon = APP_ICONS.find((i) => i.id === id) ?? APP_ICONS[0];
   const ring = icon.ring
     ? `<rect x="7" y="7" width="114" height="114" rx="30" fill="none" stroke="${icon.ring}" stroke-opacity=".55" stroke-width="3"/>`
     : '';
+  const glyphe =
+    `<g transform="translate(${GLYPH_X} ${GLYPH_Y.toFixed(2)}) scale(${GLYPH_SCALE.toFixed(5)})" fill="${icon.glyph}">` +
+    LOGOMARK_PATHS.map((d) => `<path d="${d}"/>`).join('') +
+    `</g>`;
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">` +
     `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
@@ -140,8 +161,7 @@ export function appIconDataUri(id: string): string {
     `</linearGradient></defs>` +
     `<rect width="128" height="128" rx="34" fill="url(#g)"/>` +
     ring +
-    `<path d="M64 30 90 96H77.5L64 60 50.5 96H38Z" fill="${icon.glyph}"/>` +
-    `<rect x="50" y="76" width="28" height="10" rx="5" fill="${icon.glyph}" fill-opacity=".85"/>` +
+    glyphe +
     `</svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
@@ -191,6 +211,9 @@ function applyFavicon(iconId: string): void {
     document.head.appendChild(link);
   }
   link.href = href;
+  // Ne jamais retirer les <link rel="icon"> rendus par Next : ils appartiennent
+  // à React, et les supprimer à la main casse la réconciliation
+  // (« removeChild of null »). Le nôtre est ajouté en dernier, il l'emporte.
 }
 
 /* ══════════════════════════════════════════════════════════════════════

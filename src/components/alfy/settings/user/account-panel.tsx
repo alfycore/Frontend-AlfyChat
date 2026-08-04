@@ -12,13 +12,13 @@ import {
   toast,
 } from '@heroui/react';
 import { AtSign, Camera, Check, ImageUp, Lock, Sparkles } from 'lucide-react';
-import { useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import { CURRENT_USER } from '@/components/alfy/mock/data';
 import type { AlfyUser } from '@/components/alfy/mock/types';
 import { UserBadges } from '@/components/alfy/members/user-badges';
 import { PRESENCE_LABELS } from '@/components/alfy/primitives/status-dot';
-import { api } from '@/lib/api';
+import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 
@@ -50,7 +50,8 @@ export interface AccountProfilePatch {
 interface AccountPanelProps {
   /** Profil réel ; sans lui, jeu de démonstration. */
   user?: AlfyUser;
-  onSave?: (data: AccountProfilePatch) => void;
+  /** Renvoie si l'enregistrement a réellement réussi — pilote le toast de retour. */
+  onSave?: (data: AccountProfilePatch) => Promise<boolean> | void;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -105,11 +106,24 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
   const [statut, setStatut] = useState(profil.customStatus ?? '');
   const [avatarUrl, setAvatarUrl] = useState(profil.avatarUrl);
   const [bannerUrl, setBannerUrl] = useState(profil.bannerUrl);
+  // Fichiers choisis mais pas encore téléversés — l'aperçu (avatarUrl/bannerUrl
+  // ci-dessus) montre déjà l'image locale ; le fichier réel ne part vers le
+  // serveur qu'à l'enregistrement, pour ne pas téléverser une image qu'on
+  // remplace ou annule l'instant d'après.
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [envoi, setEnvoi] = useState<'avatar' | 'banner' | null>(null);
   const [enregistrement, setEnregistrement] = useState(false);
 
   const avatarInput = useRef<HTMLInputElement>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
+  // URLs locales (blob:) à révoquer quand on les remplace ou quitte le panneau.
+  const previewUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const urls = previewUrlsRef.current;
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, []);
 
   const modifie = useMemo(
     () =>
@@ -123,37 +137,93 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
 
   const invalide = nom.trim().length === 0 || bio.length > BIO_MAX || statut.length > STATUT_MAX;
 
-  /** Téléverse l'image puis met à jour l'aperçu — la persistance suit à l'enregistrement. */
-  const televerser = async (fichier: File | undefined, cible: 'avatar' | 'banner') => {
+  /** Aperçu instantané et local — le fichier n'est envoyé qu'à l'enregistrement. */
+  const previsualiser = (fichier: File | undefined, cible: 'avatar' | 'banner') => {
     if (!fichier) return;
-    setEnvoi(cible);
-    try {
-      const res = await api.uploadImage(fichier, cible);
-      if (res.success && res.data?.url) {
-        if (cible === 'avatar') setAvatarUrl(res.data.url);
-        else setBannerUrl(res.data.url);
-      } else {
-        toast.danger('Envoi impossible', { description: res.error ?? fichier.name });
-      }
-    } finally {
-      setEnvoi(null);
+    const url = URL.createObjectURL(fichier);
+    previewUrlsRef.current.add(url);
+    if (cible === 'avatar') {
+      setAvatarFile(fichier);
+      setAvatarUrl(url);
+    } else {
+      setBannerFile(fichier);
+      setBannerUrl(url);
     }
   };
 
-  const enregistrer = () => {
-    if (invalide) return;
+  const enregistrer = async () => {
+    if (invalide || enregistrement) return;
     setEnregistrement(true);
-    onSave?.({ displayName: nom.trim(), bio, avatarUrl, bannerUrl, customStatus: statut.trim() });
-    // Le statut personnalisé passe par la présence temps réel, pas par le profil.
-    if (statut !== (profil.customStatus ?? '')) {
-      socketService.updatePresence(
-        profil.status === 'offline' ? 'online' : profil.status,
-        statut.trim() || null,
-        profil.statusEmoji ?? null,
-      );
+    try {
+      // Les fichiers choisis ne sont téléversés que maintenant — jusqu'ici
+      // l'aperçu était purement local (URL blob:).
+      let finalAvatarUrl = avatarUrl;
+      let finalBannerUrl = bannerUrl;
+      if (avatarFile) {
+        setEnvoi('avatar');
+        const res = await api.uploadImage(avatarFile, 'avatar');
+        setEnvoi(null);
+        if (!res.success || !res.data?.url) {
+          toast.danger('Envoi de l’avatar impossible', { description: res.error ?? avatarFile.name });
+          return;
+        }
+        finalAvatarUrl = res.data.url;
+      }
+      if (bannerFile) {
+        setEnvoi('banner');
+        const res = await api.uploadImage(bannerFile, 'banner');
+        setEnvoi(null);
+        if (!res.success || !res.data?.url) {
+          toast.danger('Envoi de la bannière impossible', { description: res.error ?? bannerFile.name });
+          return;
+        }
+        finalBannerUrl = res.data.url;
+      }
+
+      // `false` explicite = l'API a répondu par un échec ; `undefined` (pas de
+      // onSave câblé) est traité comme un succès pour ne pas casser les autres
+      // usages du panneau (ex: /uitest).
+      const ok = await onSave?.({
+        displayName: nom.trim(),
+        bio,
+        avatarUrl: finalAvatarUrl,
+        bannerUrl: finalBannerUrl,
+        customStatus: statut.trim(),
+      });
+      if (ok === false) {
+        toast.danger('Enregistrement impossible', { description: 'Réessayez dans un instant.' });
+        return;
+      }
+      // Les aperçus locaux ne servent plus une fois la vraie URL enregistrée.
+      // On stocke la version RÉSOLUE (avec le domaine) — pas le chemin brut
+      // renvoyé par l'upload — pour matcher exactement ce que `toAlfyUser()`
+      // produira une fois le profil (parent) resynchronisé. Sans ça, `modifie`
+      // comparait un chemin relatif à une URL absolue : jamais égaux, donc
+      // toujours vu comme "non enregistré" et la barre ne disparaissait plus.
+      if (avatarFile) {
+        previewUrlsRef.current.delete(avatarUrl!);
+        URL.revokeObjectURL(avatarUrl!);
+        setAvatarUrl(resolveMediaUrl(finalAvatarUrl));
+        setAvatarFile(null);
+      }
+      if (bannerFile) {
+        previewUrlsRef.current.delete(bannerUrl!);
+        URL.revokeObjectURL(bannerUrl!);
+        setBannerUrl(resolveMediaUrl(finalBannerUrl));
+        setBannerFile(null);
+      }
+      // Le statut personnalisé passe par la présence temps réel, pas par le profil.
+      if (statut !== (profil.customStatus ?? '')) {
+        socketService.updatePresence(
+          profil.status === 'offline' ? 'online' : profil.status,
+          statut.trim() || null,
+          profil.statusEmoji ?? null,
+        );
+      }
+      toast('Profil enregistré');
+    } finally {
+      setEnregistrement(false);
     }
-    toast('Profil enregistré');
-    setEnregistrement(false);
   };
 
   const fondBanniere = bannerUrl
@@ -267,7 +337,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
         accept="image/*"
         className="hidden"
         onChange={(e) => {
-          void televerser(e.target.files?.[0], 'avatar');
+          previsualiser(e.target.files?.[0], 'avatar');
           e.target.value = '';
         }}
       />
@@ -277,7 +347,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
         accept="image/*"
         className="hidden"
         onChange={(e) => {
-          void televerser(e.target.files?.[0], 'banner');
+          previsualiser(e.target.files?.[0], 'banner');
           e.target.value = '';
         }}
       />
@@ -367,6 +437,16 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
                 setNom(profil.displayName ?? '');
                 setBio(profil.bio ?? '');
                 setStatut(profil.customStatus ?? '');
+                if (avatarFile) {
+                  previewUrlsRef.current.delete(avatarUrl!);
+                  URL.revokeObjectURL(avatarUrl!);
+                  setAvatarFile(null);
+                }
+                if (bannerFile) {
+                  previewUrlsRef.current.delete(bannerUrl!);
+                  URL.revokeObjectURL(bannerUrl!);
+                  setBannerFile(null);
+                }
                 setAvatarUrl(profil.avatarUrl);
                 setBannerUrl(profil.bannerUrl);
               }}

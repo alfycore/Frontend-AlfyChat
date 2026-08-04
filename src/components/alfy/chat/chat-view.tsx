@@ -180,6 +180,7 @@ export function ChatView({
         onSendGif={onSendGif}
         mentionUsers={mentionUsers}
         mentionChannels={mentionChannels}
+        serverId={server?.id}
       />
     </div>
   );

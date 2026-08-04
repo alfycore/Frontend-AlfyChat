@@ -274,6 +274,8 @@ export function useCall(options: UseCallOptions = {}) {
   });
 
   const { handRaised, raiseHand, lowerHand, toggleHand, reset: resetHand } = useCallServer();
+  /** Mains levées des AUTRES participants — la mienne reste dans `handRaised`. */
+  const [raisedHands, setRaisedHands] = useState<Set<string>>(new Set());
 
   // ── Drain pending SFU producers once recv transport is ready ──
   useEffect(() => {
@@ -402,6 +404,7 @@ export function useCall(options: UseCallOptions = {}) {
 
     acceptedCallIdRef.current = null;
     resetHand();
+    setRaisedHands(new Set());
     setState({ ...INITIAL_STATE });
     cleaningUpRef.current = false;
   }, [resetHand]);
@@ -664,6 +667,12 @@ export function useCall(options: UseCallOptions = {}) {
       if (pc) { pc.close(); pcsRef.current.delete(leftId); }
       iceQueuesRef.current.delete(leftId);
       remoteDescSetMapRef.current.delete(leftId);
+      setRaisedHands((prev) => {
+        if (!prev.has(leftId)) return prev;
+        const next = new Set(prev);
+        next.delete(leftId);
+        return next;
+      });
 
       setState((prev) => {
         const newStreams = new Map(prev.remoteStreams);
@@ -824,6 +833,28 @@ export function useCall(options: UseCallOptions = {}) {
       setState((prev) => ({ ...prev, participantCount: p.count as number }));
     };
 
+    // ── Main levée par un autre participant ──
+    // La passerelle diffuse CALL_HAND_RAISED/CALL_HAND_LOWERED (et non les noms
+    // qu'on émet, CALL_RAISE_HAND/CALL_LOWER_HAND) — sans ces listeners, l'état
+    // ne bougeait que pour la personne qui levait la main.
+    const handleHandRaised = (data: unknown) => {
+      const p = parsePayload(data);
+      const uid = p.userId as string | undefined;
+      if (!uid) return;
+      setRaisedHands((prev) => (prev.has(uid) ? prev : new Set(prev).add(uid)));
+    };
+    const handleHandLowered = (data: unknown) => {
+      const p = parsePayload(data);
+      const uid = p.userId as string | undefined;
+      if (!uid) return;
+      setRaisedHands((prev) => {
+        if (!prev.has(uid)) return prev;
+        const next = new Set(prev);
+        next.delete(uid);
+        return next;
+      });
+    };
+
     // ── Socket reconnection ──
     const handleReconnect = () => {
       if (callIdRef.current) {
@@ -850,6 +881,8 @@ export function useCall(options: UseCallOptions = {}) {
     socketService.on('CALL_SCREEN_SHARE', handleRemoteScreenShare);
     socketService.on('SFU_NEW_PRODUCER', handleNewProducer);
     socketService.on('CALL_PARTICIPANT_COUNT', handleParticipantCount);
+    socketService.on('CALL_HAND_RAISED', handleHandRaised);
+    socketService.on('CALL_HAND_LOWERED', handleHandLowered);
 
     return () => {
       socketService.off('CALL_INCOMING', handleIncoming);
@@ -865,6 +898,8 @@ export function useCall(options: UseCallOptions = {}) {
       socketService.off('CALL_SCREEN_SHARE', handleRemoteScreenShare);
       socketService.off('SFU_NEW_PRODUCER', handleNewProducer);
       socketService.off('CALL_PARTICIPANT_COUNT', handleParticipantCount);
+      socketService.off('CALL_HAND_RAISED', handleHandRaised);
+      socketService.off('CALL_HAND_LOWERED', handleHandLowered);
     };
   }, [createPeerConnection, flushIceCandidates, cleanup, sfuState.recvTransportReady]);
 
@@ -1151,13 +1186,42 @@ export function useCall(options: UseCallOptions = {}) {
             // Server calls are always SFU
             await initSfuRef.current(cid, localStreamRef.current);
             setState((prev) => ({ ...prev, status: 'connected' }));
-          } else if (response?.error) {
+            return;
+          }
+
+          // Quelqu'un d'autre est déjà en vocal sur ce salon : le service
+          // renvoie 409 + existingCallId plutôt qu'un nouvel appel — le
+          // rejoindre directement au lieu d'échouer avec une erreur.
+          const existingCallId = response?.existingCallId as string | undefined;
+          if (existingCallId) {
+            callIdRef.current = existingCallId;
+            setState((prev) => ({ ...prev, callId: existingCallId, callMode: 'sfu' }));
+            socketService.joinCall(existingCallId, async (joinResponse: Record<string, unknown>) => {
+              console.log('[CALL] Joined existing server call:', joinResponse);
+              if (joinResponse?.error) {
+                setState((prev) => ({ ...prev, mediaError: `Erreur : ${joinResponse.error}` }));
+                return;
+              }
+              await initSfuRef.current(existingCallId, localStreamRef.current);
+              type PeerProd = { userId: string; producerId: string; kind: 'audio' | 'video' };
+              const existingProducers = (joinResponse?.existingProducers as PeerProd[]) ?? [];
+              for (const prod of existingProducers) {
+                if (prod.userId !== userId) {
+                  await consumeProducerRef.current(existingCallId, prod.producerId, prod.userId, prod.kind);
+                }
+              }
+              setState((prev) => ({ ...prev, status: 'connected' }));
+            });
+            return;
+          }
+
+          if (response?.error) {
             setState((prev) => ({ ...prev, mediaError: `Erreur serveur : ${response.error}` }));
           }
         },
       );
     },
-    [requestMedia],
+    [requestMedia, userId],
   );
 
   /** Join an existing call (handles both P2P and SFU paths) */
@@ -1261,6 +1325,7 @@ export function useCall(options: UseCallOptions = {}) {
     ...state,
     tierLabel,
     handRaised,
+    raisedHands,
     sfuState,
     initiateCall,
     initiateGroupCall,

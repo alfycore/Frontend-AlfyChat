@@ -1,26 +1,19 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { GroupChatArea } from '@/components/chat/group-chat-area';
 
 /**
  * Layout /channels/me — délègue la sidebar au parent channels/layout.tsx.
- * Gère uniquement le cas spécial GroupChatArea.
+ *
+ * Ne rien intercepter ici : `/channels/me/g/[groupId]` n'existe que pour
+ * rediriger vers `/channels/groups/[groupId]` (voir `me/g/[groupId]/page.tsx`).
+ * Un ancien branchement spécial rendait `GroupChatArea` (composant mort,
+ * `components/chat/`) dès que `params.groupId` était présent — un layout
+ * hérite des params de ses segments enfants — court-circuitant la page de
+ * redirection avant même que son `useEffect` ne s'exécute. Quiconque suivait
+ * un vieux lien `/channels/me/g/:id` atterrissait donc sur l'ancienne UI au
+ * lieu d'être renvoyé vers la vraie page de groupe.
  */
 export default function MeLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const params = useParams();
-  const groupId = params?.groupId as string | undefined;
-
-  if (groupId) {
-    return (
-      <GroupChatArea
-        groupId={groupId}
-        onLeave={() => router.push('/channels/me')}
-      />
-    );
-  }
-
   return <>{children}</>;
 }

@@ -4,12 +4,15 @@ import { Button, Dropdown, Header, Label, Tooltip } from '@heroui/react';
 import { Headphones, Mic, MicOff, Settings } from 'lucide-react';
 import { useState } from 'react';
 
+import { useAuth } from '@/hooks/use-auth';
+import { socketService } from '@/lib/socket';
 import type { AlfyPresence, AlfyUser } from '@/components/alfy/mock/types';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { PRESENCE_LABELS, StatusDot } from '@/components/alfy/primitives/status-dot';
 import { cn } from '@/lib/utils';
 
-const SELECTABLE: AlfyPresence[] = ['online', 'idle', 'dnd', 'invisible'];
+type SelectableStatus = 'online' | 'idle' | 'dnd' | 'invisible';
+const SELECTABLE: SelectableStatus[] = ['online', 'idle', 'dnd', 'invisible'];
 
 interface UserDockProps {
   user: AlfyUser;
@@ -18,9 +21,22 @@ interface UserDockProps {
 
 /** Dock utilisateur en bas de la sidebar : statut, micro, casque, réglages. */
 export function UserDock({ user, onOpenSettings }: UserDockProps) {
-  const [status, setStatus] = useState<AlfyPresence>(user.status);
+  // `user.status` (prop) reflète déjà la présence réelle — dérivée de
+  // useAuth() par le container. On ne garde `updateUser` que pour l'écriture
+  // optimiste : le serveur ne renvoie jamais l'écho de son propre changement.
+  const { updateUser } = useAuth();
+  const status = user.status;
   const [muted, setMuted] = useState(false);
   const [deafened, setDeafened] = useState(false);
+
+  const changerStatut = (next: SelectableStatus) => {
+    if (next === status) return;
+    // Optimiste : le serveur ne renvoie PRESENCE_UPDATE qu'à ses amis/contacts
+    // de MP, jamais à soi-même — sans cette écriture locale, le menu semblait
+    // fonctionner (fermait) sans jamais refléter le nouveau statut choisi.
+    updateUser({ status: next });
+    socketService.updatePresence(next, user.customStatus ?? null, user.statusEmoji ?? null);
+  };
 
   return (
     <div className="flex shrink-0 items-center gap-2 rounded-lg border border-border/50 bg-surface-tertiary/80 px-2.5 py-2 shadow-sm backdrop-blur-sm">
@@ -38,7 +54,7 @@ export function UserDock({ user, onOpenSettings }: UserDockProps) {
           />
         </Dropdown.Trigger>
         <Dropdown.Popover className="min-w-52">
-          <Dropdown.Menu onAction={(key) => setStatus(String(key) as AlfyPresence)}>
+          <Dropdown.Menu onAction={(key) => changerStatut(String(key) as SelectableStatus)}>
             <Dropdown.Section>
               <Header>{user.displayName}</Header>
               {SELECTABLE.map((s) => (

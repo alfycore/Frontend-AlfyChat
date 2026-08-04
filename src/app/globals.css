@@ -623,3 +623,18 @@
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-corner { background: transparent; }
+
+/* ════════════════════════════════════════════════════════════════════════
+ * Fil privé — surlignage temporaire du message atteint depuis la recherche
+ * ou le panneau des messages épinglés.
+ * ════════════════════════════════════════════════════════════════════════ */
+@keyframes alfy-jump-flash {
+  0%   { background-color: color-mix(in oklch, var(--accent) 22%, transparent); }
+  100% { background-color: transparent; }
+}
+.alfy-jump-flash {
+  animation: alfy-jump-flash 1.6s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .alfy-jump-flash { animation-duration: 0.01ms !important; }
+}

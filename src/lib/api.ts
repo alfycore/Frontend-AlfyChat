@@ -674,6 +674,23 @@ class ApiService {
     return this.request(`/api/servers/${serverId}`);
   }
 
+  /** Type 1 uniquement (hébergé par AlfyChat) — création self-hosted/hébergeur certifié pas encore disponible ici. */
+  async createServer(data: { name: string; description?: string; iconUrl?: string; bannerUrl?: string; isPublic?: boolean; category: 'standard' | 'community' }) {
+    return this.request<{ id: string; name: string; category: 'standard' | 'community'; maxMembers: number }>('/api/servers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  /** Quota de serveurs Type 1 (plateforme) restant pour l'utilisateur courant. */
+  async getServerQuota() {
+    return this.request<{
+      limits: { total: number; standard: number; community: number };
+      used: { standard: number; community: number };
+      remaining: { total: number; standard: number; community: number };
+    }>('/api/servers/quota');
+  }
+
   async joinServer(inviteCode: string) {
     return this.request('/api/servers/join', {
       method: 'POST',
@@ -693,14 +710,18 @@ class ApiService {
     return this.request(`/api/servers/${serverId}/channels`);
   }
 
-  async createChannel(serverId: string, data: { name: string; type: 'text' | 'voice' }) {
-    return this.request(`/api/servers/${serverId}/channels`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  async createChannel(serverId: string, data: {
+    name: string;
+    type: 'text' | 'voice' | 'announcement' | 'category' | 'forum' | 'stage' | 'gallery' | 'poll' | 'suggestion' | 'doc' | 'counting' | 'vent' | 'thread' | 'media' | 'minigame' | 'trivia';
+    parentId?: string | null;
+  }) {
+    return this.request<{ id: string; serverId: string; name: string; type: string; position: number; parentId: string | null }>(
+      `/api/servers/${serverId}/channels`,
+      { method: 'POST', body: JSON.stringify(data) },
+    );
   }
 
-  async updateChannel(serverId: string, channelId: string, data: { name?: string; topic?: string; position?: number; isNsfw?: boolean }) {
+  async updateChannel(serverId: string, channelId: string, data: { name?: string; topic?: string; position?: number; isNsfw?: boolean; slowMode?: number; parentId?: string | null }) {
     return this.request(`/api/servers/${serverId}/channels/${channelId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -713,11 +734,70 @@ class ApiService {
     });
   }
 
-  async updateServer(serverId: string, data: { name?: string; description?: string; iconUrl?: string; bannerUrl?: string; isPublic?: boolean }) {
+  async updateServer(serverId: string, data: {
+    name?: string; description?: string; iconUrl?: string; bannerUrl?: string; isPublic?: boolean;
+    category?: 'standard' | 'community';
+    verificationLevel?: 'none' | 'low' | 'medium' | 'high';
+    require2faModeration?: boolean;
+    restrictEmojiUsage?: boolean;
+  }) {
     return this.request(`/api/servers/${serverId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
+  }
+
+  // ── Émoji personnalisés ──────────────────────────────────────────────
+  async getServerEmojis(serverId: string) {
+    return this.request<Array<{ id: string; serverId: string; name: string; imageUrl: string; animated: boolean; creatorId: string; createdAt: string }>>(
+      `/api/servers/${serverId}/emojis`,
+    );
+  }
+  /** Tous les émoji personnalisés utilisables par l'utilisateur courant (tous ses serveurs, sauf ceux restreints ailleurs qu'à eux-mêmes). */
+  async getAvailableEmojis(currentServerId?: string) {
+    const qs = currentServerId ? `?currentServerId=${encodeURIComponent(currentServerId)}` : '';
+    return this.request<Array<{ id: string; serverId: string; name: string; imageUrl: string; animated: boolean }>>(
+      `/api/servers/emojis/available${qs}`,
+    );
+  }
+  async createServerEmoji(serverId: string, data: { name: string; imageUrl: string; animated?: boolean }) {
+    return this.request(`/api/servers/${serverId}/emojis`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async deleteServerEmoji(serverId: string, emojiId: string) {
+    return this.request(`/api/servers/${serverId}/emojis/${emojiId}`, { method: 'DELETE' });
+  }
+
+  // ── Journal d'audit ───────────────────────────────────────────────────
+  async getAuditLogs(serverId: string, opts?: { limit?: number; offset?: number }) {
+    const qs = new URLSearchParams();
+    if (opts?.limit) qs.set('limit', String(opts.limit));
+    if (opts?.offset) qs.set('offset', String(opts.offset));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return this.request<Array<{
+      id: string; action: string; targetType: string | null; targetId: string | null;
+      metadata: Record<string, unknown> | null; createdAt: string;
+      actor: { id: string; username: string; displayName?: string; avatarUrl?: string };
+    }>>(`/api/servers/${serverId}/audit-logs${suffix}`);
+  }
+
+  // ── Sécurité ──────────────────────────────────────────────────────────
+  async getServerSecurity(serverId: string) {
+    return this.request<{ verificationLevel: 'none' | 'low' | 'medium' | 'high'; require2faModeration: boolean }>(
+      `/api/servers/${serverId}/security`,
+    );
+  }
+
+  // ── Webhooks (intégrations) ──────────────────────────────────────────
+  async getServerWebhooks(serverId: string) {
+    return this.request<Array<{ id: string; serverId: string; channelId: string; name: string; avatarUrl?: string; token: string; creatorId: string; createdAt: string }>>(
+      `/api/servers/${serverId}/webhooks`,
+    );
+  }
+  async createServerWebhook(serverId: string, channelId: string, data: { name: string; avatarUrl?: string }) {
+    return this.request(`/api/servers/${serverId}/channels/${channelId}/webhooks`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async deleteServerWebhook(serverId: string, webhookId: string) {
+    return this.request(`/api/servers/${serverId}/webhooks/${webhookId}`, { method: 'DELETE' });
   }
 
   async deleteServer(serverId: string) {

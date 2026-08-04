@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertDialog, Button, toast } from '@heroui/react';
 
 import {
   CURRENT_USER,
@@ -37,10 +38,12 @@ import {
   userById,
 } from '@/components/alfy/mock/data';
 import { CallBar } from '@/components/alfy/calls/call-bar';
-import type { AlfyMessage } from '@/components/alfy/mock/types';
+import type { AlfyChannel, AlfyMessage, AlfyServer } from '@/components/alfy/mock/types';
 import { AppShell } from '@/components/alfy/shell/app-shell';
 import { ServerRail } from '@/components/alfy/servers/server-rail';
 import { ChannelSidebar } from '@/components/alfy/servers/channel-sidebar';
+import { CreateChannelDialog } from '@/components/alfy/servers/create-channel-dialog';
+import { RenameDialog } from '@/components/alfy/servers/rename-dialog';
 import { DmSidebar } from '@/components/alfy/servers/dm-sidebar';
 import { ChatView } from '@/components/alfy/chat/chat-view';
 import { SpecialChannel } from '@/components/alfy/chat/special-channel';
@@ -85,7 +88,86 @@ export default function UitestAppPage() {
   const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
   const [userSettingsOpen, setUserSettingsOpen] = useState(false);
 
-  const server = SERVERS.find((s) => s.id === activeServerId);
+  // Copie locale mutable — SERVERS reste la source figée, on ne modifie que
+  // ce state pour tester création/renommage/suppression/réordonnancement de
+  // salons et catégories sans backend.
+  const [servers, setServers] = useState<AlfyServer[]>(SERVERS);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<'channel' | 'category'>('channel');
+  const [createParentId, setCreateParentId] = useState<string | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; kind: 'channel' | 'category' } | null>(null);
+
+  const updateActiveServer = (fn: (s: AlfyServer) => AlfyServer) => {
+    setServers((prev) => prev.map((s) => (s.id === activeServerId ? fn(s) : s)));
+  };
+
+  const handleCreateChannel = ({ name, type, parentId }: { name: string; type: string; parentId: string | null }) => {
+    if (type === 'category') {
+      updateActiveServer((s) => ({ ...s, categories: [...s.categories, { id: `cat-local-${Date.now()}`, name }] }));
+      return;
+    }
+    const newChannel: AlfyChannel = {
+      id: `ch-local-${Date.now()}`,
+      serverId: activeServerId!,
+      name,
+      type: type as AlfyChannel['type'],
+      categoryId: parentId,
+      unreadCount: 0,
+      mentionCount: 0,
+    };
+    updateActiveServer((s) => ({ ...s, channels: [...s.channels, newChannel] }));
+  };
+
+  const handleRenameTarget = (name: string) => {
+    if (!renameTarget) return;
+    updateActiveServer((s) => ({
+      ...s,
+      channels: s.channels.map((c) => (c.id === renameTarget.id ? { ...c, name } : c)),
+      categories: s.categories.map((c) => (c.id === renameTarget.id ? { ...c, name } : c)),
+    }));
+  };
+
+  const handleDeleteTarget = () => {
+    if (!deleteTarget) return;
+    updateActiveServer((s) => ({
+      ...s,
+      channels: s.channels.filter((c) => c.id !== deleteTarget.id),
+      categories: s.categories.filter((c) => c.id !== deleteTarget.id),
+    }));
+    setDeleteTarget(null);
+  };
+
+  const handleMoveChannel = (id: string, direction: 'up' | 'down') => {
+    updateActiveServer((s) => {
+      const catId = s.channels.find((c) => c.id === id)?.categoryId ?? null;
+      const indices = s.channels.map((c, idx) => (c.categoryId === catId ? idx : -1)).filter((idx) => idx >= 0);
+      const group = indices.map((idx) => s.channels[idx]);
+      const i = group.findIndex((c) => c.id === id);
+      const j = direction === 'up' ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= group.length) return s;
+      [group[i], group[j]] = [group[j], group[i]];
+      const channels = [...s.channels];
+      indices.forEach((idx, k) => {
+        channels[idx] = group[k];
+      });
+      return { ...s, channels };
+    });
+  };
+
+  const handleMoveCategory = (id: string, direction: 'up' | 'down') => {
+    updateActiveServer((s) => {
+      const cats = s.categories.filter((c) => c.id !== '__root__');
+      const i = cats.findIndex((c) => c.id === id);
+      const j = direction === 'up' ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= cats.length) return s;
+      const next = [...cats];
+      [next[i], next[j]] = [next[j], next[i]];
+      return { ...s, categories: next };
+    });
+  };
+
+  const server = servers.find((s) => s.id === activeServerId);
   const channel = server?.channels.find((c) => c.id === activeChannelId && c.type !== 'voice')
     ?? server?.channels.find((c) => c.type !== 'voice');
   const dm = DMS.find((d) => d.id === activeDmId);
@@ -182,7 +264,7 @@ export default function UitestAppPage() {
         }
         rail={
           <ServerRail
-            servers={SERVERS}
+            servers={servers}
             activeServerId={activeServerId}
             orientation="vertical"
             onToggleOrientation={() => setRailHorizontal(true)}
@@ -198,7 +280,7 @@ export default function UitestAppPage() {
         topRail={
           railHorizontal ? (
             <ServerRail
-              servers={SERVERS}
+              servers={servers}
               activeServerId={activeServerId}
               orientation="horizontal"
               onToggleOrientation={() => setRailHorizontal(false)}
@@ -227,6 +309,35 @@ export default function UitestAppPage() {
               onOpenServerSettings={() => setServerSettingsOpen(true)}
               onOpenUserSettings={() => setUserSettingsOpen(true)}
               connectedVoiceChannel={inVoice ? 'Salon principal' : null}
+              canManage
+              onCreateChannel={(parentId) => {
+                setCreateMode('channel');
+                setCreateParentId(parentId);
+                setCreateOpen(true);
+              }}
+              onCreateCategory={() => {
+                setCreateMode('category');
+                setCreateParentId(null);
+                setCreateOpen(true);
+              }}
+              onRenameChannel={(id) => {
+                const ch = server.channels.find((c) => c.id === id);
+                if (ch) setRenameTarget({ id, name: ch.name });
+              }}
+              onDeleteChannel={(id) => {
+                const ch = server.channels.find((c) => c.id === id);
+                setDeleteTarget({ id, name: ch?.name ?? 'ce salon', kind: 'channel' });
+              }}
+              onMoveChannel={handleMoveChannel}
+              onRenameCategory={(id) => {
+                const cat = server.categories.find((c) => c.id === id);
+                if (cat) setRenameTarget({ id, name: cat.name });
+              }}
+              onDeleteCategory={(id) => {
+                const cat = server.categories.find((c) => c.id === id);
+                setDeleteTarget({ id, name: cat?.name ?? 'cette catégorie', kind: 'category' });
+              }}
+              onMoveCategory={handleMoveCategory}
             />
           ) : (
             <DmSidebar
@@ -296,6 +407,59 @@ export default function UitestAppPage() {
           />
         ) : null}
       </AppShell>
+
+      {server && (
+        <>
+          <CreateChannelDialog
+            isOpen={createOpen}
+            onOpenChange={setCreateOpen}
+            mode={createMode}
+            categories={server.categories.filter((c) => c.id !== '__root__')}
+            defaultCategoryId={createParentId}
+            onCreate={(data) => {
+              handleCreateChannel(data);
+              toast(createMode === 'category' ? 'Catégorie créée' : 'Salon créé', { description: data.name });
+            }}
+          />
+          <RenameDialog
+            isOpen={!!renameTarget}
+            onOpenChange={(open) => !open && setRenameTarget(null)}
+            title="Renommer"
+            fieldLabel="Nom"
+            initialValue={renameTarget?.name ?? ''}
+            onSave={handleRenameTarget}
+          />
+          <AlertDialog isOpen={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+            <AlertDialog.Backdrop>
+              <AlertDialog.Container>
+                <AlertDialog.Dialog className="sm:max-w-100">
+                  <AlertDialog.Header>
+                    <AlertDialog.Icon status="danger" />
+                    <AlertDialog.Heading>
+                      Supprimer {deleteTarget?.kind === 'category' ? 'la catégorie' : 'le salon'} « {deleteTarget?.name} » ?
+                    </AlertDialog.Heading>
+                  </AlertDialog.Header>
+                  <AlertDialog.Body>
+                    <p>
+                      {deleteTarget?.kind === 'category'
+                        ? 'Ses salons deviendront non classés — ils ne seront pas supprimés.'
+                        : 'Les messages de ce salon seront définitivement perdus.'}
+                    </p>
+                  </AlertDialog.Body>
+                  <AlertDialog.Footer>
+                    <Button slot="close" variant="tertiary">
+                      Annuler
+                    </Button>
+                    <Button variant="danger" onPress={handleDeleteTarget}>
+                      Supprimer
+                    </Button>
+                  </AlertDialog.Footer>
+                </AlertDialog.Dialog>
+              </AlertDialog.Container>
+            </AlertDialog.Backdrop>
+          </AlertDialog>
+        </>
+      )}
 
       {server && (
         <SettingsOverlay isOpen={serverSettingsOpen} onOpenChange={setServerSettingsOpen}>

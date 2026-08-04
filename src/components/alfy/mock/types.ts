@@ -154,10 +154,18 @@ export interface AlfyServer {
   id: string;
   name: string;
   iconUrl?: string;
+  bannerUrl?: string;
+  description?: string;
   isPublic: boolean;
   ownerId: string;
   nodeOnline: boolean;
   selfHosted: boolean;
+  /** Type d'hébergement (Type 1/2/3) ; absent = legacy, traité comme 'platform'. */
+  hostingType?: 'platform' | 'self_hosted' | 'certified_host';
+  /** Sous-catégorie Type 1 uniquement (standard 200 / communautaire 4000). Nommé
+   * à part de `categories` (dossiers de salons) pour éviter toute confusion. */
+  hostingCategory?: 'standard' | 'community';
+  maxMembers?: number;
   categories: AlfyCategory[];
   channels: AlfyChannel[];
   roles: AlfyRole[];

@@ -24,6 +24,7 @@ import { usePresence } from '@/hooks/use-presence';
 import { useCallContext } from '@/hooks/use-call-context';
 import { setActiveDM, setActiveGroup, setActiveChannel, clearUnread } from '@/lib/notification-store';
 import { api } from '@/lib/api';
+import { loadCustomEmojis } from '@/lib/custom-emoji-store';
 import { socketService } from '@/lib/socket';
 
 import { AlfyServerSettings } from '@/components/alfy/live/alfy-server-settings';
@@ -183,6 +184,7 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
         setLayoutReady(true);
       }
     });
+    void loadCustomEmojis();
     return () => {
       cancelled = true;
       clearTimeout(timer);

@@ -37,6 +37,9 @@ export function AlfyActiveCall() {
     stopScreenShare,
     endCall,
     leaveCall,
+    handRaised,
+    raisedHands,
+    toggleHand,
   } = useCallContext();
   const [expanded, setExpanded] = useState(false);
 
@@ -50,19 +53,27 @@ export function AlfyActiveCall() {
         isLocal: true,
         muted: isMuted,
         screenSharing: isScreenSharing,
+        handRaised,
       },
     ];
     remoteStreams.forEach((stream, userId) => {
       const info = participantInfo.get(userId);
-      list.push({ userId, name: info?.name || 'Participant', avatarUrl: info?.avatar, stream });
+      list.push({
+        userId,
+        name: info?.name || 'Participant',
+        avatarUrl: info?.avatar,
+        stream,
+        handRaised: raisedHands.has(userId),
+      });
     });
     return list;
-  }, [user?.id, user?.avatarUrl, localStream, isMuted, isScreenSharing, remoteStreams, participantInfo]);
+  }, [user?.id, user?.avatarUrl, localStream, isMuted, isScreenSharing, remoteStreams, participantInfo, handRaised, raisedHands]);
 
   if (callStatus !== 'calling' && callStatus !== 'connecting' && callStatus !== 'connected') return null;
 
   const label = callerName || (isGroup ? 'Appel de groupe' : 'Appel en cours');
-  const hangUp = isGroup || callCategory === 'server' ? leaveCall : endCall;
+  const isMultiParty = isGroup || callCategory === 'server';
+  const hangUp = isMultiParty ? leaveCall : endCall;
 
   return (
     <>
@@ -90,6 +101,9 @@ export function AlfyActiveCall() {
                   onToggleVideo={toggleVideo}
                   isScreenSharing={isScreenSharing}
                   onToggleScreenShare={isScreenSharing ? stopScreenShare : startScreenShare}
+                  // Lever la main n'a de sens qu'à plusieurs — pas en appel 1:1.
+                  handRaised={isMultiParty ? handRaised : undefined}
+                  onToggleHand={isMultiParty ? toggleHand : undefined}
                   onLeave={() => { hangUp(); setExpanded(false); }}
                 />
               </Modal.Body>

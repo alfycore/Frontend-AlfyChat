@@ -1,27 +1,43 @@
 'use client';
 
 /**
- * Container : conversation de groupe, branchée sur `useMessages(groupId)`
- * (même primitive que les DM, E2EE incluse).
- * Remplace atelier/chat/GroupChat.tsx.
+ * Container : conversation de groupe.
+ *
+ * Branche `useMessages(groupId)` (même primitive que les MP, E2EE incluse)
+ * sur `DmChat` — le même moteur de fil sert les deux, un groupe n'étant qu'une
+ * conversation dont l'identité est un nom + plusieurs membres plutôt qu'un
+ * contact unique.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/hooks/use-auth';
+import { useCallContext } from '@/hooks/use-call-context';
 import { useMessages } from '@/hooks/use-messages';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { api } from '@/lib/api';
-import { ChatView } from '@/components/alfy/chat/chat-view';
+import { DmChat } from '@/components/alfy/dm/dm-chat';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { toAlfyMessage, toAlfyUser } from '@/components/alfy/live/map';
-import type { AlfyChannel, AlfyUser } from '@/components/alfy/mock/types';
+import type { AlfyUser } from '@/components/alfy/mock/types';
+
+interface GroupInfo {
+  name: string;
+  avatarUrl?: string;
+  participants: AlfyUser[];
+}
+
+const GROUP_VIDE: GroupInfo = { name: 'Groupe', participants: [] };
 
 export function AlfyGroupChat({ groupId }: { groupId: string }) {
   const { user } = useAuth();
   const { isMobile, openSidebar } = useMobileNav();
-  const [name, setName] = useState('Groupe');
-  const [participants, setParticipants] = useState<AlfyUser[]>([]);
+  const { initiateGroupCall } = useCallContext();
+
+  /* Mémorisé avec l'id auquel il correspond : jamais d'affichage du groupe
+     précédent pendant que le nouveau charge. */
+  const [chargee, setChargee] = useState<{ id: string; info: GroupInfo } | null>(null);
+  const { name, avatarUrl, participants } = chargee?.id === groupId ? chargee.info : GROUP_VIDE;
 
   const {
     messages: rawMessages,
@@ -35,27 +51,34 @@ export function AlfyGroupChat({ groupId }: { groupId: string }) {
     deleteMessage,
     addReaction,
     removeReaction,
+    startTyping,
   } = useMessages(groupId);
 
-  /* Métadonnées du groupe (nom + participants) */
+  /* Métadonnées du groupe (nom, avatar, participants) */
   useEffect(() => {
-    let cancelled = false;
+    let annule = false;
     api
       .getConversation(groupId)
-      .then(async (res) => {
+      .then((res) => {
         const data = ((res as { data?: unknown })?.data ?? res) as Record<string, unknown>;
-        if (cancelled || !data) return;
-        setName((data.name as string) || 'Groupe');
+        if (annule || !data) return;
 
-        // `participants` contient déjà les profils complets (userId, username,
-        // displayName, avatarUrl…) — pas besoin de re-fetch chaque utilisateur.
         const rawParticipants = (data.participants as Record<string, unknown>[]) ?? [];
         const users = rawParticipants.map((p) => toAlfyUser(p, (p.userId ?? p.id) as string));
-        if (!cancelled) setParticipants(users);
+        setChargee({
+          id: groupId,
+          info: {
+            name: (data.name as string) || 'Groupe',
+            avatarUrl: (data.avatarUrl ?? data.avatar_url) as string | undefined,
+            participants: users,
+          },
+        });
       })
-      .catch(() => {});
+      .catch(() => {
+        /* le fil reste utilisable sans les métadonnées */
+      });
     return () => {
-      cancelled = true;
+      annule = true;
     };
   }, [groupId]);
 
@@ -76,41 +99,73 @@ export function AlfyGroupChat({ groupId }: { groupId: string }) {
     [rawMessages, meId, groupId],
   );
 
-  const channel: AlfyChannel = {
-    id: groupId,
-    serverId: '',
-    name,
-    type: 'text',
-    topic: `${participants.length || ''} membres`.trim() || undefined,
-    categoryId: null,
-    unreadCount: 0,
-    mentionCount: 0,
-  };
+  /* Les messages optimistes portent un id `pending_…` jusqu'à l'accusé serveur. */
+  const pendingIds = useMemo(
+    () => new Set(messages.filter((m) => m.id.startsWith('pending_')).map((m) => m.id)),
+    [messages],
+  );
 
-  const toggleReaction = (messageId: string, emoji: string) => {
-    const target = messages.find((m) => m.id === messageId);
-    if (target?.reactions.some((r) => r.emoji === emoji && r.me)) removeReaction(messageId, emoji);
-    else addReaction(messageId, emoji);
-  };
+  const toggleReaction = useCallback(
+    (messageId: string, emoji: string) => {
+      const cible = messages.find((m) => m.id === messageId);
+      const mien = cible?.reactions.some((r) => r.emoji === emoji && r.me);
+      if (mien) removeReaction(messageId, emoji);
+      else addReaction(messageId, emoji);
+    },
+    [messages, addReaction, removeReaction],
+  );
+
+  const envoyer = useCallback(
+    (contenu: string, replyToId?: string) => {
+      sendMessage(contenu, replyToId);
+    },
+    [sendMessage],
+  );
+
+  const nbMembres = participants.length;
 
   return (
     <UserDirectoryProvider value={resolver}>
-      <ChatView
-        channel={channel}
+      {/* `key` : changer de groupe remonte la vue, ce qui remet à zéro
+          défilement, brouillon de réponse et compteurs sans logique dédiée. */}
+      <DmChat
+        key={groupId}
+        conversationId={groupId}
+        title={name}
+        subtitle={nbMembres > 0 ? `${nbMembres} membre${nbMembres > 1 ? 's' : ''}` : undefined}
+        avatarUrl={avatarUrl}
+        notifTargetType="group"
+        introText={
+          <>
+            Ceci est le début de la conversation
+            {nbMembres > 0 && (
+              <>
+                {' '}
+                avec <span className="font-medium text-foreground">{nbMembres} membre{nbMembres > 1 ? 's' : ''}</span>
+              </>
+            )}
+            .
+          </>
+        }
         messages={messages}
         currentUserId={meId}
         typingNames={(typingUsers ?? []).map(
-          (t: { displayName?: string; username?: string }) => t.displayName ?? t.username ?? 'Quelqu’un',
+          (t: { id: string; username?: string }) =>
+            resolver(t.id)?.displayName || t.username || 'Quelqu’un',
         )}
         isLoading={isLoading}
-        hasMoreMessages={hasMoreMessages}
-        isLoadingMoreMessages={isLoadingMoreMessages}
+        hasMore={hasMoreMessages}
+        isLoadingMore={isLoadingMoreMessages}
         onLoadMore={loadMoreMessages}
-        onSend={(content) => sendMessage(content)}
+        onSend={envoyer}
+        onTyping={startTyping}
         onToggleReaction={toggleReaction}
         onEditMessage={editMessage}
         onDeleteMessage={deleteMessage}
+        pendingIds={pendingIds}
         onOpenNav={isMobile ? openSidebar : undefined}
+        onStartVoiceCall={() => initiateGroupCall(groupId, 'voice', name)}
+        onStartVideoCall={() => initiateGroupCall(groupId, 'video', name)}
       />
     </UserDirectoryProvider>
   );

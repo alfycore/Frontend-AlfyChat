@@ -4,6 +4,7 @@ import React, { createContext, memo, useContext, useId, useState, useEffect, use
 import { createPortal } from 'react-dom';
 import { twemojify } from '@/lib/twemoji';
 import { resolveMediaUrl } from '@/lib/api';
+import { getCustomEmojiUrl } from '@/lib/custom-emoji-store';
 
 // ── Options de rendu ──────────────────────────────────────────────────────────
 // Passées par contexte : les règles inline sont de simples fonctions, elles ne
@@ -208,6 +209,21 @@ function renderInline(text: string, pfx: string, kg: KG, onImg?: (s: string) => 
         >
           {d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
         </time>
+      );
+    }],
+    // Émoji personnalisé de serveur :nom: — inchangé (texte brut) si le nom
+    // n'est pas dans le cache des émoji disponibles pour l'utilisateur.
+    [/:([a-zA-Z0-9_]{2,32}):/, (m) => {
+      const url = getCustomEmojiUrl(m[1]);
+      if (!url) return m[0];
+      return (
+        <img
+          key={k()}
+          src={url}
+          alt={m[0]}
+          title={m[0]}
+          className="inline-block h-[1.375em] w-[1.375em] object-contain align-text-bottom"
+        />
       );
     }],
     // Mention @username

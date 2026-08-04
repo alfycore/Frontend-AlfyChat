@@ -475,12 +475,43 @@ export function useMessages(channelId?: string, recipientId?: string) {
     };
     socketService.on('message:deleted', handleMessageDelete);
 
-    // Écouter le typing
-    const handleTyping = (data: any) => {
-      const { users } = data as { users: TypingUser[] };
-      setTypingUsers(users);
+    // Écouter le typing.
+    // La passerelle envoie un début/fin par utilisateur (et jamais la liste
+    // agrégée qu'attendait l'ancien code) : on maintient la liste ici, avec
+    // une péremption au cas où le STOP se perde.
+    const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+    const dropTyping = (uid: string) => {
+      const timer = typingTimers.get(uid);
+      if (timer) {
+        clearTimeout(timer);
+        typingTimers.delete(uid);
+      }
+      setTypingUsers((prev) => prev.filter((u) => u.id !== uid));
     };
-    socketService.on('typing:update', handleTyping);
+
+    const handleTypingStart = (data: any) => {
+      const payload = data?.payload ?? data;
+      const uid = payload?.userId as string | undefined;
+      if (!uid || uid === user?.id) return;
+      setTypingUsers((prev) =>
+        prev.some((u) => u.id === uid)
+          ? prev
+          : [...prev, { id: uid, username: payload?.username ?? '' }],
+      );
+      const ancien = typingTimers.get(uid);
+      if (ancien) clearTimeout(ancien);
+      typingTimers.set(uid, setTimeout(() => dropTyping(uid), 8000));
+    };
+
+    const handleTypingStop = (data: any) => {
+      const payload = data?.payload ?? data;
+      const uid = payload?.userId as string | undefined;
+      if (uid) dropTyping(uid);
+    };
+
+    socketService.on('TYPING_START', handleTypingStart);
+    socketService.on('TYPING_STOP', handleTypingStop);
 
     // Écouter les réactions
     const handleReactionAdd = (data: any) => {
@@ -615,7 +646,10 @@ export function useMessages(channelId?: string, recipientId?: string) {
       socketService.off('message:edited', handleMessageEdit);
       socketService.off('message:edit-error', handleEditError);
       socketService.off('message:deleted', handleMessageDelete);
-      socketService.off('typing:update', handleTyping);
+      socketService.off('TYPING_START', handleTypingStart);
+      socketService.off('TYPING_STOP', handleTypingStop);
+      typingTimers.forEach((t) => clearTimeout(t));
+      typingTimers.clear();
       socketService.off('REACTION_ADD', handleReactionAdd);
       socketService.off('REACTION_REMOVE', handleReactionRemove);
       socketService.off('e2ee:history-response', handleE2EEHistoryResponse);
@@ -930,12 +964,12 @@ export function useMessages(channelId?: string, recipientId?: string) {
   }, [getConversationId]);
 
   const startTyping = useCallback(() => {
-    socketService.startTyping(channelId, recipientId);
-  }, [channelId, recipientId]);
+    socketService.startTyping(getConversationId() ?? undefined);
+  }, [getConversationId]);
 
   const stopTyping = useCallback(() => {
-    socketService.stopTyping(channelId, recipientId);
-  }, [channelId, recipientId]);
+    socketService.stopTyping(getConversationId() ?? undefined);
+  }, [getConversationId]);
 
   /**
    * Charge les MP archivés plus anciens (P2P / IndexedDB)

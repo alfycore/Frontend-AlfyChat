@@ -69,7 +69,12 @@ export function SettingsShell({ title, subtitle, groups, onClose, navFooter }: S
       {/* Colonne navigation — fond distinct, nav collée au contenu */}
       <div
         className={[
-          'grow justify-end border-r border-separator bg-surface sm:flex sm:w-auto sm:shrink-0',
+          // `grow` sert uniquement au mobile (colonne unique en plein écran) :
+          // sans `sm:grow-0`, la colonne nav absorbait aussi sa part d'espace
+          // flex sur desktop, l'étirant bien au-delà des 228px prévus par le
+          // `sm:w-57` du contenu interne — visible dès que la popup n'occupe
+          // plus toute la largeur de l'écran.
+          'grow justify-end border-r border-separator bg-surface sm:flex sm:w-auto sm:shrink-0 sm:grow-0',
           showNavOnMobile ? 'flex w-full' : 'hidden',
         ].join(' ')}
       >

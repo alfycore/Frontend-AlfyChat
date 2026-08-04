@@ -48,6 +48,8 @@ interface ComposerProps {
   /** Membres et salons proposés en autocomplétion @ / #. */
   mentionUsers?: AlfyUser[];
   mentionChannels?: AlfyChannel[];
+  /** Serveur courant — inclut ses émoji même s'ils sont réservés à lui-même. */
+  serverId?: string;
 }
 
 /** Jeton @/# en cours de saisie juste avant le curseur. */
@@ -67,6 +69,7 @@ export function Composer({
   onSendGif,
   mentionUsers = [],
   mentionChannels = [],
+  serverId,
 }: ComposerProps) {
   const [value, setValue] = useState('');
   const [caret, setCaret] = useState(0);
@@ -275,6 +278,7 @@ export function Composer({
             }}
             onPickGif={(url) => onSendGif?.(url)}
             showStickers={prefs.stickerSuggestions}
+            serverId={serverId}
           />
           {prefs.showSendButton && (
             <Button

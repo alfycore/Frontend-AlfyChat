@@ -8,7 +8,8 @@
  * gateway), salons et invitations via l'API REST.
  */
 
-import { Gavel, Globe, Hash, LayoutDashboard, Link2, Shield, Users } from 'lucide-react';
+import { Gavel, Globe, Hash, LayoutDashboard, Link2, ScrollText, Shield, ShieldCheck, Smile, Users, Webhook } from 'lucide-react';
+import { toast } from '@heroui/react';
 import { useCallback, useMemo } from 'react';
 
 import { api } from '@/lib/api';
@@ -22,6 +23,10 @@ import { DomainPanel } from '@/components/alfy/settings/server/domain-panel';
 import { RolesPanel } from '@/components/alfy/settings/server/roles-panel';
 import { MembersPanel } from '@/components/alfy/settings/server/members-panel';
 import { ModerationPanel } from '@/components/alfy/settings/server/moderation-panel';
+import { EmojiPanel } from '@/components/alfy/settings/server/emoji-panel';
+import { AuditLogPanel } from '@/components/alfy/settings/server/audit-log-panel';
+import { ServerSecurityPanel } from '@/components/alfy/settings/server/security-panel';
+import { IntegrationsPanel } from '@/components/alfy/settings/server/integrations-panel';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { useAlfyChannels } from '@/components/alfy/live/use-alfy-channels';
 import { useAlfyMembers } from '@/components/alfy/live/use-alfy-members';
@@ -65,8 +70,22 @@ export function AlfyServerSettings({
   );
 
   const saveServer = useCallback(
-    async (data: { name?: string; isPublic?: boolean }) => {
-      await api.updateServer(serverId, data).catch(() => null);
+    async (data: {
+      name?: string;
+      description?: string;
+      iconUrl?: string;
+      bannerUrl?: string;
+      isPublic?: boolean;
+      category?: 'standard' | 'community';
+      verificationLevel?: 'none' | 'low' | 'medium' | 'high';
+      require2faModeration?: boolean;
+    }) => {
+      const res = await api.updateServer(serverId, data).catch(() => null);
+      if (!res?.success) {
+        toast.danger('Enregistrement impossible', { description: res?.error ?? 'Réessayez dans un instant.' });
+        return false;
+      }
+      return true;
     },
     [serverId],
   );
@@ -95,25 +114,24 @@ export function AlfyServerSettings({
           onClose={() => onOpenChange(false)}
           groups={[
             {
-              label: 'Général',
               items: [
                 {
                   id: 'overview',
-                  label: "Vue d'ensemble",
+                  label: 'Profil du serveur',
                   icon: LayoutDashboard,
                   content: <OverviewPanel server={server} onSave={saveServer} />,
                 },
+              ],
+            },
+            {
+              label: 'Personnes',
+              items: [
+                { id: 'members', label: 'Membres', icon: Users, content: <MembersPanel server={server} /> },
                 {
-                  id: 'channels',
-                  label: 'Salons',
-                  icon: Hash,
-                  content: (
-                    <ChannelsPanel
-                      server={server}
-                      onCreateChannel={(name) => void createChannel(name)}
-                      onDeleteChannel={(id) => void deleteChannel(id)}
-                    />
-                  ),
+                  id: 'roles',
+                  label: 'Rôles',
+                  icon: Shield,
+                  content: <RolesPanel server={server} onSaveRole={saveRole} />,
                 },
                 {
                   id: 'invites',
@@ -127,20 +145,44 @@ export function AlfyServerSettings({
                     />
                   ),
                 },
-                { id: 'domain', label: 'Domaine', icon: Globe, content: <DomainPanel serverId={server.id} /> },
               ],
             },
             {
-              label: 'Communauté',
+              label: 'Expression',
+              items: [
+                { id: 'emoji', label: 'Émoji', icon: Smile, content: <EmojiPanel serverId={serverId} /> },
+              ],
+            },
+            {
+              label: 'Applications',
+              items: [
+                { id: 'integrations', label: 'Intégrations', icon: Webhook, content: <IntegrationsPanel server={server} /> },
+              ],
+            },
+            {
+              label: 'Modération',
+              items: [
+                { id: 'security', label: 'Configuration de sécurité', icon: ShieldCheck, content: <ServerSecurityPanel serverId={serverId} onSave={saveServer} /> },
+                { id: 'audit-log', label: 'Logs du serveur', icon: ScrollText, content: <AuditLogPanel serverId={serverId} /> },
+                { id: 'moderation', label: 'Modération', icon: Gavel, content: <ModerationPanel serverId={serverId} /> },
+              ],
+            },
+            {
+              label: 'Serveur',
               items: [
                 {
-                  id: 'roles',
-                  label: 'Rôles',
-                  icon: Shield,
-                  content: <RolesPanel server={server} onSaveRole={saveRole} />,
+                  id: 'channels',
+                  label: 'Salons',
+                  icon: Hash,
+                  content: (
+                    <ChannelsPanel
+                      server={server}
+                      onCreateChannel={(name) => void createChannel(name)}
+                      onDeleteChannel={(id) => void deleteChannel(id)}
+                    />
+                  ),
                 },
-                { id: 'members', label: 'Membres', icon: Users, content: <MembersPanel server={server} /> },
-                { id: 'moderation', label: 'Modération', icon: Gavel, content: <ModerationPanel serverId={serverId} /> },
+                { id: 'domain', label: 'Domaine', icon: Globe, content: <DomainPanel serverId={server.id} /> },
               ],
             },
           ]}

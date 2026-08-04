@@ -32,7 +32,7 @@ export function AlfyFriends() {
         onMessage={(userId) => router.push(`/channels/me/${userId}`)}
         onAccept={(requestId) => void accept(requestId)}
         onDecline={(requestId) => void decline(requestId)}
-        onAddFriend={(username) => void add(username)}
+        onAddFriend={(username) => add(username)}
         onUnblock={(userId) => void unblock(userId)}
       />
     </UserDirectoryProvider>

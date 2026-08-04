@@ -12,6 +12,7 @@
 import { ScrollShadow } from '@heroui/react';
 
 import { AlfyServerChat } from '@/components/alfy/live/alfy-server-chat';
+import { AlfyVoiceChannelView } from '@/components/alfy/live/alfy-voice-channel-view';
 import { ChatHeader } from '@/components/alfy/chat/chat-header';
 import { SPECIAL_VIEWS, type SpecialViewType } from '@/components/alfy/chat/special-views';
 import { useAlfyChannels } from '@/components/alfy/live/use-alfy-channels';
@@ -27,12 +28,19 @@ interface AlfyViewSwitchProps {
 }
 
 /** Types rendus par le chat classique (les autres ont une vue dédiée). */
-const CHAT_TYPES = new Set(['text', 'announcement', 'voice', 'stage']);
+const CHAT_TYPES = new Set(['text', 'announcement']);
 
 export function AlfyViewSwitch({ serverId, channelId, channelName, channelType }: AlfyViewSwitchProps) {
   const { isMobile, openSidebar, toggleMemberList, toggleMemberListDesktop, memberListDesktopVisible } =
     useMobileNav();
   const server = useAlfyChannels(serverId);
+
+  // Salon vocal : rejoint/crée l'appel SFU du salon — pas un chat texte.
+  // (Les salons stage ne sont pas encore traités séparément : ils retombent
+  // sur le chat classique comme avant, en attendant leur propre vue.)
+  if (channelType === 'voice') {
+    return <AlfyVoiceChannelView serverId={serverId} channelId={channelId} channelName={channelName} />;
+  }
 
   if (CHAT_TYPES.has(channelType)) {
     return (
