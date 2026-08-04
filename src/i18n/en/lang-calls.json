@@ -17,7 +17,46 @@
     "connectedVoice": "Connected to voice",
     "participants": "{n} participant(s)",
     "leave": "Leave",
-    "join": "Join"
+    "join": "Join",
+    "bar": {
+      "voiceConnected": "Voice connected",
+      "openCall": "Open the call"
+    },
+    "controls": {
+      "ariaLabel": "Call controls",
+      "enableMic": "Enable microphone",
+      "shareScreen": "Share screen",
+      "raiseHand": "Raise hand",
+      "lowerHand": "Lower hand"
+    },
+    "tile": {
+      "handRaised": "{name} raised their hand",
+      "micMuted": "Mic muted"
+    },
+    "view": {
+      "callWith": "Call with {name}",
+      "p2pEncrypted": "P2P encrypted"
+    },
+    "incoming": {
+      "callingYou": "{name} is calling you",
+      "subtitle": "{type} — end-to-end encrypted",
+      "decline": "Decline",
+      "accept": "Accept"
+    },
+    "room": {
+      "participantCount": "{n} participants"
+    },
+    "quality": {
+      "medium": "Fair",
+      "poor": "Poor",
+      "connectionAriaLabel": "Connection quality: {label}. See details",
+      "detailAriaLabel": "Connection details",
+      "p2pConnection": "P2P connection",
+      "latency": "Latency",
+      "packetLoss": "Packet loss",
+      "bitrate": "Bitrate",
+      "disclaimer": "Peer-to-peer encrypted call — no media passes through our servers."
+    }
   },
   "callBar": {
     "calling": "Calling...",

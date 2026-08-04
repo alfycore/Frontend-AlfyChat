@@ -5,6 +5,7 @@ import { Phone, PhoneOff, Video } from 'lucide-react';
 
 import type { AlfyUser } from '@/components/alfy/mock/types';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
+import { useTranslation } from '@/components/locale-provider';
 
 interface IncomingCallProps {
   caller: AlfyUser;
@@ -16,6 +17,7 @@ interface IncomingCallProps {
 }
 
 export function IncomingCall({ caller, callType, isOpen, onOpenChange, onAccept, onDecline }: IncomingCallProps) {
+  const { t, tx } = useTranslation();
   return (
     <AlertDialog isOpen={isOpen} onOpenChange={onOpenChange}>
       <AlertDialog.Backdrop>
@@ -26,12 +28,12 @@ export function IncomingCall({ caller, callType, isOpen, onOpenChange, onAccept,
                 <AlfyAvatar name={caller.displayName} avatarUrl={caller.avatarUrl} size="lg" />
               </span>
               <AlertDialog.Heading>
-                {caller.displayName} vous appelle
+                {tx(t.calls.incoming.callingYou, { name: caller.displayName })}
               </AlertDialog.Heading>
             </AlertDialog.Header>
             <AlertDialog.Body className="text-center">
               <p className="text-sm text-muted">
-                {callType === 'video' ? 'Appel vidéo' : 'Appel vocal'} — chiffré de bout en bout
+                {tx(t.calls.incoming.subtitle, { type: callType === 'video' ? t.callOverlay.videoCall : t.callOverlay.voiceCall })}
               </p>
             </AlertDialog.Body>
             <AlertDialog.Footer className="justify-center gap-3">
@@ -47,11 +49,11 @@ export function IncomingCall({ caller, callType, isOpen, onOpenChange, onAccept,
               */}
               <Button variant="danger" onPress={onDecline}>
                 <PhoneOff className="size-4" />
-                Refuser
+                {t.calls.incoming.decline}
               </Button>
               <Button className="bg-success text-(--success-foreground)" onPress={onAccept}>
                 {callType === 'video' ? <Video className="size-4" /> : <Phone className="size-4" />}
-                Accepter
+                {t.calls.incoming.accept}
               </Button>
             </AlertDialog.Footer>
           </AlertDialog.Dialog>

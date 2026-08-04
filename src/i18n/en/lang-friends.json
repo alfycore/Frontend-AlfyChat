@@ -50,7 +50,50 @@
     "blockError": "Unable to block this user",
     "unblocked": "Unblocked",
     "unblockedMsg": "{username} has been unblocked",
-    "unblockError": "Unable to unblock this user"
+    "unblockError": "Unable to unblock this user",
+    "dm": {
+      "encryptedIntro": "Messages are end-to-end encrypted",
+      "historyUnavailableTitle": "History unavailable",
+      "historyUnavailableDesc": "Messages could not be loaded. Check your connection and try again.",
+      "newMessage": "{n} new message",
+      "newMessages": "{n} new messages",
+      "backToBottom": "Back to bottom",
+      "replyingToLabel": "Replying to",
+      "cancelReply": "Cancel reply",
+      "writeTo": "Write to {name}",
+      "sendDisabled": "Cannot send",
+      "sendEnterHint": "Send — Enter",
+      "encryptedFooter": "End-to-end encrypted",
+      "shiftKey": "Shift",
+      "enterKey": "Enter",
+      "forNewLine": "for a new line",
+      "pinnedBadge": "Pinned",
+      "editMessageAriaLabel": "Edit message",
+      "saveEdit": "Save",
+      "editHint": "Enter to confirm · Esc to cancel",
+      "messageNotSent": "Message not sent.",
+      "retry": "Retry",
+      "conversationActions": "Conversation actions",
+      "membersLabel": "Members",
+      "viewProfile": "View profile"
+    },
+    "people": {
+      "allTab": "All",
+      "addFriendButton": "Add a friend",
+      "onlineEmptyDesc": "Your friends will appear here once they come online.",
+      "sendMessageTo": "Send a message to {name}",
+      "callUser": "Call {name}",
+      "call": "Call",
+      "pendingCount": "Pending — {n}",
+      "requestReceived": "Request received",
+      "requestSent": "Request sent",
+      "acceptRequestFrom": "Accept request from {name}",
+      "declineRequestFrom": "Decline request from {name}",
+      "cancelRequestTo": "Cancel request to {name}",
+      "addFriendDesc": "Enter the person's exact username. No phone number required.",
+      "requestFailedTitle": "Request failed",
+      "requestFailedDesc": "@{username} could not be found, or is already pending."
+    }
   },
   "group": {
     "defaultName": "Group",
@@ -113,6 +156,10 @@
     "groupAccessOpen": "Open",
     "groupAccessOpenDesc": "Any member can add new people",
     "groupAccessClosed": "Closed",
-    "groupAccessClosedDesc": "Only the group owner can add members"
+    "groupAccessClosedDesc": "Only the group owner can add members",
+    "groupNameOptional": "Group name (optional)",
+    "groupNamePlaceholder": "E.g. Design team",
+    "members": "Members",
+    "createdToast": "Group created"
   }
 }

@@ -3,6 +3,7 @@
 import { Button, Modal } from '@heroui/react';
 import { Hash, Plus, SendHorizontal, Smile, Volume2 } from 'lucide-react';
 
+import { useTranslation } from '@/components/locale-provider';
 import { APP_ICONS, appIconDataUri } from '@/hooks/use-app-prefs';
 
 const CHANNELS = ['général', 'annonces', 'design', 'incidents'];
@@ -26,6 +27,7 @@ export function ThemePreview({
   onOpenChange: (open: boolean) => void;
   appIcon: string;
 }) {
+  const { t } = useTranslation();
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Backdrop className="bg-background/80 backdrop-blur-sm">
@@ -33,11 +35,11 @@ export function ThemePreview({
           <Modal.Dialog className="w-full max-w-3xl overflow-hidden p-0">
             <div className="flex items-center justify-between border-b border-separator px-5 py-3.5">
               <div>
-                <h2 className="text-sm font-bold">Aperçu du thème</h2>
-                <p className="text-xs text-muted">Rendu réel de l&apos;interface avec vos réglages actuels.</p>
+                <h2 className="text-sm font-bold">{t.profile.appearance.preview.title}</h2>
+                <p className="text-xs text-muted">{t.profile.appearance.preview.description}</p>
               </div>
               <Button size="sm" variant="ghost" onPress={() => onOpenChange(false)}>
-                Fermer
+                {t.common.close}
               </Button>
             </div>
 
@@ -136,6 +138,7 @@ export function AppIconPreview({
   onOpenChange: (open: boolean) => void;
   appIcon: string;
 }) {
+  const { t } = useTranslation();
   const meta = APP_ICONS.find((i) => i.id === appIcon) ?? APP_ICONS[0];
   const src = appIconDataUri(appIcon);
 
@@ -146,18 +149,18 @@ export function AppIconPreview({
           <Modal.Dialog className="w-full max-w-lg overflow-hidden p-0">
             <div className="flex items-center justify-between border-b border-separator px-5 py-3.5">
               <div>
-                <h2 className="text-sm font-bold">Aperçu de l&apos;icône</h2>
+                <h2 className="text-sm font-bold">{t.profile.appearance.iconPreview.title}</h2>
                 <p className="text-xs text-muted">{meta.nom}</p>
               </div>
               <Button size="sm" variant="ghost" onPress={() => onOpenChange(false)}>
-                Fermer
+                {t.common.close}
               </Button>
             </div>
 
             <div className="space-y-5 p-5">
               {/* Onglet de navigateur */}
               <div>
-                <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">Onglet</p>
+                <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">{t.profile.appearance.iconPreview.tabLabel}</p>
                 <div className="flex items-center gap-2 rounded-t-lg border border-b-0 border-border bg-surface-secondary px-3 py-2">
                   <img src={src} alt="" className="size-4 rounded-[3px]" />
                   <span className="text-xs">AlfyChat</span>
@@ -168,7 +171,7 @@ export function AppIconPreview({
 
               {/* Écran d'accueil */}
               <div>
-                <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">Écran d&apos;accueil</p>
+                <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">{t.profile.appearance.iconPreview.homeScreenLabel}</p>
                 <div className="flex items-end gap-4 rounded-lg border border-border bg-surface-secondary p-4">
                   <span className="flex flex-col items-center gap-1.5">
                     <img src={src} alt="" className="size-14 rounded-[1rem] shadow-lg" />
@@ -187,7 +190,7 @@ export function AppIconPreview({
 
               {/* Tailles */}
               <div>
-                <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">Tailles</p>
+                <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">{t.profile.appearance.iconPreview.sizesLabel}</p>
                 <div className="flex items-end gap-3">
                   {[16, 24, 32, 48, 64].map((s) => (
                     <img key={s} src={src} alt="" style={{ width: s, height: s }} className="rounded-[22%]" />

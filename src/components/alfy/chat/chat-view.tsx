@@ -13,6 +13,7 @@ import { fadeUp } from '@/components/alfy/motion';
 import { MessageList } from '@/components/alfy/chat/message-list';
 import { TypingIndicator } from '@/components/alfy/chat/typing-indicator';
 import { CHANNEL_TYPE_ICONS } from '@/components/alfy/servers/channel-item';
+import { useTranslation } from '@/components/locale-provider';
 
 interface ChatViewProps {
   channel: AlfyChannel;
@@ -57,6 +58,7 @@ export function ChatView({
   membersOpen,
   onOpenNav,
 }: ChatViewProps) {
+  const { t, tx } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   // Suit si l'utilisateur est proche du bas — évite de forcer le scroll s'il lit l'historique.
   const atBottomRef = useRef(true);
@@ -151,14 +153,15 @@ export function ChatView({
               <IntroIcon className="size-5 text-muted" aria-hidden />
             </span>
             <h3 className="mt-2.5 text-lg font-bold">
-              Bienvenue dans {channel.type === 'text' || channel.type === 'announcement' ? '#' : ''}
-              {channel.name}
+              {tx(t.chat.welcomeChannelHeading, {
+                name: `${channel.type === 'text' || channel.type === 'announcement' ? '#' : ''}${channel.name}`,
+              })}
             </h3>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-              {channel.topic ?? 'C’est le début de ce salon.'}
+              {channel.topic ?? t.chat.channelTopicFallback}
               <span className="inline-flex items-center gap-1 text-xs text-(--alfy-e2e)">
                 <Lock className="size-3" aria-hidden />
-                chiffré
+                {t.chat.encryptedBadge}
               </span>
             </p>
           </div>
@@ -175,7 +178,7 @@ export function ChatView({
       </ScrollShadow>
       <TypingIndicator names={typingNames} />
       <Composer
-        placeholder={`Écrire dans #${channel.name}`}
+        placeholder={tx(t.chat.composerPlaceholderChannel, { name: channel.name })}
         onSend={onSend}
         onSendGif={onSendGif}
         mentionUsers={mentionUsers}

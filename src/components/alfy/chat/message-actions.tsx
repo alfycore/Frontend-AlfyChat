@@ -18,6 +18,7 @@ import {
   SmilePlus,
   Trash2,
 } from 'lucide-react';
+import { useTranslation } from '@/components/locale-provider';
 
 interface MessageActionsProps {
   messageId: string;
@@ -52,30 +53,31 @@ export function MessageActions({
   onForward,
 }: MessageActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const handle = (key: React.Key) => {
     switch (key) {
       case 'copy':
         void navigator.clipboard.writeText(content);
-        toast('Texte copié');
+        toast(t.messageItem.textCopiedToast);
         break;
       case 'copy-link':
         void navigator.clipboard.writeText(`https://alfy.chat/m/${messageId}`);
-        toast('Lien du message copié');
+        toast(t.messageItem.linkCopiedToast);
         break;
       case 'quote':
         onQuote?.();
         break;
       case 'forward':
         onForward?.();
-        toast('Message transféré', { description: 'Choisissez une destination.' });
+        toast(t.messageItem.forwardedToast, { description: t.messageItem.forwardedToastDesc });
         break;
       case 'unread':
-        toast('Marqué comme non lu');
+        toast(t.messageItem.markedUnreadToast);
         break;
       case 'pin':
         onPinToggle?.();
-        toast(pinned ? 'Message désépinglé' : 'Message épinglé');
+        toast(pinned ? t.messageItem.unpinnedToast : t.messageItem.pinnedToast);
         break;
       case 'edit':
         onEdit?.();
@@ -98,73 +100,73 @@ export function MessageActions({
       )}
     >
       <Tooltip delay={400}>
-        <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onReact} aria-label="Réagir">
+        <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onReact} aria-label={t.messageItem.react}>
           <SmilePlus className="size-4" />
         </Button>
         <Tooltip.Content>
-          <p>Réagir</p>
+          <p>{t.messageItem.react}</p>
         </Tooltip.Content>
       </Tooltip>
       <Tooltip delay={400}>
-        <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onReply} aria-label="Répondre">
+        <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onReply} aria-label={t.messageItem.reply}>
           <Reply className="size-4" />
         </Button>
         <Tooltip.Content>
-          <p>Répondre</p>
+          <p>{t.messageItem.reply}</p>
         </Tooltip.Content>
       </Tooltip>
       <Tooltip delay={400}>
-        <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onThread} aria-label="Créer un fil">
+        <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onThread} aria-label={t.messageItem.createThread}>
           <MessageSquareText className="size-4" />
         </Button>
         <Tooltip.Content>
-          <p>Créer un fil</p>
+          <p>{t.messageItem.createThread}</p>
         </Tooltip.Content>
       </Tooltip>
       <Dropdown isOpen={menuOpen} onOpenChange={setMenuOpen}>
         <Dropdown.Trigger
-          aria-label="Plus d'actions"
+          aria-label={t.messageItem.moreActions}
           className="flex size-7 cursor-pointer items-center justify-center rounded-sm text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
         >
           <Ellipsis className="size-4" />
         </Dropdown.Trigger>
         <Dropdown.Popover className="min-w-48">
           <Dropdown.Menu onAction={handle}>
-            <Dropdown.Item id="copy" textValue="Copier le texte">
+            <Dropdown.Item id="copy" textValue={t.messageItem.copyText}>
               <Copy className="size-4" />
-              <Label>Copier le texte</Label>
+              <Label>{t.messageItem.copyText}</Label>
             </Dropdown.Item>
-            <Dropdown.Item id="copy-link" textValue="Copier le lien">
+            <Dropdown.Item id="copy-link" textValue={t.messageItem.copyLink}>
               <Link2 className="size-4" />
-              <Label>Copier le lien du message</Label>
+              <Label>{t.messageItem.copyLink}</Label>
             </Dropdown.Item>
-            <Dropdown.Item id="quote" textValue="Citer">
+            <Dropdown.Item id="quote" textValue={t.messageItem.quote}>
               <Quote className="size-4" />
-              <Label>Citer</Label>
+              <Label>{t.messageItem.quote}</Label>
             </Dropdown.Item>
-            <Dropdown.Item id="forward" textValue="Transférer">
+            <Dropdown.Item id="forward" textValue={t.messageItem.forward}>
               <CornerUpRight className="size-4" />
-              <Label>Transférer</Label>
+              <Label>{t.messageItem.forward}</Label>
             </Dropdown.Item>
-            <Dropdown.Item id="unread" textValue="Marquer comme non lu">
+            <Dropdown.Item id="unread" textValue={t.messageItem.markUnread}>
               <MailOpen className="size-4" />
-              <Label>Marquer comme non lu</Label>
+              <Label>{t.messageItem.markUnread}</Label>
             </Dropdown.Item>
             <Separator />
-            <Dropdown.Item id="pin" textValue={pinned ? 'Désépingler' : 'Épingler'}>
+            <Dropdown.Item id="pin" textValue={pinned ? t.messageItem.unpin : t.messageItem.pin}>
               <Pin className="size-4" />
-              <Label>{pinned ? 'Désépingler' : 'Épingler'}</Label>
+              <Label>{pinned ? t.messageItem.unpin : t.messageItem.pin}</Label>
             </Dropdown.Item>
             {isOwn && (
-              <Dropdown.Item id="edit" textValue="Modifier">
+              <Dropdown.Item id="edit" textValue={t.messageItem.edit}>
                 <Pencil className="size-4" />
-                <Label>Modifier</Label>
+                <Label>{t.messageItem.edit}</Label>
               </Dropdown.Item>
             )}
             {(isOwn || canManage) && (
-              <Dropdown.Item id="delete" textValue="Supprimer" variant="danger">
+              <Dropdown.Item id="delete" textValue={t.messageItem.delete} variant="danger">
                 <Trash2 className="size-4" />
-                <Label>Supprimer</Label>
+                <Label>{t.messageItem.delete}</Label>
               </Dropdown.Item>
             )}
           </Dropdown.Menu>

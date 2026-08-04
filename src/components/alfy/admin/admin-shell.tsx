@@ -13,6 +13,8 @@ import type { LucideIcon } from 'lucide-react';
 
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
+import type { Translations } from '@/i18n/types';
 
 interface NavItem {
   href: string;
@@ -22,66 +24,69 @@ interface NavItem {
   exact?: boolean;
 }
 
-const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
-  {
-    label: 'Pilotage',
-    items: [
-      { href: '/admin',            label: "Vue d'ensemble", icon: Gauge, exact: true },
-      { href: '/admin/users',      label: 'Utilisateurs',   icon: Users },
-      { href: '/admin/moderation', label: 'Modération',     icon: Gavel },
-    ],
-  },
-  {
-    label: 'Communauté',
-    items: [
-      { href: '/admin/badges',        label: 'Badges',          icon: Award },
-      { href: '/admin/server-badges', label: 'Badges serveurs', icon: BadgeCheck },
-      { href: '/admin/discovery',     label: 'Découverte',      icon: Compass },
-    ],
-  },
-  {
-    label: 'Infrastructure',
-    items: [
-      { href: '/admin/monitoring',     label: 'Monitoring',    icon: Activity },
-      { href: '/admin/services',       label: 'Services',      icon: Server },
-      { href: '/admin/infrastructure', label: 'Load balancer', icon: Network },
-      { href: '/admin/hosting',        label: 'Hébergement',   icon: Boxes },
-    ],
-  },
-  {
-    label: 'Plateforme',
-    items: [
-      { href: '/admin/status',     label: 'Status public', icon: ChartNoAxesColumn },
-      { href: '/admin/security',   label: 'Sécurité',      icon: ShieldAlert },
-      { href: '/admin/changelogs', label: 'Changelogs',    icon: FileClock },
-    ],
-  },
-  {
-    label: 'Assistance',
-    items: [
-      { href: '/admin/helpdesk', label: 'Helpdesk',      icon: LifeBuoy },
-      { href: '/admin/support',  label: "Centre d'aide", icon: Scale },
-    ],
-  },
-  {
-    label: 'Configuration',
-    items: [
-      { href: '/admin/settings', label: 'Paramètres', icon: Settings2 },
-    ],
-  },
-];
-
-const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
+function buildNavGroups(t: Translations): { label: string; items: NavItem[] }[] {
+  return [
+    {
+      label: t.admin.navGroups.pilotage,
+      items: [
+        { href: '/admin',            label: t.admin.nav.overview, icon: Gauge, exact: true },
+        { href: '/admin/users',      label: t.admin.nav.users,    icon: Users },
+        { href: '/admin/moderation', label: t.admin.nav.moderation, icon: Gavel },
+      ],
+    },
+    {
+      label: t.admin.navGroups.community,
+      items: [
+        { href: '/admin/badges',        label: t.admin.nav.badges,       icon: Award },
+        { href: '/admin/server-badges', label: t.admin.nav.serverBadges, icon: BadgeCheck },
+        { href: '/admin/discovery',     label: t.admin.nav.discovery,    icon: Compass },
+      ],
+    },
+    {
+      label: t.admin.navGroups.infrastructure,
+      items: [
+        { href: '/admin/monitoring',     label: t.admin.nav.monitoring,   icon: Activity },
+        { href: '/admin/services',       label: t.admin.nav.services,     icon: Server },
+        { href: '/admin/infrastructure', label: t.admin.nav.loadBalancer, icon: Network },
+        { href: '/admin/hosting',        label: t.admin.nav.hosting,      icon: Boxes },
+      ],
+    },
+    {
+      label: t.admin.navGroups.platform,
+      items: [
+        { href: '/admin/status',     label: t.admin.nav.status,     icon: ChartNoAxesColumn },
+        { href: '/admin/security',   label: t.admin.nav.security,   icon: ShieldAlert },
+        { href: '/admin/changelogs', label: t.admin.nav.changelogs, icon: FileClock },
+      ],
+    },
+    {
+      label: t.admin.navGroups.support,
+      items: [
+        { href: '/admin/helpdesk', label: t.admin.nav.helpdesk,      icon: LifeBuoy },
+        { href: '/admin/support',  label: t.admin.nav.supportContent, icon: Scale },
+      ],
+    },
+    {
+      label: t.admin.navGroups.configuration,
+      items: [
+        { href: '/admin/settings', label: t.admin.nav.settings, icon: Settings2 },
+      ],
+    },
+  ];
+}
 
 function isActive(item: NavItem, pathname: string): boolean {
   return item.exact ? pathname === item.href : pathname.startsWith(item.href);
 }
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
   const [navOpen, setNavOpen] = useState(false);
+  const NAV_GROUPS = buildNavGroups(t);
+  const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
 
   // Le rail mobile ne doit pas rester ouvert après une navigation
   useEffect(() => setNavOpen(false), [pathname]);
@@ -106,12 +111,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <span className="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-danger/12">
             <AlertOctagon className="size-5 text-danger" aria-hidden />
           </span>
-          <p className="font-heading text-base text-foreground">Accès refusé</p>
+          <p className="font-heading text-base text-foreground">{t.admin.accessDenied.title}</p>
           <p className="mt-1.5 text-sm text-muted">
-            La console d&apos;administration est réservée aux administrateurs.
+            {t.admin.accessDenied.desc}
           </p>
           <Button className="mt-5 w-full" variant="secondary" onPress={() => router.push('/channels/me')}>
-            Retour à l&apos;application
+            {t.admin.accessDenied.btn}
           </Button>
         </div>
       </div>
@@ -128,7 +133,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {navOpen && (
         <button
           type="button"
-          aria-label="Fermer la navigation"
+          aria-label={t.admin.shell.ariaCloseNav}
           onClick={() => setNavOpen(false)}
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] lg:hidden"
         />
@@ -148,14 +153,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <ShieldCheck className="size-4" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-heading text-[13px] leading-none text-foreground">AlfyChat</p>
-            <p className="mt-1 text-[10px] tracking-wide text-muted uppercase">Console admin</p>
+            <p className="font-heading text-[13px] leading-none text-foreground">{t.admin.sidebar.appName}</p>
+            <p className="mt-1 text-[10px] tracking-wide text-muted uppercase">{t.admin.shell.consoleLabel}</p>
           </div>
           <Button
             size="sm"
             variant="ghost"
             isIconOnly
-            aria-label="Fermer"
+            aria-label={t.common.close}
             className="lg:hidden"
             onPress={() => setNavOpen(false)}
           >
@@ -216,19 +221,19 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium">{user.displayName}</p>
-            <p className="text-[10px] text-muted">Administrateur</p>
+            <p className="text-[10px] text-muted">{t.admin.sidebar.role}</p>
           </div>
           <Tooltip>
             <Button
               size="sm"
               variant="ghost"
               isIconOnly
-              aria-label="Quitter la console"
+              aria-label={t.admin.shell.ariaLeaveConsole}
               onPress={() => router.push('/channels/me')}
             >
               <LogOut className="size-3.5" aria-hidden />
             </Button>
-            <Tooltip.Content>Quitter la console</Tooltip.Content>
+            <Tooltip.Content>{t.admin.shell.ariaLeaveConsole}</Tooltip.Content>
           </Tooltip>
         </div>
       </aside>
@@ -240,15 +245,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             size="sm"
             variant="ghost"
             isIconOnly
-            aria-label="Ouvrir la navigation"
+            aria-label={t.admin.shell.ariaOpenNav}
             className="lg:hidden"
             onPress={() => setNavOpen(true)}
           >
             <Menu className="size-4.5" aria-hidden />
           </Button>
 
-          <nav aria-label="Fil d'ariane" className="flex min-w-0 items-center gap-1.5 text-sm">
-            <span className="text-muted">Admin</span>
+          <nav aria-label={t.admin.shell.ariaBreadcrumb} className="flex min-w-0 items-center gap-1.5 text-sm">
+            <span className="text-muted">{t.admin.shell.breadcrumbRoot}</span>
             {current && current.href !== '/admin' && (
               <>
                 <span className="text-separator" aria-hidden>/</span>
@@ -259,7 +264,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
           <div className="ml-auto flex items-center gap-2">
             <Chip size="sm" variant="soft" color="success" className="hidden sm:inline-flex">
-              <Chip.Label>Production</Chip.Label>
+              <Chip.Label>{t.admin.shell.productionChip}</Chip.Label>
             </Chip>
           </div>
         </header>

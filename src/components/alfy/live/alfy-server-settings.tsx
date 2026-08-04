@@ -32,6 +32,7 @@ import { useAlfyChannels } from '@/components/alfy/live/use-alfy-channels';
 import { useAlfyMembers } from '@/components/alfy/live/use-alfy-members';
 import { useAlfyInvites } from '@/components/alfy/live/use-alfy-invites';
 import type { AlfyServer } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 export function AlfyServerSettings({
   serverId,
@@ -42,6 +43,7 @@ export function AlfyServerSettings({
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const base = useAlfyChannels(serverId);
   const { members, roles, users } = useAlfyMembers(serverId);
   const { invites, create: createInvite, remove: removeInvite } = useAlfyInvites(
@@ -82,7 +84,9 @@ export function AlfyServerSettings({
     }) => {
       const res = await api.updateServer(serverId, data).catch(() => null);
       if (!res?.success) {
-        toast.danger('Enregistrement impossible', { description: res?.error ?? 'Réessayez dans un instant.' });
+        toast.danger(t.chatUI.serverSettings.saveErrorTitle, {
+          description: res?.error ?? t.chatUI.serverSettings.saveErrorDefaultDesc,
+        });
         return false;
       }
       return true;
@@ -110,32 +114,32 @@ export function AlfyServerSettings({
       <UserDirectoryProvider value={resolver}>
         <SettingsShell
           title={server.name}
-          subtitle="Paramètres du serveur"
+          subtitle={t.chatUI.serverSettings.subtitle}
           onClose={() => onOpenChange(false)}
           groups={[
             {
               items: [
                 {
                   id: 'overview',
-                  label: 'Profil du serveur',
+                  label: t.chatUI.serverSettings.navOverview,
                   icon: LayoutDashboard,
                   content: <OverviewPanel server={server} onSave={saveServer} />,
                 },
               ],
             },
             {
-              label: 'Personnes',
+              label: t.chatUI.serverSettings.groupPeople,
               items: [
-                { id: 'members', label: 'Membres', icon: Users, content: <MembersPanel server={server} /> },
+                { id: 'members', label: t.chatUI.serverSettings.navMembers, icon: Users, content: <MembersPanel server={server} /> },
                 {
                   id: 'roles',
-                  label: 'Rôles',
+                  label: t.chatUI.serverSettings.navRoles,
                   icon: Shield,
                   content: <RolesPanel server={server} onSaveRole={saveRole} />,
                 },
                 {
                   id: 'invites',
-                  label: 'Invitations',
+                  label: t.chatUI.serverSettings.navInvites,
                   icon: Link2,
                   content: (
                     <InvitesPanel
@@ -148,31 +152,31 @@ export function AlfyServerSettings({
               ],
             },
             {
-              label: 'Expression',
+              label: t.chatUI.serverSettings.groupExpression,
               items: [
-                { id: 'emoji', label: 'Émoji', icon: Smile, content: <EmojiPanel serverId={serverId} /> },
+                { id: 'emoji', label: t.chatUI.serverSettings.navEmoji, icon: Smile, content: <EmojiPanel serverId={serverId} /> },
               ],
             },
             {
-              label: 'Applications',
+              label: t.chatUI.serverSettings.groupApplications,
               items: [
-                { id: 'integrations', label: 'Intégrations', icon: Webhook, content: <IntegrationsPanel server={server} /> },
+                { id: 'integrations', label: t.chatUI.serverSettings.navIntegrations, icon: Webhook, content: <IntegrationsPanel server={server} /> },
               ],
             },
             {
-              label: 'Modération',
+              label: t.chatUI.serverSettings.groupModeration,
               items: [
-                { id: 'security', label: 'Configuration de sécurité', icon: ShieldCheck, content: <ServerSecurityPanel serverId={serverId} onSave={saveServer} /> },
-                { id: 'audit-log', label: 'Logs du serveur', icon: ScrollText, content: <AuditLogPanel serverId={serverId} /> },
-                { id: 'moderation', label: 'Modération', icon: Gavel, content: <ModerationPanel serverId={serverId} /> },
+                { id: 'security', label: t.chatUI.serverSettings.navSecurity, icon: ShieldCheck, content: <ServerSecurityPanel serverId={serverId} onSave={saveServer} /> },
+                { id: 'audit-log', label: t.chatUI.serverSettings.navAuditLog, icon: ScrollText, content: <AuditLogPanel serverId={serverId} /> },
+                { id: 'moderation', label: t.chatUI.serverSettings.navModeration, icon: Gavel, content: <ModerationPanel serverId={serverId} /> },
               ],
             },
             {
-              label: 'Serveur',
+              label: t.chatUI.serverSettings.groupServer,
               items: [
                 {
                   id: 'channels',
-                  label: 'Salons',
+                  label: t.chatUI.serverSettings.navChannels,
                   icon: Hash,
                   content: (
                     <ChannelsPanel
@@ -182,7 +186,7 @@ export function AlfyServerSettings({
                     />
                   ),
                 },
-                { id: 'domain', label: 'Domaine', icon: Globe, content: <DomainPanel serverId={server.id} /> },
+                { id: 'domain', label: t.chatUI.serverSettings.navDomain, icon: Globe, content: <DomainPanel serverId={server.id} /> },
               ],
             },
           ]}

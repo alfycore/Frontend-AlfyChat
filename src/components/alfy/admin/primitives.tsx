@@ -3,6 +3,7 @@
 import { Button, Chip, Skeleton, Spinner, Switch, Tooltip } from '@heroui/react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 /**
  * Briques partagées de la console d'administration.
@@ -165,11 +166,12 @@ export function EmptyState({
   );
 }
 
-export function LoadingPanel({ label = 'Chargement…' }: { label?: string }) {
+export function LoadingPanel({ label }: { label?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-20">
       <Spinner size="lg" />
-      <p className="text-xs text-muted">{label}</p>
+      <p className="text-xs text-muted">{label ?? t.common.loading}</p>
     </div>
   );
 }
@@ -439,11 +441,12 @@ export function DateText({ value, withTime }: { value?: string | null; withTime?
 
 /** Compte à rebours en clair : « dans 3 j », « expiré ». */
 export function RelativeExpiry({ value }: { value?: string | null }) {
-  if (!value) return <Chip size="sm" variant="soft"><Chip.Label>Permanent</Chip.Label></Chip>;
+  const { t, tx } = useTranslation();
+  if (!value) return <Chip size="sm" variant="soft"><Chip.Label>{t.admin.primitives.permanent}</Chip.Label></Chip>;
 
   const ms = new Date(value).getTime() - Date.now();
   if (ms <= 0) {
-    return <Chip size="sm" variant="soft"><Chip.Label>Expiré</Chip.Label></Chip>;
+    return <Chip size="sm" variant="soft"><Chip.Label>{t.admin.primitives.expired}</Chip.Label></Chip>;
   }
 
   const mins = Math.round(ms / 60_000);
@@ -454,7 +457,7 @@ export function RelativeExpiry({ value }: { value?: string | null }) {
 
   return (
     <Chip size="sm" variant="soft" color="warning">
-      <Chip.Label>Encore {label}</Chip.Label>
+      <Chip.Label>{tx(t.admin.primitives.remaining, { label })}</Chip.Label>
     </Chip>
   );
 }

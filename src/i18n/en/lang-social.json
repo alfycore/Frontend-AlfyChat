@@ -18,6 +18,8 @@
   },
   "invite": {
     "invalid": "Invalid invitation",
+    "invalidOrExpired": "Invalid or expired invitation",
+    "cannotJoin": "Could not join this server",
     "backHome": "Back to home",
     "youreInvited": "You're invited to join",
     "memberCount": "{n} member(s)",
@@ -27,5 +29,22 @@
     "loginToJoin": "Log in to join",
     "notNow": "Not now",
     "footer": "AlfyChat — Secure and decentralised messaging"
+  },
+  "discoverView": {
+    "categoryAll": "All",
+    "categoryCommunity": "Community",
+    "categoryDev": "Development",
+    "categorySelfHosted": "Self-hosting",
+    "categoryGaming": "Games",
+    "heading": "Discover servers",
+    "subtitle": "Join public communities hosted in France or by their own members.",
+    "searchAria": "Search a server",
+    "searchPlaceholder": "Search a community…",
+    "categoriesAria": "Categories",
+    "selfHostedChip": "self-hosted",
+    "onlineCount": "{n} online",
+    "joined": "Joined",
+    "join": "Join",
+    "serverJoined": "Server joined"
   }
 }

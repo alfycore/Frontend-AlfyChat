@@ -20,25 +20,26 @@ import { Bot, Copy, Plus } from 'lucide-react';
 
 import { BOTS } from '@/components/alfy/mock/data';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
-
-const SCOPES = [
-  { id: 'bot', label: 'bot', description: 'Rejoindre des serveurs comme bot' },
-  { id: 'messages.read', label: 'messages.read', description: 'Lire les messages des salons autorisés' },
-  { id: 'messages.write', label: 'messages.write', description: 'Envoyer des messages' },
-  { id: 'commands', label: 'commands', description: 'Déclarer des slash commands' },
-];
+import { useTranslation } from '@/components/locale-provider';
 
 export function BotList() {
+  const { t, tx } = useTranslation();
+  const SCOPES = [
+    { id: 'bot', label: 'bot', description: t.admin.dev.bots.scopeBotDesc },
+    { id: 'messages.read', label: 'messages.read', description: t.admin.dev.bots.scopeMessagesReadDesc },
+    { id: 'messages.write', label: 'messages.write', description: t.admin.dev.bots.scopeMessagesWriteDesc },
+    { id: 'commands', label: 'commands', description: t.admin.dev.bots.scopeCommandsDesc },
+  ];
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-muted">
-          {BOTS.length} bots — l&apos;API est ouverte et documentée.
+          {tx(t.admin.dev.bots.intro, { n: BOTS.length })}
         </p>
         <Modal>
           <Button size="sm">
             <Plus className="size-3.5" />
-            Nouveau bot
+            {t.admin.dev.bots.newBot}
           </Button>
           <Modal.Backdrop>
             <Modal.Container>
@@ -48,23 +49,23 @@ export function BotList() {
                   <Modal.Icon className="bg-default text-foreground">
                     <Bot className="size-5" />
                   </Modal.Icon>
-                  <Modal.Heading>Créer un bot</Modal.Heading>
+                  <Modal.Heading>{t.admin.dev.bots.createBot}</Modal.Heading>
                 </Modal.Header>
                 <Modal.Body>
                   <Form
                     className="flex flex-col gap-4"
                     onSubmit={(e) => {
                       e.preventDefault();
-                      toast('Bot créé', { description: 'Le jeton a été généré — copiez-le maintenant.' });
+                      toast(t.admin.dev.bots.toastBotCreated, { description: t.admin.dev.bots.toastBotCreatedDesc });
                     }}
                   >
                     <TextField name="name" isRequired>
-                      <Label>Nom du bot</Label>
-                      <Input placeholder="Mon super bot" />
+                      <Label>{t.admin.dev.bots.nameLabel}</Label>
+                      <Input placeholder={t.admin.dev.bots.namePlaceholder} />
                       <FieldError />
                     </TextField>
-                    <CheckboxGroup defaultValue={['bot']} aria-label="Scopes OAuth2">
-                      <Label>Scopes OAuth2</Label>
+                    <CheckboxGroup defaultValue={['bot']} aria-label={t.admin.dev.bots.ariaScopes}>
+                      <Label>{t.admin.dev.bots.scopesLabel}</Label>
                       {SCOPES.map((scope) => (
                         <Checkbox key={scope.id} value={scope.id}>
                           <Checkbox.Control>
@@ -80,7 +81,7 @@ export function BotList() {
                       ))}
                     </CheckboxGroup>
                     <Button type="submit" className="w-full">
-                      Créer le bot
+                      {t.admin.dev.bots.submitCreate}
                     </Button>
                   </Form>
                 </Modal.Body>
@@ -101,16 +102,16 @@ export function BotList() {
                     <Card.Title className="text-sm">{bot.name}</Card.Title>
                     {bot.public ? (
                       <Chip size="sm" color="accent" variant="soft">
-                        Public
+                        {t.admin.dev.bots.public}
                       </Chip>
                     ) : (
                       <Chip size="sm" variant="soft">
-                        Privé
+                        {t.admin.dev.bots.private}
                       </Chip>
                     )}
                   </div>
                   <p className="text-xs text-muted">
-                    {bot.serverCount} serveur{bot.serverCount > 1 ? 's' : ''}
+                    {tx(bot.serverCount > 1 ? t.admin.dev.bots.serverCountPlural : t.admin.dev.bots.serverCount, { n: bot.serverCount })}
                   </p>
                 </div>
               </div>
@@ -122,14 +123,14 @@ export function BotList() {
                 variant="ghost"
                 onPress={async () => {
                   await navigator.clipboard.writeText(`alfy_bot_${bot.id}_************`);
-                  toast('Jeton copié', { description: bot.name });
+                  toast(t.admin.dev.bots.toastTokenCopied, { description: bot.name });
                 }}
               >
                 <Copy className="size-3.5" />
-                Jeton
+                {t.admin.dev.bots.tokenBtn}
               </Button>
               <Button size="sm" variant="secondary">
-                Configurer
+                {t.admin.dev.bots.configureBtn}
               </Button>
             </Card.Footer>
           </Card>

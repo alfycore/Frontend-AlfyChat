@@ -11,10 +11,12 @@ import type { AlfyServer } from '@/components/alfy/mock/types';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { RoleChip } from '@/components/alfy/primitives/role-chip';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
+import { useTranslation } from '@/components/locale-provider';
 
 const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
 export function MembersPanel({ server }: { server: AlfyServer }) {
+  const { t, tx } = useTranslation();
   const { user: currentUser } = useAuth();
   const userById = useUserById();
   const [banTarget, setBanTarget] = useState<{ userId: string; displayName: string } | null>(null);
@@ -22,13 +24,13 @@ export function MembersPanel({ server }: { server: AlfyServer }) {
 
   const handleKick = (userId: string, displayName: string) => {
     socketService.kickMember(server.id, userId);
-    toast('Membre expulsé', { description: displayName });
+    toast(t.membersPanel.memberKicked, { description: displayName });
   };
 
   const handleBan = () => {
     if (!banTarget) return;
     socketService.banMember(server.id, banTarget.userId, banReason.trim() || undefined);
-    toast('Membre banni', { description: banTarget.displayName });
+    toast(t.membersPanel.memberBanned, { description: banTarget.displayName });
     setBanTarget(null);
     setBanReason('');
   };
@@ -36,16 +38,16 @@ export function MembersPanel({ server }: { server: AlfyServer }) {
   return (
     <div>
       <PanelHeader
-        title="Membres"
-        description={`${server.members.length} membres sur ce serveur.`}
+        title={t.membersPanel.panelTitle}
+        description={tx(t.membersPanel.panelDescription, { n: server.members.length })}
       />
       <Table>
         <Table.ScrollContainer>
-          <Table.Content aria-label="Membres du serveur">
+          <Table.Content aria-label={t.membersPanel.panelTitle}>
             <Table.Header>
-              <Table.Column isRowHeader>Membre</Table.Column>
-              <Table.Column>Rôles</Table.Column>
-              <Table.Column>Arrivé·e le</Table.Column>
+              <Table.Column isRowHeader>{t.membersPanel.columnMember}</Table.Column>
+              <Table.Column>{t.membersPanel.columnRoles}</Table.Column>
+              <Table.Column>{t.membersPanel.columnJoined}</Table.Column>
               <Table.Column aria-label="Actions" />
             </Table.Header>
             <Table.Body>
@@ -79,7 +81,7 @@ export function MembersPanel({ server }: { server: AlfyServer }) {
                         {!isSelf && (
                           <Dropdown>
                             <Dropdown.Trigger
-                              aria-label={`Actions pour ${user.displayName}`}
+                              aria-label={tx(t.membersPanel.actionsAria, { name: user.displayName })}
                               className="flex size-7 cursor-pointer items-center justify-center rounded-sm text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
                             >
                               <Ellipsis className="size-4" />
@@ -91,13 +93,13 @@ export function MembersPanel({ server }: { server: AlfyServer }) {
                                   else if (key === 'ban') setBanTarget({ userId: member.userId, displayName: user.displayName });
                                 }}
                               >
-                                <Dropdown.Item id="kick" textValue="Expulser" variant="danger">
+                                <Dropdown.Item id="kick" textValue={t.membersPanel.kick} variant="danger">
                                   <UserMinus className="size-4" />
-                                  <Label>Expulser</Label>
+                                  <Label>{t.membersPanel.kick}</Label>
                                 </Dropdown.Item>
-                                <Dropdown.Item id="ban" textValue="Bannir" variant="danger">
+                                <Dropdown.Item id="ban" textValue={t.membersPanel.ban} variant="danger">
                                   <ShieldOff className="size-4" />
-                                  <Label>Bannir</Label>
+                                  <Label>{t.membersPanel.ban}</Label>
                                 </Dropdown.Item>
                               </Dropdown.Menu>
                             </Dropdown.Popover>
@@ -119,19 +121,19 @@ export function MembersPanel({ server }: { server: AlfyServer }) {
             <AlertDialog.Dialog className="sm:max-w-100">
               <AlertDialog.Header>
                 <AlertDialog.Icon status="danger" />
-                <AlertDialog.Heading>Bannir {banTarget?.displayName} ?</AlertDialog.Heading>
+                <AlertDialog.Heading>{tx(t.membersPanel.banTitle, { name: banTarget?.displayName ?? '' })}</AlertDialog.Heading>
               </AlertDialog.Header>
               <AlertDialog.Body className="flex flex-col gap-3">
-                <p>Cette personne ne pourra plus rejoindre ce serveur tant qu&apos;elle ne sera pas débannie.</p>
+                <p>{t.membersPanel.banBody}</p>
                 <TextField value={banReason} onChange={setBanReason}>
-                  <Label>Motif (optionnel)</Label>
-                  <Input placeholder="Raison du bannissement" />
+                  <Label>{t.membersPanel.banReasonLabel}</Label>
+                  <Input placeholder={t.membersPanel.banReasonPlaceholder} />
                   <FieldError />
                 </TextField>
               </AlertDialog.Body>
               <AlertDialog.Footer>
-                <Button slot="close" variant="tertiary">Annuler</Button>
-                <Button variant="danger" onPress={handleBan}>Bannir</Button>
+                <Button slot="close" variant="tertiary">{t.common.cancel}</Button>
+                <Button variant="danger" onPress={handleBan}>{t.membersPanel.ban}</Button>
               </AlertDialog.Footer>
             </AlertDialog.Dialog>
           </AlertDialog.Container>

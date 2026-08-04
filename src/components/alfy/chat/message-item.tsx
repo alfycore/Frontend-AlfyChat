@@ -17,6 +17,7 @@ import { ReplyPreview } from '@/components/alfy/chat/reply-preview';
 import { UserPopover } from '@/components/alfy/members/user-popover';
 import { useAppPrefs } from '@/hooks/use-app-prefs';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const fullFmt = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full', timeStyle: 'short' });
@@ -53,6 +54,7 @@ export const MessageItem = memo(function MessageItem({
   onEditMessage,
   onDeleteMessage,
 }: MessageItemProps) {
+  const { t, tx } = useTranslation();
   const userById = useUserById();
   const { prefs } = useAppPrefs();
   const author = userById(message.authorId);
@@ -75,7 +77,7 @@ export const MessageItem = memo(function MessageItem({
 
   if (deleted) {
     return (
-      <div className="px-4 py-1 pl-15 text-xs text-muted italic">Message supprimé</div>
+      <div className="px-4 py-1 pl-15 text-xs text-muted italic">{t.messageItem.deletedPlaceholder}</div>
     );
   }
 
@@ -101,7 +103,7 @@ export const MessageItem = memo(function MessageItem({
     >
       {pinned && (
         <p className="flex items-center gap-1 pl-11 text-[10px] font-medium text-warning">
-          <Pin className="size-2.5" aria-hidden /> Épinglé
+          <Pin className="size-2.5" aria-hidden /> {t.messageItem.pinnedBadge}
         </p>
       )}
       {replyTo && <ReplyPreview original={replyTo} />}
@@ -160,7 +162,7 @@ export const MessageItem = memo(function MessageItem({
           {editing ? (
             <div className="mt-0.5">
               <TextArea
-                aria-label="Modifier le message"
+                aria-label={t.messageItem.editAriaLabel}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 autoFocus
@@ -176,11 +178,11 @@ export const MessageItem = memo(function MessageItem({
               />
               <p className="mt-1 flex items-center gap-2 text-[10px] text-muted">
                 <button type="button" className="cursor-pointer hover:text-foreground" onClick={() => { setDraft(content); setEditing(false); }}>
-                  échap pour annuler
+                  {t.messageItem.escToCancelBtn}
                 </button>
                 ·
                 <button type="button" className="cursor-pointer text-accent hover:underline" onClick={saveEdit}>
-                  entrée pour enregistrer
+                  {t.messageItem.enterToSaveBtn}
                 </button>
               </p>
             </div>
@@ -206,7 +208,7 @@ export const MessageItem = memo(function MessageItem({
                 </UserPopover>
               )}
               <AlfyMarkdown content={content} mentions={message.mentions} isModerator={isModerator} />
-              {edited && <span className="ml-1 text-[10px] text-muted">(modifié)</span>}
+              {edited && <span className="ml-1 text-[10px] text-muted">{t.messageItem.edited}</span>}
             </div>
           )}
           {message.attachments.map((a) => (
@@ -227,8 +229,8 @@ export const MessageItem = memo(function MessageItem({
               className="mt-1 flex cursor-pointer items-center gap-1.5 rounded-sm px-1.5 py-1 text-xs font-medium text-[color:var(--accent)] outline-none transition-colors hover:bg-[color:var(--accent)]/10 focus-visible:ring-2 focus-visible:ring-[color:var(--focus)]"
             >
               <MessageSquareText className="size-3.5" aria-hidden />
-              {message.threadCount} réponses dans le fil
-              <span className="text-muted">— voir le fil →</span>
+              {tx(t.messageItem.threadRepliesCount, { n: message.threadCount })}
+              <span className="text-muted">{t.messageItem.viewThread}</span>
             </button>
           )}
         </div>

@@ -11,6 +11,7 @@ import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { PRESENCE_LABELS } from '@/components/alfy/primitives/status-dot';
 import { EmptyState } from '@/components/alfy/primitives/empty-state';
 import { SectionLabel } from '@/components/alfy/primitives/section-label';
+import { useTranslation } from '@/components/locale-provider';
 
 /** Mock : tout le monde sauf soi, le bot et les bloqués est un ami. */
 const MOCK_FRIENDS = USERS.filter(
@@ -46,6 +47,7 @@ interface FriendsViewProps {
 }
 
 function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: string) => void }) {
+  const { t, tx } = useTranslation();
   const { initiateCall } = useCallContext();
   return (
     <div className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-secondary">
@@ -68,14 +70,14 @@ function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: strin
             isIconOnly
             size="sm"
             variant="ghost"
-            aria-label={`Envoyer un message à ${user.displayName}`}
+            aria-label={tx(t.friends.people.sendMessageTo, { name: user.displayName })}
             className="rounded-full bg-surface-tertiary text-muted hover:text-foreground"
             onPress={() => onMessage?.(user.id)}
           >
             <MessageCircle className="size-4" />
           </Button>
           <Tooltip.Content>
-            <p>Message</p>
+            <p>{t.friends.message}</p>
           </Tooltip.Content>
         </Tooltip>
         <Tooltip delay={300}>
@@ -83,14 +85,14 @@ function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: strin
             isIconOnly
             size="sm"
             variant="ghost"
-            aria-label={`Appeler ${user.displayName}`}
+            aria-label={tx(t.friends.people.callUser, { name: user.displayName })}
             className="rounded-full bg-surface-tertiary text-muted hover:text-foreground"
             onPress={() => initiateCall(user.id, 'voice', undefined, user.displayName)}
           >
             <Phone className="size-4" />
           </Button>
           <Tooltip.Content>
-            <p>Appeler</p>
+            <p>{t.friends.people.call}</p>
           </Tooltip.Content>
         </Tooltip>
       </div>
@@ -108,6 +110,7 @@ export function FriendsView({
   onAddFriend,
   onUnblock,
 }: FriendsViewProps) {
+  const { t, tx } = useTranslation();
   const [query, setQuery] = useState('');
 
   const FRIENDS = friends ?? MOCK_FRIENDS;

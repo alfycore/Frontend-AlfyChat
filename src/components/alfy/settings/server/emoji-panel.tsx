@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
 import { SettingsSection } from '@/components/alfy/settings/section';
+import { useTranslation } from '@/components/locale-provider';
 
 interface Emoji {
   id: string;
@@ -16,6 +17,7 @@ interface Emoji {
 }
 
 export function EmojiPanel({ serverId }: { serverId: string }) {
+  const { t, tx } = useTranslation();
   const [emojis, setEmojis] = useState<Emoji[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [name, setName] = useState('');
@@ -38,18 +40,18 @@ export function EmojiPanel({ serverId }: { serverId: string }) {
     try {
       const up = await api.uploadImage(file, 'icon');
       if (!up.success || !up.data?.url) {
-        toast.danger('Envoi impossible', { description: up.error ?? file.name });
+        toast.danger(t.emojiPanel.uploadError, { description: up.error ?? file.name });
         return;
       }
       const res = await api.createServerEmoji(serverId, { name: name.trim(), imageUrl: up.data.url });
       if (!res.success) {
-        toast.danger('Création impossible', { description: res.error ?? 'Réessayez.' });
+        toast.danger(t.emojiPanel.createError, { description: res.error ?? t.emojiPanel.retry });
         return;
       }
       setName('');
       setFile(null);
       reload();
-      toast('Émoji ajouté', { description: `:${name.trim()}:` });
+      toast(t.emojiPanel.emojiAdded, { description: `:${name.trim()}:` });
     } finally {
       setSubmitting(false);
     }
@@ -58,7 +60,7 @@ export function EmojiPanel({ serverId }: { serverId: string }) {
   const supprimer = async (emojiId: string) => {
     const res = await api.deleteServerEmoji(serverId, emojiId);
     if (!res.success) {
-      toast.danger('Suppression impossible', { description: res.error });
+      toast.danger(t.emojiPanel.deleteError, { description: res.error });
       return;
     }
     setEmojis((prev) => prev.filter((e) => e.id !== emojiId));
@@ -66,9 +68,9 @@ export function EmojiPanel({ serverId }: { serverId: string }) {
 
   return (
     <div>
-      <PanelHeader title="Émoji" description="Émoji personnalisés utilisables par les membres de ce serveur." />
+      <PanelHeader title={t.emojiPanel.panelTitle} description={t.emojiPanel.panelDescription} />
 
-      <SettingsSection title={`Ajouter (${emojis.length}/50)`}>
+      <SettingsSection title={tx(t.emojiPanel.addSection, { n: emojis.length })}>
         <div className="flex flex-wrap items-end gap-3 p-4">
           <button
             type="button"
@@ -90,16 +92,16 @@ export function EmojiPanel({ serverId }: { serverId: string }) {
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
           <TextField value={name} onChange={setName} className="max-w-48">
-            <Label>Nom</Label>
-            <Input placeholder="mon_emoji" />
+            <Label>{t.emojiPanel.name}</Label>
+            <Input placeholder={t.emojiPanel.namePlaceholder} />
           </TextField>
           <Button isDisabled={!file || name.trim().length < 2 || submitting} onPress={ajouter}>
-            {submitting ? <Spinner size="sm" /> : 'Ajouter'}
+            {submitting ? <Spinner size="sm" /> : t.emojiPanel.add}
           </Button>
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Émoji du serveur">
+      <SettingsSection title={t.emojiPanel.serverEmoji}>
         {!loaded ? (
           <div className="flex justify-center p-8">
             <Spinner size="sm" />
@@ -107,7 +109,7 @@ export function EmojiPanel({ serverId }: { serverId: string }) {
         ) : emojis.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-8 text-center text-sm text-muted">
             <Smile className="size-6" aria-hidden />
-            Aucun émoji personnalisé pour l&apos;instant.
+            {t.emojiPanel.noEmoji}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3">
@@ -116,7 +118,7 @@ export function EmojiPanel({ serverId }: { serverId: string }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={e.imageUrl} alt={e.name} className="size-7 shrink-0 rounded object-cover" />
                 <span className="min-w-0 flex-1 truncate text-sm">:{e.name}:</span>
-                <Button isIconOnly size="sm" variant="ghost" aria-label="Supprimer" onPress={() => void supprimer(e.id)}>
+                <Button isIconOnly size="sm" variant="ghost" aria-label={t.emojiPanel.deleteAria} onPress={() => void supprimer(e.id)}>
                   <Trash2 className="size-3.5 text-danger" aria-hidden />
                 </Button>
               </div>

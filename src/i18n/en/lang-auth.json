@@ -122,6 +122,35 @@
       "error": "An error occurred. Please try again.",
       "showPassword": "Show password",
       "hidePassword": "Hide password"
+    },
+    "shell": {
+      "imageTitle": "Your messages are for your eyes only.",
+      "imageDescription": "End-to-end encryption by default, self-hostable servers, no data resold."
+    },
+    "loginCard": {
+      "twoFAHeading": "Two-factor authentication",
+      "twoFASubtitle": "Enter the code from your authenticator app.",
+      "connectedToast": "Logged in",
+      "heading": "Good to see you again",
+      "subtitle": "Log in to your AlfyChat account.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com"
+    },
+    "onboarding": {
+      "subtitle": "Less than 30 seconds. No phone number required.",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "jane_doe",
+      "passwordPlaceholder": "12 characters or more",
+      "passwordStrengthAria": "Password strength",
+      "passwordStrengthLabel": "Strength",
+      "strengthExcellent": "Excellent",
+      "strengthOk": "Good",
+      "strengthWeak": "Too weak",
+      "creating": "Creating…",
+      "keysLocalNotice": "Your encryption keys stay on your device.",
+      "welcomeHeading": "Welcome, {username}",
+      "welcomeDescription": "Your Signal keys have been generated on this device. Your messages are end-to-end encrypted — not even we can read them.",
+      "enterButton": "Enter AlfyChat"
     }
   }
 }

@@ -17,7 +17,46 @@
     "connectedVoice": "Connecté au vocal",
     "participants": "{n} personne(s)",
     "leave": "Quitter",
-    "join": "Rejoindre"
+    "join": "Rejoindre",
+    "bar": {
+      "voiceConnected": "Voix connectée",
+      "openCall": "Ouvrir l'appel"
+    },
+    "controls": {
+      "ariaLabel": "Contrôles de l'appel",
+      "enableMic": "Activer le micro",
+      "shareScreen": "Partager l'écran",
+      "raiseHand": "Lever la main",
+      "lowerHand": "Baisser la main"
+    },
+    "tile": {
+      "handRaised": "{name} a levé la main",
+      "micMuted": "Micro coupé"
+    },
+    "view": {
+      "callWith": "Appel avec {name}",
+      "p2pEncrypted": "P2P chiffré"
+    },
+    "incoming": {
+      "callingYou": "{name} vous appelle",
+      "subtitle": "{type} — chiffré de bout en bout",
+      "decline": "Refuser",
+      "accept": "Accepter"
+    },
+    "room": {
+      "participantCount": "{n} participants"
+    },
+    "quality": {
+      "medium": "Correcte",
+      "poor": "Dégradée",
+      "connectionAriaLabel": "Qualité de connexion : {label}. Voir le détail",
+      "detailAriaLabel": "Détail de la connexion",
+      "p2pConnection": "Connexion P2P",
+      "latency": "Latence",
+      "packetLoss": "Perte de paquets",
+      "bitrate": "Débit",
+      "disclaimer": "Appel pair-à-pair chiffré — aucun média ne transite par nos serveurs."
+    }
   },
   "callBar": {
     "calling": "Appel en cours…",

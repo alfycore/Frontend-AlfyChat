@@ -4,12 +4,15 @@ import { FileText } from 'lucide-react';
 
 import type { AlfyAttachment } from '@/components/alfy/mock/types';
 import { useAppPrefs } from '@/hooks/use-app-prefs';
-
-const formatSize = (bytes: number) =>
-  bytes > 1_000_000 ? `${(bytes / 1_000_000).toFixed(1)} Mo` : `${Math.round(bytes / 1000)} Ko`;
+import { useTranslation } from '@/components/locale-provider';
 
 export function Attachment({ attachment }: { attachment: AlfyAttachment }) {
   const { prefs } = useAppPrefs();
+  const { t, tx } = useTranslation();
+  const formatSize = (bytes: number) =>
+    bytes > 1_000_000
+      ? tx(t.chat.attachmentSizeMB, { size: (bytes / 1_000_000).toFixed(1) })
+      : tx(t.chat.attachmentSizeKB, { size: Math.round(bytes / 1000) });
 
   // « Afficher les médias téléversés » désactivé → on garde la fiche fichier,
   // l'utilisateur peut toujours ouvrir la pièce jointe.

@@ -18,6 +18,8 @@
   },
   "invite": {
     "invalid": "Invitation invalide",
+    "invalidOrExpired": "Invitation invalide ou expirée",
+    "cannotJoin": "Impossible de rejoindre ce serveur",
     "backHome": "Retour à l'accueil",
     "youreInvited": "Vous êtes invité à rejoindre",
     "memberCount": "{n} membre(s)",
@@ -27,5 +29,22 @@
     "loginToJoin": "Se connecter pour rejoindre",
     "notNow": "Pas maintenant",
     "footer": "AlfyChat — Messagerie sécurisée et décentralisée"
+  },
+  "discoverView": {
+    "categoryAll": "Toutes",
+    "categoryCommunity": "Communauté",
+    "categoryDev": "Développement",
+    "categorySelfHosted": "Auto-hébergement",
+    "categoryGaming": "Jeux",
+    "heading": "Découvrir des serveurs",
+    "subtitle": "Rejoignez des communautés publiques hébergées en France ou par leurs membres.",
+    "searchAria": "Rechercher un serveur",
+    "searchPlaceholder": "Rechercher une communauté…",
+    "categoriesAria": "Catégories",
+    "selfHostedChip": "auto-hébergé",
+    "onlineCount": "{n} en ligne",
+    "joined": "Rejoint",
+    "join": "Rejoindre",
+    "serverJoined": "Serveur rejoint"
   }
 }

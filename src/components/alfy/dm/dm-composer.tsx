@@ -20,6 +20,7 @@ import { EmojiPicker } from '@/components/alfy/chat/emoji-picker';
 import type { AlfyMessage } from '@/components/alfy/mock/types';
 import { useUserById } from '@/components/alfy/user-directory';
 import { useAppPrefs } from '@/hooks/use-app-prefs';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 /** Hauteur maximale avant que la zone ne défile elle-même. */
@@ -34,6 +35,8 @@ const brouillons = new Map<string, string>();
 interface DmComposerProps {
   conversationId: string;
   recipientName: string;
+  /** Remplace « Écrire à {recipientName} » — ex. « Écrire dans #général ». */
+  placeholder?: string;
   /** Message auquel on répond — affiché en bandeau au-dessus de la saisie. */
   replyTo?: AlfyMessage;
   onCancelReply?: () => void;
@@ -49,6 +52,7 @@ interface DmComposerProps {
 export function DmComposer({
   conversationId,
   recipientName,
+  placeholder,
   replyTo,
   onCancelReply,
   onSend,
@@ -57,6 +61,7 @@ export function DmComposer({
   isDisabled = false,
   disabledMessage,
 }: DmComposerProps) {
+  const { t, tx } = useTranslation();
   const { prefs } = useAppPrefs();
   const userById = useUserById();
   const zoneRef = useRef<HTMLTextAreaElement>(null);
@@ -119,7 +124,7 @@ export function DmComposer({
       {replyTo && (
         <div className="at-fade flex items-center gap-2 rounded-t-lg border border-b-0 border-separator bg-surface-secondary px-3 py-1.5 text-xs">
           <span className="text-muted">
-            Réponse à{' '}
+            {t.friends.dm.replyingToLabel}{' '}
             <span className="font-medium text-foreground">
               {userById(replyTo.authorId).displayName}
             </span>
@@ -129,7 +134,7 @@ export function DmComposer({
             isIconOnly
             size="sm"
             variant="ghost"
-            aria-label="Annuler la réponse"
+            aria-label={t.friends.dm.cancelReply}
             onPress={() => onCancelReply?.()}
           >
             <X className="size-3.5" aria-hidden />
@@ -148,8 +153,12 @@ export function DmComposer({
           rows={1}
           value={valeur}
           disabled={isDisabled}
-          aria-label={`Écrire à ${recipientName}`}
-          placeholder={isDisabled ? (disabledMessage ?? 'Envoi impossible') : `Écrire à ${recipientName}`}
+          aria-label={placeholder ?? tx(t.friends.dm.writeTo, { name: recipientName })}
+          placeholder={
+            isDisabled
+              ? (disabledMessage ?? t.friends.dm.sendDisabled)
+              : (placeholder ?? tx(t.friends.dm.writeTo, { name: recipientName }))
+          }
           onChange={(e) => surSaisie(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -174,7 +183,7 @@ export function DmComposer({
               isIconOnly
               size="sm"
               variant={peutEnvoyer ? 'primary' : 'ghost'}
-              aria-label="Envoyer le message"
+              aria-label={t.common.send}
               isDisabled={!peutEnvoyer}
               onPress={envoyer}
               className="mb-0.5"
@@ -182,7 +191,7 @@ export function DmComposer({
               <SendHorizontal className="size-4" aria-hidden />
             </Button>
             <Tooltip.Content>
-              <p>Envoyer — Entrée</p>
+              <p>{t.friends.dm.sendEnterHint}</p>
             </Tooltip.Content>
           </Tooltip>
         )}
@@ -191,10 +200,10 @@ export function DmComposer({
       {encrypted && (
         <p className="mt-1.5 flex items-center gap-1 text-[10px] text-muted">
           <Lock className="size-2.5 shrink-0 text-(--alfy-e2e)" aria-hidden />
-          Chiffré de bout en bout
+          {t.friends.dm.encryptedFooter}
           <span className="hidden sm:inline">
-            — <kbd className="font-sans">Maj</kbd>+<kbd className="font-sans">Entrée</kbd> pour un
-            saut de ligne
+            — <kbd className="font-sans">{t.friends.dm.shiftKey}</kbd>+
+            <kbd className="font-sans">{t.friends.dm.enterKey}</kbd> {t.friends.dm.forNewLine}
           </span>
         </p>
       )}

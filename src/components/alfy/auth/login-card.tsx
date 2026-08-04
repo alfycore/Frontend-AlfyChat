@@ -6,10 +6,12 @@ import NextLink from 'next/link';
 import { useState } from 'react';
 
 import { AuthHeading } from '@/components/alfy/auth/auth-shell';
+import { useTranslation } from '@/components/locale-provider';
 
 type Step = 'form' | '2fa';
 
 export function LoginCard() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>('form');
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState('');
@@ -30,9 +32,9 @@ export function LoginCard() {
           <div className="flex size-11 items-center justify-center rounded-xl bg-accent/12 text-accent">
             <ShieldCheck className="size-5" aria-hidden />
           </div>
-          <AuthHeading title="Double authentification" subtitle="Saisissez le code de votre application d'authentification." />
+          <AuthHeading title={t.auth.loginCard.twoFAHeading} subtitle={t.auth.loginCard.twoFASubtitle} />
         </div>
-        <InputOTP maxLength={6} value={code} onChange={setCode} autoFocus onComplete={() => toast('Connecté·e')}>
+        <InputOTP maxLength={6} value={code} onChange={setCode} autoFocus onComplete={() => toast(t.auth.loginCard.connectedToast)}>
           <InputOTP.Group>
             <InputOTP.Slot index={0} />
             <InputOTP.Slot index={1} />
@@ -46,11 +48,11 @@ export function LoginCard() {
           </InputOTP.Group>
         </InputOTP>
         <div className="flex flex-col gap-2">
-          <Button className="w-full" isDisabled={code.length < 6} onPress={() => toast('Connecté·e')}>
-            Vérifier
+          <Button className="w-full" isDisabled={code.length < 6} onPress={() => toast(t.auth.loginCard.connectedToast)}>
+            {t.auth.login.twoFAVerify}
           </Button>
           <Button variant="ghost" className="w-full" onPress={() => setStep('form')}>
-            Retour
+            {t.common.back}
           </Button>
         </div>
       </div>
@@ -59,41 +61,41 @@ export function LoginCard() {
 
   return (
     <div className="alfy-enter">
-      <AuthHeading title="Content de vous revoir" subtitle="Connectez-vous à votre compte AlfyChat." />
+      <AuthHeading title={t.auth.loginCard.heading} subtitle={t.auth.loginCard.subtitle} />
       <Form className="flex flex-col gap-4" onSubmit={submit}>
         <TextField name="email" type="email" isRequired>
-          <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">Email</Label>
-          <Input placeholder="vous@exemple.fr" autoComplete="email" />
+          <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">{t.auth.loginCard.emailLabel}</Label>
+          <Input placeholder={t.auth.loginCard.emailPlaceholder} autoComplete="email" />
           <FieldError />
         </TextField>
 
         <TextField name="password" type="password" isRequired>
           <div className="flex items-center justify-between">
-            <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">Mot de passe</Label>
+            <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">{t.auth.login.password}</Label>
             <Link href="/uitest/auth/forgot" className="text-xs text-muted hover:text-accent">
-              Oublié ?
+              {t.auth.login.forgotPassword}
             </Link>
           </div>
-          <Input placeholder="••••••••" autoComplete="current-password" />
+          <Input placeholder={t.auth.register.passwordPlaceholder} autoComplete="current-password" />
           <FieldError />
         </TextField>
 
         <Button type="submit" size="lg" className="w-full gap-2" isDisabled={loading}>
           {loading ? <Spinner size="sm" color="current" /> : null}
-          {loading ? 'Connexion…' : 'Se connecter'}
+          {loading ? t.auth.login.logging : t.auth.login.login}
         </Button>
       </Form>
 
       <div className="mt-6 flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-separator" />
-          <span className="text-[10px] tracking-wider text-muted uppercase">ou</span>
+          <span className="text-[10px] tracking-wider text-muted uppercase">{t.auth.login.or}</span>
           <div className="h-px flex-1 bg-separator" />
         </div>
         <p className="text-[13px] text-muted">
-          Pas encore de compte ?{' '}
+          {t.auth.login.noAccount}{' '}
           <NextLink href="/uitest/auth/register" className="font-medium text-accent hover:underline">
-            Créer un compte
+            {t.auth.login.createAccount}
           </NextLink>
         </p>
       </div>

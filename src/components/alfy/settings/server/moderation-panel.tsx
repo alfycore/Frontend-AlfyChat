@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
 import { EmptyState } from '@/components/alfy/primitives/empty-state';
 import { Gavel } from 'lucide-react';
+import { useTranslation } from '@/components/locale-provider';
 
 interface BannedMember {
   userId: string;
@@ -16,6 +17,7 @@ interface BannedMember {
 }
 
 export function ModerationPanel({ serverId }: { serverId: string }) {
+  const { t } = useTranslation();
   const [bans, setBans] = useState<BannedMember[] | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
 
@@ -33,13 +35,13 @@ export function ModerationPanel({ serverId }: { serverId: string }) {
     try {
       const res: any = await api.delete(`/api/servers/${serverId}/members/${userId}/ban`);
       if (res?.success) {
-        toast.success('Bannissement révoqué');
+        toast.success(t.moderationPanel.revoked);
         load();
       } else {
-        toast.danger(res?.error || 'Échec de la révocation');
+        toast.danger(res?.error || t.moderationPanel.revokeError);
       }
     } catch {
-      toast.danger('Échec de la révocation');
+      toast.danger(t.moderationPanel.revokeError);
     } finally {
       setRevoking(null);
     }
@@ -48,21 +50,21 @@ export function ModerationPanel({ serverId }: { serverId: string }) {
   return (
     <div>
       <PanelHeader
-        title="Modération"
-        description="Bannissements en cours pour ce serveur."
+        title={t.moderationPanel.panelTitle}
+        description={t.moderationPanel.panelDescription}
       />
 
       {bans === null ? (
-        <p className="text-sm text-muted">Chargement…</p>
+        <p className="text-sm text-muted">{t.common.loading}</p>
       ) : bans.length === 0 ? (
-        <EmptyState icon={Gavel} title="Aucun banni" description="Ce serveur n'a aucun membre banni." />
+        <EmptyState icon={Gavel} title={t.moderationPanel.emptyTitle} description={t.moderationPanel.emptyDescription} />
       ) : (
         <Table>
           <Table.ScrollContainer>
-            <Table.Content aria-label="Membres bannis">
+            <Table.Content aria-label={t.moderationPanel.panelTitle}>
               <Table.Header>
-                <Table.Column isRowHeader>Membre</Table.Column>
-                <Table.Column>Motif</Table.Column>
+                <Table.Column isRowHeader>{t.moderationPanel.columnMember}</Table.Column>
+                <Table.Column>{t.moderationPanel.columnReason}</Table.Column>
                 <Table.Column aria-label="Actions" />
               </Table.Header>
               <Table.Body>
@@ -73,7 +75,7 @@ export function ModerationPanel({ serverId }: { serverId: string }) {
                     <Table.Cell>
                       <div className="flex justify-end">
                         <Button size="sm" variant="tertiary" isDisabled={revoking === ban.userId} onPress={() => handleRevoke(ban.userId)}>
-                          {revoking === ban.userId ? 'Révocation…' : 'Révoquer'}
+                          {revoking === ban.userId ? t.moderationPanel.revoking : t.moderationPanel.revoke}
                         </Button>
                       </div>
                     </Table.Cell>

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Hand, MicOff, MonitorUp } from 'lucide-react';
 
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 interface CallTileProps {
@@ -21,8 +22,9 @@ interface CallTileProps {
 }
 
 export function CallTile({ name, avatarUrl, stream, isLocal, muted, screenSharing, handRaised, size = 'md' }: CallTileProps) {
+  const { t, tx } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hasVideo = !!stream && stream.getVideoTracks().some((t) => t.enabled);
+  const hasVideo = !!stream && stream.getVideoTracks().some((track) => track.enabled);
 
   useEffect(() => {
     const el = videoRef.current;
@@ -55,8 +57,8 @@ export function CallTile({ name, avatarUrl, stream, isLocal, muted, screenSharin
       {handRaised && (
         <span
           className="at-pop absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-sm"
-          aria-label={`${name} a levé la main`}
-          title={`${name} a levé la main`}
+          aria-label={tx(t.calls.tile.handRaised, { name })}
+          title={tx(t.calls.tile.handRaised, { name })}
         >
           <Hand className="size-3.5" aria-hidden />
         </span>
@@ -64,9 +66,9 @@ export function CallTile({ name, avatarUrl, stream, isLocal, muted, screenSharin
 
       <div className="absolute right-2 bottom-2 left-2 flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 rounded-md bg-black/55 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-          {muted && <MicOff className="size-3 text-red-400" aria-label="Micro coupé" />}
+          {muted && <MicOff className="size-3 text-red-400" aria-label={t.calls.tile.micMuted} />}
           {screenSharing && (
-            <MonitorUp className="size-3 text-sky-300" aria-label="Partage d'écran" />
+            <MonitorUp className="size-3 text-sky-300" aria-label={t.callBar.shareScreen} />
           )}
           <span className="truncate">{name}</span>
         </span>

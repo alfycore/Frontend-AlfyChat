@@ -12,6 +12,7 @@ import { Button } from '@heroui/react';
 import { LogOut, Volume2 } from 'lucide-react';
 
 import { useCallContext } from '@/hooks/use-call-context';
+import { useTranslation } from '@/components/locale-provider';
 
 interface AlfyVoiceChannelViewProps {
   serverId: string;
@@ -22,6 +23,7 @@ interface AlfyVoiceChannelViewProps {
 export function AlfyVoiceChannelView({ serverId, channelId, channelName }: AlfyVoiceChannelViewProps) {
   const { callStatus, callChannelId, callCategory, participantCount, initiateServerCall, leaveCall } =
     useCallContext();
+  const { t, tx } = useTranslation();
   const attemptedRef = useRef<string | null>(null);
 
   const inThisChannel =
@@ -43,19 +45,21 @@ export function AlfyVoiceChannelView({ serverId, channelId, channelName }: AlfyV
         <Volume2 className="size-7" aria-hidden />
       </span>
       <div>
-        <p className="text-lg font-bold">{channelName ?? 'Salon vocal'}</p>
+        <p className="text-lg font-bold">{channelName ?? t.chat.voiceChannelDefaultName}</p>
         <p className="mt-1 text-sm text-muted">
           {busyElsewhere
-            ? 'Déjà en appel ailleurs — quittez-le avant de rejoindre ce salon.'
+            ? t.chat.voiceBusyElsewhere
             : callStatus === 'connected'
-              ? `Connecté${participantCount > 1 ? ` · ${participantCount} participants` : ''}`
-              : 'Connexion…'}
+              ? participantCount > 1
+                ? tx(t.chat.voiceConnectedWithParticipants, { count: participantCount })
+                : t.chat.voiceConnected
+              : t.chat.voiceConnecting}
         </p>
       </div>
       {inThisChannel && (
-        <Button color="danger" variant="soft" onPress={leaveCall}>
+        <Button variant="danger" onPress={leaveCall}>
           <LogOut className="size-4" aria-hidden />
-          Quitter le vocal
+          {t.chat.leaveVoice}
         </Button>
       )}
     </div>

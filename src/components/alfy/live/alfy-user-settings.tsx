@@ -43,17 +43,7 @@ import { AccessibilityPanel } from '@/components/alfy/settings/user/accessibilit
 import { ArchivesPanel } from '@/components/alfy/settings/user/archives-panel';
 import { toAlfyUser } from '@/components/alfy/live/map';
 import type { AlfySession } from '@/components/alfy/mock/types';
-
-/** Devine un libellé d'appareil lisible depuis le user-agent. */
-function deviceLabel(ua: string | null): string {
-  if (!ua) return 'Appareil inconnu';
-  if (/android/i.test(ua)) return 'Android';
-  if (/iphone|ipad|ios/i.test(ua)) return 'iOS';
-  if (/mac os|macintosh/i.test(ua)) return 'Mac';
-  if (/windows/i.test(ua)) return 'Windows';
-  if (/linux/i.test(ua)) return 'Linux';
-  return ua.slice(0, 40);
-}
+import { useTranslation } from '@/components/locale-provider';
 
 export function AlfyUserSettings({
   isOpen,
@@ -62,6 +52,23 @@ export function AlfyUserSettings({
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
+
+  /** Devine un libellé d'appareil lisible depuis le user-agent. Les noms
+   *  d'OS (Android/iOS/Mac/Windows/Linux) sont des noms propres — non traduits. */
+  const deviceLabel = useCallback(
+    (ua: string | null): string => {
+      if (!ua) return t.chatUI.userSettings.deviceUnknown;
+      if (/android/i.test(ua)) return 'Android';
+      if (/iphone|ipad|ios/i.test(ua)) return 'iOS';
+      if (/mac os|macintosh/i.test(ua)) return 'Mac';
+      if (/windows/i.test(ua)) return 'Windows';
+      if (/linux/i.test(ua)) return 'Linux';
+      return ua.slice(0, 40);
+    },
+    [t],
+  );
+
   const { user, updateUser, logout } = useAuth();
   const router = useRouter();
   const [sessions, setSessions] = useState<AlfySession[] | undefined>(undefined);
@@ -88,7 +95,7 @@ export function AlfyUserSettings({
         (raw as Record<string, unknown>[]).map((s, i) => ({
           id: s.id as string,
           device: deviceLabel((s.userAgent as string) ?? null),
-          location: (s.ipAddress as string) ?? 'Adresse inconnue',
+          location: (s.ipAddress as string) ?? t.chatUI.userSettings.locationUnknown,
           lastActiveAt: (s.createdAt as string) ?? new Date().toISOString(),
           // La session courante n'est pas marquée par l'API : la plus récente.
           current: i === 0,
@@ -99,7 +106,7 @@ export function AlfyUserSettings({
     } finally {
       setLoadingSessions(false);
     }
-  }, []);
+  }, [t, deviceLabel]);
 
   useEffect(() => {
     if (isOpen) void loadSessions();
@@ -141,7 +148,7 @@ export function AlfyUserSettings({
     <SettingsOverlay isOpen={isOpen} onOpenChange={onOpenChange}>
       <SettingsShell
         title={alfyUser.displayName}
-        subtitle="Paramètres du compte"
+        subtitle={t.chatUI.userSettings.subtitle}
         onClose={() => onOpenChange(false)}
         navFooter={
           <button
@@ -150,30 +157,30 @@ export function AlfyUserSettings({
             className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-danger transition-colors duration-100 hover:bg-danger/10"
           >
             <LogOut className="size-4 shrink-0 opacity-80" aria-hidden />
-            Se déconnecter
+            {t.chatUI.userSettings.logout}
           </button>
         }
         groups={[
           {
-            label: 'Compte',
+            label: t.chatUI.userSettings.groupAccount,
             items: [
               {
                 id: 'account',
-                label: 'Mon compte',
+                label: t.chatUI.userSettings.navAccount,
                 icon: UserRound,
                 content: <AccountPanel user={alfyUser} onSave={saveProfile} />,
               },
-              { id: 'privacy', label: 'Confidentialité', icon: Eye, content: <PrivacyPanel /> },
+              { id: 'privacy', label: t.chatUI.userSettings.navPrivacy, icon: Eye, content: <PrivacyPanel /> },
             ],
           },
           {
-            label: 'Sécurité',
+            label: t.chatUI.userSettings.groupSecurity,
             items: [
-              { id: 'security', label: 'Connexion & 2FA', icon: Lock, content: <SecurityPanel /> },
-              { id: 'keys', label: 'Clés de chiffrement', icon: KeyRound, content: <KeysPanel /> },
+              { id: 'security', label: t.chatUI.userSettings.navSecurity, icon: Lock, content: <SecurityPanel /> },
+              { id: 'keys', label: t.chatUI.userSettings.navKeys, icon: KeyRound, content: <KeysPanel /> },
               {
                 id: 'sessions',
-                label: 'Sessions actives',
+                label: t.chatUI.userSettings.navSessions,
                 icon: MonitorSmartphone,
                 content: (
                   <SessionsPanel
@@ -184,19 +191,19 @@ export function AlfyUserSettings({
                   />
                 ),
               },
-              { id: 'archives', label: 'Archives', icon: Archive, content: <ArchivesPanel /> },
+              { id: 'archives', label: t.chatUI.userSettings.navArchives, icon: Archive, content: <ArchivesPanel /> },
             ],
           },
           {
-            label: 'Application',
+            label: t.chatUI.userSettings.groupApplication,
             items: [
-              { id: 'voice', label: 'Voix & vidéo', icon: Mic, content: <VoicePanel /> },
-              { id: 'notifications', label: 'Notifications', icon: Bell, content: <NotificationsPanel /> },
-              { id: 'appearance', label: 'Apparence', icon: Palette, content: <AppearancePanel /> },
-              { id: 'chat', label: 'Chat', icon: MessagesSquare, content: <ChatPanel /> },
-              { id: 'accessibility', label: 'Accessibilité', icon: Accessibility, content: <AccessibilityPanel /> },
-              { id: 'layout', label: 'Mise en page', icon: LayoutTemplate, content: <LayoutPanel /> },
-              { id: 'language', label: 'Langue', icon: Languages, content: <LanguagePanel /> },
+              { id: 'voice', label: t.chatUI.userSettings.navVoice, icon: Mic, content: <VoicePanel /> },
+              { id: 'notifications', label: t.chatUI.userSettings.navNotifications, icon: Bell, content: <NotificationsPanel /> },
+              { id: 'appearance', label: t.chatUI.userSettings.navAppearance, icon: Palette, content: <AppearancePanel /> },
+              { id: 'chat', label: t.chatUI.userSettings.navChat, icon: MessagesSquare, content: <ChatPanel /> },
+              { id: 'accessibility', label: t.chatUI.userSettings.navAccessibility, icon: Accessibility, content: <AccessibilityPanel /> },
+              { id: 'layout', label: t.chatUI.userSettings.navLayout, icon: LayoutTemplate, content: <LayoutPanel /> },
+              { id: 'language', label: t.chatUI.userSettings.navLanguage, icon: Languages, content: <LanguagePanel /> },
             ],
           },
         ]}

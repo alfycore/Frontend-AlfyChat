@@ -6,12 +6,7 @@ import { useRef, useState } from 'react';
 
 import { api } from '@/lib/api';
 import { getLevel, removeChannelSetting, setChannelSetting, type NotifLevel } from '@/lib/notification-store';
-
-const OPTIONS: { id: NotifLevel; label: string; icon: typeof Bell; desc: string }[] = [
-  { id: 'all', label: 'Tous les messages', icon: BellRing, desc: 'Notifié à chaque message.' },
-  { id: 'mentions', label: 'Mentions uniquement', icon: Bell, desc: 'Seulement @vous et @rôles.' },
-  { id: 'nothing', label: 'Rien', icon: BellOff, desc: 'Aucune notification.' },
-];
+import { useTranslation } from '@/components/locale-provider';
 
 interface ChannelNotifSettingsProps {
   channelId: string;
@@ -21,6 +16,12 @@ interface ChannelNotifSettingsProps {
 
 /** Réglages de notification pour le salon courant. */
 export function ChannelNotifSettings({ channelId, channelName, targetType = 'channel' }: ChannelNotifSettingsProps) {
+  const { t, tx } = useTranslation();
+  const OPTIONS: { id: NotifLevel; label: string; icon: typeof Bell; desc: string }[] = [
+    { id: 'all', label: t.admin.notifications.levelAllLabel, icon: BellRing, desc: t.admin.notifications.levelAllDesc },
+    { id: 'mentions', label: t.admin.notifications.levelMentionsLabel, icon: Bell, desc: t.admin.notifications.levelMentionsDesc },
+    { id: 'nothing', label: t.admin.notifications.levelNothingLabel, icon: BellOff, desc: t.admin.notifications.levelNothingDesc },
+  ];
   const [level, setLevel] = useState<NotifLevel>(() => getLevel(channelId));
   const previousLevelRef = useRef<NotifLevel>('all');
 
@@ -41,19 +42,19 @@ export function ChannelNotifSettings({ channelId, channelName, targetType = 'cha
     <Popover>
       <Tooltip delay={300}>
         <Popover.Trigger
-          aria-label="Réglages de notification du salon"
+          aria-label={t.admin.notifications.ariaChannelSettings}
           className="flex size-8 cursor-pointer items-center justify-center rounded-md text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
         >
           {muted ? <BellOff className="size-4.5" /> : <Bell className="size-4.5" />}
         </Popover.Trigger>
         <Tooltip.Content>
-          <p>Notifications du salon</p>
+          <p>{t.admin.notifications.tooltipChannelNotifications}</p>
         </Tooltip.Content>
       </Tooltip>
       <Popover.Content className="w-64">
-        <Popover.Dialog aria-label={`Notifications de ${channelName}`} className="flex flex-col gap-2">
+        <Popover.Dialog aria-label={tx(t.admin.notifications.dialogAriaFor, { channel: channelName })} className="flex flex-col gap-2">
           <p className="text-[11px] font-semibold tracking-wider text-muted uppercase">
-            Notifications · #{channelName}
+            {tx(t.admin.notifications.headerChannel, { channel: channelName })}
           </p>
           <Switch
             isSelected={muted}
@@ -65,7 +66,7 @@ export function ChannelNotifSettings({ channelId, channelName, targetType = 'cha
             <Switch.Content className="flex w-full items-center justify-between gap-3">
               <span className="flex items-center gap-2 text-sm">
                 <Volume2 className="size-4 text-muted" aria-hidden />
-                Mettre en sourdine
+                {t.admin.notifications.mute}
               </span>
               <Switch.Control>
                 <Switch.Thumb />
@@ -74,7 +75,7 @@ export function ChannelNotifSettings({ channelId, channelName, targetType = 'cha
           </Switch>
           <Separator />
           <ListBox
-            aria-label="Niveau de notification"
+            aria-label={t.admin.notifications.ariaLevel}
             selectionMode="single"
             disallowEmptySelection
             selectedKeys={[level]}

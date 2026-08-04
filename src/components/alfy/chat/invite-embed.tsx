@@ -6,12 +6,14 @@ import { useState } from 'react';
 
 import { SERVERS, userById } from '@/components/alfy/mock/data';
 import type { AlfyInviteEmbed } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 const initials = (name: string) =>
   name.split(/\s+/).filter((p) => /\w/.test(p)).map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
 /** Carte d'invitation riche affichée dans un message. */
 export function InviteEmbed({ invite }: { invite: AlfyInviteEmbed }) {
+  const { t, tx } = useTranslation();
   const server = SERVERS.find((s) => s.id === invite.serverId);
   const [joined, setJoined] = useState(false);
   if (!server) return null;
@@ -24,7 +26,7 @@ export function InviteEmbed({ invite }: { invite: AlfyInviteEmbed }) {
   return (
     <div className="mt-1.5 w-full max-w-md rounded-lg bg-surface-secondary p-3">
       <p className="mb-2 text-[10px] font-semibold tracking-wider text-muted uppercase">
-        Tu as été invité·e à rejoindre un serveur
+        {t.chat.inviteBannerTitle}
       </p>
       <div className="flex items-center gap-3">
         <span
@@ -37,10 +39,10 @@ export function InviteEmbed({ invite }: { invite: AlfyInviteEmbed }) {
           <p className="truncate text-sm font-semibold">{server.name}</p>
           <p className="flex items-center gap-3 text-xs text-muted">
             <span className="flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-success" /> {online} en ligne
+              <span className="size-1.5 rounded-full bg-success" /> {tx(t.chat.onlineCount, { n: online })}
             </span>
             <span className="flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-muted" /> {server.members.length} membres
+              <span className="size-1.5 rounded-full bg-muted" /> {tx(t.chat.membersCount, { n: server.members.length })}
             </span>
           </p>
         </div>
@@ -50,15 +52,15 @@ export function InviteEmbed({ invite }: { invite: AlfyInviteEmbed }) {
           isDisabled={joined}
           onPress={() => {
             setJoined(true);
-            toast('Serveur rejoint', { description: server.name });
+            toast(t.chat.inviteJoinedToast, { description: server.name });
           }}
         >
           {joined ? (
             <>
-              <Check className="size-3.5" /> Rejoint
+              <Check className="size-3.5" /> {t.chat.inviteJoined}
             </>
           ) : (
-            'Rejoindre'
+            t.chat.inviteJoin
           )}
         </Button>
       </div>

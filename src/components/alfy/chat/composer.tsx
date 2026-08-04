@@ -12,6 +12,7 @@ import { MentionMenu, type MentionItem } from '@/components/alfy/chat/mention-me
 import { SlashMenu } from '@/components/alfy/chat/slash-menu';
 import { useAppPrefs } from '@/hooks/use-app-prefs';
 import { api } from '@/lib/api';
+import { useTranslation } from '@/components/locale-provider';
 
 /** Émoticônes converties à l'envoi — préférence « Convertir les émoticônes ». */
 const EMOTICONS: [RegExp, string][] = [
@@ -78,6 +79,7 @@ export function Composer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { prefs } = useAppPrefs();
+  const { t, tx } = useTranslation();
 
   const slashCommands = useMemo(() => {
     if (!prefs.commandSuggestions) return [];
@@ -144,7 +146,7 @@ export function Composer({
         if (res.success && res.data) {
           setAttachments((a) => [...a, { name: file.name, url: res.data!.url, isImage: res.data!.isImage }]);
         } else {
-          toast.danger('Envoi impossible', { description: res.error || file.name });
+          toast.danger(t.composer.uploadFailed, { description: res.error || file.name });
         }
       }
     } finally {
@@ -180,7 +182,7 @@ export function Composer({
       <div className="rounded-xl border border-border bg-field ring-1 ring-transparent transition-colors duration-150 focus-within:border-accent/50 focus-within:ring-accent/20">
         {preview && (
           <div className="border-b border-separator px-3 py-2">
-            <p className="mb-1 text-[10px] font-semibold tracking-wider text-muted uppercase">Aperçu</p>
+            <p className="mb-1 text-[10px] font-semibold tracking-wider text-muted uppercase">{t.common.preview}</p>
             <div className="text-sm text-foreground/90">
               <AlfyMarkdown content={preview} />
             </div>
@@ -201,7 +203,7 @@ export function Composer({
                 <span className="max-w-40 truncate">{a.name}</span>
                 <button
                   type="button"
-                  aria-label={`Retirer ${a.name}`}
+                  aria-label={tx(t.composer.removeAttachment, { name: a.name })}
                   onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
                   className="cursor-pointer rounded-sm text-muted outline-none hover:text-danger focus-visible:ring-2 focus-visible:ring-focus"
                 >
@@ -212,7 +214,7 @@ export function Composer({
             {uploading && (
               <span className="flex items-center gap-1.5 rounded-sm bg-surface-secondary px-2 py-1 text-xs text-muted">
                 <Loader2 className="size-3 animate-spin" aria-hidden />
-                Envoi…
+                {t.common.sending}
               </span>
             )}
           </div>
@@ -233,7 +235,7 @@ export function Composer({
               isIconOnly
               size="sm"
               variant="ghost"
-              aria-label="Joindre un fichier"
+              aria-label={t.composer.attachFile}
               className="text-muted"
               onPress={() => fileRef.current?.click()}
               isDisabled={uploading}
@@ -241,7 +243,7 @@ export function Composer({
               <Paperclip className="size-4.5" />
             </Button>
             <Tooltip.Content>
-              <p>Joindre un fichier</p>
+              <p>{t.composer.attachFile}</p>
             </Tooltip.Content>
           </Tooltip>
 
@@ -284,7 +286,7 @@ export function Composer({
             <Button
               isIconOnly
               size="sm"
-              aria-label="Envoyer le message"
+              aria-label={t.composer.sendMessageAriaLabel}
               onPress={send}
               isDisabled={uploading || (!value.trim() && attachments.length === 0)}
             >
@@ -297,10 +299,10 @@ export function Composer({
       {encrypted && (
         <p className="mt-1.5 flex items-center gap-1 truncate text-[10px] text-muted">
           <Lock className="size-2.5 shrink-0 text-(--alfy-e2e)" aria-hidden />
-          <span className="truncate">Chiffré de bout en bout</span>
+          <span className="truncate">{t.composer.e2eeLabel}</span>
           <span className="hidden shrink-0 items-center gap-1 sm:flex">
-            — markdown, <kbd className="font-sans">/</kbd> commandes,{' '}
-            <kbd className="font-sans">@</kbd> mentions, <kbd className="font-sans">#</kbd> salons
+            {t.composer.hintPrefix}<kbd className="font-sans">/</kbd>{t.composer.hintCommands}
+            <kbd className="font-sans">@</kbd>{t.composer.hintMentions}<kbd className="font-sans">#</kbd>{t.composer.hintChannels}
           </span>
         </p>
       )}

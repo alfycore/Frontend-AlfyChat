@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 
 import { NODE_LOGS } from '@/components/alfy/mock/data';
 import type { AlfyLogLevel } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 const LEVELS: AlfyLogLevel[] = ['info', 'warn', 'error', 'debug'];
@@ -25,6 +26,7 @@ const timeFmt = new Intl.DateTimeFormat('fr-FR', {
 });
 
 export function NodeLogs() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [levels, setLevels] = useState<Set<AlfyLogLevel>>(new Set(LEVELS));
 
@@ -40,10 +42,10 @@ export function NodeLogs() {
     <Card className="col-span-full">
       <Card.Header>
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
-          <Card.Title className="text-sm">Journaux</Card.Title>
+          <Card.Title className="text-sm">{t.node.logs.title}</Card.Title>
           <div className="flex flex-wrap items-center gap-3">
             <TagGroup
-              aria-label="Niveaux de log"
+              aria-label={t.node.logs.levelsAriaLabel}
               selectionMode="multiple"
               selectedKeys={levels}
               onSelectionChange={(keys) => {
@@ -59,10 +61,10 @@ export function NodeLogs() {
                 ))}
               </TagGroup.List>
             </TagGroup>
-            <SearchField value={query} onChange={setQuery} aria-label="Filtrer les journaux" className="w-52">
+            <SearchField value={query} onChange={setQuery} aria-label={t.node.logs.filterAriaLabel} className="w-52">
               <SearchField.Group>
                 <SearchField.SearchIcon />
-                <SearchField.Input placeholder="Filtrer…" />
+                <SearchField.Input placeholder={t.node.logs.filterPlaceholder} />
                 <SearchField.ClearButton />
               </SearchField.Group>
             </SearchField>
@@ -80,7 +82,7 @@ export function NodeLogs() {
               <span className="min-w-0">{log.message}</span>
             </p>
           ))}
-          {logs.length === 0 && <p className="text-muted">Aucune entrée ne correspond au filtre.</p>}
+          {logs.length === 0 && <p className="text-muted">{t.node.logs.noResults}</p>}
         </ScrollShadow>
       </Card.Content>
     </Card>

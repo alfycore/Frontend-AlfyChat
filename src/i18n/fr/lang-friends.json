@@ -50,7 +50,50 @@
     "blockError": "Impossible de bloquer cet utilisateur",
     "unblocked": "Débloqué",
     "unblockedMsg": "{username} a été débloqué",
-    "unblockError": "Impossible de débloquer cet utilisateur"
+    "unblockError": "Impossible de débloquer cet utilisateur",
+    "dm": {
+      "encryptedIntro": "Les messages sont chiffrés de bout en bout",
+      "historyUnavailableTitle": "Historique indisponible",
+      "historyUnavailableDesc": "Les messages n’ont pas pu être chargés. Vérifiez votre connexion puis réessayez.",
+      "newMessage": "{n} nouveau message",
+      "newMessages": "{n} nouveaux messages",
+      "backToBottom": "Revenir en bas",
+      "replyingToLabel": "Réponse à",
+      "cancelReply": "Annuler la réponse",
+      "writeTo": "Écrire à {name}",
+      "sendDisabled": "Envoi impossible",
+      "sendEnterHint": "Envoyer — Entrée",
+      "encryptedFooter": "Chiffré de bout en bout",
+      "shiftKey": "Maj",
+      "enterKey": "Entrée",
+      "forNewLine": "pour un saut de ligne",
+      "pinnedBadge": "Épinglé",
+      "editMessageAriaLabel": "Modifier le message",
+      "saveEdit": "Enregistrer",
+      "editHint": "Entrée pour valider · Échap pour annuler",
+      "messageNotSent": "Message non envoyé.",
+      "retry": "Réessayer",
+      "conversationActions": "Actions de la conversation",
+      "membersLabel": "Membres",
+      "viewProfile": "Voir le profil"
+    },
+    "people": {
+      "allTab": "Tous",
+      "addFriendButton": "Ajouter un ami",
+      "onlineEmptyDesc": "Vos amis apparaîtront ici dès qu'ils se connecteront.",
+      "sendMessageTo": "Envoyer un message à {name}",
+      "callUser": "Appeler {name}",
+      "call": "Appeler",
+      "pendingCount": "En attente — {n}",
+      "requestReceived": "Demande reçue",
+      "requestSent": "Demande envoyée",
+      "acceptRequestFrom": "Accepter la demande de {name}",
+      "declineRequestFrom": "Refuser la demande de {name}",
+      "cancelRequestTo": "Annuler la demande à {name}",
+      "addFriendDesc": "Saisissez le nom d'utilisateur exact de la personne. Aucun numéro de téléphone requis.",
+      "requestFailedTitle": "Demande impossible",
+      "requestFailedDesc": "@{username} est introuvable, ou déjà en attente."
+    }
   },
   "group": {
     "defaultName": "Groupe",
@@ -113,6 +156,10 @@
     "groupAccessOpen": "Ouvert",
     "groupAccessOpenDesc": "N'importe quel membre peut ajouter des personnes",
     "groupAccessClosed": "Fermé",
-    "groupAccessClosedDesc": "Seul le propriétaire du groupe peut ajouter des membres"
+    "groupAccessClosedDesc": "Seul le propriétaire du groupe peut ajouter des membres",
+    "groupNameOptional": "Nom du groupe (facultatif)",
+    "groupNamePlaceholder": "Ex. Équipe design",
+    "members": "Membres",
+    "createdToast": "Groupe créé"
   }
 }

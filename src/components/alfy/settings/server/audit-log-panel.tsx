@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
 import { SettingsSection } from '@/components/alfy/settings/section';
+import { useTranslation } from '@/components/locale-provider';
 
 interface AuditEntry {
   id: string;
@@ -17,23 +18,6 @@ interface AuditEntry {
   createdAt: string;
   actor: { id: string; username: string; displayName?: string; avatarUrl?: string };
 }
-
-const ACTION_LABELS: Record<string, string> = {
-  member_kick: 'a expulsé un membre',
-  member_ban: 'a banni un membre',
-  member_unban: 'a levé un bannissement',
-  role_create: 'a créé un rôle',
-  role_update: 'a modifié un rôle',
-  role_delete: 'a supprimé un rôle',
-  member_role_update: 'a changé les rôles d’un membre',
-  channel_create: 'a créé un salon',
-  channel_delete: 'a supprimé un salon',
-  server_update: 'a modifié les réglages du serveur',
-  emoji_create: 'a ajouté un émoji',
-  emoji_delete: 'a supprimé un émoji',
-  webhook_create: 'a créé un webhook',
-  webhook_delete: 'a supprimé un webhook',
-};
 
 const dateFormat = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
@@ -46,6 +30,8 @@ function detail(entry: AuditEntry): string | null {
 }
 
 export function AuditLogPanel({ serverId }: { serverId: string }) {
+  const { t } = useTranslation();
+  const ACTION_LABELS: Record<string, string> = t.auditLogPanel.actions;
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -70,7 +56,7 @@ export function AuditLogPanel({ serverId }: { serverId: string }) {
 
   return (
     <div>
-      <PanelHeader title="Journal d'audit" description="Historique des actions de modération et d'administration sur ce serveur." />
+      <PanelHeader title={t.auditLogPanel.panelTitle} description={t.auditLogPanel.panelDescription} />
 
       <SettingsSection>
         {!loaded ? (
@@ -80,7 +66,7 @@ export function AuditLogPanel({ serverId }: { serverId: string }) {
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-8 text-center text-sm text-muted">
             <ScrollText className="size-6" aria-hidden />
-            Aucune action enregistrée pour l&apos;instant.
+            {t.auditLogPanel.noEntries}
           </div>
         ) : (
           <div className="flex flex-col">
@@ -113,7 +99,7 @@ export function AuditLogPanel({ serverId }: { serverId: string }) {
               load(entries.length);
             }}
           >
-            {loadingMore ? <Spinner size="sm" /> : 'Charger plus'}
+            {loadingMore ? <Spinner size="sm" /> : t.auditLogPanel.loadMore}
           </Button>
         </div>
       )}

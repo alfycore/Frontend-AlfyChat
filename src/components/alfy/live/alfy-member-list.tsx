@@ -15,8 +15,10 @@ import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-dire
 import { useAlfyChannels } from '@/components/alfy/live/use-alfy-channels';
 import { useAlfyMembers } from '@/components/alfy/live/use-alfy-members';
 import type { AlfyServer } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 export function AlfyMemberList({ serverId }: { serverId: string }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const base = useAlfyChannels(serverId);
   const { members, roles, users } = useAlfyMembers(serverId);
@@ -27,7 +29,7 @@ export function AlfyMemberList({ serverId }: { serverId: string }) {
   const server: AlfyServer = useMemo(
     () => ({
       id: serverId,
-      name: base?.name ?? 'Serveur',
+      name: base?.name ?? t.chat.serverFallbackName,
       iconUrl: base?.iconUrl,
       isPublic: true,
       ownerId: base?.ownerId ?? '',

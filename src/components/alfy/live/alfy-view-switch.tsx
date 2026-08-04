@@ -19,6 +19,7 @@ import { useAlfyChannels } from '@/components/alfy/live/use-alfy-channels';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { toChannelType } from '@/components/alfy/live/map';
 import type { AlfyChannel } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 interface AlfyViewSwitchProps {
   serverId: string;
@@ -31,6 +32,7 @@ interface AlfyViewSwitchProps {
 const CHAT_TYPES = new Set(['text', 'announcement']);
 
 export function AlfyViewSwitch({ serverId, channelId, channelName, channelType }: AlfyViewSwitchProps) {
+  const { t } = useTranslation();
   const { isMobile, openSidebar, toggleMemberList, toggleMemberListDesktop, memberListDesktopVisible } =
     useMobileNav();
   const server = useAlfyChannels(serverId);
@@ -64,7 +66,7 @@ export function AlfyViewSwitch({ serverId, channelId, channelName, channelType }
     server?.channels.find((c) => c.id === channelId) ?? {
       id: channelId,
       serverId,
-      name: channelName ?? 'salon',
+      name: channelName ?? t.chat.channelFallbackName,
       type: toChannelType(channelType),
       categoryId: null,
       unreadCount: 0,

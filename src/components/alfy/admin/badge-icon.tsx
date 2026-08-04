@@ -1,4 +1,5 @@
 import { sanitizeSvg } from '@/lib/sanitize';
+import type { Translations } from '@/i18n/types';
 
 /**
  * Rendu d'une icône de badge. Trois provenances possibles :
@@ -31,35 +32,38 @@ export function renderBadgeIcon(
 }
 
 /** Jeu d'icônes proposé dans le formulaire de création de badge. */
-export const UICONS_LIST = [
-  { value: 'star', label: 'Étoile' },
-  { value: 'trophy', label: 'Trophée' },
-  { value: 'crown', label: 'Couronne' },
-  { value: 'shield', label: 'Bouclier' },
-  { value: 'diamond', label: 'Gemme' },
-  { value: 'fire-flame-simple', label: 'Feu' },
-  { value: 'heart', label: 'Cœur' },
-  { value: 'bolt', label: 'Éclair' },
-  { value: 'rocket', label: 'Fusée' },
-  { value: 'bug', label: 'Bug' },
-  { value: 'code-simple', label: 'Code' },
-  { value: 'palette', label: 'Palette' },
-  { value: 'music-note', label: 'Musique' },
-  { value: 'camera', label: 'Caméra' },
-  { value: 'gamepad', label: 'Manette' },
-  { value: 'paint-brush', label: 'Pinceau' },
-  { value: 'microchip', label: 'CPU' },
-  { value: 'gift', label: 'Cadeau' },
-  { value: 'badge', label: 'Médaille' },
-  { value: 'check-circle', label: 'Vérifié' },
-  { value: 'user-check', label: 'Badge ID' },
-  { value: 'comment-heart', label: 'Chat Cœur' },
-  { value: 'thumbs-up', label: 'Pouce' },
-  { value: 'sunglasses', label: 'Cool' },
-  { value: 'flag', label: 'Drapeau' },
-  { value: 'wrench-alt', label: 'Outils' },
-  { value: 'terminal', label: 'Terminal' },
-  { value: 'world', label: 'Globe' },
-  { value: 'graduation-cap', label: 'Diplômé' },
-  { value: 'eye', label: 'Œil' },
-];
+export function getUiconsList(t: Translations) {
+  const u = t.admin.badgeDialog.uicons;
+  return [
+    { value: 'star', label: u.star },
+    { value: 'trophy', label: u.trophy },
+    { value: 'crown', label: u.crown },
+    { value: 'shield', label: u.shield },
+    { value: 'diamond', label: u.diamond },
+    { value: 'fire-flame-simple', label: u['fire-flame-simple'] },
+    { value: 'heart', label: u.heart },
+    { value: 'bolt', label: u.bolt },
+    { value: 'rocket', label: u.rocket },
+    { value: 'bug', label: u.bug },
+    { value: 'code-simple', label: u['code-simple'] },
+    { value: 'palette', label: u.palette },
+    { value: 'music-note', label: u['music-note'] },
+    { value: 'camera', label: u.camera },
+    { value: 'gamepad', label: u.gamepad },
+    { value: 'paint-brush', label: u['paint-brush'] },
+    { value: 'microchip', label: u.microchip },
+    { value: 'gift', label: u.gift },
+    { value: 'badge', label: u.badge },
+    { value: 'check-circle', label: u['check-circle'] },
+    { value: 'user-check', label: u['user-check'] },
+    { value: 'comment-heart', label: u['comment-heart'] },
+    { value: 'thumbs-up', label: u['thumbs-up'] },
+    { value: 'sunglasses', label: u.sunglasses },
+    { value: 'flag', label: u.flag },
+    { value: 'wrench-alt', label: u['wrench-alt'] },
+    { value: 'terminal', label: u.terminal },
+    { value: 'world', label: u.world },
+    { value: 'graduation-cap', label: u['graduation-cap'] },
+    { value: 'eye', label: u.eye },
+  ];
+}

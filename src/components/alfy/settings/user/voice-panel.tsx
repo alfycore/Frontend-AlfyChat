@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getAudioPreferences, setAudioPreferences, type AudioPreferences } from '@/hooks/use-call';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
 import { SettingsContent, SettingsRow, SettingsSection } from '@/components/alfy/settings/section';
+import { useTranslation } from '@/components/locale-provider';
 
 interface DeviceOption {
   deviceId: string;

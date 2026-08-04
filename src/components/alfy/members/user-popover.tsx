@@ -46,6 +46,7 @@ import { PRESENCE_LABELS, StatusDot } from '@/components/alfy/primitives/status-
 import { UserBadges } from '@/components/alfy/members/user-badges';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 /** Champs de profil chargés à l'ouverture de la popup (absents des listes légères). */
 interface ProfileDetails {
@@ -74,11 +75,11 @@ function fakeSafetyNumber(seed: string): string {
 const initials = (name: string) =>
   name.split(/\s+/).filter((p) => /\w/.test(p)).map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
-const FRIEND_ACTION: Record<AlfyFriendState, { icon: typeof UserPlus; tip: string }> = {
-  none: { icon: UserPlus, tip: 'Ajouter en ami' },
-  pending_sent: { icon: Clock, tip: 'Demande envoyée' },
-  pending_received: { icon: Check, tip: 'Accepter la demande' },
-  friends: { icon: UserCheck, tip: 'Amis — retirer' },
+const FRIEND_ACTION_ICON: Record<AlfyFriendState, typeof UserPlus> = {
+  none: UserPlus,
+  pending_sent: Clock,
+  pending_received: Check,
+  friends: UserCheck,
 };
 
 /** Bouton d'action circulaire flottant sur la bannière (style Discord). */
@@ -132,6 +133,13 @@ export function UserPopover({
   onBan,
   onToggleRole,
 }: UserPopoverProps) {
+  const { t, tx } = useTranslation();
+  const FRIEND_ACTION_TIP: Record<AlfyFriendState, string> = {
+    none: t.admin.members.friendActionAdd,
+    pending_sent: t.admin.members.friendActionPendingSent,
+    pending_received: t.admin.members.friendActionPendingReceived,
+    friends: t.admin.members.friendActionFriends,
+  };
   const topRole = useMemo(() => [...roles].sort((a, b) => a.position - b.position)[0], [roles]);
 
   // Popup ouverte : déclenche le chargement du profil complet + amis en commun.
@@ -253,7 +261,7 @@ export function UserPopover({
       if (prev === 'none') {
         setFriendState('pending_sent');
         await api.sendFriendRequest(user.id);
-        toast('Demande envoyée', { description: user.displayName });
+        toast(t.admin.members.friendActionPendingSent, { description: user.displayName });
       } else if (prev === 'pending_received') {
         const res = await api.getFriendRequests();
         const received = (res as any)?.data?.received as { id: string; userId: string }[] | undefined;
@@ -261,15 +269,15 @@ export function UserPopover({
         if (!match) throw new Error('Demande introuvable');
         await api.acceptFriendRequest(match.id);
         setFriendState('friends');
-        toast('Ami·e ajouté·e', { description: user.displayName });
+        toast(t.admin.members.toastFriendAdded, { description: user.displayName });
       } else if (prev === 'friends') {
         setFriendState('none');
         await api.removeFriend(user.id);
-        toast('Ami·e retiré·e', { description: user.displayName });
+        toast(t.admin.members.toastFriendRemoved, { description: user.displayName });
       }
     } catch {
       setFriendState(prev); // rollback si l'appel échoue
-      toast.danger('Action impossible', { description: 'Réessayez plus tard.' });
+      toast.danger(t.admin.members.toastActionFailed, { description: t.admin.members.toastRetryLater });
     }
   };
 
@@ -283,13 +291,13 @@ export function UserPopover({
     try {
       if (prevBlocked) await api.unblockUser(user.id);
       else await api.blockUser(user.id);
-      toast(prevBlocked ? 'Utilisateur·rice débloqué·e' : 'Utilisateur·rice bloqué·e', {
+      toast(prevBlocked ? t.admin.members.toastUnblocked : t.admin.members.toastBlocked, {
         description: user.displayName,
       });
     } catch {
       setIBlocked(prevBlocked);
       setFriendState(prevFriendState);
-      toast.danger('Action impossible', { description: 'Réessayez plus tard.' });
+      toast.danger(t.admin.members.toastActionFailed, { description: t.admin.members.toastRetryLater });
     }
   };
 
@@ -297,7 +305,7 @@ export function UserPopover({
     switch (key) {
       case 'copy-id':
         void navigator.clipboard.writeText(user.username);
-        toast('Identifiant copié', { description: `@${user.username}` });
+        toast(t.admin.members.toastIdCopied, { description: `@${user.username}` });
         break;
       case 'verify':
         setVerifyOpen(true);
@@ -306,11 +314,11 @@ export function UserPopover({
         void toggleBlock();
         break;
       case 'report':
-        toast('Signalement envoyé', { description: 'Notre équipe va l’examiner.' });
+        toast(t.admin.members.toastReportSent, { description: t.admin.members.toastReportSentDesc });
         break;
       case 'kick':
         onKick?.();
-        toast('Membre expulsé', { description: `${user.displayName} a été retiré·e du serveur.` });
+        toast(t.admin.members.toastMemberKicked, { description: tx(t.admin.members.toastMemberKickedDesc, { name: user.displayName }) });
         break;
       case 'ban':
         setBanOpen(true);
@@ -318,16 +326,16 @@ export function UserPopover({
     }
   };
 
-  const FriendIcon = FRIEND_ACTION[friendState].icon;
+  const FriendIcon = FRIEND_ACTION_ICON[friendState];
 
   return (
     <>
       <Popover isOpen={open} onOpenChange={setOpen}>
-        <Popover.Trigger aria-label={`Profil de ${user.displayName}`} className={triggerClassName}>
+        <Popover.Trigger aria-label={tx(t.admin.members.profileOf, { name: user.displayName })} className={triggerClassName}>
           {children}
         </Popover.Trigger>
         <Popover.Content placement="left" className="w-80 overflow-hidden p-0">
-          <Popover.Dialog aria-label={`Profil de ${user.displayName}`} className="alfy-enter overflow-hidden p-0">
+          <Popover.Dialog aria-label={tx(t.admin.members.profileOf, { name: user.displayName })} className="alfy-enter overflow-hidden p-0">
             {/* Bannière + actions flottantes */}
             <div className="relative">
               <div className="relative h-24 w-full overflow-hidden">
@@ -351,24 +359,24 @@ export function UserPopover({
               </div>
               <div className="absolute top-3 right-3 flex items-center gap-2">
                 {isSelf ? (
-                  <BannerButton label="Modifier mon profil">
+                  <BannerButton label={t.admin.members.editMyProfile}>
                     <Pencil className="size-4" />
                   </BannerButton>
                 ) : (
                   <>
                     {!user.isBot && (
-                      <BannerButton label={FRIEND_ACTION[friendState].tip} onPress={advanceFriend} isDisabled={friendState === 'pending_sent'}>
+                      <BannerButton label={FRIEND_ACTION_TIP[friendState]} onPress={advanceFriend} isDisabled={friendState === 'pending_sent'}>
                         <FriendIcon className="size-4" />
                       </BannerButton>
                     )}
                     {!user.isBot && (
-                      <BannerButton label={`Appeler ${user.displayName}`}>
+                      <BannerButton label={tx(t.admin.members.callUser, { name: user.displayName })}>
                         <Phone className="size-4" />
                       </BannerButton>
                     )}
                     <Dropdown>
                       <Dropdown.Trigger
-                        aria-label={`Plus d'actions sur ${user.displayName}`}
+                        aria-label={tx(t.admin.members.moreActionsOn, { name: user.displayName })}
                         className="flex size-8 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md outline-none transition-all hover:scale-105 hover:bg-black/60 focus-visible:ring-2 focus-visible:ring-white/60"
                       >
                         <Ellipsis className="size-4" />
@@ -376,39 +384,39 @@ export function UserPopover({
                       <Dropdown.Popover className="min-w-52">
                         <Dropdown.Menu onAction={handleMenu}>
                           <Dropdown.Section>
-                            <Header>Compte</Header>
-                            <Dropdown.Item id="copy-id" textValue="Copier l'identifiant">
+                            <Header>{t.admin.members.accountSection}</Header>
+                            <Dropdown.Item id="copy-id" textValue={t.admin.members.copyId}>
                               <Copy className="size-4" />
-                              <Label>Copier l&apos;identifiant</Label>
+                              <Label>{t.admin.members.copyId}</Label>
                             </Dropdown.Item>
                             {!user.isBot && (
-                              <Dropdown.Item id="verify" textValue="Vérifier la clé">
+                              <Dropdown.Item id="verify" textValue={t.admin.members.verifyKey}>
                                 <ShieldCheck className="size-4" />
-                                <Label>Vérifier la clé de chiffrement</Label>
+                                <Label>{t.admin.members.verifyKeyEncryption}</Label>
                               </Dropdown.Item>
                             )}
-                            <Dropdown.Item id="block" textValue={iBlocked ? 'Débloquer' : 'Bloquer'} variant="danger">
+                            <Dropdown.Item id="block" textValue={iBlocked ? t.admin.members.unblock : t.admin.members.block} variant="danger">
                               <Ban className="size-4" />
-                              <Label>{iBlocked ? 'Débloquer' : 'Bloquer'}</Label>
+                              <Label>{iBlocked ? t.admin.members.unblock : t.admin.members.block}</Label>
                             </Dropdown.Item>
-                            <Dropdown.Item id="report" textValue="Signaler" variant="danger">
+                            <Dropdown.Item id="report" textValue={t.admin.members.report} variant="danger">
                               <Flag className="size-4" />
-                              <Label>Signaler</Label>
+                              <Label>{t.admin.members.report}</Label>
                             </Dropdown.Item>
                           </Dropdown.Section>
                           {(canKick || canBan) && (
                             <Dropdown.Section>
-                              <Header>Modération</Header>
+                              <Header>{t.admin.members.moderationSection}</Header>
                               {canKick && (
-                                <Dropdown.Item id="kick" textValue="Expulser" variant="danger">
+                                <Dropdown.Item id="kick" textValue={t.admin.members.kick} variant="danger">
                                   <UserMinus className="size-4" />
-                                  <Label>Expulser du serveur</Label>
+                                  <Label>{t.admin.members.kickFromServer}</Label>
                                 </Dropdown.Item>
                               )}
                               {canBan && (
-                                <Dropdown.Item id="ban" textValue="Bannir" variant="danger">
+                                <Dropdown.Item id="ban" textValue={t.admin.members.ban} variant="danger">
                                   <Ban className="size-4" />
-                                  <Label>Bannir du serveur</Label>
+                                  <Label>{t.admin.members.banFromServer}</Label>
                                 </Dropdown.Item>
                               )}
                             </Dropdown.Section>
@@ -445,7 +453,7 @@ export function UserPopover({
                   {user.isBot && (
                     <Chip size="sm" color={user.isVerifiedBot ? 'accent' : 'default'} variant="soft" className="shrink-0">
                       {user.isVerifiedBot && <BadgeCheck className="size-2.5" aria-hidden />}
-                      <Chip.Label className="text-[9px] font-bold tracking-wide">BOT</Chip.Label>
+                      <Chip.Label className="text-[9px] font-bold tracking-wide">{t.admin.members.botBadge}</Chip.Label>
                     </Chip>
                   )}
                   <span className="shrink-0">
@@ -461,7 +469,7 @@ export function UserPopover({
                   </span>
                 </p>
                 {(user.status === 'offline' || user.status === 'invisible') && user.lastSeenAt && (
-                  <p className="mt-0.5 text-[10px] text-muted">Vu le {lastSeenFmt.format(new Date(user.lastSeenAt))}</p>
+                  <p className="mt-0.5 text-[10px] text-muted">{tx(t.admin.members.lastSeenAt, { date: lastSeenFmt.format(new Date(user.lastSeenAt)) })}</p>
                 )}
 
                 {/* Communs */}
@@ -488,7 +496,7 @@ export function UserPopover({
                             ),
                           )}
                         </span>
-                        {mutualFriends.length} ami{mutualFriends.length > 1 ? 's' : ''} en commun
+                        {tx(mutualFriends.length > 1 ? t.admin.members.mutualFriendsCount : t.admin.members.mutualFriendCount, { n: mutualFriends.length })}
                       </span>
                     )}
                     {mutualServers.length > 0 && (
@@ -503,7 +511,7 @@ export function UserPopover({
                             </span>
                           ))}
                         </span>
-                        {mutualServers.length} serveur{mutualServers.length > 1 ? 's' : ''} en commun
+                        {tx(mutualServers.length > 1 ? t.admin.members.mutualServersCount : t.admin.members.mutualServerCount, { n: mutualServers.length })}
                       </span>
                     )}
                   </div>
@@ -522,7 +530,7 @@ export function UserPopover({
                         onClick={() => setBioExpanded((v) => !v)}
                         className="mt-1 cursor-pointer text-[11px] font-semibold text-muted outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
                       >
-                        {bioExpanded ? 'Réduire la bio' : 'Afficher la bio complète'}
+                        {bioExpanded ? t.admin.members.reduceBio : t.admin.members.showFullBio}
                       </button>
                     )}
                   </>
@@ -532,7 +540,7 @@ export function UserPopover({
                 {(assignedRoles.length > 0 || canManageRoles) && (
                   <>
                     <div className="my-2.5 h-px bg-separator" />
-                    <p className="mb-1.5 text-[10px] font-semibold tracking-wider text-muted uppercase">Rôles</p>
+                    <p className="mb-1.5 text-[10px] font-semibold tracking-wider text-muted uppercase">{t.admin.members.rolesLabel}</p>
                     <div className="flex flex-wrap items-center gap-1">
                       {shownRoles.map((r) => (
                         <span
@@ -545,7 +553,7 @@ export function UserPopover({
                           {canManageRoles && (
                             <button
                               type="button"
-                              aria-label={`Retirer le rôle ${r.name}`}
+                              aria-label={tx(t.admin.members.removeRole, { role: r.name })}
                               onClick={() => toggleRole(r.id)}
                               className="cursor-pointer rounded-sm opacity-70 outline-none hover:opacity-100 focus-visible:ring-2 focus-visible:ring-focus"
                             >
@@ -562,7 +570,7 @@ export function UserPopover({
                       {canManageRoles && unassignedRoles.length > 0 && (
                         <Dropdown>
                           <Dropdown.Trigger
-                            aria-label="Ajouter un rôle"
+                            aria-label={t.admin.members.addRole}
                             className="flex size-5 cursor-pointer items-center justify-center rounded-md bg-surface-tertiary text-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
                           >
                             <Plus className="size-3" />
@@ -585,12 +593,12 @@ export function UserPopover({
 
                 {/* Méta : membre depuis + sécurité */}
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-muted">
-                  <span>Membre depuis {memberSince.format(new Date(displayUser.createdAt))}</span>
+                  <span>{tx(t.admin.members.memberSince, { date: memberSince.format(new Date(displayUser.createdAt)) })}</span>
                   {!isSelf && !user.isBot && (
                     keysVerified ? (
                       <span className="flex items-center gap-1 text-(--alfy-e2e)">
                         <ShieldCheck className="size-3" aria-hidden />
-                        Clé vérifiée
+                        {t.admin.members.keyVerified}
                       </span>
                     ) : (
                       <button
@@ -599,7 +607,7 @@ export function UserPopover({
                         className="flex cursor-pointer items-center gap-1 font-medium outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
                       >
                         <Lock className="size-3 text-(--alfy-e2e)" aria-hidden />
-                        Vérifier la clé
+                        {t.admin.members.verifyKey}
                       </button>
                     )
                   )}
@@ -614,7 +622,7 @@ export function UserPopover({
                 >
                   <MessageCircle className="size-3.5 shrink-0 transition-colors group-hover/dm:text-accent" />
                   <span className="truncate">
-                    Envoyer un message à <span className="font-semibold text-foreground/80">@{user.username}</span>
+                    {t.admin.members.sendMessageTo} <span className="font-semibold text-foreground/80">@{user.username}</span>
                   </span>
                 </button>
               )}
@@ -633,12 +641,11 @@ export function UserPopover({
                 <Modal.Icon className="bg-(--alfy-e2e-soft) text-(--alfy-e2e)">
                   <ShieldCheck className="size-5" />
                 </Modal.Icon>
-                <Modal.Heading>Vérifier la sécurité de la conversation</Modal.Heading>
+                <Modal.Heading>{t.admin.members.verifySecurityHeading}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
-                  Comparez ce numéro avec {user.displayName} par un autre canal (en personne, par
-                  téléphone). S&apos;ils correspondent, votre conversation n&apos;a pas d&apos;intercepteur.
+                  {tx(t.admin.members.verifySecurityDesc, { name: user.displayName })}
                 </p>
                 <p className="rounded-md bg-surface-secondary px-3 py-2.5 text-center font-mono text-sm tracking-wider">
                   {fakeSafetyNumber(user.id)}
@@ -650,10 +657,10 @@ export function UserPopover({
                   className="w-full"
                   onPress={() => {
                     setKeysVerified(true);
-                    toast('Clés vérifiées', { description: user.displayName });
+                    toast(t.admin.members.keysVerifiedToast, { description: user.displayName });
                   }}
                 >
-                  Marquer comme vérifiée
+                  {t.admin.members.markVerified}
                 </Button>
               </Modal.Footer>
             </Modal.Dialog>
@@ -671,32 +678,31 @@ export function UserPopover({
                 <Modal.Icon className="bg-danger/15 text-danger">
                   <Ban className="size-5" />
                 </Modal.Icon>
-                <Modal.Heading>Bannir {user.displayName} ?</Modal.Heading>
+                <Modal.Heading>{tx(t.admin.members.banHeading, { name: user.displayName })}</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
-                  Le membre ne pourra plus rejoindre ce serveur. Un motif peut être enregistré dans
-                  le journal d&apos;audit.
+                  {t.admin.members.banDesc}
                 </p>
                 <TextField value={banReason} onChange={setBanReason}>
-                  <Label>Motif (facultatif)</Label>
-                  <Input placeholder="Ex. spam répété" />
+                  <Label>{t.admin.members.banReasonLabel}</Label>
+                  <Input placeholder={t.admin.members.banReasonPlaceholder} />
                 </TextField>
               </Modal.Body>
               <Modal.Footer>
                 <Button slot="close" variant="tertiary">
-                  Annuler
+                  {t.common.cancel}
                 </Button>
                 <Button
                   slot="close"
                   variant="danger"
                   onPress={() => {
                     onBan?.(banReason);
-                    toast('Membre banni', { description: banReason ? `${user.displayName} — ${banReason}` : user.displayName });
+                    toast(t.admin.members.toastMemberBanned, { description: banReason ? `${user.displayName} — ${banReason}` : user.displayName });
                     setBanReason('');
                   }}
                 >
-                  Bannir
+                  {t.admin.members.ban}
                 </Button>
               </Modal.Footer>
             </Modal.Dialog>

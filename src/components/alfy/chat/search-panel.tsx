@@ -11,6 +11,7 @@ import { useAppPrefs } from '@/hooks/use-app-prefs';
 import { api } from '@/lib/api';
 import { conversationsStore } from '@/lib/conversations-store';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 /** Nombre de conversations interrogées en parallèle sur une recherche globale. */
 const MAX_CONVERSATIONS = 15;
@@ -40,6 +41,7 @@ function highlight(text: string, q: string) {
 
 /** Recherche de messages dans le salon, résultats en popover. */
 export function SearchPanel({ messages, channelName, onJump }: { messages: AlfyMessage[]; channelName: string; onJump?: (id: string) => void }) {
+  const { t, tx } = useTranslation();
   const userById = useUserById();
   const { prefs } = useAppPrefs();
   const [query, setQuery] = useState('');
@@ -107,31 +109,31 @@ export function SearchPanel({ messages, channelName, onJump }: { messages: AlfyM
     <Popover>
       <Tooltip delay={300}>
         <Popover.Trigger
-          aria-label="Rechercher dans le salon"
+          aria-label={t.search.channelAriaLabel}
           className="flex size-8 cursor-pointer items-center justify-center rounded-md text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
         >
           <Search className="size-4.5" />
         </Popover.Trigger>
         <Tooltip.Content>
-          <p>Rechercher</p>
+          <p>{t.search.tooltip}</p>
         </Tooltip.Content>
       </Tooltip>
       <Popover.Content className="w-96 p-0">
-        <Popover.Dialog aria-label="Recherche de messages" className="flex max-h-112 flex-col p-0">
+        <Popover.Dialog aria-label={t.search.dialogAriaLabel} className="flex max-h-112 flex-col p-0">
           <div className="border-b border-separator p-2">
-            <SearchField value={query} onChange={setQuery} aria-label="Rechercher" autoFocus>
+            <SearchField value={query} onChange={setQuery} aria-label={t.search.tooltip} autoFocus>
               <SearchField.Group>
                 <SearchField.SearchIcon />
                 <SearchField.Input
-                  placeholder={isGlobal ? 'Rechercher dans tous mes MP…' : `Rechercher dans #${channelName}…`}
+                  placeholder={isGlobal ? t.search.placeholderAllDms : tx(t.search.placeholderChannel, { name: channelName })}
                 />
                 <SearchField.ClearButton />
               </SearchField.Group>
             </SearchField>
-            <div className="mt-2 flex gap-1" role="group" aria-label="Portée de la recherche">
+            <div className="mt-2 flex gap-1" role="group" aria-label={t.search.scopeAriaLabel}>
               {([
-                { id: 'selected', label: 'Cette conversation' },
-                { id: 'all', label: 'Tous mes MP' },
+                { id: 'selected', label: t.search.scopeSelected },
+                { id: 'all', label: t.search.scopeAll },
               ] as const).map((s) => (
                 <button
                   key={s.id}
@@ -153,18 +155,18 @@ export function SearchPanel({ messages, channelName, onJump }: { messages: AlfyM
           </div>
           <ScrollShadow className="min-h-0 flex-1 overflow-y-auto p-2" orientation="vertical">
             {query.trim() === '' ? (
-              <p className="p-6 text-center text-xs text-muted">Saisissez un terme pour rechercher.</p>
+              <p className="p-6 text-center text-xs text-muted">{t.search.emptyPrompt}</p>
             ) : searching ? (
               <p className="flex items-center justify-center gap-2 p-6 text-xs text-muted">
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                Recherche en cours…
+                {t.search.searching}
               </p>
             ) : count === 0 ? (
-              <p className="p-6 text-center text-xs text-muted">Aucun message ne correspond.</p>
+              <p className="p-6 text-center text-xs text-muted">{t.search.noMatch}</p>
             ) : (
               <>
                 <p className="px-1 pb-1 text-[11px] font-semibold tracking-wider text-muted uppercase">
-                  {count} résultat{count > 1 ? 's' : ''}
+                  {tx(t.search.resultsCountLabel, { n: count, plural: count > 1 ? 's' : '' })}
                 </p>
                 <div className="flex flex-col gap-0.5">
                   {isGlobal

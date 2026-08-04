@@ -17,7 +17,7 @@
  */
 
 import { Alert, Button, ScrollShadow, Spinner } from '@heroui/react';
-import { ArrowDown, Lock } from 'lucide-react';
+import { ArrowDown, Lock, type LucideIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
@@ -27,6 +27,7 @@ import { DmMessageRow } from '@/components/alfy/dm/dm-message-row';
 import { useDmScroll } from '@/components/alfy/dm/use-dm-scroll';
 import { TypingIndicator } from '@/components/alfy/chat/typing-indicator';
 import type { AlfyMessage } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 const jourFmt = new Intl.DateTimeFormat('fr-FR', {
@@ -52,8 +53,10 @@ export interface DmChatProps {
   avatarUrl?: string;
   /** Nom utilisé pour les initiales de repli de l'avatar — égal à `title` si omis. */
   avatarName?: string;
-  /** 'group' pour une conversation de groupe. */
-  notifTargetType?: 'dm' | 'group';
+  /** Remplace l'avatar par une icône (salon de serveur : # au lieu d'un visage). */
+  headerIcon?: LucideIcon;
+  /** 'group'/'channel' pilotent le libellé des réglages de notification. */
+  notifTargetType?: 'dm' | 'group' | 'channel';
   /** Paragraphe d'intro affiché avant le premier message. */
   introText?: React.ReactNode;
   messages: AlfyMessage[];
@@ -78,9 +81,17 @@ export interface DmChatProps {
   onStartVoiceCall?: () => void;
   onStartVideoCall?: () => void;
   onOpenProfile?: () => void;
+  onToggleMembers?: () => void;
+  membersOpen?: boolean;
   /** Relation de blocage active (l'un ou l'autre) — désactive la saisie. */
   isComposerDisabled?: boolean;
   composerDisabledMessage?: string;
+  /** Remplace « Écrire à {title} » — ex. « Écrire dans #général ». */
+  composerPlaceholder?: string;
+  /** false pour les salons de serveur — pas de chiffrement de bout en bout. */
+  encrypted?: boolean;
+  /** Modérateur du salon — peut gérer les messages des autres membres. */
+  canManageMessages?: boolean;
 }
 
 export function DmChat({
@@ -89,6 +100,7 @@ export function DmChat({
   subtitle,
   avatarUrl,
   avatarName,
+  headerIcon,
   notifTargetType,
   introText,
   messages,
@@ -108,12 +120,19 @@ export function DmChat({
   pendingIds,
   failedIds,
   onOpenNav,
+  onToggleMembers,
+  membersOpen,
+  composerPlaceholder,
+  encrypted = true,
+  canManageMessages = false,
   onStartVoiceCall,
   onStartVideoCall,
   onOpenProfile,
   isComposerDisabled = false,
   composerDisabledMessage,
 }: DmChatProps) {
+  const { t, tx } = useTranslation();
+
   /* Seul l'id est gardé en état : si le message visé disparaît (suppression
      distante), la référence retombe naturellement au rendu suivant — sans
      effet dédié pour la « lâcher ». */
@@ -178,11 +197,15 @@ export function DmChat({
         subtitle={subtitle}
         avatarUrl={avatarUrl}
         avatarName={avatarName ?? title}
+        icon={headerIcon}
         notifTargetType={notifTargetType}
+        encrypted={encrypted}
         messages={messages}
         onJumpToMessage={scrollToMessage}
         onOpenNav={onOpenNav}
         onOpenProfile={onOpenProfile}
+        onToggleMembers={onToggleMembers}
+        membersOpen={membersOpen}
         onStartVoiceCall={onStartVoiceCall}
         onStartVideoCall={onStartVideoCall}
       />
@@ -193,7 +216,7 @@ export function DmChat({
           <div className="flex min-h-full flex-col justify-end">
             {/* Chargement de l'historique plus ancien */}
             {isLoadingMore && (
-              <div className="flex justify-center py-3" role="status" aria-label="Chargement de l'historique">
+              <div className="flex justify-center py-3" role="status" aria-label={t.chat.loadingOlder}>
                 <Spinner size="sm" />
               </div>
             )}
@@ -201,13 +224,24 @@ export function DmChat({
             {/* Début de conversation — seulement quand il n'y a plus rien derrière */}
             {!hasMore && !isLoading && (
               <div className="px-4 pt-8 pb-4">
-                <AlfyAvatar name={avatarName ?? title} avatarUrl={avatarUrl} size="lg" />
+                {headerIcon ? (
+                  <span className="flex size-16 items-center justify-center rounded-full bg-surface-secondary text-muted">
+                    {(() => {
+                      const Icon = headerIcon;
+                      return <Icon className="size-7" aria-hidden />;
+                    })()}
+                  </span>
+                ) : (
+                  <AlfyAvatar name={avatarName ?? title} avatarUrl={avatarUrl} size="lg" />
+                )}
                 <h2 className="mt-3 text-xl font-bold">{title}</h2>
                 <p className="mt-1 max-w-prose text-sm text-muted">{introText}</p>
-                <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-(--alfy-e2e)">
-                  <Lock className="size-3" aria-hidden />
-                  Les messages sont chiffrés de bout en bout
-                </p>
+                {encrypted && (
+                  <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-(--alfy-e2e)">
+                    <Lock className="size-3" aria-hidden />
+                    {t.friends.dm.encryptedIntro}
+                  </p>
+                )}
               </div>
             )}
 
@@ -215,9 +249,9 @@ export function DmChat({
               <div className="px-4 py-3">
                 <Alert status="danger">
                   <Alert.Content>
-                    <Alert.Title>Historique indisponible</Alert.Title>
+                    <Alert.Title>{t.friends.dm.historyUnavailableTitle}</Alert.Title>
                     <Alert.Description>
-                      Les messages n’ont pas pu être chargés. Vérifiez votre connexion puis réessayez.
+                      {t.friends.dm.historyUnavailableDesc}
                     </Alert.Description>
                   </Alert.Content>
                 </Alert>
@@ -249,6 +283,7 @@ export function DmChat({
                   isFresh={new Date(message.createdAt).getTime() > ouvertA}
                   isPending={pendingIds?.has(message.id)}
                   failed={failedIds?.has(message.id)}
+                  canManage={canManageMessages}
                   onRetry={onRetry}
                   onToggleReaction={onToggleReaction}
                   onEditMessage={onEditMessage}
@@ -276,7 +311,9 @@ export function DmChat({
             onPress={() => scrollToBottom('smooth')}
           >
             <ArrowDown className="size-3.5" aria-hidden />
-            {unread > 0 ? `${unread} nouveau${unread > 1 ? 'x' : ''} message${unread > 1 ? 's' : ''}` : 'Revenir en bas'}
+            {unread > 0
+              ? tx(unread > 1 ? t.friends.dm.newMessages : t.friends.dm.newMessage, { n: String(unread) })
+              : t.friends.dm.backToBottom}
           </Button>
         </div>
       </div>
@@ -286,11 +323,12 @@ export function DmChat({
       <DmComposer
         conversationId={conversationId}
         recipientName={title}
+        placeholder={composerPlaceholder}
         replyTo={replyTo}
         onCancelReply={() => setReplyToId(undefined)}
         onSend={envoyer}
         onTyping={onTyping}
-        encrypted
+        encrypted={encrypted}
         isDisabled={isComposerDisabled}
         disabledMessage={composerDisabledMessage}
       />

@@ -7,8 +7,10 @@
 
 import { AlfyMark } from '@/components/alfy/primitives/alfy-mark';
 import { TrustBadges } from '@/components/alfy/primitives/trust-badges';
+import { useTranslation } from '@/components/locale-provider';
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="grid h-full grid-cols-1 bg-background lg:grid-cols-2">
       <div className="flex min-h-0 flex-col">
@@ -27,11 +29,10 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-8">
             <h2 className="max-w-sm font-heading text-2xl font-bold text-balance text-white">
-              Vos messages ne regardent que vous.
+              {t.auth.shell.imageTitle}
             </h2>
             <p className="mt-2 max-w-sm text-sm text-white/70">
-              Chiffrement de bout en bout par défaut, serveurs auto-hébergeables, aucune donnée
-              revendue.
+              {t.auth.shell.imageDescription}
             </p>
             <TrustBadges className="mt-4" compact />
           </div>

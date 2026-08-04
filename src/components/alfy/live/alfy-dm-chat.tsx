@@ -19,8 +19,10 @@ import { DmChat } from '@/components/alfy/dm/dm-chat';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { toAlfyMessage, toAlfyUser } from '@/components/alfy/live/map';
 import type { AlfyUser } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 export function AlfyDmChat({ recipientId }: { recipientId: string }) {
+  const { t, tx } = useTranslation();
   const { user } = useAuth();
   const { isMobile, openSidebar } = useMobileNav();
   const { initiateCall } = useCallContext();
@@ -129,24 +131,24 @@ export function AlfyDmChat({ recipientId }: { recipientId: string }) {
       <DmChat
         key={recipientId}
         conversationId={recipientId}
-        title={recipient?.displayName ?? 'Conversation'}
-        subtitle={recipient?.username ? `Conversation privée avec @${recipient.username}` : undefined}
+        title={recipient?.displayName ?? t.chat.dmFallbackTitle}
+        subtitle={recipient?.username ? tx(t.chat.dmSubtitle, { username: recipient.username }) : undefined}
         avatarUrl={recipient?.avatarUrl}
         introText={
           recipient?.username ? (
             <>
-              Ceci est le début de votre conversation privée avec{' '}
+              {t.chat.dmIntroPrefix}
               <span className="font-medium text-foreground">@{recipient.username}</span>.
             </>
           ) : (
-            'Ceci est le début de votre conversation privée.'
+            t.chat.dmIntroNoUser
           )
         }
         messages={messages}
         currentUserId={meId}
         typingNames={(typingUsers ?? []).map(
-          (t: { id: string; username?: string }) =>
-            resolver(t.id)?.displayName || t.username || 'Quelqu’un',
+          (tu: { id: string; username?: string }) =>
+            resolver(tu.id)?.displayName || tu.username || t.chat.someoneFallback,
         )}
         isLoading={isLoading}
         hasMore={hasMoreMessages}
@@ -172,9 +174,9 @@ export function AlfyDmChat({ recipientId }: { recipientId: string }) {
         isComposerDisabled={iBlockedThem || theyBlockedMe}
         composerDisabledMessage={
           iBlockedThem
-            ? 'Vous avez bloqué cette personne'
+            ? t.chat.blockedByMeComposer
             : theyBlockedMe
-              ? 'Vous ne pouvez pas écrire à cette personne'
+              ? t.chat.blockedByThemComposer
               : undefined
         }
       />

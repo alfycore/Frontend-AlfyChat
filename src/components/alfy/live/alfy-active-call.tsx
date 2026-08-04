@@ -15,8 +15,10 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCallContext } from '@/hooks/use-call-context';
 import { CallBar } from '@/components/alfy/calls/call-bar';
 import { VoiceRoom, type RoomParticipant } from '@/components/alfy/calls/voice-room';
+import { useTranslation } from '@/components/locale-provider';
 
 export function AlfyActiveCall() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const {
     callStatus,
@@ -47,7 +49,7 @@ export function AlfyActiveCall() {
     const list: RoomParticipant[] = [
       {
         userId: user?.id || 'me',
-        name: 'Vous',
+        name: t.callOverlay.you,
         avatarUrl: user?.avatarUrl,
         stream: localStream,
         isLocal: true,
@@ -60,7 +62,7 @@ export function AlfyActiveCall() {
       const info = participantInfo.get(userId);
       list.push({
         userId,
-        name: info?.name || 'Participant',
+        name: info?.name || t.chat.participantFallback,
         avatarUrl: info?.avatar,
         stream,
         handRaised: raisedHands.has(userId),
@@ -71,7 +73,7 @@ export function AlfyActiveCall() {
 
   if (callStatus !== 'calling' && callStatus !== 'connecting' && callStatus !== 'connected') return null;
 
-  const label = callerName || (isGroup ? 'Appel de groupe' : 'Appel en cours');
+  const label = callerName || (isGroup ? t.chat.groupCallLabel : t.callBar.ongoingCall);
   const isMultiParty = isGroup || callCategory === 'server';
   const hangUp = isMultiParty ? leaveCall : endCall;
 

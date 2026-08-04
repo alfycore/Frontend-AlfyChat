@@ -8,6 +8,7 @@ import type { AlfyServer } from '@/components/alfy/mock/types';
 import { useUserById } from '@/components/alfy/user-directory';
 import { SectionLabel } from '@/components/alfy/primitives/section-label';
 import { MemberItem } from '@/components/alfy/members/member-item';
+import { useTranslation } from '@/components/locale-provider';
 
 /**
  * Liste des membres, groupée par rôle « hoisted » (position croissante),
@@ -23,6 +24,7 @@ interface MemberListProps {
 }
 
 export function MemberList({ server, currentUserId, onKick, onBan, onToggleRole }: MemberListProps) {
+  const { t, tx } = useTranslation();
   const userById = useUserById();
   const meId = currentUserId ?? CURRENT_USER.id;
 
@@ -38,7 +40,9 @@ export function MemberList({ server, currentUserId, onKick, onBan, onToggleRole 
         return online && !assigned.has(m.userId) && m.roleIds.includes(role.id);
       });
       members.forEach((m) => assigned.add(m.userId));
-      if (members.length > 0) out.push({ label: `${role.name} — ${members.length}`, members });
+      if (members.length > 0) {
+        out.push({ label: tx(t.admin.members.roleGroupCount, { role: role.name, n: members.length }), members });
+      }
     }
 
     const rest = server.members.filter((m) => !assigned.has(m.userId));
@@ -47,10 +51,10 @@ export function MemberList({ server, currentUserId, onKick, onBan, onToggleRole 
       return u.status !== 'offline' && u.status !== 'invisible';
     });
     const offline = rest.filter((m) => !online.includes(m));
-    if (online.length > 0) out.push({ label: `En ligne — ${online.length}`, members: online });
-    if (offline.length > 0) out.push({ label: `Hors ligne — ${offline.length}`, members: offline });
+    if (online.length > 0) out.push({ label: tx(t.admin.members.onlineGroup, { n: online.length }), members: online });
+    if (offline.length > 0) out.push({ label: tx(t.admin.members.offlineGroup, { n: offline.length }), members: offline });
     return out;
-  }, [server, userById]);
+  }, [server, userById, t, tx]);
 
   const moderatorPermissions = useMemo(
     () => getMemberPermissions(server, meId),
@@ -58,7 +62,7 @@ export function MemberList({ server, currentUserId, onKick, onBan, onToggleRole 
   );
 
   return (
-    <aside aria-label="Membres du serveur" className="flex h-full w-full flex-col bg-surface-secondary/35">
+    <aside aria-label={t.admin.members.ariaServerMembers} className="flex h-full w-full flex-col bg-surface-secondary/35">
       <ScrollShadow className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
         {groups.map((g) => (
           <div key={g.label} className="mb-4">

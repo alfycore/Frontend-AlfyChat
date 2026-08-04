@@ -7,8 +7,10 @@ import { Globe } from 'lucide-react';
 import { api } from '@/lib/api';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
 import { SettingsContent, SettingsRow, SettingsSection } from '@/components/alfy/settings/section';
+import { useTranslation } from '@/components/locale-provider';
 
 export function DomainPanel({ serverId }: { serverId: string }) {
+  const { t } = useTranslation();
   const [domain, setDomain] = useState('');
   const [savedDomain, setSavedDomain] = useState('');
   const [verified, setVerified] = useState(false);
@@ -36,12 +38,12 @@ export function DomainPanel({ serverId }: { serverId: string }) {
       if (r?.success && r?.data) {
         setTxtRecord(r.data.txtRecord || '');
         setSavedDomain(domain.trim());
-        toast('Enregistrement TXT généré', { description: "Ajoutez-le à votre zone DNS puis lancez la vérification." });
+        toast(t.domainPanel.txtGenerated, { description: t.domainPanel.txtGeneratedDesc });
       } else {
-        toast.danger(r?.error || 'Échec du démarrage de la vérification');
+        toast.danger(r?.error || t.domainPanel.startVerifyError);
       }
     } catch {
-      toast.danger('Échec du démarrage de la vérification');
+      toast.danger(t.domainPanel.startVerifyError);
     } finally {
       setStarting(false);
     }
@@ -53,14 +55,14 @@ export function DomainPanel({ serverId }: { serverId: string }) {
       const r: any = await api.checkDomainVerification(serverId);
       loadServer();
       if (r?.success && r?.data?.verified) {
-        toast.success('Domaine vérifié', { description: savedDomain });
+        toast.success(t.domainPanel.domainVerified, { description: savedDomain });
       } else if (r?.success) {
-        toast('Pas encore vérifié', { description: "L'enregistrement DNS n'a pas encore été détecté." });
+        toast(t.domainPanel.notVerifiedYet, { description: t.domainPanel.notVerifiedYetDesc });
       } else {
-        toast.danger(r?.error || 'Échec de la vérification');
+        toast.danger(r?.error || t.domainPanel.verifyError);
       }
     } catch {
-      toast.danger('Échec de la vérification');
+      toast.danger(t.domainPanel.verifyError);
     } finally {
       setChecking(false);
     }
@@ -69,30 +71,30 @@ export function DomainPanel({ serverId }: { serverId: string }) {
   return (
     <div>
       <PanelHeader
-        title="Domaine personnalisé"
-        description="Associez votre propre domaine à ce serveur auto-hébergé pour que vos membres s'y connectent directement."
+        title={t.domainPanel.panelTitle}
+        description={t.domainPanel.panelDescription}
       />
 
-      <SettingsSection title="Domaine">
+      <SettingsSection title={t.domainPanel.domainSection}>
         <SettingsContent className="flex flex-col gap-4">
           <TextField value={domain} onChange={setDomain} isDisabled={verified} className="max-w-sm">
-            <Label>Nom de domaine</Label>
-            <Input placeholder="chat.exemple.fr" />
+            <Label>{t.domainPanel.domainNameLabel}</Label>
+            <Input placeholder={t.domainPanel.domainPlaceholder} />
           </TextField>
           <div className="flex items-center gap-2">
             <Globe className="size-4 text-muted" aria-hidden />
-            <span className="text-sm">{savedDomain || 'Aucun domaine configuré'}</span>
+            <span className="text-sm">{savedDomain || t.domainPanel.noDomain}</span>
             {savedDomain && (
               verified ? (
-                <Chip size="sm" color="success" variant="soft">Vérifié</Chip>
+                <Chip size="sm" color="success" variant="soft">{t.domainPanel.verified}</Chip>
               ) : (
-                <Chip size="sm" color="warning" variant="soft">En attente</Chip>
+                <Chip size="sm" color="warning" variant="soft">{t.domainPanel.pending}</Chip>
               )
             )}
           </div>
           {!verified && (
             <Button size="sm" variant="secondary" className="self-start" onPress={handleStartVerify} isDisabled={!domain.trim() || starting}>
-              {starting ? 'Génération…' : "Générer l'enregistrement TXT"}
+              {starting ? t.domainPanel.generating : t.domainPanel.generateTxt}
             </Button>
           )}
         </SettingsContent>
@@ -100,20 +102,20 @@ export function DomainPanel({ serverId }: { serverId: string }) {
 
       {txtRecord && !verified && (
         <SettingsSection
-          title="Vérification DNS"
-          description="Ajoutez cet enregistrement TXT à votre zone DNS, puis lancez la vérification."
+          title={t.domainPanel.dnsVerification}
+          description={t.domainPanel.dnsVerificationDesc}
         >
-          <SettingsRow label="Enregistrement TXT">
+          <SettingsRow label={t.domainPanel.txtRecord}>
             <Code className="text-[11px]">{txtRecord}</Code>
             <Button
               size="sm"
               variant="ghost"
               onPress={async () => {
                 await navigator.clipboard.writeText(txtRecord);
-                toast('Enregistrement copié');
+                toast(t.domainPanel.recordCopied);
               }}
             >
-              Copier
+              {t.domainPanel.copy}
             </Button>
           </SettingsRow>
         </SettingsSection>
@@ -122,7 +124,7 @@ export function DomainPanel({ serverId }: { serverId: string }) {
       {!verified && txtRecord && (
         <div className="flex justify-end gap-2">
           <Button onPress={handleCheckVerify} isDisabled={checking}>
-            {checking ? 'Vérification…' : 'Vérifier maintenant'}
+            {checking ? t.domainPanel.checking : t.domainPanel.verifyNow}
           </Button>
         </div>
       )}

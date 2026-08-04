@@ -6,6 +6,7 @@ import { UsersIcon, HashIcon, Loader2Icon, ShieldCheckIcon, ArrowRightIcon, LogI
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { Avatar, Button } from '@heroui/react';
+import { useTranslation } from '@/components/locale-provider';
 
 interface InviteInfo {
   server: {
@@ -32,6 +33,7 @@ export default function InvitePage() {
   const params = useParams();
   const router = useRouter();
   const code = params.code as string;
+  const { t, tx } = useTranslation();
 
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function InvitePage() {
     if (res.success && res.data) {
       setInviteInfo(res.data as InviteInfo);
     } else {
-      setError(res.error || 'Invitation invalide ou expirée');
+      setError(res.error || t.invite.invalidOrExpired);
     }
     setIsLoading(false);
   };
@@ -83,7 +85,7 @@ export default function InvitePage() {
       }
       router.push('/channels');
     } else {
-      setError(res.error || 'Impossible de rejoindre ce serveur');
+      setError(res.error || t.invite.cannotJoin);
       setIsJoining(false);
     }
   };
@@ -110,11 +112,11 @@ export default function InvitePage() {
             <ShieldCheckIcon size={26} className="text-danger" />
           </div>
           <div>
-            <h1 className="mb-1.5 text-[22px] font-bold tracking-tight">Invitation invalide</h1>
+            <h1 className="mb-1.5 text-[22px] font-bold tracking-tight">{t.invite.invalid}</h1>
             <p className="max-w-sm text-[13px] text-muted/60">{error}</p>
           </div>
           <Button variant="outline" onPress={() => router.push('/')} className="rounded-lg border-border/40">
-            Retour à l&apos;accueil
+            {t.invite.backHome}
           </Button>
         </div>
       </div>
@@ -155,7 +157,7 @@ export default function InvitePage() {
 
           {/* Invite label */}
           <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted/50">
-            Vous êtes invité à rejoindre
+            {t.invite.youreInvited}
           </p>
 
           {/* Server name */}
@@ -171,13 +173,13 @@ export default function InvitePage() {
             {server?.memberCount !== undefined && (
               <span className="flex items-center gap-1.5 text-[12px] text-muted/60">
                 <UsersIcon size={13} />
-                {server.memberCount} membre{server.memberCount !== 1 ? 's' : ''}
+                {tx(t.invite.memberCount, { n: server.memberCount })}
               </span>
             )}
             {invite?.uses !== undefined && invite?.maxUses && (
               <span className="flex items-center gap-1.5 text-[12px] text-muted/60">
                 <HashIcon size={13} />
-                {invite.uses}/{invite.maxUses} utilisations
+                {tx(t.invite.usages, { uses: invite.uses, maxUses: invite.maxUses })}
               </span>
             )}
           </div>
@@ -185,12 +187,14 @@ export default function InvitePage() {
           {/* Expiry */}
           {invite?.expiresAt && !invite.isPermanent && (
             <p className="mt-2 text-[11px] text-muted/50">
-              Expire le {new Date(invite.expiresAt).toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
+              {tx(t.invite.expires, {
+                date: new Date(invite.expiresAt).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
               })}
             </p>
           )}
@@ -215,21 +219,21 @@ export default function InvitePage() {
               ) : (
                 <LogInIcon size={17} />
               )}
-              {isLoggedIn ? 'Rejoindre le serveur' : 'Se connecter pour rejoindre'}
+              {isLoggedIn ? t.invite.joinServer : t.invite.loginToJoin}
             </Button>
             <Button
               variant="ghost"
               className="w-full rounded-lg text-[13px] text-muted/60"
               onPress={() => router.push('/')}
             >
-              Pas maintenant
+              {t.invite.notNow}
             </Button>
           </div>
         </div>
       </div>
 
       <p className="relative z-10 mt-4 text-[11px] text-muted/40">
-        AlfyChat — Messagerie sécurisée et décentralisée
+        {t.invite.footer}
       </p>
     </div>
   );

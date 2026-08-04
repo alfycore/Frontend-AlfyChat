@@ -122,6 +122,35 @@
       "error": "Une erreur est survenue. Veuillez réessayer.",
       "showPassword": "Afficher le mot de passe",
       "hidePassword": "Masquer le mot de passe"
+    },
+    "shell": {
+      "imageTitle": "Vos messages ne regardent que vous.",
+      "imageDescription": "Chiffrement de bout en bout par défaut, serveurs auto-hébergeables, aucune donnée revendue."
+    },
+    "loginCard": {
+      "twoFAHeading": "Double authentification",
+      "twoFASubtitle": "Saisissez le code de votre application d'authentification.",
+      "connectedToast": "Connecté·e",
+      "heading": "Content de vous revoir",
+      "subtitle": "Connectez-vous à votre compte AlfyChat.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "vous@exemple.fr"
+    },
+    "onboarding": {
+      "subtitle": "Moins de 30 secondes. Aucun numéro de téléphone.",
+      "usernameLabel": "Nom d'utilisateur",
+      "usernamePlaceholder": "renarde_du_38",
+      "passwordPlaceholder": "12 caractères ou plus",
+      "passwordStrengthAria": "Robustesse du mot de passe",
+      "passwordStrengthLabel": "Robustesse",
+      "strengthExcellent": "Excellente",
+      "strengthOk": "Correcte",
+      "strengthWeak": "Trop faible",
+      "creating": "Création en cours…",
+      "keysLocalNotice": "Vos clés de chiffrement restent sur votre appareil.",
+      "welcomeHeading": "Bienvenue, {username}",
+      "welcomeDescription": "Vos clés Signal ont été générées sur cet appareil. Vos messages sont chiffrés de bout en bout — même nous ne pouvons pas les lire.",
+      "enterButton": "Entrer sur AlfyChat"
     }
   }
 }

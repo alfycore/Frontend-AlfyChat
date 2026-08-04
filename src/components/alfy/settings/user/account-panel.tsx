@@ -18,6 +18,7 @@ import { CURRENT_USER } from '@/components/alfy/mock/data';
 import type { AlfyUser } from '@/components/alfy/mock/types';
 import { UserBadges } from '@/components/alfy/members/user-badges';
 import { PRESENCE_LABELS } from '@/components/alfy/primitives/status-dot';
+import { useTranslation } from '@/components/locale-provider';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { cn } from '@/lib/utils';
@@ -99,6 +100,7 @@ function Compteur({ valeur, max }: { valeur: number; max: number }) {
  * ══════════════════════════════════════════════════════════════════════════ */
 
 export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
+  const { t, tx } = useTranslation();
   const profil = user ?? CURRENT_USER;
 
   const [nom, setNom] = useState(profil.displayName ?? '');
@@ -164,7 +166,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
         const res = await api.uploadImage(avatarFile, 'avatar');
         setEnvoi(null);
         if (!res.success || !res.data?.url) {
-          toast.danger('Envoi de l’avatar impossible', { description: res.error ?? avatarFile.name });
+          toast.danger(t.profile.account.toast.avatarUploadError, { description: res.error ?? avatarFile.name });
           return;
         }
         finalAvatarUrl = res.data.url;
@@ -174,7 +176,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
         const res = await api.uploadImage(bannerFile, 'banner');
         setEnvoi(null);
         if (!res.success || !res.data?.url) {
-          toast.danger('Envoi de la bannière impossible', { description: res.error ?? bannerFile.name });
+          toast.danger(t.profile.account.toast.bannerUploadError, { description: res.error ?? bannerFile.name });
           return;
         }
         finalBannerUrl = res.data.url;
@@ -191,7 +193,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
         customStatus: statut.trim(),
       });
       if (ok === false) {
-        toast.danger('Enregistrement impossible', { description: 'Réessayez dans un instant.' });
+        toast.danger(t.profile.account.toast.saveError, { description: t.profile.account.toast.saveErrorDescription });
         return;
       }
       // Les aperçus locaux ne servent plus une fois la vraie URL enregistrée.
@@ -220,7 +222,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
           profil.statusEmoji ?? null,
         );
       }
-      toast('Profil enregistré');
+      toast(t.profile.account.toast.saved);
     } finally {
       setEnregistrement(false);
     }
@@ -237,10 +239,9 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
     <div className="pb-24">
       {/* ── Titre ─────────────────────────────────────────────────────── */}
       <header className="at-fade-up mb-8">
-        <h2 className="font-heading text-3xl leading-tight tracking-tighter">Mon compte</h2>
+        <h2 className="font-heading text-3xl leading-tight tracking-tighter">{t.profile.account.title}</h2>
         <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
-          Votre identité publique sur AlfyChat. Tout ce que vous modifiez ici apparaît en direct
-          dans l&apos;aperçu.
+          {t.profile.account.description}
         </p>
       </header>
 
@@ -255,7 +256,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
             type="button"
             onClick={() => bannerInput.current?.click()}
             disabled={envoi !== null}
-            aria-label="Changer la bannière"
+            aria-label={t.profile.account.changeBanner}
             className={cn(
               'absolute inset-0 flex cursor-pointer items-center justify-center gap-2 text-sm font-medium text-white outline-none',
               'bg-black/0 opacity-0 transition-all duration-300 group-hover/banniere:bg-black/45 group-hover/banniere:opacity-100',
@@ -263,7 +264,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
             )}
           >
             {envoi === 'banner' ? <Spinner size="sm" /> : <ImageUp className="size-4.5" aria-hidden />}
-            Changer la bannière
+            {t.profile.account.changeBanner}
           </button>
         </div>
 
@@ -274,7 +275,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
               type="button"
               onClick={() => avatarInput.current?.click()}
               disabled={envoi !== null}
-              aria-label="Changer l'avatar"
+              aria-label={t.profile.account.changeAvatar}
               className="group/avatar relative cursor-pointer rounded-3xl outline-none transition-transform duration-300 ease-out hover:scale-[1.04] focus-visible:scale-[1.04]"
             >
               <span className="block rounded-3xl bg-surface p-1">
@@ -300,7 +301,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
           {/* Identité en direct */}
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-xl leading-tight font-bold tracking-tight">
-              {nom.trim() || 'Sans nom'}
+              {nom.trim() || t.profile.account.noName}
             </p>
             <Chip size="sm" variant="soft" className="cursor-default">
               <AtSign className="size-2.5" aria-hidden />
@@ -325,7 +326,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
           )}
 
           <p className="mt-4 text-[11px] text-muted">
-            Membre depuis {memberSince.format(new Date(profil.createdAt))}
+            {tx(t.profile.account.memberSince, { date: memberSince.format(new Date(profil.createdAt)) })}
           </p>
         </div>
       </section>
@@ -353,33 +354,33 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
       />
 
       {/* ── Identité ──────────────────────────────────────────────────── */}
-      <Bloc titre="Identité" intro="Visible par tous les membres qui croisent votre profil." delai={80}>
+      <Bloc titre={t.profile.account.identity.title} intro={t.profile.account.identity.description} delai={80}>
         <div className="flex flex-col gap-3">
           <div className="rounded-2xl bg-surface px-5 py-4">
             <TextField value={nom} onChange={setNom} isInvalid={nom.trim().length === 0} className="w-full">
-              <Label>Nom affiché</Label>
-              <Input placeholder="Comment souhaitez-vous apparaître ?" />
+              <Label>{t.profile.account.identity.displayNameLabel}</Label>
+              <Input placeholder={t.profile.account.identity.displayNamePlaceholder} />
             </TextField>
           </div>
 
           <div className="rounded-2xl bg-surface px-5 py-4">
             <TextField value={profil.username} isReadOnly className="w-full">
-              <Label>Nom d&apos;utilisateur</Label>
+              <Label>{t.profile.account.identity.usernameLabel}</Label>
               <Input />
             </TextField>
             <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted">
               <Lock className="size-3 shrink-0" aria-hidden />
-              Le changer demande votre mot de passe — rendez-vous dans Connexion &amp; 2FA.
+              {t.profile.account.identity.usernameHint}
             </p>
           </div>
 
           <div className="rounded-2xl bg-surface px-5 py-4">
             <TextField value={bio} onChange={setBio} isInvalid={bio.length > BIO_MAX} className="w-full">
               <div className="flex items-baseline justify-between gap-3">
-                <Label>Bio</Label>
+                <Label>{t.profile.account.identity.bioLabel}</Label>
                 <Compteur valeur={bio.length} max={BIO_MAX} />
               </div>
-              <TextArea placeholder="Parlez de vous en quelques mots…" rows={3} />
+              <TextArea placeholder={t.profile.account.identity.bioPlaceholder} rows={3} />
             </TextField>
           </div>
         </div>
@@ -387,8 +388,8 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
 
       {/* ── Statut ────────────────────────────────────────────────────── */}
       <Bloc
-        titre="Statut personnalisé"
-        intro="Une phrase affichée sous votre nom dans les listes de membres."
+        titre={t.profile.account.status.title}
+        intro={t.profile.account.status.description}
         delai={120}
       >
         <div className="rounded-2xl bg-surface px-5 py-4">
@@ -399,10 +400,10 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
             className="w-full"
           >
             <div className="flex items-baseline justify-between gap-3">
-              <Label>Votre statut</Label>
+              <Label>{t.profile.account.status.label}</Label>
               <Compteur valeur={statut.length} max={STATUT_MAX} />
             </div>
-            <Input placeholder="En train de coder…" />
+            <Input placeholder={t.profile.account.status.placeholder} />
           </TextField>
           {statut.trim() && (
             <Button
@@ -411,7 +412,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
               className="mt-2 text-muted"
               onPress={() => setStatut('')}
             >
-              Effacer le statut
+              {t.profile.account.status.clear}
             </Button>
           )}
         </div>
@@ -422,11 +423,11 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
         <div className="at-fade-up sticky bottom-4 z-10 flex items-center justify-between gap-4 rounded-2xl bg-surface-3 px-5 py-3 shadow-2xl">
           <p className="min-w-0 text-sm">
             {invalide ? (
-              <span className="text-danger">Corrigez les champs en rouge avant d&apos;enregistrer.</span>
+              <span className="text-danger">{t.profile.account.saveBar.invalid}</span>
             ) : (
               <span className="flex items-center gap-2">
                 <Check className="size-4 shrink-0 text-success" aria-hidden />
-                Modifications prêtes à être enregistrées.
+                {t.profile.account.saveBar.ready}
               </span>
             )}
           </p>
@@ -451,10 +452,10 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
                 setBannerUrl(profil.bannerUrl);
               }}
             >
-              Annuler
+              {t.common.cancel}
             </Button>
             <Button onPress={enregistrer} isDisabled={invalide || enregistrement}>
-              Enregistrer
+              {t.profile.account.saveBar.save}
             </Button>
           </div>
         </div>

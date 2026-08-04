@@ -25,6 +25,7 @@ import { PinsPanel } from '@/components/alfy/chat/pins-panel';
 import { SearchPanel } from '@/components/alfy/chat/search-panel';
 import { NotificationCenter } from '@/components/alfy/notifications/notification-center';
 import { ChannelNotifSettings } from '@/components/alfy/notifications/channel-notif-settings';
+import { useTranslation } from '@/components/locale-provider';
 
 const ICONS: Record<AlfyChannelType, typeof Hash> = {
   text: Hash,
@@ -52,6 +53,7 @@ interface ChatHeaderProps {
 }
 
 export function ChatHeader({ channel, messages = [], onToggleMembers, membersOpen, onOpenNav }: ChatHeaderProps) {
+  const { t } = useTranslation();
   const Icon = ICONS[channel.type];
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-separator bg-surface/85 px-3 backdrop-blur-sm">
@@ -59,7 +61,7 @@ export function ChatHeader({ channel, messages = [], onToggleMembers, membersOpe
         isIconOnly
         size="sm"
         variant="ghost"
-        aria-label="Ouvrir la navigation"
+        aria-label={t.chat.openNav}
         className="text-muted lg:hidden"
         onPress={onOpenNav}
       >
@@ -80,7 +82,7 @@ export function ChatHeader({ channel, messages = [], onToggleMembers, membersOpe
       )}
       <div className="min-w-0 flex-1 md:hidden" />
 
-      <Toolbar aria-label="Actions du salon" className="shrink-0 gap-0.5">
+      <Toolbar aria-label={t.chat.channelActions} className="shrink-0 gap-0.5">
         <ChannelNotifSettings channelId={channel.id} channelName={channel.name} />
         <PinsPanel messages={messages} />
         <SearchPanel messages={messages} channelName={channel.name} />
@@ -90,14 +92,14 @@ export function ChatHeader({ channel, messages = [], onToggleMembers, membersOpe
             isIconOnly
             size="sm"
             variant="ghost"
-            aria-label={membersOpen ? 'Masquer les membres' : 'Afficher les membres'}
+            aria-label={membersOpen ? t.chat.hideMembers : t.chat.showMembers}
             className={membersOpen ? 'text-foreground' : 'text-muted'}
             onPress={onToggleMembers}
           >
             <Users className="size-4.5" />
           </Button>
           <Tooltip.Content>
-            <p>{membersOpen ? 'Masquer les membres' : 'Afficher les membres'}</p>
+            <p>{membersOpen ? t.chat.hideMembers : t.chat.showMembers}</p>
           </Tooltip.Content>
         </Tooltip>
       </Toolbar>

@@ -7,6 +7,7 @@ import { useUserById } from '@/components/alfy/user-directory';
 import type { AlfyCallParticipant } from '@/components/alfy/mock/types';
 import { CallControls } from '@/components/alfy/calls/call-controls';
 import { CallTile } from '@/components/alfy/calls/call-tile';
+import { useTranslation } from '@/components/locale-provider';
 
 interface CallViewProps {
   participants: AlfyCallParticipant[];
@@ -29,6 +30,7 @@ export function CallView({
   onHangUp,
   ...controls
 }: CallViewProps) {
+  const { t, tx } = useTranslation();
   const userById = useUserById();
   const peer = participants.find((p) => p.userId !== currentUserId) ?? participants[0];
   const me = participants.find((p) => p.userId === currentUserId);
@@ -38,10 +40,10 @@ export function CallView({
   return (
     <div className="relative flex h-full flex-col items-center justify-center gap-4 bg-background p-4">
       <div className="flex items-center gap-2">
-        <h2 className="text-sm font-semibold">Appel avec {peerUser.displayName}</h2>
+        <h2 className="text-sm font-semibold">{tx(t.calls.view.callWith, { name: peerUser.displayName })}</h2>
         <Chip size="sm" variant="soft" className="cursor-default text-(--alfy-e2e)">
           <Lock className="size-3" aria-hidden />
-          <Chip.Label>P2P chiffré</Chip.Label>
+          <Chip.Label>{t.calls.view.p2pEncrypted}</Chip.Label>
         </Chip>
         <Chip size="sm" variant="soft" className="cursor-default tabular-nums">
           {mmss}
@@ -52,7 +54,7 @@ export function CallView({
         <CallTile name={peerUser.displayName} avatarUrl={peerUser.avatarUrl} muted={peer.muted} screenSharing={peer.screenSharing} size="lg" />
         {me && (
           <div className="absolute right-3 bottom-3 w-40 shadow-lg sm:w-48">
-            <CallTile name="Vous" avatarUrl={userById(me.userId).avatarUrl} isLocal muted={me.muted} />
+            <CallTile name={t.common.you} avatarUrl={userById(me.userId).avatarUrl} isLocal muted={me.muted} />
           </div>
         )}
       </div>

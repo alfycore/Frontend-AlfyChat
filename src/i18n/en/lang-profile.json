@@ -213,7 +213,447 @@
     "kickConfirm": "Kick {name}?",
     "banConfirm": "Ban {name}?",
     "banReason": "Reason (optional)",
-    "badgeEarned": "Earned on {date}"
+    "badgeEarned": "Earned on {date}",
+    "appearance": {
+      "title": "Theme",
+      "description": "Background depth, interface colors and app icon.",
+      "previewButton": "Theme preview",
+      "depth": {
+        "title": "Depth",
+        "description": "The light or dark base of the interface. It combines freely with the color chosen below.",
+        "ariaLabel": "Theme depth"
+      },
+      "presets": {
+        "light": { "name": "Light", "detail": "Cold paper" },
+        "dark": { "name": "Dark", "detail": "The default" },
+        "deep": { "name": "Deep dark", "detail": "Higher contrast" },
+        "oled": { "name": "Nocturnal", "detail": "Absolute black, OLED" },
+        "system": { "name": "System", "detail": "Follows the device" }
+      },
+      "serverThemeOptions": {
+        "server": "Use the server's theme",
+        "user": "Always use my theme"
+      },
+      "color": {
+        "title": "Color",
+        "description": "The hue spreads across the whole interface. Pick a mood, or compose your own accent.",
+        "resetAccent": "Original accent",
+        "ariaLabel": "Color theme",
+        "customTitle": "Custom accent",
+        "customDescription": "A free color for buttons, links and focus.",
+        "hueSaturationAriaLabel": "Hue and brightness",
+        "hueAriaLabel": "Hue"
+      },
+      "app": {
+        "title": "Application",
+        "description": "Where and how your theme applies.",
+        "syncTitle": "Sync with my other devices",
+        "syncDetail": "Theme, depth and icon follow your account.",
+        "syncAriaLabel": "Sync theme with my other devices",
+        "applyToProfilesTitle": "Apply to other members' profiles",
+        "applyToProfilesDetail": "Ignores custom profile colors.",
+        "applyToProfilesAriaLabel": "Apply theme to other users' profiles",
+        "serversTitle": "In servers",
+        "serversDetail": "When a server enforces its own theme.",
+        "serversAriaLabel": "Default theme in servers"
+      },
+      "icon": {
+        "title": "App icon",
+        "description": "Visible in the browser tab and on the home screen.",
+        "ariaLabel": "Application icon"
+      },
+      "link": {
+        "title": "Accessibility",
+        "description": "Saturation, high contrast, reduced motion, text size."
+      },
+      "preview": {
+        "title": "Theme preview",
+        "description": "Real rendering of the interface with your current settings."
+      },
+      "iconPreview": {
+        "title": "Icon preview",
+        "tabLabel": "Tab",
+        "homeScreenLabel": "Home screen",
+        "sizesLabel": "Sizes"
+      }
+    },
+    "account": {
+      "title": "My account",
+      "description": "Your public identity on AlfyChat. Everything you change here appears live in the preview.",
+      "changeBanner": "Change banner",
+      "changeAvatar": "Change avatar",
+      "noName": "No name",
+      "memberSince": "Member since {date}",
+      "identity": {
+        "title": "Identity",
+        "description": "Visible to all members who come across your profile.",
+        "displayNameLabel": "Display name",
+        "displayNamePlaceholder": "How would you like to appear?",
+        "usernameLabel": "Username",
+        "usernameHint": "Changing it requires your password — head to Login & 2FA.",
+        "bioLabel": "Bio",
+        "bioPlaceholder": "Tell us about yourself in a few words…"
+      },
+      "status": {
+        "title": "Custom status",
+        "description": "A sentence shown under your name in member lists.",
+        "label": "Your status",
+        "placeholder": "Coding right now…",
+        "clear": "Clear status"
+      },
+      "saveBar": {
+        "invalid": "Fix the fields in red before saving.",
+        "ready": "Changes ready to be saved.",
+        "save": "Save"
+      },
+      "toast": {
+        "avatarUploadError": "Could not upload avatar",
+        "bannerUploadError": "Could not upload banner",
+        "saveError": "Could not save",
+        "saveErrorDescription": "Try again in a moment.",
+        "saved": "Profile saved"
+      }
+    },
+    "accessibility": {
+      "title": "Accessibility",
+      "description": "Color saturation, contrast, motion and text size.",
+      "displays": {
+        "cozy": { "name": "Cozy", "description": "Round avatars, generous spacing — the default view." },
+        "compact": { "name": "Compact", "description": "One line per message, avatars can be hidden." }
+      },
+      "messageDisplay": {
+        "sectionTitle": "Chat message display",
+        "ariaLabel": "Message display"
+      },
+      "colors": {
+        "sectionTitle": "Colors",
+        "saturationLabel": "Color saturation",
+        "saturationHint": "Reduce saturation if bright colors bother you. 100% matches the original colors.",
+        "highContrastLabel": "High contrast mode",
+        "highContrastDescription": "Strengthens borders, separators and secondary text."
+      },
+      "motion": {
+        "sectionTitle": "Motion and text",
+        "reducedMotionLabel": "Reduce motion",
+        "reducedMotionDescription": "Turns off animations and transitions across the app.",
+        "fontSizeLabel": "Text size",
+        "fontSizeHint": "Applies to the whole interface, not just messages."
+      },
+      "reset": "Reset accessibility"
+    },
+    "chat": {
+      "title": "Chat",
+      "description": "Media, previews, input and search across conversations.",
+      "messages": {
+        "sectionTitle": "Messages",
+        "sectionDescription": "Show images, videos and shared media in conversations.",
+        "linkedMediaLabel": "When sent as links in the channel",
+        "linkedMediaAriaLabel": "Show media sent as links",
+        "uploadedMediaLabel": "When uploaded directly to AlfyChat",
+        "uploadedMediaAriaLabel": "Show uploaded media",
+        "embedsLabel": "Show link embeds and previews",
+        "embedsDescription": "Title, description and thumbnail of shared links.",
+        "reactionsLabel": "Show emoji reactions",
+        "spoilersLabel": "Show spoilers",
+        "spoilersDescription": "Content hidden with ||double bars||.",
+        "spoilerOptions": {
+          "always": "Always",
+          "moderated": "In channels I moderate",
+          "click": "On click only"
+        },
+        "threadsSplitLabel": "Open threads in split view",
+        "threadsSplitDescription": "The thread opens next to the channel instead of full screen.",
+        "avatarsLabel": "Show user avatars",
+        "avatarsHint": {
+          "prefix": "To hide avatars, go to",
+          "link": "Accessibility",
+          "middle": "and select",
+          "compact": "Compact",
+          "suffix": "under Message display."
+        },
+        "avatarsHintUnlocked": "Compact mode: avatars can be hidden to save space."
+      },
+      "relatedSettingsHeading": "Related settings",
+      "relatedAccessibility": {
+        "title": "Accessibility",
+        "description": "Adjusts the visual density of messages and the interface."
+      },
+      "messageBox": {
+        "sectionTitle": "Message box",
+        "previewSyntaxLabel": "Show a preview of emojis, mentions and Markdown syntax while typing",
+        "previewSyntaxAriaLabel": "Syntax preview while typing",
+        "emoticonLabel": "Automatically convert emoticons to emojis",
+        "emoticonDescription": "For example, if you type :) AlfyChat will convert it to 🙂",
+        "emoticonAriaLabel": "Convert emoticons to emojis",
+        "stickerLabel": "Show stickers and GIFs in autocomplete results",
+        "stickerAriaLabel": "Stickers and GIFs in autocomplete",
+        "commandsLabel": "Show commands in autocomplete results",
+        "commandsAriaLabel": "Commands in autocomplete",
+        "sendButtonLabel": "Show the Send message button",
+        "sendButtonAriaLabel": "Show the Send button"
+      },
+      "search": {
+        "sectionTitle": "Search",
+        "sectionDescription": "By default, search within direct messages…",
+        "ariaLabel": "Direct message search scope",
+        "selectedOption": "Search only in selected DMs",
+        "allOption": "Search all my DMs"
+      }
+    },
+    "archives": {
+      "title": "Archives",
+      "description": "Your direct messages are end-to-end encrypted: we only keep a limited encrypted copy. Archive them wherever you want.",
+      "e2eeNotice": "Archives are encrypted with your keys. Even exported to an external database, they remain unreadable without your device.",
+      "quota": {
+        "sectionTitle": "Server-side quota",
+        "description": "Each direct conversation keeps up to 20,000 encrypted messages or 30 days of history on our servers. Beyond that, the oldest messages are deleted server-side (never on devices that archived them).",
+        "loading": "Calculating usage…",
+        "empty": "No direct conversation to show yet.",
+        "groupFallbackName": "Group",
+        "conversationFallbackName": "Conversation"
+      },
+      "externalDb": {
+        "sectionTitle": "External database",
+        "toggleLabel": "Archive to my own database",
+        "toggleDescription": "Offload the encrypted history to your own MySQL database.",
+        "configuredChip": "Configured",
+        "hostLabel": "Host",
+        "hostPlaceholder": "db.example.com",
+        "portLabel": "Port",
+        "portPlaceholder": "3306",
+        "userLabel": "User",
+        "userPlaceholder": "alfychat",
+        "passwordLabel": "Password",
+        "passwordPlaceholderConfigured": "••••••••",
+        "databaseLabel": "Database",
+        "databasePlaceholder": "alfychat_archives",
+        "testButton": "Test connection",
+        "testing": "Testing…",
+        "saveButton": "Save",
+        "saving": "Saving…"
+      },
+      "exportAll": {
+        "button": "Export all my archives",
+        "exporting": "Exporting…"
+      },
+      "toast": {
+        "fillRequired": "Fill in at least host, user, password and database.",
+        "testSuccess": "Connection successful",
+        "testError": "Connection failed",
+        "saveSuccess": "Configuration saved",
+        "saveError": "Connection failed",
+        "exportStarted": "Export started",
+        "exportStartedDescription": "You'll receive a download link.",
+        "exportError": "Export failed"
+      }
+    },
+    "voice": {
+      "title": "Voice & video",
+      "description": "Devices and quality of your calls.",
+      "devices": {
+        "sectionTitle": "Devices",
+        "microphoneLabel": "Microphone",
+        "outputLabel": "Audio output",
+        "defaultMic": "Default microphone",
+        "defaultOutput": "Default output",
+        "micFallback": "Microphone {n}",
+        "outputFallback": "Output {n}"
+      },
+      "input": {
+        "sectionTitle": "Microphone input",
+        "sensitivityLabel": "Input sensitivity",
+        "volumeAriaLabel": "Input volume",
+        "noiseSuppressionLabel": "Noise suppression",
+        "noiseSuppressionDescription": "Filters background noise (keyboard, fan).",
+        "echoCancellationLabel": "Echo cancellation",
+        "echoCancellationDescription": "Prevents feedback when using speakers."
+      },
+      "activation": {
+        "sectionTitle": "Activation mode",
+        "sectionDescription": "How to trigger voice transmission.",
+        "modes": {
+          "vad": { "label": "Voice activity", "desc": "Triggered automatically by your voice." },
+          "ptt": { "label": "Push-to-talk", "desc": "Hold a key to talk." },
+          "always": { "label": "Always on", "desc": "Microphone constantly active." }
+        }
+      }
+    },
+    "layout": {
+      "title": "Layout",
+      "description": "Interface arrangement and density.",
+      "serverBar": {
+        "sectionTitle": "Server bar",
+        "ariaLabel": "Bar position",
+        "left": "On the left",
+        "right": "On the right"
+      },
+      "density": {
+        "sectionTitle": "Density",
+        "compactLabel": "Compact mode",
+        "compactDescription": "Reduces message spacing to show more."
+      }
+    },
+    "language": {
+      "title": "Language",
+      "description": "The interface language. 12 languages available.",
+      "sectionTitle": "Interface language",
+      "ariaLabel": "Language"
+    },
+    "keys": {
+      "title": "Encryption keys",
+      "description": "Your account has a single Signal key pair, encrypted with your password and stored only in this encrypted form on our servers.",
+      "e2eeActiveTitle": "End-to-end encryption active",
+      "e2eeActiveDescription": "Your private keys never leave your devices. AlfyChat cannot read your messages — and neither can anyone else.",
+      "fingerprint": {
+        "sectionTitle": "Your fingerprint",
+        "sectionDescription": "Compare this fingerprint in person or through another secure channel with your contacts to protect against interception attacks.",
+        "rowLabel": "Account encryption identity",
+        "copyAriaLabel": "Copy fingerprint",
+        "copiedToast": "Fingerprint copied"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "What you're notified about, and how.",
+      "general": {
+        "sectionTitle": "General",
+        "desktopLabel": "Desktop notifications",
+        "desktopDescription": "Show a system notification.",
+        "soundLabel": "Sounds",
+        "soundDescription": "Play a sound on receipt."
+      },
+      "triggers": {
+        "sectionTitle": "Triggers",
+        "dmLabel": "Direct messages",
+        "dmDescription": "Always notify for DMs and groups.",
+        "mentionsLabel": "Mentions",
+        "mentionsDescription": "@you, @role and @everyone."
+      },
+      "dnd": {
+        "sectionTitle": "Do not disturb",
+        "label": "Do not disturb mode",
+        "description": "Turns off notifications immediately (mentions still get through)."
+      },
+      "quietHours": {
+        "hint": "Daily quiet time window",
+        "from": "From",
+        "to": "to",
+        "clear": "Clear"
+      }
+    },
+    "security": {
+      "title": "Security",
+      "description": "Password, two-factor authentication and connections.",
+      "auth": {
+        "sectionTitle": "Authentication"
+      },
+      "password": {
+        "label": "Password",
+        "description": "Change your login password.",
+        "changeButton": "Change",
+        "modalTitle": "Change password",
+        "currentLabel": "Current password",
+        "currentPlaceholder": "Current password",
+        "newLabel": "New password",
+        "newPlaceholder": "Min. 8 characters",
+        "confirmLabel": "Confirm new password",
+        "confirmPlaceholder": "Confirm",
+        "submitButton": "Change password",
+        "submitting": "Changing…",
+        "errors": {
+          "fillAll": "Please fill in all fields",
+          "mismatch": "Passwords do not match",
+          "tooShort": "The new password must be at least 8 characters",
+          "reencryptFailed": "Could not re-encrypt the encryption key.",
+          "wrongCurrent": "Incorrect current password",
+          "generic": "Error while changing password"
+        },
+        "successToast": "Password changed successfully"
+      },
+      "twoFA": {
+        "label": "Two-factor authentication (2FA)",
+        "description": "Authenticator app (TOTP) — recommended for all accounts.",
+        "enabledChip": "Enabled",
+        "disabledChip": "Disabled",
+        "disableButton": "Disable",
+        "configureButton": "Configure",
+        "modalTitleDisable": "Disable 2FA",
+        "modalTitleBackup": "2FA enabled",
+        "modalTitleSetup": "Verify your device",
+        "setupInstructions": "Scan this QR code with your authenticator app, then enter the 6-digit code.",
+        "generatingSecret": "Generating secret…",
+        "codeAriaLabel": "Verification code",
+        "disableInstructions": "Enter the 6-digit code from your authenticator app to disable 2FA.",
+        "disableCodeAriaLabel": "Disable code",
+        "enabledMessage": "2FA is enabled!",
+        "backupHint": "Save these recovery codes: they let you regain access if you lose your device. They won't be shown again.",
+        "disabling": "Disabling…",
+        "activateButton": "Activate",
+        "startError": "Could not start 2FA setup",
+        "invalidCode": "Invalid code"
+      }
+    },
+    "privacy": {
+      "title": "Privacy",
+      "description": "AlfyChat does not collect any advertising data. These settings only concern what other members see of you.",
+      "dm": {
+        "sectionTitle": "Direct messages",
+        "filterStrangersLabel": "Filter messages from strangers",
+        "filterStrangersDescription": "People with no mutual friend go through a message request."
+      },
+      "visibility": {
+        "sectionTitle": "Visibility",
+        "sharePresenceLabel": "Share my presence status",
+        "sharePresenceDescription": "Your contacts see when you're online. Off = always invisible."
+      },
+      "gdpr": {
+        "sectionTitle": "Your data (GDPR)",
+        "sectionDescription": "Data hosted in France. Export and deletion at any time, no justification needed.",
+        "exportLabel": "Export my data",
+        "exportDescription": "Full archive (profile, server-side unencrypted messages, preferences) in JSON format.",
+        "exportButton": "Export",
+        "exporting": "Exporting…",
+        "hostingLabel": "Hosting"
+      },
+      "danger": {
+        "sectionTitle": "Danger zone",
+        "deleteLabel": "Delete my account",
+        "deleteDescription": "Permanent deletion within 30 days, in accordance with GDPR. Irreversible.",
+        "deleteButton": "Delete",
+        "modalTitle": "Permanently delete your account?",
+        "modalBody": "Your messages, encryption keys and personal data will be deleted within 30 days. This action is irreversible.",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "Confirm with your password",
+        "confirmButton": "Delete my account",
+        "deleting": "Deleting…"
+      },
+      "errors": {
+        "exportFailed": "Export failed",
+        "passwordRequired": "Password required",
+        "wrongPassword": "Incorrect password",
+        "generic": "An error occurred"
+      },
+      "toast": {
+        "exportStarted": "Export started",
+        "exportStartedDescription": "You'll receive a download link."
+      }
+    },
+    "sessions": {
+      "title": "Active sessions",
+      "description": "Devices currently connected to your account. Revoke anything you don't recognize.",
+      "sectionTitle": "Connected devices",
+      "loading": "Loading sessions…",
+      "empty": "No other active session.",
+      "currentChip": "This session",
+      "revokeButton": "Revoke",
+      "revokeAllButton": "Disconnect all other devices",
+      "sessionDescription": "{location} · last active {date}",
+      "toast": {
+        "revoked": "Session revoked",
+        "revokedAllTitle": "Sessions revoked",
+        "revokedAllDescription": "All other devices have been disconnected."
+      }
+    }
   },
   "userProfile": {
     "cardColor": "Card color",

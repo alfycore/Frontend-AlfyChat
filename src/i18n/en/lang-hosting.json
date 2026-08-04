@@ -352,5 +352,50 @@
     "toastTokenCopied": "Token copied!",
     "toastRegistrationError": "Registration error",
     "toastServerError": "Server error"
+  },
+  "node": {
+    "docker": {
+      "title": "Docker configuration",
+      "description": "Deploy your node with a single command.",
+      "cliAccordionTitle": "Without Docker (Node.js CLI)",
+      "cliCommandLabel": "CLI command",
+      "copyAriaLabel": "Copy {label}",
+      "copyTooltip": "Copy",
+      "copiedToast": "Copied"
+    },
+    "domain": {
+      "title": "Custom domain",
+      "verified": "Verified",
+      "pending": "Pending",
+      "noDomain": "No domain configured",
+      "txtInstructions": "Add this TXT record to your DNS zone to prove ownership:",
+      "copyTxtBtn": "Copy TXT",
+      "verifyBtn": "Verify now",
+      "txtCopiedToast": "TXT record copied"
+    },
+    "logs": {
+      "title": "Logs",
+      "levelsAriaLabel": "Log levels",
+      "filterPlaceholder": "Filter…",
+      "filterAriaLabel": "Filter logs",
+      "noResults": "No entry matches the filter."
+    },
+    "status": {
+      "title": "Node status",
+      "uptimeLabel": "Uptime",
+      "messagesStoredLabel": "Messages stored",
+      "diskSpaceLabel": "Disk space",
+      "diskUsage": "{used} / {total} GB",
+      "uptimeDaysHours": "{d}d {h}h",
+      "uptimeHoursOnly": "{h}h"
+    },
+    "token": {
+      "title": "Node token",
+      "description": "Authenticates your node with the AlfyChat gateway. Never share it.",
+      "regenerateBtn": "Regenerate token",
+      "regenerateDialogTitle": "Regenerate token?",
+      "regenerateDialogBody": "The old token will be immediately invalidated: your node will go offline until you restart it with the new token.",
+      "confirmRegenerateBtn": "Regenerate"
+    }
   }
 }

@@ -782,7 +782,7 @@ class ApiService {
 
   // ── Sécurité ──────────────────────────────────────────────────────────
   async getServerSecurity(serverId: string) {
-    return this.request<{ verificationLevel: 'none' | 'low' | 'medium' | 'high'; require2faModeration: boolean }>(
+    return this.request<{ verificationLevel: 'none' | 'low' | 'medium' | 'high'; require2faModeration: boolean; restrictEmojiUsage: boolean }>(
       `/api/servers/${serverId}/security`,
     );
   }

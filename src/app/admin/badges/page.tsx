@@ -11,7 +11,8 @@ import { api } from '@/lib/api';
 import {
   EmptyState, PageHeader, SectionCard, TableShell, TableSkeleton, Td, Th, Toggle, Tr,
 } from '@/components/alfy/admin/primitives';
-import { renderBadgeIcon, UICONS_LIST } from '@/components/alfy/admin/badge-icon';
+import { renderBadgeIcon, getUiconsList } from '@/components/alfy/admin/badge-icon';
+import { useTranslation } from '@/components/locale-provider';
 
 type IconType = 'bootstrap' | 'svg' | 'flaticon';
 
@@ -42,6 +43,8 @@ const EMPTY_FORM = {
 };
 
 export default function AdminBadgesPage() {
+  const { t } = useTranslation();
+  const UICONS_LIST = getUiconsList(t);
   const [badges, setBadges]   = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);

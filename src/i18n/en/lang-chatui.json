@@ -60,7 +60,17 @@
       "deleteTitle": "Delete server?",
       "deleteDesc": "This action is irreversible.",
       "deleteConfirm": "Delete",
-      "deleteCancel": "Cancel"
+      "deleteCancel": "Cancel",
+      "channelActionErrorTitle": "Action failed",
+      "channelActionErrorDefaultDesc": "Try again in a moment.",
+      "defaultChannelName": "this channel",
+      "defaultCategoryName": "this category",
+      "renameChannelTitle": "Rename",
+      "renameFieldLabel": "Name",
+      "deleteCategoryHeading": "Delete category \"{name}\"?",
+      "deleteChannelHeading": "Delete channel \"{name}\"?",
+      "deleteCategoryBody": "Its channels will become uncategorized — they will not be deleted.",
+      "deleteChannelBody": "Messages in this channel will be permanently lost."
     },
     "roleManager": {
       "permRead": "Read messages",
@@ -145,6 +155,49 @@
       "unlock3_3": "Custom stickers",
       "unlock3_4": "Splashscreen",
       "unlock3_5": "Max members ×2"
+    },
+    "serverSettings": {
+      "subtitle": "Server settings",
+      "saveErrorTitle": "Could not save",
+      "saveErrorDefaultDesc": "Try again in a moment.",
+      "groupPeople": "People",
+      "groupExpression": "Expression",
+      "groupApplications": "Applications",
+      "groupModeration": "Moderation",
+      "groupServer": "Server",
+      "navOverview": "Server profile",
+      "navMembers": "Members",
+      "navRoles": "Roles",
+      "navInvites": "Invites",
+      "navEmoji": "Emoji",
+      "navIntegrations": "Integrations",
+      "navSecurity": "Security settings",
+      "navAuditLog": "Server logs",
+      "navModeration": "Moderation",
+      "navChannels": "Channels",
+      "navDomain": "Domain"
+    },
+    "userSettings": {
+      "subtitle": "Account settings",
+      "logout": "Log out",
+      "groupAccount": "Account",
+      "navAccount": "My account",
+      "navPrivacy": "Privacy",
+      "groupSecurity": "Security",
+      "navSecurity": "Login & 2FA",
+      "navKeys": "Encryption keys",
+      "navSessions": "Active sessions",
+      "navArchives": "Archives",
+      "groupApplication": "Application",
+      "navVoice": "Voice & video",
+      "navNotifications": "Notifications",
+      "navAppearance": "Appearance",
+      "navChat": "Chat",
+      "navAccessibility": "Accessibility",
+      "navLayout": "Layout",
+      "navLanguage": "Language",
+      "deviceUnknown": "Unknown device",
+      "locationUnknown": "Unknown address"
     }
   }
 }

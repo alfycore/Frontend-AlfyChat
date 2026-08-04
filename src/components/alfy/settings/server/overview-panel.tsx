@@ -11,6 +11,7 @@ import { TrustBadges } from '@/components/alfy/primitives/trust-badges';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
 import { SettingsContent, SettingsRow, SettingsSection } from '@/components/alfy/settings/section';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 type HostingCategory = 'standard' | 'community';
 
@@ -23,8 +24,6 @@ const initiales = (nom: string) =>
     .slice(0, 2)
     .join('')
     .toUpperCase() || '?';
-
-const HOSTING_LABEL: Record<HostingCategory, string> = { standard: 'Standard', community: 'Communautaire' };
 
 interface OverviewPanelProps {
   server: AlfyServer;
@@ -40,6 +39,11 @@ interface OverviewPanelProps {
 }
 
 export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
+  const { t, tx } = useTranslation();
+  const HOSTING_LABEL: Record<HostingCategory, string> = {
+    standard: t.hostingCategory.standardTitle,
+    community: t.hostingCategory.communityTitle,
+  };
   const [name, setName] = useState(server.name);
   const [description, setDescription] = useState(server.description ?? '');
   const [requireInvite, setRequireInvite] = useState(!server.isPublic);
@@ -110,7 +114,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
         const res = await api.uploadImage(iconFile, 'icon');
         setEnvoi(null);
         if (!res.success || !res.data?.url) {
-          toast.danger('Envoi de l’icône impossible', { description: res.error ?? iconFile.name });
+          toast.danger(t.overviewPanel.uploadIconError, { description: res.error ?? iconFile.name });
           return;
         }
         finalIconUrl = res.data.url;
@@ -120,7 +124,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
         const res = await api.uploadImage(bannerFile, 'banner');
         setEnvoi(null);
         if (!res.success || !res.data?.url) {
-          toast.danger('Envoi de la bannière impossible', { description: res.error ?? bannerFile.name });
+          toast.danger(t.overviewPanel.uploadBannerError, { description: res.error ?? bannerFile.name });
           return;
         }
         finalBannerUrl = res.data.url;
@@ -134,7 +138,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
         isPublic: !requireInvite,
         category: isPlatform && category !== currentCategory ? category : undefined,
       });
-      toast('Serveur enregistré', { description: name });
+      toast(t.overviewPanel.serverSaved, { description: name });
     } finally {
       setEnvoi(null);
       setEnregistrement(false);
@@ -150,7 +154,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
 
   return (
     <div className="pb-4">
-      <PanelHeader title="Profil du serveur" description="Identité, visibilité et catégorie du serveur." />
+      <PanelHeader title={t.overviewPanel.panelTitle} description={t.overviewPanel.panelDescription} />
 
       {/* ── Aperçu vivant ─────────────────────────────────────────────── */}
       <div className="at-fade-up mb-8 overflow-hidden rounded-2xl bg-surface" style={{ animationDelay: '20ms' } as CSSProperties}>
@@ -159,7 +163,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
             type="button"
             onClick={() => bannerInput.current?.click()}
             disabled={envoi !== null}
-            aria-label="Changer la bannière"
+            aria-label={t.overviewPanel.changeBanner}
             className={cn(
               'absolute inset-0 flex cursor-pointer items-center justify-center gap-2 text-sm font-medium text-white outline-none',
               'bg-black/0 opacity-0 transition-all duration-300 group-hover/banniere:bg-black/45 group-hover/banniere:opacity-100',
@@ -167,7 +171,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
             )}
           >
             {envoi === 'banner' ? <Spinner size="sm" /> : <ImageUp className="size-4.5" aria-hidden />}
-            Changer la bannière
+            {t.overviewPanel.changeBanner}
           </button>
         </div>
 
@@ -177,7 +181,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
               type="button"
               onClick={() => iconInput.current?.click()}
               disabled={envoi !== null}
-              aria-label="Changer l'icône"
+              aria-label={t.overviewPanel.changeIcon}
               className="group/icon relative cursor-pointer rounded-3xl outline-none transition-transform duration-300 ease-out hover:scale-[1.04] focus-visible:scale-[1.04]"
             >
               <span className="block rounded-3xl bg-surface p-1">
@@ -214,7 +218,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
           />
 
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-lg leading-tight font-bold tracking-tight">{name.trim() || 'Sans nom'}</p>
+            <p className="truncate text-lg leading-tight font-bold tracking-tight">{name.trim() || t.overviewPanel.unnamed}</p>
             {isPlatform && (
               <Chip size="sm" variant="soft" className="cursor-default">
                 <Chip.Label>{HOSTING_LABEL[category]}</Chip.Label>
@@ -223,40 +227,40 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
             {server.selfHosted && (
               <Chip size="sm" color="success" variant="soft" className="cursor-default">
                 <Server className="size-2.5" aria-hidden />
-                <Chip.Label>Auto-hébergé</Chip.Label>
+                <Chip.Label>{t.overviewPanel.selfHosted}</Chip.Label>
               </Chip>
             )}
           </div>
           <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
             <Users className="size-3" aria-hidden />
-            {server.members.length} membre{server.members.length > 1 ? 's' : ''}
-            {isPlatform && ` · jusqu'à ${category === 'community' ? '4000' : '200'}`}
+            {tx(t.common.members, { n: server.members.length })}
+            {isPlatform && tx(t.overviewPanel.upTo, { n: category === 'community' ? '4000' : '200' })}
           </p>
         </div>
       </div>
 
       {/* ── Identité ──────────────────────────────────────────────────── */}
-      <SettingsSection title="Identité">
+      <SettingsSection title={t.overviewPanel.identity}>
         <SettingsContent>
           <div className="flex flex-col gap-4">
             <TextField value={name} onChange={setName} isInvalid={invalide} className="max-w-sm">
-              <Label>Nom du serveur</Label>
-              <Input placeholder="Nom du serveur" />
+              <Label>{t.overviewPanel.serverName}</Label>
+              <Input placeholder={t.overviewPanel.serverNamePlaceholder} />
             </TextField>
             <TextField value={description} onChange={setDescription} className="max-w-md">
-              <Label>Description (facultatif)</Label>
-              <TextArea placeholder="En une phrase, de quoi parle ce serveur ?" rows={2} />
+              <Label>{t.overviewPanel.descriptionLabel}</Label>
+              <TextArea placeholder={t.overviewPanel.descriptionPlaceholder} rows={2} />
             </TextField>
           </div>
         </SettingsContent>
       </SettingsSection>
 
-      <SettingsSection title="Accès">
+      <SettingsSection title={t.overviewPanel.access}>
         <SettingsRow
-          label="Sur invitation uniquement"
-          description="Le serveur n'apparaît pas dans la découverte publique ; il faut un lien d'invitation pour le rejoindre."
+          label={t.overviewPanel.inviteOnly}
+          description={t.overviewPanel.inviteOnlyDesc}
         >
-          <Switch isSelected={requireInvite} onChange={setRequireInvite} aria-label="Sur invitation uniquement">
+          <Switch isSelected={requireInvite} onChange={setRequireInvite} aria-label={t.overviewPanel.inviteOnly}>
             <Switch.Content>
               <Switch.Control>
                 <Switch.Thumb />
@@ -268,34 +272,34 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
 
       {isPlatform && (
         <SettingsSection
-          title="Type de serveur"
-          description="Hébergé à 100% par AlfyChat. Changer de catégorie redimensionne le plafond de membres."
+          title={t.overviewPanel.serverType}
+          description={t.overviewPanel.serverTypeDesc}
         >
           <SettingsContent>
             <RadioGroup
               value={category}
               onChange={(v) => setCategory(v as HostingCategory)}
-              aria-label="Catégorie du serveur"
+              aria-label={t.createServerDialog.categoryAria}
               className="grid gap-3 sm:grid-cols-2"
             >
               <HostingCategoryRadio
                 value="standard"
                 icon={Home}
-                title="Standard"
-                subtitle="Jusqu'à 200 membres"
+                title={t.hostingCategory.standardTitle}
+                subtitle={t.hostingCategory.standardSubtitle}
                 isDisabled={disabledFor('standard') || (category !== 'standard' && server.members.length > 200)}
               />
               <HostingCategoryRadio
                 value="community"
                 icon={Users}
-                title="Communautaire"
-                subtitle="Jusqu'à 4000 membres"
+                title={t.hostingCategory.communityTitle}
+                subtitle={t.hostingCategory.communitySubtitle}
                 isDisabled={disabledFor('community')}
               />
             </RadioGroup>
             {overCapacity && (
               <p className="mt-2 text-xs text-danger">
-                Ce serveur a {server.members.length} membres — repassez sous 200 avant de revenir en Standard.
+                {tx(t.overviewPanel.overCapacity, { n: server.members.length })}
               </p>
             )}
           </SettingsContent>
@@ -304,10 +308,10 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
 
       {server.selfHosted && (
         <SettingsSection
-          title="Souveraineté"
-          description="Les messages de ce serveur sont stockés sur votre propre nœud, pas sur l'infrastructure AlfyChat."
+          title={t.overviewPanel.sovereignty}
+          description={t.overviewPanel.sovereigntyDesc}
         >
-          <SettingsRow label="Garanties">
+          <SettingsRow label={t.overviewPanel.guarantees}>
             <TrustBadges compact />
           </SettingsRow>
         </SettingsSection>
@@ -315,7 +319,7 @@ export function OverviewPanel({ server, onSave }: OverviewPanelProps) {
 
       <div className="flex justify-end">
         <Button isDisabled={invalide || overCapacity || enregistrement} onPress={enregistrer}>
-          {enregistrement ? <Spinner size="sm" /> : 'Enregistrer les modifications'}
+          {enregistrement ? <Spinner size="sm" /> : t.overviewPanel.saveChanges}
         </Button>
       </div>
     </div>

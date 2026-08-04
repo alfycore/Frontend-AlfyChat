@@ -30,6 +30,7 @@ import { UserPopover } from '@/components/alfy/members/user-popover';
 import { useUserById } from '@/components/alfy/user-directory';
 import type { AlfyMessage } from '@/components/alfy/mock/types';
 import { useAppPrefs } from '@/hooks/use-app-prefs';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 const heureFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -47,6 +48,8 @@ export interface DmMessageRowProps {
   isPending?: boolean;
   /** L'envoi a échoué : propose de réessayer. */
   failed?: boolean;
+  /** Modérateur du salon — peut gérer (supprimer/épingler) les messages des autres. */
+  canManage?: boolean;
   onRetry?: (messageId: string) => void;
   onToggleReaction?: (messageId: string, emoji: string) => void;
   onEditMessage?: (messageId: string, content: string) => void;
@@ -62,12 +65,14 @@ function Row({
   isFresh = false,
   isPending = false,
   failed = false,
+  canManage = false,
   onRetry,
   onToggleReaction,
   onEditMessage,
   onDeleteMessage,
   onReply,
 }: DmMessageRowProps) {
+  const { t } = useTranslation();
   const userById = useUserById();
   const { prefs } = useAppPrefs();
   const auteur = userById(message.authorId);
@@ -104,7 +109,7 @@ function Row({
     >
       {message.pinned && (
         <p className="flex items-center gap-1 pl-11 text-[10px] font-medium text-warning">
-          <Pin className="size-2.5" aria-hidden /> Épinglé
+          <Pin className="size-2.5" aria-hidden /> {t.friends.dm.pinnedBadge}
         </p>
       )}
       {replyTo && <ReplyPreview original={replyTo} />}
@@ -159,7 +164,7 @@ function Row({
           {editing ? (
             <div className="mt-0.5">
               <TextArea
-                aria-label="Modifier le message"
+                aria-label={t.friends.dm.editMessageAriaLabel}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 autoFocus
@@ -176,19 +181,19 @@ function Row({
               <div className="mt-1.5 flex items-center gap-2">
                 <Button size="sm" variant="primary" onPress={enregistrer}>
                   <Check className="size-3.5" aria-hidden />
-                  Enregistrer
+                  {t.friends.dm.saveEdit}
                 </Button>
                 <Button size="sm" variant="ghost" onPress={annuler}>
                   <X className="size-3.5" aria-hidden />
-                  Annuler
+                  {t.common.cancel}
                 </Button>
-                <span className="text-[10px] text-muted">Entrée pour valider · Échap pour annuler</span>
+                <span className="text-[10px] text-muted">{t.friends.dm.editHint}</span>
               </div>
             </div>
           ) : (
             <div className="text-sm leading-relaxed text-foreground/90">
               <AlfyMarkdown content={message.content} mentions={message.mentions} />
-              {message.editedAt && <span className="ml-1 text-[10px] text-muted">(modifié)</span>}
+              {message.editedAt && <span className="ml-1 text-[10px] text-muted">{t.messageItem.edited}</span>}
             </div>
           )}
 
@@ -205,13 +210,13 @@ function Row({
 
           {failed && (
             <p className="mt-1 flex items-center gap-2 text-[11px] text-danger">
-              Message non envoyé.
+              {t.friends.dm.messageNotSent}
               <button
                 type="button"
                 className="cursor-pointer font-medium underline underline-offset-2"
                 onClick={() => onRetry?.(message.id)}
               >
-                Réessayer
+                {t.friends.dm.retry}
               </button>
             </p>
           )}
@@ -223,7 +228,7 @@ function Row({
           messageId={message.id}
           content={message.content}
           isOwn={estMoi}
-          canManage={false}
+          canManage={canManage}
           pinned={Boolean(message.pinned)}
           onReact={() => onToggleReaction?.(message.id, '👍')}
           onEdit={() => setDraft(message.content)}

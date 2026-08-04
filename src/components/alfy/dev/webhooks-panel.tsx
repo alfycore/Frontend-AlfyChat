@@ -4,26 +4,28 @@ import { Button, Chip, Code, Switch, Table } from '@heroui/react';
 import { Plus } from 'lucide-react';
 
 import { WEBHOOKS } from '@/components/alfy/mock/data';
+import { useTranslation } from '@/components/locale-provider';
 
 export function WebhooksPanel() {
+  const { t, tx } = useTranslation();
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-muted">
-          Recevez les événements de vos serveurs en HTTP POST signé (HMAC).
+          {t.admin.dev.webhooks.intro}
         </p>
         <Button size="sm">
           <Plus className="size-3.5" />
-          Nouveau webhook
+          {t.admin.dev.webhooks.newWebhook}
         </Button>
       </div>
       <Table>
         <Table.ScrollContainer>
-          <Table.Content aria-label="Webhooks">
+          <Table.Content aria-label={t.admin.dev.webhooks.ariaTable}>
             <Table.Header>
-              <Table.Column isRowHeader>URL</Table.Column>
-              <Table.Column>Événements</Table.Column>
-              <Table.Column>Actif</Table.Column>
+              <Table.Column isRowHeader>{t.admin.dev.webhooks.colUrl}</Table.Column>
+              <Table.Column>{t.admin.dev.webhooks.colEvents}</Table.Column>
+              <Table.Column>{t.admin.dev.webhooks.colActive}</Table.Column>
             </Table.Header>
             <Table.Body>
               {WEBHOOKS.map((hook) => (
@@ -41,7 +43,7 @@ export function WebhooksPanel() {
                     </div>
                   </Table.Cell>
                   <Table.Cell>
-                    <Switch defaultSelected={hook.active} aria-label={`Activer ${hook.url}`}>
+                    <Switch defaultSelected={hook.active} aria-label={tx(t.admin.dev.webhooks.ariaActivate, { url: hook.url })}>
                       <Switch.Content>
                         <Switch.Control>
                           <Switch.Thumb />

@@ -352,5 +352,50 @@
     "toastTokenCopied": "Token copié !",
     "toastRegistrationError": "Erreur lors de l'inscription",
     "toastServerError": "Erreur serveur"
+  },
+  "node": {
+    "docker": {
+      "title": "Configuration Docker",
+      "description": "Déployez votre nœud en une commande.",
+      "cliAccordionTitle": "Sans Docker (CLI Node.js)",
+      "cliCommandLabel": "Commande CLI",
+      "copyAriaLabel": "Copier {label}",
+      "copyTooltip": "Copier",
+      "copiedToast": "Copié"
+    },
+    "domain": {
+      "title": "Domaine personnalisé",
+      "verified": "Vérifié",
+      "pending": "En attente",
+      "noDomain": "Aucun domaine configuré",
+      "txtInstructions": "Ajoutez cet enregistrement TXT à votre zone DNS pour prouver la propriété :",
+      "copyTxtBtn": "Copier le TXT",
+      "verifyBtn": "Vérifier maintenant",
+      "txtCopiedToast": "Enregistrement TXT copié"
+    },
+    "logs": {
+      "title": "Journaux",
+      "levelsAriaLabel": "Niveaux de log",
+      "filterPlaceholder": "Filtrer…",
+      "filterAriaLabel": "Filtrer les journaux",
+      "noResults": "Aucune entrée ne correspond au filtre."
+    },
+    "status": {
+      "title": "État du nœud",
+      "uptimeLabel": "Disponibilité",
+      "messagesStoredLabel": "Messages stockés",
+      "diskSpaceLabel": "Espace disque",
+      "diskUsage": "{used} / {total} Go",
+      "uptimeDaysHours": "{d} j {h} h",
+      "uptimeHoursOnly": "{h} h"
+    },
+    "token": {
+      "title": "Jeton du nœud",
+      "description": "Authentifie votre nœud auprès de la passerelle AlfyChat. Ne le partagez jamais.",
+      "regenerateBtn": "Régénérer le jeton",
+      "regenerateDialogTitle": "Régénérer le jeton ?",
+      "regenerateDialogBody": "L'ancien jeton sera immédiatement invalidé : votre nœud passera hors ligne jusqu'à ce que vous le redémarriez avec le nouveau jeton.",
+      "confirmRegenerateBtn": "Régénérer"
+    }
   }
 }

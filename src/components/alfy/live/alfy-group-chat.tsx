@@ -20,6 +20,7 @@ import { DmChat } from '@/components/alfy/dm/dm-chat';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { toAlfyMessage, toAlfyUser } from '@/components/alfy/live/map';
 import type { AlfyUser } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 interface GroupInfo {
   name: string;
@@ -27,9 +28,9 @@ interface GroupInfo {
   participants: AlfyUser[];
 }
 
-const GROUP_VIDE: GroupInfo = { name: 'Groupe', participants: [] };
-
 export function AlfyGroupChat({ groupId }: { groupId: string }) {
+  const { t, tx } = useTranslation();
+  const GROUP_VIDE: GroupInfo = { name: t.chat.groupFallbackName, participants: [] };
   const { user } = useAuth();
   const { isMobile, openSidebar } = useMobileNav();
   const { initiateGroupCall } = useCallContext();
@@ -68,7 +69,7 @@ export function AlfyGroupChat({ groupId }: { groupId: string }) {
         setChargee({
           id: groupId,
           info: {
-            name: (data.name as string) || 'Groupe',
+            name: (data.name as string) || t.chat.groupFallbackName,
             avatarUrl: (data.avatarUrl ?? data.avatar_url) as string | undefined,
             participants: users,
           },
@@ -132,16 +133,18 @@ export function AlfyGroupChat({ groupId }: { groupId: string }) {
         key={groupId}
         conversationId={groupId}
         title={name}
-        subtitle={nbMembres > 0 ? `${nbMembres} membre${nbMembres > 1 ? 's' : ''}` : undefined}
+        subtitle={nbMembres > 0 ? tx(t.chat.groupMembersCount, { n: nbMembres, plural: nbMembres > 1 ? 's' : '' }) : undefined}
         avatarUrl={avatarUrl}
         notifTargetType="group"
         introText={
           <>
-            Ceci est le début de la conversation
+            {t.chat.groupIntroBase}
             {nbMembres > 0 && (
               <>
-                {' '}
-                avec <span className="font-medium text-foreground">{nbMembres} membre{nbMembres > 1 ? 's' : ''}</span>
+                {t.chat.groupIntroWith}
+                <span className="font-medium text-foreground">
+                  {tx(t.chat.groupMembersCount, { n: nbMembres, plural: nbMembres > 1 ? 's' : '' })}
+                </span>
               </>
             )}
             .
@@ -150,8 +153,8 @@ export function AlfyGroupChat({ groupId }: { groupId: string }) {
         messages={messages}
         currentUserId={meId}
         typingNames={(typingUsers ?? []).map(
-          (t: { id: string; username?: string }) =>
-            resolver(t.id)?.displayName || t.username || 'Quelqu’un',
+          (tu: { id: string; username?: string }) =>
+            resolver(tu.id)?.displayName || tu.username || t.chat.someoneFallback,
         )}
         isLoading={isLoading}
         hasMore={hasMoreMessages}

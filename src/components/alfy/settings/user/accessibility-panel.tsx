@@ -5,41 +5,43 @@ import { AlignLeft, RotateCcw, Rows3 } from 'lucide-react';
 
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
 import { SettingsContent, SettingsRow, SettingsSection } from '@/components/alfy/settings/section';
+import { useTranslation } from '@/components/locale-provider';
 import { useAppPrefs, type MessageDisplay } from '@/hooks/use-app-prefs';
 import { cn } from '@/lib/utils';
 
-const DISPLAYS: { id: MessageDisplay; nom: string; description: string; icon: typeof Rows3 }[] = [
-  {
-    id: 'cozy',
-    nom: 'Confortable',
-    description: 'Avatars ronds, espacement généreux — la vue par défaut.',
-    icon: Rows3,
-  },
-  {
-    id: 'compact',
-    nom: 'Compact',
-    description: 'Une ligne par message, avatars masquables.',
-    icon: AlignLeft,
-  },
-];
-
 export function AccessibilityPanel() {
   const { prefs, updatePrefs } = useAppPrefs();
+  const { t } = useTranslation();
+
+  const DISPLAYS: { id: MessageDisplay; nom: string; description: string; icon: typeof Rows3 }[] = [
+    {
+      id: 'cozy',
+      nom: t.profile.accessibility.displays.cozy.name,
+      description: t.profile.accessibility.displays.cozy.description,
+      icon: Rows3,
+    },
+    {
+      id: 'compact',
+      nom: t.profile.accessibility.displays.compact.name,
+      description: t.profile.accessibility.displays.compact.description,
+      icon: AlignLeft,
+    },
+  ];
 
   return (
     <div>
       <PanelHeader
-        title="Accessibilité"
-        description="Saturation des couleurs, contraste, mouvement et taille du texte."
+        title={t.profile.accessibility.title}
+        description={t.profile.accessibility.description}
       />
 
       {/* ── Affichage des messages ────────────────────────────────────── */}
-      <SettingsSection title="Affichage des messages de discussion">
+      <SettingsSection title={t.profile.accessibility.messageDisplay.sectionTitle}>
         <SettingsContent>
           <RadioGroup
             value={prefs.messageDisplay}
             onChange={(v) => updatePrefs({ messageDisplay: v as MessageDisplay })}
-            aria-label="Affichage des messages"
+            aria-label={t.profile.accessibility.messageDisplay.ariaLabel}
             className="grid gap-3 sm:grid-cols-2"
           >
             {DISPLAYS.map(({ id, nom, description, icon: Icon }) => (
@@ -72,7 +74,7 @@ export function AccessibilityPanel() {
       </SettingsSection>
 
       {/* ── Couleurs ──────────────────────────────────────────────────── */}
-      <SettingsSection title="Couleurs">
+      <SettingsSection title={t.profile.accessibility.colors.sectionTitle}>
         <SettingsContent>
           <Slider
             value={prefs.saturation}
@@ -80,11 +82,11 @@ export function AccessibilityPanel() {
             maxValue={100}
             step={5}
             onChange={(v) => updatePrefs({ saturation: Array.isArray(v) ? v[0] : v })}
-            aria-label="Saturation des couleurs"
+            aria-label={t.profile.accessibility.colors.saturationLabel}
             className="max-w-sm"
           >
             <div className="flex items-center justify-between">
-              <Label className="text-xs">Saturation des couleurs</Label>
+              <Label className="text-xs">{t.profile.accessibility.colors.saturationLabel}</Label>
               <Slider.Output className="text-xs text-muted" />
             </div>
             <Slider.Track>
@@ -93,15 +95,15 @@ export function AccessibilityPanel() {
             </Slider.Track>
           </Slider>
           <p className="mt-2 text-[11px] text-muted">
-            Réduisez la saturation si les couleurs vives vous gênent. 100 % correspond aux couleurs d&apos;origine.
+            {t.profile.accessibility.colors.saturationHint}
           </p>
         </SettingsContent>
         <SettingsRow
-          label="Mode contraste élevé"
-          description="Renforce les bordures, les séparateurs et les textes secondaires."
+          label={t.profile.accessibility.colors.highContrastLabel}
+          description={t.profile.accessibility.colors.highContrastDescription}
         >
           <Switch
-            aria-label="Mode contraste élevé"
+            aria-label={t.profile.accessibility.colors.highContrastLabel}
             isSelected={prefs.highContrast}
             onChange={(v) => updatePrefs({ highContrast: v })}
           >
@@ -115,13 +117,13 @@ export function AccessibilityPanel() {
       </SettingsSection>
 
       {/* ── Mouvement & texte ─────────────────────────────────────────── */}
-      <SettingsSection title="Mouvement et texte">
+      <SettingsSection title={t.profile.accessibility.motion.sectionTitle}>
         <SettingsRow
-          label="Réduire le mouvement"
-          description="Coupe les animations et les transitions dans toute l'application."
+          label={t.profile.accessibility.motion.reducedMotionLabel}
+          description={t.profile.accessibility.motion.reducedMotionDescription}
         >
           <Switch
-            aria-label="Réduire le mouvement"
+            aria-label={t.profile.accessibility.motion.reducedMotionLabel}
             isSelected={prefs.reducedMotion}
             onChange={(v) => updatePrefs({ reducedMotion: v })}
           >
@@ -139,11 +141,11 @@ export function AccessibilityPanel() {
             maxValue={130}
             step={5}
             onChange={(v) => updatePrefs({ fontScale: Array.isArray(v) ? v[0] : v })}
-            aria-label="Taille du texte"
+            aria-label={t.profile.accessibility.motion.fontSizeLabel}
             className="max-w-sm"
           >
             <div className="flex items-center justify-between">
-              <Label className="text-xs">Taille du texte</Label>
+              <Label className="text-xs">{t.profile.accessibility.motion.fontSizeLabel}</Label>
               <Slider.Output className="text-xs text-muted" />
             </div>
             <Slider.Track>
@@ -152,7 +154,7 @@ export function AccessibilityPanel() {
             </Slider.Track>
           </Slider>
           <p className="mt-2 text-[11px] text-muted">
-            S&apos;applique à toute l&apos;interface, pas seulement aux messages.
+            {t.profile.accessibility.motion.fontSizeHint}
           </p>
         </SettingsContent>
       </SettingsSection>
@@ -173,7 +175,7 @@ export function AccessibilityPanel() {
           }
         >
           <RotateCcw className="size-3.5" aria-hidden />
-          Réinitialiser l&apos;accessibilité
+          {t.profile.accessibility.reset}
         </Button>
       </div>
     </div>

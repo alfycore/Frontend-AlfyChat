@@ -213,7 +213,447 @@
     "kickConfirm": "Expulser {name} ?",
     "banConfirm": "Bannir {name} ?",
     "banReason": "Raison (optionnel)",
-    "badgeEarned": "Obtenu le {date}"
+    "badgeEarned": "Obtenu le {date}",
+    "appearance": {
+      "title": "Thème",
+      "description": "Profondeur du fond, couleurs de l'interface et icône de l'application.",
+      "previewButton": "Aperçu du thème",
+      "depth": {
+        "title": "Profondeur",
+        "description": "Le socle clair ou sombre de l'interface. Il se combine librement avec la couleur choisie plus bas.",
+        "ariaLabel": "Profondeur du thème"
+      },
+      "presets": {
+        "light": { "name": "Clair", "detail": "Papier froid" },
+        "dark": { "name": "Sombre", "detail": "Le défaut" },
+        "deep": { "name": "Sombre profond", "detail": "Contraste accru" },
+        "oled": { "name": "Nocturne", "detail": "Noir absolu, OLED" },
+        "system": { "name": "Système", "detail": "Suit l'appareil" }
+      },
+      "serverThemeOptions": {
+        "server": "Utiliser le thème du serveur",
+        "user": "Toujours utiliser mon thème"
+      },
+      "color": {
+        "title": "Couleur",
+        "description": "La teinte se propage à toute l'interface. Choisissez une ambiance, ou composez votre propre accent.",
+        "resetAccent": "Accent d'origine",
+        "ariaLabel": "Thème de couleur",
+        "customTitle": "Accent personnalisé",
+        "customDescription": "Une couleur libre pour les boutons, les liens et le focus.",
+        "hueSaturationAriaLabel": "Teinte et intensité",
+        "hueAriaLabel": "Nuance"
+      },
+      "app": {
+        "title": "Application",
+        "description": "Où et comment votre thème s'applique.",
+        "syncTitle": "Synchroniser avec mes autres appareils",
+        "syncDetail": "Le thème, la profondeur et l'icône suivent votre compte.",
+        "syncAriaLabel": "Synchroniser le thème avec mes autres appareils",
+        "applyToProfilesTitle": "Appliquer sur les profils des autres membres",
+        "applyToProfilesDetail": "Ignore les couleurs de profil personnalisées.",
+        "applyToProfilesAriaLabel": "Appliquer le thème sur les profils des autres utilisateurs",
+        "serversTitle": "Dans les serveurs",
+        "serversDetail": "Quand un serveur impose son propre thème.",
+        "serversAriaLabel": "Thème par défaut dans les serveurs"
+      },
+      "icon": {
+        "title": "Icône de l'appli",
+        "description": "Visible dans l'onglet du navigateur et sur l'écran d'accueil.",
+        "ariaLabel": "Icône de l'application"
+      },
+      "link": {
+        "title": "Accessibilité",
+        "description": "Saturation, contraste élevé, mouvement réduit, taille du texte."
+      },
+      "preview": {
+        "title": "Aperçu du thème",
+        "description": "Rendu réel de l'interface avec vos réglages actuels."
+      },
+      "iconPreview": {
+        "title": "Aperçu de l'icône",
+        "tabLabel": "Onglet",
+        "homeScreenLabel": "Écran d'accueil",
+        "sizesLabel": "Tailles"
+      }
+    },
+    "account": {
+      "title": "Mon compte",
+      "description": "Votre identité publique sur AlfyChat. Tout ce que vous modifiez ici apparaît en direct dans l'aperçu.",
+      "changeBanner": "Changer la bannière",
+      "changeAvatar": "Changer l'avatar",
+      "noName": "Sans nom",
+      "memberSince": "Membre depuis {date}",
+      "identity": {
+        "title": "Identité",
+        "description": "Visible par tous les membres qui croisent votre profil.",
+        "displayNameLabel": "Nom affiché",
+        "displayNamePlaceholder": "Comment souhaitez-vous apparaître ?",
+        "usernameLabel": "Nom d'utilisateur",
+        "usernameHint": "Le changer demande votre mot de passe — rendez-vous dans Connexion & 2FA.",
+        "bioLabel": "Bio",
+        "bioPlaceholder": "Parlez de vous en quelques mots…"
+      },
+      "status": {
+        "title": "Statut personnalisé",
+        "description": "Une phrase affichée sous votre nom dans les listes de membres.",
+        "label": "Votre statut",
+        "placeholder": "En train de coder…",
+        "clear": "Effacer le statut"
+      },
+      "saveBar": {
+        "invalid": "Corrigez les champs en rouge avant d'enregistrer.",
+        "ready": "Modifications prêtes à être enregistrées.",
+        "save": "Enregistrer"
+      },
+      "toast": {
+        "avatarUploadError": "Envoi de l'avatar impossible",
+        "bannerUploadError": "Envoi de la bannière impossible",
+        "saveError": "Enregistrement impossible",
+        "saveErrorDescription": "Réessayez dans un instant.",
+        "saved": "Profil enregistré"
+      }
+    },
+    "accessibility": {
+      "title": "Accessibilité",
+      "description": "Saturation des couleurs, contraste, mouvement et taille du texte.",
+      "displays": {
+        "cozy": { "name": "Confortable", "description": "Avatars ronds, espacement généreux — la vue par défaut." },
+        "compact": { "name": "Compact", "description": "Une ligne par message, avatars masquables." }
+      },
+      "messageDisplay": {
+        "sectionTitle": "Affichage des messages de discussion",
+        "ariaLabel": "Affichage des messages"
+      },
+      "colors": {
+        "sectionTitle": "Couleurs",
+        "saturationLabel": "Saturation des couleurs",
+        "saturationHint": "Réduisez la saturation si les couleurs vives vous gênent. 100 % correspond aux couleurs d'origine.",
+        "highContrastLabel": "Mode contraste élevé",
+        "highContrastDescription": "Renforce les bordures, les séparateurs et les textes secondaires."
+      },
+      "motion": {
+        "sectionTitle": "Mouvement et texte",
+        "reducedMotionLabel": "Réduire le mouvement",
+        "reducedMotionDescription": "Coupe les animations et les transitions dans toute l'application.",
+        "fontSizeLabel": "Taille du texte",
+        "fontSizeHint": "S'applique à toute l'interface, pas seulement aux messages."
+      },
+      "reset": "Réinitialiser l'accessibilité"
+    },
+    "chat": {
+      "title": "Chat",
+      "description": "Médias, aperçus, saisie et recherche dans les conversations.",
+      "messages": {
+        "sectionTitle": "Messages",
+        "sectionDescription": "Afficher les images, vidéos et médias partagés dans les conversations.",
+        "linkedMediaLabel": "Lorsqu'ils sont envoyés comme liens dans le salon",
+        "linkedMediaAriaLabel": "Afficher les médias envoyés comme liens",
+        "uploadedMediaLabel": "Lorsqu'ils sont téléversés directement dans AlfyChat",
+        "uploadedMediaAriaLabel": "Afficher les médias téléversés",
+        "embedsLabel": "Afficher les intégrations et aperçus de lien",
+        "embedsDescription": "Titre, description et vignette des liens partagés.",
+        "reactionsLabel": "Afficher les réactions emoji",
+        "spoilersLabel": "Afficher les spoilers",
+        "spoilersDescription": "Contenu masqué par ||double barre||.",
+        "spoilerOptions": {
+          "always": "Toujours",
+          "moderated": "Sur les salons que je modère",
+          "click": "Au clic uniquement"
+        },
+        "threadsSplitLabel": "Ouvrir les fils en fenêtre fractionnée",
+        "threadsSplitDescription": "Le fil s'ouvre à côté du salon plutôt qu'en plein écran.",
+        "avatarsLabel": "Afficher les avatars des utilisateurs",
+        "avatarsHint": {
+          "prefix": "Pour masquer les avatars, rendez-vous dans",
+          "link": "Accessibilité",
+          "middle": "et sélectionnez",
+          "compact": "Compact",
+          "suffix": "sous Affichage des messages."
+        },
+        "avatarsHintUnlocked": "Mode compact : les avatars peuvent être masqués pour gagner de la place."
+      },
+      "relatedSettingsHeading": "Paramètres connexes",
+      "relatedAccessibility": {
+        "title": "Accessibilité",
+        "description": "Ajuste la densité visuelle des messages et de l'interface."
+      },
+      "messageBox": {
+        "sectionTitle": "Boîte de discussion",
+        "previewSyntaxLabel": "Afficher un aperçu des émojis, des mentions et de la syntaxe Markdown pendant la saisie",
+        "previewSyntaxAriaLabel": "Aperçu de la syntaxe pendant la saisie",
+        "emoticonLabel": "Convertir automatiquement les émoticônes en émojis",
+        "emoticonDescription": "Par exemple, si vous tapez :) AlfyChat le convertira en 🙂",
+        "emoticonAriaLabel": "Convertir les émoticônes en émojis",
+        "stickerLabel": "Afficher les autocollants et GIF dans les résultats d'autocomplétion",
+        "stickerAriaLabel": "Autocollants et GIF dans l'autocomplétion",
+        "commandsLabel": "Afficher les commandes dans les résultats d'autocomplétion",
+        "commandsAriaLabel": "Commandes dans l'autocomplétion",
+        "sendButtonLabel": "Afficher le bouton Envoyer un message",
+        "sendButtonAriaLabel": "Afficher le bouton Envoyer"
+      },
+      "search": {
+        "sectionTitle": "Rechercher",
+        "sectionDescription": "Par défaut, la recherche dans les messages privés…",
+        "ariaLabel": "Portée de la recherche dans les messages privés",
+        "selectedOption": "Recherche uniquement dans les MP sélectionnés",
+        "allOption": "Recherche dans tous mes MP"
+      }
+    },
+    "archives": {
+      "title": "Archives",
+      "description": "Vos messages privés sont chiffrés de bout en bout : nous n'en gardons qu'une copie chiffrée limitée. Archivez-les où vous voulez.",
+      "e2eeNotice": "Les archives sont chiffrées avec vos clés. Même exportées vers une base externe, elles restent illisibles sans votre appareil.",
+      "quota": {
+        "sectionTitle": "Quota côté serveur",
+        "description": "Chaque conversation privée conserve jusqu'à 20 000 messages chiffrés ou 30 jours d'historique sur nos serveurs. Au-delà, les plus anciens messages sont supprimés côté serveur (jamais des appareils qui les ont archivés).",
+        "loading": "Calcul de l'usage…",
+        "empty": "Aucune conversation privée à afficher pour l'instant.",
+        "groupFallbackName": "Groupe",
+        "conversationFallbackName": "Conversation"
+      },
+      "externalDb": {
+        "sectionTitle": "Base de données externe",
+        "toggleLabel": "Archiver vers ma propre base",
+        "toggleDescription": "Déportez l'historique chiffré vers votre propre base MySQL.",
+        "configuredChip": "Configurée",
+        "hostLabel": "Hôte",
+        "hostPlaceholder": "db.example.com",
+        "portLabel": "Port",
+        "portPlaceholder": "3306",
+        "userLabel": "Utilisateur",
+        "userPlaceholder": "alfychat",
+        "passwordLabel": "Mot de passe",
+        "passwordPlaceholderConfigured": "••••••••",
+        "databaseLabel": "Base de données",
+        "databasePlaceholder": "alfychat_archives",
+        "testButton": "Tester la connexion",
+        "testing": "Test en cours…",
+        "saveButton": "Enregistrer",
+        "saving": "Enregistrement…"
+      },
+      "exportAll": {
+        "button": "Exporter toutes mes archives",
+        "exporting": "Export en cours…"
+      },
+      "toast": {
+        "fillRequired": "Renseignez au moins hôte, utilisateur, mot de passe et base.",
+        "testSuccess": "Connexion réussie",
+        "testError": "Connexion échouée",
+        "saveSuccess": "Configuration enregistrée",
+        "saveError": "Échec de la connexion",
+        "exportStarted": "Export lancé",
+        "exportStartedDescription": "Vous recevrez un lien de téléchargement.",
+        "exportError": "Échec de l'export"
+      }
+    },
+    "voice": {
+      "title": "Voix & vidéo",
+      "description": "Périphériques et qualité de vos appels.",
+      "devices": {
+        "sectionTitle": "Périphériques",
+        "microphoneLabel": "Microphone",
+        "outputLabel": "Sortie audio",
+        "defaultMic": "Micro par défaut",
+        "defaultOutput": "Sortie par défaut",
+        "micFallback": "Microphone {n}",
+        "outputFallback": "Sortie {n}"
+      },
+      "input": {
+        "sectionTitle": "Entrée micro",
+        "sensitivityLabel": "Sensibilité d'entrée",
+        "volumeAriaLabel": "Volume d'entrée",
+        "noiseSuppressionLabel": "Suppression de bruit",
+        "noiseSuppressionDescription": "Filtre les bruits de fond (clavier, ventilateur).",
+        "echoCancellationLabel": "Annulation d'écho",
+        "echoCancellationDescription": "Évite le larsen quand vous utilisez des haut-parleurs."
+      },
+      "activation": {
+        "sectionTitle": "Mode d'activation",
+        "sectionDescription": "Comment déclencher la transmission vocale.",
+        "modes": {
+          "vad": { "label": "Activité vocale", "desc": "Déclenché automatiquement par votre voix." },
+          "ptt": { "label": "Push-to-talk", "desc": "Maintenez une touche pour parler." },
+          "always": { "label": "Toujours ouvert", "desc": "Microphone constamment actif." }
+        }
+      }
+    },
+    "layout": {
+      "title": "Mise en page",
+      "description": "Disposition et densité de l'interface.",
+      "serverBar": {
+        "sectionTitle": "Barre de serveurs",
+        "ariaLabel": "Position de la barre",
+        "left": "À gauche",
+        "right": "À droite"
+      },
+      "density": {
+        "sectionTitle": "Densité",
+        "compactLabel": "Mode compact",
+        "compactDescription": "Réduit l'espacement des messages pour en afficher plus."
+      }
+    },
+    "language": {
+      "title": "Langue",
+      "description": "La langue de l'interface. 12 langues disponibles.",
+      "sectionTitle": "Langue de l'interface",
+      "ariaLabel": "Langue"
+    },
+    "keys": {
+      "title": "Clés de chiffrement",
+      "description": "Votre compte possède une seule paire de clés Signal, chiffrée avec votre mot de passe et stockée uniquement sous cette forme chiffrée sur nos serveurs.",
+      "e2eeActiveTitle": "Chiffrement de bout en bout actif",
+      "e2eeActiveDescription": "Vos clés privées ne quittent jamais vos appareils. AlfyChat ne peut pas lire vos messages — et personne d'autre non plus.",
+      "fingerprint": {
+        "sectionTitle": "Votre empreinte",
+        "sectionDescription": "Comparez cette empreinte de visu ou par un autre canal sûr avec vos contacts pour vous protéger des attaques de l'intercepteur.",
+        "rowLabel": "Identité de chiffrement du compte",
+        "copyAriaLabel": "Copier l'empreinte",
+        "copiedToast": "Empreinte copiée"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Ce qui vous est signalé, et comment.",
+      "general": {
+        "sectionTitle": "Général",
+        "desktopLabel": "Notifications sur le bureau",
+        "desktopDescription": "Afficher une notification système.",
+        "soundLabel": "Sons",
+        "soundDescription": "Jouer un son à la réception."
+      },
+      "triggers": {
+        "sectionTitle": "Déclencheurs",
+        "dmLabel": "Messages privés",
+        "dmDescription": "Toujours notifier les DM et groupes.",
+        "mentionsLabel": "Mentions",
+        "mentionsDescription": "@vous, @rôle et @everyone."
+      },
+      "dnd": {
+        "sectionTitle": "Ne pas déranger",
+        "label": "Mode ne pas déranger",
+        "description": "Coupe les notifications immédiatement (les mentions passent quand même)."
+      },
+      "quietHours": {
+        "hint": "Plage horaire de silence quotidienne",
+        "from": "De",
+        "to": "à",
+        "clear": "Effacer"
+      }
+    },
+    "security": {
+      "title": "Sécurité",
+      "description": "Mot de passe, double authentification et connexions.",
+      "auth": {
+        "sectionTitle": "Authentification"
+      },
+      "password": {
+        "label": "Mot de passe",
+        "description": "Modifiez votre mot de passe de connexion.",
+        "changeButton": "Changer",
+        "modalTitle": "Changer le mot de passe",
+        "currentLabel": "Mot de passe actuel",
+        "currentPlaceholder": "Mot de passe actuel",
+        "newLabel": "Nouveau mot de passe",
+        "newPlaceholder": "Min. 8 caractères",
+        "confirmLabel": "Confirmer le nouveau mot de passe",
+        "confirmPlaceholder": "Confirmer",
+        "submitButton": "Modifier le mot de passe",
+        "submitting": "Modification…",
+        "errors": {
+          "fillAll": "Veuillez remplir tous les champs",
+          "mismatch": "Les mots de passe ne correspondent pas",
+          "tooShort": "Le nouveau mot de passe doit faire au moins 8 caractères",
+          "reencryptFailed": "Impossible de ré-encrypter la clé de chiffrement.",
+          "wrongCurrent": "Mot de passe actuel incorrect",
+          "generic": "Erreur lors du changement de mot de passe"
+        },
+        "successToast": "Mot de passe modifié avec succès"
+      },
+      "twoFA": {
+        "label": "Double authentification (2FA)",
+        "description": "Application d'authentification (TOTP) — recommandé pour tous les comptes.",
+        "enabledChip": "Activée",
+        "disabledChip": "Désactivée",
+        "disableButton": "Désactiver",
+        "configureButton": "Configurer",
+        "modalTitleDisable": "Désactiver la 2FA",
+        "modalTitleBackup": "2FA activée",
+        "modalTitleSetup": "Vérifier votre appareil",
+        "setupInstructions": "Scannez ce QR code avec votre application d'authentification, puis saisissez le code à 6 chiffres.",
+        "generatingSecret": "Génération du secret…",
+        "codeAriaLabel": "Code de vérification",
+        "disableInstructions": "Saisissez le code à 6 chiffres de votre application d'authentification pour désactiver la 2FA.",
+        "disableCodeAriaLabel": "Code de désactivation",
+        "enabledMessage": "La 2FA est activée !",
+        "backupHint": "Conservez ces codes de récupération : ils permettent de retrouver l'accès si vous perdez votre appareil. Ils ne seront plus affichés ensuite.",
+        "disabling": "Désactivation…",
+        "activateButton": "Activer",
+        "startError": "Impossible de démarrer la configuration 2FA",
+        "invalidCode": "Code invalide"
+      }
+    },
+    "privacy": {
+      "title": "Confidentialité",
+      "description": "AlfyChat ne collecte aucune donnée publicitaire. Ces réglages ne concernent que ce que les autres membres voient de vous.",
+      "dm": {
+        "sectionTitle": "Messages privés",
+        "filterStrangersLabel": "Filtrer les messages des inconnus",
+        "filterStrangersDescription": "Les personnes sans ami commun passent par une demande de message."
+      },
+      "visibility": {
+        "sectionTitle": "Visibilité",
+        "sharePresenceLabel": "Partager mon statut de présence",
+        "sharePresenceDescription": "Vos contacts voient si vous êtes en ligne. Désactivé = toujours invisible."
+      },
+      "gdpr": {
+        "sectionTitle": "Vos données (RGPD)",
+        "sectionDescription": "Données hébergées en France. Export et suppression à tout moment, sans justification.",
+        "exportLabel": "Exporter mes données",
+        "exportDescription": "Archive complète (profil, messages non chiffrés côté serveur, préférences) au format JSON.",
+        "exportButton": "Exporter",
+        "exporting": "Export en cours…",
+        "hostingLabel": "Hébergement"
+      },
+      "danger": {
+        "sectionTitle": "Zone dangereuse",
+        "deleteLabel": "Supprimer mon compte",
+        "deleteDescription": "Suppression définitive sous 30 jours, conformément au RGPD. Irréversible.",
+        "deleteButton": "Supprimer",
+        "modalTitle": "Supprimer définitivement votre compte ?",
+        "modalBody": "Vos messages, clés de chiffrement et données personnelles seront supprimés sous 30 jours. Cette action est irréversible.",
+        "passwordLabel": "Mot de passe",
+        "passwordPlaceholder": "Confirmez avec votre mot de passe",
+        "confirmButton": "Supprimer mon compte",
+        "deleting": "Suppression…"
+      },
+      "errors": {
+        "exportFailed": "Échec de l'export",
+        "passwordRequired": "Mot de passe requis",
+        "wrongPassword": "Mot de passe incorrect",
+        "generic": "Une erreur est survenue"
+      },
+      "toast": {
+        "exportStarted": "Export lancé",
+        "exportStartedDescription": "Vous recevrez un lien de téléchargement."
+      }
+    },
+    "sessions": {
+      "title": "Sessions actives",
+      "description": "Les appareils actuellement connectés à votre compte. Révoquez ce que vous ne reconnaissez pas.",
+      "sectionTitle": "Appareils connectés",
+      "loading": "Chargement des sessions…",
+      "empty": "Aucune autre session active.",
+      "currentChip": "Cette session",
+      "revokeButton": "Révoquer",
+      "revokeAllButton": "Déconnecter tous les autres appareils",
+      "sessionDescription": "{location} · dernière activité {date}",
+      "toast": {
+        "revoked": "Session révoquée",
+        "revokedAllTitle": "Sessions révoquées",
+        "revokedAllDescription": "Tous les autres appareils ont été déconnectés."
+      }
+    }
   },
   "userProfile": {
     "cardColor": "Couleur de la carte",

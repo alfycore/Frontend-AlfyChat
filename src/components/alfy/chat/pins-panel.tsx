@@ -7,33 +7,35 @@ import type { AlfyMessage } from '@/components/alfy/mock/types';
 import { useUserById } from '@/components/alfy/user-directory';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { EmptyState } from '@/components/alfy/primitives/empty-state';
+import { useTranslation } from '@/components/locale-provider';
 
 const timeFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 /** Bouton + popover listant les messages épinglés du salon. */
 export function PinsPanel({ messages, onJump }: { messages: AlfyMessage[]; onJump?: (id: string) => void }) {
+  const { t, tx } = useTranslation();
   const userById = useUserById();
   const pinned = messages.filter((m) => m.pinned);
   return (
     <Popover>
       <Tooltip delay={300}>
         <Popover.Trigger
-          aria-label="Messages épinglés"
+          aria-label={t.chat.pinsTooltip}
           className="flex size-8 cursor-pointer items-center justify-center rounded-md text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
         >
           <Pin className="size-4.5" />
         </Popover.Trigger>
         <Tooltip.Content>
-          <p>Messages épinglés</p>
+          <p>{t.chat.pinsTooltip}</p>
         </Tooltip.Content>
       </Tooltip>
       <Popover.Content className="w-88 p-0">
-        <Popover.Dialog aria-label="Messages épinglés" className="p-0">
+        <Popover.Dialog aria-label={t.chat.pinsTooltip} className="p-0">
           <div className="border-b border-separator px-3 py-2 text-sm font-semibold">
-            Messages épinglés — {pinned.length}
+            {tx(t.chat.pinsHeading, { n: pinned.length })}
           </div>
           {pinned.length === 0 ? (
-            <EmptyState icon={Pin} title="Aucun message épinglé" description="Épinglez un message via ses actions pour le retrouver ici." />
+            <EmptyState icon={Pin} title={t.chat.pinsEmpty} description={t.chat.pinsEmptyDesc} />
           ) : (
             <ScrollShadow className="max-h-96 overflow-y-auto p-2" orientation="vertical">
               <div className="flex flex-col gap-1">

@@ -5,6 +5,7 @@ import { Volume2 } from 'lucide-react';
 
 import { CallControls } from '@/components/alfy/calls/call-controls';
 import { CallTile } from '@/components/alfy/calls/call-tile';
+import { useTranslation } from '@/components/locale-provider';
 
 export interface RoomParticipant {
   userId: string;
@@ -40,13 +41,14 @@ export function VoiceRoom({
   onLeave,
   ...controls
 }: VoiceRoomProps) {
+  const { t, tx } = useTranslation();
   return (
     <div className="flex h-full flex-col items-center gap-4 bg-background p-4">
       <div className="flex items-center gap-2 pt-2">
         <Volume2 className="size-4 text-muted" aria-hidden />
         <h2 className="text-sm font-semibold">{channelName}</h2>
         <Chip size="sm" variant="soft" className="cursor-default">
-          {participants.length} participants
+          {tx(t.calls.room.participantCount, { n: participants.length })}
         </Chip>
         {tierLabel && (
           <Chip size="sm" variant="soft" className="cursor-default">

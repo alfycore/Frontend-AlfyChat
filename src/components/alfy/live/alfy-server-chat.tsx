@@ -2,20 +2,29 @@
 
 /**
  * Container : chat d'un salon de serveur, branché sur les vraies données.
- * Remplace atelier/chat/ServerChat.tsx.
+ *
+ * Réutilise `DmChat` — le même moteur de fil que les MP/groupes (défilement,
+ * regroupement, saisie, épingles/recherche) — plutôt que l'ancien `ChatView`
+ * dédié aux serveurs, pour que les trois contextes se comportent et se
+ * ressemblent de façon identique. Les différences réelles (pas de
+ * chiffrement, identité par salon plutôt que par contact, modération par
+ * rôle) sont réduites aux quelques props que `DmChat` expose pour ça.
  */
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
-import { ChatView } from '@/components/alfy/chat/chat-view';
+import { DmChat } from '@/components/alfy/dm/dm-chat';
+import { CHANNEL_TYPE_ICONS } from '@/components/alfy/servers/channel-item';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { useAlfyChannels } from '@/components/alfy/live/use-alfy-channels';
 import { useAlfyMembers } from '@/components/alfy/live/use-alfy-members';
 import { useAlfyServerMessages } from '@/components/alfy/live/use-alfy-server-messages';
 import { toAlfyUser } from '@/components/alfy/live/map';
-import type { AlfyChannel, AlfyServer } from '@/components/alfy/mock/types';
+import { PERMISSIONS } from '@/components/alfy/mock/types';
+import type { AlfyChannel } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 interface AlfyServerChatProps {
   serverId: string;
@@ -26,6 +35,7 @@ interface AlfyServerChatProps {
 }
 
 export function AlfyServerChat({ serverId, channelId, channelName, channelType }: AlfyServerChatProps) {
+  const { t, tx } = useTranslation();
   const { user } = useAuth();
   const { isMobile, openSidebar, toggleMemberList, toggleMemberListDesktop, memberListDesktopVisible } =
     useMobileNav();
@@ -42,7 +52,10 @@ export function AlfyServerChat({ serverId, channelId, channelName, channelType }
     edit,
     remove,
     toggleReaction,
+    notifyTyping,
   } = useAlfyServerMessages(serverId, channelId);
+
+  const meId = user?.id ?? '';
 
   const resolver = useMemo(() => {
     const table = new Map(users);
@@ -56,7 +69,7 @@ export function AlfyServerChat({ serverId, channelId, channelName, channelType }
       found ?? {
         id: channelId,
         serverId,
-        name: channelName ?? 'salon',
+        name: channelName ?? t.chat.channelFallbackName,
         type: (channelType as AlfyChannel['type']) ?? 'text',
         categoryId: null,
         unreadCount: 0,
@@ -65,31 +78,59 @@ export function AlfyServerChat({ serverId, channelId, channelName, channelType }
     );
   }, [base, channelId, serverId, channelName, channelType]);
 
-  // Le serveur transmis au chat porte membres + rôles (mentions, couleurs).
-  const server: AlfyServer | undefined = useMemo(
-    () => (base ? { ...base, members, roles } : undefined),
-    [base, members, roles],
+  /* Modération : propriétaire ou rôle avec MANAGE_MESSAGES/ADMIN — permet de
+     supprimer les messages des autres, pas de les modifier (jamais permis,
+     y compris sur Discord). */
+  const canManageMessages = useMemo(() => {
+    if (!base || !meId) return false;
+    if (base.ownerId === meId) return true;
+    const moi = members.find((m) => m.userId === meId);
+    if (!moi) return false;
+    const rolePerms = moi.roleIds
+      .map((id) => roles.find((r) => r.id === id)?.permissions ?? 0)
+      .reduce((acc, p) => acc | p, 0);
+    return (rolePerms & (PERMISSIONS.MANAGE_MESSAGES | PERMISSIONS.ADMIN)) !== 0;
+  }, [base, members, roles, meId]);
+
+  const envoyer = useCallback(
+    (content: string, replyToId?: string) => send(content, replyToId ? { replyToId } : undefined),
+    [send],
   );
 
   return (
     <UserDirectoryProvider value={resolver}>
-      <ChatView
-        channel={channel}
+      {/* `key` : changer de salon remonte la vue (défilement, brouillon de
+          réponse, compteurs) sans logique de remise à zéro dédiée. */}
+      <DmChat
+        key={channelId}
+        conversationId={channelId}
+        title={channel.name}
+        subtitle={channel.topic}
+        headerIcon={CHANNEL_TYPE_ICONS[channel.type]}
+        notifTargetType="channel"
+        encrypted={false}
+        introText={
+          channel.type === 'announcement'
+            ? <>{t.chat.announcementIntroPrefix}<span className="font-medium text-foreground">#{channel.name}</span>{t.chat.announcementIntroSuffix}</>
+            : <>{t.chat.channelIntroPrefix}<span className="font-medium text-foreground">#{channel.name}</span>{t.chat.channelIntroSuffix}</>
+        }
+        composerPlaceholder={tx(t.chat.composerPlaceholderChannel, { name: channel.name })}
         messages={messages}
-        server={server}
-        currentUserId={user?.id ?? ''}
+        currentUserId={meId}
         typingNames={typingNames}
         isLoading={isLoading}
-        hasMoreMessages={hasMore}
-        isLoadingMoreMessages={isLoadingMore}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
         onLoadMore={loadMore}
-        onSend={(content) => send(content)}
+        onSend={envoyer}
+        onTyping={notifyTyping}
         onToggleReaction={toggleReaction}
         onEditMessage={edit}
         onDeleteMessage={remove}
+        canManageMessages={canManageMessages}
+        onOpenNav={isMobile ? openSidebar : undefined}
         onToggleMembers={isMobile ? toggleMemberList : toggleMemberListDesktop}
         membersOpen={memberListDesktopVisible}
-        onOpenNav={openSidebar}
       />
     </UserDirectoryProvider>
   );

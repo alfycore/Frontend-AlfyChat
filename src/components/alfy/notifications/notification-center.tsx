@@ -11,6 +11,7 @@ import {
 } from '@/lib/notification-store';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { EmptyState } from '@/components/alfy/primitives/empty-state';
+import { useTranslation } from '@/components/locale-provider';
 
 const ICON: Record<NotificationEntry['type'], typeof AtSign> = {
   mention: AtSign,
@@ -24,6 +25,7 @@ const timeFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short
 
 /** Cloche + centre de notifications. */
 export function NotificationCenter() {
+  const { t, tx } = useTranslation();
   const { history: items } = useNotificationStore();
   const unread = items.filter((n) => !n.read).length;
 
@@ -31,7 +33,7 @@ export function NotificationCenter() {
     <Popover>
       <Tooltip delay={300}>
         <Popover.Trigger
-          aria-label={`Notifications${unread ? ` (${unread} non lues)` : ''}`}
+          aria-label={unread ? tx(t.admin.notifications.centerAriaUnread, { n: unread }) : t.admin.notifications.centerHeading}
           className="relative flex size-8 cursor-pointer items-center justify-center rounded-md text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
         >
           <Bell className="size-4.5" />
@@ -42,21 +44,21 @@ export function NotificationCenter() {
           )}
         </Popover.Trigger>
         <Tooltip.Content>
-          <p>Notifications</p>
+          <p>{t.admin.notifications.centerHeading}</p>
         </Tooltip.Content>
       </Tooltip>
       <Popover.Content className="w-88 p-0">
-        <Popover.Dialog aria-label="Notifications" className="p-0">
+        <Popover.Dialog aria-label={t.admin.notifications.centerHeading} className="p-0">
           <div className="flex items-center justify-between border-b border-separator px-3 py-2">
-            <span className="text-sm font-semibold">Notifications</span>
+            <span className="text-sm font-semibold">{t.admin.notifications.centerHeading}</span>
             {unread > 0 && (
               <Button size="sm" variant="ghost" onPress={() => markAllHistoryRead()}>
-                Tout marquer comme lu
+                {t.admin.notifications.markAllRead}
               </Button>
             )}
           </div>
           {items.length === 0 ? (
-            <EmptyState icon={Bell} title="Aucune notification" description="Vous êtes à jour." />
+            <EmptyState icon={Bell} title={t.admin.notifications.emptyTitle} description={t.admin.notifications.emptyDesc} />
           ) : (
             <ScrollShadow className="max-h-96 overflow-y-auto p-1" orientation="vertical">
               <div className="flex flex-col">
@@ -90,7 +92,7 @@ export function NotificationCenter() {
                         </span>
                         <span className="mt-0.5 block text-[10px] text-muted">{timeFmt.format(new Date(n.timestamp))}</span>
                       </span>
-                      {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" aria-label="Non lu" />}
+                      {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" aria-label={t.admin.notifications.unreadAria} />}
                     </button>
                   );
                 })}

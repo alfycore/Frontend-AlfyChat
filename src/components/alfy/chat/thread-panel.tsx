@@ -6,6 +6,7 @@ import { MessageSquareText, X } from 'lucide-react';
 import type { AlfyMessage } from '@/components/alfy/mock/types';
 import { MessageItem } from '@/components/alfy/chat/message-item';
 import { Composer } from '@/components/alfy/chat/composer';
+import { useTranslation } from '@/components/locale-provider';
 
 interface ThreadPanelProps {
   origin: AlfyMessage;
@@ -16,17 +17,18 @@ interface ThreadPanelProps {
 
 /** Panneau de fil de discussion (colonne droite ≥ lg, plein écran via Drawer sinon). */
 export function ThreadPanel({ origin, messages, currentUserId, onClose }: ThreadPanelProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex h-full w-full flex-col bg-surface">
       <header className="flex h-12 shrink-0 items-center gap-2 border-b border-separator px-3">
         <MessageSquareText className="size-4 text-muted" aria-hidden />
-        <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">Fil de discussion</h3>
+        <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{t.chat.threadPanelTitle}</h3>
         <Tooltip delay={300}>
-          <Button isIconOnly size="sm" variant="ghost" aria-label="Fermer le fil" onPress={onClose}>
+          <Button isIconOnly size="sm" variant="ghost" aria-label={t.chat.closeThread} onPress={onClose}>
             <X className="size-4" />
           </Button>
           <Tooltip.Content>
-            <p>Fermer le fil</p>
+            <p>{t.chat.closeThread}</p>
           </Tooltip.Content>
         </Tooltip>
       </header>
@@ -43,7 +45,7 @@ export function ThreadPanel({ origin, messages, currentUserId, onClose }: Thread
           />
         ))}
       </ScrollShadow>
-      <Composer placeholder="Répondre dans le fil…" />
+      <Composer placeholder={t.chat.threadReplyPlaceholder} />
     </div>
   );
 }

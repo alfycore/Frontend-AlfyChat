@@ -15,6 +15,7 @@ import { useState } from 'react';
 
 import { AlfyMark } from '@/components/alfy/primitives/alfy-mark';
 import { TrustBadges } from '@/components/alfy/primitives/trust-badges';
+import { useTranslation } from '@/components/locale-provider';
 
 /** Force naïve du mot de passe pour la jauge (mock). */
 function strength(pw: string): number {
@@ -30,6 +31,7 @@ function strength(pw: string): number {
 type Stage = 'form' | 'welcome';
 
 export function OnboardingFlow() {
+  const { t, tx } = useTranslation();
   const router = useRouter();
   const [stage, setStage] = useState<Stage>('form');
   const [username, setUsername] = useState('');
@@ -65,18 +67,18 @@ export function OnboardingFlow() {
             {stage === 'form' ? (
               <div key="form" className="alfy-enter flex flex-col gap-6">
                 <div className="flex flex-col gap-1">
-                  <h1 className="font-heading text-2xl font-bold">Créer un compte</h1>
+                  <h1 className="font-heading text-2xl font-bold">{t.auth.register.heading}</h1>
                   <p className="text-[13px] text-muted">
-                    Moins de 30 secondes. Aucun numéro de téléphone.
+                    {t.auth.onboarding.subtitle}
                   </p>
                 </div>
 
                 <Form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                   <TextField name="username" value={username} onChange={setUsername} isRequired>
                     <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">
-                      Nom d&apos;utilisateur
+                      {t.auth.onboarding.usernameLabel}
                     </Label>
-                    <Input placeholder="renarde_du_38" autoComplete="username" />
+                    <Input placeholder={t.auth.onboarding.usernamePlaceholder} autoComplete="username" />
                     <FieldError />
                   </TextField>
 
@@ -88,17 +90,17 @@ export function OnboardingFlow() {
                     isRequired
                   >
                     <Label className="text-[11px] font-medium tracking-wider text-muted uppercase">
-                      Mot de passe
+                      {t.auth.login.password}
                     </Label>
-                    <Input placeholder="12 caractères ou plus" autoComplete="new-password" />
+                    <Input placeholder={t.auth.onboarding.passwordPlaceholder} autoComplete="new-password" />
                     <FieldError />
                   </TextField>
 
                   {password.length > 0 && (
-                    <Meter aria-label="Robustesse du mot de passe" value={pwScore}>
-                      <Label className="text-xs">Robustesse</Label>
+                    <Meter aria-label={t.auth.onboarding.passwordStrengthAria} value={pwScore}>
+                      <Label className="text-xs">{t.auth.onboarding.passwordStrengthLabel}</Label>
                       <span className="text-xs text-muted">
-                        {pwScore >= 80 ? 'Excellente' : pwScore >= 40 ? 'Correcte' : 'Trop faible'}
+                        {pwScore >= 80 ? t.auth.onboarding.strengthExcellent : pwScore >= 40 ? t.auth.onboarding.strengthOk : t.auth.onboarding.strengthWeak}
                       </span>
                       <Meter.Track>
                         <Meter.Fill />
@@ -108,13 +110,13 @@ export function OnboardingFlow() {
 
                   <Button type="submit" size="lg" className="w-full gap-2" isDisabled={!canSubmit || submitting}>
                     {submitting ? <Spinner size="sm" color="current" /> : null}
-                    {submitting ? 'Création en cours…' : 'Créer mon compte'}
+                    {submitting ? t.auth.onboarding.creating : t.auth.register.createAccount}
                     {!submitting && <ArrowRight className="size-4" />}
                   </Button>
 
                   <p className="flex items-center gap-1.5 text-[11px] text-muted">
                     <Lock className="size-3 text-(--alfy-e2e)" aria-hidden />
-                    Vos clés de chiffrement restent sur votre appareil.
+                    {t.auth.onboarding.keysLocalNotice}
                   </p>
                 </Form>
 
@@ -122,17 +124,17 @@ export function OnboardingFlow() {
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-separator" />
-                    <span className="text-[10px] tracking-wider text-muted uppercase">ou</span>
+                    <span className="text-[10px] tracking-wider text-muted uppercase">{t.auth.login.or}</span>
                     <div className="h-px flex-1 bg-separator" />
                   </div>
                   <p className="text-[13px] text-muted">
-                    Déjà un compte ?{' '}
+                    {t.auth.register.alreadyAccount}{' '}
                     <button
                       type="button"
                       onClick={() => router.push('/login')}
                       className="cursor-pointer font-medium text-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-focus"
                     >
-                      Se connecter
+                      {t.auth.register.logIn}
                     </button>
                   </p>
                 </div>
@@ -144,16 +146,15 @@ export function OnboardingFlow() {
                     <ShieldCheck className="size-5" aria-hidden />
                   </div>
                   <div>
-                    <h1 className="font-heading text-xl font-bold">Bienvenue, {username}</h1>
+                    <h1 className="font-heading text-xl font-bold">{tx(t.auth.onboarding.welcomeHeading, { username })}</h1>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
-                      Vos clés Signal ont été générées sur cet appareil. Vos messages sont chiffrés
-                      de bout en bout — même nous ne pouvons pas les lire.
+                      {t.auth.onboarding.welcomeDescription}
                     </p>
                   </div>
                 </div>
                 <Button size="lg" className="w-full gap-2">
                   <Check className="size-4" />
-                  Entrer sur AlfyChat
+                  {t.auth.onboarding.enterButton}
                 </Button>
               </div>
             )}
@@ -172,11 +173,10 @@ export function OnboardingFlow() {
           <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-8">
             <h2 className="max-w-sm font-heading text-2xl font-bold text-balance text-white">
-              Vos messages ne regardent que vous.
+              {t.auth.shell.imageTitle}
             </h2>
             <p className="mt-2 max-w-sm text-sm text-white/70">
-              Chiffrement de bout en bout par défaut, serveurs auto-hébergeables, aucune donnée
-              revendue.
+              {t.auth.shell.imageDescription}
             </p>
             <TrustBadges className="mt-4" compact />
           </div>
