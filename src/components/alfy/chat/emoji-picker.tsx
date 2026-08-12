@@ -20,23 +20,44 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { api } from '@/lib/api';
-import { getRecentEmojis, loadEmojiSet, recordRecentEmoji, type EmojiSection } from '@/components/alfy/chat/emoji-data';
+import { getRecentEmojis, loadEmojiSet, recordRecentEmoji, type EmojiCategoryId, type EmojiSection } from '@/components/alfy/chat/emoji-data';
 import { searchGifs, trendingGifs, type GifResult } from '@/components/alfy/chat/tenor';
 import { Twemoji } from '@/lib/twemoji';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
+import type { Translations } from '@/i18n';
 
-const CATEGORY_ICON: Record<string, LucideIcon> = {
-  Fréquents: Clock,
-  'Visages & Personnes': Smile,
-  'Animaux & Nature': Leaf,
-  'Nourriture & Boissons': Utensils,
-  Activités: Trophy,
-  'Voyages & Lieux': Plane,
-  Objets: Package,
-  Symboles: Hash,
-  Drapeaux: Flag,
-  'Émoji du serveur': Sparkles,
+/** Synthetic ids for the two non-Unicode-category sections. */
+type SectionId = EmojiCategoryId | 'recent' | 'server';
+
+const CATEGORY_ICON: Record<SectionId, LucideIcon> = {
+  recent: Clock,
+  people: Smile,
+  nature: Leaf,
+  foods: Utensils,
+  activity: Trophy,
+  places: Plane,
+  objects: Package,
+  symbols: Hash,
+  flags: Flag,
+  server: Sparkles,
 };
+
+function categoryLabel(t: Translations, id: SectionId): string {
+  const map: Record<SectionId, string> = {
+    recent: t.chatUI.emoji.catRecent,
+    people: t.chatUI.emoji.catPeople,
+    nature: t.chatUI.emoji.catAnimals,
+    foods: t.chatUI.emoji.catFood,
+    activity: t.chatUI.emoji.catActivities,
+    places: t.chatUI.emoji.catTravel,
+    objects: t.chatUI.emoji.catObjects,
+    symbols: t.chatUI.emoji.catSymbols,
+    flags: t.chatUI.emoji.catFlags,
+    server: t.chatUI.emoji.catServer,
+  };
+  return map[id];
+}
 
 interface ServerEmoji {
   id: string;
@@ -62,6 +83,7 @@ interface EmojiPickerProps {
 }
 
 export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }: EmojiPickerProps) {
+  const { t, tx } = useTranslation();
   const [opened, setOpened] = useState(false);
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<'emoji' | 'gif'>('emoji');
@@ -69,7 +91,7 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
   const [emojiSet, setEmojiSet] = useState<EmojiSection[] | null>(null);
   const [serverEmojis, setServerEmojis] = useState<ServerEmoji[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
-  const [activeCat, setActiveCat] = useState('');
+  const [activeCat, setActiveCat] = useState<SectionId | ''>('');
   const [hovered, setHovered] = useState<HoverPreview | null>(null);
 
   const [gifs, setGifs] = useState<GifResult[]>([]);
@@ -122,7 +144,8 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, tab, opened]);
 
-  const recentSection: EmojiSection | null = recent.length > 0 ? { category: 'Fréquents', emojis: recent } : null;
+  const recentSection: { category: SectionId; emojis: string[] } | null =
+    recent.length > 0 ? { category: 'recent', emojis: recent } : null;
   const allSections = useMemo(
     () => (recentSection ? [recentSection, ...(emojiSet ?? [])] : (emojiSet ?? [])),
     [recentSection, emojiSet],
@@ -135,15 +158,15 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
     if (!searching || tab !== 'emoji') return allSections;
     // Pas de mots-clés par émoji chargés (dataset allégé) — on filtre par
     // catégorie, et la recherche par mot-clé complet reste possible côté GIF.
-    return allSections.filter((s) => s.category.toLowerCase().includes(q));
-  }, [allSections, searching, q, tab]);
+    return allSections.filter((s) => categoryLabel(t, s.category).toLowerCase().includes(q));
+  }, [allSections, searching, q, tab, t]);
 
   const filteredServerEmojis = useMemo(() => {
     if (!searching) return serverEmojis;
     return serverEmojis.filter((e) => e.name.toLowerCase().includes(q));
   }, [serverEmojis, searching, q]);
 
-  const jumpTo = (category: string) => {
+  const jumpTo = (category: SectionId) => {
     const el = sectionRefs.current[category];
     const container = scrollRef.current;
     if (el && container) {
@@ -156,14 +179,14 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
     const container = scrollRef.current;
     if (!container) return;
     const top = container.scrollTop + 8;
-    let current = emojiSections[0]?.category ?? '';
+    let current: SectionId | '' = emojiSections[0]?.category ?? '';
     for (const section of emojiSections) {
       const el = sectionRefs.current[section.category];
       if (el && el.offsetTop <= top) current = section.category;
     }
     if (filteredServerEmojis.length > 0) {
-      const el = sectionRefs.current['Émoji du serveur'];
-      if (el && el.offsetTop <= top) current = 'Émoji du serveur';
+      const el = sectionRefs.current.server;
+      if (el && el.offsetTop <= top) current = 'server';
     }
     setActiveCat(current);
   };
@@ -176,33 +199,33 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
   return (
     <Popover isOpen={opened} onOpenChange={setOpened}>
       <Tooltip delay={300}>
-        <Button isIconOnly size="sm" variant="ghost" aria-label="Emoji et GIF" className="text-muted">
+        <Button isIconOnly size="sm" variant="ghost" aria-label={t.chatUI.emoji.pickerAriaLabel} className="text-muted">
           <SmilePlus className="size-4.5" />
         </Button>
         <Tooltip.Content>
-          <p>Emoji et GIF</p>
+          <p>{t.chatUI.emoji.pickerAriaLabel}</p>
         </Tooltip.Content>
       </Tooltip>
       <Popover.Content className="w-90 p-0">
-        <Popover.Dialog aria-label="Emoji et GIF" className="flex h-108 flex-col overflow-hidden p-0">
+        <Popover.Dialog aria-label={t.chatUI.emoji.pickerAriaLabel} className="flex h-108 flex-col overflow-hidden p-0">
           <Tabs selectedKey={tab} onSelectionChange={(k) => setTab(k as 'emoji' | 'gif')} variant="secondary" className="flex min-h-0 flex-1 flex-col">
             {/* Barre : recherche + bascule Emoji/GIF */}
             <div className="flex shrink-0 items-center gap-2 border-b border-separator p-2">
-              <SearchField value={query} onChange={setQuery} aria-label="Chercher" className="flex-1">
+              <SearchField value={query} onChange={setQuery} aria-label={t.chatUI.emoji.searchAriaLabel} className="flex-1">
                 <SearchField.Group>
                   <SearchField.SearchIcon />
-                  <SearchField.Input placeholder={tab === 'gif' ? 'Chercher un GIF…' : 'Chercher…'} />
+                  <SearchField.Input placeholder={tab === 'gif' ? t.chatUI.emoji.searchGifPlaceholder : t.chatUI.emoji.searchPlaceholder} />
                   <SearchField.ClearButton />
                 </SearchField.Group>
               </SearchField>
               <Tabs.ListContainer>
-                <Tabs.List aria-label="Emoji ou GIF" className="gap-0.5">
-                  <Tabs.Tab id="emoji" aria-label="Emoji" className="px-2 py-1">
+                <Tabs.List aria-label={t.chatUI.emoji.pickerAriaLabel} className="gap-0.5">
+                  <Tabs.Tab id="emoji" aria-label={t.chatUI.emoji.tabEmoji} className="px-2 py-1">
                     <Smile className="size-4" aria-hidden />
                     <Tabs.Indicator />
                   </Tabs.Tab>
                   {showStickers && (
-                    <Tabs.Tab id="gif" aria-label="GIF" className="px-2 py-1">
+                    <Tabs.Tab id="gif" aria-label={t.chatUI.emoji.tabGif} className="px-2 py-1">
                       <Film className="size-4" aria-hidden />
                       <Tabs.Indicator />
                     </Tabs.Tab>
@@ -224,11 +247,12 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                       {allSections.map((section) => {
                         const Icon = CATEGORY_ICON[section.category] ?? Smile;
                         const active = section.category === activeCat;
+                        const label = categoryLabel(t, section.category);
                         return (
                           <Tooltip key={section.category} delay={300}>
                             <button
                               type="button"
-                              aria-label={section.category}
+                              aria-label={label}
                               aria-current={active ? 'true' : undefined}
                               onClick={() => jumpTo(section.category)}
                               className={cn(
@@ -242,7 +266,7 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                               <Icon className="size-4" aria-hidden />
                             </button>
                             <Tooltip.Content placement="right">
-                              <p>{section.category}</p>
+                              <p>{label}</p>
                             </Tooltip.Content>
                           </Tooltip>
                         );
@@ -251,13 +275,13 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                         <Tooltip delay={300}>
                           <button
                             type="button"
-                            aria-label="Émoji du serveur"
-                            aria-current={activeCat === 'Émoji du serveur' ? 'true' : undefined}
-                            onClick={() => jumpTo('Émoji du serveur')}
+                            aria-label={t.chatUI.emoji.catServer}
+                            aria-current={activeCat === 'server' ? 'true' : undefined}
+                            onClick={() => jumpTo('server')}
                             className={cn(
                               'flex size-8 cursor-pointer items-center justify-center rounded-md outline-none transition-colors',
                               'focus-visible:ring-2 focus-visible:ring-focus',
-                              activeCat === 'Émoji du serveur'
+                              activeCat === 'server'
                                 ? 'bg-(--accent)/15 text-accent'
                                 : 'text-muted hover:bg-surface-secondary hover:text-foreground',
                             )}
@@ -265,7 +289,7 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                             <Sparkles className="size-4" aria-hidden />
                           </button>
                           <Tooltip.Content placement="right">
-                            <p>Émoji du serveur</p>
+                            <p>{t.chatUI.emoji.catServer}</p>
                           </Tooltip.Content>
                         </Tooltip>
                       )}
@@ -282,28 +306,28 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                       {emojiSections.length === 0 && filteredServerEmojis.length === 0 && (
                         <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted">
                           <Search className="size-5" aria-hidden />
-                          <p className="text-xs">Aucun emoji ne correspond</p>
+                          <p className="text-xs">{t.chatUI.emoji.noEmoji}</p>
                         </div>
                       )}
                       {filteredServerEmojis.length > 0 && (
                         <div
                           ref={(el) => {
-                            sectionRefs.current['Émoji du serveur'] = el;
+                            sectionRefs.current.server = el;
                           }}
                           className="mb-2"
                         >
                           <p className="sticky top-0 z-10 -mx-3 mb-1 bg-overlay/95 px-3 py-1 text-[11px] font-semibold tracking-wider text-muted uppercase backdrop-blur-sm">
-                            Émoji du serveur
+                            {t.chatUI.emoji.catServer}
                           </p>
                           <div className="grid grid-cols-8 gap-0.5">
                             {filteredServerEmojis.map((e) => (
                               <button
                                 key={e.id}
                                 type="button"
-                                aria-label={`Emoji :${e.name}:`}
+                                aria-label={tx(t.chatUI.emoji.emojiCustomAria, { name: e.name })}
                                 onClick={() => pick(`:${e.name}:`)}
-                                onMouseEnter={() => setHovered({ label: `:${e.name}:`, category: 'Émoji du serveur', imageUrl: e.imageUrl })}
-                                onFocus={() => setHovered({ label: `:${e.name}:`, category: 'Émoji du serveur', imageUrl: e.imageUrl })}
+                                onMouseEnter={() => setHovered({ label: `:${e.name}:`, category: t.chatUI.emoji.catServer, imageUrl: e.imageUrl })}
+                                onFocus={() => setHovered({ label: `:${e.name}:`, category: t.chatUI.emoji.catServer, imageUrl: e.imageUrl })}
                                 className="flex size-9 cursor-pointer items-center justify-center rounded-md p-1.5 outline-none transition-transform hover:scale-115 hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -322,17 +346,17 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                           className="mb-2"
                         >
                           <p className="sticky top-0 z-10 -mx-3 mb-1 bg-overlay/95 px-3 py-1 text-[11px] font-semibold tracking-wider text-muted uppercase backdrop-blur-sm">
-                            {section.category}
+                            {categoryLabel(t, section.category)}
                           </p>
                           <div className="grid grid-cols-8 gap-0.5">
                             {section.emojis.map((e, i) => (
                               <button
                                 key={`${section.category}-${i}`}
                                 type="button"
-                                aria-label={`Emoji ${e}`}
+                                aria-label={tx(t.chatUI.emoji.emojiNativeAria, { emoji: e })}
                                 onClick={() => pick(e)}
-                                onMouseEnter={() => setHovered({ label: e, category: section.category })}
-                                onFocus={() => setHovered({ label: e, category: section.category })}
+                                onMouseEnter={() => setHovered({ label: e, category: categoryLabel(t, section.category) })}
+                                onFocus={() => setHovered({ label: e, category: categoryLabel(t, section.category) })}
                                 className="flex size-9 cursor-pointer items-center justify-center rounded-md outline-none transition-transform hover:scale-115 hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
                               >
                                 <Twemoji emoji={e} size={24} />
@@ -356,7 +380,7 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                           <span className="truncate text-xs text-muted">{hovered.category}</span>
                         </>
                       ) : (
-                        <span className="text-xs text-muted">Survolez un emoji pour l’aperçu</span>
+                        <span className="text-xs text-muted">{t.chatUI.emoji.hoverHint}</span>
                       )}
                     </div>
                   </div>
@@ -374,7 +398,7 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                 ) : gifs.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted">
                     <Search className="size-5" aria-hidden />
-                    <p className="text-xs">Aucun GIF ne correspond</p>
+                    <p className="text-xs">{t.chatUI.emoji.noGif}</p>
                   </div>
                 ) : (
                   <div className="columns-2 gap-1.5">
@@ -382,7 +406,7 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                       <button
                         key={g.id}
                         type="button"
-                        aria-label={`Envoyer le GIF ${g.title || 'sans titre'}`}
+                        aria-label={tx(t.chatUI.emoji.sendGifAria, { title: g.title || t.chatUI.emoji.untitledGif })}
                         onClick={() => onPickGif?.(g.url)}
                         className="group/gif relative mb-1.5 block w-full cursor-pointer overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-focus"
                       >
@@ -416,11 +440,11 @@ export function EmojiPicker({ onPick, onPickGif, showStickers = true, serverId }
                       });
                     }}
                   >
-                    {gifLoading ? <Spinner size="sm" /> : 'Charger plus'}
+                    {gifLoading ? <Spinner size="sm" /> : t.chatUI.emoji.loadMore}
                   </Button>
                 </div>
               )}
-              <p className="shrink-0 border-t border-separator py-1 text-center text-[10px] text-muted/60">Powered by Tenor</p>
+              <p className="shrink-0 border-t border-separator py-1 text-center text-[10px] text-muted/60">{t.chatUI.emoji.poweredByTenor}</p>
             </Tabs.Panel>
           </Tabs>
         </Popover.Dialog>

@@ -1,5 +1,7 @@
 {
   "chatUI": {
+    "unknownUsername": "utilisateur",
+    "unknownUserDisplay": "Utilisateur",
     "emoji": {
       "tabEmoji": "Émoji",
       "tabGif": "GIF",
@@ -31,7 +33,96 @@
       "catScience": "Sciences",
       "catMisc": "Divers",
       "catRecent": "Récents",
-      "catSearch": "Résultats"
+      "catSearch": "Résultats",
+      "catServer": "Émoji du serveur",
+      "pickerAriaLabel": "Emoji et GIF",
+      "searchAriaLabel": "Chercher",
+      "emojiCustomAria": "Emoji :{name}:",
+      "emojiNativeAria": "Emoji {emoji}",
+      "sendGifAria": "Envoyer le GIF {title}",
+      "untitledGif": "sans titre",
+      "loadMore": "Charger plus"
+    },
+    "sidebar": {
+      "actionFailed": "Action impossible",
+      "tryAgain": "Réessayez dans un instant.",
+      "thisChannel": "ce salon",
+      "thisCategory": "cette catégorie",
+      "rename": "Renommer",
+      "name": "Nom",
+      "deleteCategoryHeading": "Supprimer la catégorie « {name} » ?",
+      "deleteChannelHeading": "Supprimer le salon « {name} » ?",
+      "deleteCategoryWarning": "Ses salons deviendront non classés — ils ne seront pas supprimés.",
+      "deleteChannelWarning": "Les messages de ce salon seront définitivement perdus.",
+      "delete": "Supprimer"
+    },
+    "specialViews": {
+      "announcement": {
+        "title": "Annonces",
+        "sub": "Nouveautés officielles — lecture seule",
+        "subscribe": "S’abonner",
+        "pinned": "Épinglé"
+      },
+      "forum": {
+        "title": "Forum",
+        "activeTopics": "{n} sujets actifs",
+        "newTopic": "Nouveau sujet"
+      },
+      "gallery": {
+        "title": "Galerie",
+        "sub": "Captures & créations de la communauté",
+        "publish": "Publier"
+      },
+      "media": {
+        "title": "Médiathèque",
+        "sub": "Vidéos, streams et tutoriels",
+        "views": "{n} vues"
+      },
+      "doc": {
+        "title": "Doc",
+        "editedAgo": "Modifié il y a {n} min"
+      },
+      "poll": {
+        "title": "Sondages",
+        "voted": "Merci, votre vote a été enregistré."
+      },
+      "counting": {
+        "title": "Compteur communautaire",
+        "next": "Prochain :",
+        "lastBy": "dernier compté par",
+        "wrongNumber": "Raté ! Ce n’est pas le bon nombre.",
+        "yourNumber": "Votre nombre",
+        "submit": "Compter"
+      },
+      "minigame": {
+        "title": "Salle de jeux",
+        "sub": "Défiez les autres membres",
+        "featured": "À la une",
+        "joined": "Partie rejointe",
+        "join": "Rejoindre",
+        "started": "Partie lancée",
+        "play": "Jouer",
+        "players": "{n} joueurs",
+        "liveCount": "{n} en cours"
+      },
+      "trivia": {
+        "title": "Trivia",
+        "question": "Question {n} / {total}",
+        "points": "{n} pts"
+      },
+      "suggestion": {
+        "title": "Suggestions",
+        "sub": "Proposez et votez les prochaines fonctionnalités",
+        "propose": "Proposer",
+        "proposedBy": "proposé par"
+      },
+      "vent": {
+        "title": "Espace d’écoute bienveillant",
+        "desc": "Les messages y sont anonymes et éphémères. Pas de jugement, pas de captures. Prenez soin les un·es des autres.",
+        "support": "Soutenir",
+        "anonymous": "anonyme",
+        "timeAgo": "il y a {time}"
+      }
     },
     "gif": {
       "searchPlaceholder": "Rechercher un GIF...",

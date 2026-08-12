@@ -27,6 +27,7 @@ import { useAlfyDms } from '@/components/alfy/live/use-alfy-dms';
 import { usePinnedConversations } from '@/components/alfy/live/use-pinned-conversations';
 import { toAlfyUser } from '@/components/alfy/live/map';
 import type { AlfyUser } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 interface AlfySidebarProps {
   serverId: string | null;
@@ -45,6 +46,7 @@ export function AlfySidebar({
   onOpenServerSettings,
   onOpenUserSettings,
 }: AlfySidebarProps) {
+  const { t, tx } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const server = useAlfyChannels(serverId);
@@ -72,10 +74,11 @@ export function AlfySidebar({
     const onError = (data: unknown) => {
       const d = data as { type?: string; payload?: { message?: string } };
       if (d?.type !== 'CHANNEL_ERROR') return;
-      toast.danger('Action impossible', { description: d.payload?.message ?? 'Réessayez dans un instant.' });
+      toast.danger(t.chatUI.sidebar.actionFailed, { description: d.payload?.message ?? t.chatUI.sidebar.tryAgain });
     };
     socketService.on('ERROR', onError);
     return () => socketService.off('ERROR', onError);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Propriétaire uniquement pour l'instant : un membre avec MANAGE_CHANNELS
@@ -121,7 +124,7 @@ export function AlfySidebar({
           }}
           onDeleteChannel={(id) => {
             const ch = server.channels.find((c) => c.id === id);
-            setDeleteTarget({ id, name: ch?.name ?? 'ce salon', kind: 'channel' });
+            setDeleteTarget({ id, name: ch?.name ?? t.chatUI.sidebar.thisChannel, kind: 'channel' });
           }}
           onMoveChannel={(id, direction) => {
             const list = server.channels.filter((c) => c.categoryId === server.channels.find((x) => x.id === id)?.categoryId);
@@ -137,7 +140,7 @@ export function AlfySidebar({
           }}
           onDeleteCategory={(id) => {
             const cat = server.categories.find((c) => c.id === id);
-            setDeleteTarget({ id, name: cat?.name ?? 'cette catégorie', kind: 'category' });
+            setDeleteTarget({ id, name: cat?.name ?? t.chatUI.sidebar.thisCategory, kind: 'category' });
           }}
           onMoveCategory={(id, direction) => {
             const i = categories.findIndex((c) => c.id === id);
@@ -165,8 +168,8 @@ export function AlfySidebar({
         <RenameDialog
           isOpen={!!renameTarget}
           onOpenChange={(open) => !open && setRenameTarget(null)}
-          title="Renommer"
-          fieldLabel="Nom"
+          title={t.chatUI.sidebar.rename}
+          fieldLabel={t.chatUI.sidebar.name}
           initialValue={renameTarget?.name ?? ''}
           onSave={(name) => {
             if (renameTarget) socketService.updateChannel(serverId, renameTarget.id, { name });
@@ -180,19 +183,24 @@ export function AlfySidebar({
                 <AlertDialog.Header>
                   <AlertDialog.Icon status="danger" />
                   <AlertDialog.Heading>
-                    Supprimer {deleteTarget?.kind === 'category' ? 'la catégorie' : 'le salon'} « {deleteTarget?.name} » ?
+                    {tx(
+                      deleteTarget?.kind === 'category'
+                        ? t.chatUI.sidebar.deleteCategoryHeading
+                        : t.chatUI.sidebar.deleteChannelHeading,
+                      { name: deleteTarget?.name ?? '' },
+                    )}
                   </AlertDialog.Heading>
                 </AlertDialog.Header>
                 <AlertDialog.Body>
                   <p>
                     {deleteTarget?.kind === 'category'
-                      ? 'Ses salons deviendront non classés — ils ne seront pas supprimés.'
-                      : 'Les messages de ce salon seront définitivement perdus.'}
+                      ? t.chatUI.sidebar.deleteCategoryWarning
+                      : t.chatUI.sidebar.deleteChannelWarning}
                   </p>
                 </AlertDialog.Body>
                 <AlertDialog.Footer>
                   <Button slot="close" variant="tertiary">
-                    Annuler
+                    {t.common.cancel}
                   </Button>
                   <Button
                     variant="danger"
@@ -201,7 +209,7 @@ export function AlfySidebar({
                       setDeleteTarget(null);
                     }}
                   >
-                    Supprimer
+                    {t.chatUI.sidebar.delete}
                   </Button>
                 </AlertDialog.Footer>
               </AlertDialog.Dialog>

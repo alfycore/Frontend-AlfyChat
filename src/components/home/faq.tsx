@@ -36,7 +36,7 @@ const ITEMS = [
 
 export function HomeFaq() {
   return (
-    <section className="border-t border-border bg-background py-28">
+    <section className="bg-background py-28">
       <div className="mx-auto max-w-6xl px-6 lg:px-12">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-[1fr_1.6fr] lg:items-start">
 

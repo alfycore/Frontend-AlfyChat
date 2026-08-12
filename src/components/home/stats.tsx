@@ -16,7 +16,7 @@ export function HomeStats() {
   const reduce = useReducedMotion();
 
   return (
-    <section className="border-t border-border bg-background">
+    <section className="bg-surface">
       <div className="mx-auto max-w-6xl px-6 lg:px-12">
         <div className="grid grid-cols-2 sm:grid-cols-4">
           {STATS.map(({ value, label, desc }, i) => (

@@ -34,6 +34,22 @@ export function resolveSystemLocale(): Locale {
 export const DEFAULT_LOCALE: Locale = 'fr';
 export const LOCALE_STORAGE_KEY = 'alfychat_locale';
 
+/** BCP-47 tag used for `Intl.DateTimeFormat`/`toLocaleDateString` per supported locale. */
+export const INTL_LOCALE_MAP: Record<Locale, string> = {
+  fr: 'fr-FR',
+  en: 'en-US',
+  de: 'de-DE',
+  es: 'es-ES',
+  it: 'it-IT',
+  pt: 'pt-PT',
+  nl: 'nl-NL',
+  pl: 'pl-PL',
+  sv: 'sv-SE',
+  da: 'da-DK',
+  no: 'nb-NO',
+  ja: 'ja-JP',
+};
+
 // ─────────────────────────────────────────────────────────────
 // Translation shape — English is the source of truth
 // ─────────────────────────────────────────────────────────────

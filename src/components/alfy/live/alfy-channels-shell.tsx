@@ -37,6 +37,7 @@ import { AlfyMemberList } from '@/components/alfy/live/alfy-member-list';
 import { IncomingCall } from '@/components/alfy/calls/incoming-call';
 import { AlfyActiveCall } from '@/components/alfy/live/alfy-active-call';
 import type { AlfyUser } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 /** Analyse l'URL active : serveur, canal, DM, groupe. */
 function useActiveRoute(pathname: string) {
@@ -112,13 +113,14 @@ function useNotificationSync(route: ReturnType<typeof useActiveRoute>, pathname:
 }
 
 function LoadingScreen() {
+  const { t } = useTranslation();
   return (
     <div data-ui="alfy" className="flex h-dvh items-center justify-center">
       <div className="flex flex-col items-center gap-5">
         <AlfyMark className="size-14" />
         <div className="flex items-center gap-2.5 text-muted">
           <Spinner size="sm" />
-          <p className="text-sm">Chargement…</p>
+          <p className="text-sm">{t.common.loading}</p>
         </div>
       </div>
     </div>
@@ -126,6 +128,7 @@ function LoadingScreen() {
 }
 
 export function AlfyChannelsShell({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [layoutReady, setLayoutReady] = useState(false);
@@ -163,8 +166,8 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
   const incomingOpen = callStatus === 'ringing';
   const caller: AlfyUser = {
     id: 'caller',
-    username: (callerName || 'utilisateur').toLowerCase(),
-    displayName: callerName || 'Utilisateur',
+    username: (callerName || t.chatUI.unknownUsername).toLowerCase(),
+    displayName: callerName || t.chatUI.unknownUserDisplay,
     avatarUrl: callerAvatar,
     status: 'online',
     badges: [],

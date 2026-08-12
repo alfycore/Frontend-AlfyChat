@@ -4,21 +4,13 @@
  * initial : seul l'ouverture du picker déclenche le téléchargement.
  */
 
+/** Stable category id — the UI translates this to a localized label via `t.chatui.emojiPicker.categories`. */
+export type EmojiCategoryId = 'people' | 'nature' | 'foods' | 'activity' | 'places' | 'objects' | 'symbols' | 'flags';
+
 export interface EmojiSection {
-  category: string;
+  category: EmojiCategoryId;
   emojis: string[];
 }
-
-const CATEGORY_LABELS: Record<string, string> = {
-  people: 'Visages & Personnes',
-  nature: 'Animaux & Nature',
-  foods: 'Nourriture & Boissons',
-  activity: 'Activités',
-  places: 'Voyages & Lieux',
-  objects: 'Objets',
-  symbols: 'Symboles',
-  flags: 'Drapeaux',
-};
 
 interface EmojiMartSkin {
   native: string;
@@ -44,7 +36,7 @@ export function loadEmojiSet(): Promise<EmojiSection[]> {
   pending = import('@emoji-mart/data/sets/15/native.json').then((mod) => {
     const data = (mod.default ?? mod) as unknown as EmojiMartData;
     const sections = data.categories.map((cat) => ({
-      category: CATEGORY_LABELS[cat.id] ?? cat.id,
+      category: cat.id as EmojiCategoryId,
       emojis: cat.emojis
         .map((id) => data.emojis[id]?.skins?.[0]?.native)
         .filter((e): e is string => Boolean(e)),

@@ -6,30 +6,24 @@ import { LockIcon, ShieldCheckIcon, GlobeIcon, CodeIcon } from '@/components/ico
 
 const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
 
-type Tone = 'accent' | 'success' | 'warning';
-
-const POINTS: { icon: typeof LockIcon; tone: Tone; label: string; desc: string }[] = [
+const POINTS: { icon: typeof LockIcon; label: string; desc: string }[] = [
   {
     icon: LockIcon,
-    tone: 'success',
     label: 'Protocole Signal',
     desc: 'Standard de référence pour la messagerie chiffrée, audité en indépendance.',
   },
   {
     icon: ShieldCheckIcon,
-    tone: 'success',
     label: 'Zéro tracking',
     desc: 'Aucune publicité, aucun suivi comportemental, aucune revente de données.',
   },
   {
     icon: GlobeIcon,
-    tone: 'accent',
     label: 'Données en France',
     desc: 'Serveurs hébergés sur le territoire français, soumis au droit européen.',
   },
   {
     icon: CodeIcon,
-    tone: 'warning',
     label: 'Code auditable',
     desc: 'Source ouverte, vérifiable et contribuable par toute la communauté.',
   },
@@ -60,7 +54,7 @@ function Reveal({
 
 export function HomeSecurity() {
   return (
-    <section id="security" className="border-t border-border bg-background py-28">
+    <section id="security" className="bg-background py-28">
       <div className="mx-auto max-w-6xl px-6 lg:px-12">
         <div className="grid grid-cols-1 gap-16 md:grid-cols-2 md:items-center">
 
@@ -97,15 +91,15 @@ export function HomeSecurity() {
             </Reveal>
 
             <div className="mt-9 flex flex-col">
-              {POINTS.map(({ icon: Icon, tone, label, desc }, i) => (
+              {POINTS.map(({ icon: Icon, label, desc }, i) => (
                 <Reveal key={label} delay={0.06 + i * 0.07}>
                   {i > 0 && <Separator />}
                   <div className="flex items-start gap-4 py-5">
                     <div
                       className="flex size-9 shrink-0 items-center justify-center rounded-lg"
-                      style={{ background: `color-mix(in oklch, var(--${tone}) 13%, transparent)` }}
+                      style={{ background: 'color-mix(in oklch, var(--foreground) 6%, transparent)' }}
                     >
-                      <Icon size={14} style={{ color: `var(--${tone})` }} />
+                      <Icon size={14} style={{ color: 'var(--foreground)' }} />
                     </div>
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <Typography type="body-sm" weight="semibold" className="text-foreground">{label}</Typography>

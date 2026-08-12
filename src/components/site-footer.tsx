@@ -58,7 +58,7 @@ const PILLARS = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border/40 bg-background">
+    <footer className="bg-surface-secondary">
 
       {/* ── Links grid ──────────────────────────────────────────── */}
       <div className="mx-auto max-w-6xl px-6 py-14">

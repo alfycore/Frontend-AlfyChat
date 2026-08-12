@@ -17,14 +17,13 @@ import {
   Trophy,
   Users2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { MESSAGES } from '@/components/alfy/mock/data';
 import { useUserById } from '@/components/alfy/user-directory';
 import { useAlfyServerMessages } from '@/components/alfy/live/use-alfy-server-messages';
-
-const dayFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 const img = (seed: string, w = 400, h = 300) => `https://picsum.photos/seed/${seed}/${w}/${h}`;
@@ -63,6 +62,8 @@ function Head({ icon: Icon, title, sub, action }: { icon: typeof Bell; title: st
 
 /* ── 1. Annonces ─────────────────────────────────────────────── */
 export function AnnouncementView({ serverId, channelId }: SpecialViewProps = {}) {
+  const { t, intlLocale } = useTranslation();
+  const dayFmt = useMemo(() => new Intl.DateTimeFormat(intlLocale, { day: 'numeric', month: 'short' }), [intlLocale]);
   const userById = useUserById();
   const live = useAlfyServerMessages(serverId ?? null, channelId ?? null);
 
@@ -82,7 +83,7 @@ export function AnnouncementView({ serverId, channelId }: SpecialViewProps = {})
       ];
   return (
     <Page>
-      <Head icon={Bell} title="Annonces" sub="Nouveautés officielles — lecture seule" action={<Button size="sm" variant="secondary">S’abonner</Button>} />
+      <Head icon={Bell} title={t.chatUI.specialViews.announcement.title} sub={t.chatUI.specialViews.announcement.sub} action={<Button size="sm" variant="secondary">{t.chatUI.specialViews.announcement.subscribe}</Button>} />
       <div className="flex flex-col gap-4">
         {posts.map((p) => {
           const a = userById(p.author);
@@ -90,7 +91,7 @@ export function AnnouncementView({ serverId, channelId }: SpecialViewProps = {})
             <article key={p.title} className={cn('rounded-2xl border bg-surface p-5', p.pinned ? 'border-accent/40' : 'border-border/70')}>
               {p.pinned && (
                 <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold tracking-wide text-accent uppercase">
-                  <Pin className="size-3" /> Épinglé
+                  <Pin className="size-3" /> {t.chatUI.specialViews.announcement.pinned}
                 </p>
               )}
               <h3 className="text-base font-bold">{p.title}</h3>
@@ -114,6 +115,7 @@ export function AnnouncementView({ serverId, channelId }: SpecialViewProps = {})
 
 /* ── 2. Forum ────────────────────────────────────────────────── */
 export function ForumView(_props: SpecialViewProps = {}) {
+  const { t, tx } = useTranslation();
   const userById = useUserById();
   const topics = [
     { title: 'Comment migrer mon node sur un VPS ?', author: 'u-sam', replies: 12, last: '5 min', tags: ['aide', 'node'], hot: true },
@@ -123,7 +125,7 @@ export function ForumView(_props: SpecialViewProps = {}) {
   ];
   return (
     <Page>
-      <Head icon={MessageSquare} title="Forum" sub={`${topics.length} sujets actifs`} action={<Button size="sm"><Plus className="size-3.5" /> Nouveau sujet</Button>} />
+      <Head icon={MessageSquare} title={t.chatUI.specialViews.forum.title} sub={tx(t.chatUI.specialViews.forum.activeTopics, { n: topics.length })} action={<Button size="sm"><Plus className="size-3.5" /> {t.chatUI.specialViews.forum.newTopic}</Button>} />
       <div className="divide-y divide-separator overflow-hidden rounded-2xl border border-border/70 bg-surface">
         {topics.map((t) => {
           const a = userById(t.author);
@@ -154,11 +156,12 @@ export function ForumView(_props: SpecialViewProps = {}) {
 
 /* ── 3. Galerie ──────────────────────────────────────────────── */
 export function GalleryView(_props: SpecialViewProps = {}) {
+  const { t } = useTranslation();
   const userById = useUserById();
   const authors = ['u-lea', 'u-marc', 'u-chloe', 'u-theo', 'u-me', 'u-ines', 'u-nadia', 'u-sam', 'u-julie'];
   return (
     <Page wide>
-      <Head icon={Sparkles} title="Galerie" sub="Captures & créations de la communauté" action={<Button size="sm" variant="secondary"><Plus className="size-3.5" /> Publier</Button>} />
+      <Head icon={Sparkles} title={t.chatUI.specialViews.gallery.title} sub={t.chatUI.specialViews.gallery.sub} action={<Button size="sm" variant="secondary"><Plus className="size-3.5" /> {t.chatUI.specialViews.gallery.publish}</Button>} />
       <div className="columns-2 gap-3 sm:columns-3">
         {authors.map((au, i) => {
           const a = userById(au);
@@ -179,6 +182,7 @@ export function GalleryView(_props: SpecialViewProps = {}) {
 
 /* ── 4. Médiathèque ──────────────────────────────────────────── */
 export function MediaView(_props: SpecialViewProps = {}) {
+  const { t, tx } = useTranslation();
   const userById = useUserById();
   const items = [
     { title: 'Stream — build en live #4', dur: '1:12:04', views: '842' },
@@ -187,7 +191,7 @@ export function MediaView(_props: SpecialViewProps = {}) {
   ];
   return (
     <Page>
-      <Head icon={Play} title="Médiathèque" sub="Vidéos, streams et tutoriels" />
+      <Head icon={Play} title={t.chatUI.specialViews.media.title} sub={t.chatUI.specialViews.media.sub} />
       <div className="flex flex-col gap-3">
         {items.map((m, i) => (
           <button key={m.title} type="button" className="group/med flex cursor-pointer gap-4 rounded-2xl border border-border/70 bg-surface p-3 text-left transition-colors hover:bg-surface-secondary">
@@ -200,7 +204,7 @@ export function MediaView(_props: SpecialViewProps = {}) {
             </div>
             <div className="min-w-0 flex-1 py-1">
               <p className="text-sm font-semibold">{m.title}</p>
-              <p className="mt-1 text-xs text-muted">{userById('u-me').displayName} · {m.views} vues</p>
+              <p className="mt-1 text-xs text-muted">{userById('u-me').displayName} · {tx(t.chatUI.specialViews.media.views, { n: m.views })}</p>
             </div>
           </button>
         ))}
@@ -211,13 +215,14 @@ export function MediaView(_props: SpecialViewProps = {}) {
 
 /* ── 5. Doc ──────────────────────────────────────────────────── */
 export function DocView(_props: SpecialViewProps = {}) {
+  const { t, tx } = useTranslation();
   const userById = useUserById();
   const contributors = ['u-me', 'u-lea', 'u-nadia'];
   return (
     <Page>
       <div className="mb-6 flex items-center justify-between border-b border-separator pb-4">
         <div className="flex items-center gap-2 text-xs text-muted">
-          <FileText className="size-4" /> Modifié il y a 5 min
+          <FileText className="size-4" /> {tx(t.chatUI.specialViews.doc.editedAgo, { n: 5 })}
         </div>
         <div className="flex -space-x-2">
           {contributors.map((c) => (
@@ -240,12 +245,13 @@ export function DocView(_props: SpecialViewProps = {}) {
 
 /* ── 6. Sondage ──────────────────────────────────────────────── */
 export function PollView(_props: SpecialViewProps = {}) {
+  const { t } = useTranslation();
   const userById = useUserById();
   const [voted, setVoted] = useState<number | null>(null);
   const options = [{ label: 'Mode sombre par défaut', pct: 62 }, { label: 'Mode clair par défaut', pct: 23 }, { label: 'Suivre le système', pct: 15 }];
   return (
     <Page>
-      <Head icon={Trophy} title="Sondages" />
+      <Head icon={Trophy} title={t.chatUI.specialViews.poll.title} />
       <div className="rounded-2xl border border-border/70 bg-surface p-6">
         <div className="flex items-center gap-2">
           <AlfyAvatar name={userById('u-me').displayName} avatarUrl={userById('u-me').avatarUrl} size="sm" />
@@ -263,7 +269,7 @@ export function PollView(_props: SpecialViewProps = {}) {
             </button>
           ))}
         </div>
-        {voted !== null && <p className="mt-3 text-xs text-muted">Merci, votre vote a été enregistré.</p>}
+        {voted !== null && <p className="mt-3 text-xs text-muted">{t.chatUI.specialViews.poll.voted}</p>}
       </div>
     </Page>
   );
@@ -271,6 +277,7 @@ export function PollView(_props: SpecialViewProps = {}) {
 
 /* ── 7. Comptage ─────────────────────────────────────────────── */
 export function CountingView({ serverId, channelId }: SpecialViewProps = {}) {
+  const { t } = useTranslation();
   const userById = useUserById();
   const live = useAlfyServerMessages(serverId ?? null, channelId ?? null);
   const [localCount, setLocalCount] = useState(347);
@@ -286,10 +293,10 @@ export function CountingView({ serverId, channelId }: SpecialViewProps = {}) {
   return (
     <Page>
       <div className="flex flex-col items-center gap-4 py-14 text-center">
-        <span className="rounded-full border border-border bg-surface px-3 py-1 text-[11px] tracking-wider text-muted uppercase">Compteur communautaire</span>
+        <span className="rounded-full border border-border bg-surface px-3 py-1 text-[11px] tracking-wider text-muted uppercase">{t.chatUI.specialViews.counting.title}</span>
         <p className="font-heading text-7xl leading-none font-bold text-accent tabular-nums">{count}</p>
         <p className="text-sm text-muted">
-          Prochain : <strong className="text-foreground">{count + 1}</strong> — dernier compté par{' '}
+          {t.chatUI.specialViews.counting.next} <strong className="text-foreground">{count + 1}</strong> — {t.chatUI.specialViews.counting.lastBy}{' '}
           <span className="font-medium text-foreground">{lastCounter}</span>
         </p>
         <form
@@ -297,7 +304,7 @@ export function CountingView({ serverId, channelId }: SpecialViewProps = {}) {
           onSubmit={(e) => {
             e.preventDefault();
             if (Number(val) !== count + 1) {
-              toast('Raté ! Ce n’est pas le bon nombre.');
+              toast(t.chatUI.specialViews.counting.wrongNumber);
               return;
             }
             if (isLive) live.send(String(count + 1));
@@ -305,10 +312,10 @@ export function CountingView({ serverId, channelId }: SpecialViewProps = {}) {
             setVal('');
           }}
         >
-          <TextField value={val} onChange={setVal} aria-label="Votre nombre">
+          <TextField value={val} onChange={setVal} aria-label={t.chatUI.specialViews.counting.yourNumber}>
             <Input placeholder={String(count + 1)} className="w-28 text-center text-lg tabular-nums" />
           </TextField>
-          <Button type="submit" size="lg">Compter</Button>
+          <Button type="submit" size="lg">{t.chatUI.specialViews.counting.submit}</Button>
         </form>
       </div>
     </Page>
@@ -317,6 +324,7 @@ export function CountingView({ serverId, channelId }: SpecialViewProps = {}) {
 
 /* ── 8. Mini-jeu ─────────────────────────────────────────────── */
 export function MinigameView(_props: SpecialViewProps = {}) {
+  const { t, tx } = useTranslation();
   const games = [
     { name: 'Puissance 4', players: '2', icon: Gamepad2, live: 3 },
     { name: 'Morpion', players: '2', icon: Gamepad2, live: 0 },
@@ -325,16 +333,16 @@ export function MinigameView(_props: SpecialViewProps = {}) {
   ];
   return (
     <Page>
-      <Head icon={Gamepad2} title="Salle de jeux" sub="Défiez les autres membres" />
+      <Head icon={Gamepad2} title={t.chatUI.specialViews.minigame.title} sub={t.chatUI.specialViews.minigame.sub} />
       {/* Jeu à la une */}
       <div className="mb-4 flex items-center gap-4 overflow-hidden rounded-2xl bg-linear-to-br from-accent/20 to-accent/5 p-5">
         <span className="flex size-14 items-center justify-center rounded-2xl bg-accent text-(--accent-foreground)"><Dices className="size-7" /></span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold tracking-wider text-accent uppercase">À la une</p>
+          <p className="text-[11px] font-semibold tracking-wider text-accent uppercase">{t.chatUI.specialViews.minigame.featured}</p>
           <p className="text-base font-bold">Blackjack — table ouverte</p>
           <p className="text-xs text-muted">3 joueurs attendent · mise en jetons virtuels</p>
         </div>
-        <Button onPress={() => toast('Partie rejointe', { description: 'Blackjack' })}>Rejoindre</Button>
+        <Button onPress={() => toast(t.chatUI.specialViews.minigame.joined, { description: 'Blackjack' })}>{t.chatUI.specialViews.minigame.join}</Button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {games.map((g) => (
@@ -342,9 +350,9 @@ export function MinigameView(_props: SpecialViewProps = {}) {
             <span className="flex size-10 items-center justify-center rounded-xl bg-surface-secondary text-foreground/70"><g.icon className="size-5" /></span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">{g.name}</p>
-              <p className="text-xs text-muted">{g.players} joueurs{g.live > 0 && <span className="ml-1 text-success">· {g.live} en cours</span>}</p>
+              <p className="text-xs text-muted">{tx(t.chatUI.specialViews.minigame.players, { n: g.players })}{g.live > 0 && <span className="ml-1 text-success">· {tx(t.chatUI.specialViews.minigame.liveCount, { n: g.live })}</span>}</p>
             </div>
-            <Button size="sm" variant="secondary" onPress={() => toast('Partie lancée', { description: g.name })}>Jouer</Button>
+            <Button size="sm" variant="secondary" onPress={() => toast(t.chatUI.specialViews.minigame.started, { description: g.name })}>{t.chatUI.specialViews.minigame.play}</Button>
           </div>
         ))}
       </div>
@@ -354,14 +362,15 @@ export function MinigameView(_props: SpecialViewProps = {}) {
 
 /* ── 9. Trivia ───────────────────────────────────────────────── */
 export function TriviaView(_props: SpecialViewProps = {}) {
+  const { t, tx } = useTranslation();
   const [answered, setAnswered] = useState<string | null>(null);
   const answers = ['Signal', 'PGP', 'TLS', 'Kerberos'];
   return (
     <Page>
       <div className="rounded-2xl border border-border/70 bg-surface p-6">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted">Question 4 / 10</span>
-          <span className="flex items-center gap-1 text-sm font-bold text-accent"><Trophy className="size-4" /> 30 pts</span>
+          <span className="text-xs font-medium text-muted">{tx(t.chatUI.specialViews.trivia.question, { n: 4, total: 10 })}</span>
+          <span className="flex items-center gap-1 text-sm font-bold text-accent"><Trophy className="size-4" /> {tx(t.chatUI.specialViews.trivia.points, { n: 30 })}</span>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-secondary">
           <div className="h-full rounded-full bg-accent" style={{ width: '40%' }} />
@@ -398,6 +407,7 @@ export function TriviaView(_props: SpecialViewProps = {}) {
 
 /* ── 10. Suggestions ─────────────────────────────────────────── */
 export function SuggestionView(_props: SpecialViewProps = {}) {
+  const { t } = useTranslation();
   const userById = useUserById();
   const [votes, setVotes] = useState<Record<string, number>>({});
   const items = [
@@ -408,7 +418,7 @@ export function SuggestionView(_props: SpecialViewProps = {}) {
   const color = { Prévu: 'success', 'À l’étude': 'warning', Nouveau: 'default' } as const;
   return (
     <Page>
-      <Head icon={ArrowBigUp} title="Suggestions" sub="Proposez et votez les prochaines fonctionnalités" action={<Button size="sm"><Plus className="size-3.5" /> Proposer</Button>} />
+      <Head icon={ArrowBigUp} title={t.chatUI.specialViews.suggestion.title} sub={t.chatUI.specialViews.suggestion.sub} action={<Button size="sm"><Plus className="size-3.5" /> {t.chatUI.specialViews.suggestion.propose}</Button>} />
       <div className="flex flex-col gap-3">
         {items.map((s) => {
           const bump = votes[s.id] ?? 0;
@@ -426,7 +436,7 @@ export function SuggestionView(_props: SpecialViewProps = {}) {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{s.title}</p>
                 <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
-                  <AlfyAvatar name={a.displayName} avatarUrl={a.avatarUrl} size="sm" /> proposé par {a.displayName}
+                  <AlfyAvatar name={a.displayName} avatarUrl={a.avatarUrl} size="sm" /> {t.chatUI.specialViews.suggestion.proposedBy} {a.displayName}
                 </p>
               </div>
               <Chip size="sm" color={color[s.status]} variant="soft">{s.status}</Chip>
@@ -440,6 +450,7 @@ export function SuggestionView(_props: SpecialViewProps = {}) {
 
 /* ── 11. Vent — espace bienveillant ──────────────────────────── */
 export function VentView(_props: SpecialViewProps = {}) {
+  const { t, tx } = useTranslation();
   const entries = [
     { mood: '😔', text: 'Grosse journée, j’avais juste besoin de le poser quelque part.', support: 7, at: '1 h' },
     { mood: '😮‍💨', text: 'Merci à cette communauté, ça aide de se sentir moins seul·e.', support: 14, at: '3 h' },
@@ -449,8 +460,8 @@ export function VentView(_props: SpecialViewProps = {}) {
       <div className="mb-6 flex items-start gap-3 rounded-2xl border border-(--alfy-e2e)/25 bg-(--alfy-e2e-soft) p-4">
         <Heart className="mt-0.5 size-5 shrink-0 text-(--alfy-e2e)" aria-hidden />
         <div>
-          <p className="text-sm font-semibold">Espace d’écoute bienveillant</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-foreground/75">Les messages y sont anonymes et éphémères. Pas de jugement, pas de captures. Prenez soin les un·es des autres.</p>
+          <p className="text-sm font-semibold">{t.chatUI.specialViews.vent.title}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-foreground/75">{t.chatUI.specialViews.vent.desc}</p>
         </div>
       </div>
       <div className="flex flex-col gap-3">
@@ -459,10 +470,10 @@ export function VentView(_props: SpecialViewProps = {}) {
             <p className="text-sm leading-relaxed"><span className="mr-2 text-lg">{v.mood}</span>{v.text}</p>
             <div className="mt-3 flex items-center gap-3 text-xs text-muted">
               <button type="button" className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-2.5 py-1 transition-colors hover:border-(--alfy-e2e)/50 hover:text-(--alfy-e2e)">
-                <Heart className="size-3" /> Soutenir · {v.support}
+                <Heart className="size-3" /> {t.chatUI.specialViews.vent.support} · {v.support}
               </button>
-              <span className="flex items-center gap-1"><Users2 className="size-3" /> anonyme</span>
-              <span>· il y a {v.at}</span>
+              <span className="flex items-center gap-1"><Users2 className="size-3" /> {t.chatUI.specialViews.vent.anonymous}</span>
+              <span>· {tx(t.chatUI.specialViews.vent.timeAgo, { time: v.at })}</span>
             </div>
           </div>
         ))}
@@ -486,3 +497,22 @@ export const SPECIAL_VIEWS = {
 } as const;
 
 export type SpecialViewType = keyof typeof SPECIAL_VIEWS;
+
+/** Localized label for a special channel type — prefer this over `SPECIAL_VIEWS[type].label` (French only). */
+export function specialViewLabel(t: import('@/i18n').Translations, type: SpecialViewType): string {
+  const titles = t.chatUI.specialViews;
+  const map: Record<SpecialViewType, string> = {
+    announcement: titles.announcement.title,
+    forum: titles.forum.title,
+    gallery: titles.gallery.title,
+    media: titles.media.title,
+    doc: titles.doc.title,
+    poll: titles.poll.title,
+    counting: titles.counting.title,
+    minigame: titles.minigame.title,
+    trivia: titles.trivia.title,
+    suggestion: titles.suggestion.title,
+    vent: titles.vent.title,
+  };
+  return map[type];
+}

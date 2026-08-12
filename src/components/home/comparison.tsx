@@ -66,7 +66,7 @@ function Reveal({
 
 export function HomeComparison() {
   return (
-    <section className="border-t border-border bg-background py-28">
+    <section className="bg-background py-28">
       <div className="mx-auto max-w-6xl px-6 lg:px-12">
 
         <Reveal className="mb-14 flex max-w-xl flex-col gap-4">

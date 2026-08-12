@@ -7,8 +7,7 @@ import { getMemberPermissions } from '@/components/alfy/mock/data';
 import type { AlfyMessage, AlfyRole, AlfyServer } from '@/components/alfy/mock/types';
 import { MessageItem } from '@/components/alfy/chat/message-item';
 import { fadeUp } from '@/components/alfy/motion';
-
-const dayFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+import { useTranslation } from '@/components/locale-provider';
 
 /** Groupé si même auteur et < 5 min d'écart, sans réponse intercalée. */
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
@@ -34,6 +33,11 @@ export function MessageList({
   onEditMessage,
   onDeleteMessage,
 }: MessageListProps) {
+  const { intlLocale } = useTranslation();
+  const dayFmt = useMemo(
+    () => new Intl.DateTimeFormat(intlLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+    [intlLocale],
+  );
   const byId = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
 
   // Couleur du rôle hoisted le plus haut de chaque auteur + rôles complets pour le popover profil.
@@ -81,7 +85,7 @@ export function MessageList({
       prev = m;
     }
     return out;
-  }, [messages]);
+  }, [messages, dayFmt]);
 
   return (
     <div className="flex flex-col pb-4">

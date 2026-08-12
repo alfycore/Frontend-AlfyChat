@@ -7,15 +7,17 @@ import { LockIcon, ZapIcon, UsersIcon, ServerIcon, BotIcon } from '@/components/
 const MONO = { fontFamily: 'var(--font-geist-mono, monospace)' } as const;
 const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
 
-type Tone = 'accent' | 'success' | 'warning';
-
-function IconTile({ icon: Icon, tone }: { icon: typeof LockIcon; tone: Tone }) {
+function IconTile({ icon: Icon, accent }: { icon: typeof LockIcon; accent?: boolean }) {
   return (
     <div
       className="flex size-11 items-center justify-center rounded-xl"
-      style={{ background: `color-mix(in oklch, var(--${tone}) 13%, transparent)` }}
+      style={{
+        background: accent
+          ? 'color-mix(in oklch, var(--accent) 13%, transparent)'
+          : 'color-mix(in oklch, var(--foreground) 6%, transparent)',
+      }}
     >
-      <Icon size={19} style={{ color: `var(--${tone})` }} />
+      <Icon size={19} style={{ color: accent ? 'var(--accent)' : 'var(--foreground)' }} />
     </div>
   );
 }
@@ -66,46 +68,42 @@ function Spec({ items }: { items: [string, string][] }) {
 
 type Feature = {
   icon: typeof LockIcon;
-  tone: Tone;
   title: string;
   desc: string;
   specs: [string, string][];
   span?: boolean;
+  accent?: boolean;
 };
 
 const FEATURES: Feature[] = [
   {
     icon: LockIcon,
-    tone: 'success',
     title: 'Chiffrement de bout en bout',
     desc: "Chaque message, fichier et appel est chiffré sur votre appareil avant l'envoi. Nos serveurs ne voient que des données illisibles.",
     specs: [['Protocole', 'Signal'], ['Chiffrement', 'AES-256'], ['Audit', 'Public']],
     span: true,
+    accent: true,
   },
   {
     icon: ZapIcon,
-    tone: 'accent',
     title: 'Appels HD instantanés',
     desc: 'Voix et vidéo haute qualité, chiffrés de bout en bout, en pair-à-pair.',
     specs: [['Vidéo', '1080p'], ['Latence', '< 50ms']],
   },
   {
     icon: UsersIcon,
-    tone: 'accent',
     title: 'Serveurs communautaires',
     desc: 'Salons, rôles et permissions configurables à volonté pour vos communautés.',
     specs: [['Rôles', 'Illimités'], ['Salons', 'Texte · Voix']],
   },
   {
     icon: ServerIcon,
-    tone: 'warning',
     title: 'Auto-hébergement',
     desc: 'Déployez votre propre nœud en une commande. Vos données restent chez vous.',
     specs: [['Déploiement', 'Docker'], ['Contrôle', 'Total']],
   },
   {
     icon: BotIcon,
-    tone: 'warning',
     title: 'API ouverte',
     desc: 'Créez des bots et intégrations via notre API REST documentée.',
     specs: [['API', 'REST'], ['Webhooks', 'Natifs']],
@@ -114,7 +112,7 @@ const FEATURES: Feature[] = [
 
 export function HomeFeatures() {
   return (
-    <section id="features" className="border-t border-border bg-background py-28">
+    <section id="features" className="bg-surface py-28">
       <div className="mx-auto max-w-6xl px-6 lg:px-12">
 
         {/* Header */}
@@ -139,8 +137,8 @@ export function HomeFeatures() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f, i) => (
             <Reveal key={f.title} delay={i * 0.06} className={f.span ? 'sm:col-span-2' : undefined}>
-              <Card className="flex h-full min-h-56 flex-col p-7 transition-transform duration-300 hover:-translate-y-0.5">
-                <IconTile icon={f.icon} tone={f.tone} />
+              <Card className="flex h-full min-h-56 flex-col p-7 transition-shadow duration-300 hover:shadow-lg">
+                <IconTile icon={f.icon} accent={f.accent} />
                 <Card.Header className="mt-5">
                   <Card.Title style={KRONA}>{f.title}</Card.Title>
                   <Card.Description className="max-w-md">{f.desc}</Card.Description>

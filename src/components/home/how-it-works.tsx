@@ -11,21 +11,21 @@ const STEPS = [
     title: 'Créer un compte',
     desc: "Inscription en 30 secondes. Sans numéro de téléphone, sans carte bancaire, sans vérification d'identité.",
     tag: 'Gratuit',
-    tone: 'success' as const,
+    accent: false,
   },
   {
     number: '02',
     title: 'Inviter vos contacts',
     desc: "Partagez un lien ou cherchez directement par nom d'utilisateur. Aucune importation de carnet d'adresses.",
     tag: 'Zéro donnée collectée',
-    tone: 'accent' as const,
+    accent: false,
   },
   {
     number: '03',
     title: 'Discuter en privé',
     desc: "Chaque message est chiffré sur votre appareil avant l'envoi. Même nos serveurs ne peuvent pas lire vos échanges.",
     tag: 'Chiffrement E2E',
-    tone: 'warning' as const,
+    accent: true,
   },
 ];
 
@@ -54,7 +54,7 @@ function Reveal({
 
 export function HomeHowItWorks() {
   return (
-    <section className="border-t border-border bg-background py-28">
+    <section className="bg-surface py-28">
       <div className="mx-auto max-w-6xl px-6 lg:px-12">
 
         <Reveal className="mb-16 flex max-w-xl flex-col gap-4">
@@ -72,7 +72,7 @@ export function HomeHowItWorks() {
         </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3">
-          {STEPS.map(({ number, title, desc, tag, tone }, i) => (
+          {STEPS.map(({ number, title, desc, tag, accent }, i) => (
             <Reveal key={number} delay={i * 0.1} className="relative px-0 py-8 md:px-10 md:py-0">
               {i > 0 && (
                 <Separator orientation="vertical" className="absolute left-0 top-0 hidden h-full md:block" />
@@ -87,7 +87,7 @@ export function HomeHowItWorks() {
                 {number}
               </Typography>
 
-              <Chip color={tone} variant="soft" size="sm" className="mb-3">
+              <Chip color={accent ? 'accent' : 'default'} variant="soft" size="sm" className="mb-3">
                 <Chip.Label>{tag}</Chip.Label>
               </Chip>
 

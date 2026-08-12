@@ -7,6 +7,7 @@ import {
   translations,
   DEFAULT_LOCALE,
   LOCALE_STORAGE_KEY,
+  INTL_LOCALE_MAP,
   resolveSystemLocale,
 } from '@/i18n';
 
@@ -36,6 +37,8 @@ interface LocaleContextValue {
   localePreference: Locale | 'system';
   setLocale: (l: Locale | 'system') => void;
   t: Translations;
+  /** BCP-47 tag for Intl.DateTimeFormat/toLocaleDateString, e.g. 'fr-FR'. */
+  intlLocale: string;
 }
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
@@ -74,8 +77,10 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     [locale],
   );
 
+  const intlLocale = INTL_LOCALE_MAP[locale];
+
   return (
-    <LocaleContext.Provider value={{ locale, localePreference, setLocale, t }}>
+    <LocaleContext.Provider value={{ locale, localePreference, setLocale, t, intlLocale }}>
       {children}
     </LocaleContext.Provider>
   );
@@ -90,7 +95,7 @@ export function useLocale() {
 
 /** Returns the translation object `t` and a helper `tx` for interpolation. */
 export function useTranslation() {
-  const { t, locale, setLocale } = useLocale();
+  const { t, locale, setLocale, intlLocale } = useLocale();
 
   /**
    * Interpolates `{variable}` placeholders in a string.
@@ -104,5 +109,5 @@ export function useTranslation() {
     );
   };
 
-  return { t, tx, locale, setLocale };
+  return { t, tx, locale, setLocale, intlLocale };
 }

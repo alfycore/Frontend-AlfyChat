@@ -12,7 +12,7 @@ export function HomeCta() {
   const reduce = useReducedMotion();
 
   return (
-    <section id="download" className="border-t border-border bg-background py-28">
+    <section id="download" className="bg-surface py-28">
       <div className="mx-auto max-w-4xl px-6 lg:px-12">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 20 }}
