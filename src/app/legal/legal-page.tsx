@@ -1,10 +1,39 @@
+import { Fragment } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { cn } from '@/lib/utils';
 
+export interface LegalSubsection {
+  title: string;
+  body: string;
+  bullets?: string[];
+}
+
 export interface LegalSection {
   heading: string;
-  body: React.ReactNode;
+  intro?: string;
+  bullets?: string[];
+  subsections?: LegalSubsection[];
+}
+
+/** Rend `**mot**` en <strong>, sans dépendance markdown complète. */
+function renderInlineBold(str: string) {
+  return str.split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <Fragment key={i}>{part}</Fragment>;
+  });
+}
+
+function LegalBody({ text }: { text: string }) {
+  return (
+    <>
+      {text.split('\n\n').map((para, i) => (
+        <p key={i}>{renderInlineBold(para)}</p>
+      ))}
+    </>
+  );
 }
 
 export function LegalPage({
@@ -12,12 +41,16 @@ export function LegalPage({
   title,
   subtitle,
   updatedAt,
+  updatedLabel,
+  contactLabel,
   sections,
 }: {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   title: string;
   subtitle: string;
   updatedAt: string;
+  updatedLabel: string;
+  contactLabel: string;
   sections: LegalSection[];
 }) {
   return (
@@ -36,7 +69,7 @@ export function LegalPage({
               <p className="mt-0.5 text-[13px] text-muted-foreground/70">{subtitle}</p>
               <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border/40 bg-muted/30 px-2.5 py-0.5 text-[10px] tabular-nums text-muted-foreground/60">
                 <span className="size-1 rounded-full bg-green-500" />
-                Mise à jour : {updatedAt}
+                {updatedLabel} {updatedAt}
               </span>
             </div>
           </div>
@@ -66,7 +99,27 @@ export function LegalPage({
                   '[&_p+p]:mt-2',
                 )}
               >
-                {s.body}
+                {s.intro && <LegalBody text={s.intro} />}
+                {s.bullets && (
+                  <ul>
+                    {s.bullets.map((b, bi) => (
+                      <li key={bi}>{renderInlineBold(b)}</li>
+                    ))}
+                  </ul>
+                )}
+                {s.subsections?.map((sub, si) => (
+                  <div key={si}>
+                    <h3 className="mt-3 text-[12px] font-semibold text-foreground">{sub.title}</h3>
+                    <LegalBody text={sub.body} />
+                    {sub.bullets && (
+                      <ul>
+                        {sub.bullets.map((b, bi) => (
+                          <li key={bi}>{renderInlineBold(b)}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           ))}
@@ -74,7 +127,7 @@ export function LegalPage({
 
         {/* Footer contact */}
         <div className="mt-6 flex items-center justify-between rounded-xl border border-border/20 bg-muted/10 px-4 py-3 text-[12px] text-muted-foreground/60">
-          <span>Des questions ?</span>
+          <span>{contactLabel}</span>
           <a href="mailto:contact@alfycore.org" className="font-medium text-accent underline underline-offset-2">
             contact@alfycore.org
           </a>

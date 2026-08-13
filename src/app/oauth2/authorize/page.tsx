@@ -15,36 +15,12 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/components/locale-provider';
 
 // ── Bitmask → labels ──────────────────────────────────────────────────────────
 
-const PERMISSION_LABELS: Record<number, { label: string; desc: string }> = {
-  0x1:   { label: 'Lire les messages',     desc: 'Voir le contenu des salons' },
-  0x2:   { label: 'Envoyer des messages',  desc: 'Poster dans les salons textuels' },
-  0x4:   { label: 'Ajouter des réactions', desc: 'Réagir aux messages' },
-  0x8:   { label: 'Gérer les messages',    desc: 'Supprimer et épingler des messages' },
-  0x10:  { label: 'Expulser des membres',  desc: 'Exclure des membres du serveur' },
-  0x20:  { label: 'Bannir des membres',    desc: 'Bannir des membres définitivement' },
-  0x40:  { label: 'Administrateur',        desc: 'Accès complet à toutes les fonctions' },
-  0x80:  { label: 'Gérer les salons',      desc: 'Créer, modifier et supprimer des salons' },
-  0x100: { label: 'Gérer les rôles',       desc: 'Créer, modifier et supprimer des rôles' },
-};
-
-const SCOPE_LABELS: Record<string, { label: string; desc: string }> = {
-  identify: {
-    label: 'Accès à votre profil',
-    desc: "Lire votre identifiant, nom d'utilisateur et avatar.",
-  },
-  guilds: {
-    label: 'Liste de vos serveurs',
-    desc: 'Voir la liste de vos serveurs AlfyChat.',
-  },
-};
-
-function decodedPermissions(bits: number) {
-  return Object.entries(PERMISSION_LABELS)
-    .filter(([bit]) => (bits & parseInt(bit)) !== 0)
-    .map(([, info]) => info);
+function decodedPermissions(bits: number, permissions: { bit: number; label: string; desc: string }[]) {
+  return permissions.filter(p => (bits & p.bit) !== 0);
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -84,6 +60,12 @@ function AuthorizeContent() {
   const searchParams = useSearchParams();
   const router       = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const { t } = useTranslation();
+  const o = t.pages.oauth2;
+  const SCOPE_LABELS: Record<string, { label: string; desc: string }> = {
+    identify: { label: o.scopeIdentifyLabel, desc: o.scopeIdentifyDesc },
+    guilds:   { label: o.scopeGuildsLabel,   desc: o.scopeGuildsDesc },
+  };
 
   const clientId    = searchParams.get('client_id') || '';
   const scope       = searchParams.get('scope') || 'bot';
@@ -111,7 +93,7 @@ function AuthorizeContent() {
   // Charger app + serveurs
   useEffect(() => {
     if (!user || authLoading) return;
-    if (!clientId) { setError('Paramètre client_id manquant.'); setLoadingApp(false); return; }
+    if (!clientId) { setError(o.clientIdMissing); setLoadingApp(false); return; }
 
     Promise.all([
       api.getOAuth2Application(clientId),
@@ -121,7 +103,7 @@ function AuthorizeContent() {
     ])
       .then(([appRes, serversRes]) => {
         if (!appRes.success) {
-          setError('Application introuvable. Vérifiez le client_id.');
+          setError(o.appNotFound);
           setLoadingApp(false);
           return;
         }
@@ -137,7 +119,7 @@ function AuthorizeContent() {
         }
         setLoadingApp(false);
       })
-      .catch(() => { setError('Erreur lors du chargement.'); setLoadingApp(false); });
+      .catch(() => { setError(o.loadError); setLoadingApp(false); });
   }, [clientId, hasBotScope, user, authLoading]);
 
   const handleAuthorize = async () => {
@@ -163,11 +145,11 @@ function AuthorizeContent() {
           setAuthorizing(false);
         }
       } else {
-        setError((res as any).error || 'Autorisation refusée.');
+        setError((res as any).error || o.authDenied);
         setAuthorizing(false);
       }
     } catch {
-      setError('Une erreur est survenue.');
+      setError(o.genericError);
       setAuthorizing(false);
     }
   };
@@ -184,7 +166,7 @@ function AuthorizeContent() {
     }
   };
 
-  const permList    = decodedPermissions(permissions);
+  const permList    = decodedPermissions(permissions, t.pages.developers.permissions);
   const extraScopes = scopes.filter(s => s !== 'bot');
   let redirectDomain = '';
   try { redirectDomain = new URL(redirectUri).hostname; } catch {}
@@ -254,7 +236,7 @@ function AuthorizeContent() {
                   </div>
                   <div>
                     <h1 className="font-(family-name:--font-krona) text-xl font-bold text-foreground">
-                      Application introuvable
+                      {o.appNotFoundTitle}
                     </h1>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
                       {error}
@@ -263,7 +245,7 @@ function AuthorizeContent() {
                 </MotionStaggerItem>
                 <MotionStaggerItem>
                   <Button asChild variant="outline" className="w-full" size="lg">
-                    <Link href="/">Retour à l&apos;accueil</Link>
+                    <Link href="/">{o.backHome}</Link>
                   </Button>
                 </MotionStaggerItem>
               </MotionStagger>
@@ -275,10 +257,10 @@ function AuthorizeContent() {
                 {/* Titre */}
                 <MotionStaggerItem className="flex flex-col gap-1">
                   <h1 className="font-(family-name:--font-krona) text-2xl font-bold text-foreground">
-                    Autorisation
+                    {o.title}
                   </h1>
                   <p className="text-[13px] text-muted-foreground">
-                    Une application demande l&apos;accès à votre compte.
+                    {o.subtitle}
                   </p>
                 </MotionStaggerItem>
 
@@ -304,14 +286,12 @@ function AuthorizeContent() {
                         <span className="text-[14px] font-bold text-foreground">{app.name}</span>
                         {app.isVerified && (
                           <Badge className="h-4 border border-blue-500/30 bg-blue-500/10 px-1.5 text-[9px] text-blue-400">
-                            VÉRIFIÉ
+                            {o.verifiedBadge}
                           </Badge>
                         )}
                       </div>
                       <p className="mt-0.5 text-[12px] text-muted-foreground">
-                        {hasBotScope
-                          ? 'souhaite être ajouté à un de vos serveurs'
-                          : 'souhaite accéder à votre compte AlfyChat'}
+                        {hasBotScope ? o.wantsBotAccess : o.wantsAccountAccess}
                       </p>
                       {app.description && (
                         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/70">
@@ -325,13 +305,13 @@ function AuthorizeContent() {
                   {hasBotScope && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                        Ajouter au serveur
+                        {o.addToServerLabel}
                       </label>
                       {servers.length === 0 ? (
                         <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5">
                           <AlertTriangleIcon size={13} className="shrink-0 text-amber-400" />
                           <p className="text-[12px] text-muted-foreground">
-                            Vous n&apos;administrez aucun serveur.
+                            {o.noAdminServer}
                           </p>
                         </div>
                       ) : (
@@ -341,7 +321,7 @@ function AuthorizeContent() {
                             onChange={e => setSelectedServer(e.target.value)}
                             className="h-9 w-full appearance-none rounded-lg border border-input bg-background px-3 pr-8 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/30"
                           >
-                            <option value="">— Choisir un serveur —</option>
+                            <option value="">{o.chooseServerOption}</option>
                             {servers.map(s => (
                               <option key={s.id} value={s.id}>{s.name}</option>
                             ))}
@@ -358,7 +338,7 @@ function AuthorizeContent() {
                       {permList.length > 0 && (
                         <div className="flex flex-col gap-1.5">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                            Permissions
+                            {o.permissionsLabel}
                           </p>
                           <div className="flex flex-col gap-1">
                             {permList.map(perm => (
@@ -381,7 +361,7 @@ function AuthorizeContent() {
                       {extraScopes.length > 0 && (
                         <div className="flex flex-col gap-1.5">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                            Accès demandés
+                            {o.requestedAccessLabel}
                           </p>
                           <div className="flex flex-col gap-1">
                             {extraScopes.map(s => {
@@ -405,9 +385,9 @@ function AuthorizeContent() {
 
                   {redirectDomain && (
                     <p className="text-[11px] text-muted-foreground/50">
-                      Vous serez redirigé vers{' '}
+                      {o.redirectNoticeBefore}{' '}
                       <span className="font-mono text-muted-foreground">{redirectDomain}</span>{' '}
-                      après l&apos;autorisation.
+                      {o.redirectNoticeAfter}
                     </p>
                   )}
 
@@ -426,7 +406,7 @@ function AuthorizeContent() {
                       onClick={handleCancel}
                       disabled={authorizing}
                     >
-                      Annuler
+                      {o.cancelBtn}
                     </Button>
                     <Button
                       size="lg"
@@ -439,7 +419,7 @@ function AuthorizeContent() {
                       }
                     >
                       {authorizing && <Spinner className="size-4" />}
-                      {authorizing ? 'Autorisation…' : 'Autoriser'}
+                      {authorizing ? o.authorizingBtn : o.authorizeBtn}
                     </Button>
                   </div>
                 </MotionStaggerItem>
@@ -447,7 +427,7 @@ function AuthorizeContent() {
                 {/* Note sécurité */}
                 <MotionStaggerItem className="flex items-center gap-1.5 text-[11px] text-muted-foreground/40">
                   <ShieldCheckIcon size={11} />
-                  <span>AlfyChat ne partage jamais votre mot de passe avec des applications tierces</span>
+                  <span>{o.securityNote}</span>
                 </MotionStaggerItem>
 
               </MotionStagger>

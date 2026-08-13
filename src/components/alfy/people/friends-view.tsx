@@ -50,7 +50,10 @@ function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: strin
   const { t, tx } = useTranslation();
   const { initiateCall } = useCallContext();
   return (
-    <div className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-secondary">
+    <div
+      className="group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-secondary"
+      onDoubleClick={() => onMessage?.(user.id)}
+    >
       <AlfyAvatar
         name={user.displayName}
         avatarUrl={user.avatarUrl}

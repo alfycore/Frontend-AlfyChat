@@ -1111,6 +1111,22 @@ class ApiService {
     });
   }
 
+  // Page dev : aperçu / envoi de test des templates d'email
+  async getAdminDevEmailTypes() {
+    return this.request<{ id: string; label: string }[]>('/api/admin/dev/emails/types');
+  }
+
+  async getAdminDevEmailPreview(type: string) {
+    return this.request<{ html: string }>(`/api/admin/dev/emails/${type}/preview`);
+  }
+
+  async sendAdminDevTestEmail(type: string, to: string) {
+    return this.request(`/api/admin/dev/emails/${type}/send`, {
+      method: 'POST',
+      body: JSON.stringify({ to }),
+    });
+  }
+
   // Gestion des utilisateurs
   async getAdminUsers(limit: number = 100, offset: number = 0) {
     return this.request(`/api/admin/users?limit=${limit}&offset=${offset}`);

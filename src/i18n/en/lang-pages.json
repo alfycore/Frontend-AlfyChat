@@ -1,13 +1,301 @@
 {
   "pages": {
+    "groups": {
+      "emptyTitle": "Your groups",
+      "emptySubtitle": "Select a group or create a new one."
+    },
     "legal": {
       "updatedPrefix": "Updated:",
-      "contactQuestion": "Questions?"
+      "contactQuestion": "Questions?",
+      "sidebarTitle": "Documents",
+      "orgName": "AlfyCore",
+      "orgTagline": "Non-profit association · France 🇫🇷",
+      "navCguLabel": "Terms of use",
+      "navCguDesc": "Terms",
+      "navPrivacyLabel": "Privacy",
+      "navPrivacyDesc": "GDPR",
+      "navMentionsLabel": "Legal notice",
+      "navMentionsDesc": "Legal",
+      "navCookiesLabel": "Cookies",
+      "navCookiesDesc": "Cookies"
     },
     "cgu": {
       "title": "Terms of Service",
       "subtitle": "AlfyChat Platform — alfychat.app",
-      "updatedAt": "March 26, 2026"
+      "updatedAt": "March 26, 2026",
+      "sections": [
+        {
+          "heading": "Presentation of AlfyChat and AlfyCore",
+          "intro": "By accessing or using AlfyChat, you accept these Terms of Service (the “Terms”) without reservation. Please read them carefully before using the Service.",
+          "subsections": [
+            {
+              "title": "1.1 The AlfyCore Association",
+              "body": "AlfyChat is an instant messaging platform developed, maintained, and operated by **AlfyCore**, a non-profit association formed under the French law of 1 July 1901 governing associations, with its registered office in France. AlfyCore has no shareholders and distributes no profit to its members. Its corporate purpose is to design, distribute, and maintain free, sovereign, and privacy-respecting digital tools.",
+              "bullets": [
+                "Association website: **alfycore.pro**",
+                "AlfyChat platform: **alfychat.app**",
+                "Contact: **contact@alfycore.org**"
+              ]
+            },
+            {
+              "title": "1.2 Description of the Service",
+              "body": "AlfyChat is an instant messaging application offering in particular:",
+              "bullets": [
+                "Direct messaging between users with end-to-end encryption (E2EE ECDH P-256 + AES-256-GCM)",
+                "Creation of community servers with text and voice channels",
+                "Peer-to-peer audio and video calls via WebRTC with DTLS-SRTP encryption",
+                "Sharing of files, images, and media",
+                "An open API enabling the creation of bots and third-party integrations",
+                "A granular role and permission system within community servers"
+              ]
+            },
+            {
+              "title": "1.3 Free of Charge and Open Source",
+              "body": "AlfyChat is and will remain free of charge for end users. The platform's source code is published under an open-source licence, allowing anyone to audit, contribute to, or deploy their own instance. AlfyCore does not use any advertising, engages in no commercial tracking, and does not sell any personal data."
+            }
+          ]
+        },
+        {
+          "heading": "Acceptance of these Terms",
+          "intro": "Accessing or using AlfyChat, in any form whatsoever, presupposes and implies full, complete, and unreserved acceptance of these Terms of Service. If you do not accept these Terms in their entirety, you must immediately and permanently cease all use of the Service.",
+          "subsections": [
+            { "title": "2.1 Contractual Nature of the Terms", "body": "These Terms constitute a legally binding and enforceable contract between you (the “User”) and AlfyCore. They govern all forms of access to and use of the Service, including via the alfychat.app web application, the official iOS and Android mobile applications, desktop clients, any official AlfyChat API, and any third-party client using the official API." },
+            { "title": "2.2 Manifestation of Acceptance", "body": "By clicking “Create an account,” logging into your existing account, or otherwise beginning to use the Service in any other manner, you expressly represent and warrant that you have fully read, understood, and accepted these Terms and AlfyChat's Privacy Policy, in the version in force at the time of your use." },
+            { "title": "2.3 Hierarchy of Contractual Documents", "body": "These Terms, together with AlfyChat's Privacy Policy and Cookie Policy, constitute the entire agreement between you and AlfyCore regarding use of the Service. They supersede and cancel all prior agreements, representations, or undertakings, whether written or oral, relating to their subject matter. In the event of any conflict between these Terms and any other document (marketing communications, FAQ, technical documentation), these Terms shall prevail." },
+            { "title": "2.4 Legal Capacity", "body": "By accepting these Terms, you represent that you have the legal capacity required to enter into a contract. If you are acting on behalf of a legal entity (association, company), you represent that you are duly authorised to bind it and to accept these Terms on its behalf." }
+          ]
+        },
+        {
+          "heading": "Access to the Service and Registration",
+          "subsections": [
+            { "title": "3.1 Age Requirements", "body": "Use of AlfyChat is restricted to persons aged at least 13. If you are between 13 and 16 years of age, you must have obtained the consent of your legal representative in accordance with the provisions of the GDPR." },
+            { "title": "3.2 Invitation System", "body": "Registration may be subject to an invitation system depending on the period and policy in force. AlfyCore reserves the right to limit registrations in order to guarantee the quality and security of the Service." },
+            {
+              "title": "3.3 Information Required at Registration",
+              "body": "When registering, you must provide:\n\nYou undertake to provide accurate, complete, and up-to-date information. AlfyCore reserves the right to refuse registration or delete any account whose information is manifestly false or fraudulent.",
+              "bullets": [
+                "A valid and accessible e-mail address",
+                "A unique username",
+                "A sufficiently strong password"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "User Account",
+          "subsections": [
+            { "title": "4.1 Account Responsibility", "body": "Each account is strictly personal and non-transferable. You are solely responsible for all activity carried out from your account, whether performed by you or by a third party who has gained access to your credentials." },
+            { "title": "4.2 Security of Credentials", "body": "You undertake to keep your password confidential and not to disclose it to third parties. If you suspect your credentials have been compromised, you must report this immediately to AlfyCore via contact@alfycore.org and change your password without delay." },
+            { "title": "4.3 Prohibition on Transfer", "body": "Your account may under no circumstances be transferred, sold, rented, or assigned to a third party. Any attempt to transfer an account is prohibited and may result in the immediate termination of the account concerned." },
+            { "title": "4.4 One Account per User", "body": "Each user is limited to a single active account. Creating multiple accounts, in particular for the purpose of circumventing a sanction, is strictly prohibited and may result in the termination of all accounts concerned." }
+          ]
+        },
+        {
+          "heading": "Acceptable Use of the Service",
+          "subsections": [
+            {
+              "title": "5.1 Prohibited Conduct",
+              "body": "By using AlfyChat, you formally undertake not to:",
+              "bullets": [
+                "Use the Service for unlawful, fraudulent purposes or purposes contrary to public order",
+                "Harass, threaten, intimidate, defame, or discriminate against other users",
+                "Distribute unlawful, hateful, racist content, CSAM, terrorist content, or content glorifying violence",
+                "Impersonate a third party, a member of the AlfyCore team, or an authority",
+                "Attempt to compromise the security, integrity, or availability of the AlfyChat infrastructure",
+                "Automate access to the Service without using the official API and in compliance with its terms",
+                "Collect or extract other users' personal data without their explicit consent",
+                "Distribute malware, viruses, ransomware, or any other harmful code",
+                "Carry out phishing operations or any attempted fraud against other users",
+                "Use the Service for mass spam activities or unsolicited communications"
+              ]
+            },
+            { "title": "5.2 Reporting Vulnerabilities", "body": "If you discover a security vulnerability in AlfyChat, we invite you to report it responsibly to contact@alfycore.org before any public disclosure." }
+          ]
+        },
+        {
+          "heading": "User-Generated Content",
+          "subsections": [
+            { "title": "6.1 Ownership of Content", "body": "You retain all of your intellectual property rights in the content you publish on AlfyChat. By publishing it, you grant AlfyCore a non-exclusive, worldwide, royalty-free licence limited to what is strictly necessary to provide the Service." },
+            { "title": "6.2 Content Protected by E2EE", "body": "When end-to-end encryption is enabled, messages are encrypted client-side prior to transmission. AlfyCore has no technical means of decrypting these communications." },
+            { "title": "6.3 Editorial Responsibility", "body": "AlfyCore acts as a hosting provider within the meaning of the LCEN (French Digital Economy Act) and the Digital Services Act. As such, AlfyCore is not responsible for content published by users but acts promptly upon receipt of a valid notice to remove manifestly unlawful content." }
+          ]
+        },
+        {
+          "heading": "Encryption and Confidentiality of Communications",
+          "subsections": [
+            {
+              "title": "7.1 Levels of Encryption",
+              "body": "AlfyChat offers three levels of protection for communications:",
+              "bullets": [
+                "**Level 1 — Standard:** encryption in transit via TLS 1.3",
+                "**Level 2 — Enhanced:** encryption at rest using AES-256 with a per-account derived key",
+                "**Level 3 — Maximum:** end-to-end encryption (E2EE ECDH P-256 + AES-256-GCM)"
+              ]
+            },
+            { "title": "7.2 Key Management", "body": "In E2EE mode, cryptographic keys are generated locally on your device and never leave your environment in unencrypted form. AlfyCore cannot recover lost keys." },
+            { "title": "7.3 Limits of Encryption", "body": "Even with E2EE enabled, certain metadata such as participant identifiers, timestamps, and the approximate size of messages may be processed to ensure the routing of communications." }
+          ]
+        },
+        {
+          "heading": "Bots, API, and Third-Party Integrations",
+          "subsections": [
+            { "title": "8.1 Use of the API", "body": "AlfyChat provides an open API enabling the creation of bots and integrations. Any abusive exceeding of rate limits may result in the temporary or permanent suspension of API access." },
+            { "title": "8.2 Responsibility for Bots", "body": "Any person deploying a bot on AlfyChat is responsible for its behaviour. Bots must comply with these Terms, clearly identify their automated nature, and must not deceptively simulate human behaviour." },
+            { "title": "8.3 Third-Party Services", "body": "AlfyCore is not responsible for the content, privacy practices, or services offered by third parties integrated via bots or webhooks." }
+          ]
+        },
+        {
+          "heading": "Community Servers",
+          "subsections": [
+            { "title": "9.1 Creation and Administration", "body": "Any user may create a community server on AlfyChat. The creator automatically becomes the owner of the server and assumes editorial responsibility for all content published within it." },
+            {
+              "title": "9.2 Obligations of Administrators",
+              "body": "",
+              "bullets": [
+                "Establish clear and visible moderation rules",
+                "Act promptly on reports of unlawful content",
+                "Not use their server to organise unlawful activities",
+                "Comply with and enforce these Terms"
+              ]
+            },
+            { "title": "9.3 AlfyCore's Rights Over Servers", "body": "AlfyCore reserves the right to close, suspend, or delete any community server that fails to comply with these Terms, without notice or compensation in cases of serious violations." }
+          ]
+        },
+        {
+          "heading": "Voice and Video Calls",
+          "subsections": [
+            { "title": "10.1 WebRTC Technology", "body": "Audio and video calls use WebRTC technology with end-to-end DTLS-SRTP encryption on each media stream. Peer-to-peer communications do not pass through AlfyCore's servers, except where a TURN relay is used, in which case they remain encrypted." },
+            { "title": "10.2 Consent to Enabling Audio/Video", "body": "Activating your microphone and/or camera requires your explicit authorisation via your browser's or operating system's permission mechanisms." },
+            { "title": "10.3 Recording of Calls", "body": "AlfyCore does not record voice or video calls. Any recording made by a participant must be carried out with the explicit consent of all participants." }
+          ]
+        },
+        {
+          "heading": "Intellectual Property",
+          "subsections": [
+            { "title": "11.1 Trademarks and Visual Identity", "body": "“AlfyChat,” “AlfyCore,” the associated logos, and the platform's visual identity are the property of AlfyCore. Any reproduction, imitation, or unauthorised use of these elements is strictly prohibited." },
+            { "title": "11.2 Open-Source Code", "body": "AlfyChat's source code is published under an open-source licence. This freedom does not extend to the trademark, domain names, or the infrastructure operated by AlfyCore." },
+            { "title": "11.3 Third-Party Content", "body": "Any claim relating to content that infringes intellectual property rights may be sent to contact@alfycore.org." }
+          ]
+        },
+        {
+          "heading": "Reporting and Moderation",
+          "subsections": [
+            { "title": "12.1 Reporting Mechanism", "body": "AlfyChat provides a reporting mechanism accessible from the Service's interface. Any user may report content or conduct that violates these Terms." },
+            { "title": "12.2 Handling of Reports", "body": "AlfyCore undertakes to review reports received within a reasonable time and to take appropriate action." },
+            { "title": "12.3 Reporting to Authorities", "body": "In accordance with applicable legal obligations, AlfyCore may report to the competent authorities any serious unlawful content of which it becomes aware." }
+          ]
+        },
+        {
+          "heading": "Suspension and Termination of the Account",
+          "subsections": [
+            { "title": "13.1 Termination at the User's Initiative", "body": "You may close your account at any time from your profile settings. Deletion of the account results in the permanent deletion of your personal data within the timeframes set out in our Privacy Policy." },
+            {
+              "title": "13.2 Termination at AlfyCore's Initiative",
+              "body": "AlfyCore reserves the right to suspend or terminate any account in the event of:",
+              "bullets": [
+                "Violation of these Terms",
+                "Proven fraudulent or unlawful activity",
+                "A threat to the security, availability, or integrity of the Service",
+                "A judicial or administrative decision requiring it"
+              ]
+            },
+            { "title": "13.3 Challenging a Sanction", "body": "If you disagree with a suspension or termination decision, you may lodge an appeal by contacting AlfyCore at contact@alfycore.org within 30 days of notification of the sanction." }
+          ]
+        },
+        {
+          "heading": "Service Availability and Hosting",
+          "intro": "AlfyCore strives to keep AlfyChat available 24 hours a day, 7 days a week, but cannot guarantee uninterrupted availability. Interruptions may occur for reasons of maintenance, updates, technical failures, or force majeure.",
+          "subsections": [
+            {
+              "title": "14.1 Hosting Infrastructure",
+              "body": "AlfyChat's infrastructure is split between two providers:",
+              "bullets": [
+                "**Hostinger:** website, API Gateway, Users, Messages, and Calls services, media CDN. European data centres.",
+                "**AlfyCore:** Friends, Community Servers, Bots, and backend Media services, MySQL database, and Redis cache."
+              ]
+            },
+            { "title": "14.2 Liability in the Event of Unavailability", "body": "AlfyCore shall not be held liable for any harm resulting from unavailability of the Service, loss of data, or any other technical failure, to the extent permitted by applicable law.\n\nThe real-time status of the services can be viewed at **alfychat.app/status**." }
+          ]
+        },
+        {
+          "heading": "Limitation of Liability",
+          "subsections": [
+            {
+              "title": "15.1 Scope of the Limitation",
+              "body": "To the fullest extent permitted by the law applicable in France and the European Union, AlfyCore excludes and disclaims all contractual, tortious, or quasi-tortious liability for the following categories of damages and situations:",
+              "bullets": [
+                "Indirect, consequential, incidental, or intangible damages of any nature whatsoever",
+                "Loss of data, profits, revenue, business opportunities, or clientele",
+                "Loss of reputation or image, even if AlfyCore has been advised of the possibility of such damages",
+                "Content published, disseminated, or shared by third-party users on the platform",
+                "The conduct, acts, or omissions of third-party users towards you",
+                "Failures, interruptions, bugs, or unavailability of third-party services integrated via bots or webhooks developed by third parties",
+                "Losses resulting from the compromise of your login credentials due to your own negligence or that of a third party to whom you disclosed your access information",
+                "The inability to recover lost E2EE cryptographic keys, insofar as those keys are generated and managed exclusively client-side",
+                "Harm resulting from an interruption of the Service for planned maintenance, an update, or force majeure"
+              ]
+            },
+            { "title": "15.2 Mandatory Limits", "body": "The limitations of liability set out in this article do not apply in cases where applicable law expressly prohibits them, in particular in the event of bodily injury, gross or wilful misconduct on the part of AlfyCore, or for any liability that cannot be excluded or limited under mandatory consumer protection provisions applicable to the user." },
+            { "title": "15.3 Service Provided “As Is”", "body": "The AlfyChat Service is provided “as is,” without warranty of any kind, express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, non-infringement of third-party rights, or absence of errors. AlfyCore does not warrant that the Service will be uninterrupted, error-free, 100% secure, or free of any harmful component." }
+          ]
+        },
+        {
+          "heading": "Protection of Personal Data",
+          "intro": "The collection and processing of your personal data in connection with your use of AlfyChat are governed by AlfyCore's Privacy Policy, a separate but inseparable document from these Terms. The Privacy Policy is available at **alfychat.app/legal/privacy**.\n\nThe Privacy Policy describes in detail the data collected, the purposes and legal bases for its processing (in accordance with the GDPR), the security measures in place, any processors involved, the retention periods, and the full scope of your rights (access, rectification, erasure, portability, objection, restriction).\n\nAlfyCore formally undertakes never to sell, rent, transfer, or otherwise commercialise your personal data to any third party whatsoever, without exception. AlfyCore engages in no targeted advertising and carries out no commercial profiling. These commitments are structural and flow directly from AlfyCore's status as a non-profit association."
+        },
+        {
+          "heading": "Hosting Provider Status, the DSA, and the LCEN",
+          "intro": "AlfyCore acts as a content hosting provider within the meaning of Article 6 of French Law No. 2004-575 of 21 June 2004 (LCEN) and Regulation (EU) 2022/2065 of 19 October 2022 on Digital Services (the Digital Services Act — DSA), which came into full application on 17 February 2024.",
+          "subsections": [
+            { "title": "17.1 Limited Liability of the Hosting Provider", "body": "As a hosting provider, AlfyCore is not liable a priori for content published by users, provided it does not have actual knowledge of its unlawful nature or acts promptly to remove it once it obtains such knowledge (Article 6 I 2 LCEN, Article 6.1 DSA)." },
+            { "title": "17.2 Obligation to Act Promptly (Notice and Action)", "body": "AlfyCore provides a reporting mechanism accessible from the application's interface and via contact@alfycore.org. Upon receipt of a valid report of manifestly unlawful content, AlfyCore acts as promptly as possible to remove or disable access to that content, in accordance with its legal obligations." },
+            { "title": "17.3 Serious Unlawful Content", "body": "In accordance with Article 6 I 7 of the LCEN and the provisions of the DSA, AlfyCore promptly reports to the competent authorities any content of which it becomes aware and which is likely to constitute a serious criminal offence, in particular content of a child sexual abuse material (CSAM) nature, content glorifying or inciting the commission of terrorist acts, or content inciting hatred." }
+          ]
+        },
+        {
+          "heading": "Amendment of these Terms",
+          "intro": "AlfyCore reserves the right to amend these Terms at any time, in particular to reflect changes in applicable legislation, court or regulatory decisions, the introduction of new features or services, or changes in our operational practices.",
+          "subsections": [
+            { "title": "18.1 Notification of Material Changes", "body": "In the event of a material change significantly affecting your rights or obligations, you will be notified via a notification within the AlfyChat application and/or by e-mail to the address associated with your account, at least 30 days before the new provisions take effect. This period allows you to review the changes and, if you do not accept them, to delete your account before they take effect." },
+            { "title": "18.2 Tacit Acceptance of Changes", "body": "By continuing to use the Service after the amended Terms take effect, you are deemed to have reviewed and accepted the new provisions. If you refuse the changes, you must stop using the Service and delete your account before the effective date." },
+            { "title": "18.3 Versioning and Archiving", "body": "The version of the Terms currently in force is always available at **alfychat.app/legal/cgu**. The date of the last update is shown at the top of this page. AlfyCore maintains a history of previous versions of the Terms, available upon request at contact@alfycore.org." }
+          ]
+        },
+        {
+          "heading": "Governing Law and Competent Jurisdiction",
+          "subsections": [
+            { "title": "19.1 Applicable Law", "body": "These Terms are governed, interpreted, and performed in accordance with French law, without regard to conflict-of-law rules. The application of the United Nations Convention on Contracts for the International Sale of Goods is expressly excluded. These Terms are drafted in French, which shall prevail in the event of a dispute or discrepancy with a translated version." },
+            { "title": "19.2 Prior Amicable Resolution", "body": "In the event of a dispute concerning the interpretation, performance, or termination of these Terms, the parties undertake to seek an amicable solution before any judicial proceedings. You may send your complaint to contact@alfycore.org. AlfyCore undertakes to respond within a reasonable period of 30 calendar days." },
+            { "title": "19.3 Jurisdiction", "body": "Failing an amicable resolution, any dispute relating to these Terms shall fall within the exclusive jurisdiction of the competent French courts, subject to the mandatory consumer protection provisions applicable according to the user's country of residence, in particular Regulation (EU) No. 1215/2012, known as “Brussels I bis,” for users residing in the European Union." },
+            { "title": "19.4 Online Dispute Resolution (ODR)", "body": "Users residing in the European Union may also make use of the online dispute resolution (ODR) platform set up by the European Commission, available at **ec.europa.eu/consumers/odr**. This platform enables the submission of a complaint and helps locate a competent out-of-court dispute resolution body." }
+          ]
+        },
+        {
+          "heading": "Contact, Complaints, and Support",
+          "intro": "For any question, request for clarification, or complaint relating to these Terms or the use of the AlfyChat Service, you may contact AlfyCore through the following means:",
+          "bullets": [
+            "**AlfyCore** — Association under the French 1901 law, France",
+            "**General e-mail:** contact@alfycore.org",
+            "**Institutional website:** alfycore.pro",
+            "**Platform:** alfychat.app"
+          ],
+          "subsections": [
+            { "title": "20.1 Response Times", "body": "AlfyCore undertakes to acknowledge receipt of any request or complaint within 72 business hours and to provide a complete response within 30 calendar days of receipt. For complex requests requiring further investigation, this period may be extended by an additional 30 days, with prior notice of such extension." },
+            {
+              "title": "20.2 Recommended Contact Subjects",
+              "body": "",
+              "bullets": [
+                "GDPR rights (access, rectification, erasure...): “GDPR Rights — [nature]”",
+                "Urgent report of unlawful content: “Urgent Report — [nature]”",
+                "Security vulnerability disclosure: “Security — Vulnerability Disclosure”",
+                "Question relating to the Terms: “Terms — [nature of the question]”",
+                "DPA request (data processing agreement): “DPA Request”"
+              ]
+            },
+            { "title": "20.3 Final Provisions", "body": "These Terms of Service were drafted for the AlfyChat platform, developed, operated, and maintained by AlfyCore, a non-profit association formed under the French law of 1 July 1901, domiciled in France. Should one or more clauses of these Terms be declared void or unenforceable by a court decision, the remaining clauses shall remain in full force and effect. AlfyCore's failure to exercise any right or prerogative arising from these Terms shall not be construed as a waiver of that right or prerogative. These Terms are drafted in French, which shall prevail in the event of a dispute." }
+          ]
+        }
+      ]
     },
     "cookies": {
       "title": "Cookie Policy",
@@ -165,7 +453,52 @@
       "addCommandBtn": "Add command",
       "deleteConfirmTitle": "Confirm deletion",
       "deleteConfirmDesc": "This action is irreversible. The bot will be removed from all servers and all associated data will be deleted.",
-      "deletePermanentlyBtn": "Delete permanently"
+      "deletePermanentlyBtn": "Delete permanently",
+      "tags": [
+        "Moderation", "Music", "Games", "Utility", "Fun",
+        "Social", "Economy", "Levels", "Logs", "Polls",
+        "Notifications", "Translation", "AI", "Statistics", "Roles"
+      ],
+      "permissions": [
+        { "bit": 1,   "label": "Read messages",       "desc": "View channel content" },
+        { "bit": 2,   "label": "Send messages",       "desc": "Post in text channels" },
+        { "bit": 4,   "label": "Add reactions",       "desc": "React to messages" },
+        { "bit": 8,   "label": "Manage messages",     "desc": "Delete and pin messages" },
+        { "bit": 16,  "label": "Kick members",        "desc": "Remove members from the server" },
+        { "bit": 32,  "label": "Ban members",         "desc": "Permanently ban members" },
+        { "bit": 64,  "label": "Administrator",       "desc": "Full access to every function" },
+        { "bit": 128, "label": "Manage channels",     "desc": "Create, edit and delete channels" },
+        { "bit": 256, "label": "Manage roles",        "desc": "Create, edit and delete roles" }
+      ]
+    },
+    "oauth2": {
+      "clientIdMissing": "Missing client_id parameter.",
+      "appNotFound": "Application not found. Check the client_id.",
+      "loadError": "Error while loading.",
+      "authDenied": "Authorization denied.",
+      "genericError": "An error occurred.",
+      "appNotFoundTitle": "Application not found",
+      "backHome": "Back to home",
+      "title": "Authorize",
+      "subtitle": "An application is requesting access to your account.",
+      "verifiedBadge": "VERIFIED",
+      "wantsBotAccess": "wants to be added to one of your servers",
+      "wantsAccountAccess": "wants to access your AlfyChat account",
+      "addToServerLabel": "Add to server",
+      "noAdminServer": "You don't administer any server.",
+      "chooseServerOption": "— Choose a server —",
+      "permissionsLabel": "Permissions",
+      "requestedAccessLabel": "Requested access",
+      "redirectNoticeBefore": "You will be redirected to",
+      "redirectNoticeAfter": "after authorization.",
+      "cancelBtn": "Cancel",
+      "authorizeBtn": "Authorize",
+      "authorizingBtn": "Authorizing…",
+      "securityNote": "AlfyChat never shares your password with third-party applications",
+      "scopeIdentifyLabel": "Access to your profile",
+      "scopeIdentifyDesc": "Read your ID, username and avatar.",
+      "scopeGuildsLabel": "List of your servers",
+      "scopeGuildsDesc": "See the list of your AlfyChat servers."
     }
   }
 }

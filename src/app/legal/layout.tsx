@@ -11,16 +11,19 @@ import {
 import { cn } from '@/lib/utils';
 import { LandingNavbar } from '@/components/site-navbar';
 import { SiteFooter } from '@/components/site-footer';
-
-const NAV = [
-  { href: '/legal/cgu',      icon: FileTextIcon, label: "Conditions d'utilisation", desc: "CGU" },
-  { href: '/legal/privacy',  icon: ShieldIcon,   label: 'Confidentialité',          desc: "RGPD" },
-  { href: '/legal/mentions', icon: ScaleIcon,    label: 'Mentions légales',         desc: "Légal" },
-  { href: '/legal/cookies',  icon: LockIcon,     label: 'Cookies',                  desc: "Cookies" },
-];
+import { useTranslation } from '@/components/locale-provider';
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useTranslation();
+  const l = t.pages.legal;
+
+  const NAV = [
+    { href: '/legal/cgu',      icon: FileTextIcon, label: l.navCguLabel,      desc: l.navCguDesc },
+    { href: '/legal/privacy',  icon: ShieldIcon,   label: l.navPrivacyLabel,  desc: l.navPrivacyDesc },
+    { href: '/legal/mentions', icon: ScaleIcon,    label: l.navMentionsLabel, desc: l.navMentionsDesc },
+    { href: '/legal/cookies',  icon: LockIcon,     label: l.navCookiesLabel,  desc: l.navCookiesDesc },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -31,7 +34,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
         {/* Sidebar */}
         <aside className="hidden w-56 shrink-0 flex-col border-r bg-background px-2 py-4 md:flex">
           <p className="mb-2 px-2.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40">
-            Documents
+            {l.sidebarTitle}
           </p>
           <nav className="space-y-0.5">
             {NAV.map(({ href, icon: Icon, label, desc }) => {
@@ -67,8 +70,8 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           {/* Footer sidebar */}
           <div className="mt-auto px-2">
             <div className="rounded-xl border border-border/30 bg-muted/20 p-3 text-[11px] text-muted-foreground/60">
-              <p className="font-medium text-muted-foreground">AlfyCore</p>
-              <p className="mt-0.5">Association loi 1901 · France 🇫🇷</p>
+              <p className="font-medium text-muted-foreground">{l.orgName}</p>
+              <p className="mt-0.5">{l.orgTagline}</p>
             </div>
           </div>
         </aside>

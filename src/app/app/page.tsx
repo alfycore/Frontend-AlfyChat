@@ -4,10 +4,12 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { MessageCircleIcon } from '@/components/icons';
+import { useTranslation } from '@/components/locale-provider';
 
 export default function AppPage() {
   const { isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!isLoading) {
@@ -25,7 +27,7 @@ export default function AppPage() {
         <div className="flex size-16 animate-pulse items-center justify-center rounded-2xl bg-primary">
           <MessageCircleIcon size={32} className="text-primary-foreground" />
         </div>
-        <p className="text-muted-foreground">Chargement...</p>
+        <p className="text-muted-foreground">{t.common.loading}</p>
       </div>
     </div>
   );

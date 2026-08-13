@@ -9,6 +9,7 @@ import { socketService } from '@/lib/socket';
 import type { AlfyPresence, AlfyUser } from '@/components/alfy/mock/types';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { PRESENCE_LABELS, StatusDot } from '@/components/alfy/primitives/status-dot';
+import { UserPopover } from '@/components/alfy/members/user-popover';
 import { cn } from '@/lib/utils';
 
 type SelectableStatus = 'online' | 'idle' | 'dnd' | 'invisible';
@@ -68,12 +69,18 @@ export function UserDock({ user, onOpenSettings }: UserDockProps) {
         </Dropdown.Popover>
       </Dropdown>
 
-      <div className="flex min-w-0 flex-1 flex-col leading-tight">
-        <span className="truncate text-xs font-semibold">{user.displayName}</span>
-        <span className="truncate text-[10px] text-muted">
-          {user.customStatus || PRESENCE_LABELS[status]}
-        </span>
-      </div>
+      <UserPopover user={user} isSelf placement="top" triggerClassName="min-w-0 flex-1 text-left outline-none">
+        <button
+          type="button"
+          aria-label="Voir mon profil"
+          className="flex min-w-0 w-full cursor-pointer flex-col rounded-sm leading-tight outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          <span className="truncate text-xs font-semibold">{user.displayName}</span>
+          <span className="truncate text-[10px] text-muted">
+            {user.customStatus || PRESENCE_LABELS[status]}
+          </span>
+        </button>
+      </UserPopover>
 
       <div className="flex items-center gap-0.5">
         <Tooltip delay={300}>

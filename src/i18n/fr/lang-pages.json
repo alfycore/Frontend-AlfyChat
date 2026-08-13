@@ -1,23 +1,651 @@
 {
   "pages": {
+    "groups": {
+      "emptyTitle": "Vos groupes",
+      "emptySubtitle": "Selectionnez un groupe ou creez-en un nouveau."
+    },
     "legal": {
       "updatedPrefix": "Mise à jour :",
-      "contactQuestion": "Des questions ?"
+      "contactQuestion": "Des questions ?",
+      "sidebarTitle": "Documents",
+      "orgName": "AlfyCore",
+      "orgTagline": "Association loi 1901 · France 🇫🇷",
+      "navCguLabel": "Conditions d'utilisation",
+      "navCguDesc": "CGU",
+      "navPrivacyLabel": "Confidentialité",
+      "navPrivacyDesc": "RGPD",
+      "navMentionsLabel": "Mentions légales",
+      "navMentionsDesc": "Légal",
+      "navCookiesLabel": "Cookies",
+      "navCookiesDesc": "Cookies"
     },
     "cgu": {
       "title": "Conditions Générales d'Utilisation",
       "subtitle": "Plateforme AlfyChat — alfychat.app",
-      "updatedAt": "26 mars 2026"
+      "updatedAt": "26 mars 2026",
+      "sections": [
+        {
+          "heading": "Présentation d'AlfyChat et d'AlfyCore",
+          "intro": "En accédant ou en utilisant AlfyChat, vous acceptez sans réserve les présentes Conditions Générales d'Utilisation (« CGU »). Lisez-les attentivement avant d'utiliser le service.",
+          "subsections": [
+            {
+              "title": "1.1 L'association AlfyCore",
+              "body": "AlfyChat est une plateforme de messagerie instantanée développée, maintenue et exploitée par **AlfyCore**, association à but non lucratif constituée conformément à la loi du 1er juillet 1901 relative au contrat d'association, dont le siège social est établi en France. AlfyCore n'a aucun actionnaire et ne distribue aucun bénéfice à ses membres. Son objet social est de concevoir, distribuer et maintenir des outils numériques libres, souverains et respectueux de la vie privée.",
+              "bullets": [
+                "Site de l'association : **alfycore.pro**",
+                "Plateforme AlfyChat : **alfychat.app**",
+                "Contact : **contact@alfycore.org**"
+              ]
+            },
+            {
+              "title": "1.2 Description du service",
+              "body": "AlfyChat est une application de messagerie instantanée proposant notamment :",
+              "bullets": [
+                "La messagerie directe entre utilisateurs avec chiffrement de bout en bout E2EE ECDH P-256 + AES-256-GCM",
+                "La création de serveurs communautaires avec salons textuels et vocaux",
+                "Les appels audio et vidéo peer-to-peer via WebRTC avec chiffrement DTLS-SRTP",
+                "Le partage de fichiers, images et médias",
+                "Une API ouverte permettant la création de bots et d'intégrations tierces",
+                "Un système de rôles et permissions granulaires au sein des serveurs communautaires"
+              ]
+            },
+            {
+              "title": "1.3 Caractère gratuit et open source",
+              "body": "AlfyChat est et restera gratuit pour les utilisateurs finaux. Le code source de la plateforme est publié sous licence open source, permettant à quiconque d'auditer, de contribuer ou de déployer sa propre instance. AlfyCore ne recourt à aucune publicité, aucun traçage commercial et ne vend aucune donnée personnelle."
+            }
+          ]
+        },
+        {
+          "heading": "Acceptation des présentes conditions",
+          "intro": "L'accès ou l'utilisation d'AlfyChat, sous quelque forme que ce soit, suppose et implique l'acceptation pleine, entière et sans réserve des présentes Conditions Générales d'Utilisation. Si vous n'acceptez pas l'intégralité de ces conditions, vous devez cesser immédiatement et définitivement toute utilisation du service.",
+          "subsections": [
+            { "title": "2.1 Nature contractuelle des CGU", "body": "Les présentes CGU constituent un contrat juridiquement contraignant et opposable entre vous (ci-après « l'Utilisateur ») et AlfyCore (ci-après « AlfyCore »). Elles régissent toutes les formes d'accès et d'utilisation du service, y compris via l'application web alfychat.app, les applications mobiles officielles iOS et Android, les clients de bureau, toute API officielle AlfyChat, ainsi que tout client tiers utilisant l'API officielle." },
+            { "title": "2.2 Manifestation de l'acceptation", "body": "En cliquant sur « Créer un compte », en vous connectant à votre compte existant ou en commençant à utiliser le service de toute autre manière, vous déclarez et garantissez expressément avoir lu intégralement, compris et accepté les présentes CGU ainsi que la Politique de confidentialité d'AlfyChat, dans leur version en vigueur à la date de votre utilisation." },
+            { "title": "2.3 Hiérarchie des documents contractuels", "body": "Les présentes CGU forment, avec la Politique de confidentialité et la Politique de cookies d'AlfyChat, l'intégralité de l'accord entre vous et AlfyCore concernant l'utilisation du service. Elles remplacent et annulent tous accords, déclarations ou engagements antérieurs, écrits ou oraux, relatifs à leur objet. En cas de contradiction entre les présentes CGU et tout autre document (communications marketing, FAQ, documentation technique), les présentes CGU prévalent." },
+            { "title": "2.4 Capacité juridique", "body": "En acceptant les présentes CGU, vous déclarez disposer de la capacité juridique nécessaire pour conclure un contrat. Si vous agissez au nom d'une personne morale (association, entreprise), vous déclarez être dûment habilité à l'engager et à accepter ces conditions en son nom." }
+          ]
+        },
+        {
+          "heading": "Accès au service et inscription",
+          "subsections": [
+            { "title": "3.1 Conditions d'âge", "body": "L'utilisation d'AlfyChat est réservée aux personnes âgées d'au moins 13 ans. Si vous avez entre 13 et 16 ans, vous devez avoir obtenu le consentement de votre représentant légal conformément aux dispositions du RGPD." },
+            { "title": "3.2 Système d'invitation", "body": "L'inscription peut être soumise à un système d'invitation selon les périodes et la politique en vigueur. AlfyCore se réserve le droit de limiter les inscriptions afin de garantir la qualité et la sécurité du service." },
+            {
+              "title": "3.3 Informations requises à l'inscription",
+              "body": "Lors de l'inscription, vous devez fournir :\n\nVous vous engagez à fournir des informations exactes, complètes et à jour. AlfyCore se réserve le droit de refuser l'inscription ou de supprimer tout compte dont les informations seraient manifestement fausses ou usurpées.",
+              "bullets": [
+                "Une adresse e-mail valide et accessible",
+                "Un nom d'utilisateur unique",
+                "Un mot de passe suffisamment robuste"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Compte utilisateur",
+          "subsections": [
+            { "title": "4.1 Responsabilité du compte", "body": "Chaque compte est strictement personnel et nominatif. Vous êtes seul responsable de toutes les activités réalisées depuis votre compte, qu'elles soient effectuées par vous-même ou par un tiers ayant accès à vos identifiants." },
+            { "title": "4.2 Sécurité des identifiants", "body": "Vous vous engagez à maintenir la confidentialité de votre mot de passe et à ne pas le communiquer à des tiers. En cas de compromission suspectée, vous devez le signaler immédiatement à AlfyCore via contact@alfycore.org et changer votre mot de passe sans délai." },
+            { "title": "4.3 Interdiction de cession", "body": "Votre compte ne peut en aucun cas être cédé, vendu, loué ou transféré à un tiers. Toute tentative de cession de compte est prohibée et peut entraîner la résiliation immédiate du compte concerné." },
+            { "title": "4.4 Unicité du compte", "body": "Chaque utilisateur est limité à un seul compte actif. La création de comptes multiples, notamment dans le but de contourner une sanction, est strictement interdite et peut entraîner la résiliation de l'ensemble des comptes concernés." }
+          ]
+        },
+        {
+          "heading": "Utilisation acceptable du service",
+          "subsections": [
+            {
+              "title": "5.1 Comportements interdits",
+              "body": "En utilisant AlfyChat, vous vous engagez formellement à ne pas :",
+              "bullets": [
+                "Utiliser le service à des fins illicites, frauduleuses ou contraires à l'ordre public",
+                "Harceler, menacer, intimider, diffamer ou discriminer d'autres utilisateurs",
+                "Diffuser du contenu illicite, haineux, raciste, CSAM, terroriste ou faisant l'apologie de la violence",
+                "Usurper l'identité d'un tiers, d'un membre de l'équipe AlfyCore ou d'une autorité",
+                "Tenter de compromettre la sécurité, l'intégrité ou la disponibilité de l'infrastructure AlfyChat",
+                "Automatiser l'accès au service sans utiliser l'API officielle et dans le respect de ses conditions",
+                "Collecter ou extraire des données personnelles d'autres utilisateurs sans consentement explicite",
+                "Diffuser des programmes malveillants, virus, ransomwares ou tout autre code nuisible",
+                "Effectuer des opérations de phishing ou toute tentative de fraude visant d'autres utilisateurs",
+                "Utiliser le service pour des activités de spam massif ou de communications non sollicitées"
+              ]
+            },
+            { "title": "5.2 Signalement de vulnérabilités", "body": "Si vous découvrez une vulnérabilité de sécurité dans AlfyChat, nous vous invitons à la signaler de manière responsable à contact@alfycore.org avant toute divulgation publique." }
+          ]
+        },
+        {
+          "heading": "Contenu généré par les utilisateurs",
+          "subsections": [
+            { "title": "6.1 Propriété du contenu", "body": "Vous conservez l'intégralité de vos droits de propriété intellectuelle sur les contenus que vous publiez sur AlfyChat. En les publiant, vous accordez à AlfyCore une licence non exclusive, mondiale, gratuite et limitée au strict nécessaire pour fournir le service." },
+            { "title": "6.2 Contenu protégé par E2EE", "body": "Lorsque le chiffrement de bout en bout est activé, les messages sont chiffrés côté client avant transmission. AlfyCore ne dispose techniquement d'aucune clé permettant de déchiffrer ces communications." },
+            { "title": "6.3 Responsabilité éditoriale", "body": "AlfyCore agit en qualité d'hébergeur au sens de la LCEN et du Digital Services Act. À ce titre, AlfyCore n'est pas responsable du contenu publié par les utilisateurs mais agit promptement dès réception d'une notification valide pour supprimer les contenus manifestement illicites." }
+          ]
+        },
+        {
+          "heading": "Chiffrement et confidentialité des communications",
+          "subsections": [
+            {
+              "title": "7.1 Niveaux de chiffrement",
+              "body": "AlfyChat propose trois niveaux de protection des communications :",
+              "bullets": [
+                "**Niveau 1 — Standard :** chiffrement en transit TLS 1.3",
+                "**Niveau 2 — Amélioré :** chiffrement au repos AES-256 avec clé dérivée par compte",
+                "**Niveau 3 — Maximum :** chiffrement de bout en bout E2EE ECDH P-256 + AES-256-GCM"
+              ]
+            },
+            { "title": "7.2 Gestion des clés", "body": "En mode E2EE, les clés cryptographiques sont générées localement sur votre appareil et ne quittent jamais votre environnement sous forme non chiffrée. AlfyCore ne peut pas récupérer les clés perdues." },
+            { "title": "7.3 Limites du chiffrement", "body": "Même avec le chiffrement E2EE activé, certaines métadonnées comme les identifiants de participants, horodatages et taille approximative des messages peuvent être traitées pour assurer le routage des communications." }
+          ]
+        },
+        {
+          "heading": "Bots, API et intégrations tierces",
+          "subsections": [
+            { "title": "8.1 Utilisation de l'API", "body": "AlfyChat met à disposition une API ouverte permettant la création de bots et d'intégrations. Tout dépassement abusif des limites de taux peut entraîner une suspension temporaire ou définitive de l'accès à l'API." },
+            { "title": "8.2 Responsabilité des bots", "body": "Toute personne déployant un bot sur AlfyChat est responsable de son comportement. Les bots doivent respecter les présentes CGU, identifier clairement leur nature automatisée, et ne pas simuler un comportement humain de manière trompeuse." },
+            { "title": "8.3 Services tiers", "body": "AlfyCore n'est pas responsable du contenu, des pratiques de confidentialité ou des services proposés par des tiers intégrés via des bots ou des webhooks." }
+          ]
+        },
+        {
+          "heading": "Serveurs communautaires",
+          "subsections": [
+            { "title": "9.1 Création et administration", "body": "Tout utilisateur peut créer un serveur communautaire sur AlfyChat. Le créateur devient automatiquement propriétaire du serveur et assume la responsabilité éditoriale de l'ensemble des contenus publiés dans son serveur." },
+            {
+              "title": "9.2 Obligations des administrateurs",
+              "body": "",
+              "bullets": [
+                "Mettre en place des règles de modération claires et visibles",
+                "Agir promptement face aux signalements de contenus illicites",
+                "Ne pas utiliser leur serveur pour organiser des activités illicites",
+                "Respecter et faire respecter les présentes CGU"
+              ]
+            },
+            { "title": "9.3 Droits d'AlfyCore sur les serveurs", "body": "AlfyCore se réserve le droit de fermer, suspendre ou supprimer tout serveur communautaire ne respectant pas les présentes CGU, sans préavis ni indemnisation dans les cas de violations graves." }
+          ]
+        },
+        {
+          "heading": "Appels vocaux et vidéo",
+          "subsections": [
+            { "title": "10.1 Technologie WebRTC", "body": "Les appels audio et vidéo utilisent la technologie WebRTC avec chiffrement DTLS-SRTP de bout en bout sur chaque flux média. Les communications pair-à-pair ne transitent pas par les serveurs d'AlfyCore sauf en cas d'utilisation d'un relais TURN, auquel cas elles restent chiffrées." },
+            { "title": "10.2 Consentement à l'activation audio/vidéo", "body": "L'activation de votre microphone et ou caméra requiert votre autorisation explicite via les mécanismes de permission de votre navigateur ou système d'exploitation." },
+            { "title": "10.3 Enregistrement des appels", "body": "AlfyCore n'enregistre pas les appels vocaux et vidéo. Tout enregistrement réalisé par un participant doit être fait avec le consentement explicite de l'ensemble des participants." }
+          ]
+        },
+        {
+          "heading": "Propriété intellectuelle",
+          "subsections": [
+            { "title": "11.1 Marque et identité visuelle", "body": "« AlfyChat », « AlfyCore », les logos associés et l'identité visuelle de la plateforme sont la propriété d'AlfyCore. Toute reproduction, imitation ou utilisation non autorisée de ces éléments est strictement interdite." },
+            { "title": "11.2 Code source open source", "body": "Le code source d'AlfyChat est publié sous licence open source. Cette liberté ne s'étend pas à la marque, aux noms de domaine ou à l'infrastructure opérée par AlfyCore." },
+            { "title": "11.3 Contenus tiers", "body": "Toute réclamation relative à un contenu portant atteinte à des droits de propriété intellectuelle peut être adressée à contact@alfycore.org." }
+          ]
+        },
+        {
+          "heading": "Signalement et modération",
+          "subsections": [
+            { "title": "12.1 Mécanisme de signalement", "body": "AlfyChat met à disposition un mécanisme de signalement accessible depuis l'interface du service. Tout utilisateur peut signaler un contenu ou un comportement contraire aux présentes CGU." },
+            { "title": "12.2 Traitement des signalements", "body": "AlfyCore s'engage à examiner les signalements reçus dans un délai raisonnable et à prendre les mesures appropriées." },
+            { "title": "12.3 Signalement aux autorités", "body": "Conformément aux obligations légales applicables, AlfyCore peut signaler aux autorités compétentes tout contenu illicite grave dont il aurait connaissance." }
+          ]
+        },
+        {
+          "heading": "Suspension et résiliation du compte",
+          "subsections": [
+            { "title": "13.1 Résiliation à l'initiative de l'utilisateur", "body": "Vous pouvez fermer votre compte à tout moment depuis les paramètres de votre profil. La suppression du compte entraîne la suppression définitive de vos données personnelles dans les délais prévus par notre Politique de confidentialité." },
+            {
+              "title": "13.2 Résiliation à l'initiative d'AlfyCore",
+              "body": "AlfyCore se réserve le droit de suspendre ou de résilier tout compte en cas de :",
+              "bullets": [
+                "Violation des présentes CGU",
+                "Activité frauduleuse ou illicite avérée",
+                "Atteinte à la sécurité, la disponibilité ou l'intégrité du service",
+                "Décision judiciaire ou administrative l'imposant"
+              ]
+            },
+            { "title": "13.3 Contestation d'une sanction", "body": "En cas de désaccord avec une décision de suspension ou de résiliation, vous pouvez exercer un recours en contactant AlfyCore à contact@alfycore.org dans un délai de 30 jours suivant la notification de la sanction." }
+          ]
+        },
+        {
+          "heading": "Disponibilité du service et hébergement",
+          "intro": "AlfyCore s'efforce de maintenir AlfyChat disponible 24h sur 24 et 7j sur 7, mais ne peut garantir une disponibilité ininterrompue. Des interruptions peuvent survenir pour raisons de maintenance, de mises à jour, de pannes techniques ou de force majeure.",
+          "subsections": [
+            {
+              "title": "14.1 Infrastructure d'hébergement",
+              "body": "L'infrastructure AlfyChat est répartie entre deux prestataires :",
+              "bullets": [
+                "**Hostinger :** site web, API Gateway, services Utilisateurs, Messages et Appels, CDN media. Datacenters européens.",
+                "**AlfyCore :** services Amis, Serveurs communautaires, Bots, Médias backend, base MySQL et cache Redis."
+              ]
+            },
+            { "title": "14.2 Responsabilité en cas d'indisponibilité", "body": "AlfyCore ne saurait être tenu responsable des préjudices résultant d'une indisponibilité du service, d'une perte de données ou d'une autre défaillance technique, dans les limites permises par le droit applicable.\n\nL'état en temps réel des services est consultable sur **alfychat.app/status**." }
+          ]
+        },
+        {
+          "heading": "Limitation de responsabilité",
+          "subsections": [
+            {
+              "title": "15.1 Étendue de la limitation",
+              "body": "Dans toute la mesure permise par la législation applicable en France et dans l'Union européenne, AlfyCore exclut et décline toute responsabilité contractuelle, délictuelle ou quasi-délictuelle pour les catégories de dommages et situations suivantes :",
+              "bullets": [
+                "Les dommages indirects, consécutifs, accessoires ou immatériels, quel que soit leur nature",
+                "Les pertes de données, de profits, de revenus, d'opportunités commerciales ou de clientèle",
+                "Les pertes de réputation ou d'image, même si AlfyCore a été informé de la possibilité de tels dommages",
+                "Les contenus publiés, diffusés ou partagés par des utilisateurs tiers sur la plateforme",
+                "Les comportements, actes ou omissions d'utilisateurs tiers à votre égard",
+                "Les défaillances, interruptions, bugs ou indisponibilités de services tiers intégrés via des bots ou webhooks développés par des tiers",
+                "Les pertes résultant d'une compromission de vos identifiants de connexion consécutive à votre propre négligence ou à celle d'un tiers auquel vous auriez communiqué vos informations d'accès",
+                "L'impossibilité de récupérer des clés cryptographiques E2EE perdues, dans la mesure où ces clés sont générées et gérées exclusivement côté client",
+                "Les préjudices résultant d'une interruption du service pour maintenance planifiée, mise à jour ou force majeure"
+              ]
+            },
+            { "title": "15.2 Limites impératives", "body": "Les limitations de responsabilité définies au présent article ne s'appliquent pas dans les cas où la loi applicable les interdit expressément, notamment en cas de dommage corporel, de faute lourde ou dolosive d'AlfyCore, ou pour toute responsabilité qui ne peut pas être exclue ou limitée en vertu des dispositions impératives du droit de la consommation applicable à l'utilisateur." },
+            { "title": "15.3 Service fourni « en l'état »", "body": "Le service AlfyChat est fourni « en l'état » (« as is ») sans garantie d'aucune sorte, expresse ou implicite, y compris mais sans s'y limiter : les garanties implicites de qualité marchande, d'adéquation à un usage particulier, de non-violation de droits de tiers, ou d'absence d'erreurs. AlfyCore ne garantit pas que le service sera ininterrompu, sans erreur, sécurisé à 100 % ou exempt de tout composant nuisible." }
+          ]
+        },
+        {
+          "heading": "Protection des données personnelles",
+          "intro": "La collecte et le traitement de vos données personnelles dans le cadre de l'utilisation d'AlfyChat sont régis par la Politique de confidentialité d'AlfyCore, document distinct mais indissociable des présentes CGU. La Politique de confidentialité est accessible à l'adresse **alfychat.app/legal/privacy**.\n\nLa Politique de confidentialité décrit en détail les données collectées, les finalités et bases légales de leur traitement (conformément au RGPD), les mesures de sécurité mises en place, les sous-traitants éventuels, les durées de conservation, et l'ensemble de vos droits (accès, rectification, effacement, portabilité, opposition, limitation).\n\nAlfyCore s'engage formellement à ne jamais vendre, louer, céder ni commercialiser vos données personnelles à quelque tiers que ce soit, sans exception. AlfyCore ne fait aucune publicité ciblée et ne réalise aucun profilage commercial. Ces engagements sont structurels et découlant directement du statut d'association à but non lucratif d'AlfyCore."
+        },
+        {
+          "heading": "Statut d'hébergeur, DSA et LCEN",
+          "intro": "AlfyCore agit en qualité d'hébergeur de contenu au sens de l'article 6 de la loi n° 2004-575 du 21 juin 2004 (LCEN) et du Règlement (UE) 2022/2065 du 19 octobre 2022 sur les services numériques (Digital Services Act — DSA), entré pleinement en application le 17 février 2024.",
+          "subsections": [
+            { "title": "17.1 Responsabilité limitée de l'hébergeur", "body": "En tant qu'hébergeur, AlfyCore n'est pas responsable a priori des contenus publiés par les utilisateurs, dès lors qu'il n'a pas connaissance effective de leur caractère illicite ou qu'il agit promptement pour les retirer dès obtention de cette connaissance (article 6 I 2 LCEN, article 6.1 DSA)." },
+            { "title": "17.2 Obligation d'agir promptement (notice and action)", "body": "AlfyCore met à disposition un mécanisme de signalement accessible depuis l'interface de l'application et via contact@alfycore.org. Dès réception d'un signalement valide d'un contenu manifestement illicite, AlfyCore agit dans les meilleurs délais pour retirer ou désactiver l'accès audit contenu, conformément à ses obligations légales." },
+            { "title": "17.3 Contenus illicites graves", "body": "Conformément à l'article 6 I 7 de la LCEN et aux dispositions du DSA, AlfyCore signale sans délai aux autorités compétentes les contenus dont il aurait connaissance et qui sont susceptibles de constituer des infractions pénales graves, notamment les contenus à caractère pédopornographique (CSAM), les contenus faisant l'apologie ou provoquant à la commission d'actes terroristes, ou les contenus incitant à la haine." }
+          ]
+        },
+        {
+          "heading": "Modification des présentes CGU",
+          "intro": "AlfyCore se réserve le droit de modifier les présentes CGU à tout moment, notamment pour refléter les évolutions de la législation applicable, les décisions de justice ou des autorités réglementaires, l'introduction de nouvelles fonctionnalités ou services, ou des modifications dans nos pratiques opérationnelles.",
+          "subsections": [
+            { "title": "18.1 Notification des modifications substantielles", "body": "En cas de modification substantielle affectant vos droits ou obligations de manière significative, vous serez informé par notification dans l'application AlfyChat et/ou par e-mail à l'adresse associée à votre compte, au moins 30 jours avant l'entrée en vigueur des nouvelles dispositions. Ce délai vous permet de prendre connaissance des modifications et, si vous ne les acceptez pas, de supprimer votre compte avant leur application." },
+            { "title": "18.2 Acceptation tacite des modifications", "body": "En continuant à utiliser le service après l'entrée en vigueur des CGU modifiées, vous êtes réputé avoir pris connaissance des nouvelles dispositions et les avoir acceptées. Si vous refusez les modifications, vous devez cesser d'utiliser le service et supprimer votre compte avant la date d'entrée en vigueur." },
+            { "title": "18.3 Versionnement et archivage", "body": "La version actuellement en vigueur des CGU est toujours accessible à l'adresse **alfychat.app/legal/cgu**. La date de dernière mise à jour est indiquée en haut de cette page. AlfyCore maintient un historique des versions précédentes des CGU, accessible sur demande à contact@alfycore.org." }
+          ]
+        },
+        {
+          "heading": "Droit applicable et juridiction compétente",
+          "subsections": [
+            { "title": "19.1 Loi applicable", "body": "Les présentes CGU sont régies, interprétées et exécutées conformément au droit français, sans égard pour les règles de conflit de lois. L'application de la Convention des Nations Unies sur les contrats de vente internationale de marchandises est expressément exclue. Les présentes CGU sont rédigées en langue française, qui fait foi en cas de litige ou de contradiction avec une version traduite." },
+            { "title": "19.2 Résolution amiable préalable", "body": "En cas de litige relatif à l'interprétation, l'exécution ou la résiliation des présentes CGU, les parties s'engagent à rechercher une solution amiable avant tout recours judiciaire. Vous pouvez adresser votre réclamation à contact@alfycore.org. AlfyCore s'engage à y répondre dans un délai raisonnable de 30 jours calendaires." },
+            { "title": "19.3 Compétence juridictionnelle", "body": "À défaut de résolution amiable, tout litige relatif aux présentes CGU relève de la compétence exclusive des juridictions françaises territorialement compétentes, sous réserve des dispositions impératives de protection des consommateurs applicables selon le pays de résidence de l'utilisateur, notamment le Règlement (UE) n° 1215/2012 dit « Bruxelles I bis » pour les utilisateurs résidant dans l'Union européenne." },
+            { "title": "19.4 Règlement en ligne des litiges (RLL)", "body": "Les utilisateurs résidant dans l'Union européenne peuvent également recourir à la plateforme de règlement en ligne des litiges (RLL) mise en place par la Commission européenne, accessible à l'adresse **ec.europa.eu/consumers/odr**. Cette plateforme permet de soumettre une réclamation et de trouver un organisme de règlement extrajudiciaire des litiges compétent." }
+          ]
+        },
+        {
+          "heading": "Contact, réclamations et support",
+          "intro": "Pour toute question, demande de précision, réclamation relative aux présentes CGU ou à l'utilisation du service AlfyChat, vous pouvez contacter AlfyCore via les moyens suivants :",
+          "bullets": [
+            "**AlfyCore** — Association loi 1901, France",
+            "**E-mail général :** contact@alfycore.org",
+            "**Site institutionnel :** alfycore.pro",
+            "**Plateforme :** alfychat.app"
+          ],
+          "subsections": [
+            { "title": "20.1 Délais de traitement", "body": "AlfyCore s'engage à accuser réception de toute demande ou réclamation dans un délai de 72 heures ouvrables et à y apporter une réponse complète dans un délai de 30 jours calendaires à compter de la réception. Pour les demandes complexes ou nécessitant une instruction approfondie, ce délai peut être prolongé de 30 jours supplémentaires, avec notification préalable de ce report." },
+            {
+              "title": "20.2 Objets de contact recommandés",
+              "body": "",
+              "bullets": [
+                "Droits RGPD (accès, rectification, effacement...) : « Droits RGPD — [nature] »",
+                "Signalement de contenu illicite urgent : « Signalement urgent — [nature] »",
+                "Report de vulnérabilité de sécurité : « Security — Vulnerability Disclosure »",
+                "Question relative aux CGU : « CGU — [nature de la question] »",
+                "Demande de DPA (accord de traitement des données) : « DPA Request »"
+              ]
+            },
+            { "title": "20.3 Dispositions finales", "body": "Les présentes Conditions Générales d'Utilisation ont été rédigées pour la plateforme AlfyChat, développée, exploitée et maintenue par AlfyCore, association à but non lucratif constituée conformément à la loi du 1er juillet 1901, domiciliée en France. Si une ou plusieurs clauses des présentes CGU venaient à être déclarées nulles ou non opposables par une décision de justice, les autres clauses demeureraient pleinement en vigueur. L'absence d'exercice par AlfyCore d'un droit ou d'une prérogative découlant des présentes CGU ne saurait être interprétée comme une renonciation à ce droit ou à cette prérogative. Les présentes CGU sont rédigées en langue française, qui fait foi en cas de litige." }
+          ]
+        }
+      ]
     },
     "cookies": {
       "title": "Politique des cookies",
       "subtitle": "Utilisation des cookies et technologies de stockage local par la plateforme AlfyChat",
-      "updatedAt": "14 mars 2026"
+      "updatedAt": "14 mars 2026",
+      "sections": [
+        {
+          "heading": "Définition et fonctionnement des cookies",
+          "intro": "Un cookie (ou « témoin de connexion ») est un petit fichier texte déposé par un serveur web sur votre terminal (ordinateur, smartphone, tablette) lorsque vous visitez un site web ou utilisez une application. Il est ensuite renvoyé automatiquement au serveur lors de chaque visite ou requête ultérieure, permettant au service de mémoriser des informations entre deux sessions et d'assurer certaines fonctions techniques essentielles.",
+          "subsections": [
+            {
+              "title": "1.1 Catégories de cookies selon leur durée de vie",
+              "body": "",
+              "bullets": [
+                "**Cookies de session :** temporaires, ils sont automatiquement supprimés à la fermeture de votre navigateur ou à l'expiration de la session authentifiée. Ils ne persistent pas entre deux visites.",
+                "**Cookies persistants :** ils demeurent sur votre terminal jusqu'à leur date d'expiration définie ou jusqu'à ce que vous les supprimiez manuellement via les paramètres de votre navigateur."
+              ]
+            },
+            {
+              "title": "1.2 Catégories de cookies selon leur origine",
+              "body": "",
+              "bullets": [
+                "**Cookies first-party (propriétaires) :** déposés directement par le service que vous utilisez (ici, alfychat.app). Ce sont les seuls cookies utilisés par AlfyChat.",
+                "**Cookies third-party (tiers) :** déposés par des services externes intégrés dans une page (réseaux publicitaires, traceurs analytiques, réseaux sociaux). AlfyChat n'utilise aucun cookie tiers directement."
+              ]
+            },
+            {
+              "title": "1.3 Technologies complémentaires au stockage côté client",
+              "body": "Les applications web modernes disposent de plusieurs mécanismes de stockage côté client au-delà des cookies HTTP traditionnels :",
+              "bullets": [
+                "**localStorage :** espace de stockage persistant dans le navigateur, non transmis automatiquement au serveur contrairement aux cookies HTTP. Les données persistent jusqu'à effacement manuel.",
+                "**sessionStorage :** espace de stockage limité à la durée de vie de l'onglet du navigateur. Effacé automatiquement à la fermeture de l'onglet.",
+                "**IndexedDB :** base de données côté navigateur pour des données plus volumineuses ou structurées. Non utilisée par AlfyChat dans sa version actuelle."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Philosophie privacy-first d'AlfyCore",
+          "intro": "AlfyCore a adopté dès la conception d'AlfyChat une approche volontairement restrictive, transparente et éthique vis-à-vis des cookies et des technologies de stockage local. Cette approche repose sur deux principes fondamentaux indissociables de la mission de l'association :\n\nEn pratique, AlfyChat ne dépose aucun cookie appartenant aux catégories suivantes : cookies publicitaires, cookies de retargeting, cookies de réseaux sociaux (Facebook Pixel, Twitter/X tracking tag, LinkedIn Insight, etc.), cookies d'analytics tiers (Google Analytics, Matomo, Mixpanel, Amplitude, Segment, Hotjar, FullStory, etc.), cookies de heatmapping ou de session recording, ni aucun traceur tiers à des fins de profilage comportemental ou démographique.\n\nCette absence totale de cookies de suivi n'est pas une promesse marketing : c'est une réalité architecturale. L'infrastructure d'AlfyChat ne contient aucun SDK ni aucun script provenant de services publicitaires ou analytiques tiers.",
+          "bullets": [
+            "**Minimisation technique :** nous ne déposons que les cookies et données de stockage local strictement indispensables au fonctionnement opérationnel du service. Aucun cookie « de confort » ou « d'optimisation » n'est ajouté sans nécessité technique démontrée et documentée.",
+            "**Zéro suivi commercial :** AlfyCore ne fait aucune publicité ciblée, ne profile pas ses utilisateurs et ne vend aucune donnée. Il n'existe donc aucune justification économique, technique ou légale à l'utilisation de cookies de suivi, de ciblage publicitaire ou de retargeting sur la plateforme AlfyChat."
+          ]
+        },
+        {
+          "heading": "Cookies techniques essentiels au fonctionnement",
+          "intro": "AlfyChat utilise uniquement les cookies techniques suivants, strictement nécessaires au bon fonctionnement du service. Ces cookies relèvent de l'exemption de consentement prévue par l'article 5.3 de la Directive 2002/58/CE (Directive ePrivacy) et confirmée par les délibérations de la CNIL sur les cookies, car ils sont indispensables à la prestation du service expressément demandée par l'utilisateur.",
+          "bullets": [
+            "**session_token** — Type : Cookie HTTP, Secure, HttpOnly, SameSite=Strict — Durée : Session ou 7 jours d'inactivité maximum — Finalité : Maintient votre session authentifiée entre les requêtes successives. Contient un jeton opaque cryptographiquement sécurisé (token aléatoire de 256 bits), signé et vérifié côté serveur à chaque requête. Sans ce cookie, vous seriez déconnecté à chaque changement de page ou requête. Ce cookie ne contient aucune information personnelle identifiable en clair. — Partage tiers : Aucun",
+            "**csrf_token** — Type : Cookie HTTP, Secure, SameSite=Strict — Durée : Durée de la session — Finalité : Protection contre les attaques Cross-Site Request Forgery (CSRF). Ce token est généré aléatoirement à chaque session et vérifié à chaque opération sensible (modification de profil, envoi de messages, changement de paramètres) pour garantir que la requête provient de votre navigateur et non d'un site malveillant. — Partage tiers : Aucun",
+            "**theme_pref** — Type : Cookie HTTP ou localStorage selon le contexte — Durée : 13 mois (conformément aux recommandations CNIL) — Finalité : Mémorise votre préférence de thème visuel (mode clair ou mode sombre) pour l'appliquer instantanément dès le chargement de la page, évitant tout flash visuel indésirable. Sans ce cookie, AlfyChat appliquerait son thème par défaut à chaque visite. — Partage tiers : Aucun",
+            "**lang** — Type : Cookie HTTP ou localStorage selon le contexte — Durée : 13 mois — Finalité : Mémorise votre préférence de langue d'interface pour afficher AlfyChat dans la langue que vous avez sélectionnée, indépendamment de la langue configurée dans les paramètres de votre navigateur. Sans ce cookie, la langue par défaut serait appliquée à chaque chargement. — Partage tiers : Aucun"
+          ]
+        },
+        {
+          "heading": "Absence totale de cookies publicitaires et de tracking",
+          "intro": "AlfyCore prend l'engagement formel, public et sans réserve de n'utiliser aucun des types de cookies, traceurs ou technologies de suivi suivants sur la plateforme AlfyChat, aujourd'hui et pour toute version future du service :\n\nCette politique de zéro cookie publicitaire ou de suivi résulte directement et structurellement du modèle associatif à but non lucratif d'AlfyCore. Sans publicité à diffuser et sans données à valoriser commercialement, l'utilisation de tels cookies serait non seulement inutile, mais contraire à la mission fondatrice de l'association.",
+          "bullets": [
+            "**Cookies publicitaires (advertising cookies) :** aucun ciblage publicitaire, aucun réseau RTB (Real Time Bidding), aucun achat programmatique d'espace publicitaire",
+            "**Cookies de retargeting :** aucune technique de reciblage publicitaire des utilisateurs ayant visité AlfyChat",
+            "**Pixels de suivi :** aucun pixel Facebook/Meta, Google Ads, Twitter/X, LinkedIn ou de tout autre réseau publicitaire ou social",
+            "**Cookies d'analytics tiers :** aucun Google Analytics (Universal Analytics ou GA4), Adobe Analytics, Matomo hébergé chez tiers, Mixpanel, Amplitude, Segment ou équivalent",
+            "**Cookies de session recording :** aucun Hotjar, FullStory, LogRocket, Microsoft Clarity ou équivalent enregistrant les interactions des utilisateurs",
+            "**Identifiants publicitaires mobiles :** aucun IDFA (Apple), GAID (Google/Android) ni aucun identifiant similaire collecté sur les applications mobiles",
+            "**Fingerprinting :** aucune technique de fingerprinting du navigateur (canvas fingerprinting, AudioContext fingerprinting, WebGL fingerprinting, etc.) ni de l'appareil",
+            "**Tracking cross-site :** aucune technique permettant de suivre votre navigation sur d'autres sites web en dehors d'AlfyChat"
+          ]
+        },
+        {
+          "heading": "Stockage local : localStorage et sessionStorage",
+          "intro": "En complément des cookies HTTP, AlfyChat utilise les API de stockage local HTML5 du navigateur pour mémoriser certaines données de fonctionnement d'interface. Contrairement aux cookies HTTP, ces données ne sont jamais transmises automatiquement à nos serveurs — elles restent sur votre appareil uniquement. Elles n'ont donc aucun impact sur votre vie privée au sens du suivi côté serveur.",
+          "subsections": [
+            {
+              "title": "5.1 Données stockées en localStorage (persistant)",
+              "body": "",
+              "bullets": [
+                "**density_pref :** votre préférence d'affichage (compact, normal, spacieux) pour la liste des messages et des serveurs. Conservé jusqu'à effacement manuel.",
+                "**sidebar_state :** état d'ouverture, de fermeture et largeur préférée de la barre latérale (liste des serveurs, des amis). Conservé jusqu'à effacement manuel.",
+                "**notif_dismissed :** liste des identifiants de bannières d'information système (mises à jour, annonces) que vous avez déjà lues et fermées, pour éviter qu'elles ne réapparaissent à chaque connexion.",
+                "**e2ee_public_keys_cache :** cache local des clés publiques de vos contacts pour le chiffrement E2EE. Ces clés publiques ne sont pas confidentielles par nature (elles sont destinées à être partagées) mais sont mises en cache localement pour accélérer le chiffrement des messages sans interroger le serveur à chaque message. Ce cache est invalidé et régénéré automatiquement lors des mises à jour de clés.",
+                "**draft_[identifiant_salon] :** brouillon de message en cours de rédaction pour chaque salon, pour préserver votre texte en cas de navigation entre deux salons sans envoyer le message. Supprimé automatiquement lors de l'envoi ou de l'effacement manuel."
+              ]
+            },
+            {
+              "title": "5.2 Données stockées en sessionStorage (durée de l'onglet uniquement)",
+              "body": "",
+              "bullets": [
+                "**nav_state :** état de navigation interne (dernier salon visité, onglet actif, position de défilement) pour maintenir le contexte en cas de rechargement accidentel de la page. Effacé automatiquement à la fermeture de l'onglet du navigateur.",
+                "**upload_progress :** données de progression des téléchargements de fichiers en cours, pour afficher la barre de progression correctement. Effacé à la fermeture de l'onglet."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Durées de conservation détaillées",
+          "intro": "Le tableau ci-dessous récapitule les durées de conservation de l'ensemble des cookies et données de stockage local utilisés par AlfyChat :",
+          "bullets": [
+            "**session_token :** expire automatiquement à la déconnexion explicite ou après 7 jours consécutifs d'inactivité (aucune requête authentifiée). Un token de session ne peut pas être utilisé indéfiniment — il est régénéré à chaque connexion pour des raisons de sécurité.",
+            "**csrf_token :** supprimé à la fermeture du navigateur ou à la déconnexion. Jamais persistant au-delà de la session.",
+            "**theme_pref et lang :** conservés au maximum 13 mois à compter du dernier accès au service, conformément aux recommandations de la délibération de la CNIL du 17 septembre 2020. Cette durée est réinitialisée à chaque visite.",
+            "**localStorage (density_pref, sidebar_state, notif_dismissed, e2ee_public_keys_cache, drafts) :** conservés indéfiniment jusqu'à effacement manuel via les paramètres de votre navigateur ou la fonctionnalité « Effacer les données du site ». Ces données ne quittent pas votre appareil et ne sont pas sensibles.",
+            "**sessionStorage (nav_state, upload_progress) :** effacés automatiquement et systématiquement à la fermeture de l'onglet ou du navigateur. Non persistants entre deux sessions."
+          ]
+        },
+        {
+          "heading": "Gestion, contrôle et suppression de vos cookies",
+          "subsections": [
+            {
+              "title": "7.1 Paramètres de votre navigateur",
+              "body": "Vous disposez d'un contrôle total sur les cookies et données de stockage local via les paramètres de votre navigateur. Voici comment accéder à ces réglages dans les principaux navigateurs :",
+              "bullets": [
+                "**Google Chrome :** Menu (⋮) → Paramètres → Confidentialité et sécurité → Cookies et autres données des sites → Voir toutes les données et autorisations des sites",
+                "**Mozilla Firefox :** Menu (☰) → Paramètres → Vie privée et sécurité → section « Cookies et données des sites » → Gérer les données",
+                "**Apple Safari :** Préférences (⌘+,) → Confidentialité → Gérer les données des sites web",
+                "**Microsoft Edge :** Menu (...) → Paramètres → Cookies et autorisations de site → Cookies et données stockées → Voir toutes les données et autorisations des sites",
+                "**Opera :** Menu → Paramètres → Avancé → Confidentialité et sécurité → Paramètres du site → Cookies et données des sites"
+              ]
+            },
+            {
+              "title": "7.2 Effacement ciblé des données AlfyChat",
+              "body": "Pour supprimer uniquement les données stockées par AlfyChat sans affecter les cookies d'autres sites, accédez aux paramètres de votre navigateur et recherchez la gestion par site. Filtrez par « alfychat.app » pour voir et effacer toutes les données associées (cookies, localStorage, sessionStorage) de manière ciblée."
+            },
+            {
+              "title": "7.3 Conséquences du blocage des cookies techniques",
+              "body": "Si vous choisissez de bloquer ou supprimer certains cookies techniques d'AlfyChat, voici les impacts fonctionnels prévisibles :",
+              "bullets": [
+                "**Blocage ou suppression de session_token :** vous ne pourrez pas rester connecté. Chaque page chargée nécessitera une nouvelle authentification. Le service sera inutilisable en mode connecté.",
+                "**Blocage ou suppression de csrf_token :** les opérations sensibles (envoi de messages, modifications de compte, gestion des serveurs) seront bloquées par les mécanismes de sécurité anti-CSRF du service.",
+                "**Suppression de theme_pref et lang :** votre thème visuel et votre langue reviendront aux valeurs par défaut du service à chaque visite. Aucun impact sur les fonctionnalités core.",
+                "**Effacement du localStorage :** vos brouillons de messages non envoyés seront perdus, vos préférences d'affichage seront réinitialisées et le cache des clés publiques E2EE sera régénéré (provoquant un délai lors des premiers messages E2EE)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Cookies tiers potentiels issus d'interactions",
+          "intro": "Bien qu'AlfyCore ne dépose directement aucun cookie tiers sur la plateforme AlfyChat, certaines interactions spécifiques avec des contenus ou services externes pourraient théoriquement introduire des cookies tiers dans votre navigateur. Voici les cas identifiés et les mesures prises :",
+          "subsections": [
+            {
+              "title": "8.1 Prévisualisation d'URL (embeds)",
+              "body": "Lorsqu'un utilisateur partage un lien dans une conversation, AlfyChat peut générer une prévisualisation (titre, description, image de vignette). Ce traitement est réalisé côté serveur par AlfyCore : c'est notre serveur qui interroge l'URL externe, et non votre navigateur directement. Les images et ressources d'aperçu sont servies via notre CDN après récupération, évitant de charger des ressources tierces directement dans votre navigateur et prévenant ainsi tout dépôt de cookies tiers."
+            },
+            {
+              "title": "8.2 Bots et intégrations tierces",
+              "body": "Si un administrateur de serveur communautaire a activé un bot tiers qui envoie des messages contenant des liens ou des boutons pointant vers des services externes, cliquer sur ces éléments vous amènera sur des sites tiers qui appliquent leurs propres politiques de cookies. AlfyCore n'est pas responsable des pratiques de ces services tiers. Consultez leurs politiques de confidentialité respectives avant d'interagir avec des contenus issus de bots."
+            },
+            {
+              "title": "8.3 Recommandation pour une protection maximale",
+              "body": "Pour une protection optimale contre les cookies tiers non désirés lors de votre navigation sur Internet en général, nous recommandons l'utilisation d'un bloqueur de contenu réputé tel que uBlock Origin (extension open source), ou l'utilisation d'un navigateur axé sur la confidentialité. Ces outils n'affecteront pas le fonctionnement des cookies essentiels propres à AlfyChat décrits dans la présente politique."
+            }
+          ]
+        },
+        {
+          "heading": "Base légale et conformité réglementaire",
+          "intro": "La présente politique de cookies est établie en conformité avec l'ensemble des textes réglementaires applicables :\n\nConformément à ces textes, les cookies strictement nécessaires au fonctionnement technique d'un service sont exemptés du recueil préalable du consentement. AlfyChat n'utilisant exclusivement que de tels cookies essentiels, aucune bannière de consentement aux cookies (communément appelée « bandeau cookies ») n'est légalement requise. Cette absence n'est pas une omission ou un manquement : elle est la conséquence directe d'une conception privacy-first qui ne dépose aucun cookie nécessitant un consentement.",
+          "bullets": [
+            "**Directive 2002/58/CE (ePrivacy) :** transposée en droit français à l'article L.32-3-1 du Code des postes et des communications électroniques (CPCE), elle régit l'utilisation des cookies et traceurs sur les services de communications électroniques. Elle prévoit l'exemption de consentement pour les cookies « strictement nécessaires ».",
+            "**RGPD — Règlement (UE) 2016/679 :** applicable dans ses dispositions générales sur le traitement des données personnelles, notamment les principes de minimisation et de transparence.",
+            "**Lignes directrices de la CNIL sur les cookies et traceurs :** délibérations n° 2020-091 du 17 septembre 2020 et n° 2023-095 du 5 octobre 2023, définissant les critères d'exemption de consentement et les durées maximales de conservation des cookies."
+          ]
+        },
+        {
+          "heading": "Modifications de la politique de cookies",
+          "intro": "AlfyCore se réserve le droit de modifier la présente politique de cookies à tout moment, notamment pour :\n\nEn cas d'introduction de nouveaux cookies ou technologies de stockage local, la présente page sera mise à jour préalablement à leur déploiement. Si les modifications portent sur des cookies nécessitant un consentement (ajout hypothétique de cookies non essentiels), vous en serez informé et le recueil de votre consentement sera effectué conformément à la réglementation applicable.\n\nLa date de dernière mise à jour de la présente politique est indiquée en haut de cette page. Pour toute question relative à l'utilisation des cookies et des technologies de stockage par AlfyChat, vous pouvez contacter AlfyCore à l'adresse **contact@alfycore.org**.",
+          "bullets": [
+            "Refléter l'introduction de nouvelles fonctionnalités techniques dans AlfyChat nécessitant de nouveaux cookies ou données de stockage local",
+            "Intégrer les évolutions de la réglementation applicable (refonte de la Directive ePrivacy, nouvelles délibérations CNIL)",
+            "Corriger des inexactitudes ou améliorer la clarté des descriptions",
+            "Refléter des changements dans nos prestataires d'infrastructure"
+          ]
+        }
+      ]
     },
     "mentions": {
       "title": "Mentions légales",
       "subtitle": "Informations légales relatives à l'éditeur, l'hébergeur et l'exploitant du service AlfyChat",
-      "updatedAt": "26 mars 2026"
+      "updatedAt": "26 mars 2026",
+      "sections": [
+        {
+          "heading": "Identité de l'éditeur et de l'exploitant",
+          "intro": "Conformément aux dispositions de l'article 6 III de la loi n° 2004-575 du 21 juin 2004 pour la Confiance dans l'Économie Numérique (LCEN), les présentes mentions légales identifient l'éditeur du site et de la plateforme AlfyChat :\n\nAlfyCore est une association à but non lucratif au sens strict de la loi française du 1er juillet 1901. Elle n'a ni capital social, ni actionnaire, ni investisseur externe, et ne distribue aucun bénéfice à ses membres. Elle ne dépend d'aucun groupe industriel ou commercial, et n'est soumise à aucune obligation de rentabilité ou de valorisation. Son financement est assuré exclusivement par les contributions volontaires de ses membres et les éventuels dons réalisés en soutien à sa mission d'intérêt général.",
+          "bullets": [
+            "**Dénomination sociale :** AlfyCore",
+            "**Forme juridique :** Association à but non lucratif, régie par la loi du 1er juillet 1901 relative au contrat d'association et le décret du 16 août 1901",
+            "**Nature :** Personne morale de droit privé à but non lucratif, sans capital social ni actionnaires",
+            "**Pays d'établissement :** France",
+            "**Objet statutaire :** Concevoir, distribuer, maintenir et promouvoir des outils numériques libres, souverains et respectueux de la vie privée des utilisateurs",
+            "**Adresse e-mail de contact :** contact@alfycore.org",
+            "**Site institutionnel de l'association :** alfycore.pro",
+            "**Plateforme exploitée :** alfychat.app"
+          ]
+        },
+        {
+          "heading": "Directeur de la publication",
+          "intro": "Conformément à l'article 6 III de la LCEN, la direction de la publication du site alfychat.app et de la plateforme AlfyChat est assurée par un représentant mandaté de l'association AlfyCore. Pour toute question relative au contenu éditorial du service, vous pouvez adresser votre demande à **contact@alfycore.org**.",
+          "subsections": [
+            {
+              "title": "2.1 Qualité d'hébergeur de contenu",
+              "body": "AlfyCore n'opère pas un service de presse au sens de la loi du 29 juillet 1881 sur la liberté de la presse. AlfyChat est une infrastructure technique de messagerie instantanée dont les contenus sont intégralement générés par les utilisateurs. AlfyCore agit en qualité d'hébergeur de contenu au sens de l'article 6 de la LCEN et du Règlement (UE) 2022/2065 du Parlement européen et du Conseil du 19 octobre 2022 relatif à un marché intérieur des services numériques (Digital Services Act — DSA). À ce titre, AlfyCore n'est pas responsable a priori des contenus publiés par ses utilisateurs mais agit promptement pour retirer les contenus manifestement illicites qui lui sont signalés."
+            },
+            {
+              "title": "2.2 Absence d'obligation générale de surveillance",
+              "body": "Conformément à l'article 15 de la Directive 2000/31/CE et à son équivalent dans la LCEN, AlfyCore n'est pas soumis à une obligation générale de surveiller les contenus transmis ou stockés par les utilisateurs, ni à une obligation générale de rechercher activement des faits ou des circonstances révélant des activités illicites."
+            }
+          ]
+        },
+        {
+          "heading": "Coordonnées de contact",
+          "subsections": [
+            {
+              "title": "3.1 Contact général",
+              "body": "",
+              "bullets": [
+                "**Adresse e-mail générale :** contact@alfycore.org",
+                "**Site institutionnel :** alfycore.pro",
+                "**Accès à la plateforme :** alfychat.app"
+              ]
+            },
+            {
+              "title": "3.2 Demandes relatives aux données personnelles (RGPD)",
+              "body": "Pour toute demande d'exercice de vos droits sur vos données personnelles (accès, rectification, effacement, portabilité, opposition, limitation), adressez votre demande à contact@alfycore.org avec l'objet : « Droits RGPD — [nature de votre demande] » en précisant votre nom d'utilisateur AlfyChat pour faciliter le traitement. AlfyCore s'engage à accuser réception sous 72 heures et à répondre dans un délai maximum d'un mois."
+            },
+            {
+              "title": "3.3 Signalement de contenus illicites",
+              "body": "Pour le signalement urgent de contenus illicites (contenu à caractère pédopornographique — CSAM, apologie du terrorisme, contenu portant atteinte grave à la dignité, violation manifeste de vie privée), adressez votre signalement à contact@alfycore.org avec l'objet : « Signalement urgent — [nature du contenu] ». AlfyCore s'engage à traiter les signalements urgents en priorité et dans les meilleurs délais, conformément aux obligations prescrites par le DSA."
+            },
+            {
+              "title": "3.4 Signalement de violations de droits de propriété intellectuelle",
+              "body": "Pour toute réclamation relative à une atteinte alléguée à vos droits de propriété intellectuelle (contrefaçon, droits d'auteur, droits voisins), adressez une notification documentée à contact@alfycore.org avec l'objet « DPI — [nature du signalement] », accompagnée des éléments permettant d'identifier le contenu litigieux et de justifier de votre qualité de titulaire des droits invoqués."
+            }
+          ]
+        },
+        {
+          "heading": "Hébergement et infrastructure technique",
+          "intro": "L'infrastructure technique de la plateforme AlfyChat est répartie entre deux environnements d'hébergement complémentaires. L'ensemble des serveurs et datacenters utilisés est localisé au sein de l'Union européenne, conformément aux exigences du RGPD en matière de transferts de données.",
+          "subsections": [
+            {
+              "title": "4.1 Hostinger International Ltd (hébergeur partenaire)",
+              "body": "",
+              "bullets": [
+                "**Raison sociale :** Hostinger International Ltd",
+                "**Siège social :** 61 Lordou Vironos Street, 6023 Larnaca, République de Chypre",
+                "**Localisation des datacenters utilisés :** Europe (Union européenne)",
+                "**Site web :** hostinger.com"
+              ]
+            },
+            {
+              "title": "Services hébergés chez Hostinger :",
+              "body": "",
+              "bullets": [
+                "Serveur web front-end (alfychat.app) — rendu de l'application Next.js",
+                "API Gateway centralisé (gateway.alfychat.app) — routage des requêtes vers les microservices",
+                "Microservice Utilisateurs — gestion des comptes, authentification, profils",
+                "Microservice Messages — stockage et transmission des messages (chiffrés au repos AES-256)",
+                "Microservice Appels — signalisation WebRTC, serveurs TURN et STUN pour appels audio/vidéo",
+                "CDN intégré (media.alfychat.app) — distribution mondiale des médias et fichiers"
+              ]
+            },
+            {
+              "title": "4.2 Serveurs propres AlfyCore (France)",
+              "body": "",
+              "bullets": [
+                "**Opérateur :** AlfyCore — Association loi 1901",
+                "**Localisation :** France (Union européenne)"
+              ]
+            },
+            {
+              "title": "Services hébergés sur l'infrastructure propre d'AlfyCore :",
+              "body": "",
+              "bullets": [
+                "Microservice Amis — gestion des relations sociales (liste d'amis, invitations, blocages)",
+                "Microservice Serveurs communautaires — gestion des serveurs, salons, rôles et membres",
+                "Microservice Bots — enregistrement, gestion et webhooks des bots et intégrations",
+                "Microservice Médias backend — traitement, transformation et stockage des fichiers et images",
+                "Base de données MySQL principale — persistance structurée de l'ensemble des données",
+                "Cache Redis — sessions utilisateur, présence en ligne, files de messages"
+              ]
+            },
+            {
+              "title": "4.3 Sécurité de l'infrastructure",
+              "body": "L'ensemble de l'infrastructure AlfyChat est sécurisé par les mesures suivantes :",
+              "bullets": [
+                "**Chiffrement en transit :** TLS 1.3 avec Perfect Forward Secrecy sur tous les points de terminaison exposés",
+                "**Chiffrement au repos :** AES-256-GCM pour les données persistées",
+                "**Chiffrement E2EE :** ECDH P-256 + AES-256-GCM pour les conversations privées",
+                "**Accès administratif :** authentification par clé SSH, MFA obligatoire, aucun accès distant non chiffré autorisé"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Propriété intellectuelle",
+          "subsections": [
+            {
+              "title": "5.1 Marques et identité visuelle d'AlfyCore",
+              "body": "Les dénominations « AlfyChat » et « AlfyCore », ainsi que les logos, typographies, chartes graphiques, icônes, mises en page et éléments visuels associés constituent l'identité visuelle propriétaire d'AlfyCore. Ces éléments font l'objet d'une protection au titre du droit des marques et du droit d'auteur applicables en France et dans l'Union européenne. Toute reproduction, imitation, utilisation partielle ou totale, adaptation ou modification de ces éléments sans autorisation préalable, expresse et écrite d'AlfyCore est strictement interdite et expose son auteur à des poursuites civiles et pénales."
+            },
+            {
+              "title": "5.2 Code source open source et ses limites",
+              "body": "Le code source de la plateforme AlfyChat est publié sous licence open source dans les dépôts officiels d'AlfyCore. Cette ouverture permet à quiconque d'auditer indépendamment la sécurité du code, de contribuer à son développement, ou de déployer sa propre instance du logiciel. Cette licence ne confère cependant aucun droit sur :\n\nTout fork ou déploiement d'une instance dérivée du code source doit obligatoirement utiliser un nom, une identité visuelle et des noms de domaine distincts pour éviter toute confusion avec le service officiel opéré par AlfyCore.",
+              "bullets": [
+                "La marque « AlfyChat » et « AlfyCore » et leurs déclinaisons",
+                "Les noms de domaine alfychat.app et alfycore.pro et leurs sous-domaines",
+                "L'infrastructure technique opérée par AlfyCore pour le service officiel",
+                "Les données personnelles des utilisateurs inscrits sur l'instance officielle",
+                "Les contenus éditoriaux, documentations et supports de communication d'AlfyCore"
+              ]
+            },
+            {
+              "title": "5.3 Droits des utilisateurs sur leurs contenus",
+              "body": "Les utilisateurs conservent l'intégralité de leurs droits de propriété intellectuelle sur tous les contenus (textes, images, fichiers, créations) qu'ils publient sur AlfyChat. En publiant du contenu, l'utilisateur accorde à AlfyCore une licence technique strictement limitée, non exclusive, gratuite et non transférable, uniquement dans la mesure nécessaire à la transmission, au routage, au stockage temporaire et à l'affichage du contenu aux destinataires désignés par l'utilisateur. Cette licence prend fin dès la suppression du contenu par l'utilisateur."
+            }
+          ]
+        },
+        {
+          "heading": "Statut d'hébergeur, DSA et obligations de modération",
+          "intro": "AlfyCore agit en qualité d'hébergeur de contenu au sens de l'article 6 de la loi n° 2004-575 du 21 juin 2004 (LCEN) et du Règlement (UE) 2022/2065 sur les services numériques (Digital Services Act — DSA) entré en application le 17 février 2024. Ce statut d'hébergeur implique les droits et obligations suivants :",
+          "subsections": [
+            {
+              "title": "6.1 Responsabilité limitée pour les contenus tiers",
+              "body": "En tant qu'hébergeur, AlfyCore n'est pas responsable des contenus publiés par les utilisateurs à condition de ne pas avoir eu effectivement connaissance de leur caractère illicite ou d'avoir agi promptement pour les retirer dès obtention de cette connaissance (article 6 I 2 de la LCEN et article 6.1 du DSA)."
+            },
+            {
+              "title": "6.2 Mécanisme de signalement (notice and action)",
+              "body": "AlfyCore met à disposition un mécanisme de signalement accessible via l'interface de l'application (bouton « Signaler ») et par e-mail (contact@alfycore.org). Tout signalement valide d'un contenu illicite est traité dans les meilleurs délais. Pour être valide, un signalement doit préciser la localisation du contenu, sa nature illicite présumée, et l'identité du signalant."
+            },
+            {
+              "title": "6.3 Signalement aux autorités pour contenus graves",
+              "body": "Conformément à ses obligations légales, AlfyCore signale sans délai aux autorités compétentes (notamment l'OFMIN pour les contenus pédopornographiques) tout contenu illicite grave dont il aurait connaissance, conformément à l'article 6 I 7 de la LCEN et aux dispositions du DSA relatives aux contenus à risque systémique."
+            }
+          ]
+        },
+        {
+          "heading": "Accessibilité numérique",
+          "intro": "AlfyCore s'engage à rendre la plateforme AlfyChat aussi accessible que possible, dans l'esprit du Référentiel Général d'Amélioration de l'Accessibilité (RGAA), norme française transposant la Directive (UE) 2016/2102 relative à l'accessibilité des sites internet des organismes du secteur public. Bien qu'AlfyCore soit une association de droit privé non soumise directement à l'obligation légale de conformité RGAA, nous considérons l'accessibilité numérique comme un impératif éthique.\n\nDes efforts continus sont réalisés pour améliorer l'accessibilité de l'interface AlfyChat, notamment en matière de contrastes visuels, de navigation au clavier, de compatibilité avec les lecteurs d'écran, et de structure sémantique des pages.\n\nSi vous rencontrez des difficultés d'accessibilité sur la plateforme qui empêchent ou limitent votre utilisation du service, vous pouvez le signaler à contact@alfycore.org avec l'objet « Accessibilité — [description de la difficulté] ». AlfyCore s'engage à étudier chaque signalement et à proposer une solution alternative ou une correction dans les meilleurs délais raisonnables."
+        },
+        {
+          "heading": "Liens hypertextes vers des sites tiers",
+          "intro": "La plateforme AlfyChat peut contenir des liens hypertextes vers des sites web ou services tiers, générés notamment lors de la prévisualisation d'URL partagées dans des messages, ou dans le cadre d'intégrations de bots. Ces liens sont fournis à titre informatif ou fonctionnel uniquement.\n\nAlfyCore n'exerce aucun contrôle sur le contenu, la disponibilité, la qualité, la légalité ou les pratiques en matière de données personnelles des sites web tiers vers lesquels ces liens renvoient. La présence d'un lien vers un site tiers ne constitue pas un partenariat, un accord commercial, une recommandation, une approbation ou une garantie de la part d'AlfyCore à l'égard de ce site, de son contenu, de ses services ou de son exploitant.\n\nAlfyCore ne peut en aucun cas être tenu responsable des préjudices directs ou indirects résultant de votre consultation de sites tiers accessibles via des liens présents sur AlfyChat. Nous vous invitons à consulter les conditions d'utilisation et les politiques de confidentialité de chaque site tiers que vous visitez."
+        },
+        {
+          "heading": "Droit applicable et compétence juridictionnelle",
+          "intro": "Les présentes mentions légales et l'utilisation du service AlfyChat sont régies par le droit français. En cas de litige relatif à l'interprétation, à l'exécution ou à la validité des présentes mentions légales, et sous réserve des dispositions impératives de protection des consommateurs applicables selon le pays de résidence de l'utilisateur, les juridictions françaises territorialement compétentes seront seules habilitées à en connaître.\n\nPour les utilisateurs résidant dans un État membre de l'Union européenne, les règles de compétence juridictionnelle prévues par le Règlement (UE) n° 1215/2012 (dit « Bruxelles I bis ») s'appliquent. En matière de protection des consommateurs, les dispositions impératives du droit du pays de résidence habituelle du consommateur demeurent applicables, conformément à l'article 6 du Règlement (CE) n° 593/2008 (dit « Rome I »).\n\nIl est précisé que la langue française fait foi dans l'interprétation des présentes mentions légales. Des traductions dans d'autres langues peuvent être proposées à titre informatif uniquement."
+        },
+        {
+          "heading": "Médiation et règlement extrajudiciaire des litiges",
+          "intro": "En cas de litige non résolu à la suite d'une réclamation adressée directement à AlfyCore, et conformément aux dispositions des articles L.611-1 et suivants du Code de la consommation transposant la Directive 2013/11/UE relative au règlement extrajudiciaire des litiges de consommation (directive RELC), les utilisateurs ayant la qualité de consommateur peuvent avoir recours à un médiateur.\n\nIl est toutefois rappelé qu'AlfyCore est une association à but non lucratif proposant un service entièrement gratuit, sans relation commerciale au sens strict. Les dispositions relatives à la médiation de la consommation peuvent ne pas être directement applicables à ce contexte. Néanmoins, AlfyCore est toujours ouvert au dialogue amiable pour résoudre tout différend éventuel de manière équitable et dans l'intérêt de ses utilisateurs.\n\nLa plateforme européenne de règlement en ligne des litiges (RLL), mise en place par la Commission européenne en application du Règlement (UE) n° 524/2013, est accessible à l'adresse **ec.europa.eu/consumers/odr**. Elle permet aux consommateurs de l'UE de soumettre leurs réclamations concernant des achats en ligne et des services numériques lors de litiges transfrontaliers au sein de l'Union européenne."
+        }
+      ]
     },
     "privacy": {
       "title": "Politique de confidentialité",
@@ -165,7 +793,167 @@
       "addCommandBtn": "Ajouter la commande",
       "deleteConfirmTitle": "Confirmer la suppression",
       "deleteConfirmDesc": "Cette action est irréversible. Le bot sera supprimé de tous les serveurs et toutes les données associées seront perdues.",
-      "deletePermanentlyBtn": "Supprimer définitivement"
+      "deletePermanentlyBtn": "Supprimer définitivement",
+      "nav": {
+        "backToApp": "Retour à l'app",
+        "sections": [
+          {
+            "label": "BOTS ALFYCHAT",
+            "items": ["Introduction", "Créer un Bot", "Authentification", "Envoyer des messages", "Commandes", "Permissions", "Certification"]
+          },
+          {
+            "label": "OAUTH2",
+            "items": ["Introduction", "Flows d'autorisation", "Scopes"]
+          },
+          {
+            "label": "GATEWAY API",
+            "items": ["Vue d'ensemble", "Authentification", "Référence REST", "↳ Auth & RGPD", "↳ Utilisateurs", "↳ Messages & Conversations", "↳ Amis & Appels", "↳ Serveurs", "↳ Bots", "↳ Médias", "↳ Admin & Monitoring", "WebSocket", "Événements", "Limites & Erreurs"]
+          },
+          {
+            "label": "DÉVELOPPEMENT",
+            "items": ["Accueil", "Mes Bots", "Nouveau Bot"]
+          }
+        ]
+      },
+      "home": {
+        "badge": "Portail développeur",
+        "heroTitleLine1": "Construisez sur",
+        "heroTitleLine2": "AlfyChat",
+        "heroSubtitle": "Créez des bots puissants, intégrez OAuth2 et connectez-vous à la Gateway en temps réel. Toute l'infrastructure dont vous avez besoin pour enrichir l'expérience de vos utilisateurs.",
+        "newBotBtn": "Nouveau bot",
+        "documentationBtn": "Documentation",
+        "stats": {
+          "myBots": "Mes bots",
+          "docsPages": "Pages de docs",
+          "wsEvents": "Événements WS"
+        },
+        "startIn3StepsTitle": "Démarrer en 3 étapes",
+        "steps": [
+          { "title": "Créer une application", "description": "Enregistrez votre bot depuis le portail développeur. Vous recevrez un token et un client secret." },
+          { "title": "Configurer OAuth2", "description": "Ajoutez vos URIs de redirection et générez un lien d'invitation pour votre bot." },
+          { "title": "Connecter et coder", "description": "Utilisez votre token Bot pour vous connecter à la Gateway et commencer à recevoir des événements." }
+        ],
+        "quickLinksTitle": "Accès rapides",
+        "quickLinks": [
+          { "label": "Guide des bots", "description": "Introduction complète au système de bots AlfyChat" },
+          { "label": "OAuth2", "description": "Flows d'autorisation, scopes et échange de tokens" },
+          { "label": "WebSocket Gateway", "description": "Connexion temps-réel, événements et heartbeat" },
+          { "label": "API REST", "description": "Référence complète des endpoints HTTP" }
+        ]
+      },
+      "docsIndex": {
+        "badge": "Documentation officielle",
+        "title": "AlfyChat Developer Hub",
+        "subtitleBefore": "Construisez des bots et intégrez l'API AlfyChat dans vos applications. Documentation complète avec exemples en JavaScript, TypeScript, Python et cURL. Développé par",
+        "subtitleAfter": "(Association loi 1901, France).",
+        "createFirstBotBtn": "Créer mon premier bot",
+        "exploreGatewayBtn": "Explorer l'API Gateway",
+        "stats": [
+          { "label": "Endpoints REST", "value": "50+" },
+          { "label": "Événements WebSocket", "value": "80+" },
+          { "label": "Langages d'exemples", "value": "4" },
+          { "label": "Microservices", "value": "8" }
+        ],
+        "botsSection": { "title": "Bots AlfyChat", "subtitle": "Créer et gérer des bots automatisés sur la plateforme" },
+        "oauth2Section": { "title": "OAuth2", "subtitle": "Intégrer AlfyChat dans vos applications tierces via le protocole OAuth2" },
+        "gatewaySection": { "title": "Gateway API", "subtitle": "API REST + WebSocket Socket.IO — point d'entrée unique vers tous les microservices" },
+        "restSection": { "title": "Référence REST — par ressource", "subtitle": "Documentation détaillée endpoint par endpoint avec exemples de code" },
+        "botDocs": [
+          { "title": "Introduction", "description": "Architecture d'un bot AlfyChat, cycle de vie, flux de démarrage, connexion Socket.IO et exemple de bot minimal en 4 langages." },
+          { "title": "Créer un Bot", "description": "Enregistrement via POST /api/bots, récupération du token (affiché une seule fois), modification des métadonnées et suppression." },
+          { "title": "Authentification", "description": "Header Authorization: Bot <token>, validation du token côté bot, gestion des 401/403 et bonnes pratiques de stockage sécurisé." },
+          { "title": "Envoyer des messages", "description": "Envoi de messages en DM, dans un salon de serveur ou en réponse — REST et WebSocket, mentions et pièces jointes." },
+          { "title": "Commandes", "description": "Déclaration de commandes par prefix, cooldown par utilisateur/serveur, parsing des arguments et aide automatique." },
+          { "title": "Permissions", "description": "Système de permissions en bitmask — SEND_MESSAGES, MANAGE_MEMBERS, BAN_MEMBERS, ADMINISTRATOR — vérification runtime." },
+          { "title": "Certification", "description": "Obtenir le badge officiel ✅ : prérequis (100+ serveurs, conformité RGPD), processus de review et avantages techniques.", "badge": "Officiel" }
+        ],
+        "oauth2Docs": [
+          { "title": "Introduction OAuth2", "description": "Vue d'ensemble du système OAuth2 AlfyChat — authorization code flow, client_id/client_secret, scopes et redirect URIs.", "badge": "Nouveau" },
+          { "title": "Flows d'autorisation", "description": "Authorization code flow pas-à-pas — redirect vers /oauth2/authorize, échange de code contre access_token et appels authentifiés." },
+          { "title": "Scopes", "description": "Référence complète des scopes OAuth2 : bot (ajouter à un serveur), identify (profil utilisateur), guilds (liste des serveurs)." }
+        ],
+        "gatewayMain": [
+          { "title": "Vue d'ensemble", "description": "URL de base (https://gateway.alfychat.app), architecture 8 microservices, en-têtes communs, CORS et format des réponses JSON." },
+          { "title": "Authentification", "description": "JWT Bearer (15 min) + refresh token (1 an), sessions WebSocket, révocation de session et bonnes pratiques de sécurité." },
+          { "title": "Référence REST", "description": "Vue d'ensemble des 50+ endpoints REST — routes, auth requise, pagination par curseur et format général des erreurs.", "badge": "50+" },
+          { "title": "WebSocket", "description": "Connexion Socket.IO v4, rooms auto-jointes, heartbeat 30s, event READY, gestion des déconnexions et CALL_REJOIN." },
+          { "title": "Événements", "description": "Référence des 80+ events Socket.IO — appels WebRTC, messages DM/serveur, présence, archive P2P et groupes.", "badge": "80+" },
+          { "title": "Limites & Erreurs", "description": "Rate limiting (100 req/min global, 5 msg/5s WebSocket), codes HTTP, format d'erreur JSON et wrapper de retry avec backoff." }
+        ],
+        "restSubsections": [
+          { "title": "Auth & RGPD", "description": "Inscription, connexion, refresh, révocation de session. Droits RGPD : export ZIP de données et suppression irréversible de compte." },
+          { "title": "Utilisateurs", "description": "Profil complet, modification du displayName/bio/avatar, préférences (thème, langue, notifications), statut de présence et lastSeen." },
+          { "title": "Messages & Conversations", "description": "CRUD messages DM/groupe, réactions, pagination par curseur UUID, notifications et système d'archive P2P hybride client/serveur." },
+          { "title": "Amis & Appels", "description": "Demandes d'ami, acceptation/refus, blocage/déblocage, side-effects WebSocket temps réel et historique des appels audio/vidéo." },
+          { "title": "Serveurs", "description": "CRUD serveurs, channels (text/voice/announcement), membres, rôles, invitations, upload de fichiers et routing vers server-nodes." },
+          { "title": "Bots", "description": "Création, authentification, gestion des commandes, ajout dans les serveurs, annuaire public et soumission à la certification." },
+          { "title": "Médias", "description": "Upload multipart/form-data par type (avatars, banners, icons, attachments), CDN géo-distribué EU/US et conversion auto WebP." },
+          { "title": "Admin & Monitoring", "description": "Stats rate-limiting, ban/déban d'IP, monitoring des microservices, gestion des incidents, status public et endpoints internes." }
+        ],
+        "compliance": {
+          "title": "Sécurité & conformité RGPD",
+          "p1Before": "Les messages privés (DM) supportent le",
+          "p1Strong": "chiffrement de bout en bout (E2EE)",
+          "p1Mid1": "via le champ",
+          "p1Mid2": "et le paramètre",
+          "p1After": "sur les events WebSocket.",
+          "p2Before": "Conformément au",
+          "p2Strong": "Règlement (UE) 2016/679 (RGPD)",
+          "p2Mid1": ", AlfyCore propose l'export complet des données (",
+          "p2Mid2": ") et la suppression définitive de compte (",
+          "p2After": "). Contact conformité :"
+        },
+        "footer": {
+          "baseUrlLabel": "Base URL :",
+          "restPrefixLabel": "— préfixe REST :",
+          "supportLabel": "· Support :"
+        }
+      },
+      "tags": [
+        "Modération", "Musique", "Jeux", "Utilitaire", "Fun",
+        "Social", "Économie", "Niveaux", "Logs", "Sondages",
+        "Notifications", "Traduction", "IA", "Statistiques", "Rôles"
+      ],
+      "permissions": [
+        { "bit": 1,   "label": "Lire les messages",     "desc": "Voir le contenu des salons" },
+        { "bit": 2,   "label": "Envoyer des messages",  "desc": "Poster dans les salons textuels" },
+        { "bit": 4,   "label": "Ajouter des réactions", "desc": "Réagir aux messages" },
+        { "bit": 8,   "label": "Gérer les messages",    "desc": "Supprimer et épingler des messages" },
+        { "bit": 16,  "label": "Expulser des membres",  "desc": "Exclure des membres du serveur" },
+        { "bit": 32,  "label": "Bannir des membres",    "desc": "Bannir des membres définitivement" },
+        { "bit": 64,  "label": "Administrateur",        "desc": "Accès complet à toutes les fonctions" },
+        { "bit": 128, "label": "Gérer les salons",      "desc": "Créer, modifier et supprimer des salons" },
+        { "bit": 256, "label": "Gérer les rôles",       "desc": "Créer, modifier et supprimer des rôles" }
+      ]
+    },
+    "oauth2": {
+      "clientIdMissing": "Paramètre client_id manquant.",
+      "appNotFound": "Application introuvable. Vérifiez le client_id.",
+      "loadError": "Erreur lors du chargement.",
+      "authDenied": "Autorisation refusée.",
+      "genericError": "Une erreur est survenue.",
+      "appNotFoundTitle": "Application introuvable",
+      "backHome": "Retour à l'accueil",
+      "title": "Autorisation",
+      "subtitle": "Une application demande l'accès à votre compte.",
+      "verifiedBadge": "VÉRIFIÉ",
+      "wantsBotAccess": "souhaite être ajouté à un de vos serveurs",
+      "wantsAccountAccess": "souhaite accéder à votre compte AlfyChat",
+      "addToServerLabel": "Ajouter au serveur",
+      "noAdminServer": "Vous n'administrez aucun serveur.",
+      "chooseServerOption": "— Choisir un serveur —",
+      "permissionsLabel": "Permissions",
+      "requestedAccessLabel": "Accès demandés",
+      "redirectNoticeBefore": "Vous serez redirigé vers",
+      "redirectNoticeAfter": "après l'autorisation.",
+      "cancelBtn": "Annuler",
+      "authorizeBtn": "Autoriser",
+      "authorizingBtn": "Autorisation…",
+      "securityNote": "AlfyChat ne partage jamais votre mot de passe avec des applications tierces",
+      "scopeIdentifyLabel": "Accès à votre profil",
+      "scopeIdentifyDesc": "Lire votre identifiant, nom d'utilisateur et avatar.",
+      "scopeGuildsLabel": "Liste de vos serveurs",
+      "scopeGuildsDesc": "Voir la liste de vos serveurs AlfyChat."
     }
   }
 }

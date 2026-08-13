@@ -128,8 +128,18 @@ export function useAlfyDms(): {
       const m = unwrap(data);
       const convId = (m?.conversationId ?? m?.conversation_id) as string | undefined;
       if (!convId) return;
-      setConversations((prev) =>
-        prev.map((c) =>
+      setConversations((prev) => {
+        if (!prev.some((c) => c.id === convId)) {
+          // Premier message d'une conversation encore inconnue côté client
+          // (ex: nouvel ami qui vient d'écrire) : un simple .map() ne peut
+          // pas la faire apparaître puisqu'elle n'existe pas encore dans la
+          // liste locale. On recharge depuis le serveur pour qu'elle
+          // apparaisse tout de suite dans la barre MP, sans attendre que
+          // l'utilisateur passe par Amis → ouvrir le MP manuellement.
+          void load();
+          return prev;
+        }
+        return prev.map((c) =>
           c.id === convId
             ? {
                 ...c,
@@ -137,8 +147,8 @@ export function useAlfyDms(): {
                 lastMessageAt: (m.createdAt as string) ?? new Date().toISOString(),
               }
             : c,
-        ),
-      );
+        );
+      });
     };
     const refresh = () => void load();
 

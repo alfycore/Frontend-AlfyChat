@@ -107,6 +107,7 @@ interface UserPopoverProps {
   allServerRoles?: AlfyRole[];
   children: React.ReactNode;
   triggerClassName?: string;
+  placement?: 'left' | 'right' | 'top' | 'bottom';
   isSelf?: boolean;
   moderatorPermissions?: number;
   /** Communs et relation — fournis par le container réel ; mock par défaut. */
@@ -124,6 +125,7 @@ export function UserPopover({
   allServerRoles,
   children,
   triggerClassName,
+  placement = 'left',
   isSelf = false,
   moderatorPermissions = 0,
   mutualFriends: mutualFriendsProp,
@@ -334,7 +336,7 @@ export function UserPopover({
         <Popover.Trigger aria-label={tx(t.admin.members.profileOf, { name: user.displayName })} className={triggerClassName}>
           {children}
         </Popover.Trigger>
-        <Popover.Content placement="left" className="w-80 overflow-hidden p-0">
+        <Popover.Content placement={placement} className="w-80 overflow-hidden p-0">
           <Popover.Dialog aria-label={tx(t.admin.members.profileOf, { name: user.displayName })} className="alfy-enter overflow-hidden p-0">
             {/* Bannière + actions flottantes */}
             <div className="relative">

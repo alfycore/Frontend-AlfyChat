@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Button, Chip, Spinner, Tooltip } from '@heroui/react';
 import {
   Activity, AlertOctagon, Award, BadgeCheck, Boxes, ChartNoAxesColumn, Compass,
-  FileClock, Gauge, Gavel, LifeBuoy, LogOut, Menu, Network, Scale, Server,
+  FileClock, FlaskConical, Gauge, Gavel, LifeBuoy, LogOut, Menu, Network, Scale, Server,
   Settings2, ShieldAlert, ShieldCheck, Users, X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -70,6 +70,13 @@ function buildNavGroups(t: Translations): { label: string; items: NavItem[] }[] 
       label: t.admin.navGroups.configuration,
       items: [
         { href: '/admin/settings', label: t.admin.nav.settings, icon: Settings2 },
+      ],
+    },
+    {
+      // Outils internes réservés aux devs — pas de clé i18n, pas destiné aux autres rôles.
+      label: 'Dev',
+      items: [
+        { href: '/admin/dev/emails', label: 'Emails', icon: FlaskConical },
       ],
     },
   ];
