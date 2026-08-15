@@ -43,19 +43,6 @@
       "untitledGif": "untitled",
       "loadMore": "Load more"
     },
-    "sidebar": {
-      "actionFailed": "Action failed",
-      "tryAgain": "Try again in a moment.",
-      "thisChannel": "this channel",
-      "thisCategory": "this category",
-      "rename": "Rename",
-      "name": "Name",
-      "deleteCategoryHeading": "Delete the category \"{name}\"?",
-      "deleteChannelHeading": "Delete the channel \"{name}\"?",
-      "deleteCategoryWarning": "Its channels will become uncategorized — they won't be deleted.",
-      "deleteChannelWarning": "Messages in this channel will be permanently lost.",
-      "delete": "Delete"
-    },
     "specialViews": {
       "announcement": {
         "title": "Announcements",

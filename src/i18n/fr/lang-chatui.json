@@ -43,19 +43,6 @@
       "untitledGif": "sans titre",
       "loadMore": "Charger plus"
     },
-    "sidebar": {
-      "actionFailed": "Action impossible",
-      "tryAgain": "Réessayez dans un instant.",
-      "thisChannel": "ce salon",
-      "thisCategory": "cette catégorie",
-      "rename": "Renommer",
-      "name": "Nom",
-      "deleteCategoryHeading": "Supprimer la catégorie « {name} » ?",
-      "deleteChannelHeading": "Supprimer le salon « {name} » ?",
-      "deleteCategoryWarning": "Ses salons deviendront non classés — ils ne seront pas supprimés.",
-      "deleteChannelWarning": "Les messages de ce salon seront définitivement perdus.",
-      "delete": "Supprimer"
-    },
     "specialViews": {
       "announcement": {
         "title": "Annonces",

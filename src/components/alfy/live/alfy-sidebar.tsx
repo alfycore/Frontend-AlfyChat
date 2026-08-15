@@ -74,7 +74,7 @@ export function AlfySidebar({
     const onError = (data: unknown) => {
       const d = data as { type?: string; payload?: { message?: string } };
       if (d?.type !== 'CHANNEL_ERROR') return;
-      toast.danger(t.chatUI.sidebar.actionFailed, { description: d.payload?.message ?? t.chatUI.sidebar.tryAgain });
+      toast.danger(t.chatUI.sidebar.channelActionErrorTitle, { description: d.payload?.message ?? t.chatUI.sidebar.channelActionErrorDefaultDesc });
     };
     socketService.on('ERROR', onError);
     return () => socketService.off('ERROR', onError);
@@ -124,7 +124,7 @@ export function AlfySidebar({
           }}
           onDeleteChannel={(id) => {
             const ch = server.channels.find((c) => c.id === id);
-            setDeleteTarget({ id, name: ch?.name ?? t.chatUI.sidebar.thisChannel, kind: 'channel' });
+            setDeleteTarget({ id, name: ch?.name ?? t.chatUI.sidebar.defaultChannelName, kind: 'channel' });
           }}
           onMoveChannel={(id, direction) => {
             const list = server.channels.filter((c) => c.categoryId === server.channels.find((x) => x.id === id)?.categoryId);
@@ -140,7 +140,7 @@ export function AlfySidebar({
           }}
           onDeleteCategory={(id) => {
             const cat = server.categories.find((c) => c.id === id);
-            setDeleteTarget({ id, name: cat?.name ?? t.chatUI.sidebar.thisCategory, kind: 'category' });
+            setDeleteTarget({ id, name: cat?.name ?? t.chatUI.sidebar.defaultCategoryName, kind: 'category' });
           }}
           onMoveCategory={(id, direction) => {
             const i = categories.findIndex((c) => c.id === id);
@@ -168,8 +168,8 @@ export function AlfySidebar({
         <RenameDialog
           isOpen={!!renameTarget}
           onOpenChange={(open) => !open && setRenameTarget(null)}
-          title={t.chatUI.sidebar.rename}
-          fieldLabel={t.chatUI.sidebar.name}
+          title={t.chatUI.sidebar.renameChannelTitle}
+          fieldLabel={t.chatUI.sidebar.renameFieldLabel}
           initialValue={renameTarget?.name ?? ''}
           onSave={(name) => {
             if (renameTarget) socketService.updateChannel(serverId, renameTarget.id, { name });
@@ -194,8 +194,8 @@ export function AlfySidebar({
                 <AlertDialog.Body>
                   <p>
                     {deleteTarget?.kind === 'category'
-                      ? t.chatUI.sidebar.deleteCategoryWarning
-                      : t.chatUI.sidebar.deleteChannelWarning}
+                      ? t.chatUI.sidebar.deleteCategoryBody
+                      : t.chatUI.sidebar.deleteChannelBody}
                   </p>
                 </AlertDialog.Body>
                 <AlertDialog.Footer>
@@ -209,7 +209,7 @@ export function AlfySidebar({
                       setDeleteTarget(null);
                     }}
                   >
-                    {t.chatUI.sidebar.delete}
+                    {t.chatUI.sidebar.deleteConfirm}
                   </Button>
                 </AlertDialog.Footer>
               </AlertDialog.Dialog>

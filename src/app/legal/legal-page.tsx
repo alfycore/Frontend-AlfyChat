@@ -14,6 +14,7 @@ export interface LegalSection {
   intro?: string;
   bullets?: string[];
   subsections?: LegalSubsection[];
+  body?: React.ReactNode;
 }
 
 /** Rend `**mot**` en <strong>, sans dépendance markdown complète. */
@@ -41,16 +42,16 @@ export function LegalPage({
   title,
   subtitle,
   updatedAt,
-  updatedLabel,
-  contactLabel,
+  updatedLabel = 'Dernière mise à jour :',
+  contactLabel = 'Une question ? Contactez-nous',
   sections,
 }: {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   title: string;
   subtitle: string;
   updatedAt: string;
-  updatedLabel: string;
-  contactLabel: string;
+  updatedLabel?: string;
+  contactLabel?: string;
   sections: LegalSection[];
 }) {
   return (
@@ -99,6 +100,7 @@ export function LegalPage({
                   '[&_p+p]:mt-2',
                 )}
               >
+                {s.body}
                 {s.intro && <LegalBody text={s.intro} />}
                 {s.bullets && (
                   <ul>
