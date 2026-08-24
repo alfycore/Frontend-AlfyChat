@@ -60,7 +60,13 @@
     "membersCount": "{n} members",
     "writingIn": "Write in {name}…",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "lightbox": {
+      "previousImage": "Poprzedni obraz",
+      "nextImage": "Następny obraz",
+      "zoomIn": "Powiększ",
+      "zoomOut": "Dopasuj do ekranu"
+    }
   },
   "messageItem": {
     "user": "Uzytkownik",

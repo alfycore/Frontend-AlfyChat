@@ -29,5 +29,14 @@
     "dnd": "Do Not Disturb",
     "invisible": "Invisible",
     "offline": "Offline"
+  },
+  "titleBar": {
+    "back": "Back",
+    "forward": "Forward",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close",
+    "help": "Help"
   }
 }

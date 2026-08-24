@@ -113,7 +113,13 @@
     "blockedByThemComposer": "You cannot write to this person",
     "welcomeChannelHeading": "Welcome to {name}",
     "channelTopicFallback": "This is the beginning of this channel.",
-    "encryptedBadge": "encrypted"
+    "encryptedBadge": "encrypted",
+    "lightbox": {
+      "previousImage": "Previous image",
+      "nextImage": "Next image",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Fit to screen"
+    }
   },
   "messageItem": {
     "user": "User",

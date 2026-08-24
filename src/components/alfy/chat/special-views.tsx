@@ -261,7 +261,7 @@ export function PollView(_props: SpecialViewProps = {}) {
         <div className="mt-4 flex flex-col gap-2">
           {options.map((o, i) => (
             <button key={o.label} type="button" onClick={() => setVoted(i)} className={cn('relative cursor-pointer overflow-hidden rounded-xl border px-3.5 py-2.5 text-left transition-colors', voted === i ? 'border-accent' : 'border-border hover:bg-surface-secondary')}>
-              <span aria-hidden className="absolute inset-y-0 left-0 bg-accent/12 transition-[width] duration-500" style={{ width: voted === null ? '0%' : `${o.pct}%` }} />
+              <span aria-hidden className="absolute inset-y-0 left-0 w-full origin-left bg-accent/12 transition-transform duration-500 ease-linear" style={{ transform: `scaleX(${voted === null ? 0 : o.pct / 100})` }} />
               <span className="relative flex items-center justify-between text-sm font-medium">
                 {o.label}
                 {voted !== null && <span className="text-xs text-muted tabular-nums">{o.pct}%</span>}

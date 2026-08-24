@@ -11,6 +11,7 @@ import {
 } from '@/lib/notification-store';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { EmptyState } from '@/components/alfy/primitives/empty-state';
+import { notificationTime } from '@/components/alfy/chat/date-format';
 import { useTranslation } from '@/components/locale-provider';
 
 const ICON: Record<NotificationEntry['type'], typeof AtSign> = {
@@ -21,12 +22,11 @@ const ICON: Record<NotificationEntry['type'], typeof AtSign> = {
   reaction: Heart,
 };
 
-const timeFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-
 /** Cloche + centre de notifications. */
 export function NotificationCenter() {
-  const { t, tx } = useTranslation();
+  const { t, tx, intlLocale } = useTranslation();
   const { history: items } = useNotificationStore();
+  const timeFmt = notificationTime(intlLocale);
   const unread = items.filter((n) => !n.read).length;
 
   return (

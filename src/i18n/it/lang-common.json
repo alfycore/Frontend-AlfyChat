@@ -30,5 +30,14 @@
     "invisible": "Invisibile",
     "offline": "Offline",
     "you": "Tu"
+  },
+  "titleBar": {
+    "back": "Indietro",
+    "forward": "Avanti",
+    "minimize": "Riduci a icona",
+    "maximize": "Ingrandisci",
+    "restore": "Ripristina",
+    "close": "Chiudi",
+    "help": "Aiuto"
   }
 }

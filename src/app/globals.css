@@ -10,6 +10,85 @@
   --font-heading: var(--font-krona);
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+ * Motion — courbes partagées.
+ *
+ * Le défaut Tailwind pour `transition-*` est cubic-bezier(.4, 0, .2, 1),
+ * un ease-in-out : il démarre lentement, ce qui rend molle toute entrée
+ * ou sortie. On le remplace par un ease-out — accélération initiale
+ * rapide = réactivité perçue, atterrissage calme.
+ * Les ~240 `duration-*` du code n'ont pour la plupart pas de `ease-*`
+ * explicite : elles héritent donc de cette courbe.
+ *
+ * Utiliser `ease-in-out-cubic` explicitement pour un élément DÉJÀ visible
+ * qui se déplace ou change de taille (reflow, accordéon, réorganisation).
+ * ════════════════════════════════════════════════════════════════════════ */
+/* `static` : force l'émission des variables dans :root même si aucune classe
+ * ease-* ne les utilise — le CSS brut (alfy-theme.css, keyframes ci-dessous)
+ * en dépend. */
+@theme static {
+  --default-transition-timing-function: cubic-bezier(.165, .84, .44, 1);
+
+  --ease-out-quad:     cubic-bezier(.25, .46, .45, .94);
+  --ease-out-cubic:    cubic-bezier(.215, .61, .355, 1);
+  --ease-out-quart:    cubic-bezier(.165, .84, .44, 1);
+  --ease-out-quint:    cubic-bezier(.23, 1, .32, 1);
+  --ease-out-expo:     cubic-bezier(.19, 1, .22, 1);
+  --ease-in-out-cubic: cubic-bezier(.645, .045, .355, 1);
+  --ease-in-out-quart: cubic-bezier(.77, 0, .175, 1);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+ * Durées — un seul jeu pour toute l'interface.
+ *
+ * Point de coupure UNIQUE du reduced-motion : toutes les animations CSS
+ * de l'app passent par ces jetons, donc les neutraliser ici les neutralise
+ * partout. Deux déclencheurs :
+ *   1. `prefers-reduced-motion: reduce`  → préférence système
+ *   2. `[data-motion="reduced"]`         → réglage in-app (use-app-prefs)
+ *
+ * Toute nouvelle animation DOIT utiliser var(--dur-*) et var(--motion-iter)
+ * plutôt qu'une valeur en dur, sinon elle échappe à ce filet.
+ * ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --dur-1: 120ms;   /* micro-feedback, appui bouton */
+  --dur-2: 180ms;   /* dropdowns, popovers, entrées standard */
+  --dur-3: 240ms;   /* dialogues, feuilles, surfaces moyennes */
+  --dur-4: 300ms;   /* borne haute de l'UI produit */
+  --dur-5: 500ms;   /* grandes surfaces */
+  --dur-illustrative: 900ms; /* onboarding, marketing uniquement */
+
+  /* Boucles — respirations et indicateurs continus */
+  --dur-pulse:  2400ms;
+  --dur-typing: 1300ms;
+  --dur-caret:  1100ms;
+  --dur-flash:  1600ms;
+  --motion-iter: infinite;
+
+  /* Pas de cascade entre enfants d'une liste (plafonné côté sélecteurs) */
+  --stagger-step: 35ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0.01ms; --dur-2: 0.01ms; --dur-3: 0.01ms;
+    --dur-4: 0.01ms; --dur-5: 0.01ms; --dur-illustrative: 0.01ms;
+    --dur-pulse: 0.01ms; --dur-typing: 0.01ms;
+    --dur-caret: 0.01ms; --dur-flash: 0.01ms;
+    --motion-iter: 1;
+    --stagger-step: 0ms;
+  }
+}
+
+[data-motion="reduced"] {
+  --dur-1: 0.01ms; --dur-2: 0.01ms; --dur-3: 0.01ms;
+  --dur-4: 0.01ms; --dur-5: 0.01ms; --dur-illustrative: 0.01ms;
+  --dur-pulse: 0.01ms; --dur-typing: 0.01ms;
+  --dur-caret: 0.01ms; --dur-flash: 0.01ms;
+  --motion-iter: 1;
+  --stagger-step: 0ms;
+}
+
 @layer base {
   * { @apply border-border outline-focus/50; }
   body { @apply bg-background text-foreground font-sans; }
@@ -388,8 +467,17 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+/* scale(0.6) lisait « synthétique » : un élément qui naît à 60 % de sa
+ * taille n'a pas d'équivalent physique. 0.97 + opacité suffit à signaler
+ * l'arrivée sans donner l'impression d'un zoom. */
 @keyframes at-pop {
-  from { opacity: 0; transform: scale(0.6); }
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+/* Variante avec dépassement — réservée aux moments de célébration rares
+ * (connexion validée, succès). Jamais sur une action répétable. */
+@keyframes at-pop-bounce {
+  from { opacity: 0; transform: scale(0.9); }
   to   { opacity: 1; transform: scale(1); }
 }
 @keyframes at-pulse {
@@ -397,10 +485,11 @@
   50%      { opacity: 0.5; transform: scale(0.85); }
 }
 
-.at-fade-up { animation: at-fade-up 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-.at-fade    { animation: at-fade 220ms ease both; }
-.at-pop     { animation: at-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-.at-pulse   { animation: at-pulse 2.4s ease-in-out infinite; }
+.at-fade-up   { animation: at-fade-up var(--dur-2) var(--ease-out-quart) both; }
+.at-fade      { animation: at-fade var(--dur-2) ease both; }
+.at-pop       { animation: at-pop var(--dur-2) var(--ease-out-quart) both; }
+.at-pop-bounce{ animation: at-pop-bounce var(--dur-3) cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.at-pulse     { animation: at-pulse var(--dur-pulse) ease-in-out var(--motion-iter); }
 
 /* Élévations — profondeur douce, plus marquée en sombre. */
 .at-elev-1 {
@@ -422,12 +511,8 @@
   box-shadow: 0 10px 36px oklch(0% 0 0 / 55%);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .at-fade-up, .at-fade, .at-pop, .at-pulse {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-}
+/* (reduced-motion : plus de bloc dédié ici — la famille at-* passe par
+ * var(--dur-*) / var(--motion-iter), neutralisés en haut du fichier.) */
 
 /* ════════════════════════════════════════════════════════════════════════
  * Liquid Glass — verre liquide façon Apple.
@@ -528,11 +613,11 @@
   50%      { opacity: 0.45; transform: scale(0.82); }
 }
 
-.animate-fade-in    { animation: redesign-fade-in 200ms ease forwards; }
-.animate-slide-left { animation: redesign-slide-in-left 200ms ease forwards; }
-.animate-slide-top  { animation: redesign-slide-in-top 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-.animate-pop        { animation: redesign-pop-in 240ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-.animate-pulse-dot  { animation: redesign-pulse-dot 2.4s ease-in-out infinite; }
+.animate-fade-in    { animation: redesign-fade-in var(--dur-2) var(--ease-out-quart) forwards; }
+.animate-slide-left { animation: redesign-slide-in-left var(--dur-2) var(--ease-out-quart) forwards; }
+.animate-slide-top  { animation: redesign-slide-in-top var(--dur-2) var(--ease-out-quart) forwards; }
+.animate-pop        { animation: redesign-pop-in var(--dur-2) var(--ease-out-quart) forwards; }
+.animate-pulse-dot  { animation: redesign-pulse-dot var(--dur-pulse) ease-in-out var(--motion-iter); }
 
 /* ── Console d'administration ───────────────────────────────
  * Entrées discrètes : la section apparaît, ses rangées se posent
@@ -547,17 +632,19 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.admin-fade-in { animation: admin-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.admin-fade-in { animation: admin-enter var(--dur-3) var(--ease-out-quart) both; }
 
-/* Cascade sur les enfants directs — plafonnée pour rester imperceptible */
+/* Cascade sur les enfants directs — plafonnée pour rester imperceptible.
+ * Les rangées entrent plus vite que leur conteneur : sinon la cascade
+ * se lit comme un retard et non comme un enchaînement. */
 .admin-stagger > * {
-  animation: admin-row-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: admin-row-enter var(--dur-2) var(--ease-out-quart) both;
 }
 .admin-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.admin-stagger > *:nth-child(2) { animation-delay: 35ms; }
-.admin-stagger > *:nth-child(3) { animation-delay: 70ms; }
-.admin-stagger > *:nth-child(4) { animation-delay: 105ms; }
-.admin-stagger > *:nth-child(n + 5) { animation-delay: 140ms; }
+.admin-stagger > *:nth-child(2) { animation-delay: var(--stagger-step); }
+.admin-stagger > *:nth-child(3) { animation-delay: calc(var(--stagger-step) * 2); }
+.admin-stagger > *:nth-child(4) { animation-delay: calc(var(--stagger-step) * 3); }
+.admin-stagger > *:nth-child(n + 5) { animation-delay: calc(var(--stagger-step) * 4); }
 
 /* ── Écrans d'erreur ────────────────────────────────────────
  * L'erreur est présentée comme un message reçu dans un salon :
@@ -580,26 +667,24 @@
   55%, 100% { opacity: 0; }
 }
 
-.err-thread   { animation: err-thread-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-.err-message  { animation: err-message-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-.err-caret    { animation: err-caret 1.1s step-end infinite; }
+.err-thread   { animation: err-thread-in var(--dur-4) var(--ease-out-quart) both; }
+.err-message  { animation: err-message-in var(--dur-3) var(--ease-out-quart) both; }
+.err-caret    { animation: err-caret var(--dur-caret) step-end var(--motion-iter); }
 
-.err-typing-dot { animation: err-typing-dot 1.3s ease-in-out infinite; }
-.err-typing-dot:nth-child(2) { animation-delay: 0.16s; }
-.err-typing-dot:nth-child(3) { animation-delay: 0.32s; }
+/* Décalage exprimé en fraction de la boucle : le rythme des trois points
+ * reste juste si --dur-typing change, et tombe à zéro en reduced-motion. */
+.err-typing-dot { animation: err-typing-dot var(--dur-typing) ease-in-out var(--motion-iter); }
+.err-typing-dot:nth-child(2) { animation-delay: calc(var(--dur-typing) * 0.123); }
+.err-typing-dot:nth-child(3) { animation-delay: calc(var(--dur-typing) * 0.246); }
 
-.alfy-typing-dot { animation: err-typing-dot 1.3s ease-in-out infinite; }
+/* Indicateur de frappe du chat — même boucle. Il était absent de l'ancien
+ * bloc reduced-motion ; il passe maintenant par les jetons comme le reste. */
+.alfy-typing-dot { animation: err-typing-dot var(--dur-typing) ease-in-out var(--motion-iter); }
+.alfy-typing-dot:nth-child(2) { animation-delay: calc(var(--dur-typing) * 0.123); }
+.alfy-typing-dot:nth-child(3) { animation-delay: calc(var(--dur-typing) * 0.246); }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-fade-in, .animate-slide-left, .animate-slide-top,
-  .animate-pop, .animate-pulse-dot,
-  .admin-fade-in, .admin-stagger > *,
-  .err-thread, .err-message, .err-caret, .err-typing-dot {
-    animation-duration: 0.01ms !important;
-    animation-delay: 0ms !important;
-    animation-iteration-count: 1 !important;
-  }
-}
+/* (reduced-motion : plus de bloc dédié — tout passe par var(--dur-*),
+ * var(--motion-iter) et var(--stagger-step), coupés en haut du fichier.) */
 
 /* ── Scrollbars personnalisées ──────────────────────────────
  * Fines, discrètes, thumb dérivé de --scrollbar (suit le thème).
@@ -633,8 +718,5 @@
   100% { background-color: transparent; }
 }
 .alfy-jump-flash {
-  animation: alfy-jump-flash 1.6s ease-out both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .alfy-jump-flash { animation-duration: 0.01ms !important; }
+  animation: alfy-jump-flash var(--dur-flash) ease-out both;
 }

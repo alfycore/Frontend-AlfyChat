@@ -40,9 +40,9 @@ export function MessageReactions({ reactions, onToggle, onAdd }: MessageReaction
             onClick={() => onToggle?.(r.emoji)}
             className={cn(
               'flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-xs outline-none',
-              'transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-[color:var(--focus)]',
+              'transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-focus',
               r.me
-                ? 'border-[color:var(--accent)]/50 bg-[color:var(--accent)]/15 text-foreground'
+                ? 'border-accent/50 bg-accent/15 text-foreground'
                 : 'border-transparent bg-surface-secondary text-muted hover:border-border hover:text-foreground',
             )}
           >
@@ -51,19 +51,22 @@ export function MessageReactions({ reactions, onToggle, onAdd }: MessageReaction
           </motion.button>
         ))}
       </AnimatePresence>
-      <Tooltip delay={300}>
-        <button
-          type="button"
-          aria-label={t.chat.addReaction}
-          onClick={onAdd}
-          className="flex cursor-pointer items-center rounded-full bg-surface-secondary px-2 py-1 text-muted opacity-0 transition-opacity group-hover/msg:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[color:var(--focus)] outline-none"
-        >
-          <SmilePlus className="size-3.5" aria-hidden />
-        </button>
-        <Tooltip.Content>
-          <p>{t.chat.addReaction}</p>
-        </Tooltip.Content>
-      </Tooltip>
+      {/* Sans `onAdd`, ce bouton s'affichait au survol sans rien déclencher. */}
+      {onAdd && (
+        <Tooltip delay={300}>
+          <button
+            type="button"
+            aria-label={t.chat.addReaction}
+            onClick={onAdd}
+            className="flex cursor-pointer items-center rounded-full bg-surface-secondary px-2 py-1 text-muted opacity-0 outline-none transition-opacity group-hover/msg:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            <SmilePlus className="size-3.5" aria-hidden />
+          </button>
+          <Tooltip.Content>
+            <p>{t.chat.addReaction}</p>
+          </Tooltip.Content>
+        </Tooltip>
+      )}
     </div>
   );
 }

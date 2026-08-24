@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { CURRENT_USER } from '@/components/alfy/mock/data';
 import type { AlfyUser } from '@/components/alfy/mock/types';
 import { UserBadges } from '@/components/alfy/members/user-badges';
-import { PRESENCE_LABELS } from '@/components/alfy/primitives/status-dot';
+import { usePresenceLabels } from '@/components/alfy/primitives/status-dot';
 import { useTranslation } from '@/components/locale-provider';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -101,6 +101,7 @@ function Compteur({ valeur, max }: { valeur: number; max: number }) {
 
 export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
   const { t, tx } = useTranslation();
+  const presenceLabels = usePresenceLabels();
   const profil = user ?? CURRENT_USER;
 
   const [nom, setNom] = useState(profil.displayName ?? '');
@@ -308,7 +309,7 @@ export function AccountPanel({ user, onSave }: AccountPanelProps = {}) {
               <Chip.Label>{profil.username}</Chip.Label>
             </Chip>
             <Chip size="sm" color="success" variant="soft" className="cursor-default">
-              {PRESENCE_LABELS[profil.status]}
+              {presenceLabels[profil.status]}
             </Chip>
           </div>
 

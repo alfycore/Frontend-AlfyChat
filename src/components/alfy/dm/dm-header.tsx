@@ -65,37 +65,54 @@ export function DmHeader({
 }: DmHeaderProps) {
   const { t } = useTranslation();
 
+  const Icon = icon;
+
+  /* Identité du fil : avatar/croisillon + nom. Cliquable seulement quand une
+     fiche existe — un `<button disabled>` grisâit le titre du salon via la
+     feuille de style du navigateur, ce qui le faisait passer pour inactif. */
+  const identite = (
+    <>
+      {Icon ? (
+        <Icon className="size-4.5 shrink-0 text-muted" aria-hidden />
+      ) : (
+        <AlfyAvatar name={avatarName} avatarUrl={avatarUrl} size="sm" />
+      )}
+      <h2 className="truncate text-sm font-semibold">{title}</h2>
+    </>
+  );
+
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-separator bg-surface/85 px-3 backdrop-blur-sm">
-      <Button
-        isIconOnly
-        size="sm"
-        variant="ghost"
-        aria-label={t.chat.openNav}
-        className="text-muted lg:hidden"
-        onPress={onOpenNav}
-      >
-        <Menu className="size-4.5" aria-hidden />
-      </Button>
+      {/* `md:hidden` et non `lg:hidden` : le tiroir n'existe qu'en dessous de
+          768 px (useIsMobile), au-delà le bouton n'ouvrait rien. */}
+      {onOpenNav && (
+        <Button
+          isIconOnly
+          size="sm"
+          variant="ghost"
+          aria-label={t.chat.openNav}
+          className="shrink-0 text-muted md:hidden"
+          onPress={onOpenNav}
+        >
+          <Menu className="size-4.5" aria-hidden />
+        </Button>
+      )}
 
       {/* Un fil privé ou de groupe s'identifie par ses membres ; un salon par un croisillon. */}
-      <button
-        type="button"
-        onClick={onOpenProfile}
-        disabled={!onOpenProfile}
-        className="flex min-w-0 items-center gap-2 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus enabled:cursor-pointer"
-      >
-        {icon ? (
-          (() => {
-            const Icon = icon;
-            return <Icon className="size-4.5 shrink-0 text-muted" aria-hidden />;
-          })()
-        ) : (
-          <AlfyAvatar name={avatarName} avatarUrl={avatarUrl} size="sm" />
-        )}
-        <h2 className="truncate text-sm font-semibold">{title}</h2>
-        {encrypted && <E2eBadge />}
-      </button>
+      {onOpenProfile ? (
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          className="flex min-w-0 cursor-pointer items-center gap-2 rounded-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          {identite}
+        </button>
+      ) : (
+        <div className="flex min-w-0 items-center gap-2">{identite}</div>
+      )}
+
+      {/* Hors du bouton : le badge porte son propre tooltip. */}
+      {encrypted && <E2eBadge className="shrink-0" />}
 
       {subtitle && (
         <>
@@ -103,13 +120,20 @@ export function DmHeader({
           <p className="hidden min-w-0 flex-1 truncate text-xs text-muted md:block">{subtitle}</p>
         </>
       )}
-      <div className="min-w-0 flex-1 md:hidden" />
 
-      <Toolbar aria-label={t.friends.dm.conversationActions} className="shrink-0 gap-0.5">
+      {/* `ml-auto` plutôt qu'une cale `md:hidden` : sans sous-titre (cas d'un
+          salon sans sujet), plus rien ne poussait la barre d'actions à droite
+          et elle se collait au nom du salon. */}
+      <Toolbar aria-label={t.friends.dm.conversationActions} className="ml-auto shrink-0 gap-0.5">
         <ChannelNotifSettings channelId={conversationId} channelName={title} targetType={notifTargetType} />
+        {/* Le bandeau de titre porte le centre de notifications à partir de
+            `md` : ici on ne le garde que pour les tailles où il est masqué,
+            sinon la cloche apparaît deux fois à l'écran. */}
+        <span className="md:hidden">
+          <NotificationCenter />
+        </span>
         <PinsPanel messages={messages} onJump={onJumpToMessage} />
         <SearchPanel messages={messages} channelName={title} onJump={onJumpToMessage} />
-        <NotificationCenter />
         {onToggleMembers && (
           <Tooltip delay={300}>
             <Button

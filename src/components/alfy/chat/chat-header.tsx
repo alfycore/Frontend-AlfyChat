@@ -57,21 +57,25 @@ export function ChatHeader({ channel, messages = [], onToggleMembers, membersOpe
   const Icon = ICONS[channel.type];
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-separator bg-surface/85 px-3 backdrop-blur-sm">
-      <Button
-        isIconOnly
-        size="sm"
-        variant="ghost"
-        aria-label={t.chat.openNav}
-        className="text-muted lg:hidden"
-        onPress={onOpenNav}
-      >
-        <Menu className="size-4.5" />
-      </Button>
+      {/* `md:hidden` et non `lg:hidden` : le tiroir n'existe qu'en dessous de
+          768 px (useIsMobile), au-delà le bouton n'ouvrait rien. */}
+      {onOpenNav && (
+        <Button
+          isIconOnly
+          size="sm"
+          variant="ghost"
+          aria-label={t.chat.openNav}
+          className="shrink-0 text-muted md:hidden"
+          onPress={onOpenNav}
+        >
+          <Menu className="size-4.5" />
+        </Button>
+      )}
 
       <div className="flex min-w-0 items-center gap-2">
         <Icon className="size-4.5 shrink-0 text-muted" aria-hidden />
         <h2 className="truncate text-sm font-semibold">{channel.name}</h2>
-        <E2eBadge />
+        <E2eBadge className="shrink-0" />
       </div>
 
       {channel.topic && (
@@ -80,13 +84,17 @@ export function ChatHeader({ channel, messages = [], onToggleMembers, membersOpe
           <p className="hidden min-w-0 flex-1 truncate text-xs text-muted md:block">{channel.topic}</p>
         </>
       )}
-      <div className="min-w-0 flex-1 md:hidden" />
 
-      <Toolbar aria-label={t.chat.channelActions} className="shrink-0 gap-0.5">
+      {/* `ml-auto` plutôt qu'une cale `md:hidden` : sans sujet de salon, plus
+          rien ne poussait la barre d'actions à droite. */}
+      <Toolbar aria-label={t.chat.channelActions} className="ml-auto shrink-0 gap-0.5">
         <ChannelNotifSettings channelId={channel.id} channelName={channel.name} />
+        {/* Voir dm-header : le bandeau de titre le porte à partir de `md`. */}
+        <span className="md:hidden">
+          <NotificationCenter />
+        </span>
         <PinsPanel messages={messages} />
         <SearchPanel messages={messages} channelName={channel.name} />
-        <NotificationCenter />
         <Tooltip delay={300}>
           <Button
             isIconOnly

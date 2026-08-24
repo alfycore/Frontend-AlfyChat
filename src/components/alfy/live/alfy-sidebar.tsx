@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { AlertDialog, Button, toast } from '@heroui/react';
 
 import { useAuth } from '@/hooks/use-auth';
+import { api } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { ChannelSidebar } from '@/components/alfy/servers/channel-sidebar';
 import { DmSidebar } from '@/components/alfy/servers/dm-sidebar';
@@ -34,7 +35,8 @@ interface AlfySidebarProps {
   activeChannelId: string | null;
   activeDmId: string | null;
   friendsActive: boolean;
-  onOpenServerSettings: () => void;
+  /** `tab` permet d'entrer directement sur un onglet (ex. « invites »). */
+  onOpenServerSettings: (tab?: string) => void;
   onOpenUserSettings: () => void;
 }
 
@@ -93,6 +95,24 @@ export function AlfySidebar({
   const [createParentId, setCreateParentId] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; kind: 'channel' | 'category' } | null>(null);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+
+  /* « Quitter le serveur » figurait au menu sans aucun gestionnaire : le clic
+     fermait simplement le menu. Le point de sortie existait pourtant déjà côté
+     API, tout comme les libellés traduits. */
+  const quitterServeur = async () => {
+    if (!serverId) return;
+    setLeaveOpen(false);
+    const res = await api.leaveServer(serverId);
+    if (res && (res as { success?: boolean }).success === false) {
+      toast.danger(t.chatUI.sidebar.channelActionErrorTitle, {
+        description: (res as { error?: string }).error ?? t.chatUI.sidebar.channelActionErrorDefaultDesc,
+      });
+      return;
+    }
+    toast(t.chatUI.sidebar.serverLeft);
+    router.push('/channels/me');
+  };
 
   if (serverId && server) {
     const categories = server.categories.filter((c) => c.id !== '__root__');
@@ -104,7 +124,9 @@ export function AlfySidebar({
           currentUser={currentUser}
           activeChannelId={activeChannelId}
           onSelectChannel={(id) => router.push(`/channels/server/${serverId}/${id}`)}
-          onOpenServerSettings={onOpenServerSettings}
+          onOpenServerSettings={() => onOpenServerSettings()}
+          onInvite={() => onOpenServerSettings('invites')}
+          onLeave={server.ownerId === currentUser.id ? undefined : () => setLeaveOpen(true)}
           onOpenUserSettings={onOpenUserSettings}
           connectedVoiceChannel={null}
           canManage={canManage}
@@ -175,6 +197,30 @@ export function AlfySidebar({
             if (renameTarget) socketService.updateChannel(serverId, renameTarget.id, { name });
           }}
         />
+
+        <AlertDialog isOpen={leaveOpen} onOpenChange={setLeaveOpen}>
+          <AlertDialog.Backdrop>
+            <AlertDialog.Container>
+              <AlertDialog.Dialog className="sm:max-w-100">
+                <AlertDialog.Header>
+                  <AlertDialog.Icon status="danger" />
+                  <AlertDialog.Heading>{t.chatUI.sidebar.leaveTitle}</AlertDialog.Heading>
+                </AlertDialog.Header>
+                <AlertDialog.Body>
+                  <p>{t.chatUI.sidebar.leaveDesc}</p>
+                </AlertDialog.Body>
+                <AlertDialog.Footer>
+                  <Button slot="close" variant="tertiary">
+                    {t.chatUI.sidebar.leaveCancel}
+                  </Button>
+                  <Button variant="danger" onPress={() => void quitterServeur()}>
+                    {t.chatUI.sidebar.leaveConfirm}
+                  </Button>
+                </AlertDialog.Footer>
+              </AlertDialog.Dialog>
+            </AlertDialog.Container>
+          </AlertDialog.Backdrop>
+        </AlertDialog>
 
         <AlertDialog isOpen={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
           <AlertDialog.Backdrop>

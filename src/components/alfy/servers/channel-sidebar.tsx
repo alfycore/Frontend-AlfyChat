@@ -7,6 +7,7 @@ import { useState } from 'react';
 import type { AlfyServer, AlfyUser } from '@/components/alfy/mock/types';
 import { ServerMenu } from '@/components/alfy/servers/server-menu';
 import { ChannelItem } from '@/components/alfy/servers/channel-item';
+import { useTranslation } from '@/components/locale-provider';
 import { UserDock } from '@/components/alfy/servers/user-dock';
 import { VoiceDock } from '@/components/alfy/servers/voice-dock';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,10 @@ interface ChannelSidebarProps {
   onRenameCategory?: (id: string) => void;
   onDeleteCategory?: (id: string) => void;
   onMoveCategory?: (id: string, direction: 'up' | 'down') => void;
+  /** Ouvre les réglages sur l'onglet des invitations. */
+  onInvite?: () => void;
+  /** Quitte le serveur — la confirmation est gérée par le conteneur. */
+  onLeave?: () => void;
 }
 
 function CategoryHeader({
@@ -54,6 +59,7 @@ function CategoryHeader({
   onMoveUp?: () => void;
   onMoveDown?: () => void;
 }) {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="group/cat flex items-center gap-0.5">
@@ -72,17 +78,17 @@ function CategoryHeader({
         <div className={cn('flex shrink-0 items-center gap-0.5', menuOpen ? 'flex' : 'hidden group-hover/cat:flex')}>
           {onAddChannel && (
             <Tooltip delay={400}>
-              <Button isIconOnly size="sm" variant="ghost" aria-label="Ajouter un salon" className="size-5 text-muted hover:text-foreground" onPress={onAddChannel}>
+              <Button isIconOnly size="sm" variant="ghost" aria-label={t.serverCommon.addChannel} className="size-5 text-muted hover:text-foreground" onPress={onAddChannel}>
                 <Plus className="size-3.5" />
               </Button>
               <Tooltip.Content>
-                <p>Ajouter un salon</p>
+                <p>{t.serverCommon.addChannel}</p>
               </Tooltip.Content>
             </Tooltip>
           )}
           <Dropdown isOpen={menuOpen} onOpenChange={setMenuOpen}>
             <Dropdown.Trigger
-              aria-label="Gérer la catégorie"
+              aria-label={t.channelSidebar.manageCategoryAria}
               className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded text-muted outline-none transition-colors hover:bg-surface-tertiary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
             >
               <MoreVertical className="size-3.5" />
@@ -96,21 +102,21 @@ function CategoryHeader({
                   else if (key === 'delete') onDelete?.();
                 }}
               >
-                <Dropdown.Item id="rename" textValue="Renommer">
+                <Dropdown.Item id="rename" textValue={t.serverCommon.rename}>
                   <Pencil className="size-4" />
-                  <Label>Renommer</Label>
+                  <Label>{t.serverCommon.rename}</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="up" textValue="Monter" isDisabled={isFirst}>
+                <Dropdown.Item id="up" textValue={t.serverCommon.moveUp} isDisabled={isFirst}>
                   <ArrowUp className="size-4" />
-                  <Label>Monter</Label>
+                  <Label>{t.serverCommon.moveUp}</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="down" textValue="Descendre" isDisabled={isLast}>
+                <Dropdown.Item id="down" textValue={t.serverCommon.moveDown} isDisabled={isLast}>
                   <ArrowDown className="size-4" />
-                  <Label>Descendre</Label>
+                  <Label>{t.serverCommon.moveDown}</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="delete" textValue="Supprimer la catégorie" variant="danger">
+                <Dropdown.Item id="delete" textValue={t.serverCommon.deleteCategory} variant="danger">
                   <Trash2 className="size-4" />
-                  <Label>Supprimer la catégorie</Label>
+                  <Label>{t.serverCommon.deleteCategory}</Label>
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown.Popover>
@@ -138,7 +144,10 @@ export function ChannelSidebar({
   onRenameCategory,
   onDeleteCategory,
   onMoveCategory,
+  onInvite,
+  onLeave,
 }: ChannelSidebarProps) {
+  const { t } = useTranslation();
   const realCategories = server.categories.filter((c) => c.id !== '__root__');
 
   return (
@@ -149,12 +158,14 @@ export function ChannelSidebar({
         canManage={canManage}
         onCreateChannel={onCreateChannel ? () => onCreateChannel(null) : undefined}
         onCreateCategory={onCreateCategory}
+        onInvite={onInvite}
+        onLeave={onLeave}
       />
 
       {server.selfHosted && !server.nodeOnline && (
         <div className="mx-2 mt-2 flex items-center gap-2 rounded-md bg-warning/15 px-3 py-2 text-xs text-(--warning)">
           <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
-          <span>Nœud hors ligne — messages en attente</span>
+          <span>{t.channelSidebar.nodeOffline}</span>
         </div>
       )}
 
@@ -166,34 +177,34 @@ export function ChannelSidebar({
             if (channels.length === 0 && isRoot) return null;
             const catIndex = realCategories.findIndex((c) => c.id === cat.id);
 
-            const list = (
-              <Disclosure.Body className="flex flex-col gap-px pb-1.5 pl-1">
-                {channels.length === 0 ? (
-                  <p className="px-2 py-1 text-xs text-muted/70 italic">Aucun salon ici pour l&apos;instant.</p>
-                ) : (
-                  channels.map((ch, i) => (
-                    <ChannelItem
-                      key={ch.id}
-                      channel={ch}
-                      active={ch.id === activeChannelId}
-                      onSelect={onSelectChannel}
-                      canManage={canManage}
-                      onRename={onRenameChannel}
-                      onDelete={onDeleteChannel}
-                      onMoveUp={onMoveChannel ? (id) => onMoveChannel(id, 'up') : undefined}
-                      onMoveDown={onMoveChannel ? (id) => onMoveChannel(id, 'down') : undefined}
-                      isFirst={i === 0}
-                      isLast={i === channels.length - 1}
-                    />
-                  ))
-                )}
-              </Disclosure.Body>
-            );
+            const contenu =
+              channels.length === 0 ? (
+                <p className="px-2 py-1 text-xs text-muted/70 italic">{t.channelSidebar.emptyCategory}</p>
+              ) : (
+                channels.map((ch, i) => (
+                  <ChannelItem
+                    key={ch.id}
+                    channel={ch}
+                    active={ch.id === activeChannelId}
+                    onSelect={onSelectChannel}
+                    canManage={canManage}
+                    onRename={onRenameChannel}
+                    onDelete={onDeleteChannel}
+                    onMoveUp={onMoveChannel ? (id) => onMoveChannel(id, 'up') : undefined}
+                    onMoveDown={onMoveChannel ? (id) => onMoveChannel(id, 'down') : undefined}
+                    isFirst={i === 0}
+                    isLast={i === channels.length - 1}
+                  />
+                ))
+              );
 
+            /* Les salons sans catégorie ne sont pas repliables : les envelopper
+               dans un `Disclosure.Body` sortait le composant de son contexte
+               `Disclosure`. Une simple pile suffit. */
             if (isRoot) {
               return (
-                <div key={cat.id} className="flex flex-col gap-px">
-                  {list}
+                <div key={cat.id} className="flex flex-col gap-px pb-1.5 pl-1">
+                  {contenu}
                 </div>
               );
             }
@@ -211,14 +222,16 @@ export function ChannelSidebar({
                   onMoveUp={onMoveCategory ? () => onMoveCategory(cat.id, 'up') : undefined}
                   onMoveDown={onMoveCategory ? () => onMoveCategory(cat.id, 'down') : undefined}
                 />
-                <Disclosure.Content>{list}</Disclosure.Content>
+                <Disclosure.Content>
+                  <Disclosure.Body className="flex flex-col gap-px pb-1.5 pl-1">{contenu}</Disclosure.Body>
+                </Disclosure.Content>
               </Disclosure>
             );
           })}
 
           {server.categories.length === 0 && (
             <p className="px-2 py-3 text-center text-xs text-muted/70">
-              {canManage ? 'Créez votre premier salon depuis le menu du serveur.' : 'Aucun salon pour l’instant.'}
+              {canManage ? t.channelSidebar.emptyCanManage : t.channelSidebar.emptyCannotManage}
             </p>
           )}
         </div>

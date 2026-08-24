@@ -4,15 +4,24 @@ import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
 import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
+import { loadBootstrap } from '@/lib/bootstrap-store';
 
-const PREFETCH_CONV_COUNT = 10;
-const PREFETCH_MSG_COUNT = 10;
-const MAX_CONCURRENT = 3;
+const PREFETCH_CONV_COUNT = 6;
+const PREFETCH_MSG_COUNT = 20;
 
 /**
- * Pré-charge les 10 premières conversations privées et leurs 10 derniers messages
- * dès que l'utilisateur est authentifié. Les résultats sont mis en cache dans
- * dmPrefetchCache et consommés par useMessages() pour un affichage instantané.
+ * Précharge les messages des conversations les plus récentes, pour que leur
+ * ouverture soit instantanée.
+ *
+ * Ce hook faisait auparavant son propre `getConversations()` (le troisième de
+ * la page), puis un `getUser()` par conversation — pour des profils que la
+ * liste contenait déjà — puis un `getMessages()` par conversation, par lots
+ * séquentiels de 3. Soit une vingtaine de requêtes en concurrence directe avec
+ * le rendu initial.
+ *
+ * Désormais : les conversations et les profils viennent de l'amorçage partagé
+ * (zéro requête supplémentaire), et seuls les messages sont préchargés — en
+ * parallèle, et seulement après que la page a eu le temps de se peindre.
  */
 export function usePrefetchDMs() {
   const { user } = useAuth();
@@ -26,79 +35,62 @@ export function usePrefetchDMs() {
     let cancelled = false;
 
     const run = async () => {
-      // 1. Récupérer la liste des conversations (top 10)
-      try {
-        const response = await api.getConversations();
-        if (cancelled || !response.success || !response.data) return;
+      const boot = await loadBootstrap();
+      if (cancelled || !boot) return;
 
-        const allConvs = response.data as any[];
-        dmPrefetchCache.setConversations(allConvs);
+      dmPrefetchCache.setConversations(boot.conversations as unknown as any[]);
 
-        const toFetch = allConvs.slice(0, PREFETCH_CONV_COUNT);
-
-        // 2. Pré-charger les infos utilisateurs + messages par batchs de MAX_CONCURRENT
-        for (let i = 0; i < toFetch.length; i += MAX_CONCURRENT) {
-          if (cancelled) break;
-
-          const batch = toFetch.slice(i, i + MAX_CONCURRENT);
-          await Promise.all(
-            batch.map(async (conv) => {
-              const recipientId: string | undefined =
-                conv.type === 'dm' ? conv.recipientId : undefined;
-              const channelId: string | undefined =
-                conv.type === 'group' ? conv.id : undefined;
-              const cacheKey = recipientId ?? channelId;
-              if (!cacheKey) return;
-
-              // Pré-charger les infos utilisateur pour les DMs
-              if (recipientId && !dmPrefetchCache.getUser(recipientId)) {
-                try {
-                  const userRes = await api.getUser(recipientId);
-                  if (!cancelled && userRes.success && userRes.data) {
-                    const u = userRes.data as any;
-                    dmPrefetchCache.setUser(recipientId, {
-                      id: u.id,
-                      username: u.username,
-                      displayName: u.displayName || u.username,
-                      avatarUrl: u.avatarUrl,
-                      bannerUrl: u.bannerUrl,
-                      bio: u.bio,
-                      status: u.status,
-                      customStatus: u.customStatus ?? null,
-                    });
-                  }
-                } catch {
-                  // Silencieux
-                }
-              }
-
-              // Ne pas re-fetch les messages si déjà en cache et frais
-              if (dmPrefetchCache.getMessages(cacheKey)) return;
-
-              try {
-                const msgRes = await api.getMessages(
-                  channelId,
-                  recipientId,
-                  PREFETCH_MSG_COUNT
-                );
-                if (!cancelled && msgRes.success && msgRes.data) {
-                  dmPrefetchCache.setMessages(cacheKey, msgRes.data as any[]);
-                }
-              } catch {
-                // Silencieux — le prefetch est best-effort
-              }
-            })
-          );
-        }
-      } catch {
-        // Silencieux — le prefetch est best-effort
+      // Les profils sont déjà dans l'amorçage : on remplit le cache sans
+      // aucune requête réseau.
+      for (const conv of boot.conversations) {
+        if (conv.type !== 'dm' || !conv.recipientId) continue;
+        if (dmPrefetchCache.getUser(conv.recipientId)) continue;
+        dmPrefetchCache.setUser(conv.recipientId, {
+          id: conv.recipientId,
+          username: conv.recipientUsername ?? conv.recipientName ?? conv.recipientId,
+          displayName: conv.recipientName ?? conv.recipientUsername ?? conv.recipientId,
+          avatarUrl: conv.recipientAvatar,
+          status: conv.recipientOnline ? 'online' : 'offline',
+          customStatus: null,
+        });
       }
+
+      // Messages : uniquement les conversations les plus récentes, et en
+      // parallèle. Le tri vient du serveur (ORDER BY updated_at DESC).
+      const toFetch = boot.conversations.slice(0, PREFETCH_CONV_COUNT);
+      await Promise.all(
+        toFetch.map(async (conv) => {
+          const recipientId = conv.type === 'dm' ? conv.recipientId : undefined;
+          const channelId = conv.type === 'group' ? conv.id : undefined;
+          const cacheKey = recipientId ?? channelId;
+          if (!cacheKey || dmPrefetchCache.getMessages(cacheKey)) return;
+          try {
+            const msgRes = await api.getMessages(channelId, recipientId, PREFETCH_MSG_COUNT);
+            if (!cancelled && msgRes.success && msgRes.data) {
+              dmPrefetchCache.setMessages(cacheKey, msgRes.data as any[]);
+            }
+          } catch {
+            // Le préchargement est best-effort : un échec ne se voit pas.
+          }
+        }),
+      );
     };
 
-    run();
+    // Laisser le rendu initial passer devant : ce préchargement est un confort,
+    // il ne doit pas concurrencer l'affichage de la page.
+    const idle =
+      typeof window !== 'undefined' && 'requestIdleCallback' in window
+        ? (window as unknown as { requestIdleCallback: (cb: () => void, o?: { timeout: number }) => number })
+            .requestIdleCallback(() => void run(), { timeout: 3000 })
+        : (setTimeout(() => void run(), 1200) as unknown as number);
 
     return () => {
       cancelled = true;
+      if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        (window as unknown as { cancelIdleCallback: (h: number) => void }).cancelIdleCallback(idle);
+      } else {
+        clearTimeout(idle as unknown as ReturnType<typeof setTimeout>);
+      }
     };
   }, [user?.id]);
 }

@@ -141,15 +141,15 @@
 }
 
 [data-ui="alfy"] .alfy-enter {
-  animation: alfy-fade-up 180ms ease-out both;
+  animation: alfy-fade-up var(--dur-2) var(--ease-out-quart) both;
 }
 
 [data-ui="alfy"] .alfy-pulse {
-  animation: alfy-pulse-soft 2.2s ease-in-out infinite;
+  animation: alfy-pulse-soft var(--dur-pulse) ease-in-out var(--motion-iter);
 }
 
 [data-ui="alfy"] .alfy-typing-dot {
-  animation: alfy-typing-dot 1.1s ease-in-out infinite;
+  animation: alfy-typing-dot var(--dur-typing) ease-in-out var(--motion-iter);
 }
 
 /* Pill d'actif du rail serveurs — pseudo-élément, pas de radius custom sur
@@ -157,23 +157,29 @@
 [data-ui="alfy"] .alfy-rail-item {
   position: relative;
 }
+/* La barre garde une hauteur fixe et se révèle par scaleY : animer `height`
+ * relançait layout + paint à chaque frame, sur la surface la plus survolée
+ * de l'app. scaleY reste sur le compositeur.
+ * top:50% + translateY(-50%) centre la barre ; scaleY se fait autour de ce
+ * même centre, donc elle grandit symétriquement. */
 [data-ui="alfy"] .alfy-rail-item::before {
   content: "";
   position: absolute;
   left: -8px;
   top: 50%;
   width: 3px;
-  height: 0;
+  height: 100%;
   border-radius: 2px;
   background: var(--foreground);
-  transform: translateY(-50%);
-  transition: height 160ms ease-out;
+  pointer-events: none;
+  transform: translateY(-50%) scaleY(0);
+  transition: transform var(--dur-2) var(--ease-out-quart);
 }
 [data-ui="alfy"] .alfy-rail-item:hover::before {
-  height: 40%;
+  transform: translateY(-50%) scaleY(0.4);
 }
 [data-ui="alfy"] .alfy-rail-item[data-active="true"]::before {
-  height: 75%;
+  transform: translateY(-50%) scaleY(0.75);
 }
 
 /* Pill d'actif du rail horizontal — même principe, barre qui grandit en bas */
@@ -186,17 +192,18 @@
   bottom: -10px;
   left: 50%;
   height: 3px;
-  width: 0;
+  width: 100%;
   border-radius: 2px;
   background: var(--foreground);
-  transform: translateX(-50%);
-  transition: width 160ms ease-out;
+  pointer-events: none;
+  transform: translateX(-50%) scaleX(0);
+  transition: transform var(--dur-2) var(--ease-out-quart);
 }
 [data-ui="alfy"] .alfy-rail-item-h:hover::before {
-  width: 40%;
+  transform: translateX(-50%) scaleX(0.4);
 }
 [data-ui="alfy"] .alfy-rail-item-h[data-active="true"]::before {
-  width: 75%;
+  transform: translateX(-50%) scaleX(0.75);
 }
 
 /* Groupe de survol des messages */
@@ -204,14 +211,23 @@
   background: color-mix(in oklab, var(--surface-secondary) 55%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  [data-ui="alfy"] .alfy-enter,
-  [data-ui="alfy"] .alfy-pulse,
-  [data-ui="alfy"] .alfy-typing-dot {
-    animation: none;
-  }
-  [data-ui="alfy"] .alfy-rail-item::before,
-  [data-ui="alfy"] .alfy-rail-item-h::before {
-    transition: none;
-  }
+/* reduced-motion : les animations ci-dessus passent par var(--dur-*) et
+ * var(--motion-iter), neutralisés dans globals.css par `prefers-reduced-motion`
+ * ET par [data-motion="reduced"] (réglage in-app). Rien à couper ici. */
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Zone de déplacement de la fenêtre (desktop Electron)
+ *
+ * La fenêtre est créée avec `titleBarStyle: 'hidden'` : sans région
+ * déclarée « draggable », elle ne peut plus être déplacée du tout. Les
+ * boutons doivent au contraire s'en exclure, sinon le clic est avalé par
+ * le déplacement. Sans effet dans un navigateur.
+ * ──────────────────────────────────────────────────────────────────────── */
+[data-ui="alfy"] .alfy-drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+[data-ui="alfy"] .alfy-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }

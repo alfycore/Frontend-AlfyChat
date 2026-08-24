@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { serverListStore } from '@/lib/server-list-store';
+import { liveKey, readLive, writeLive } from '@/lib/live-cache';
 import * as notif from '@/lib/notification-store';
 import { normalizeChannel, toAlfyChannel, unwrap, type RawChannel } from '@/components/alfy/live/map';
 import type { AlfyCategory, AlfyServer } from '@/components/alfy/mock/types';
@@ -29,24 +30,56 @@ interface ServerInfo {
   maxMembers?: number;
 }
 
+const INFO_VIDE: ServerInfo = { name: 'Serveur', isPublic: false, nodeOnline: null, selfHosted: false };
+
+/**
+ * Fiche serveur de départ, du plus complet au plus pauvre : le cache live
+ * (déjà visité dans cette session), sinon le nom et l'icône que la liste des
+ * serveurs connaît déjà, sinon rien. Évite le « Serveur » générique affiché
+ * une fraction de seconde le temps de la réponse WebSocket.
+ */
+function infoInitiale(serverId: string | null): ServerInfo {
+  const enCache = readLive<ServerInfo>(liveKey.serverInfo(serverId));
+  if (enCache) return enCache;
+  const listed = serverId ? serverListStore.get().find((s) => s.id === serverId) : undefined;
+  if (!listed) return INFO_VIDE;
+  return { ...INFO_VIDE, name: listed.name ?? INFO_VIDE.name, iconUrl: listed.iconUrl };
+}
+
 /**
  * Construit l'`AlfyServer` complet (catégories + salons + compteurs) attendu
  * par la sidebar alfy. Rôles et membres restent vides ici : ils sont chargés
  * par `useAlfyMembers` là où c'est nécessaire.
  */
 export function useAlfyChannels(serverId: string | null): AlfyServer | null {
-  const [raw, setRaw] = useState<RawChannel[]>([]);
-  const [info, setInfo] = useState<ServerInfo>({ name: 'Serveur', isPublic: false, nodeOnline: null, selfHosted: false });
+  /* Amorçage depuis le cache : revenir sur un serveur déjà ouvert affiche
+     immédiatement ses salons, le réseau ne fait que les corriger. */
+  const [raw, setRaw] = useState<RawChannel[]>(
+    () => readLive<RawChannel[]>(liveKey.channels(serverId)) ?? [],
+  );
+  const [info, setInfo] = useState<ServerInfo>(() => infoInitiale(serverId));
   const notifState = useSyncExternalStore(notif.subscribe, notif.getSnapshot, notif.getSnapshot);
+
+  /* Changement de serveur sans démontage : réamorçage pendant le rendu, donc
+     les salons du serveur précédent ne sont jamais peints. */
+  const [prevServerId, setPrevServerId] = useState(serverId);
+  if (prevServerId !== serverId) {
+    setPrevServerId(serverId);
+    setRaw(readLive<RawChannel[]>(liveKey.channels(serverId)) ?? []);
+    setInfo(infoInitiale(serverId));
+  }
+
+  useEffect(() => {
+    writeLive(liveKey.channels(serverId), raw);
+  }, [serverId, raw]);
+  useEffect(() => {
+    writeLive(liveKey.serverInfo(serverId), info);
+  }, [serverId, info]);
 
   /* Chargement initial */
   useEffect(() => {
-    if (!serverId) {
-      setRaw([]);
-      return;
-    }
-    const cached = serverListStore.get().find((s) => s.id === serverId);
-    setInfo((i) => ({ ...i, name: cached?.name ?? i.name, iconUrl: cached?.iconUrl }));
+    // Pas de serveur : le réamorçage en phase de rendu a déjà vidé l'état.
+    if (!serverId) return;
 
     socketService.requestServerChannels(serverId, (data: unknown) => {
       const d = data as { channels?: unknown[] } | unknown[];

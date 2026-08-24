@@ -130,7 +130,10 @@ export function RemoteLoginPanel() {
 
             {etat === 'connecte' && (
               <>
-                <span className="at-pop flex size-12 items-center justify-center rounded-full bg-success text-success-fg">
+                {/* Seul endroit qui garde un dépassement : succès terminal,
+                  * vu une fois par connexion. Le reste de l'app utilise
+                  * at-pop, sans rebond. */}
+                <span className="at-pop-bounce flex size-12 items-center justify-center rounded-full bg-success text-success-fg">
                   <Check className="size-6" strokeWidth={3} aria-hidden />
                 </span>
                 <p className="text-sm font-medium">Connexion…</p>

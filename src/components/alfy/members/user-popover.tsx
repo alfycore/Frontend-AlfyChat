@@ -42,7 +42,7 @@ import {
   type AlfyUser,
 } from '@/components/alfy/mock/types';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
-import { PRESENCE_LABELS, StatusDot } from '@/components/alfy/primitives/status-dot';
+import { StatusDot, usePresenceLabels } from '@/components/alfy/primitives/status-dot';
 import { UserBadges } from '@/components/alfy/members/user-badges';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -136,6 +136,7 @@ export function UserPopover({
   onToggleRole,
 }: UserPopoverProps) {
   const { t, tx } = useTranslation();
+  const presenceLabels = usePresenceLabels();
   const FRIEND_ACTION_TIP: Record<AlfyFriendState, string> = {
     none: t.admin.members.friendActionAdd,
     pending_sent: t.admin.members.friendActionPendingSent,
@@ -467,7 +468,7 @@ export function UserPopover({
                   <StatusDot status={user.status} size="xs" ring={false} />
                   <span className="truncate text-foreground/70">
                     {user.statusEmoji ? `${user.statusEmoji} ` : ''}
-                    {user.customStatus || PRESENCE_LABELS[user.status]}
+                    {user.customStatus || presenceLabels[user.status]}
                   </span>
                 </p>
                 {(user.status === 'offline' || user.status === 'invisible') && user.lastSeenAt && (

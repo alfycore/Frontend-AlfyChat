@@ -9,7 +9,6 @@ import {
   CornerUpRight,
   Ellipsis,
   Link2,
-  MailOpen,
   MessageSquareText,
   Pencil,
   Pin,
@@ -36,7 +35,15 @@ interface MessageActionsProps {
   onForward?: () => void;
 }
 
-/** Barre d'actions flottante au survol d'un message. */
+/**
+ * Barre d'actions flottante au survol d'un message.
+ *
+ * Chaque commande n'apparaît que si un gestionnaire la porte vraiment. Avant,
+ * le fil privé affichait « Créer un fil », « Citer », « Transférer », « Marquer
+ * comme non lu » et « Épingler » alors qu'aucune de ces props n'était fournie :
+ * les boutons ne faisaient rien, et le menu allait jusqu'à afficher un toast de
+ * réussite pour une action qui n'avait pas eu lieu.
+ */
 export function MessageActions({
   messageId,
   content,
@@ -55,6 +62,9 @@ export function MessageActions({
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useTranslation();
 
+  /* Le séparateur n'a de sens que s'il sépare vraiment deux blocs. */
+  const separateur = Boolean(onPinToggle || (isOwn && onEdit) || ((isOwn || canManage) && onDelete));
+
   const handle = (key: React.Key) => {
     switch (key) {
       case 'copy':
@@ -62,7 +72,12 @@ export function MessageActions({
         toast(t.messageItem.textCopiedToast);
         break;
       case 'copy-link':
-        void navigator.clipboard.writeText(`https://alfy.chat/m/${messageId}`);
+        // Le domaine `alfy.chat` codé en dur ne pointait nulle part. L'URL
+        // courante est déjà celle de la conversation : elle rouvre au bon
+        // endroit, avec l'ancre du message.
+        void navigator.clipboard.writeText(
+          `${window.location.origin}${window.location.pathname}#msg-${messageId}`,
+        );
         toast(t.messageItem.linkCopiedToast);
         break;
       case 'quote':
@@ -71,9 +86,6 @@ export function MessageActions({
       case 'forward':
         onForward?.();
         toast(t.messageItem.forwardedToast, { description: t.messageItem.forwardedToastDesc });
-        break;
-      case 'unread':
-        toast(t.messageItem.markedUnreadToast);
         break;
       case 'pin':
         onPinToggle?.();
@@ -107,22 +119,26 @@ export function MessageActions({
           <p>{t.messageItem.react}</p>
         </Tooltip.Content>
       </Tooltip>
-      <Tooltip delay={400}>
-        <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onReply} aria-label={t.messageItem.reply}>
-          <Reply className="size-4" />
-        </Button>
-        <Tooltip.Content>
-          <p>{t.messageItem.reply}</p>
-        </Tooltip.Content>
-      </Tooltip>
-      <Tooltip delay={400}>
-        <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onThread} aria-label={t.messageItem.createThread}>
-          <MessageSquareText className="size-4" />
-        </Button>
-        <Tooltip.Content>
-          <p>{t.messageItem.createThread}</p>
-        </Tooltip.Content>
-      </Tooltip>
+      {onReply && (
+        <Tooltip delay={400}>
+          <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onReply} aria-label={t.messageItem.reply}>
+            <Reply className="size-4" />
+          </Button>
+          <Tooltip.Content>
+            <p>{t.messageItem.reply}</p>
+          </Tooltip.Content>
+        </Tooltip>
+      )}
+      {onThread && (
+        <Tooltip delay={400}>
+          <Button isIconOnly size="sm" variant="ghost" className="size-7" onPress={onThread} aria-label={t.messageItem.createThread}>
+            <MessageSquareText className="size-4" />
+          </Button>
+          <Tooltip.Content>
+            <p>{t.messageItem.createThread}</p>
+          </Tooltip.Content>
+        </Tooltip>
+      )}
       <Dropdown isOpen={menuOpen} onOpenChange={setMenuOpen}>
         <Dropdown.Trigger
           aria-label={t.messageItem.moreActions}
@@ -140,30 +156,32 @@ export function MessageActions({
               <Link2 className="size-4" />
               <Label>{t.messageItem.copyLink}</Label>
             </Dropdown.Item>
-            <Dropdown.Item id="quote" textValue={t.messageItem.quote}>
-              <Quote className="size-4" />
-              <Label>{t.messageItem.quote}</Label>
-            </Dropdown.Item>
-            <Dropdown.Item id="forward" textValue={t.messageItem.forward}>
-              <CornerUpRight className="size-4" />
-              <Label>{t.messageItem.forward}</Label>
-            </Dropdown.Item>
-            <Dropdown.Item id="unread" textValue={t.messageItem.markUnread}>
-              <MailOpen className="size-4" />
-              <Label>{t.messageItem.markUnread}</Label>
-            </Dropdown.Item>
-            <Separator />
-            <Dropdown.Item id="pin" textValue={pinned ? t.messageItem.unpin : t.messageItem.pin}>
-              <Pin className="size-4" />
-              <Label>{pinned ? t.messageItem.unpin : t.messageItem.pin}</Label>
-            </Dropdown.Item>
-            {isOwn && (
+            {onQuote && (
+              <Dropdown.Item id="quote" textValue={t.messageItem.quote}>
+                <Quote className="size-4" />
+                <Label>{t.messageItem.quote}</Label>
+              </Dropdown.Item>
+            )}
+            {onForward && (
+              <Dropdown.Item id="forward" textValue={t.messageItem.forward}>
+                <CornerUpRight className="size-4" />
+                <Label>{t.messageItem.forward}</Label>
+              </Dropdown.Item>
+            )}
+            {separateur && <Separator />}
+            {onPinToggle && (
+              <Dropdown.Item id="pin" textValue={pinned ? t.messageItem.unpin : t.messageItem.pin}>
+                <Pin className="size-4" />
+                <Label>{pinned ? t.messageItem.unpin : t.messageItem.pin}</Label>
+              </Dropdown.Item>
+            )}
+            {isOwn && onEdit && (
               <Dropdown.Item id="edit" textValue={t.messageItem.edit}>
                 <Pencil className="size-4" />
                 <Label>{t.messageItem.edit}</Label>
               </Dropdown.Item>
             )}
-            {(isOwn || canManage) && (
+            {(isOwn || canManage) && onDelete && (
               <Dropdown.Item id="delete" textValue={t.messageItem.delete} variant="danger">
                 <Trash2 className="size-4" />
                 <Label>{t.messageItem.delete}</Label>

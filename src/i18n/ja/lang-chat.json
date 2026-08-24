@@ -60,7 +60,13 @@
     "membersCount": "{n} members",
     "writingIn": "Write in {name}…",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "lightbox": {
+      "previousImage": "前の画像",
+      "nextImage": "次の画像",
+      "zoomIn": "拡大",
+      "zoomOut": "画面に合わせる"
+    }
   },
   "messageItem": {
     "user": "ユーザー",

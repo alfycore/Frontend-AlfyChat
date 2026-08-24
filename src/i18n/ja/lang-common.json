@@ -30,5 +30,14 @@
     "invisible": "非表示",
     "offline": "オフライン",
     "you": "あなた"
+  },
+  "titleBar": {
+    "back": "戻る",
+    "forward": "進む",
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "restore": "元のサイズに戻す",
+    "close": "閉じる",
+    "help": "ヘルプ"
   }
 }

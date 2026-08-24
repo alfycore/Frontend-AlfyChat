@@ -25,17 +25,11 @@ import { DmComposer } from '@/components/alfy/dm/dm-composer';
 import { DmHeader } from '@/components/alfy/dm/dm-header';
 import { DmMessageRow } from '@/components/alfy/dm/dm-message-row';
 import { useDmScroll } from '@/components/alfy/dm/use-dm-scroll';
+import { dayFormat } from '@/components/alfy/chat/date-format';
 import { TypingIndicator } from '@/components/alfy/chat/typing-indicator';
 import type { AlfyMessage } from '@/components/alfy/mock/types';
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
-
-const jourFmt = new Intl.DateTimeFormat('fr-FR', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
 
 /** Regroupement sous un même auteur en deçà de cet écart. */
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
@@ -131,7 +125,8 @@ export function DmChat({
   isComposerDisabled = false,
   composerDisabledMessage,
 }: DmChatProps) {
-  const { t, tx } = useTranslation();
+  const { t, tx, intlLocale } = useTranslation();
+  const jourFmt = dayFormat(intlLocale);
 
   /* Seul l'id est gardé en état : si le message visé disparaît (suppression
      distante), la référence retombe naturellement au rendu suivant — sans
@@ -177,7 +172,7 @@ export function DmChat({
       precedent = m;
     }
     return out;
-  }, [messages]);
+  }, [messages, jourFmt]);
 
   /* Références stables : sans elles, `memo` sur les lignes ne sert à rien. */
   const repondre = useCallback((id: string) => setReplyToId(id), []);
@@ -300,7 +295,11 @@ export function DmChat({
         {/* Retour en bas — n'apparaît que si on a réellement décroché */}
         <div
           className={cn(
-            'pointer-events-none absolute inset-x-0 bottom-3 flex justify-center transition-all duration-200',
+            /* transition-[opacity,transform] et pas transition-all : `all`
+             * met en transition toute propriété qui change, y compris celles
+             * qui déclenchent un layout, sur un conteneur qui vit au-dessus
+             * de la liste de messages. */
+            'pointer-events-none absolute inset-x-0 bottom-3 flex justify-center transition-[opacity,transform] duration-200',
             pinned ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100',
           )}
         >

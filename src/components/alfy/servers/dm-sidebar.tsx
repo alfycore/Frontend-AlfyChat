@@ -1,22 +1,22 @@
 'use client';
 
 import { Button, ScrollShadow, SearchField } from '@heroui/react';
-import { Pin, PinOff, Plus, Users } from 'lucide-react';
+import { MessageSquareDashed, Pin, PinOff, Plus, Search, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-import { GROUP_DMS } from '@/components/alfy/mock/data';
 import type { AlfyDM, AlfyGroupDM, AlfyUser } from '@/components/alfy/mock/types';
 import { useUserById } from '@/components/alfy/user-directory';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
+import { EmptyState } from '@/components/alfy/primitives/empty-state';
 import { SectionLabel } from '@/components/alfy/primitives/section-label';
+import { conversationTime } from '@/components/alfy/chat/date-format';
 import { GroupCreateDialog } from '@/components/alfy/people/group-create-dialog';
 import { UserDock } from '@/components/alfy/servers/user-dock';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
-
-const relFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
 interface DmSidebarProps {
   dms: AlfyDM[];
-  /** Groupes réels ; par défaut, jeu de démonstration. */
   groups?: AlfyGroupDM[];
   onSelectGroup?: (id: string) => void;
   currentUser: AlfyUser;
@@ -35,7 +35,9 @@ interface DmSidebarProps {
 
 export function DmSidebar({
   dms,
-  groups = GROUP_DMS,
+  // Aucun repli sur le jeu de démonstration : quand les vraies données
+  // tardaient, des groupes fictifs apparaissaient dans l'application réelle.
+  groups = [],
   onSelectGroup,
   currentUser,
   activeDmId,
@@ -47,10 +49,36 @@ export function DmSidebar({
   pinnedIds = [],
   onTogglePin,
 }: DmSidebarProps) {
+  const { t, tx, intlLocale } = useTranslation();
   const userById = useUserById();
+  const [recherche, setRecherche] = useState('');
 
-  const pinnedDms = dms.filter((d) => pinnedIds.includes(d.id));
-  const unpinnedDms = dms.filter((d) => !pinnedIds.includes(d.id));
+  const requete = recherche.trim().toLowerCase();
+
+  /* Le champ de recherche existait déjà mais n'était relié à rien : taper
+     dedans ne filtrait aucune conversation. */
+  const dmsVisibles = useMemo(() => {
+    if (!requete) return dms;
+    return dms.filter((d) => {
+      const u = userById(d.recipientId);
+      return (
+        u.displayName.toLowerCase().includes(requete) ||
+        u.username.toLowerCase().includes(requete)
+      );
+    });
+  }, [dms, requete, userById]);
+
+  const groupesVisibles = useMemo(() => {
+    if (!requete) return groups;
+    return groups.filter((g) => {
+      if (g.name?.toLowerCase().includes(requete)) return true;
+      return g.memberIds.some((id) => userById(id).displayName.toLowerCase().includes(requete));
+    });
+  }, [groups, requete, userById]);
+
+  const pinnedDms = dmsVisibles.filter((d) => pinnedIds.includes(d.id));
+  const unpinnedDms = dmsVisibles.filter((d) => !pinnedIds.includes(d.id));
+  const aucunResultat = dmsVisibles.length === 0 && groupesVisibles.length === 0;
 
   /** Une ligne de conversation : bouton principal + épingle en frère
    *  (jamais imbriquée — un bouton dans un bouton est invalide). */
@@ -88,9 +116,12 @@ export function DmSidebar({
             >
               {user.displayName}
             </span>
+            {/* Hauteur réservée même sans dernier message : sinon une
+                conversation vide tenait sur une ligne au lieu de deux et la
+                liste partait en marches d'escalier. */}
             <span
               className={cn(
-                'block truncate text-[11px]',
+                'block h-4 truncate text-[11px] leading-4',
                 dm.unreadCount > 0 ? 'text-foreground/70' : 'text-muted',
               )}
             >
@@ -99,45 +130,40 @@ export function DmSidebar({
           </span>
         </button>
 
-        <span className="flex shrink-0 flex-col items-end gap-1">
-          {/* L'heure cède la place à l'épingle au survol. */}
-          <span
-            className={cn(
-              'text-[10px] text-muted tabular-nums',
-              onTogglePin && 'group-hover/dm:hidden group-focus-within/dm:hidden',
-            )}
-          >
-            {relFmt.format(new Date(dm.lastMessageAt))}
-          </span>
-          {onTogglePin && (
-            <button
-              type="button"
-              aria-label={pinned ? 'Détacher la conversation' : 'Épingler la conversation'}
-              aria-pressed={pinned}
-              onClick={() => onTogglePin(dm.id)}
+        {/* Fente unique horodatage / épingle : largeur figée, donc aucun
+            décalage de la ligne au survol. */}
+        <span className="flex shrink-0 items-center gap-1">
+          <span className="relative flex h-6 w-9 items-center justify-end">
+            <span
               className={cn(
-                'hidden cursor-pointer rounded-sm p-0.5 outline-none transition-colors',
-                'group-hover/dm:block group-focus-within/dm:block focus-visible:ring-2 focus-visible:ring-focus',
-                pinned ? 'text-accent' : 'text-muted hover:text-foreground',
+                'text-[10px] text-muted tabular-nums',
+                onTogglePin && 'group-hover/dm:opacity-0 group-focus-within/dm:opacity-0',
               )}
             >
-              {pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
-            </button>
-          )}
+              {conversationTime(intlLocale, dm.lastMessageAt)}
+            </span>
+            {onTogglePin && (
+              <button
+                type="button"
+                aria-label={pinned ? t.dmSidebar.unpinAria : t.dmSidebar.pinAria}
+                aria-pressed={pinned}
+                onClick={() => onTogglePin(dm.id)}
+                className={cn(
+                  'absolute inset-y-0 right-0 hidden cursor-pointer items-center rounded-sm px-0.5 outline-none transition-colors',
+                  'group-hover/dm:flex group-focus-within/dm:flex focus-visible:ring-2 focus-visible:ring-focus',
+                  pinned ? 'text-accent' : 'text-muted hover:text-foreground',
+                )}
+              >
+                {pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
+              </button>
+            )}
+          </span>
           {dm.unreadCount > 0 && (
             <span className="flex min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-(--accent-foreground)">
               {dm.unreadCount}
             </span>
           )}
         </span>
-
-        {/* Épinglée : marqueur permanent, discret, quand on ne survole pas. */}
-        {pinned && (
-          <Pin
-            className="size-3 shrink-0 text-accent group-hover/dm:hidden"
-            aria-hidden
-          />
-        )}
       </div>
     );
   };
@@ -146,10 +172,10 @@ export function DmSidebar({
     <div className="flex h-full w-full flex-col bg-surface-secondary/35">
       {/* Recherche */}
       <div className="px-3 pt-3 pb-2">
-        <SearchField aria-label="Rechercher une conversation">
+        <SearchField value={recherche} onChange={setRecherche} aria-label={t.dmSidebar.searchAria}>
           <SearchField.Group>
             <SearchField.SearchIcon />
-            <SearchField.Input placeholder="Rechercher" />
+            <SearchField.Input placeholder={t.dmSidebar.searchPlaceholder} />
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>
@@ -163,27 +189,27 @@ export function DmSidebar({
           aria-current={friendsActive ? 'true' : undefined}
           className={cn(
             'group flex w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium outline-none',
-            'transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-(--focus)',
+            'transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-focus',
             friendsActive
-              ? 'bg-(--accent)/12 text-foreground'
+              ? 'bg-accent/12 text-foreground'
               : 'text-muted hover:bg-surface-secondary hover:text-foreground',
           )}
         >
           <span
             className={cn(
-              'flex size-8 items-center justify-center rounded-full transition-colors',
+              'flex size-8 shrink-0 items-center justify-center rounded-full transition-colors',
               friendsActive
-                ? 'bg-(--accent) text-(--accent-foreground)'
+                ? 'bg-accent text-(--accent-foreground)'
                 : 'bg-surface-tertiary text-muted group-hover:text-foreground',
             )}
           >
             <Users className="size-4" aria-hidden />
           </span>
-          <span className="flex-1 text-left">Amis</span>
+          <span className="min-w-0 flex-1 truncate text-left">{t.dmSidebar.friends}</span>
           {pendingCount > 0 && (
             <span
-              aria-label={`${pendingCount} demandes en attente`}
-              className="flex min-w-5 items-center justify-center rounded-full bg-danger px-1.5 py-0.5 text-[10px] font-semibold text-(--danger-foreground)"
+              aria-label={tx(t.dmSidebar.pendingRequestsAria, { n: pendingCount })}
+              className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-danger px-1.5 py-0.5 text-[10px] font-semibold text-(--danger-foreground)"
             >
               {pendingCount}
             </span>
@@ -199,26 +225,28 @@ export function DmSidebar({
           <div className="mb-2">
             <SectionLabel className="mb-1 flex items-center gap-1.5">
               <Pin className="size-3" aria-hidden />
-              Épinglés
+              {t.dmSidebar.pinned}
             </SectionLabel>
             <div className="flex flex-col gap-0.5">{pinnedDms.map(renderDm)}</div>
           </div>
         )}
 
         {/* Groupes */}
-        {groups.length > 0 && (
+        {groupesVisibles.length > 0 && (
           <div className="mb-2">
-            <SectionLabel className="mb-1">Groupes</SectionLabel>
+            <SectionLabel className="mb-1">{t.dmSidebar.groups}</SectionLabel>
             <div className="flex flex-col gap-0.5">
-              {groups.map((g) => {
+              {groupesVisibles.map((g) => {
                 const others = g.memberIds.filter((id) => id !== currentUser.id && id !== 'u-me');
                 const names =
                   g.name?.trim() ||
                   others.map((id) => userById(id).displayName).join(', ') ||
-                  'Groupe';
+                  t.dmSidebar.defaultGroupName;
                 const subtitle = g.lastMessage?.trim()
                   ? g.lastMessage
-                  : `${g.memberIds.length || others.length + 1} membres`;
+                  : tx(t.memberList.memberCountPlural, {
+                      n: g.memberIds.length || others.length + 1,
+                    });
                 return (
                   <button
                     key={g.id}
@@ -230,13 +258,20 @@ export function DmSidebar({
                       <Users className="size-4 text-muted" aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className={cn('block truncate text-sm', g.unreadCount > 0 ? 'font-semibold' : 'font-medium text-foreground/85')}>
+                      <span
+                        className={cn(
+                          'block truncate text-sm',
+                          g.unreadCount > 0 ? 'font-semibold' : 'font-medium text-foreground/85',
+                        )}
+                      >
                         {names}
                       </span>
-                      <span className="block truncate text-[11px] text-muted">{subtitle}</span>
+                      <span className="block h-4 truncate text-[11px] leading-4 text-muted">
+                        {subtitle}
+                      </span>
                     </span>
                     {g.unreadCount > 0 && (
-                      <span className="flex min-w-4 items-center justify-center rounded-full bg-(--accent) px-1 text-[10px] font-semibold text-(--accent-foreground)">
+                      <span className="flex min-w-4 shrink-0 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-(--accent-foreground)">
                         {g.unreadCount}
                       </span>
                     )}
@@ -248,14 +283,14 @@ export function DmSidebar({
         )}
 
         <div className="mb-1 flex items-center justify-between pr-1">
-          <SectionLabel>Messages privés</SectionLabel>
+          <SectionLabel>{t.dmSidebar.directMessages}</SectionLabel>
           <GroupCreateDialog
             trigger={
               <Button
                 isIconOnly
                 size="sm"
                 variant="ghost"
-                aria-label="Nouveau groupe"
+                aria-label={t.dmSidebar.newGroupAria}
                 className="size-6 text-muted hover:text-foreground"
               >
                 <Plus className="size-3.5" />
@@ -264,9 +299,17 @@ export function DmSidebar({
           />
         </div>
 
-        <div className="flex flex-col gap-0.5">
-          {unpinnedDms.map(renderDm)}
-        </div>
+        <div className="flex flex-col gap-0.5">{unpinnedDms.map(renderDm)}</div>
+
+        {/* Une liste vide ne doit pas être indiscernable d'un chargement raté. */}
+        {aucunResultat && (
+          <EmptyState
+            className="py-8"
+            icon={requete ? Search : MessageSquareDashed}
+            title={requete ? t.friends.noResults : t.friends.noFriends}
+            description={requete ? t.friends.noResultsHint : t.friends.addFriendsHint}
+          />
+        )}
       </ScrollShadow>
 
       <div className="p-2">

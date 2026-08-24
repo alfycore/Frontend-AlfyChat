@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { socketService } from '@/lib/socket';
+import { liveKey, readLive, writeLive } from '@/lib/live-cache';
 import { toAlfyRole, toAlfyUser, toPresence, unwrap } from '@/components/alfy/live/map';
 import type { AlfyMember, AlfyRole, AlfyUser } from '@/components/alfy/mock/types';
 
@@ -32,9 +33,36 @@ export interface AlfyMembersResult {
   users: Map<string, AlfyUser>;
 }
 
+type RawMember = Record<string, unknown>;
+
 export function useAlfyMembers(serverId: string | null): AlfyMembersResult {
-  const [raw, setRaw] = useState<Record<string, unknown>[]>([]);
-  const [roles, setRoles] = useState<AlfyRole[]>([]);
+  /* Amorçage depuis le cache : rouvrir un serveur déjà visité affiche la liste
+     connue tout de suite, le réseau ne fait que la corriger ensuite. */
+  const [raw, setRaw] = useState<RawMember[]>(
+    () => readLive<RawMember[]>(liveKey.members(serverId)) ?? [],
+  );
+  const [roles, setRoles] = useState<AlfyRole[]>(
+    () => readLive<AlfyRole[]>(liveKey.roles(serverId)) ?? [],
+  );
+
+  /* Changement de serveur sans démontage : on réamorce pendant le rendu plutôt
+     que dans un effet — React relance le rendu avant peinture, donc la liste du
+     serveur précédent n'apparaît jamais à l'écran. */
+  const [prevServerId, setPrevServerId] = useState(serverId);
+  if (prevServerId !== serverId) {
+    setPrevServerId(serverId);
+    setRaw(readLive<RawMember[]>(liveKey.members(serverId)) ?? []);
+    setRoles(readLive<AlfyRole[]>(liveKey.roles(serverId)) ?? []);
+  }
+
+  /* Report au cache : une seule écriture par état, quelle que soit l'origine
+     de la mise à jour (chargement initial ou événement temps réel). */
+  useEffect(() => {
+    writeLive(liveKey.members(serverId), raw);
+  }, [serverId, raw]);
+  useEffect(() => {
+    writeLive(liveKey.roles(serverId), roles);
+  }, [serverId, roles]);
 
   const loadRoles = useCallback(() => {
     if (!serverId) return;
@@ -47,14 +75,11 @@ export function useAlfyMembers(serverId: string | null): AlfyMembersResult {
 
   /* Chargement initial */
   useEffect(() => {
-    if (!serverId) {
-      setRaw([]);
-      setRoles([]);
-      return;
-    }
+    // Pas de serveur : le réamorçage en phase de rendu a déjà vidé l'état.
+    if (!serverId) return;
     socketService.requestMembers(serverId, (data: unknown) => {
       const d = data as { members?: unknown[] } | unknown[];
-      const list = (Array.isArray(d) ? d : (d?.members ?? [])) as Record<string, unknown>[];
+      const list = (Array.isArray(d) ? d : (d?.members ?? [])) as RawMember[];
       setRaw(list);
     });
     loadRoles();

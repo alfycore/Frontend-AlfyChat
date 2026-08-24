@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useMessages } from '@/hooks/use-messages';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
-import { api } from '@/lib/api';
+import { loadDmBootstrap } from '@/lib/dm-bootstrap';
 import { DmChat } from '@/components/alfy/dm/dm-chat';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { toAlfyMessage, toAlfyUser } from '@/components/alfy/live/map';
@@ -38,11 +38,15 @@ export function AlfyDmChat({ recipientId }: { recipientId: string }) {
   const [blockStatus, setBlockStatus] = useState<{ id: string; iBlockedThem: boolean; theyBlockedMe: boolean } | null>(null);
   useEffect(() => {
     let annule = false;
-    api
-      .getBlockStatus(recipientId)
-      .then((res) => {
-        if (annule || !res.success || !res.data) return;
-        setBlockStatus({ id: recipientId, ...res.data });
+    // `loadDmBootstrap` mutualise la requête déjà lancée par la page : ce
+    // second appel ne produit aucun trafic réseau supplémentaire.
+    loadDmBootstrap(recipientId)
+      .then((boot) => {
+        if (annule || !boot) return;
+        setBlockStatus({ id: recipientId, ...boot.blockStatus });
+        if (boot.recipient) {
+          setFicheChargee({ id: recipientId, user: toAlfyUser(boot.recipient, recipientId) });
+        }
       })
       .catch(() => {});
     return () => {
@@ -66,23 +70,6 @@ export function AlfyDmChat({ recipientId }: { recipientId: string }) {
     removeReaction,
     startTyping,
   } = useMessages(undefined, recipientId);
-
-  /* Profil du destinataire (nom, avatar, présence) */
-  useEffect(() => {
-    let annule = false;
-    api
-      .getUser(recipientId)
-      .then((res) => {
-        const data = ((res as { data?: unknown })?.data ?? res) as Record<string, unknown>;
-        if (!annule && data) setFicheChargee({ id: recipientId, user: toAlfyUser(data, recipientId) });
-      })
-      .catch(() => {
-        /* le fil reste utilisable sans la fiche profil */
-      });
-    return () => {
-      annule = true;
-    };
-  }, [recipientId]);
 
   const meId = user?.id ?? '';
 

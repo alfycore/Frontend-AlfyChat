@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/lib/api';
+import { loadBootstrap } from '@/lib/bootstrap-store';
 import { socketService } from '@/lib/socket';
 import { toAlfyUser, toPresence, unwrap } from '@/components/alfy/live/map';
 import type { AlfyPresence, AlfyUser } from '@/components/alfy/mock/types';
@@ -52,14 +53,20 @@ export function useAlfyFriends(): AlfyFriendsData {
     [rawFriends, presence],
   );
 
-  const reload = useCallback(() => {
+  const reload = useCallback((force = false) => {
     void (async () => {
       try {
-        const [fRes, rRes, bRes] = await Promise.all([
-          api.getFriends().catch(() => null),
-          api.getFriendRequests().catch(() => null),
-          api.getBlockedUsers().catch(() => null),
-        ]);
+        // Amis, demandes et blocages arrivent dans la requête d'amorçage
+        // partagée : trois appels de moins, et aucun si la barre latérale l'a
+        // déjà déclenchée (la requête en vol est mutualisée).
+        const boot = await loadBootstrap(force);
+        const [fRes, rRes, bRes] = boot
+          ? [boot.friends, boot.friendRequests, boot.blocked]
+          : await Promise.all([
+              api.getFriends().catch(() => null),
+              api.getFriendRequests().catch(() => null),
+              api.getBlockedUsers().catch(() => null),
+            ]);
 
         const friendUsers = list(fRes).map((u) => toAlfyUser(u, (u.id as string) ?? ''));
         setRawFriends(friendUsers);
@@ -109,7 +116,7 @@ export function useAlfyFriends(): AlfyFriendsData {
 
   /* Temps réel : demandes et acceptations */
   useEffect(() => {
-    const refresh = () => reload();
+    const refresh = () => reload(true);
     socketService.on('FRIEND_REQUEST', refresh);
     socketService.on('FRIEND_ACCEPT', refresh);
     socketService.on('FRIEND_DECLINE', refresh);
@@ -135,7 +142,7 @@ export function useAlfyFriends(): AlfyFriendsData {
   const accept = useCallback(
     async (requestId: string) => {
       await api.acceptFriendRequest(requestId).catch(() => null);
-      reload();
+      reload(true);
     },
     [reload],
   );
@@ -143,7 +150,7 @@ export function useAlfyFriends(): AlfyFriendsData {
   const decline = useCallback(
     async (requestId: string) => {
       await api.declineFriendRequest(requestId).catch(() => null);
-      reload();
+      reload(true);
     },
     [reload],
   );
@@ -159,7 +166,7 @@ export function useAlfyFriends(): AlfyFriendsData {
       );
       const targetId = (found?.id as string) ?? clean;
       const res = await api.sendFriendRequest(targetId).catch(() => null);
-      reload();
+      reload(true);
       return Boolean((res as { success?: boolean } | null)?.success);
     },
     [reload],
@@ -168,7 +175,7 @@ export function useAlfyFriends(): AlfyFriendsData {
   const unblock = useCallback(
     async (userId: string) => {
       await api.unblockUser(userId).catch(() => null);
-      reload();
+      reload(true);
     },
     [reload],
   );

@@ -8,6 +8,7 @@ import { signalService } from '@/lib/signal-service';
 import { api } from '@/lib/api';
 import { notify } from '@/hooks/use-notification';
 import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
+import { loadDmBootstrap, invalidateDmBootstrap } from '@/lib/dm-bootstrap';
 import { userProfileCache } from '@/lib/user-profile-cache';
 
 interface Reaction {
@@ -103,7 +104,13 @@ async function ensureSignalSession(recipientId: string): Promise<boolean> {
 
   const promise = (async (): Promise<boolean> => {
     try {
-      const res = await api.getSignalKeyBundle(recipientId) as any;
+      // L'amorçage du fil (`/api/bootstrap/dm/:id`) transporte déjà le
+      // trousseau : on le consomme au lieu de rappeler l'endpoint — qui
+      // consomme une one-time prekey à chaque appel.
+      const boot = await loadDmBootstrap(recipientId);
+      const res = boot?.keyBundle
+        ? { success: true, data: boot.keyBundle as any }
+        : (await api.getSignalKeyBundle(recipientId) as any);
       if (!res?.success || !res?.data) {
         console.warn('[Signal] Bundle introuvable pour', recipientId);
         return false;
@@ -727,7 +734,12 @@ export function useMessages(channelId?: string, recipientId?: string) {
 
       // Lancer le fetch du bundle E2EE en parallèle avec la requête messages
       const bundlePromise = recipientId ? ensureSignalSession(recipientId) : Promise.resolve(true);
-      const response = await api.getMessages(channelId, recipientId);
+      // La première page est déjà arrivée avec l'amorçage du fil : la
+      // réutiliser évite un aller-retour de plus à l'ouverture.
+      const preloaded = recipientId ? (await loadDmBootstrap(recipientId))?.messages : null;
+      const response = preloaded && preloaded.length > 0
+        ? { success: true as const, data: preloaded as unknown as any[] }
+        : await api.getMessages(channelId, recipientId);
 
       if (response.success && response.data) {
         const rawMessages = response.data as any[];
@@ -859,6 +871,11 @@ export function useMessages(channelId?: string, recipientId?: string) {
     async (content: string, replyToId?: string, mentionedUserIds?: string[]) => {
       if (!user) return;
 
+      // L'amorçage du fil embarque la première page de messages : elle vient
+      // d'être dépassée. Sans cette purge, revenir sur le fil dans les 15 s
+      // réafficherait la liste d'avant l'envoi.
+      if (recipientId) invalidateDmBootstrap(recipientId);
+
       // Message optimiste : afficher le texte clair immédiatement
       const optimisticMessage: Message = {
         id: `pending_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -944,14 +961,16 @@ export function useMessages(channelId?: string, recipientId?: string) {
     setMessages((prev) =>
       prev.map((m) => (m.id === messageId ? { ...m, content, isEdited: true } : m))
     );
+    if (recipientId) invalidateDmBootstrap(recipientId);
     socketService.editMessage(messageId, content, getConversationId() || undefined);
-  }, [getConversationId]);
+  }, [getConversationId, recipientId]);
 
   const deleteMessage = useCallback((messageId: string) => {
     // Suppression optimiste côté expéditeur : retirer du state immédiatement
     setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    if (recipientId) invalidateDmBootstrap(recipientId);
     socketService.deleteMessage(messageId, getConversationId() || undefined);
-  }, [getConversationId]);
+  }, [getConversationId, recipientId]);
 
   const addReaction = useCallback((messageId: string, emoji: string) => {
     const convId = getConversationId();

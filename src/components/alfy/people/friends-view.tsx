@@ -1,30 +1,31 @@
 'use client';
 
 import { Button, Chip, Input, SearchField, Tabs, TextField, Tooltip, toast } from '@heroui/react';
-import { Ban, Check, MessageCircle, Phone, UserPlus, Users, X } from 'lucide-react';
+import { Ban, Check, MailCheck, Menu, MessageCircle, Phone, Search, UserPlus, Users, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { useCallContext } from '@/hooks/use-call-context';
-import { BLOCKED_USER_IDS, PENDING_FRIENDS, USERS, userById } from '@/components/alfy/mock/data';
 import type { AlfyUser } from '@/components/alfy/mock/types';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
-import { PRESENCE_LABELS } from '@/components/alfy/primitives/status-dot';
+import { usePresenceLabels } from '@/components/alfy/primitives/status-dot';
 import { EmptyState } from '@/components/alfy/primitives/empty-state';
 import { SectionLabel } from '@/components/alfy/primitives/section-label';
 import { useTranslation } from '@/components/locale-provider';
 
-/** Mock : tout le monde sauf soi, le bot et les bloqués est un ami. */
-const MOCK_FRIENDS = USERS.filter(
-  (u) => u.id !== 'u-me' && u.id !== 'u-alfybot' && !BLOCKED_USER_IDS.includes(u.id),
-);
-const MOCK_PENDING = PENDING_FRIENDS.map((p) => ({
-  requestId: p.userId,
-  user: userById(p.userId),
-  direction: p.direction,
-}));
-const MOCK_BLOCKED = BLOCKED_USER_IDS.map(userById);
-
 const isOnline = (u: AlfyUser) => u.status !== 'offline' && u.status !== 'invisible';
+
+/**
+ * Style de la variante « secondary » des onglets, appliqué à la main.
+ *
+ * `variant="secondary"` pose bien `tabs--secondary` sur la racine, mais son CSS
+ * cible `.tabs--secondary > .tabs__list-container` : un combinateur enfant
+ * direct. Ici le conteneur est un petit-enfant (Tabs → header → ListContainer),
+ * donc aucune de ces règles ne l'atteint — d'où le conteneur arrondi et la
+ * pastille pleine qui subsistaient. La couche `utilities` prime sur
+ * `components`, aucun `!` n'est nécessaire.
+ */
+const TAB_CLASS = 'h-full rounded-none whitespace-nowrap data-[selected=true]:text-foreground';
+const TAB_INDICATOR_CLASS = 'top-auto bottom-0 h-0.5 rounded-none bg-accent shadow-none';
 
 export interface FriendsPendingEntry {
   requestId: string;
@@ -34,8 +35,8 @@ export interface FriendsPendingEntry {
 
 interface FriendsViewProps {
   onMessage?: (userId: string) => void;
+  /** Ouvre le tiroir de navigation (mobile) — sans lui, on est piégé sur cet écran. */
   onOpenNav?: () => void;
-  /** Données réelles ; sans elles, jeu de démonstration. */
   friends?: AlfyUser[];
   pending?: FriendsPendingEntry[];
   blocked?: AlfyUser[];
@@ -48,6 +49,7 @@ interface FriendsViewProps {
 
 function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: string) => void }) {
   const { t, tx } = useTranslation();
+  const presenceLabels = usePresenceLabels();
   const { initiateCall } = useCallContext();
   return (
     <div
@@ -64,10 +66,12 @@ function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: strin
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{user.displayName}</p>
         <p className="truncate text-xs text-muted">
-          {user.customStatus ?? PRESENCE_LABELS[user.status]}
+          {user.customStatus ?? presenceLabels[user.status]}
         </p>
       </div>
-      <div className="flex items-center gap-1 opacity-0 transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100">
+      {/* `opacity-0` seul laissait les boutons cliquables et focusables alors
+          qu'ils étaient invisibles. */}
+      <div className="pointer-events-none flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
         <Tooltip delay={300}>
           <Button
             isIconOnly
@@ -105,9 +109,10 @@ function FriendRow({ user, onMessage }: { user: AlfyUser; onMessage?: (id: strin
 
 export function FriendsView({
   onMessage,
-  friends,
-  pending,
-  blocked,
+  onOpenNav,
+  friends = [],
+  pending = [],
+  blocked = [],
   onAccept,
   onDecline,
   onAddFriend,
@@ -116,18 +121,16 @@ export function FriendsView({
   const { t, tx } = useTranslation();
   const [query, setQuery] = useState('');
 
-  const FRIENDS = friends ?? MOCK_FRIENDS;
-  const PENDING = pending ?? MOCK_PENDING;
-  const BLOCKED = blocked ?? MOCK_BLOCKED;
+  const requete = query.trim().toLowerCase();
 
   const filtered = useMemo(
     () =>
-      FRIENDS.filter(
+      friends.filter(
         (u) =>
-          (u.displayName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-          (u.username ?? '').toLowerCase().includes(query.toLowerCase()),
+          (u.displayName ?? '').toLowerCase().includes(requete) ||
+          (u.username ?? '').toLowerCase().includes(requete),
       ),
-    [query, FRIENDS],
+    [requete, friends],
   );
   const online = filtered.filter(isOnline);
   const offline = filtered.filter((u) => !isOnline(u));
@@ -136,172 +139,248 @@ export function FriendsView({
   const [addName, setAddName] = useState('');
   const [sending, setSending] = useState(false);
 
+  /* Distingue « aucun ami » de « la recherche ne donne rien » : les deux
+     affichaient le même vide, impossible à interpréter. */
+  const videRecherche = requete.length > 0 && filtered.length === 0;
+
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-surface">
-      <Tabs selectedKey={tab} onSelectionChange={(k) => setTab(String(k))} className="flex h-full flex-col">
+      {/* `secondary` : indicateur souligné plutôt que pastille pleine. */}
+      <Tabs
+        variant="secondary"
+        selectedKey={tab}
+        onSelectionChange={(k) => setTab(String(k))}
+        className="flex h-full flex-col"
+      >
         {/* En-tête */}
         <header className="flex h-12 shrink-0 items-center gap-3 border-b border-separator bg-surface/85 px-4 backdrop-blur-sm">
+          {/* Sans ce bouton, arriver sur /channels/me depuis un téléphone
+              laissait l'utilisateur sans aucun accès à la navigation. */}
+          {onOpenNav && (
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              aria-label={t.chat.openNav}
+              className="-ml-1 shrink-0 text-muted md:hidden"
+              onPress={onOpenNav}
+            >
+              <Menu className="size-4.5" aria-hidden />
+            </Button>
+          )}
+
           <div className="flex shrink-0 items-center gap-2">
             <Users className="size-4.5 text-muted" aria-hidden />
-            <h2 className="hidden text-sm font-semibold sm:block">Amis</h2>
+            <h2 className="hidden text-sm font-semibold sm:block">{t.friends.title}</h2>
           </div>
           <div className="hidden h-5 w-px bg-separator sm:block" aria-hidden />
-          <Tabs.ListContainer className="min-w-0">
-            <Tabs.List aria-label="Filtres d'amis" className="gap-1">
-              <Tabs.Tab id="online" className="px-2.5 py-1 text-sm whitespace-nowrap">
-                En ligne
-                <Tabs.Indicator />
+          {/* `h-full` sur toute la chaîne pour que le soulignement tombe sur la
+              ligne de base du bandeau plutôt que de coller au texte. HeroUI
+              insère un `.tabs__list-container__scroller` entre le conteneur et
+              la liste, et ne lui donne `h-full` qu'en orientation verticale :
+              `[&>[data-orientation]]:h-full` le vise (c'est le seul enfant
+              direct porteur de cet attribut) sans toucher aux chevrons de
+              débordement. Voir TAB_CLASS pour le style de la variante. */}
+          <Tabs.ListContainer className="h-full min-w-0 rounded-none bg-transparent [&>[data-orientation]]:h-full">
+            <Tabs.List aria-label={t.friends.title} className="h-full gap-1 p-0">
+              <Tabs.Tab id="online" className={TAB_CLASS}>
+                {t.friends.onlineSidebar}
+                <Tabs.Indicator className={TAB_INDICATOR_CLASS} />
               </Tabs.Tab>
-              <Tabs.Tab id="all" className="px-2.5 py-1 text-sm whitespace-nowrap">
-                Tous
-                <Tabs.Indicator />
+              <Tabs.Tab id="all" className={TAB_CLASS}>
+                {t.friends.people.allTab}
+                <Tabs.Indicator className={TAB_INDICATOR_CLASS} />
               </Tabs.Tab>
-              <Tabs.Tab id="pending" className="px-2.5 py-1 text-sm whitespace-nowrap">
-                En attente
-                {PENDING.length > 0 && (
+              <Tabs.Tab id="pending" className={TAB_CLASS}>
+                {t.friends.pending}
+                {pending.length > 0 && (
                   <Chip size="sm" color="danger" variant="soft" className="ml-1 text-[10px]">
-                    {PENDING.length}
+                    {pending.length}
                   </Chip>
                 )}
-                <Tabs.Indicator />
+                <Tabs.Indicator className={TAB_INDICATOR_CLASS} />
               </Tabs.Tab>
-              <Tabs.Tab id="blocked" className="px-2.5 py-1 text-sm whitespace-nowrap">
-                Bloqués
-                <Tabs.Indicator />
+              <Tabs.Tab id="blocked" className={TAB_CLASS}>
+                {t.friends.tabBlocked}
+                <Tabs.Indicator className={TAB_INDICATOR_CLASS} />
+              </Tabs.Tab>
+              {/* L'onglet « Ajouter » était piloté par un bouton hors de la
+                  liste : la clé sélectionnée ne correspondait alors à aucun
+                  onglet de la collection. */}
+              <Tabs.Tab id="add" className="sr-only">
+                {t.friends.tabAdd}
               </Tabs.Tab>
             </Tabs.List>
           </Tabs.ListContainer>
           <div className="ml-auto shrink-0">
             <Button size="sm" variant={tab === 'add' ? 'primary' : 'secondary'} onPress={() => setTab('add')}>
               <UserPlus className="size-3.5" />
-              <span className="hidden sm:inline">Ajouter un ami</span>
-              <span className="sm:hidden">Ajouter</span>
+              <span className="hidden sm:inline">{t.friends.people.addFriendButton}</span>
+              <span className="sm:hidden">{t.friends.tabAdd}</span>
             </Button>
           </div>
         </header>
 
-        {/* Recherche */}
-        <div className="shrink-0 px-4 pt-3">
-          <SearchField value={query} onChange={setQuery} aria-label="Chercher un ami">
-            <SearchField.Group>
-              <SearchField.SearchIcon />
-              <SearchField.Input placeholder="Chercher un ami…" />
-              <SearchField.ClearButton />
-            </SearchField.Group>
-          </SearchField>
-        </div>
+        {/* Recherche — masquée sur l'onglet « Ajouter », qui a son propre champ */}
+        {tab !== 'add' && (
+          <div className="shrink-0 px-4 pt-3">
+            <SearchField value={query} onChange={setQuery} aria-label={t.friends.searchPlaceholder}>
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input placeholder={t.friends.searchPlaceholder} />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
+          </div>
+        )}
 
         <Tabs.Panel id="online" className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
-          <SectionLabel className="mb-1.5 px-3">En ligne — {online.length}</SectionLabel>
+          <SectionLabel className="mb-1.5 px-3">
+            {tx(t.friends.onlineCount, { n: online.length })}
+          </SectionLabel>
           <div className="flex flex-col gap-0.5">
             {online.map((u) => (
               <FriendRow key={u.id} user={u} onMessage={onMessage} />
             ))}
           </div>
           {online.length === 0 && (
-            <EmptyState icon={Users} title="Personne en ligne" description="Vos amis apparaîtront ici dès qu'ils se connecteront." />
+            <EmptyState
+              icon={videRecherche ? Search : Users}
+              title={videRecherche ? t.friends.noResults : t.friends.noOneOnline}
+              description={videRecherche ? t.friends.noResultsHint : t.friends.people.onlineEmptyDesc}
+            />
           )}
         </Tabs.Panel>
 
         <Tabs.Panel id="all" className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
-          <SectionLabel className="mb-1.5 px-3">En ligne — {online.length}</SectionLabel>
-          <div className="flex flex-col gap-0.5">
-            {online.map((u) => (
-              <FriendRow key={u.id} user={u} onMessage={onMessage} />
-            ))}
-          </div>
-          {offline.length > 0 && (
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon={videRecherche ? Search : Users}
+              title={videRecherche ? t.friends.noResults : t.friends.noFriends}
+              description={videRecherche ? t.friends.noResultsHint : t.friends.addFriendsHint}
+              actionLabel={videRecherche ? undefined : t.friends.people.addFriendButton}
+              onAction={videRecherche ? undefined : () => setTab('add')}
+            />
+          ) : (
             <>
-              <SectionLabel className="mt-4 mb-1.5 px-3">Hors ligne — {offline.length}</SectionLabel>
-              <div className="flex flex-col gap-0.5 opacity-60">
-                {offline.map((u) => (
+              <SectionLabel className="mb-1.5 px-3">
+                {tx(t.friends.onlineCount, { n: online.length })}
+              </SectionLabel>
+              <div className="flex flex-col gap-0.5">
+                {online.map((u) => (
                   <FriendRow key={u.id} user={u} onMessage={onMessage} />
                 ))}
               </div>
+              {offline.length > 0 && (
+                <>
+                  <SectionLabel className="mt-4 mb-1.5 px-3">
+                    {tx(t.friends.offlineCount, { n: offline.length })}
+                  </SectionLabel>
+                  <div className="flex flex-col gap-0.5 opacity-60">
+                    {offline.map((u) => (
+                      <FriendRow key={u.id} user={u} onMessage={onMessage} />
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
         </Tabs.Panel>
 
         <Tabs.Panel id="pending" className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
-          <SectionLabel className="mb-1.5 px-3">En attente — {PENDING.length}</SectionLabel>
-          <div className="flex flex-col gap-0.5">
-            {PENDING.map(({ requestId, user, direction }) => (
-              <div
-                key={requestId || user.id}
-                className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-secondary"
-              >
-                <AlfyAvatar name={user.displayName} avatarUrl={user.avatarUrl} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{user.displayName}</p>
-                  <p className="text-xs text-muted">
-                    {direction === 'incoming' ? 'Demande reçue' : 'Demande envoyée'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  {direction === 'incoming' && (
+          <SectionLabel className="mb-1.5 px-3">
+            {tx(t.friends.people.pendingCount, { n: pending.length })}
+          </SectionLabel>
+          {pending.length === 0 ? (
+            <EmptyState icon={MailCheck} title={t.friends.noRequests} description={t.friends.upToDate} />
+          ) : (
+            <div className="flex flex-col gap-0.5">
+              {pending.map(({ requestId, user, direction }) => (
+                <div
+                  key={requestId || user.id}
+                  className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-secondary"
+                >
+                  <AlfyAvatar name={user.displayName} avatarUrl={user.avatarUrl} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{user.displayName}</p>
+                    <p className="truncate text-xs text-muted">
+                      {direction === 'incoming'
+                        ? t.friends.people.requestReceived
+                        : t.friends.people.requestSent}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {direction === 'incoming' && (
+                      <Tooltip delay={300}>
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="ghost"
+                          aria-label={tx(t.friends.people.acceptRequestFrom, { name: user.displayName })}
+                          className="rounded-full bg-surface-tertiary text-success"
+                          onPress={() => onAccept?.(requestId)}
+                        >
+                          <Check className="size-4" />
+                        </Button>
+                        <Tooltip.Content>
+                          <p>{t.friends.accept}</p>
+                        </Tooltip.Content>
+                      </Tooltip>
+                    )}
                     <Tooltip delay={300}>
                       <Button
                         isIconOnly
                         size="sm"
                         variant="ghost"
-                        aria-label={`Accepter la demande de ${user.displayName}`}
-                        className="rounded-full bg-surface-tertiary text-success"
-                        onPress={() => onAccept?.(requestId)}
+                        aria-label={
+                          direction === 'incoming'
+                            ? tx(t.friends.people.declineRequestFrom, { name: user.displayName })
+                            : tx(t.friends.people.cancelRequestTo, { name: user.displayName })
+                        }
+                        className="rounded-full bg-surface-tertiary text-muted hover:text-danger"
+                        onPress={() => onDecline?.(requestId)}
                       >
-                        <Check className="size-4" />
+                        <X className="size-4" />
                       </Button>
                       <Tooltip.Content>
-                        <p>Accepter</p>
+                        <p>{direction === 'incoming' ? t.friends.decline : t.common.cancel}</p>
                       </Tooltip.Content>
                     </Tooltip>
-                  )}
-                  <Tooltip delay={300}>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="ghost"
-                      aria-label={
-                        direction === 'incoming'
-                          ? `Refuser la demande de ${user.displayName}`
-                          : `Annuler la demande à ${user.displayName}`
-                      }
-                      className="rounded-full bg-surface-tertiary text-muted hover:text-danger"
-                      onPress={() => onDecline?.(requestId)}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                    <Tooltip.Content>
-                      <p>{direction === 'incoming' ? 'Refuser' : 'Annuler'}</p>
-                    </Tooltip.Content>
-                  </Tooltip>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Tabs.Panel>
 
         <Tabs.Panel id="blocked" className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
-          <SectionLabel className="mb-1.5 px-3">Bloqués — {BLOCKED.length}</SectionLabel>
-          {BLOCKED.length === 0 ? (
-            <EmptyState icon={Ban} title="Personne de bloqué" description="Les personnes que vous bloquez apparaîtront ici." />
+          <SectionLabel className="mb-1.5 px-3">
+            {tx(t.friends.blockedCount, { n: blocked.length })}
+          </SectionLabel>
+          {blocked.length === 0 ? (
+            <EmptyState icon={Ban} title={t.friends.noBlocked} description={t.friends.blockedListEmpty} />
           ) : (
             <div className="flex flex-col gap-0.5">
-              {BLOCKED.map((u) => (
-                <div key={u.id} className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-secondary">
+              {blocked.map((u) => (
+                <div
+                  key={u.id}
+                  className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-secondary"
+                >
                   <AlfyAvatar name={u.displayName} avatarUrl={u.avatarUrl} size="sm" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{u.displayName}</p>
-                    <p className="text-xs text-muted">@{u.username}</p>
+                    <p className="truncate text-xs text-muted">@{u.username}</p>
                   </div>
                   <Button
                     size="sm"
                     variant="secondary"
+                    className="shrink-0"
                     onPress={() => {
                       onUnblock?.(u.id);
-                      toast('Débloqué·e', { description: u.displayName });
+                      toast(t.friends.unblocked, { description: u.displayName });
                     }}
                   >
-                    Débloquer
+                    {t.friends.unblock}
                   </Button>
                 </div>
               ))}
@@ -311,10 +390,8 @@ export function FriendsView({
 
         <Tabs.Panel id="add" className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
           <div className="mx-auto max-w-md">
-            <h3 className="text-base font-bold">Ajouter un ami</h3>
-            <p className="mt-1 text-sm text-muted">
-              Saisissez le nom d&apos;utilisateur exact de la personne. Aucun numéro de téléphone requis.
-            </p>
+            <h3 className="text-base font-bold">{t.friends.findFriends}</h3>
+            <p className="mt-1 text-sm text-muted">{t.friends.people.addFriendDesc}</p>
             <form
               className="mt-4 flex items-start gap-2"
               onSubmit={async (e) => {
@@ -327,10 +404,13 @@ export function FriendsView({
                   // toast doit refléter ce qui s'est réellement passé, pas
                   // s'afficher en succès inconditionnel dès la soumission.
                   const ok = await onAddFriend?.(pseudo);
+                  const username = pseudo.replace(/^@/, '');
                   if (ok === false) {
-                    toast.danger('Demande impossible', { description: `@${pseudo.replace(/^@/, '')} est introuvable, ou déjà en attente.` });
+                    toast.danger(t.friends.people.requestFailedTitle, {
+                      description: tx(t.friends.people.requestFailedDesc, { username }),
+                    });
                   } else {
-                    toast('Demande envoyée', { description: `@${pseudo.replace(/^@/, '')}` });
+                    toast(t.friends.requestSent, { description: `@${username}` });
                     setAddName('');
                   }
                 } finally {
@@ -338,12 +418,19 @@ export function FriendsView({
                 }
               }}
             >
-              <TextField value={addName} onChange={setAddName} className="flex-1">
-                <Input placeholder="pseudo" autoComplete="off" />
+              {/* Sans libellé visible, React Aria exige un `aria-label` — sinon
+                  le champ part sans nom accessible (avertissement au montage). */}
+              <TextField
+                value={addName}
+                onChange={setAddName}
+                aria-label={t.friends.usernamePlaceholder}
+                className="flex-1"
+              >
+                <Input placeholder={t.friends.usernamePlaceholder} autoComplete="off" />
               </TextField>
-              <Button type="submit" isDisabled={!addName.trim() || sending}>
+              <Button type="submit" className="shrink-0" isDisabled={!addName.trim() || sending}>
                 <UserPlus className="size-3.5" />
-                {sending ? 'Envoi…' : 'Envoyer'}
+                {sending ? t.friends.sendingRequest : t.friends.sendRequest}
               </Button>
             </form>
           </div>

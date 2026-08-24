@@ -12,12 +12,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { socketService } from '@/lib/socket';
+import { liveKey, readLive, writeLive } from '@/lib/live-cache';
 import { useAuth } from '@/hooks/use-auth';
 import { toAlfyMessage, unwrap } from '@/components/alfy/live/map';
 import type { AlfyMessage } from '@/components/alfy/mock/types';
 
 /** Taille d'un lot d'historique — vaut aussi comme seuil « il en reste ». */
 const PAGE_SIZE = 50;
+
+type RawMessage = Record<string, unknown>;
+/** Ce que le cache retient d'un salon : l'historique chargé et s'il en reste. */
+interface HistoriqueCache {
+  raw: RawMessage[];
+  hasMore: boolean;
+}
+
+const dateOf = (m: RawMessage) => String(m.createdAt ?? m.created_at ?? '');
 /** Au-delà, on considère que le STOP de frappe s'est perdu. */
 const TYPING_TTL_MS = 8000;
 
@@ -46,35 +56,62 @@ export function useAlfyServerMessages(
 ): AlfyServerMessages {
   const { user } = useAuth();
   const meId = user?.id ?? '';
-  const [raw, setRaw] = useState<Record<string, unknown>[]>([]);
-  const [isLoading, setLoading] = useState(true);
+
+  /* Amorçage depuis le cache : rouvrir un salon déjà lu affiche ses messages
+     tout de suite, sans spinner, le rafraîchissement se fait par-dessus. */
+  const enCache = readLive<HistoriqueCache>(liveKey.messages(channelId));
+  const [raw, setRaw] = useState<RawMessage[]>(() => enCache?.raw ?? []);
+  const [isLoading, setLoading] = useState(() => Boolean(channelId) && !enCache);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
+  const [hasMore, setHasMore] = useState(() => enCache?.hasMore ?? false);
   const [isLoadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
   const [typing, setTyping] = useState<Record<string, string>>({});
+
+  /* Changement de salon sans démontage : réamorçage pendant le rendu, donc les
+     messages du salon précédent ne sont jamais peints. */
+  const [prevChannelId, setPrevChannelId] = useState(channelId);
+  if (prevChannelId !== channelId) {
+    setPrevChannelId(channelId);
+    const c = readLive<HistoriqueCache>(liveKey.messages(channelId));
+    setRaw(c?.raw ?? []);
+    setHasMore(c?.hasMore ?? false);
+    setLoading(Boolean(channelId) && !c);
+    setError(null);
+  }
+
+  useEffect(() => {
+    if (channelId) writeLive<HistoriqueCache>(liveKey.messages(channelId), { raw, hasMore });
+  }, [channelId, raw, hasMore]);
 
   const idOf = (m: Record<string, unknown>) => m.id as string;
   const typingTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
   /* Historique + abonnement au salon */
   useEffect(() => {
-    if (!serverId || !channelId) {
-      setRaw([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    setHasMore(false);
+    // Pas de salon : le réamorçage en phase de rendu a déjà vidé l'état.
+    if (!serverId || !channelId) return;
+    /* Spinner, `hasMore` et erreur sont déjà positionnés par le réamorçage en
+       phase de rendu : les repositionner ici ferait clignoter un salon connu et
+       couperait sa pagination le temps de l'aller-retour. */
+    const dejaConnu = Boolean(readLive<HistoriqueCache>(liveKey.messages(channelId)));
     socketService.requestMessageHistory(serverId, channelId, { limit: PAGE_SIZE }, (res: unknown) => {
       const d = res as { messages?: unknown[]; error?: string } | unknown[];
       const echec = !Array.isArray(d) ? d?.error : undefined;
-      const list = (Array.isArray(d) ? d : (d?.messages ?? [])) as Record<string, unknown>[];
-      setRaw(list);
+      const list = (Array.isArray(d) ? d : (d?.messages ?? [])) as RawMessage[];
+      /* Le lot frais fait autorité sur la fenêtre qu'il couvre (il intègre les
+         suppressions faites en notre absence). En revanche il ne doit pas
+         effacer l'historique plus ancien déjà paginé : on ne conserve du cache
+         que ce qui précède le plus vieux message du lot. */
+      const plusVieuxFrais = list.length > 0 ? dateOf(list[0]) : null;
+      setRaw((prev) =>
+        plusVieuxFrais === null
+          ? list
+          : [...prev.filter((m) => dateOf(m) < plusVieuxFrais), ...list],
+      );
       setError(echec ?? null);
       // Un lot plein laisse supposer qu'il reste de l'historique derrière.
-      setHasMore(list.length >= PAGE_SIZE);
+      if (list.length >= PAGE_SIZE || !dejaConnu) setHasMore(list.length >= PAGE_SIZE);
       setLoading(false);
     });
     socketService.joinChannel(channelId);
@@ -95,7 +132,7 @@ export function useAlfyServerMessages(
         { limit: PAGE_SIZE, before: idOf(plusAncien) },
         (res: unknown) => {
           const d = res as { messages?: unknown[]; error?: string } | unknown[];
-          const list = (Array.isArray(d) ? d : (d?.messages ?? [])) as Record<string, unknown>[];
+          const list = (Array.isArray(d) ? d : (d?.messages ?? [])) as RawMessage[];
           if (list.length > 0) {
             setRaw((prev) => {
               const connus = new Set(prev.map(idOf));

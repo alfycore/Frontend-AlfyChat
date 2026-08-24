@@ -27,6 +27,8 @@ interface SettingsShellProps {
   onClose: () => void;
   /** Pied de navigation optionnel (version, actions danger…). */
   navFooter?: React.ReactNode;
+  /** Onglet ouvert à l'affichage — permet d'entrer directement au bon endroit. */
+  initialTabId?: string;
 }
 
 /** Navigation programmatique entre onglets (liens « Paramètres connexes »). */
@@ -42,9 +44,11 @@ export function useSettingsNav() {
  * navigation groupée (ListBox à sections) sur colonne sombre alignée à
  * droite, contenu large, bouton de fermeture dédié, fermeture Échap.
  */
-export function SettingsShell({ title, subtitle, groups, onClose, navFooter }: SettingsShellProps) {
+export function SettingsShell({ title, subtitle, groups, onClose, navFooter, initialTabId }: SettingsShellProps) {
   const allTabs = groups.flatMap((g) => g.items);
-  const [selectedId, setSelectedId] = useState(allTabs[0]?.id);
+  const [selectedId, setSelectedId] = useState(
+    () => (initialTabId && allTabs.some((tab) => tab.id === initialTabId) ? initialTabId : allTabs[0]?.id),
+  );
   const selected = allTabs.find((t) => t.id === selectedId) ?? allTabs[0];
   // Sur mobile, une seule colonne à la fois : liste des onglets ou contenu.
   const [showNavOnMobile, setShowNavOnMobile] = useState(true);

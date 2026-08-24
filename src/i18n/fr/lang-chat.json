@@ -113,7 +113,13 @@
     "blockedByThemComposer": "Vous ne pouvez pas écrire à cette personne",
     "welcomeChannelHeading": "Bienvenue dans {name}",
     "channelTopicFallback": "C’est le début de ce salon.",
-    "encryptedBadge": "chiffré"
+    "encryptedBadge": "chiffré",
+    "lightbox": {
+      "previousImage": "Image précédente",
+      "nextImage": "Image suivante",
+      "zoomIn": "Agrandir",
+      "zoomOut": "Ajuster à l’écran"
+    }
   },
   "messageItem": {
     "user": "Utilisateur",

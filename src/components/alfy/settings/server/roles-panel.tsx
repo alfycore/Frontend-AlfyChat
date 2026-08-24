@@ -1,24 +1,33 @@
 'use client';
 
-import { Button, Chip, ListBox, Label } from '@heroui/react';
-import { Plus, Shield } from 'lucide-react';
+import { AlertDialog, Button, Chip, Dropdown, ListBox, Label, toast } from '@heroui/react';
+import { Ellipsis, Plus, Shield, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import type { AlfyRole, AlfyServer } from '@/components/alfy/mock/types';
 import { PERMISSIONS } from '@/components/alfy/mock/types';
+import type { MemberPerms } from '@/lib/server-perms';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
 import { RoleEditor } from '@/components/alfy/settings/server/role-editor';
 
 interface RolesPanelProps {
   server: AlfyServer;
+  /** Droits du membre courant — l'éditeur est en lecture seule sans MANAGE_ROLES. */
+  perms?: MemberPerms;
   /** Persistance réelle du rôle édité (socket, permissions en bitmask). */
   onSaveRole?: (role: AlfyRole) => void;
+  /** Création réelle (socket). Sans ce callback, le bouton n'est pas affiché. */
+  onCreateRole?: (data: { name: string; color?: string; permissions?: number }) => void;
+  /** Suppression réelle (socket). */
+  onDeleteRole?: (roleId: string) => void;
 }
 
 /** Maître-détail : liste des rôles à gauche, éditeur à droite. */
-export function RolesPanel({ server, onSaveRole }: RolesPanelProps) {
+export function RolesPanel({ server, perms, onSaveRole, onCreateRole, onDeleteRole }: RolesPanelProps) {
   const [roles, setRoles] = useState<AlfyRole[]>(server.roles);
   const [selectedId, setSelectedId] = useState(roles[0]?.id);
+  const [deleteTarget, setDeleteTarget] = useState<AlfyRole | null>(null);
+  const canManage = perms?.canManageRoles ?? Boolean(onSaveRole);
 
   // Les rôles réels arrivent en asynchrone : resynchroniser à leur arrivée.
   const [lastServerRoles, setLastServerRoles] = useState(server.roles);
@@ -75,39 +84,97 @@ export function RolesPanel({ server, onSaveRole }: RolesPanelProps) {
               </ListBox.Item>
             ))}
           </ListBox>
-          <Button
-            size="sm"
-            variant="secondary"
-            className="mt-2 w-full"
-            onPress={() => {
-              const nr: AlfyRole = {
-                id: `r-new-${Date.now()}`,
-                name: 'Nouveau rôle',
-                color: '#94a3b8',
-                permissions: PERMISSIONS.READ | PERMISSIONS.SEND | PERMISSIONS.REACT,
-                hoisted: false,
-                position: roles.length,
-              };
-              setRoles((r) => [...r, nr]);
-              setSelectedId(nr.id);
-            }}
-          >
-            <Plus className="size-3.5" />
-            Créer un rôle
-          </Button>
+          {canManage && onCreateRole && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-2 w-full"
+              onPress={() => {
+                // Le rôle est créé côté serveur ; il réapparaît via ROLE_CREATE.
+                // Auparavant il n'existait qu'en state local et disparaissait au
+                // rechargement — et l'édition ciblait un identifiant inventé.
+                onCreateRole({
+                  name: 'Nouveau rôle',
+                  color: '#94a3b8',
+                  permissions: PERMISSIONS.READ | PERMISSIONS.SEND | PERMISSIONS.REACT,
+                });
+                toast('Rôle en cours de création…');
+              }}
+            >
+              <Plus className="size-3.5" />
+              Créer un rôle
+            </Button>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           {selected && (
-            <RoleEditor
-              role={selected}
-              onSave={(updated) => {
-                setRoles((rs) => rs.map((r) => (r.id === updated.id ? updated : r)));
-                onSaveRole?.(updated);
-              }}
-            />
+            <>
+              {canManage && onDeleteRole && (
+                <div className="mb-3 flex justify-end">
+                  <Dropdown>
+                    <Dropdown.Trigger
+                      aria-label={`Actions pour ${selected.name}`}
+                      className="flex size-7 cursor-pointer items-center justify-center rounded-sm text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+                    >
+                      <Ellipsis className="size-4" />
+                    </Dropdown.Trigger>
+                    <Dropdown.Popover className="min-w-48">
+                      <Dropdown.Menu onAction={(k) => { if (k === 'delete') setDeleteTarget(selected); }}>
+                        <Dropdown.Item id="delete" textValue="Supprimer le rôle" variant="danger">
+                          <Trash2 className="size-4" />
+                          <Label>Supprimer le rôle</Label>
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown.Popover>
+                  </Dropdown>
+                </div>
+              )}
+              <RoleEditor
+                role={selected}
+                onSave={(updated) => {
+                  setRoles((rs) => rs.map((r) => (r.id === updated.id ? updated : r)));
+                  onSaveRole?.(updated);
+                }}
+              />
+            </>
           )}
         </div>
       </div>
+
+      <AlertDialog
+        isOpen={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+      >
+        <AlertDialog.Backdrop>
+          <AlertDialog.Container>
+            <AlertDialog.Dialog className="sm:max-w-100">
+              <AlertDialog.Header>
+                <AlertDialog.Icon status="danger" />
+                <AlertDialog.Heading>Supprimer « {deleteTarget?.name} » ?</AlertDialog.Heading>
+              </AlertDialog.Header>
+              <AlertDialog.Body>
+                <p>
+                  Le rôle est retiré de tous les membres qui le portent. Cette action est
+                  définitive.
+                </p>
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button slot="close" variant="tertiary">Annuler</Button>
+                <Button
+                  variant="danger"
+                  onPress={() => {
+                    if (!deleteTarget) return;
+                    onDeleteRole?.(deleteTarget.id);
+                    setDeleteTarget(null);
+                  }}
+                >
+                  Supprimer
+                </Button>
+              </AlertDialog.Footer>
+            </AlertDialog.Dialog>
+          </AlertDialog.Container>
+        </AlertDialog.Backdrop>
+      </AlertDialog>
     </div>
   );
 }

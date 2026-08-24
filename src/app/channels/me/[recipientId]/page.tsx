@@ -5,9 +5,9 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, UserX } from 'lucide-react';
 
-import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
+import { loadDmBootstrap } from '@/lib/dm-bootstrap';
 import { useTranslation } from '@/components/locale-provider';
 import { AlfyDmChat } from '@/components/alfy/live/alfy-dm-chat';
 
@@ -21,14 +21,17 @@ export default function DMPage() {
   const cached = recipientId ? dmPrefetchCache.getUser(recipientId) : null;
   const [error, setError] = useState(false);
 
-  // Rafraîchit le cache de profil en arrière-plan (affichage instantané).
+  /* Amorçage du fil : profil, blocage, trousseau Signal et première page de
+     messages en UNE requête. La page et `AlfyDmChat` la partagent — chacun
+     demandait auparavant le profil de son côté, soit deux fois le même appel. */
   useEffect(() => {
     if (authLoading || !user || !recipientId) return;
-    api
-      .getUser(recipientId)
-      .then((res) => {
-        if (res.success && res.data) {
-          const u = res.data as Record<string, unknown>;
+    let annule = false;
+    loadDmBootstrap(recipientId)
+      .then((boot) => {
+        if (annule) return;
+        const u = boot?.recipient as Record<string, unknown> | null;
+        if (u) {
           dmPrefetchCache.setUser(recipientId, {
             id: u.id as string,
             username: u.username as string,
@@ -39,13 +42,19 @@ export default function DMPage() {
             status: u.status as string | undefined,
             customStatus: (u.customStatus as string) ?? null,
           });
+          if (Array.isArray(boot?.messages) && boot.messages.length > 0) {
+            dmPrefetchCache.setMessages(recipientId, boot.messages as unknown[] as never[]);
+          }
         } else if (!cached) {
           setError(true);
         }
       })
       .catch(() => {
-        if (!cached) setError(true);
+        if (!annule && !cached) setError(true);
       });
+    return () => {
+      annule = true;
+    };
   }, [recipientId, user, authLoading, cached]);
 
   /* Destinataire introuvable */

@@ -12,6 +12,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { serverListStore, type CachedServer } from '@/lib/server-list-store';
+import { loadBootstrap } from '@/lib/bootstrap-store';
 import * as notif from '@/lib/notification-store';
 import type { AlfyServer } from '@/components/alfy/mock/types';
 
@@ -44,13 +45,18 @@ export function useAlfyServers(): { servers: AlfyServer[]; loaded: boolean; dmUn
   const notifState = useSyncExternalStore(notif.subscribe, notif.getSnapshot, notif.getSnapshot);
 
   // Chargement initial (une seule fois grâce au flag du store).
+  // La liste arrive avec l'amorçage partagé : aucun appel `getServers` de plus
+  // quand la coquille l'a déjà déclenché.
   useEffect(() => {
     if (serverListStore.isLoaded()) return;
     let cancelled = false;
-    api
-      .getServers()
-      .then((res) => {
-        const list = (res?.data ?? res) as CachedServer[] | undefined;
+    loadBootstrap()
+      .then(async (boot) => {
+        if (cancelled) return;
+        const list = (boot?.servers ??
+          ((await api.getServers().catch(() => null))?.data as CachedServer[] | undefined)) as
+          | CachedServer[]
+          | undefined;
         if (!cancelled && Array.isArray(list)) serverListStore.set(list);
       })
       .catch(() => {});

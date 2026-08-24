@@ -8,6 +8,7 @@ import type { AlfyServer } from '@/components/alfy/mock/types';
 import { AlfyMark } from '@/components/alfy/primitives/alfy-mark';
 import { SPRING } from '@/components/alfy/motion';
 import { ServerRailItem } from '@/components/alfy/servers/server-rail-item';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 interface ServerRailProps {
@@ -34,6 +35,7 @@ export function ServerRail({
   onCreate,
   onJoin,
 }: ServerRailProps) {
+  const { t } = useTranslation();
   const horizontal = orientation === 'horizontal';
 
   return (
@@ -48,7 +50,7 @@ export function ServerRail({
         <button
           type="button"
           onClick={() => onSelectServer(null)}
-          aria-label="Messages privés"
+          aria-label={t.serverRail.dms}
           data-active={activeServerId === null}
           className={cn(
             horizontal ? 'alfy-rail-item-h' : 'alfy-rail-item',
@@ -80,7 +82,7 @@ export function ServerRail({
           )}
         </button>
         <Tooltip.Content placement={horizontal ? 'bottom' : 'right'}>
-          <p>Messages privés</p>
+          <p>{t.serverRail.dms}</p>
         </Tooltip.Content>
       </Tooltip>
 
@@ -110,7 +112,7 @@ export function ServerRail({
 
         <Dropdown>
           <Dropdown.Trigger
-            aria-label="Créer ou rejoindre un serveur"
+            aria-label={t.serverRail.createOrJoinAria}
             className={cn(
               'flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-surface text-success outline-none transition-colors hover:bg-success/15 focus-visible:ring-2 focus-visible:ring-focus',
               !horizontal && 'mt-1',
@@ -125,13 +127,13 @@ export function ServerRail({
                 else if (key === 'join') onJoin?.();
               }}
             >
-              <Dropdown.Item id="create" textValue="Créer un serveur">
+              <Dropdown.Item id="create" textValue={t.serverRail.createServer}>
                 <Rocket className="size-4" aria-hidden />
-                <Label>Créer un serveur</Label>
+                <Label>{t.serverRail.createServer}</Label>
               </Dropdown.Item>
-              <Dropdown.Item id="join" textValue="Rejoindre un serveur">
+              <Dropdown.Item id="join" textValue={t.serverRail.joinServer}>
                 <Link2 className="size-4" aria-hidden />
-                <Label>Rejoindre un serveur</Label>
+                <Label>{t.serverRail.joinServer}</Label>
               </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown.Popover>
@@ -142,14 +144,14 @@ export function ServerRail({
         <Button
           isIconOnly
           variant="ghost"
-          aria-label="Découvrir des serveurs publics"
+          aria-label={t.serverRail.discoverAria}
           className="size-11 shrink-0 rounded-full bg-surface text-muted transition-colors hover:text-foreground"
           onPress={onDiscover}
         >
           <Compass className="size-5" />
         </Button>
         <Tooltip.Content placement={horizontal ? 'bottom' : 'right'}>
-          <p>Découvrir des serveurs publics</p>
+          <p>{t.serverRail.discoverAria}</p>
         </Tooltip.Content>
       </Tooltip>
 
@@ -158,14 +160,14 @@ export function ServerRail({
           <Button
             isIconOnly
             variant="ghost"
-            aria-label={horizontal ? 'Passer la barre en vertical' : 'Passer la barre en horizontal'}
+            aria-label={horizontal ? t.serverRail.toggleToVertical : t.serverRail.toggleToHorizontal}
             className="size-11 shrink-0 rounded-full bg-surface text-muted transition-colors hover:text-foreground"
             onPress={onToggleOrientation}
           >
             {horizontal ? <PanelLeft className="size-5" /> : <PanelTop className="size-5" />}
           </Button>
           <Tooltip.Content placement={horizontal ? 'bottom' : 'right'}>
-            <p>{horizontal ? 'Barre verticale' : 'Barre horizontale'}</p>
+            <p>{horizontal ? t.serverRail.verticalBar : t.serverRail.horizontalBar}</p>
           </Tooltip.Content>
         </Tooltip>
       )}

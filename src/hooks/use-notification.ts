@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { socketService } from '@/lib/socket';
 import { signalService } from '@/lib/signal-service';
 import { api } from '@/lib/api';
+import { loadBootstrap } from '@/lib/bootstrap-store';
 import { useAuth } from '@/hooks/use-auth';
 import {
   isDMActive,
@@ -89,10 +90,11 @@ export function useNotification() {
     if (!user?.id) return;
     setStorageNamespace(user.id);
 
-    // Charger les préférences utilisateur
-    api.getPreferences(user.id).then((res: any) => {
-      if (res?.success && res?.data) {
-        const p = res.data as any;
+    // Préférences et réglages par salon : deux requêtes de moins, ils arrivent
+    // avec l'amorçage partagé (`/api/bootstrap/me`).
+    loadBootstrap().then((boot) => {
+      if (boot?.preferences && Object.keys(boot.preferences).length > 0) {
+        const p = boot.preferences as any;
         prefsRef.current = {
           notificationsSound:   p.notifications_sound   ?? p.notificationsSound   ?? true,
           notificationsDesktop: p.notifications_desktop ?? p.notificationsDesktop ?? true,
@@ -105,16 +107,14 @@ export function useNotification() {
           quietEnd:             p.quiet_end   ?? p.quietEnd   ?? undefined,
         };
       }
-    }).catch(() => {});
 
-    // Charger les paramètres de notification par canal
-    api.get('/api/messages/notifications/settings').then((res: any) => {
-      if (res?.success && res?.data && typeof res.data === 'object') {
+      const raw = boot?.notificationSettings;
+      if (raw && typeof raw === 'object') {
         const settings: Record<string, NotifLevel> = {};
-        for (const [targetId, val] of Object.entries(res.data as Record<string, any>)) {
+        for (const [targetId, val] of Object.entries(raw as Record<string, any>)) {
           if (val?.level) settings[targetId] = val.level as NotifLevel;
         }
-        loadChannelSettings(settings);
+        if (Object.keys(settings).length > 0) loadChannelSettings(settings);
       }
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps

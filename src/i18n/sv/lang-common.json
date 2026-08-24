@@ -30,5 +30,14 @@
     "invisible": "Osynlig",
     "offline": "Offline",
     "you": "Du"
+  },
+  "titleBar": {
+    "back": "Tillbaka",
+    "forward": "Framåt",
+    "minimize": "Minimera",
+    "maximize": "Maximera",
+    "restore": "Återställ",
+    "close": "Stäng",
+    "help": "Hjälp"
   }
 }

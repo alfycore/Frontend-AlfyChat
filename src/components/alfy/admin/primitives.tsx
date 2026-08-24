@@ -252,9 +252,13 @@ export function LoadBar({
   return (
     <div className="flex items-center gap-2">
       <div className="relative h-1.5 w-16 overflow-hidden rounded-full bg-surface-tertiary">
+        {/* linear : une quantité doit progresser à vitesse constante — un
+          * ease-out fait paraître la fin du remplissage plus lente qu'elle
+          * ne l'est. scaleX plutôt que width pour rester sur le compositeur ;
+          * le parent porte déjà overflow-hidden + rounded-full. */}
         <div
-          className={cn('absolute inset-y-0 left-0 rounded-full transition-[width] duration-500 ease-out', tone)}
-          style={{ width: `${pct}%` }}
+          className={cn('absolute inset-y-0 left-0 w-full origin-left transition-transform duration-500 ease-linear', tone)}
+          style={{ transform: `scaleX(${Math.max(0, Math.min(100, pct)) / 100})` }}
         />
       </div>
       <span className={cn('text-xs tabular-nums', text)}>{pct}%</span>

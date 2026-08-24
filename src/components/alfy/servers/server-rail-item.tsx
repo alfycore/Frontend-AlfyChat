@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 
 import type { AlfyServer } from '@/components/alfy/mock/types';
 import { SPRING } from '@/components/alfy/motion';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 interface ServerRailItemProps {
@@ -14,16 +15,20 @@ interface ServerRailItemProps {
   orientation?: 'vertical' | 'horizontal';
 }
 
+/* `/\w/` ne reconnaît que l'alphabet latin : un serveur nommé « 日本 » ou
+   « Сервер » retombait sur une pastille vide. */
 const initials = (name: string) =>
   name
+    .trim()
     .split(/\s+/)
-    .filter((p) => /\w/.test(p))
+    .filter(Boolean)
     .map((p) => p[0])
     .slice(0, 2)
     .join('')
-    .toUpperCase();
+    .toUpperCase() || '?';
 
 export function ServerRailItem({ server, active, onSelect, orientation = 'vertical' }: ServerRailItemProps) {
+  const { t, tx } = useTranslation();
   const horizontal = orientation === 'horizontal';
   return (
     <Tooltip delay={150}>
@@ -52,7 +57,7 @@ export function ServerRailItem({ server, active, onSelect, orientation = 'vertic
             <Avatar.Fallback>{initials(server.name)}</Avatar.Fallback>
           </Avatar>
           {server.mentionCount > 0 && (
-            <Badge color="danger" size="sm" aria-label={`${server.mentionCount} mentions`}>
+            <Badge color="danger" size="sm" aria-label={tx(t.serverRailItem.mentionsAria, { n: server.mentionCount })}>
               {server.mentionCount}
             </Badge>
           )}
@@ -61,14 +66,14 @@ export function ServerRailItem({ server, active, onSelect, orientation = 'vertic
               color="success"
               size="sm"
               placement="bottom-right"
-              aria-label="Nœud auto-hébergé en ligne"
+              aria-label={t.serverRailItem.nodeOnlineAria}
             />
           )}
         </Badge.Anchor>
         {/* Point non-lu discret quand pas de mention */}
         {server.unread && server.mentionCount === 0 && !active && (
           <span
-            aria-label="Messages non lus"
+            aria-label={t.serverRailItem.unreadAria}
             className={cn(
               'absolute size-1.5 rounded-full bg-foreground/70',
               horizontal ? '-top-2 left-1/2 -translate-x-1/2' : 'top-1/2 -left-2 -translate-y-1/2',
@@ -92,7 +97,9 @@ export function ServerRailItem({ server, active, onSelect, orientation = 'vertic
         <p className="font-medium">{server.name}</p>
         {server.selfHosted && (
           <p className="text-xs text-muted">
-            {server.nodeOnline ? 'Nœud auto-hébergé · en ligne' : 'Nœud hors ligne'}
+            {server.nodeOnline
+              ? t.serverRailItem.nodeOnlineTooltip
+              : t.serverRailItem.nodeOfflineTooltip}
           </p>
         )}
       </Tooltip.Content>

@@ -5,14 +5,10 @@
  * ────────────────────────────────────────────────────────────────────────────
  * Retourne les droits du membre courant dans un serveur donné.
  *
- * Droits (bitfield Discord-like) :
- *   ADMIN           = 0x40  (peut tout faire)
- *   MANAGE_CHANNELS = 0x80  (créer/modifier/supprimer des salons)
- *   MANAGE_ROLES    = 0x100 (créer/modifier des rôles)
- *   SEND_MESSAGES   = 0x01  (envoyer des messages)
- *   KICK_MEMBERS    = 0x02  (expulser)
- *   BAN_MEMBERS     = 0x04  (bannir)
- *   MANAGE_MESSAGES = 0x08  (supprimer les messages des autres)
+ * ⚠️ Le bitmask vient de `@/lib/server-perms`, copie de la table qui fait autorité
+ * dans servers/src/index.ts. Ne PAS le redéfinir ici : cette version en avait une
+ * variante incompatible (0x01=SEND_MESSAGES, 0x02=KICK…) qui lisait le rôle par
+ * défaut (0x7 = READ|SEND|REACT) comme « peut expulser et bannir ».
  *
  * Usage :
  *   const { isOwner, isAdmin, canManage, canSend, isLoading } = useServerPermissions(serverId);
@@ -21,17 +17,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { socketService } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
+import { PERMISSIONS, KICK_ANY, BAN_ANY, ALL_PERMS } from '@/lib/server-perms';
 
-/* ── Bitfield constants ─────────────────────────────────────────────────────── */
-export const PERM = {
-  SEND_MESSAGES:   0x01,
-  KICK_MEMBERS:    0x02,
-  BAN_MEMBERS:     0x04,
-  MANAGE_MESSAGES: 0x08,
-  MANAGE_ROLES:    0x10,
-  ADMIN:           0x40,
-  MANAGE_CHANNELS: 0x80,
-} as const;
+/* ── Bitfield constants — source unique, partagée avec le backend ───────────── */
+export const PERM = PERMISSIONS;
 
 /* ── Types ──────────────────────────────────────────────────────────────────── */
 export interface ServerPermissions {
@@ -147,25 +136,23 @@ export function useServerPermissions(serverId?: string): ServerPermissions {
             if (Array.isArray(p)) {
               // Format tableau de strings (ex: ['ADMIN','MANAGE_CHANNELS'])
               for (const perm of p) {
-                const k = perm as keyof typeof PERM;
-                if (k in PERM) bits |= PERM[k];
+                const bit = (PERMISSIONS as Record<string, number>)[perm];
+                if (typeof bit === 'number') bits |= bit;
               }
             } else {
-              bits |= typeof p === 'number' ? p : parseInt(p || '0', 10);
+              const n = typeof p === 'number' ? p : parseInt(p || '0', 10);
+              if (Number.isFinite(n)) bits |= n & ALL_PERMS;
             }
           }
 
-          const isAdmin = (bits & PERM.ADMIN) !== 0;
+          const isAdmin = (bits & PERMISSIONS.ADMIN) !== 0;
           const result: ServerPermissions = {
             isOwner: false,
             isAdmin,
-            canManage: isAdmin || (bits & PERM.MANAGE_CHANNELS) !== 0,
-            canSend: true, // tout le monde peut envoyer par défaut
-            canManageMessages: isAdmin || (bits & PERM.MANAGE_MESSAGES) !== 0,
-            canModerate:
-              isAdmin ||
-              (bits & PERM.KICK_MEMBERS) !== 0 ||
-              (bits & PERM.BAN_MEMBERS) !== 0,
+            canManage: isAdmin || (bits & PERMISSIONS.MANAGE_CHANNELS) !== 0,
+            canSend: isAdmin || (bits & PERMISSIONS.SEND) !== 0,
+            canManageMessages: isAdmin || (bits & PERMISSIONS.MANAGE_MESSAGES) !== 0,
+            canModerate: isAdmin || (bits & KICK_ANY) !== 0 || (bits & BAN_ANY) !== 0,
             rawPermissions: bits,
             isLoading: false,
           };

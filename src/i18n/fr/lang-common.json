@@ -29,5 +29,14 @@
     "dnd": "Ne pas déranger",
     "invisible": "Invisible",
     "offline": "Hors ligne"
+  },
+  "titleBar": {
+    "back": "Précédent",
+    "forward": "Suivant",
+    "minimize": "Réduire",
+    "maximize": "Agrandir",
+    "restore": "Restaurer",
+    "close": "Fermer",
+    "help": "Aide"
   }
 }

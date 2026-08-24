@@ -5,6 +5,9 @@ import { api } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { userProfileCache } from '@/lib/user-profile-cache';
 import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
+import { clearBootstrap } from '@/lib/bootstrap-store';
+import { clearPreviews } from '@/lib/dm-preview-store';
+import { clearLiveCache } from '@/lib/live-cache';
 import { signalService } from '@/lib/signal-service';
 import {
   generateKeypair,
@@ -491,6 +494,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Vider le cache de messages persisté (localStorage) — évite qu'un autre
     // compte ouvert sur ce navigateur hérite du cache du compte précédent.
     dmPrefetchCache.clear();
+    // Même raison pour le cache mémoire des salons, membres et historiques de
+    // serveur : il survivrait à la déconnexion sans ça.
+    clearLiveCache();
+    // Et pour l'amorçage : il porte conversations, amis et préférences du
+    // compte qui vient de se déconnecter.
+    clearBootstrap();
+    // Les aperçus de MP sont du texte EN CLAIR issu de messages chiffrés :
+    // les laisser en mémoire après une déconnexion serait la pire fuite du lot.
+    clearPreviews();
     setUser(null);
     setPrivateKey(null);
     setSignalKeysReady(false);

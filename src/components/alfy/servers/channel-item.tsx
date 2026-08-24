@@ -26,6 +26,7 @@ import { useState } from 'react';
 
 import type { AlfyChannel, AlfyChannelType } from '@/components/alfy/mock/types';
 import { SPRING } from '@/components/alfy/motion';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
 export const CHANNEL_TYPE_ICONS: Record<AlfyChannelType, typeof Hash> = {
@@ -70,6 +71,7 @@ export function ChannelItem({
   isFirst,
   isLast,
 }: ChannelItemProps) {
+  const { t, tx } = useTranslation();
   const Icon = CHANNEL_TYPE_ICONS[channel.type];
   const unread = channel.unreadCount > 0;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -107,21 +109,26 @@ export function ChannelItem({
         <span className="min-w-0 flex-1 truncate text-left">{channel.name}</span>
         {channel.mentionCount > 0 ? (
           <span
-            aria-label={`${channel.mentionCount} mentions`}
+            aria-label={tx(t.channelItem.mentionsAria, { n: channel.mentionCount })}
             className="flex min-w-4.5 shrink-0 items-center justify-center rounded-full bg-danger px-1.5 py-px text-[10px] font-semibold text-(--danger-foreground)"
           >
             {channel.mentionCount}
           </span>
         ) : (
           unread &&
-          !active && <span aria-label="Non lu" className="size-1.5 shrink-0 rounded-full bg-foreground/80" />
+          !active && (
+            <span
+              aria-label={t.serverRailItem.unreadAria}
+              className="size-1.5 shrink-0 rounded-full bg-foreground/80"
+            />
+          )
         )}
       </button>
 
       {canManage && (
         <Dropdown isOpen={menuOpen} onOpenChange={setMenuOpen}>
           <Dropdown.Trigger
-            aria-label={`Gérer #${channel.name}`}
+            aria-label={tx(t.channelItem.manageAria, { name: channel.name })}
             className={cn(
               'mr-1 flex size-6 shrink-0 cursor-pointer items-center justify-center rounded outline-none transition-colors',
               'text-muted hover:bg-surface-tertiary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus',
@@ -139,21 +146,21 @@ export function ChannelItem({
                 else if (key === 'delete') onDelete?.(channel.id);
               }}
             >
-              <Dropdown.Item id="rename" textValue="Renommer">
+              <Dropdown.Item id="rename" textValue={t.serverCommon.rename}>
                 <Pencil className="size-4" />
-                <Label>Renommer</Label>
+                <Label>{t.serverCommon.rename}</Label>
               </Dropdown.Item>
-              <Dropdown.Item id="up" textValue="Monter" isDisabled={isFirst}>
+              <Dropdown.Item id="up" textValue={t.serverCommon.moveUp} isDisabled={isFirst}>
                 <ArrowUp className="size-4" />
-                <Label>Monter</Label>
+                <Label>{t.serverCommon.moveUp}</Label>
               </Dropdown.Item>
-              <Dropdown.Item id="down" textValue="Descendre" isDisabled={isLast}>
+              <Dropdown.Item id="down" textValue={t.serverCommon.moveDown} isDisabled={isLast}>
                 <ArrowDown className="size-4" />
-                <Label>Descendre</Label>
+                <Label>{t.serverCommon.moveDown}</Label>
               </Dropdown.Item>
-              <Dropdown.Item id="delete" textValue="Supprimer le salon" variant="danger">
+              <Dropdown.Item id="delete" textValue={t.serverCommon.deleteChannel} variant="danger">
                 <Trash2 className="size-4" />
-                <Label>Supprimer le salon</Label>
+                <Label>{t.serverCommon.deleteChannel}</Label>
               </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown.Popover>

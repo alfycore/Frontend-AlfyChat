@@ -18,6 +18,7 @@ const SCREENS = [
   { href: '/uitest', label: 'Index' },
   { href: '/uitest/app', label: 'App' },
   { href: '/uitest/views', label: 'Salons+' },
+  { href: '/uitest/props', label: 'Props ×10' },
   { href: '/uitest/discover', label: 'Découvrir' },
   { href: '/uitest/call', label: 'Appels' },
   { href: '/uitest/settings/server', label: 'Serveur' },
@@ -36,6 +37,11 @@ export function UitestSwitcher() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Les 10 propositions occupent tout l'écran et portent leur propre
+  // sélecteur : cette barre y fausserait le jugement (chrome étranger + 36 px
+  // de hauteur en moins). On la garde sur la galerie pour pouvoir revenir.
+  if (pathname.startsWith('/uitest/props/')) return null;
 
   return (
     <nav

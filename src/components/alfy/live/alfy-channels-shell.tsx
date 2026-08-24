@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { useNotification } from '@/hooks/use-notification';
 import { usePresence } from '@/hooks/use-presence';
+import { loadBootstrap } from '@/lib/bootstrap-store';
 import { useCallContext } from '@/hooks/use-call-context';
 import { setActiveDM, setActiveGroup, setActiveChannel, clearUnread } from '@/lib/notification-store';
 import { api } from '@/lib/api';
@@ -31,6 +32,7 @@ import { AlfyServerSettings } from '@/components/alfy/live/alfy-server-settings'
 import { AlfyUserSettings } from '@/components/alfy/live/alfy-user-settings';
 
 import { AlfyMark } from '@/components/alfy/primitives/alfy-mark';
+import { AppTitleBar } from '@/components/alfy/shell/app-title-bar';
 import { AlfyServerRail } from '@/components/alfy/live/alfy-server-rail';
 import { AlfySidebar } from '@/components/alfy/live/alfy-sidebar';
 import { AlfyMemberList } from '@/components/alfy/live/alfy-member-list';
@@ -39,12 +41,20 @@ import { AlfyActiveCall } from '@/components/alfy/live/alfy-active-call';
 import type { AlfyUser } from '@/components/alfy/mock/types';
 import { useTranslation } from '@/components/locale-provider';
 
-/** Analyse l'URL active : serveur, canal, DM, groupe. */
+/**
+ * Analyse l'URL active : serveur, canal, DM, groupe.
+ *
+ * Le motif des MP exclut explicitement les segments qui n'en sont pas :
+ * `/channels/me/g/<id>` (groupe) donnait un destinataire « g » et
+ * `/channels/me/changelogs` un destinataire « changelogs ». La sidebar
+ * surlignait donc une conversation inexistante, et la synchronisation des
+ * notifications marquait comme lue une clé fantôme.
+ */
 function useActiveRoute(pathname: string) {
   return useMemo(() => {
     const serverMatch = pathname.match(/\/channels\/server\/([^/]+)/);
     const channelMatch = pathname.match(/\/channels\/server\/[^/]+\/([^/]+)/);
-    const dmMatch = pathname.match(/\/channels\/me\/([^/]+)/);
+    const dmMatch = pathname.match(/\/channels\/me\/(?!g(?:\/|$)|changelogs(?:\/|$))([^/]+)/);
     const groupMatch = pathname.match(/\/channels\/(?:me\/g|groups)\/([^/]+)/);
 
     const activeServerId = serverMatch?.[1] ?? null;
@@ -52,10 +62,13 @@ function useActiveRoute(pathname: string) {
     const activeDmId = dmMatch?.[1] ?? null;
     const activeGroupId = groupMatch?.[1] ?? null;
 
+    /* `??` ne saute pas une branche qui vaut `null` par calcul : chaîner
+       `(x ? … : null) ?? …` évaluait toujours la première expression. Une
+       cascade explicite lève l'ambiguïté et donne la priorité au groupe. */
     const selectedChannel =
-      activeChannelId ??
-      (activeDmId ? `dm:${activeDmId}` : null) ??
-      (activeGroupId ? `group:${activeGroupId}` : null) ??
+      activeChannelId ||
+      (activeGroupId ? `group:${activeGroupId}` : null) ||
+      (activeDmId ? `dm:${activeDmId}` : null) ||
       (pathname === '/channels/me' || pathname === '/channels/me/' ? 'friends' : null);
 
     return { activeServerId, activeChannelId, activeDmId, activeGroupId, selectedChannel };
@@ -159,7 +172,14 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
   useNotification();
   useNotificationSync(route, pathname);
 
+  /* L'onglet demandé accompagne l'ouverture : « Inviter des membres » doit
+     tomber directement sur les invitations, pas sur la vue d'ensemble. */
+  const [serverSettingsTab, setServerSettingsTab] = useState<string | undefined>(undefined);
   const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
+  const openServerSettings = (tab?: string) => {
+    setServerSettingsTab(tab);
+    setServerSettingsOpen(true);
+  };
 
   /* Appel entrant */
   const { callType, callStatus, callerName, callerAvatar, isGroup, acceptCall, joinCall, declineCall } = useCallContext();
@@ -181,7 +201,11 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
     const timer = setTimeout(() => {
       if (!cancelled) setLayoutReady(true);
     }, 5000);
-    Promise.all([api.getServers(), api.getConversations()]).finally(() => {
+    // Une seule requête : elle rapporte utilisateur, serveurs, conversations
+    // (profils résolus), amis, demandes, blocages et notifications. Les hooks
+    // de la barre latérale et de la page Amis consomment le même résultat —
+    // la requête en vol est mutualisée, ils n'en déclenchent aucune de plus.
+    loadBootstrap().finally(() => {
       if (!cancelled) {
         clearTimeout(timer);
         setLayoutReady(true);
@@ -209,110 +233,115 @@ export function AlfyChannelsShell({ children }: { children: ReactNode }) {
   const showMembers = memberListDesktopVisible && !!activeServerId;
 
   return (
-    <div data-ui="alfy" className="relative flex h-dvh flex-row overflow-hidden bg-background">
-      <IncomingCall
-        caller={caller}
-        callType={(callType as 'voice' | 'video') || 'voice'}
-        isOpen={incomingOpen}
-        onOpenChange={(open) => !open && declineCall()}
-        onAccept={isGroup ? joinCall : acceptCall}
-        onDecline={declineCall}
-      />
+    <div data-ui="alfy" className="flex h-dvh flex-col overflow-hidden bg-background">
+      <AppTitleBar serverId={activeServerId} />
 
-      {/* Rail alfy — vraies données */}
-      {!isMobile && (
-        <div className="flex h-full shrink-0 border-r border-separator">
-          <AlfyServerRail activeServerId={activeServerId} />
-        </div>
-      )}
+      <div className="relative flex min-h-0 flex-1 flex-row overflow-hidden">
+        <IncomingCall
+          caller={caller}
+          callType={(callType as 'voice' | 'video') || 'voice'}
+          isOpen={incomingOpen}
+          onOpenChange={(open) => !open && declineCall()}
+          onAccept={isGroup ? joinCall : acceptCall}
+          onDecline={declineCall}
+        />
 
-      {/* Sidebar alfy — vraies données (salons ou DM selon la route) */}
-      {!isMobile && (
-        <aside className="h-full w-66 shrink-0 overflow-hidden border-r border-separator">
-          <AlfySidebar
-            serverId={activeServerId}
-            activeChannelId={activeChannelId}
-            activeDmId={activeDmId}
-            friendsActive={selectedChannel === 'friends'}
-            onOpenServerSettings={() => setServerSettingsOpen(true)}
-            onOpenUserSettings={openSettings}
-          />
-        </aside>
-      )}
-
-      {/* Contenu réel des pages — rendu unique, quel que soit l'appareil */}
-      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-surface">
-        <AlfyActiveCall />
-        {children}
-      </main>
-
-      {/* Membres */}
-      {!isMobile && showMembers && (
-        <div className="h-full w-62 shrink-0 overflow-hidden border-l border-separator bg-surface">
-          <AlfyMemberList serverId={activeServerId!} />
-        </div>
-      )}
-
-      {/* Mobile : nav / membres en slide-over par-dessus le contenu */}
-      {isMobile && (
-        <>
-          {/* Fond semi-transparent commun aux deux panneaux mobiles */}
-          {(showSidebar || showMemberList) && (
-            <div
-              className="fixed inset-0 z-40 bg-black/50"
-              onClick={closeAll}
-              aria-hidden
-            />
-          )}
-
-          {/* Rail serveurs + salons/DM, en slide-over depuis la gauche */}
-          <div
-            className={
-              'fixed inset-y-0 left-0 z-50 flex h-full w-[85vw] max-w-sm overflow-hidden bg-surface transition-transform duration-300 ease-out ' +
-              (showSidebar ? 'translate-x-0' : '-translate-x-full')
-            }
-          >
+        {/* Rail alfy — vraies données */}
+        {!isMobile && (
+          <div className="flex h-full shrink-0 border-r border-separator">
             <AlfyServerRail activeServerId={activeServerId} />
-            <div className="min-w-0 flex-1 overflow-hidden border-l border-separator">
-              <AlfySidebar
-                serverId={activeServerId}
-                activeChannelId={activeChannelId}
-                activeDmId={activeDmId}
-                friendsActive={selectedChannel === 'friends'}
-                onOpenServerSettings={() => {
-                  closeSidebar();
-                  setServerSettingsOpen(true);
-                }}
-                onOpenUserSettings={() => {
-                  closeSidebar();
-                  openSettings();
-                }}
-              />
-            </div>
           </div>
+        )}
 
-          {activeServerId && (
+        {/* Sidebar alfy — vraies données (salons ou DM selon la route) */}
+        {!isMobile && (
+          <aside className="h-full w-66 shrink-0 overflow-hidden border-r border-separator">
+            <AlfySidebar
+              serverId={activeServerId}
+              activeChannelId={activeChannelId}
+              activeDmId={activeDmId}
+              friendsActive={selectedChannel === 'friends'}
+              onOpenServerSettings={openServerSettings}
+              onOpenUserSettings={openSettings}
+            />
+          </aside>
+        )}
+
+        {/* Contenu réel des pages — rendu unique, quel que soit l'appareil */}
+        <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-surface">
+          <AlfyActiveCall />
+          {children}
+        </main>
+
+        {/* Membres */}
+        {!isMobile && showMembers && (
+          <div className="h-full w-62 shrink-0 overflow-hidden border-l border-separator bg-surface">
+            <AlfyMemberList serverId={activeServerId!} />
+          </div>
+        )}
+
+        {/* Mobile : nav / membres en slide-over par-dessus le contenu */}
+        {isMobile && (
+          <>
+            {/* Fond semi-transparent commun aux deux panneaux mobiles */}
+            {(showSidebar || showMemberList) && (
+              <div
+                className="fixed inset-0 z-40 bg-black/50"
+                onClick={closeAll}
+                aria-hidden
+              />
+            )}
+
+            {/* Rail serveurs + salons/DM, en slide-over depuis la gauche */}
             <div
               className={
-                'fixed inset-y-0 right-0 z-50 w-[82vw] max-w-xs overflow-hidden bg-surface transition-transform duration-300 ease-out ' +
-                (showMemberList ? 'translate-x-0' : 'translate-x-full')
+                'fixed inset-y-0 left-0 z-50 flex h-full w-[85vw] max-w-sm overflow-hidden bg-surface transition-transform duration-300 ease-out ' +
+                (showSidebar ? 'translate-x-0' : '-translate-x-full')
               }
             >
-              <AlfyMemberList serverId={activeServerId} />
+              <AlfyServerRail activeServerId={activeServerId} />
+              <div className="min-w-0 flex-1 overflow-hidden border-l border-separator">
+                <AlfySidebar
+                  serverId={activeServerId}
+                  activeChannelId={activeChannelId}
+                  activeDmId={activeDmId}
+                  friendsActive={selectedChannel === 'friends'}
+                  onOpenServerSettings={(tab) => {
+                    closeSidebar();
+                    openServerSettings(tab);
+                  }}
+                  onOpenUserSettings={() => {
+                    closeSidebar();
+                    openSettings();
+                  }}
+                />
+              </div>
             </div>
-          )}
-        </>
-      )}
 
-      {/* Dialogues */}
-      {activeServerId && (
-        <AlfyServerSettings
-          serverId={activeServerId}
-          isOpen={serverSettingsOpen}
-          onOpenChange={setServerSettingsOpen}
-        />
-      )}
-      <AlfyUserSettings isOpen={showSettings} onOpenChange={(open) => !open && closeSettings()} />
+            {activeServerId && (
+              <div
+                className={
+                  'fixed inset-y-0 right-0 z-50 w-[82vw] max-w-xs overflow-hidden bg-surface transition-transform duration-300 ease-out ' +
+                  (showMemberList ? 'translate-x-0' : 'translate-x-full')
+                }
+              >
+                <AlfyMemberList serverId={activeServerId} />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Dialogues */}
+        {activeServerId && (
+          <AlfyServerSettings
+            serverId={activeServerId}
+            isOpen={serverSettingsOpen}
+            onOpenChange={setServerSettingsOpen}
+            initialTab={serverSettingsTab}
+          />
+        )}
+        <AlfyUserSettings isOpen={showSettings} onOpenChange={(open) => !open && closeSettings()} />
+      </div>
     </div>
   );
 }

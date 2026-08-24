@@ -60,7 +60,13 @@
     "membersCount": "{n} members",
     "writingIn": "Write in {name}…",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "lightbox": {
+      "previousImage": "Föregående bild",
+      "nextImage": "Nästa bild",
+      "zoomIn": "Zooma in",
+      "zoomOut": "Anpassa till skärmen"
+    }
   },
   "messageItem": {
     "user": "Anv�ndare",

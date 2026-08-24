@@ -14,6 +14,11 @@ export interface CachedConversation {
   recipientAvatar?: string;
   lastMessage?: string;
   lastMessageAt?: string;
+  /** Métadonnées du dernier message — le client en déchiffre l'aperçu lui-même. */
+  lastMessageId?: string;
+  lastMessageSenderId?: string;
+  lastMessageSenderContent?: string;
+  lastMessageE2eeType?: number | null;
   participants?: string[];
 }
 

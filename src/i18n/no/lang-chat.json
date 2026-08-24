@@ -60,7 +60,13 @@
     "membersCount": "{n} members",
     "writingIn": "Write in {name}…",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "lightbox": {
+      "previousImage": "Forrige bilde",
+      "nextImage": "Neste bilde",
+      "zoomIn": "Zoom inn",
+      "zoomOut": "Tilpass til skjermen"
+    }
   },
   "messageItem": {
     "user": "Bruker",

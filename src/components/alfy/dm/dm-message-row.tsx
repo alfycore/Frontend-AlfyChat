@@ -21,7 +21,9 @@ import { memo, useState } from 'react';
 
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { Attachment } from '@/components/alfy/chat/attachment';
+import { fullFormat, timeFormat } from '@/components/alfy/chat/date-format';
 import { LinkPreview } from '@/components/alfy/chat/link-preview';
+import { ImageLightbox } from '@/components/alfy/chat/image-lightbox';
 import { AlfyMarkdown } from '@/components/alfy/chat/markdown';
 import { MessageActions } from '@/components/alfy/chat/message-actions';
 import { MessageReactions } from '@/components/alfy/chat/message-reactions';
@@ -32,9 +34,6 @@ import type { AlfyMessage } from '@/components/alfy/mock/types';
 import { useAppPrefs } from '@/hooks/use-app-prefs';
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
-
-const heureFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
-const completFmt = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full', timeStyle: 'short' });
 
 export interface DmMessageRowProps {
   message: AlfyMessage;
@@ -72,9 +71,11 @@ function Row({
   onDeleteMessage,
   onReply,
 }: DmMessageRowProps) {
-  const { t } = useTranslation();
+  const { t, intlLocale } = useTranslation();
   const userById = useUserById();
   const { prefs } = useAppPrefs();
+  const heureFmt = timeFormat(intlLocale);
+  const completFmt = fullFormat(intlLocale);
   const auteur = userById(message.authorId);
   const date = new Date(message.createdAt);
   const estMoi = message.authorId === currentUserId;
@@ -85,6 +86,11 @@ function Row({
   /* Le brouillon porte l'état d'édition : `null` = pas en cours d'édition.
      Le texte est copié à l'ouverture, donc rien à resynchroniser ensuite. */
   const [draft, setDraft] = useState<string | null>(null);
+  /* Index de l'image ouverte dans le visualiseur, `null` s'il est fermé.
+     L'état vit ici et pas dans `Attachment` : c'est ce qui permet de passer
+     d'une image à l'autre au sein du même message sans refermer. */
+  const [apercuIndex, setApercuIndex] = useState<number | null>(null);
+  const imagesDuMessage = message.attachments.filter((a) => a.mimeType.startsWith('image/') && a.url);
   const editing = draft !== null;
 
   const enregistrer = () => {
@@ -197,9 +203,26 @@ function Row({
             </div>
           )}
 
-          {message.attachments.map((piece) => (
-            <Attachment key={piece.id} attachment={piece} />
-          ))}
+          {message.attachments.map((piece) => {
+            const rangImage = imagesDuMessage.indexOf(piece);
+            return (
+              <Attachment
+                key={piece.id}
+                attachment={piece}
+                onPreview={
+                  rangImage >= 0 && prefs.showUploadedMedia
+                    ? () => setApercuIndex(rangImage)
+                    : undefined
+                }
+              />
+            );
+          })}
+          <ImageLightbox
+            images={imagesDuMessage}
+            index={apercuIndex}
+            onIndexChange={setApercuIndex}
+            onClose={() => setApercuIndex(null)}
+          />
           {prefs.showEmbeds && message.linkPreview && <LinkPreview preview={message.linkPreview} />}
           {prefs.showReactions && (
             <MessageReactions

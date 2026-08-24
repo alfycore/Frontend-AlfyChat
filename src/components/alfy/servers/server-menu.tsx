@@ -1,9 +1,10 @@
 'use client';
 
 import { Chip, Dropdown, Label, Separator } from '@heroui/react';
-import { Bell, ChevronDown, FolderPlus, Hash, LogOut, Server, Settings, UserPlus } from 'lucide-react';
+import { ChevronDown, FolderPlus, Hash, LogOut, Server, Settings, UserPlus } from 'lucide-react';
 
 import type { AlfyServer } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 interface ServerMenuProps {
   server: AlfyServer;
@@ -11,14 +12,35 @@ interface ServerMenuProps {
   canManage?: boolean;
   onCreateChannel?: () => void;
   onCreateCategory?: () => void;
+  /** Ouvre les réglages sur l'onglet des invitations. */
+  onInvite?: () => void;
+  /** Quitte le serveur (confirmation gérée par l'appelant). */
+  onLeave?: () => void;
 }
 
-/** En-tête de la sidebar : bannière du serveur (ou dégradé de repli) + nom + menu. */
-export function ServerMenu({ server, onOpenSettings, canManage = false, onCreateChannel, onCreateCategory }: ServerMenuProps) {
+/**
+ * En-tête de la sidebar : bannière du serveur (ou dégradé de repli) + nom + menu.
+ *
+ * Les entrées « Inviter des membres », « Notifications » et « Quitter le
+ * serveur » étaient rendues sans gestionnaire : le menu proposait trois
+ * commandes qui ne faisaient rien. Elles sont maintenant conditionnées à leur
+ * action, et « Notifications » — qui n'a aucune destination côté serveur — a
+ * été retirée.
+ */
+export function ServerMenu({
+  server,
+  onOpenSettings,
+  canManage = false,
+  onCreateChannel,
+  onCreateCategory,
+  onInvite,
+  onLeave,
+}: ServerMenuProps) {
+  const { t, tx } = useTranslation();
   return (
     <Dropdown>
       <Dropdown.Trigger
-        aria-label={`Menu du serveur ${server.name}`}
+        aria-label={tx(t.serverMenu.menuAria, { name: server.name })}
         className="group/menu relative block w-full cursor-pointer overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
       >
         {/* Bannière */}
@@ -31,7 +53,7 @@ export function ServerMenu({ server, onOpenSettings, canManage = false, onCreate
           {server.selfHosted && server.nodeOnline && (
             <Chip size="sm" color="success" variant="soft" className="cursor-default">
               <Server className="size-2.5" aria-hidden />
-              <Chip.Label className="text-[10px]">auto</Chip.Label>
+              <Chip.Label className="text-[10px]">{t.serverMenu.autoChip}</Chip.Label>
             </Chip>
           )}
           <ChevronDown
@@ -44,44 +66,50 @@ export function ServerMenu({ server, onOpenSettings, canManage = false, onCreate
         <Dropdown.Menu
           onAction={(key) => {
             if (key === 'settings') onOpenSettings?.();
+            else if (key === 'invite') onInvite?.();
             else if (key === 'create-channel') onCreateChannel?.();
             else if (key === 'create-category') onCreateCategory?.();
+            else if (key === 'leave') onLeave?.();
           }}
         >
-          <Dropdown.Item id="invite" textValue="Inviter des membres">
-            <UserPlus className="size-4" />
-            <Label>Inviter des membres</Label>
-          </Dropdown.Item>
-          <Dropdown.Item id="settings" textValue="Paramètres du serveur">
-            <Settings className="size-4" />
-            <Label>Paramètres du serveur</Label>
-          </Dropdown.Item>
-          <Dropdown.Item id="notifications" textValue="Notifications">
-            <Bell className="size-4" />
-            <Label>Notifications</Label>
-          </Dropdown.Item>
+          {onInvite && (
+            <Dropdown.Item id="invite" textValue={t.serverMenu.inviteMembers}>
+              <UserPlus className="size-4" />
+              <Label>{t.serverMenu.inviteMembers}</Label>
+            </Dropdown.Item>
+          )}
+          {onOpenSettings && (
+            <Dropdown.Item id="settings" textValue={t.serverMenu.serverSettings}>
+              <Settings className="size-4" />
+              <Label>{t.serverMenu.serverSettings}</Label>
+            </Dropdown.Item>
+          )}
           {canManage && (onCreateChannel || onCreateCategory) && (
             <>
               <Separator className="my-1" />
               {onCreateChannel && (
-                <Dropdown.Item id="create-channel" textValue="Créer un salon">
+                <Dropdown.Item id="create-channel" textValue={t.serverMenu.createChannel}>
                   <Hash className="size-4" />
-                  <Label>Créer un salon</Label>
+                  <Label>{t.serverMenu.createChannel}</Label>
                 </Dropdown.Item>
               )}
               {onCreateCategory && (
-                <Dropdown.Item id="create-category" textValue="Créer une catégorie">
+                <Dropdown.Item id="create-category" textValue={t.serverMenu.createCategory}>
                   <FolderPlus className="size-4" />
-                  <Label>Créer une catégorie</Label>
+                  <Label>{t.serverMenu.createCategory}</Label>
                 </Dropdown.Item>
               )}
             </>
           )}
-          <Separator className="my-1" />
-          <Dropdown.Item id="leave" textValue="Quitter le serveur" variant="danger">
-            <LogOut className="size-4" />
-            <Label>Quitter le serveur</Label>
-          </Dropdown.Item>
+          {onLeave && (
+            <>
+              <Separator className="my-1" />
+              <Dropdown.Item id="leave" textValue={t.serverMenu.leaveServer} variant="danger">
+                <LogOut className="size-4" />
+                <Label>{t.serverMenu.leaveServer}</Label>
+              </Dropdown.Item>
+            </>
+          )}
         </Dropdown.Menu>
       </Dropdown.Popover>
     </Dropdown>

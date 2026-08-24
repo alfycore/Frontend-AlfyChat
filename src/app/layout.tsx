@@ -10,6 +10,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { BackgroundProvider } from "@/components/background-provider";
 import { PrefetchDMs } from "@/components/prefetch-dms";
 import { PrefsSync } from "@/components/prefs-sync";
+import { MotionProvider } from "@/components/motion-provider";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { ChunkErrorHandler } from "@/components/chunk-error-handler";
@@ -84,9 +85,11 @@ export default function RootLayout({
             <AuthProvider>
               <PrefetchDMs />
               <PrefsSync />
-              <BackgroundProvider>
-                {children}
-              </BackgroundProvider>
+              <MotionProvider>
+                <BackgroundProvider>
+                  {children}
+                </BackgroundProvider>
+              </MotionProvider>
             </AuthProvider>
           </LocaleProvider>
         <Toaster richColors position="bottom-right" />

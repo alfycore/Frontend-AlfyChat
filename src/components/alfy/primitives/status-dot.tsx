@@ -1,6 +1,14 @@
+'use client';
+
 import type { AlfyPresence } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
+/**
+ * Libellés de présence — repli français utilisé hors composant.
+ * Préférer `usePresenceLabels()` : cette table figée affichait « Ne pas
+ * déranger » même avec l'interface en anglais ou en japonais.
+ */
 export const PRESENCE_LABELS: Record<AlfyPresence, string> = {
   online: 'En ligne',
   idle: 'Absent·e',
@@ -8,6 +16,18 @@ export const PRESENCE_LABELS: Record<AlfyPresence, string> = {
   invisible: 'Invisible',
   offline: 'Hors ligne',
 };
+
+/** Libellés de présence dans la langue de l'interface. */
+export function usePresenceLabels(): Record<AlfyPresence, string> {
+  const { t } = useTranslation();
+  return {
+    online: t.status.online,
+    idle: t.status.idle,
+    dnd: t.status.dnd,
+    invisible: t.status.invisible,
+    offline: t.status.offline,
+  };
+}
 
 /**
  * Tracés repris de `public/statusicon/*.svg` (viewBox 0 0 10 10), inlinés
@@ -53,12 +73,13 @@ const SIZES: Record<NonNullable<StatusDotProps['size']>, string> = {
 };
 
 export function StatusDot({ status, size = 'md', ring = true, ringClass = 'ring-surface', className }: StatusDotProps) {
+  const labels = usePresenceLabels();
   const icon = ICONS[status];
   return (
     <svg
       viewBox="0 0 10 10"
       role="img"
-      aria-label={PRESENCE_LABELS[status]}
+      aria-label={labels[status]}
       className={cn('block shrink-0 rounded-full', SIZES[size], ring && ['ring-2', ringClass], className)}
     >
       {/* Le disque de fond garantit un cercle plein même pour les tracés

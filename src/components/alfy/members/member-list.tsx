@@ -3,9 +3,12 @@
 import { ScrollShadow } from '@heroui/react';
 import { useMemo } from 'react';
 
+import { UsersRound } from 'lucide-react';
+
 import { CURRENT_USER, getMemberPermissions } from '@/components/alfy/mock/data';
 import type { AlfyServer } from '@/components/alfy/mock/types';
 import { useUserById } from '@/components/alfy/user-directory';
+import { EmptyState } from '@/components/alfy/primitives/empty-state';
 import { SectionLabel } from '@/components/alfy/primitives/section-label';
 import { MemberItem } from '@/components/alfy/members/member-item';
 import { useTranslation } from '@/components/locale-provider';
@@ -64,6 +67,10 @@ export function MemberList({ server, currentUserId, onKick, onBan, onToggleRole 
   return (
     <aside aria-label={t.admin.members.ariaServerMembers} className="flex h-full w-full flex-col bg-surface-secondary/35">
       <ScrollShadow className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+        {/* Un panneau vide était indiscernable d'un chargement bloqué. */}
+        {groups.length === 0 && (
+          <EmptyState icon={UsersRound} title={t.memberList.title} description={tx(t.memberList.memberCountPlural, { n: 0 })} />
+        )}
         {groups.map((g) => (
           <div key={g.label} className="mb-4">
             <SectionLabel className="mb-1">{g.label}</SectionLabel>

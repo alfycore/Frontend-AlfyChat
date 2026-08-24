@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertDialog, Button, Dropdown, FieldError, Input, Label, Table, TextField, toast } from '@heroui/react';
 import { Ellipsis, ShieldOff, UserMinus } from 'lucide-react';
 
@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { socketService } from '@/lib/socket';
 import { useUserById } from '@/components/alfy/user-directory';
 import type { AlfyServer } from '@/components/alfy/mock/types';
+import { canActOnMember, type MemberPerms } from '@/lib/server-perms';
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { RoleChip } from '@/components/alfy/primitives/role-chip';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
@@ -15,22 +16,54 @@ import { useTranslation } from '@/components/locale-provider';
 
 const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
-export function MembersPanel({ server }: { server: AlfyServer }) {
+export function MembersPanel({ server, perms }: { server: AlfyServer; perms?: MemberPerms }) {
   const { t, tx } = useTranslation();
   const { user: currentUser } = useAuth();
   const userById = useUserById();
   const [banTarget, setBanTarget] = useState<{ userId: string; displayName: string } | null>(null);
   const [banReason, setBanReason] = useState('');
+  /** Action en vol : sert à n'annoncer le succès qu'une fois le membre réellement parti. */
+  const pending = useRef<{ userId: string; displayName: string; kind: 'kick' | 'ban' } | null>(null);
 
-  const handleKick = (userId: string, displayName: string) => {
+  // Le succès vient du serveur (MEMBER_LEAVE), l'échec aussi (MEMBER_ERROR).
+  // Auparavant le toast de succès s'affichait avant même la réponse, y compris
+  // quand le gateway répondait PERMISSION_DENIED.
+  useEffect(() => {
+    function onMemberLeave(payload: any) {
+      const p = payload?.payload ?? payload;
+      const inFlight = pending.current;
+      if (!inFlight || p?.userId !== inFlight.userId) return;
+      pending.current = null;
+      toast(
+        inFlight.kind === 'kick' ? t.membersPanel.memberKicked : t.membersPanel.memberBanned,
+        { description: inFlight.displayName },
+      );
+    }
+    function onMemberError(payload: any) {
+      const inFlight = pending.current;
+      pending.current = null;
+      const message: string | undefined = payload?.message ?? payload?.error;
+      toast.danger(t.common.error, {
+        description: inFlight ? `${inFlight.displayName} — ${message ?? ''}`.trim() : message,
+      });
+    }
+    socketService.on('MEMBER_LEAVE', onMemberLeave);
+    socketService.on('MEMBER_ERROR', onMemberError);
+    return () => {
+      socketService.off('MEMBER_LEAVE', onMemberLeave);
+      socketService.off('MEMBER_ERROR', onMemberError);
+    };
+  }, [t]);
+
+  const handleKick = useCallback((userId: string, displayName: string) => {
+    pending.current = { userId, displayName, kind: 'kick' };
     socketService.kickMember(server.id, userId);
-    toast(t.membersPanel.memberKicked, { description: displayName });
-  };
+  }, [server.id]);
 
   const handleBan = () => {
     if (!banTarget) return;
+    pending.current = { userId: banTarget.userId, displayName: banTarget.displayName, kind: 'ban' };
     socketService.banMember(server.id, banTarget.userId, banReason.trim() || undefined);
-    toast(t.membersPanel.memberBanned, { description: banTarget.displayName });
     setBanTarget(null);
     setBanReason('');
   };
@@ -55,6 +88,11 @@ export function MembersPanel({ server }: { server: AlfyServer }) {
                 const user = userById(member.userId);
                 const roles = server.roles.filter((r) => member.roleIds.includes(r.id));
                 const isSelf = member.userId === currentUser?.id;
+                // On n'affiche l'action que si le serveur l'accepterait :
+                // droit correspondant ET cible pas plus puissante que soi.
+                const actionable = canActOnMember(server, currentUser?.id, member.userId);
+                const showKick = Boolean(perms?.canKick) && actionable;
+                const showBan = Boolean(perms?.canBan) && actionable;
                 return (
                   <Table.Row key={member.userId}>
                     <Table.Cell>
@@ -78,7 +116,7 @@ export function MembersPanel({ server }: { server: AlfyServer }) {
                     </Table.Cell>
                     <Table.Cell>
                       <div className="flex justify-end">
-                        {!isSelf && (
+                        {!isSelf && (showKick || showBan) && (
                           <Dropdown>
                             <Dropdown.Trigger
                               aria-label={tx(t.membersPanel.actionsAria, { name: user.displayName })}
@@ -93,14 +131,18 @@ export function MembersPanel({ server }: { server: AlfyServer }) {
                                   else if (key === 'ban') setBanTarget({ userId: member.userId, displayName: user.displayName });
                                 }}
                               >
-                                <Dropdown.Item id="kick" textValue={t.membersPanel.kick} variant="danger">
-                                  <UserMinus className="size-4" />
-                                  <Label>{t.membersPanel.kick}</Label>
-                                </Dropdown.Item>
-                                <Dropdown.Item id="ban" textValue={t.membersPanel.ban} variant="danger">
-                                  <ShieldOff className="size-4" />
-                                  <Label>{t.membersPanel.ban}</Label>
-                                </Dropdown.Item>
+                                {showKick && (
+                                  <Dropdown.Item id="kick" textValue={t.membersPanel.kick} variant="danger">
+                                    <UserMinus className="size-4" />
+                                    <Label>{t.membersPanel.kick}</Label>
+                                  </Dropdown.Item>
+                                )}
+                                {showBan && (
+                                  <Dropdown.Item id="ban" textValue={t.membersPanel.ban} variant="danger">
+                                    <ShieldOff className="size-4" />
+                                    <Label>{t.membersPanel.ban}</Label>
+                                  </Dropdown.Item>
+                                )}
                               </Dropdown.Menu>
                             </Dropdown.Popover>
                           </Dropdown>
