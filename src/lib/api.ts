@@ -275,7 +275,8 @@ class ApiService {
     return this.request<{ keySalt: string | null; encryptedPrivateKey: string | null; publicKey: string | null }>('/api/auth/keys');
   }
 
-  async saveMyKeys(data: { publicKey: string; encryptedPrivateKey: string; keySalt: string }) {
+  // `password` est exigé par le serveur pour REMPLACER une clé existante.
+  async saveMyKeys(data: { publicKey: string; encryptedPrivateKey: string; keySalt: string; password?: string }) {
     return this.request('/api/auth/keys', {
       method: 'PATCH',
       body: JSON.stringify(data),

@@ -112,6 +112,12 @@ export function useDMArchive(options: UseDMArchiveOptions = {}) {
     const payload: PeerRequestPayload = event?.payload || event;
     if (!payload || !localStore.current) return;
 
+    // Ne répondre qu'au participant légitime d'un MP bien formé : la réponse
+    // part automatiquement avec nos archives locales. (Le gateway vérifie
+    // aussi désormais l'accès du demandeur ; ceci est une seconde barrière.)
+    const dm = /^dm_([0-9a-f-]{36})_([0-9a-f-]{36})$/i.exec(String(payload.conversationId ?? ''));
+    if (!dm || (payload.requesterId !== dm[1] && payload.requesterId !== dm[2])) return;
+
     console.log(`[Archive] Demande peer: ${payload.requesterId} cherche dans ${payload.conversationId}`);
 
     try {

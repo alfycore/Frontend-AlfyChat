@@ -599,17 +599,20 @@ export function useNotification() {
   useEffect(() => {
     const handleE2EEHistoryRequest = async (data: { requesterId: string; conversationId: string }) => {
       const currentUserId = userIdRef.current;
-      if (!currentUserId || !data.conversationId?.startsWith('dm_')) return;
-      if (!data.conversationId.includes(currentUserId)) return;
+      if (!currentUserId || typeof data?.conversationId !== 'string') return;
+      // Décomposition STRICTE de l'identifiant de MP, et le demandeur doit être
+      // l'autre participant. Avec `includes()` + `parts.find()`, un identifiant
+      // forgé `dm_<moi>_<C>_<attaquant>` faisait ré-chiffrer tout l'historique
+      // moi↔C à destination de l'attaquant.
+      const m = /^dm_([0-9a-f-]{36})_([0-9a-f-]{36})$/i.exec(data.conversationId);
+      if (!m) return;
+      const otherUserId = m[1] === currentUserId ? m[2] : m[2] === currentUserId ? m[1] : null;
+      if (!otherUserId || data.requesterId !== otherUserId) return;
 
       try {
         const bundleRes = await api.getSignalKeyBundle(data.requesterId) as any;
         if (!bundleRes?.success || !bundleRes?.data?.ecdhKey) return;
         const requesterECDHKey: string = bundleRes.data.ecdhKey;
-
-        const parts = data.conversationId.replace('dm_', '').split('_');
-        const otherUserId = parts.find((p) => p !== currentUserId);
-        if (!otherUserId) return;
 
         const rawMessages: any[] = [];
         let before: string | undefined;

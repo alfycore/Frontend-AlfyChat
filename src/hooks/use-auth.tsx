@@ -284,7 +284,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const salt = generateSalt();
             const aesKey = await deriveKey(password, salt);
             const encPrivKey = await encryptPrivateKey(keypair.privateKey, aesKey);
-            await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt });
+            await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt, password });
             setPrivateKey(keypair.privateKey);
             sessionStorage.setItem(E2EE_SESSION_KEY, keypair.privateKey);
             console.log('[E2EE] Nouvelles clés générées après échec déchiffrement ✓');
@@ -296,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const salt = generateSalt();
           const aesKey = await deriveKey(password, salt);
           const encPrivKey = await encryptPrivateKey(keypair.privateKey, aesKey);
-          await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt });
+          await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt, password });
           setPrivateKey(keypair.privateKey);
           sessionStorage.setItem(E2EE_SESSION_KEY, keypair.privateKey);
           console.log('[E2EE] Clés générées et sauvegardées ✓');
@@ -351,7 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const salt = generateSalt();
             const aesKey = await deriveKey(password, salt);
             const encPrivKey = await encryptPrivateKey(keypair.privateKey, aesKey);
-            await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt });
+            await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt, password });
             setPrivateKey(keypair.privateKey);
             sessionStorage.setItem(E2EE_SESSION_KEY, keypair.privateKey);
             console.log('[E2EE] Nouvelles clés générées après échec déchiffrement (2FA) ✓');
@@ -362,7 +362,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const salt = generateSalt();
           const aesKey = await deriveKey(password, salt);
           const encPrivKey = await encryptPrivateKey(keypair.privateKey, aesKey);
-          await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt });
+          await api.saveMyKeys({ publicKey: keypair.publicKey, encryptedPrivateKey: encPrivKey, keySalt: salt, password });
           setPrivateKey(keypair.privateKey);
           sessionStorage.setItem(E2EE_SESSION_KEY, keypair.privateKey);
           console.log('[E2EE] Clés générées et sauvegardées ✓');
