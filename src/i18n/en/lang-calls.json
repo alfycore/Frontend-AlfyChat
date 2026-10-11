@@ -56,6 +56,17 @@
       "packetLoss": "Packet loss",
       "bitrate": "Bitrate",
       "disclaimer": "Peer-to-peer encrypted call — no media passes through our servers."
+    },
+    "stage": {
+      "waitingFor": "Waiting for {name}…",
+      "e2e": "End-to-end encrypted",
+      "inputDevice": "Input device",
+      "defaultDevice": "Default",
+      "noDevices": "No microphone found",
+      "micOptions": "Microphone options",
+      "stopShare": "Stop sharing",
+      "screenOf": "{name}'s screen",
+      "speaking": "{name} is speaking"
     }
   },
   "callBar": {

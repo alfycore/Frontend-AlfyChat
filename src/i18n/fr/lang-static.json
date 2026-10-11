@@ -887,6 +887,168 @@
         "terms": "CGU",
         "privacy": "Confidentialité"
       }
+    },
+    "home": {
+      "nav": {
+        "features": "Fonctionnalités",
+        "security": "Sécurité",
+        "selfHosting": "Auto-hébergement",
+        "developers": "Développeurs",
+        "login": "Connexion",
+        "register": "Créer un compte",
+        "openApp": "Ouvrir AlfyChat",
+        "menu": "Menu",
+        "theme": "Changer de thème",
+        "home": "Accueil AlfyChat"
+      },
+      "hero": {
+        "eyebrow": "Messagerie chiffrée de bout en bout",
+        "lines": [
+          "Vos mots",
+          "restent",
+          "à vous."
+        ],
+        "subtitle": "Messages, appels et communautés, chiffrés sur votre appareil avant de partir. Nos serveurs ne voient passer que du bruit.",
+        "ctaPrimary": "Créer un compte",
+        "ctaSecondary": "Voir ce que voit le serveur",
+        "facts": [
+          "Open source",
+          "Hébergé en France",
+          "Sans numéro de téléphone"
+        ]
+      },
+      "readings": {
+        "label": "Point de vue",
+        "you": "Votre écran",
+        "server": "Nos serveurs",
+        "youCaption": "Ce que Léa et vous lisez.",
+        "serverCaption": "Ce que nos serveurs stockent. Illisible sans vos clés.",
+        "contact": "Léa Martin",
+        "online": "En ligne",
+        "composer": "Écrire à Léa",
+        "messages": [
+          {
+            "mine": false,
+            "text": "Tu as pu récupérer les clés de l'appart ?"
+          },
+          {
+            "mine": true,
+            "text": "Oui, je les dépose ce soir."
+          },
+          {
+            "mine": false,
+            "text": "Parfait. Le code de l'interphone, c'est 4417."
+          },
+          {
+            "mine": true,
+            "text": "Noté. Je ne le dirai à personne."
+          }
+        ]
+      },
+      "security": {
+        "eyebrow": "Sécurité",
+        "title1": "Chiffré au départ.",
+        "title2": "Lisible à l'arrivée.",
+        "body": "Le chiffrement a lieu sur votre appareil, avec des clés qui n'en sortent jamais. Entre vous et votre contact, le message n'existe que chiffré : AlfyCore ne peut techniquement lire ni vos messages, ni vos appels, ni vos fichiers.",
+        "you": "Votre appareil",
+        "server": "Serveurs AlfyChat",
+        "contact": "Appareil de Léa",
+        "plain": "Lisible",
+        "cipher": "Chiffré"
+      },
+      "features": {
+        "eyebrow": "Fonctionnalités",
+        "title1": "Tout ce qu'il faut.",
+        "title2": "Le pistage en moins.",
+        "tabsLabel": "Fonctionnalités d'AlfyChat",
+        "dm": {
+          "title": "Messages privés",
+          "desc": "Conversations et groupes chiffrés, avec réactions, fichiers et messages épinglés."
+        },
+        "servers": {
+          "title": "Serveurs",
+          "desc": "Des communautés avec salons, catégories, rôles et permissions fines."
+        },
+        "voice": {
+          "title": "Vocal et vidéo",
+          "desc": "Appels audio et vidéo chiffrés, en tête-à-tête ou dans un salon."
+        },
+        "bots": {
+          "title": "Bots",
+          "desc": "Commandes, sondages, modération : une API ouverte pour brancher vos outils."
+        },
+        "mock": {
+          "dmContact": "Hugo",
+          "dm": [
+            "On se cale un appel demain ?",
+            "Avec plaisir. 18 h ?",
+            "Parfait, je t'envoie le lien."
+          ],
+          "serverName": "Atelier Photo",
+          "serverMembers": "248 membres",
+          "categories": [
+            "Informations",
+            "Discussions"
+          ],
+          "channels": [
+            [
+              "annonces",
+              "règlement"
+            ],
+            [
+              "général",
+              "argentique",
+              "retouche"
+            ]
+          ],
+          "roles": [
+            "Fondatrice",
+            "Modération",
+            "Membres"
+          ],
+          "voiceChannel": "Salon vocal",
+          "voiceState": "4 participants · chiffré",
+          "mute": "Micro",
+          "camera": "Caméra",
+          "leave": "Quitter",
+          "botName": "Alfy Bot",
+          "botTag": "BOT",
+          "botCommand": "/sondage Prochaine sortie ?",
+          "botQuestion": "Prochaine sortie ?",
+          "botOptions": [
+            "Bord de mer",
+            "Forêt",
+            "Centre-ville"
+          ],
+          "botVotes": "31 votes"
+        }
+      },
+      "selfHost": {
+        "title1": "Votre serveur,",
+        "title2": "chez vous.",
+        "terminalTitle": "alfychat-server",
+        "registered": "Serveur enregistré auprès du gateway",
+        "data": "Données locales : ./alfychat-data",
+        "online": "Nœud en ligne sur le port 4100"
+      },
+      "association": {
+        "eyebrow": "AlfyCore",
+        "lines": [
+          "Pas d'actionnaires.",
+          "Pas de publicité.",
+          "Pas de pistage."
+        ],
+        "link": "Découvrir l'association"
+      },
+      "faq": {
+        "eyebrow": "FAQ",
+        "all": "Toutes les questions"
+      },
+      "footer": {
+        "language": "Langue",
+        "status": "État des services",
+        "theme": "Thème"
+      }
     }
   },
   "changelogs": {

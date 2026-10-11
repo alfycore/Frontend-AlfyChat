@@ -16,6 +16,7 @@ import { useMessages } from '@/hooks/use-messages';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { loadDmBootstrap } from '@/lib/dm-bootstrap';
 import { DmChat } from '@/components/alfy/dm/dm-chat';
+import { ConversationCallStage } from '@/components/alfy/calls/call-stage';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { toAlfyMessage, toAlfyUser } from '@/components/alfy/live/map';
 import type { AlfyUser } from '@/components/alfy/mock/types';
@@ -158,6 +159,7 @@ export function AlfyDmChat({ recipientId }: { recipientId: string }) {
             ? undefined
             : () => initiateCall(recipientId, 'video', undefined, recipient?.displayName)
         }
+        callStage={<ConversationCallStage target={{ kind: 'dm', userId: recipientId }} />}
         isComposerDisabled={iBlockedThem || theyBlockedMe}
         composerDisabledMessage={
           iBlockedThem

@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 
 interface CallBarProps {
   label: string;
+  /** État réel de la session — « connectée » seulement une fois le pair joint. */
+  status: 'calling' | 'connecting' | 'connected';
   durationSeconds: number;
   isMuted: boolean;
   onToggleMute: () => void;
@@ -16,19 +18,36 @@ interface CallBarProps {
 }
 
 /** Barre d'appel persistante affichée quand une session vocale est active. */
-export function CallBar({ label, durationSeconds, isMuted, onToggleMute, onOpen, onLeave }: CallBarProps) {
+export function CallBar({ label, status, durationSeconds, isMuted, onToggleMute, onOpen, onLeave }: CallBarProps) {
   const { t } = useTranslation();
   const mmss = `${String(Math.floor(durationSeconds / 60)).padStart(2, '0')}:${String(durationSeconds % 60).padStart(2, '0')}`;
+  const connected = status === 'connected';
+  const statusLabel = connected
+    ? t.calls.bar.voiceConnected
+    : status === 'connecting'
+      ? t.callBar.connecting
+      : t.callBar.calling;
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-3 border-b border-separator bg-success/10 px-4">
-      <span className="flex items-center gap-2">
-        <span className="alfy-pulse size-2 rounded-full bg-success" aria-hidden />
-        <span className="text-xs font-semibold text-success">{t.calls.bar.voiceConnected}</span>
+    <div
+      className={cn(
+        'flex h-11 shrink-0 items-center gap-3 border-b border-separator px-4 transition-colors duration-(--dur-4)',
+        connected ? 'bg-success/10' : 'bg-warning/10',
+      )}
+    >
+      <span className="flex items-center gap-2" aria-live="polite">
+        <span className={cn('alfy-pulse size-2 rounded-full', connected ? 'bg-success' : 'bg-warning')} aria-hidden />
+        <span className={cn('text-xs font-semibold', connected ? 'text-success' : 'text-warning')}>{statusLabel}</span>
       </span>
-      <span className="flex items-center gap-1.5 text-xs text-muted">
-        <Signal className="size-3.5" aria-hidden />
-        {label} · <span className="tabular-nums">{mmss}</span>
+      <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
+        <Signal className="size-3.5 shrink-0" aria-hidden />
+        <span className="truncate">{label}</span>
+        {connected && (
+          <>
+            <span aria-hidden>·</span>
+            <span className="tabular-nums">{mmss}</span>
+          </>
+        )}
       </span>
 
       <div className="ml-auto flex items-center gap-0.5">

@@ -1,118 +1,96 @@
 'use client';
 
-import { motion, useReducedMotion } from 'motion/react';
-import { Card, Chip, Separator, Typography } from '@heroui/react';
-import { LockIcon, ShieldCheckIcon, GlobeIcon, CodeIcon } from '@/components/icons';
+import { Chip } from '@heroui/react';
+import { Laptop, Server, Smartphone, type LucideIcon } from 'lucide-react';
 
-const KRONA = { fontFamily: 'var(--font-krona), sans-serif' } as const;
+import { useTranslation } from '@/components/locale-provider';
+import { cn } from '@/lib/utils';
+import { CONTAINER, Display, Eyebrow, Reveal, cipherOf } from './shared';
 
-const POINTS: { icon: typeof LockIcon; label: string; desc: string }[] = [
-  {
-    icon: LockIcon,
-    label: 'Protocole Signal',
-    desc: 'Standard de référence pour la messagerie chiffrée, audité en indépendance.',
-  },
-  {
-    icon: ShieldCheckIcon,
-    label: 'Zéro tracking',
-    desc: 'Aucune publicité, aucun suivi comportemental, aucune revente de données.',
-  },
-  {
-    icon: GlobeIcon,
-    label: 'Données en France',
-    desc: 'Serveurs hébergés sur le territoire français, soumis au droit européen.',
-  },
-  {
-    icon: CodeIcon,
-    label: 'Code auditable',
-    desc: 'Source ouverte, vérifiable et contribuable par toute la communauté.',
-  },
-];
+export function HomeSecurity() {
+  const { t } = useTranslation();
+  const s = t.landing.home.security;
+  const specs = Object.values(t.landing.security.bullets);
+  const sample = t.landing.home.readings.messages[2]?.text ?? '';
 
-function Reveal({
-  children,
-  delay = 0,
-  className,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-  className?: string;
-}) {
-  const reduce = useReducedMotion();
   return (
-    <motion.div
-      className={className}
-      initial={reduce ? false : { opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-    >
-      {children}
-    </motion.div>
+    <section id="security" className="scroll-mt-16 bg-surface">
+      <div className={cn(CONTAINER, 'py-28 lg:py-40')}>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-end">
+          <div className="flex flex-col gap-6">
+            <Reveal>
+              <Eyebrow>{s.eyebrow}</Eyebrow>
+            </Reveal>
+            <Display lines={[s.title1, s.title2]} tones={{ 1: 'text-muted' }} />
+          </div>
+          <Reveal delay={0.1}>
+            <p className="max-w-[46ch] text-[17px] leading-relaxed text-muted">{s.body}</p>
+          </Reveal>
+        </div>
+
+        {/* Trajet d'un message */}
+        <Reveal delay={0.1} className="mt-20 lg:mt-28">
+          <div className="flex flex-col items-stretch lg:flex-row lg:items-start">
+            <Node icon={Laptop} label={s.you} state={s.plain} tone="success" sample={sample} />
+            <Track />
+            <Node icon={Server} label={s.server} state={s.cipher} tone="accent" sample={cipherOf(sample)} cipher />
+            <Track late />
+            <Node icon={Smartphone} label={s.contact} state={s.plain} tone="success" sample={sample} />
+          </div>
+        </Reveal>
+
+        {/* Primitives */}
+        <dl className="mt-24 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:mt-32 lg:grid-cols-5">
+          {specs.map((spec, i) => (
+            <Reveal key={spec.title} delay={i * 0.05} className="flex flex-col gap-2">
+              <dt className="font-mono text-sm text-foreground">{spec.title}</dt>
+              <dd className="text-sm leading-relaxed text-muted">{spec.desc}</dd>
+            </Reveal>
+          ))}
+        </dl>
+      </div>
+    </section>
   );
 }
 
-export function HomeSecurity() {
+function Node({
+  icon: Icon, label, state, tone, sample, cipher,
+}: {
+  icon: LucideIcon;
+  label: string;
+  state: string;
+  tone: 'success' | 'accent';
+  sample: string;
+  cipher?: boolean;
+}) {
   return (
-    <section id="security" className="bg-background py-28">
-      <div className="mx-auto max-w-6xl px-6 lg:px-12">
-        <div className="grid grid-cols-1 gap-16 md:grid-cols-2 md:items-center">
-
-          {/* Left — image inside HeroUI Card */}
-          <Reveal delay={0.04} className="order-2 md:order-1">
-            <Card className="overflow-hidden p-0">
-              <img
-                src="https://picsum.photos/seed/alfychat-privacy-security/800/600"
-                alt="Sécurité et confidentialité AlfyChat"
-                className="w-full select-none object-cover"
-                draggable={false}
-              />
-            </Card>
-          </Reveal>
-
-          {/* Right — content */}
-          <div className="order-1 flex flex-col md:order-2">
-            <Reveal className="flex flex-col gap-4">
-              <Chip color="accent" variant="soft" size="sm" className="w-fit">
-                <Chip.Label>Sécurité</Chip.Label>
-              </Chip>
-              <Typography
-                type="h2"
-                weight="bold"
-                className="text-foreground"
-                style={{ ...KRONA, fontSize: 'clamp(1.9rem, 3vw, 2.6rem)', lineHeight: 1.1, letterSpacing: '-0.025em' }}
-              >
-                La vie privée n'est pas une option.
-              </Typography>
-              <Typography type="body" color="muted" className="max-w-md">
-                AlfyChat est construit autour d'une conviction : vos conversations vous appartiennent.
-                Chaque choix technique garantit cette promesse.
-              </Typography>
-            </Reveal>
-
-            <div className="mt-9 flex flex-col">
-              {POINTS.map(({ icon: Icon, label, desc }, i) => (
-                <Reveal key={label} delay={0.06 + i * 0.07}>
-                  {i > 0 && <Separator />}
-                  <div className="flex items-start gap-4 py-5">
-                    <div
-                      className="flex size-9 shrink-0 items-center justify-center rounded-lg"
-                      style={{ background: 'color-mix(in oklch, var(--foreground) 6%, transparent)' }}
-                    >
-                      <Icon size={14} style={{ color: 'var(--foreground)' }} />
-                    </div>
-                    <div className="flex min-w-0 flex-col gap-0.5">
-                      <Typography type="body-sm" weight="semibold" className="text-foreground">{label}</Typography>
-                      <Typography type="body-xs" color="muted">{desc}</Typography>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-
-        </div>
+    <div className="flex flex-col items-center gap-4 text-center lg:w-[22%] lg:shrink-0">
+      <span className="flex size-16 items-center justify-center rounded-3xl bg-background text-foreground">
+        <Icon className="size-6" strokeWidth={1.6} aria-hidden />
+      </span>
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-[15px] font-semibold text-foreground">{label}</p>
+        <Chip size="sm" variant="soft" color={tone}>
+          <Chip.Label>{state}</Chip.Label>
+        </Chip>
       </div>
-    </section>
+      <p
+        className={cn(
+          'max-w-[26ch] text-[13px] leading-relaxed',
+          cipher ? 'font-mono text-[11px] break-all text-muted' : 'text-foreground',
+        )}
+      >
+        {cipher ? sample.slice(0, 56) : sample}
+      </p>
+    </div>
+  );
+}
+
+/** Liaison entre deux nœuds, parcourue en boucle par un paquet. */
+function Track({ late }: { late?: boolean }) {
+  return (
+    <div className="home-track mx-auto h-14 w-px bg-separator lg:mx-0 lg:mt-8 lg:h-px lg:w-auto lg:flex-1" aria-hidden>
+      <span className={cn('home-packet', late && 'home-packet--late')} />
+    </div>
   );
 }

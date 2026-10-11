@@ -18,7 +18,7 @@
 
 import { Alert, Button, ScrollShadow, Spinner } from '@heroui/react';
 import { ArrowDown, Lock, type LucideIcon } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { DmComposer } from '@/components/alfy/dm/dm-composer';
@@ -86,6 +86,10 @@ export interface DmChatProps {
   encrypted?: boolean;
   /** Modérateur du salon — peut gérer les messages des autres membres. */
   canManageMessages?: boolean;
+  /** Scène d'appel, posée entre l'en-tête et le fil (rend null hors appel). */
+  callStage?: ReactNode;
+  /** Groupes : ouvre l'édition (nom, icône, membres). */
+  onEditGroup?: () => void;
 }
 
 export function DmChat({
@@ -124,6 +128,8 @@ export function DmChat({
   onOpenProfile,
   isComposerDisabled = false,
   composerDisabledMessage,
+  callStage,
+  onEditGroup,
 }: DmChatProps) {
   const { t, tx, intlLocale } = useTranslation();
   const jourFmt = dayFormat(intlLocale);
@@ -203,7 +209,10 @@ export function DmChat({
         membersOpen={membersOpen}
         onStartVoiceCall={onStartVoiceCall}
         onStartVideoCall={onStartVideoCall}
+        onEditGroup={onEditGroup}
       />
+
+      {callStage}
 
       {/* ── Fil ─────────────────────────────────────────────────────────── */}
       <div className="relative min-h-0 flex-1">

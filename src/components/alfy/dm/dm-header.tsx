@@ -11,7 +11,7 @@
  */
 
 import { Button, Separator, Toolbar, Tooltip } from '@heroui/react';
-import { Menu, Phone, UserRound, Users, Video, type LucideIcon } from 'lucide-react';
+import { Menu, Pencil, Phone, UserRound, Users, Video, type LucideIcon } from 'lucide-react';
 
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { E2eBadge } from '@/components/alfy/primitives/e2e-badge';
@@ -43,6 +43,8 @@ interface DmHeaderProps {
   membersOpen?: boolean;
   onStartVoiceCall?: () => void;
   onStartVideoCall?: () => void;
+  /** Groupes : le nom devient cliquable et un crayon apparaît dans la barre. */
+  onEditGroup?: () => void;
 }
 
 export function DmHeader({
@@ -62,6 +64,7 @@ export function DmHeader({
   membersOpen,
   onStartVoiceCall,
   onStartVideoCall,
+  onEditGroup,
 }: DmHeaderProps) {
   const { t } = useTranslation();
 
@@ -99,7 +102,21 @@ export function DmHeader({
       )}
 
       {/* Un fil privé ou de groupe s'identifie par ses membres ; un salon par un croisillon. */}
-      {onOpenProfile ? (
+      {onEditGroup ? (
+        <Tooltip delay={300}>
+          <button
+            type="button"
+            onClick={onEditGroup}
+            aria-label={t.group.edit}
+            className="flex min-w-0 cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-foreground outline-none transition-colors duration-(--dur-2) hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            {identite}
+          </button>
+          <Tooltip.Content placement="bottom start">
+            <p>{t.group.edit}</p>
+          </Tooltip.Content>
+        </Tooltip>
+      ) : onOpenProfile ? (
         <button
           type="button"
           onClick={onOpenProfile}
@@ -169,6 +186,16 @@ export function DmHeader({
             </Button>
             <Tooltip.Content>
               <p>{t.chat.videoCall}</p>
+            </Tooltip.Content>
+          </Tooltip>
+        )}
+        {onEditGroup && (
+          <Tooltip delay={300}>
+            <Button isIconOnly size="sm" variant="ghost" className="text-muted" aria-label={t.group.edit} onPress={onEditGroup}>
+              <Pencil className="size-4.5" aria-hidden />
+            </Button>
+            <Tooltip.Content>
+              <p>{t.group.edit}</p>
             </Tooltip.Content>
           </Tooltip>
         )}

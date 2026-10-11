@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCallContext } from '@/hooks/use-call-context';
 import { CallBar } from '@/components/alfy/calls/call-bar';
 import { VoiceRoom, type RoomParticipant } from '@/components/alfy/calls/voice-room';
+import { useCallStageVisible } from '@/components/alfy/calls/call-stage-store';
 import { useTranslation } from '@/components/locale-provider';
 
 export function AlfyActiveCall() {
@@ -44,6 +45,8 @@ export function AlfyActiveCall() {
     toggleHand,
   } = useCallContext();
   const [expanded, setExpanded] = useState(false);
+  // La conversation de l'appel est ouverte : sa scène porte déjà les contrôles.
+  const stageVisible = useCallStageVisible();
 
   const participants = useMemo<RoomParticipant[]>(() => {
     const list: RoomParticipant[] = [
@@ -72,6 +75,7 @@ export function AlfyActiveCall() {
   }, [user?.id, user?.avatarUrl, localStream, isMuted, isScreenSharing, remoteStreams, participantInfo, handRaised, raisedHands]);
 
   if (callStatus !== 'calling' && callStatus !== 'connecting' && callStatus !== 'connected') return null;
+  if (stageVisible && !expanded) return null;
 
   const label = callerName || (isGroup ? t.chat.groupCallLabel : t.callBar.ongoingCall);
   const isMultiParty = isGroup || callCategory === 'server';
@@ -81,6 +85,7 @@ export function AlfyActiveCall() {
     <>
       <CallBar
         label={label}
+        status={callStatus}
         durationSeconds={callDuration}
         isMuted={isMuted}
         onToggleMute={toggleMute}

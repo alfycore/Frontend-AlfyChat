@@ -56,6 +56,17 @@
       "packetLoss": "Perte de paquets",
       "bitrate": "Débit",
       "disclaimer": "Appel pair-à-pair chiffré — aucun média ne transite par nos serveurs."
+    },
+    "stage": {
+      "waitingFor": "En attente de {name}…",
+      "e2e": "Chiffré de bout en bout",
+      "inputDevice": "Périphérique d'entrée",
+      "defaultDevice": "Par défaut",
+      "noDevices": "Aucun micro détecté",
+      "micOptions": "Options du micro",
+      "stopShare": "Arrêter le partage",
+      "screenOf": "Écran de {name}",
+      "speaking": "{name} parle"
     }
   },
   "callBar": {

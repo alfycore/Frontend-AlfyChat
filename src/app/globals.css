@@ -720,3 +720,60 @@
 .alfy-jump-flash {
   animation: alfy-jump-flash var(--dur-flash) ease-out both;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+ * Homepage — trajet du message et indicateur vocal.
+ * Durées dérivées des jetons : reduced-motion les neutralise d'office.
+ * ════════════════════════════════════════════════════════════════════════ */
+@keyframes home-packet-x {
+  0%   { left: 0%;   opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+@keyframes home-packet-y {
+  0%   { top: 0%;   opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+.home-track { position: relative; }
+.home-packet {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+  translate: -50% -50%;
+  opacity: 0;
+  animation: home-packet-y calc(var(--dur-illustrative) * 3) var(--ease-in-out-cubic) var(--motion-iter);
+}
+.home-packet--late { animation-delay: calc(var(--dur-illustrative) * 1.5); }
+@media (min-width: 1024px) {
+  .home-packet { top: 50%; left: 0; animation-name: home-packet-x; }
+}
+
+@keyframes home-bar {
+  from { transform: scaleY(0.35); }
+  to   { transform: scaleY(1); }
+}
+.home-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 10px; }
+.home-bars > span {
+  width: 2px;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: home-bar calc(var(--dur-5) * 0.9) var(--ease-in-out-cubic) var(--motion-iter) alternate;
+}
+.home-bars > span:nth-child(2) { animation-delay: calc(var(--dur-5) * -0.4); }
+.home-bars > span:nth-child(3) { animation-delay: calc(var(--dur-5) * -0.7); }
+
+/* ── Scène d'appel : contact qui sonne encore ───────────────────────── */
+@keyframes call-ring {
+  0%   { box-shadow: 0 0 0 0 color-mix(in oklch, var(--success) 45%, transparent); }
+  100% { box-shadow: 0 0 0 16px transparent; }
+}
+.call-ringing { animation: call-ring var(--dur-pulse) var(--ease-out-quart) var(--motion-iter); }

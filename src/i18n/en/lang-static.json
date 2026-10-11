@@ -887,6 +887,168 @@
         "terms": "Terms",
         "privacy": "Privacy"
       }
+    },
+    "home": {
+      "nav": {
+        "features": "Features",
+        "security": "Security",
+        "selfHosting": "Self-hosting",
+        "developers": "Developers",
+        "login": "Log in",
+        "register": "Create account",
+        "openApp": "Open AlfyChat",
+        "menu": "Menu",
+        "theme": "Toggle theme",
+        "home": "AlfyChat home"
+      },
+      "hero": {
+        "eyebrow": "End-to-end encrypted messaging",
+        "lines": [
+          "Your words",
+          "stay",
+          "yours."
+        ],
+        "subtitle": "Messages, calls and communities, encrypted on your device before they leave. Our servers only ever see noise.",
+        "ctaPrimary": "Create account",
+        "ctaSecondary": "See what the server sees",
+        "facts": [
+          "Open source",
+          "Hosted in France",
+          "No phone number"
+        ]
+      },
+      "readings": {
+        "label": "Point of view",
+        "you": "Your screen",
+        "server": "Our servers",
+        "youCaption": "What you and Léa read.",
+        "serverCaption": "What our servers store. Unreadable without your keys.",
+        "contact": "Léa Martin",
+        "online": "Online",
+        "composer": "Message Léa",
+        "messages": [
+          {
+            "mine": false,
+            "text": "Did you manage to get the flat keys?"
+          },
+          {
+            "mine": true,
+            "text": "Yes, I'll drop them off tonight."
+          },
+          {
+            "mine": false,
+            "text": "Great. The door code is 4417."
+          },
+          {
+            "mine": true,
+            "text": "Got it. I won't tell anyone."
+          }
+        ]
+      },
+      "security": {
+        "eyebrow": "Security",
+        "title1": "Encrypted on departure.",
+        "title2": "Readable on arrival.",
+        "body": "Encryption happens on your device, with keys that never leave it. Between you and your contact, the message only exists encrypted: AlfyCore technically cannot read your messages, your calls or your files.",
+        "you": "Your device",
+        "server": "AlfyChat servers",
+        "contact": "Léa's device",
+        "plain": "Readable",
+        "cipher": "Encrypted"
+      },
+      "features": {
+        "eyebrow": "Features",
+        "title1": "Everything you need.",
+        "title2": "Minus the tracking.",
+        "tabsLabel": "AlfyChat features",
+        "dm": {
+          "title": "Direct messages",
+          "desc": "Encrypted conversations and groups, with reactions, files and pinned messages."
+        },
+        "servers": {
+          "title": "Servers",
+          "desc": "Communities with channels, categories, roles and fine-grained permissions."
+        },
+        "voice": {
+          "title": "Voice and video",
+          "desc": "Encrypted audio and video calls, one-to-one or in a channel."
+        },
+        "bots": {
+          "title": "Bots",
+          "desc": "Commands, polls, moderation: an open API to plug in your tools."
+        },
+        "mock": {
+          "dmContact": "Hugo",
+          "dm": [
+            "Shall we call tomorrow?",
+            "Sure. 6 pm?",
+            "Perfect, I'll send the link."
+          ],
+          "serverName": "Photo Club",
+          "serverMembers": "248 members",
+          "categories": [
+            "Information",
+            "Chat"
+          ],
+          "channels": [
+            [
+              "announcements",
+              "rules"
+            ],
+            [
+              "general",
+              "film",
+              "editing"
+            ]
+          ],
+          "roles": [
+            "Founder",
+            "Moderators",
+            "Members"
+          ],
+          "voiceChannel": "Voice channel",
+          "voiceState": "4 participants · encrypted",
+          "mute": "Mic",
+          "camera": "Camera",
+          "leave": "Leave",
+          "botName": "Alfy Bot",
+          "botTag": "BOT",
+          "botCommand": "/poll Next outing?",
+          "botQuestion": "Next outing?",
+          "botOptions": [
+            "Seaside",
+            "Forest",
+            "Downtown"
+          ],
+          "botVotes": "31 votes"
+        }
+      },
+      "selfHost": {
+        "title1": "Your server,",
+        "title2": "at home.",
+        "terminalTitle": "alfychat-server",
+        "registered": "Server registered with the gateway",
+        "data": "Local data: ./alfychat-data",
+        "online": "Node online on port 4100"
+      },
+      "association": {
+        "eyebrow": "AlfyCore",
+        "lines": [
+          "No shareholders.",
+          "No ads.",
+          "No tracking."
+        ],
+        "link": "About the association"
+      },
+      "faq": {
+        "eyebrow": "FAQ",
+        "all": "All questions"
+      },
+      "footer": {
+        "language": "Language",
+        "status": "Service status",
+        "theme": "Theme"
+      }
     }
   },
   "changelogs": {

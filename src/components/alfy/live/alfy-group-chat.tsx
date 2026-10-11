@@ -10,13 +10,17 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useCallContext } from '@/hooks/use-call-context';
 import { useMessages } from '@/hooks/use-messages';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
 import { api } from '@/lib/api';
+import { socketService } from '@/lib/socket';
 import { DmChat } from '@/components/alfy/dm/dm-chat';
+import { GroupSettingsModal, type GroupMember, type GroupRole } from '@/components/alfy/dm/group-settings-modal';
+import { ConversationCallStage } from '@/components/alfy/calls/call-stage';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { toAlfyMessage, toAlfyUser } from '@/components/alfy/live/map';
 import type { AlfyUser } from '@/components/alfy/mock/types';
@@ -25,20 +29,27 @@ import { useTranslation } from '@/components/locale-provider';
 interface GroupInfo {
   name: string;
   avatarUrl?: string;
+  /** Faux = seul le propriétaire peut ajouter des membres. */
+  isOpen: boolean;
   participants: AlfyUser[];
+  members: GroupMember[];
 }
 
 export function AlfyGroupChat({ groupId }: { groupId: string }) {
   const { t, tx } = useTranslation();
-  const GROUP_VIDE: GroupInfo = { name: t.chat.groupFallbackName, participants: [] };
+  const GROUP_VIDE: GroupInfo = { name: t.chat.groupFallbackName, isOpen: true, participants: [], members: [] };
   const { user } = useAuth();
+  const router = useRouter();
+  const [editOpen, setEditOpen] = useState(false);
   const { isMobile, openSidebar } = useMobileNav();
   const { initiateGroupCall } = useCallContext();
 
   /* Mémorisé avec l'id auquel il correspond : jamais d'affichage du groupe
      précédent pendant que le nouveau charge. */
   const [chargee, setChargee] = useState<{ id: string; info: GroupInfo } | null>(null);
-  const { name, avatarUrl, participants } = chargee?.id === groupId ? chargee.info : GROUP_VIDE;
+  const { name, avatarUrl, isOpen, participants, members } = chargee?.id === groupId ? chargee.info : GROUP_VIDE;
+  /* Incrémenté à chaque écho de GROUP_UPDATE / ajout / retrait : relance la lecture. */
+  const [version, setVersion] = useState(0);
 
   const {
     messages: rawMessages,
@@ -66,12 +77,22 @@ export function AlfyGroupChat({ groupId }: { groupId: string }) {
 
         const rawParticipants = (data.participants as Record<string, unknown>[]) ?? [];
         const users = rawParticipants.map((p) => toAlfyUser(p, (p.userId ?? p.id) as string));
+        const ownerId = (data.ownerId ?? data.owner_id) as string | undefined;
+        const membres: GroupMember[] = rawParticipants.map((p, i) => {
+          const role = p.role as GroupRole | undefined;
+          return {
+            user: users[i],
+            role: role ?? (users[i].id === ownerId ? 'owner' : 'member'),
+          };
+        });
         setChargee({
           id: groupId,
           info: {
             name: (data.name as string) || t.chat.groupFallbackName,
             avatarUrl: (data.avatarUrl ?? data.avatar_url) as string | undefined,
+            isOpen: data.isOpen !== false && data.is_open !== false,
             participants: users,
+            members: membres,
           },
         });
       })
@@ -81,7 +102,32 @@ export function AlfyGroupChat({ groupId }: { groupId: string }) {
     return () => {
       annule = true;
     };
-  }, [groupId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, version]);
+
+  /* Modifs du groupe (nom, icône, membres) faites ici ou ailleurs. */
+  useEffect(() => {
+    const concerne = (data: unknown) => {
+      const p = ((data as { payload?: unknown })?.payload ?? data) as { groupId?: string; id?: string } | undefined;
+      return p?.groupId === groupId || p?.id === groupId;
+    };
+    const rafraichir = (data: unknown) => {
+      if (concerne(data)) setVersion((v) => v + 1);
+    };
+    const supprime = (data: unknown) => {
+      if (concerne(data)) router.push('/channels/me');
+    };
+    socketService.on('GROUP_UPDATE', rafraichir);
+    socketService.on('GROUP_MEMBER_ADD', rafraichir);
+    socketService.on('GROUP_MEMBER_REMOVE', rafraichir);
+    socketService.on('GROUP_DELETE', supprime);
+    return () => {
+      socketService.off('GROUP_UPDATE', rafraichir);
+      socketService.off('GROUP_MEMBER_ADD', rafraichir);
+      socketService.off('GROUP_MEMBER_REMOVE', rafraichir);
+      socketService.off('GROUP_DELETE', supprime);
+    };
+  }, [groupId, router]);
 
   const meId = user?.id ?? '';
 
@@ -169,6 +215,19 @@ export function AlfyGroupChat({ groupId }: { groupId: string }) {
         onOpenNav={isMobile ? openSidebar : undefined}
         onStartVoiceCall={() => initiateGroupCall(groupId, 'voice', name)}
         onStartVideoCall={() => initiateGroupCall(groupId, 'video', name)}
+        onEditGroup={() => setEditOpen(true)}
+        callStage={<ConversationCallStage target={{ kind: 'group', groupId }} />}
+      />
+      <GroupSettingsModal
+        isOpen={editOpen}
+        onOpenChange={setEditOpen}
+        groupId={groupId}
+        name={name}
+        avatarUrl={avatarUrl}
+        isOpenGroup={isOpen}
+        members={members}
+        currentUserId={meId}
+        onGone={() => router.push('/channels/me')}
       />
     </UserDirectoryProvider>
   );

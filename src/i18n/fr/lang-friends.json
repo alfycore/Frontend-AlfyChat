@@ -160,6 +160,15 @@
     "groupNameOptional": "Nom du groupe (facultatif)",
     "groupNamePlaceholder": "Ex. Équipe design",
     "members": "Membres",
-    "createdToast": "Groupe créé"
+    "createdToast": "Groupe créé",
+    "edit": "Modifier le groupe",
+    "saved": "Groupe mis à jour",
+    "saveError": "Impossible d'enregistrer les modifications",
+    "owner": "Propriétaire",
+    "admin": "Admin",
+    "remove": "Retirer",
+    "leaveConfirm": "Vous ne recevrez plus les messages de ce groupe.",
+    "deleteConfirm": "Le groupe et tous ses messages seront supprimés pour tout le monde.",
+    "cancel": "Annuler"
   }
 }

@@ -160,6 +160,15 @@
     "groupNameOptional": "Group name (optional)",
     "groupNamePlaceholder": "E.g. Design team",
     "members": "Members",
-    "createdToast": "Group created"
+    "createdToast": "Group created",
+    "edit": "Edit group",
+    "saved": "Group updated",
+    "saveError": "Couldn't save your changes",
+    "owner": "Owner",
+    "admin": "Admin",
+    "remove": "Remove",
+    "leaveConfirm": "You will stop receiving messages from this group.",
+    "deleteConfirm": "The group and all its messages will be deleted for everyone.",
+    "cancel": "Cancel"
   }
 }
