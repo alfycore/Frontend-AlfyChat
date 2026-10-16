@@ -4,6 +4,7 @@ import { Button, Dropdown, Label, Separator, toast, Tooltip } from '@heroui/reac
 import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
+import { messageLink } from '@/lib/domains';
 import {
   Copy,
   CornerUpRight,
@@ -71,15 +72,19 @@ export function MessageActions({
         void navigator.clipboard.writeText(content);
         toast(t.messageItem.textCopiedToast);
         break;
-      case 'copy-link':
-        // Le domaine `alfy.chat` codé en dur ne pointait nulle part. L'URL
-        // courante est déjà celle de la conversation : elle rouvre au bon
-        // endroit, avec l'ancre du message.
+      case 'copy-link': {
+        // Salon de serveur → lien court alfy.chat/m/…, partageable avec tous
+        // les membres. En DM, l'URL dépend de qui la lit : on garde l'URL
+        // courante, avec l'ancre du message.
+        const salon = window.location.pathname.match(/^\/channels\/server\/([^/]+)\/([^/]+)/);
         void navigator.clipboard.writeText(
-          `${window.location.origin}${window.location.pathname}#msg-${messageId}`,
+          salon
+            ? messageLink(salon[1], salon[2], messageId)
+            : `${window.location.origin}${window.location.pathname}#msg-${messageId}`,
         );
         toast(t.messageItem.linkCopiedToast);
         break;
+      }
       case 'quote':
         onQuote?.();
         break;

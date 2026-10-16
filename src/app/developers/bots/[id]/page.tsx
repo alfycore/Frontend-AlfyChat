@@ -23,6 +23,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { APP_URL, botInviteLink } from '@/lib/domains';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -290,15 +291,16 @@ export default function BotDetailPage() {
   const togglePerm = (bit: number) => setPermsBitmask(prev => prev ^ bit);
 
   const getInviteLink = () => {
-    const base = typeof window !== 'undefined' ? window.location.origin : '';
     const uri = redirectUrisLocal.find(u => u.trim()) || '';
+    // Sans redirect_uri, le lien court alfy.chat/b/… suffit.
+    if (!uri) return botInviteLink(id, permsBitmask);
     const params = new URLSearchParams({
       client_id: id,
       scope: 'bot',
       permissions: String(permsBitmask),
     });
-    if (uri) params.set('redirect_uri', uri);
-    return `${base}/oauth2/authorize?${params.toString()}`;
+    params.set('redirect_uri', uri);
+    return `${APP_URL}/oauth2/authorize?${params.toString()}`;
   };
 
   const copyText = (text: string, setter: (v: boolean) => void) => {
@@ -514,7 +516,7 @@ export default function BotDetailPage() {
                     <div className="space-y-3">
                       {[
                         { key: 'websiteUrl', label: 'Site web', icon: GlobeIcon, placeholder: 'https://monbot.fr' },
-                        { key: 'supportServerUrl', label: 'Serveur support', icon: LinkIcon, placeholder: 'https://alfychat.app/invite/abc' },
+                        { key: 'supportServerUrl', label: 'Serveur support', icon: LinkIcon, placeholder: 'https://alfy.chat/i/abc' },
                         { key: 'privacyPolicyUrl', label: 'Politique de confidentialité', icon: LockIcon, placeholder: 'https://monbot.fr/privacy' },
                       ].map(({ key, label, icon: Icon, placeholder }) => (
                         <div key={key} className="flex flex-col gap-1.5">

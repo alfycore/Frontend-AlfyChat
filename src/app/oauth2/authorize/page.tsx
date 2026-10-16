@@ -138,9 +138,12 @@ function AuthorizeContent() {
         state: state || undefined,
       });
       if (res.success && res.data) {
-        const { redirectUri: callbackUrl } = res.data as any;
+        const { redirectUri: callbackUrl, installed } = res.data as any;
         if (callbackUrl) {
           window.location.href = callbackUrl;
+        } else if (installed && selectedServer) {
+          // Ajout simple (sans redirect_uri) : on ouvre le serveur où le bot arrive.
+          router.push(`/channels/server/${selectedServer}`);
         } else {
           setAuthorizing(false);
         }

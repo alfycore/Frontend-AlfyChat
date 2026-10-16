@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Button, Chip, Spinner, Tooltip } from '@heroui/react';
 import {
   Activity, AlertOctagon, Award, BadgeCheck, Boxes, ChartNoAxesColumn, Compass,
-  FileClock, FlaskConical, Gauge, Gavel, LifeBuoy, LogOut, Menu, Network, Scale, Server,
+  FileClock, FlaskConical, Gauge, Gavel, LifeBuoy, Link2, LogOut, Menu, Network, Scale, Server,
   Settings2, ShieldAlert, ShieldCheck, Users, X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -57,6 +57,7 @@ function buildNavGroups(t: Translations): { label: string; items: NavItem[] }[] 
         { href: '/admin/status',     label: t.admin.nav.status,     icon: ChartNoAxesColumn },
         { href: '/admin/security',   label: t.admin.nav.security,   icon: ShieldAlert },
         { href: '/admin/changelogs', label: t.admin.nav.changelogs, icon: FileClock },
+        { href: '/admin/links',      label: 'Liens courts',         icon: Link2 },
       ],
     },
     {

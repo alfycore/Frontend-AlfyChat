@@ -77,7 +77,7 @@ export function JoinServerDialog({ isOpen, onOpenChange, onJoined }: JoinServerD
                 }}
               >
                 <Label>Code ou lien d&apos;invitation</Label>
-                <Input placeholder="https://alfychat.app/invite/... ou ABCD1234" autoFocus />
+                <Input placeholder="https://alfy.chat/i/... ou ABCD1234" autoFocus />
               </TextField>
             </Modal.Body>
             <Modal.Footer>

@@ -23,6 +23,7 @@ import {
 } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
+import { inviteLink } from '@/lib/domains';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { useUIStyle } from '@/hooks/use-ui-style';
@@ -312,7 +313,7 @@ export function ServerSettingsDialog({ serverId, open, onOpenChange, onServerUpd
   function handleDeleteInvite(invId: string) { socketService.deleteInvite(serverId, invId, () => void loadDialogData()); }
 
   function copyInviteLink(code: string) {
-    navigator.clipboard.writeText(`${window.location.origin}/invite/${code}`).then(() => { setCopiedCode(code); setTimeout(() => setCopiedCode(''), 1800); });
+    navigator.clipboard.writeText(inviteLink(code)).then(() => { setCopiedCode(code); setTimeout(() => setCopiedCode(''), 1800); });
   }
 
   async function handleStartDomainVerify() {

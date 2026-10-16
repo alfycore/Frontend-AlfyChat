@@ -247,7 +247,7 @@ export default function NewBotPage() {
                           <InputGroupInput
                             id="supportServerUrl"
                             type="url"
-                            placeholder="https://alfychat.app/invite/abc"
+                            placeholder="https://alfy.chat/i/abc"
                             value={form.supportServerUrl}
                             onChange={e => setForm(f => ({ ...f, supportServerUrl: e.target.value }))}
                             className="text-sm"

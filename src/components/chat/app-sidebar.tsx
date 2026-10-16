@@ -11,6 +11,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
+import { inviteLink } from '@/lib/domains';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotificationStore, getUnread, clearUnread, pruneServerUnread } from '@/lib/notification-store';
 import { NotificationCenter } from '@/components/chat/notification-center';
@@ -558,7 +559,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
     if (res.success && res.data) {
       const code = (res.data as any).code ?? (res.data as any).invite?.code;
       if (code) {
-        navigator.clipboard.writeText(`${window.location.origin}/invite/${code}`);
+        navigator.clipboard.writeText(inviteLink(code));
         toast.success("Lien d'invitation copié");
       }
     }

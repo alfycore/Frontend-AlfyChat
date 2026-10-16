@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { UsersIcon, Loader2Icon, ArrowRightIcon, LogInIcon, ShieldCheckIcon } from '@/components/icons';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
+import { LINK_HOST } from '@/lib/domains';
 import { cn } from '@/lib/utils';
 
 interface InviteInfo {
@@ -186,10 +187,15 @@ export function InviteEmbed({ code }: InviteEmbedProps) {
 
 /**
  * Extract invite codes from a message text.
- * Matches URLs like https://alfychat.app/invite/CODE or /invite/CODE
+ * Matches URLs like https://alfy.chat/i/CODE, https://alfychat.app/invite/CODE or /invite/CODE
  */
+const LINK_HOST_RE = LINK_HOST.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export function extractInviteCodes(content: string): string[] {
-  const regex = /(?:https?:\/\/[^\s/]*)?\/invite\/([A-Za-z0-9]{4,20})/g;
+  const regex = new RegExp(
+    `(?:(?:https?:\\/\\/)?${LINK_HOST_RE}\\/i|(?:https?:\\/\\/[^\\s/]*)?\\/invite)\\/([A-Za-z0-9]{4,20})`,
+    'g',
+  );
   const codes: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = regex.exec(content)) !== null) {

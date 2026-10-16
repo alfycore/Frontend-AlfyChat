@@ -7,6 +7,7 @@ import { INVITES } from '@/components/alfy/mock/data';
 import type { AlfyInvite } from '@/components/alfy/mock/types';
 import { useUserById } from '@/components/alfy/user-directory';
 import { PanelHeader } from '@/components/alfy/settings/settings-shell';
+import { inviteLink, LINK_HOST } from '@/lib/domains';
 
 const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -21,8 +22,8 @@ export function InvitesPanel({ invites, onCreate, onRevoke }: InvitesPanelProps 
   const userById = useUserById();
   const items = invites ?? INVITES;
   const copy = async (code: string) => {
-    await navigator.clipboard.writeText(`https://alfy.chat/invite/${code}`);
-    toast('Lien copié', { description: `alfy.chat/invite/${code}` });
+    await navigator.clipboard.writeText(inviteLink(code));
+    toast('Lien copié', { description: `${LINK_HOST}/i/${code}` });
   };
 
   return (

@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { useAuth } from '@/hooks/use-auth';
 import { pollRemoteSession, startRemoteSession, type RemoteSession } from '@/lib/remote-auth';
 import { cn } from '@/lib/utils';
+import { nextAfterLogin } from '@/lib/domains';
 
 /** Intervalle de sondage. Un code vit 120 s, soit ~60 requêtes au plus. */
 const POLL_MS = 2000;
@@ -61,7 +62,7 @@ export function RemoteLoginPanel() {
           arrete.current = true;
           setEtat('connecte');
           const out = await completeRemoteLogin(res);
-          if (out.success) router.replace('/channels/me');
+          if (out.success) router.replace(nextAfterLogin());
           else setEtat('erreur');
           return;
         }

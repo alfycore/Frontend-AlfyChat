@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { siteLink } from '@/lib/domains';
+
+const DOCS = siteLink('/developers/docs');
 
 const STEPS = [
   {
@@ -35,7 +38,7 @@ const STEPS = [
 
 const QUICK_LINKS = [
   {
-    href: '/developers/docs/bots-introduction',
+    href: DOCS + '/bots-introduction',
     icon: BotIcon,
     label: 'Guide des bots',
     description: 'Introduction complète au système de bots AlfyChat',
@@ -44,7 +47,7 @@ const QUICK_LINKS = [
     border: 'border-accent/15',
   },
   {
-    href: '/developers/docs/oauth2-introduction',
+    href: DOCS + '/oauth2-introduction',
     icon: LockIcon,
     label: 'OAuth2',
     description: 'Flows d\'autorisation, scopes et échange de tokens',
@@ -53,7 +56,7 @@ const QUICK_LINKS = [
     border: 'border-blue-500/15',
   },
   {
-    href: '/developers/docs/gateway-websocket',
+    href: DOCS + '/gateway-websocket',
     icon: WifiIcon,
     label: 'WebSocket Gateway',
     description: 'Connexion temps-réel, événements et heartbeat',
@@ -62,7 +65,7 @@ const QUICK_LINKS = [
     border: 'border-emerald-500/15',
   },
   {
-    href: '/developers/docs/gateway-rest',
+    href: DOCS + '/gateway-rest',
     icon: CodeIcon,
     label: 'API REST',
     description: 'Référence complète des endpoints HTTP',
@@ -111,7 +114,7 @@ export default function DevelopersPage() {
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link href="/developers/docs/bots-introduction">
+                <Link href={DOCS + '/bots-introduction'}>
                   <BookOpenIcon size={14} />
                   Documentation
                 </Link>
@@ -124,8 +127,8 @@ export default function DevelopersPage() {
         <MotionStagger className="grid grid-cols-3 gap-3">
           {[
             { icon: BotIcon, value: botCount !== null ? String(botCount) : '–', label: 'Mes bots', href: '/developers/bots', color: 'text-accent', bg: 'bg-accent/8' },
-            { icon: BookOpenIcon, value: '50+', label: 'Pages de docs', href: '/developers/docs/gateway-rest', color: 'text-blue-400', bg: 'bg-blue-500/8' },
-            { icon: ZapIcon, value: '80+', label: 'Événements WS', href: '/developers/docs/gateway-events', color: 'text-emerald-400', bg: 'bg-emerald-500/8' },
+            { icon: BookOpenIcon, value: '50+', label: 'Pages de docs', href: DOCS + '/gateway-rest', color: 'text-blue-400', bg: 'bg-blue-500/8' },
+            { icon: ZapIcon, value: '80+', label: 'Événements WS', href: DOCS + '/gateway-events', color: 'text-emerald-400', bg: 'bg-emerald-500/8' },
           ].map(stat => (
             <MotionStaggerItem key={stat.label}>
               <Link

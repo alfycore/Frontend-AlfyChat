@@ -18,7 +18,7 @@
 
 import { Alert, Button, ScrollShadow, Spinner } from '@heroui/react';
 import { ArrowDown, Lock, type LucideIcon } from 'lucide-react';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { AlfyAvatar } from '@/components/alfy/primitives/alfy-avatar';
 import { DmComposer } from '@/components/alfy/dm/dm-composer';
@@ -147,6 +147,24 @@ export function DmChat({
     isLoadingMore,
     onLoadMore,
   });
+
+  /* Lien de message (`…#msg-<id>`, ex. depuis alfy.chat/m/…) : on vise le
+     message dès qu'il est chargé, une seule fois, puis on retire l'ancre pour
+     qu'un rechargement ne refasse pas le saut. */
+  const [ancreMessage, setAncreMessage] = useState<string | null>(() =>
+    typeof window !== 'undefined' && window.location.hash.startsWith('#msg-')
+      ? decodeURIComponent(window.location.hash.slice(5))
+      : null,
+  );
+  useEffect(() => {
+    if (!ancreMessage || !itemIds.includes(ancreMessage)) return;
+    const frame = requestAnimationFrame(() => {
+      if (!scrollToMessage(ancreMessage)) return;
+      setAncreMessage(null);
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [ancreMessage, itemIds, scrollToMessage]);
 
   /* Seuls les messages postés après l'ouverture s'animent : sinon toute la
      conversation clignote au chargement. Comparer à l'instant de montage évite

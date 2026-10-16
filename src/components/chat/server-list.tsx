@@ -8,6 +8,7 @@ import { useUIStyle } from '@/hooks/use-ui-style';
 import { useTranslation } from '@/components/locale-provider';
 import { api, resolveMediaUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
+import { inviteLink } from '@/lib/domains';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotificationStore } from '@/lib/notification-store';
 import { serverListStore } from '@/lib/server-list-store';
@@ -292,8 +293,18 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
   const handleContextAction = (serverId: string, action: string) => {
     if (action === 'settings') setSettingsId(serverId);
     if (action === 'invite') {
-      navigator.clipboard.writeText(`${window.location.origin}/invite/${serverId}`);
-      toast.success("Lien d'invitation copié !");
+      // Un lien d'invitation porte un code, pas l'ID du serveur.
+      void api.createServerInvite(serverId, {}).then((res) => {
+        const code = res.success && res.data
+          ? ((res.data as any).code ?? (res.data as any).invite?.code)
+          : null;
+        if (!code) {
+          toast.warning("Impossible de créer le lien d'invitation.");
+          return;
+        }
+        navigator.clipboard.writeText(inviteLink(code));
+        toast.success("Lien d'invitation copié !");
+      });
     }
     if (action === 'leave') setLeaveId(serverId);
     if (action === 'delete') setDeleteId(serverId);
@@ -679,7 +690,7 @@ export function ServerList({ selectedServer, onSelectServer, horizontal = false 
                 <Input
                   value={invite}
                   onChange={(e) => setInvite(e.target.value)}
-                  placeholder="https://alfychat.app/invite/... ou ABCD1234"
+                  placeholder="https://alfy.chat/i/... ou ABCD1234"
                   onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
                   autoFocus
                 />

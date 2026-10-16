@@ -10,6 +10,7 @@ import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
+import { nextAfterLogin } from '@/lib/domains';
 import { AlfyAuthShell, AlfyAuthHeading, AlfyAuthBanner } from '@/components/alfy/auth/alfy-auth-shell';
 import { RemoteLoginPanel } from '@/components/auth/remote-login-panel';
 
@@ -94,7 +95,7 @@ export default function LoginPage() {
       const result = await login(email, password, turnstileToken || undefined);
       if (result.twoFactorRequired && result.twoFactorToken) { set2FAToken(result.twoFactorToken); setTwoFactorStep(true); return; }
       if (result.emailNotVerified) { setEmailNotVerifiedStep(true); return; }
-      if (result.success) router.push('/channels/me');
+      if (result.success) router.push(nextAfterLogin());
       else { setError(result.error || t.auth.login.loginError); resetTurnstile(); }
     } finally {
       setIsLoading(false);
@@ -108,7 +109,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const result = await loginWith2FA(twoFactorToken, totpCode, password);
-      if (result.success) router.push('/channels/me');
+      if (result.success) router.push(nextAfterLogin());
       else { setError(result.error || t.auth.login.invalidCode); setTotpCode(''); }
     } finally {
       setIsLoading(false);

@@ -13,6 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { siteLink } from '@/lib/domains';
+
+// La documentation est publique sur le site (alfychat.com).
+const DOCS = siteLink('/developers/docs');
 
 type NavItem = { href: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string };
 type NavSection = { label: string; items: NavItem[] };
@@ -21,40 +25,40 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'BOTS ALFYCHAT',
     items: [
-      { href: '/developers/docs/bots-introduction',   icon: BotIcon,          label: 'Introduction' },
-      { href: '/developers/docs/bots-creation',       icon: PlusIcon,         label: 'Créer un Bot' },
-      { href: '/developers/docs/bots-auth',           icon: KeyIcon,          label: 'Authentification' },
-      { href: '/developers/docs/bots-messages',       icon: MessageCircleIcon,label: 'Envoyer des messages' },
-      { href: '/developers/docs/bots-commands',       icon: TerminalIcon,     label: 'Commandes' },
-      { href: '/developers/docs/bots-permissions',    icon: ShieldCheckIcon,  label: 'Permissions' },
-      { href: '/developers/docs/bots-certification',  icon: TagIcon,          label: 'Certification' },
+      { href: DOCS + '/bots-introduction',   icon: BotIcon,          label: 'Introduction' },
+      { href: DOCS + '/bots-creation',       icon: PlusIcon,         label: 'Créer un Bot' },
+      { href: DOCS + '/bots-auth',           icon: KeyIcon,          label: 'Authentification' },
+      { href: DOCS + '/bots-messages',       icon: MessageCircleIcon,label: 'Envoyer des messages' },
+      { href: DOCS + '/bots-commands',       icon: TerminalIcon,     label: 'Commandes' },
+      { href: DOCS + '/bots-permissions',    icon: ShieldCheckIcon,  label: 'Permissions' },
+      { href: DOCS + '/bots-certification',  icon: TagIcon,          label: 'Certification' },
     ],
   },
   {
     label: 'OAUTH2',
     items: [
-      { href: '/developers/docs/oauth2-introduction', icon: LockIcon,         label: 'Introduction' },
-      { href: '/developers/docs/oauth2-flows',        icon: LinkIcon,         label: 'Flows d\'autorisation' },
-      { href: '/developers/docs/oauth2-scopes',       icon: ShieldCheckIcon,  label: 'Scopes' },
+      { href: DOCS + '/oauth2-introduction', icon: LockIcon,         label: 'Introduction' },
+      { href: DOCS + '/oauth2-flows',        icon: LinkIcon,         label: 'Flows d\'autorisation' },
+      { href: DOCS + '/oauth2-scopes',       icon: ShieldCheckIcon,  label: 'Scopes' },
     ],
   },
   {
     label: 'GATEWAY API',
     items: [
-      { href: '/developers/docs/gateway-overview',    icon: GlobeIcon,        label: 'Vue d\'ensemble' },
-      { href: '/developers/docs/gateway-auth',        icon: LockIcon,         label: 'Authentification' },
-      { href: '/developers/docs/gateway-rest',                icon: CodeIcon,         label: 'Référence REST' },
-      { href: '/developers/docs/gateway-rest-auth',           icon: KeyIcon,          label: '↳ Auth & RGPD' },
-      { href: '/developers/docs/gateway-rest-users',          icon: BookOpenIcon,     label: '↳ Utilisateurs' },
-      { href: '/developers/docs/gateway-rest-messages',       icon: MessageCircleIcon,label: '↳ Messages & Conversations' },
-      { href: '/developers/docs/gateway-rest-friends',        icon: UserPlusIcon,     label: '↳ Amis & Appels' },
-      { href: '/developers/docs/gateway-rest-servers',        icon: ServerIcon,       label: '↳ Serveurs' },
-      { href: '/developers/docs/gateway-rest-bots',           icon: BotIcon,          label: '↳ Bots' },
-      { href: '/developers/docs/gateway-rest-media',          icon: TerminalIcon,     label: '↳ Médias' },
-      { href: '/developers/docs/gateway-rest-admin',          icon: ShieldCheckIcon,  label: '↳ Admin & Monitoring' },
-      { href: '/developers/docs/gateway-websocket',   icon: WifiIcon,         label: 'WebSocket' },
-      { href: '/developers/docs/gateway-events',      icon: ZapIcon,          label: 'Événements' },
-      { href: '/developers/docs/gateway-limits',      icon: AlertTriangleIcon,label: 'Limites & Erreurs' },
+      { href: DOCS + '/gateway-overview',    icon: GlobeIcon,        label: 'Vue d\'ensemble' },
+      { href: DOCS + '/gateway-auth',        icon: LockIcon,         label: 'Authentification' },
+      { href: DOCS + '/gateway-rest',                icon: CodeIcon,         label: 'Référence REST' },
+      { href: DOCS + '/gateway-rest-auth',           icon: KeyIcon,          label: '↳ Auth & RGPD' },
+      { href: DOCS + '/gateway-rest-users',          icon: BookOpenIcon,     label: '↳ Utilisateurs' },
+      { href: DOCS + '/gateway-rest-messages',       icon: MessageCircleIcon,label: '↳ Messages & Conversations' },
+      { href: DOCS + '/gateway-rest-friends',        icon: UserPlusIcon,     label: '↳ Amis & Appels' },
+      { href: DOCS + '/gateway-rest-servers',        icon: ServerIcon,       label: '↳ Serveurs' },
+      { href: DOCS + '/gateway-rest-bots',           icon: BotIcon,          label: '↳ Bots' },
+      { href: DOCS + '/gateway-rest-media',          icon: TerminalIcon,     label: '↳ Médias' },
+      { href: DOCS + '/gateway-rest-admin',          icon: ShieldCheckIcon,  label: '↳ Admin & Monitoring' },
+      { href: DOCS + '/gateway-websocket',   icon: WifiIcon,         label: 'WebSocket' },
+      { href: DOCS + '/gateway-events',      icon: ZapIcon,          label: 'Événements' },
+      { href: DOCS + '/gateway-limits',      icon: AlertTriangleIcon,label: 'Limites & Erreurs' },
     ],
   },
   {

@@ -1,3 +1,5 @@
+import { parseInviteCode } from '@/lib/domains';
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 /**
@@ -259,7 +261,11 @@ class ApiService {
   }
 
   async logout() {
-    return this.request('/api/auth/logout', { method: 'POST' });
+    // Le serveur ne révoque la session que si on lui désigne son refresh token.
+    return this.request('/api/auth/logout', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken: this.getRefreshToken() }),
+    });
   }
 
   // ============ UTILISATEURS ============
@@ -695,7 +701,7 @@ class ApiService {
   async joinServer(inviteCode: string) {
     return this.request('/api/servers/join', {
       method: 'POST',
-      body: JSON.stringify({ inviteCode }),
+      body: JSON.stringify({ inviteCode: parseInviteCode(inviteCode) }),
     });
   }
 
@@ -855,6 +861,63 @@ class ApiService {
 
   async resolveInvite(code: string) {
     return this.request(`/api/servers/invite/${encodeURIComponent(code)}`);
+  }
+
+  /** Profil public par pseudo (liens alfy.chat/u/PSEUDO). */
+  async getUserByUsername(username: string) {
+    return this.request<{
+      id: string;
+      username: string;
+      displayName: string;
+      avatarUrl: string | null;
+      bannerUrl: string | null;
+      bio: string | null;
+    }>(`/api/users/by-username/${encodeURIComponent(username)}`);
+  }
+
+  /** Aperçu d'un serveur public (liens alfy.chat/s/ID). */
+  async getPublicServer(serverId: string) {
+    return this.request<{
+      id: string;
+      name: string;
+      description: string | null;
+      iconUrl: string | null;
+      bannerUrl: string | null;
+      memberCount: number;
+    }>(`/api/servers/public/${encodeURIComponent(serverId)}`);
+  }
+
+  /** SSO : code à usage unique pour ouvrir une session sur le site (alfychat.com). */
+  async createSsoCode(returnUrl: string) {
+    return this.request<{ redirect: string }>('/api/auth/sso/code', {
+      method: 'POST',
+      body: JSON.stringify({ returnUrl }),
+    });
+  }
+
+  // ── Liens courts admin (alfy.chat/<slug>) ──
+  async getShortLinks() {
+    return this.request<Array<{ slug: string; targetUrl: string; clicks: number; createdAt: string }>>(
+      '/api/admin/short-links',
+    );
+  }
+
+  async createShortLink(slug: string, targetUrl: string) {
+    return this.request('/api/admin/short-links', {
+      method: 'POST',
+      body: JSON.stringify({ slug, targetUrl }),
+    });
+  }
+
+  async updateShortLink(slug: string, targetUrl: string) {
+    return this.request(`/api/admin/short-links/${encodeURIComponent(slug)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ targetUrl }),
+    });
+  }
+
+  async deleteShortLink(slug: string) {
+    return this.request(`/api/admin/short-links/${encodeURIComponent(slug)}`, { method: 'DELETE' });
   }
 
   // ============ MESSAGES SERVEUR ============
