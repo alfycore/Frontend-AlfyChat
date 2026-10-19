@@ -9,6 +9,7 @@ import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { api } from '@/lib/api';
+import { nextAfterLogin } from '@/lib/domains';
 import { AlfyAuthShell, AlfyAuthHeading, AlfyAuthBanner } from '@/components/alfy/auth/alfy-auth-shell';
 
 export default function RegisterPage() {
@@ -98,8 +99,12 @@ function RegisterContent() {
         ...(inviteCode && { inviteCode }),
         ...(turnstileToken && { turnstileToken }),
       });
-      if (result.success) router.push('/channels/gotostart');
-      else if ((result as { emailNotVerified?: boolean }).emailNotVerified) router.push('/login?emailVerification=1&email=' + encodeURIComponent(email));
+      // Inscrit depuis une invitation (`?next=/invite/…`) : on y retourne, le
+      // serveur se rejoint ensuite en un clic. Sinon, l'accueil habituel.
+      const next = nextAfterLogin('/channels/gotostart');
+      const keepNext = next !== '/channels/gotostart' ? `&next=${encodeURIComponent(next)}` : '';
+      if (result.success) router.push(next);
+      else if ((result as { emailNotVerified?: boolean }).emailNotVerified) router.push('/login?emailVerification=1&email=' + encodeURIComponent(email) + keepNext);
       else {
         setError(result.error || t.auth.register.registerError);
         const w = window as unknown as { turnstile?: { reset: (id: string) => void } };

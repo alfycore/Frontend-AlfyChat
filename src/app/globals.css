@@ -731,6 +731,55 @@
 /* (reduced-motion : plus de bloc dédié — tout passe par var(--dur-*),
  * var(--motion-iter) et var(--stagger-step), coupés en haut du fichier.) */
 
+/* ── Page d'invitation ──────────────────────────────────────
+ * Fond : la bannière du serveur, floutée — à défaut, deux halos
+ * d'accent qui dérivent très lentement. La carte se pose, l'icône
+ * du serveur arrive avec un léger rebond (moment rare, pas une
+ * action répétée), puis les lignes montent l'une après l'autre.
+ * À la jonction, une coche se trace et une onde s'éteint.
+ * ─────────────────────────────────────────────────────────── */
+@keyframes inv-drift {
+  from { transform: translate3d(-6%, -4%, 0) scale(1); }
+  to   { transform: translate3d(6%, 5%, 0) scale(1.12); }
+}
+@keyframes inv-check {
+  from { stroke-dashoffset: 24; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes inv-ring {
+  from { opacity: 0.5; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.8); }
+}
+@keyframes inv-live {
+  0%       { box-shadow: 0 0 0 0 color-mix(in oklab, var(--success) 55%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 5px transparent; }
+}
+
+.inv-halo {
+  animation: inv-drift calc(var(--dur-illustrative) * 20) var(--ease-in-out-cubic) var(--motion-iter) alternate both;
+  will-change: transform;
+}
+.inv-halo-b { animation-duration: calc(var(--dur-illustrative) * 27); animation-direction: alternate-reverse; }
+
+.inv-card { animation: at-pop var(--dur-4) var(--ease-out-quart) both; }
+.inv-icon {
+  animation: at-pop-bounce var(--dur-4) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(var(--stagger-step) * 2);
+}
+.inv-stagger > * { animation: nf-fade-up var(--dur-4) var(--ease-out-quart) both; }
+.inv-stagger > *:nth-child(1) { animation-delay: calc(var(--stagger-step) * 3); }
+.inv-stagger > *:nth-child(2) { animation-delay: calc(var(--stagger-step) * 5); }
+.inv-stagger > *:nth-child(3) { animation-delay: calc(var(--stagger-step) * 7); }
+.inv-stagger > *:nth-child(n + 4) { animation-delay: calc(var(--stagger-step) * 9); }
+
+.inv-live-dot { animation: inv-live var(--dur-pulse) ease-out var(--motion-iter); }
+.inv-success-ring { animation: inv-ring var(--dur-5) var(--ease-out-quart) both; }
+.inv-check path {
+  stroke-dasharray: 24;
+  animation: inv-check var(--dur-4) var(--ease-out-quart) both;
+  animation-delay: var(--dur-2);
+}
+
 /* ── Scrollbars personnalisées ──────────────────────────────
  * Fines, discrètes, thumb dérivé de --scrollbar (suit le thème).
  * Firefox (scrollbar-*) + WebKit (::-webkit-scrollbar).
