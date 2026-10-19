@@ -1,0 +1,40 @@
+{
+  "presence": {
+    "menuAria": "Changer de statut",
+    "idleDesc": "Vous apparaissez comme absent pour les autres.",
+    "dndDesc": "Vous ne recevrez aucune notification sur le bureau.",
+    "invisibleDesc": "Vous apparaissez hors ligne, mais vous avez accès à tout.",
+    "durationMenu": "Durée",
+    "durations": {
+      "15m": "Pendant 15 minutes",
+      "1h": "Pendant 1 heure",
+      "8h": "Pendant 8 heures",
+      "24h": "Pendant 24 heures",
+      "3d": "Pendant 3 jours",
+      "forever": "Pour toujours"
+    },
+    "until": "Jusqu'à {time}",
+    "setCustom": "Définir un statut personnalisé",
+    "editCustom": "Modifier le statut personnalisé",
+    "clearCustom": "Effacer le statut personnalisé",
+    "dialogTitle": "Statut personnalisé",
+    "dialogDesc": "Il s'affiche sous votre nom, partout où vous apparaissez.",
+    "placeholder": "Quoi de neuf ?",
+    "emoji": "Choisir un émoji",
+    "removeEmoji": "Retirer l'émoji",
+    "clearAfter": "Effacer après",
+    "clearOptions": {
+      "today": "Aujourd'hui",
+      "4h": "4 heures",
+      "1h": "1 heure",
+      "30m": "30 minutes",
+      "never": "Ne pas effacer"
+    },
+    "preview": "Aperçu",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "copyId": "Copier l'identifiant",
+    "copied": "Identifiant copié",
+    "counter": "{n} / 100"
+  }
+}

@@ -4,8 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { socketService } from '@/lib/socket';
-import { signalService } from '@/lib/signal-service';
-import { api } from '@/lib/api';
+import { isEncrypted, resolveMessages } from '@/lib/e2ee/codec';
 import { loadBootstrap } from '@/lib/bootstrap-store';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -78,6 +77,12 @@ export function useNotification() {
   const { user }    = useAuth();
   const userIdRef   = useRef<string | null>(user?.id ?? null);
   const prefsRef    = useRef<UserPrefs>({});
+  /* Statut « Ne pas déranger » : compteurs et historique continuent, mais
+     ni son, ni bulle, ni notification de bureau (comme Discord). */
+  const presenceRef = useRef<string | undefined>(user?.status);
+  useEffect(() => {
+    presenceRef.current = user?.status;
+  }, [user?.status]);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const seenIdsRef  = useRef<Set<string>>(new Set());
@@ -286,6 +291,9 @@ export function useNotification() {
     };
     pushHistory(entry);
 
+    // Statut « Ne pas déranger » : silence total, badges et historique conservés.
+    if (presenceRef.current === 'dnd') return;
+
     // Son
     if (effectiveMention) playMentionSound();
     else playMessageSound();
@@ -342,13 +350,19 @@ export function useNotification() {
         isViewing = isGroupActive(groupId) || currentPath.includes(groupId);
       } else return;
 
-      // Déchiffrement optionnel pour le preview
+      // Aperçu : déchiffré localement (formats sans état + coffre, jamais le
+      // Double Ratchet), groupes chiffrés compris. Le texte ne quitte pas l'appareil.
       let content: string = payload.content || '';
-      if (payload.e2eeType && senderId && myId && content.startsWith('ecdh:')) {
-        try {
-          content = await signalService.decrypt(senderId, myId, content, payload.senderContent, payload.e2eeType as 1 | 3);
-        } catch { content = '🔒 Nouveau message chiffré'; }
+      if (myId && isEncrypted(payload)) {
+        const out = await resolveMessages(
+          [{ id: payload.id, senderId, content, senderContent: payload.senderContent, e2eeType: payload.e2eeType }],
+          { me: myId, conversationId: convId ?? '', allowRatchet: false },
+        ).catch(() => null);
+        const d = out?.get(payload.id);
+        content = d && d.crypto !== 'locked' ? d.content : 'Nouveau message chiffré';
       }
+      // Les pièces jointes voyagent en lignes techniques dans le contenu.
+      content = content.replace(/\n?\[attach:[^\]]+\]:[^\n]*/g, '').trim() || 'Pièce jointe';
       const preview = content.length > 80 ? content.substring(0, 80) + '…' : content;
       const senderName = payload.authorName || payload.senderName || 'Nouveau message';
 
@@ -595,68 +609,9 @@ export function useNotification() {
     };
   }, []);
 
-  // ── E2EE History Recovery (conservé tel quel) ─────────────────────────────
-  useEffect(() => {
-    const handleE2EEHistoryRequest = async (data: { requesterId: string; conversationId: string }) => {
-      const currentUserId = userIdRef.current;
-      if (!currentUserId || typeof data?.conversationId !== 'string') return;
-      // Décomposition STRICTE de l'identifiant de MP, et le demandeur doit être
-      // l'autre participant. Avec `includes()` + `parts.find()`, un identifiant
-      // forgé `dm_<moi>_<C>_<attaquant>` faisait ré-chiffrer tout l'historique
-      // moi↔C à destination de l'attaquant.
-      const m = /^dm_([0-9a-f-]{36})_([0-9a-f-]{36})$/i.exec(data.conversationId);
-      if (!m) return;
-      const otherUserId = m[1] === currentUserId ? m[2] : m[2] === currentUserId ? m[1] : null;
-      if (!otherUserId || data.requesterId !== otherUserId) return;
-
-      try {
-        const bundleRes = await api.getSignalKeyBundle(data.requesterId) as any;
-        if (!bundleRes?.success || !bundleRes?.data?.ecdhKey) return;
-        const requesterECDHKey: string = bundleRes.data.ecdhKey;
-
-        const rawMessages: any[] = [];
-        let before: string | undefined;
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const response = await api.getMessages(undefined, otherUserId, 100, before) as any;
-          if (!response?.success || !response?.data) break;
-          const batch = response.data as any[];
-          if (batch.length === 0) break;
-          rawMessages.push(...batch);
-          if (batch.length < 100) break;
-          before = batch[batch.length - 1]?.createdAt;
-        }
-        if (rawMessages.length === 0) return;
-
-        const reEncrypted: Array<{ id: string; content: string; senderId: string; createdAt: string }> = [];
-        for (const m of rawMessages) {
-          if (!m.e2eeType) continue;
-          try {
-            const senderId = m.senderId || m.authorId;
-            const isSender = senderId === currentUserId;
-            let plaintext: string | null = null;
-            if (isSender && m.senderContent) {
-              try { plaintext = await signalService.decryptECDH(m.senderContent.startsWith('ecdh:') ? m.senderContent : `ecdh:${m.senderContent}`); } catch {}
-              if (!plaintext) { try { plaintext = await (signalService as any).decryptForSelf?.(m.senderContent); } catch {} }
-            } else {
-              try { plaintext = await signalService.decryptECDH(m.content); } catch {}
-            }
-            if (!plaintext || plaintext.startsWith('[Message non disponible') ||
-              plaintext === '[Message chiffré — relecture non disponible]' ||
-              plaintext === '🔒 Message chiffré (session non établie)') continue;
-            const encrypted = await signalService.encryptECDH(plaintext, requesterECDHKey);
-            reEncrypted.push({ id: m.id, content: encrypted, senderId, createdAt: m.createdAt });
-          } catch { /* ignorer */ }
-        }
-
-        socketService.sendE2EEHistoryResponse(data.requesterId, data.conversationId, reEncrypted);
-      } catch { /* non bloquant */ }
-    };
-
-    socketService.on('e2ee:history-request', handleE2EEHistoryRequest);
-    return () => socketService.off('e2ee:history-request', handleE2EEHistoryRequest);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ── Récupération d'historique E2EE : désormais dans le module conversation
+  // (`conversation/engine.ts` → `onHistoryRequest`), qui ne rechiffre que vers
+  // la clé DÉJÀ connue du demandeur et sait relire les messages du coffre.
 }
 
 /** Fonctions utilitaires pour déclencher des toasts manuellement */

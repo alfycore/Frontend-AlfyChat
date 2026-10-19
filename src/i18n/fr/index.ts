@@ -13,6 +13,9 @@ import langSocial from './lang-social.json';
 import langStatic from './lang-static.json';
 import langHosting from './lang-hosting.json';
 import langGuild from './lang-guild.json';
+import langConversation from './lang-conversation.json';
+import langPresence from './lang-presence.json';
+import langHome from './lang-home.json';
 
 export const fr = {
   ...langCommon,
@@ -26,6 +29,9 @@ export const fr = {
   ...langStatic,
   ...langHosting,
   ...langGuild,
+  ...langConversation,
+  ...langPresence,
+  ...langHome,
   ...langViews,
   ...langChatui,
   ...langAdmin,

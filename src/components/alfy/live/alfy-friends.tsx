@@ -1,23 +1,25 @@
 'use client';
 
 /**
- * Container : page Amis branchée sur les vraies données.
- * Remplace atelier/people/FriendsHome.tsx.
+ * Conteneur de la page Amis (/channels/me) : données d'amis + gestes, sur la
+ * vue `FriendsHome`. Retirer / bloquer rafraîchissent la liste.
  */
 
-import { useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { toast } from '@heroui/react';
+import { useCallback, useMemo } from 'react';
 
+import { api } from '@/lib/api';
 import { useMobileNav } from '@/hooks/use-mobile-nav';
-import { FriendsView } from '@/components/alfy/people/friends-view';
+import { FriendsHome } from '@/components/alfy/people/friends-home';
 import { UserDirectoryProvider, makeResolver } from '@/components/alfy/user-directory';
 import { useAlfyFriends } from '@/components/alfy/live/use-alfy-friends';
 import type { AlfyUser } from '@/components/alfy/mock/types';
+import { useTranslation } from '@/components/locale-provider';
 
 export function AlfyFriends() {
-  const router = useRouter();
+  const { t, tx } = useTranslation();
   const { isMobile, openSidebar } = useMobileNav();
-  const { friends, pending, blocked, accept, decline, add, unblock } = useAlfyFriends();
+  const { friends, pending, blocked, accept, decline, add, unblock, reload } = useAlfyFriends();
 
   const resolver = useMemo(() => {
     const table = new Map<string, AlfyUser>();
@@ -25,18 +27,43 @@ export function AlfyFriends() {
     return makeResolver(table);
   }, [friends, blocked, pending]);
 
+  const nameOf = useCallback((id: string) => resolver(id).displayName, [resolver]);
+
+  const remove = useCallback(
+    async (userId: string) => {
+      const res = await api.removeFriend(userId).catch(() => null);
+      if (res?.success === false) return toast.danger(res.error || t.guild.errors.default);
+      toast(tx(t.home.done.removed, { name: nameOf(userId) }));
+      void reload();
+    },
+    [nameOf, reload, t, tx],
+  );
+  const block = useCallback(
+    async (userId: string) => {
+      const res = await api.blockUser(userId).catch(() => null);
+      if (res?.success === false) return toast.danger(res.error || t.guild.errors.default);
+      toast(tx(t.home.done.blocked, { name: nameOf(userId) }));
+      void reload();
+    },
+    [nameOf, reload, t, tx],
+  );
+
   return (
     <UserDirectoryProvider value={resolver}>
-      <FriendsView
+      <FriendsHome
         friends={friends}
         pending={pending}
         blocked={blocked}
-        onMessage={(userId) => router.push(`/channels/me/${userId}`)}
         onOpenNav={isMobile ? openSidebar : undefined}
         onAccept={(requestId) => void accept(requestId)}
         onDecline={(requestId) => void decline(requestId)}
         onAddFriend={(username) => add(username)}
-        onUnblock={(userId) => void unblock(userId)}
+        onUnblock={(userId) => {
+          void unblock(userId);
+          toast(tx(t.home.done.unblocked, { name: nameOf(userId) }));
+        }}
+        onRemove={(userId) => void remove(userId)}
+        onBlock={(userId) => void block(userId)}
       />
     </UserDirectoryProvider>
   );

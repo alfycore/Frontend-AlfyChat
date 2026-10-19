@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 
-import { AlfyGroupChat } from '@/components/alfy/live/alfy-group-chat';
+import { GroupConversation } from '@/components/alfy/conversation/view/conversation-view';
 
 export default function GroupPage() {
   const params = useParams();
@@ -10,5 +10,5 @@ export default function GroupPage() {
 
   if (!groupId) return null;
 
-  return <AlfyGroupChat key={groupId} groupId={groupId} />;
+  return <GroupConversation key={groupId} groupId={groupId} />;
 }

@@ -1,0 +1,72 @@
+{
+  "home": {
+    "title": "Friends",
+    "tabs": {
+      "online": "Online",
+      "all": "All",
+      "pending": "Pending",
+      "blocked": "Blocked"
+    },
+    "tabsAria": "Friends list",
+    "addFriend": "Add friend",
+    "search": "Search",
+    "sectionOnline": "Online — {n}",
+    "sectionAll": "All friends — {n}",
+    "sectionIncoming": "Incoming — {n}",
+    "sectionOutgoing": "Outgoing — {n}",
+    "sectionBlocked": "Blocked — {n}",
+    "message": "Message",
+    "more": "More",
+    "voiceCall": "Start voice call",
+    "videoCall": "Start video call",
+    "removeFriend": "Remove friend",
+    "block": "Block",
+    "unblock": "Unblock",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancelRequest": "Cancel request",
+    "incoming": "Incoming friend request",
+    "outgoing": "Outgoing friend request",
+    "removeTitle": "Remove {name}",
+    "removeBody": "Are you sure you want to remove {name} from your friends?",
+    "removeConfirm": "Remove friend",
+    "blockTitle": "Block {name}",
+    "blockBody": "{name} won't be able to message or call you. You can unblock them at any time.",
+    "blockConfirm": "Block",
+    "done": {
+      "removed": "{name} is no longer your friend.",
+      "blocked": "{name} is blocked.",
+      "unblocked": "{name} is unblocked."
+    },
+    "empty": {
+      "online": "No friends online right now.",
+      "onlineHint": "Write anyway: offline friends will get your message.",
+      "all": "You don't have any friends yet.",
+      "allHint": "Add someone with their username.",
+      "pending": "No pending requests.",
+      "pendingHint": "Incoming and outgoing friend requests will show up here.",
+      "blocked": "Nobody is blocked.",
+      "blockedHint": "People you block will show up here.",
+      "search": "No friend matches “{q}”."
+    },
+    "add": {
+      "title": "Add friend",
+      "desc": "Add friends with their AlfyChat username.",
+      "placeholder": "Username",
+      "send": "Send friend request",
+      "sending": "Sending…",
+      "success": "Request sent to @{username}.",
+      "failure": "Couldn't send a request to @{username}: check the username.",
+      "yourName": "Your username",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "activity": {
+      "title": "Active now",
+      "emptyTitle": "It's quiet for now…",
+      "emptyHint": "When a friend joins a voice channel, it'll show up here.",
+      "join": "Join",
+      "inChannel": "{n} in the channel"
+    }
+  }
+}

@@ -1,126 +1,36 @@
 /* ════════════════════════════════════════════════════════════════════════
- * Thème « alfy » — source unique, entièrement scopée [data-ui="alfy"].
- * Importable partout (atelier /uitest ET vraies pages) sans aucun effet
- * en dehors des conteneurs qui portent l'attribut.
+ * Thème « alfy » — jetons propres à l'interface, scopés [data-ui="alfy"].
  *
- * Accent : violet #7627FF ≈ oklch(53% 0.27 293).
- * Neutres PROPRES (chroma ≈ 0) pour laisser le violet ressortir.
- *
- * ⚠ Ces variables sont redéclarées SUR UN DESCENDANT de <html>. Comme les
- * custom properties s'héritent, la déclaration la plus proche gagne : sans
- * garde, ce bloc écraserait toujours la palette posée sur :root par le
- * ThemeKit (data-palette / data-depth / data-accent) et « changer de thème
- * de couleur » ne ferait rien dans l'app.
- * D'où le découpage ci-dessous :
- *   • jetons propres à Alfy + statuts → jamais gardés (aucune palette ne les
- *     définit) ;
- *   • échelle de neutres            → cède si data-palette ou data-depth ;
- *   • accent                        → cède si data-palette ou data-accent.
- * Le rendu par défaut (aucun attribut posé) reste strictement identique.
+ * Les couleurs (neutres, accent, succès / alerte / danger, statuts de
+ * présence) viennent TOUTES de la palette active (globals.css, générée et
+ * vérifiée en contraste). Ce fichier n'y ajoute que ce qu'aucune palette
+ * ne définit : le vert du chiffrement de bout en bout et le bleu de
+ * l'auto-hébergement. L'ancienne échelle de neutres redéclarée ici masquait
+ * la palette par défaut à l'intérieur de l'app — supprimée.
  * ════════════════════════════════════════════════════════════════════════ */
 
-/* ── Jetons Alfy + statuts — indépendants des palettes ─────────────────── */
+:root,
 [data-ui="alfy"] {
-  --field-border: transparent;
-  --danger: oklch(58% 0.22 27);
-  --danger-foreground: oklch(99.2% 0 0);
-  --success: oklch(62% 0.17 152);
-  --success-foreground: oklch(99.2% 0 0);
-  --warning: oklch(75% 0.16 72);
-  --warning-foreground: oklch(24% 0.05 72);
-
   /* Sémantiques Alfy (sécurité / auto-hébergement) */
-  --alfy-e2e: oklch(56% 0.15 158);
-  --alfy-e2e-soft: oklch(93% 0.04 158);
-  --alfy-node: oklch(58% 0.14 230);
-  --alfy-node-soft: oklch(93% 0.035 230);
+  --alfy-e2e: oklch(52% 0.13 162);
+  --alfy-e2e-soft: oklch(94% 0.035 162);
+  --alfy-node: oklch(53% 0.15 240);
+  --alfy-node-soft: oklch(94% 0.03 240);
+}
 
+[data-ui="alfy"] {
   background-color: var(--background);
   color: var(--foreground);
 }
 
+.dark,
 .dark [data-ui="alfy"],
 [data-ui="alfy"].dark {
   color-scheme: dark;
-  --danger: oklch(63% 0.2 26);
-  --danger-foreground: oklch(99.2% 0 0);
-  --success: oklch(71% 0.17 155);
-  --success-foreground: oklch(16% 0.04 155);
-  --warning: oklch(80% 0.15 78);
-  --warning-foreground: oklch(20% 0.05 78);
-
-  --alfy-e2e: oklch(74% 0.155 158);
-  --alfy-e2e-soft: oklch(26% 0.045 158);
-  --alfy-node: oklch(72% 0.13 230);
-  --alfy-node-soft: oklch(25% 0.04 230);
-}
-
-/* ── Échelle de neutres — cède à une palette ou à une profondeur ────────── */
-:root:not([data-palette]):not([data-depth]) [data-ui="alfy"] {
-  /* Palette claire — blanc franc, gris neutres */
-  --background: oklch(98% 0.002 293);
-  --foreground: oklch(20% 0.006 293);
-  --surface: oklch(100% 0 0);
-  --surface-foreground: oklch(20% 0.006 293);
-  --surface-secondary: oklch(96.5% 0.003 293);
-  --surface-secondary-foreground: oklch(20% 0.006 293);
-  --surface-tertiary: oklch(94% 0.004 293);
-  --surface-tertiary-foreground: oklch(20% 0.006 293);
-  --overlay: oklch(100% 0 0);
-  --overlay-foreground: oklch(20% 0.006 293);
-  --default: oklch(94% 0.004 293);
-  --default-foreground: oklch(20% 0.006 293);
-  --muted: oklch(50% 0.012 293);
-  --field-background: oklch(99% 0.002 293);
-  --field-foreground: oklch(20% 0.006 293);
-  --field-placeholder: oklch(58% 0.012 293);
-  --border: oklch(91% 0.004 293);
-  --separator: oklch(94% 0.003 293);
-  --scrollbar: oklch(85% 0.006 293);
-  --segment: oklch(100% 0 0);
-  --segment-foreground: oklch(20% 0.006 293);
-}
-
-:root:not([data-palette]):not([data-depth]) .dark [data-ui="alfy"],
-:root:not([data-palette]):not([data-depth]) [data-ui="alfy"].dark,
-.dark:not([data-palette]):not([data-depth]) [data-ui="alfy"] {
-  /* Palette sombre — noir neutre propre */
-  --background: oklch(14.5% 0.006 293);
-  --foreground: oklch(96% 0.004 293);
-  --surface: oklch(18% 0.007 293);
-  --surface-foreground: oklch(96% 0.004 293);
-  --surface-secondary: oklch(21.5% 0.009 293);
-  --surface-secondary-foreground: oklch(96% 0.004 293);
-  --surface-tertiary: oklch(25% 0.011 293);
-  --surface-tertiary-foreground: oklch(96% 0.004 293);
-  --overlay: oklch(20% 0.008 293);
-  --overlay-foreground: oklch(96% 0.004 293);
-  --default: oklch(27% 0.011 293);
-  --default-foreground: oklch(96% 0.004 293);
-  --muted: oklch(66% 0.014 293);
-  --field-background: oklch(12.5% 0.006 293);
-  --field-foreground: oklch(96% 0.004 293);
-  --field-placeholder: oklch(55% 0.012 293);
-  --border: oklch(28% 0.011 293);
-  --separator: oklch(23% 0.009 293);
-  --scrollbar: oklch(37% 0.012 293);
-  --segment: oklch(28% 0.011 293);
-  --segment-foreground: oklch(96% 0.004 293);
-}
-
-/* ── Accent — cède à une palette ou à un accent explicite/personnalisé ──── */
-:root:not([data-palette]):not([data-accent]) [data-ui="alfy"] {
-  --accent: oklch(53% 0.27 293);
-  --accent-foreground: oklch(99.5% 0 0);
-  --focus: oklch(53% 0.27 293);
-}
-
-:root:not([data-palette]):not([data-accent]) .dark [data-ui="alfy"],
-:root:not([data-palette]):not([data-accent]) [data-ui="alfy"].dark,
-.dark:not([data-palette]):not([data-accent]) [data-ui="alfy"] {
-  --accent: oklch(64% 0.24 293);
-  --accent-foreground: oklch(99.5% 0 0);
-  --focus: oklch(64% 0.24 293);
+  --alfy-e2e: oklch(76% 0.145 162);
+  --alfy-e2e-soft: oklch(27% 0.045 162);
+  --alfy-node: oklch(74% 0.13 236);
+  --alfy-node-soft: oklch(26% 0.04 236);
 }
 
 /* ── Micro-animations (150–200 ms, désactivées si reduced-motion) ───────── */
@@ -242,8 +152,9 @@
    conteneur) en ont besoin aussi, et le conteneur redéfinit ses neutres. */
 :root,
 [data-ui="alfy"] {
-  --alfy-sidebar: color-mix(in oklab, var(--surface) 58%, var(--background));
-  --alfy-dock: color-mix(in oklab, var(--surface-secondary) 72%, var(--background));
+  /* rail (background) < dock < colonne < fil (surface) */
+  --alfy-sidebar: color-mix(in oklab, var(--surface) 55%, var(--background));
+  --alfy-dock: color-mix(in oklab, var(--background) 55%, var(--alfy-sidebar));
 }
 
 .alfy-sidebar {

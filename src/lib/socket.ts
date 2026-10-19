@@ -311,19 +311,29 @@ class SocketService {
   // Messages
   sendMessage(data: {
     channelId?: string;
+    conversationId?: string;
     recipientId?: string;
     content: string;
     senderContent?: string;
-    e2eeType?: 1 | 3;
+    /** 1 / 3 : Signal (MP), 4 : enveloppe de groupe. */
+    e2eeType?: number;
     replyToId?: string;
     attachments?: string[];
     mentionedUserIds?: string[];
+    /** Renvoyé dans `message:sent` : associe l'accusé au message en attente. */
+    clientNonce?: string;
   }): void {
     this.emitOrQueue('message:send', data);
   }
 
-  editMessage(messageId: string, content: string, conversationId?: string): void {
-    this.emitOrQueue('message:edit', { messageId, content, conversationId });
+  /** Édition — `encrypted` porte la nouvelle copie chiffrée (MP / groupe chiffrés). */
+  editMessage(
+    messageId: string,
+    content: string,
+    conversationId?: string,
+    encrypted?: { senderContent?: string; e2eeType?: number },
+  ): void {
+    this.emitOrQueue('message:edit', { messageId, content, conversationId, ...encrypted });
   }
 
   deleteMessage(messageId: string, conversationId?: string): void {

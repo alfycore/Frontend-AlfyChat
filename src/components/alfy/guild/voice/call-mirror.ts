@@ -48,6 +48,8 @@ export const useCallMirror = create<CallMirrorState>()(() => ({
 type Ctx = ReturnType<typeof useCallContext>;
 export interface CallActions {
   initiateServerCall: Ctx['initiateServerCall'];
+  initiateCall: Ctx['initiateCall'];
+  initiateGroupCall: Ctx['initiateGroupCall'];
   leaveCall: Ctx['leaveCall'];
   endCall: Ctx['endCall'];
   toggleMute: Ctx['toggleMute'];
@@ -70,6 +72,8 @@ export function CallMirrorSync() {
   useEffect(() => {
     callActions.current = {
       initiateServerCall: c.initiateServerCall,
+      initiateCall: c.initiateCall,
+      initiateGroupCall: c.initiateGroupCall,
       leaveCall: c.leaveCall,
       endCall: c.endCall,
       toggleMute: c.toggleMute,

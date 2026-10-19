@@ -162,7 +162,7 @@ function toReactions(raw: unknown, currentUserId: string): AlfyReaction[] {
  * contenu (convention partagée avec components/chat/message-item.tsx) et
  * renvoie le texte restant + les pièces jointes typées.
  */
-function extractAttachments(content: string, messageId: string): { text: string; attachments: AlfyAttachment[] } {
+export function extractAttachments(content: string, messageId: string): { text: string; attachments: AlfyAttachment[] } {
   const lines = content.split('\n');
   const textLines: string[] = [];
   const attachments: AlfyAttachment[] = [];

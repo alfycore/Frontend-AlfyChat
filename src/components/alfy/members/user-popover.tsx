@@ -598,7 +598,12 @@ export function UserPopover({
 
                 {/* Méta : membre depuis + sécurité */}
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-muted">
-                  <span>{tx(t.admin.members.memberSince, { date: memberSince.format(new Date(displayUser.createdAt)) })}</span>
+                  {/* Date d'inscription parfois inconnue (profil partiel) : rien plutôt qu'un RangeError. */}
+                  {Number.isFinite(Date.parse(displayUser.createdAt)) ? (
+                    <span>{tx(t.admin.members.memberSince, { date: memberSince.format(new Date(displayUser.createdAt)) })}</span>
+                  ) : (
+                    <span />
+                  )}
                   {!isSelf && !user.isBot && (
                     keysVerified ? (
                       <span className="flex items-center gap-1 text-(--alfy-e2e)">

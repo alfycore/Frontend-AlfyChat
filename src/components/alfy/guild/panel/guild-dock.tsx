@@ -16,7 +16,6 @@ import {
   AudioLines,
   Check,
   ChevronDown,
-  Copy,
   Hand,
   HeadphoneOff,
   Headphones,
@@ -37,13 +36,12 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCallContext } from '@/hooks/use-call-context';
 import { getAudioPreferences, setAudioPreferences } from '@/hooks/use-call';
 import { resolveMediaUrl } from '@/lib/api';
-import { socketService } from '@/lib/socket';
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 import { StatusDot, usePresenceLabels } from '@/components/alfy/primitives/status-dot';
+import { StatusMenuPopover } from '@/components/alfy/status/status-menu';
 import type { AlfyPresence } from '@/components/alfy/mock/types';
 import { useGuildChannel, useGuildInfo } from '@/components/alfy/guild/hooks';
-import { copyText } from '@/components/alfy/guild/actions';
 import { useGuildVoice } from '@/components/alfy/guild/voice/use-guild-voice';
 import { useVoicePrefs } from '@/components/alfy/guild/voice/voice-prefs';
 
@@ -298,11 +296,10 @@ function DeviceMenu({ kind, onOpenSettings }: { kind: 'audioinput' | 'audiooutpu
 
 /* ── Panneau utilisateur ──────────────────────────────────────────────────── */
 
-const STATUSES: Exclude<AlfyPresence, 'offline'>[] = ['online', 'idle', 'dnd', 'invisible'];
 
 function UserPanel({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { t } = useTranslation();
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const labels = usePresenceLabels();
   const voice = useGuildVoice();
   if (!user) return null;
@@ -310,19 +307,8 @@ function UserPanel({ onOpenSettings }: { onOpenSettings: () => void }) {
   const status = ((user.status as AlfyPresence) ?? 'online') as AlfyPresence;
   const avatar = user.avatarUrl ? resolveMediaUrl(user.avatarUrl) : undefined;
   const display = user.displayName || user.username;
-  const sub = user.customStatus || labels[status];
-
-  const setStatus = (next: (typeof STATUSES)[number]) => {
-    if (next === status) return;
-    // Le serveur ne renvoie pas l'écho de son propre changement : écriture locale.
-    updateUser({ status: next });
-    socketService.updatePresence(next, user.customStatus ?? null, (user as { emoji?: string }).emoji ?? null);
-  };
-
-  const STATUS_DESC: Partial<Record<AlfyPresence, string>> = {
-    dnd: t.guild.dock.dndDesc,
-    invisible: t.guild.dock.invisibleDesc,
-  };
+  const emoji = (user as { emoji?: string | null }).emoji;
+  const sub = [emoji, user.customStatus || (emoji ? '' : labels[status])].filter(Boolean).join(' ');
 
   return (
     <div className="flex h-13 items-center gap-0.5 px-2">
@@ -352,30 +338,7 @@ function UserPanel({ onOpenSettings }: { onOpenSettings: () => void }) {
             </span>
           </span>
         </Dropdown.Trigger>
-        <Dropdown.Popover placement="top start" offset={10} className="min-w-64">
-          <Dropdown.Menu aria-label={t.guild.dock.statusMenu}>
-            <Dropdown.Section>
-              <Header>{display}</Header>
-              {STATUSES.map((s) => (
-                <Dropdown.Item key={s} id={s} textValue={labels[s]} onAction={() => setStatus(s)}>
-                  <StatusDot status={s} size="sm" ringClass="ring-overlay" />
-                  <div className="flex min-w-0 flex-col">
-                    <Label>{labels[s]}</Label>
-                    {STATUS_DESC[s] && <span className="text-xs text-muted">{STATUS_DESC[s]}</span>}
-                  </div>
-                  {s === status && <Check className="ms-auto size-4 shrink-0 text-accent" aria-hidden />}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Section>
-            <Separator />
-            <Dropdown.Section>
-              <Dropdown.Item id="copy" textValue={t.guild.member.copyUserId} onAction={() => void copyText(user.id, t.guild.menu.copied)}>
-                <Copy className="size-4" aria-hidden />
-                <Label>{t.guild.member.copyUserId}</Label>
-              </Dropdown.Item>
-            </Dropdown.Section>
-          </Dropdown.Menu>
-        </Dropdown.Popover>
+        <StatusMenuPopover />
       </Dropdown>
 
       <div className="flex items-center">

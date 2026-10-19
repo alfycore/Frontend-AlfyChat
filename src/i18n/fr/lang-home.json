@@ -1,0 +1,72 @@
+{
+  "home": {
+    "title": "Amis",
+    "tabs": {
+      "online": "En ligne",
+      "all": "Tous",
+      "pending": "En attente",
+      "blocked": "Bloqués"
+    },
+    "tabsAria": "Liste d'amis",
+    "addFriend": "Ajouter un ami",
+    "search": "Rechercher",
+    "sectionOnline": "En ligne — {n}",
+    "sectionAll": "Tous les amis — {n}",
+    "sectionIncoming": "Reçues — {n}",
+    "sectionOutgoing": "Envoyées — {n}",
+    "sectionBlocked": "Bloqués — {n}",
+    "message": "Message",
+    "more": "Plus",
+    "voiceCall": "Démarrer un appel vocal",
+    "videoCall": "Démarrer un appel vidéo",
+    "removeFriend": "Retirer l'ami",
+    "block": "Bloquer",
+    "unblock": "Débloquer",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "cancelRequest": "Annuler la demande",
+    "incoming": "Demande d'ami reçue",
+    "outgoing": "Demande d'ami envoyée",
+    "removeTitle": "Retirer {name}",
+    "removeBody": "Voulez-vous vraiment retirer {name} de vos amis ?",
+    "removeConfirm": "Retirer l'ami",
+    "blockTitle": "Bloquer {name}",
+    "blockBody": "{name} ne pourra plus vous écrire ni vous appeler. Vous pourrez le débloquer à tout moment.",
+    "blockConfirm": "Bloquer",
+    "done": {
+      "removed": "{name} ne fait plus partie de vos amis.",
+      "blocked": "{name} est bloqué.",
+      "unblocked": "{name} est débloqué."
+    },
+    "empty": {
+      "online": "Aucun ami en ligne pour l'instant.",
+      "onlineHint": "Écrivez quand même : vos amis hors ligne recevront votre message.",
+      "all": "Vous n'avez pas encore d'amis.",
+      "allHint": "Ajoutez quelqu'un grâce à son nom d'utilisateur.",
+      "pending": "Aucune demande en attente.",
+      "pendingHint": "Les demandes d'amis reçues et envoyées apparaîtront ici.",
+      "blocked": "Personne n'est bloqué.",
+      "blockedHint": "Les personnes que vous bloquez apparaîtront ici.",
+      "search": "Aucun ami ne correspond à « {q} »."
+    },
+    "add": {
+      "title": "Ajouter un ami",
+      "desc": "Ajoutez des amis grâce à leur nom d'utilisateur AlfyChat.",
+      "placeholder": "Nom d'utilisateur",
+      "send": "Envoyer une demande d'ami",
+      "sending": "Envoi…",
+      "success": "Demande envoyée à @{username}.",
+      "failure": "Impossible d'envoyer une demande à @{username} : vérifiez le nom d'utilisateur.",
+      "yourName": "Votre nom d'utilisateur",
+      "copy": "Copier",
+      "copied": "Copié"
+    },
+    "activity": {
+      "title": "Activité en cours",
+      "emptyTitle": "C'est calme pour l'instant…",
+      "emptyHint": "Quand un ami rejoint un salon vocal, ça s'affichera ici.",
+      "join": "Rejoindre",
+      "inChannel": "{n} dans le salon"
+    }
+  }
+}

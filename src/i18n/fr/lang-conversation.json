@@ -1,0 +1,138 @@
+{
+  "conv": {
+    "e2ee": {
+      "badge": "Chiffré de bout en bout",
+      "badgeTooltip": "Seuls les participants peuvent lire ces messages — ni AlfyChat ni personne d'autre.",
+      "introDm": "Les messages de cette conversation sont chiffrés de bout en bout : personne d'autre, pas même AlfyChat, ne peut les lire.",
+      "introGroup": "Les messages de ce groupe sont chiffrés de bout en bout, pour chacun de ses membres.",
+      "vaultNote": "Les messages déjà lus restent sur cet appareil, chiffrés, et sont effacés à la déconnexion.",
+      "verify": "Vérifier la sécurité",
+      "safetyTitle": "Numéro de sécurité",
+      "safetyDesc": "Comparez ces chiffres avec {name}, de vive voix ou en personne. S'ils sont identiques des deux côtés, personne ne s'interpose dans votre conversation.",
+      "safetyUnavailable": "{name} n'a pas encore de clé de chiffrement : il n'y a rien à comparer pour l'instant.",
+      "yourKey": "Votre clé",
+      "theirKey": "Clé de {name}",
+      "markVerified": "Marquer comme vérifié",
+      "unmarkVerified": "Retirer la vérification",
+      "verified": "Vérifié",
+      "unverified": "Non vérifié",
+      "keyChanged": "La clé de sécurité de {name} a changé. Cela arrive après une connexion sur un nouvel appareil — vérifiez avec {name} en cas de doute.",
+      "keyChangedAction": "Vérifier",
+      "keyMissing": "{name} n'a pas encore de clé de chiffrement : il doit se reconnecter une fois pour recevoir vos messages.",
+      "close": "Fermer",
+      "startedHere": "Chiffrement de bout en bout activé — les messages au-dessus ont été envoyés en clair"
+    },
+    "locked": {
+      "notMember": "Envoyé avant votre arrivée — chiffré pour les membres d'alors.",
+      "noKey": "Votre clé de déchiffrement manque sur cet appareil. Reconnectez-vous avec votre mot de passe pour la restaurer.",
+      "unreadable": "Ce message ne peut pas être déchiffré sur cet appareil.",
+      "askResend": "Demander à {name} de le renvoyer",
+      "askSent": "Demande envoyée à {name}"
+    },
+    "plain": {
+      "tag": "non chiffré",
+      "tooltip": "Envoyé avant l'activation du chiffrement de bout en bout."
+    },
+    "send": {
+      "sending": "Envoi…",
+      "failed": "Non envoyé",
+      "retry": "Réessayer",
+      "discard": "Supprimer",
+      "skipped": "{n} membre(s) sans clé de chiffrement ne pourront pas lire ce message.",
+      "errors": {
+        "PEER_NO_KEY": "{name} n'a pas encore activé le chiffrement.",
+        "NO_LOCAL_KEY": "Votre clé de chiffrement manque sur cet appareil — reconnectez-vous.",
+        "NO_RECIPIENT": "Aucun membre ne peut recevoir ce message chiffré.",
+        "TIMEOUT": "Le serveur n'a pas répondu.",
+        "RATE_LIMITED": "Vous envoyez des messages trop vite.",
+        "BLOCKED": "Vous ne pouvez pas écrire à cette personne.",
+        "DM_NOT_ALLOWED": "Cette personne n'accepte pas vos messages privés.",
+        "MUTED": "Vous êtes réduit au silence pour le moment.",
+        "FORBIDDEN": "Vous ne participez plus à cette conversation.",
+        "SAVE_FAILED": "Le message n'a pas pu être enregistré.",
+        "default": "Le message n'a pas pu être envoyé."
+      }
+    },
+    "thread": {
+      "startDm": "C'est le début de votre conversation avec {name}.",
+      "startGroup": "Bienvenue au début du groupe {name}.",
+      "newMessages": "Nouveaux",
+      "loadError": "Impossible de charger les messages.",
+      "retryLoad": "Réessayer",
+      "offline": "Hors ligne — messages enregistrés sur cet appareil.",
+      "syncing": "Synchronisation…",
+      "jumpPresent": "Revenir au présent",
+      "newBelowOne": "1 nouveau message",
+      "newBelowMany": "{n} nouveaux messages",
+      "edited": "(modifié)",
+      "today": "Aujourd'hui à {time}",
+      "yesterday": "Hier à {time}",
+      "loadingOlder": "Chargement des messages plus anciens"
+    },
+    "header": {
+      "voice": "Démarrer un appel vocal",
+      "video": "Démarrer un appel vidéo",
+      "profile": "Afficher le profil",
+      "hideProfile": "Masquer le profil",
+      "members": "Afficher la liste des membres",
+      "hideMembers": "Masquer la liste des membres",
+      "addMembers": "Ajouter des amis au groupe",
+      "groupSettings": "Paramètres du groupe",
+      "nav": "Ouvrir la navigation",
+      "membersCount": "{n} membres",
+      "actions": "Actions de la conversation"
+    },
+    "panel": {
+      "aboutMe": "À propos de moi",
+      "memberSince": "Membre AlfyChat depuis",
+      "encryption": "Chiffrement",
+      "keyFingerprint": "Empreinte de clé",
+      "online": "En ligne — {n}",
+      "offline": "Hors ligne — {n}",
+      "owner": "Propriétaire du groupe",
+      "you": "vous",
+      "sendMessage": "Envoyer un message",
+      "viewFullProfile": "Voir le profil complet"
+    },
+    "sidebar": {
+      "search": "Rechercher une conversation",
+      "friends": "Amis",
+      "directMessages": "Messages privés",
+      "newGroup": "Créer un groupe",
+      "empty": "Aucune conversation pour l'instant.",
+      "emptyHint": "Écrivez à un ami pour commencer.",
+      "noResults": "Aucune conversation ne correspond.",
+      "pin": "Épingler",
+      "unpin": "Désépingler",
+      "pinned": "Épinglées",
+      "membersCount": "{n} membres",
+      "you": "Vous : ",
+      "encrypted": "Message chiffré",
+      "attachment": "Pièce jointe",
+      "aria": "Conversations privées"
+    },
+    "typing": {
+      "one": "{a} est en train d'écrire…",
+      "two": "{a} et {b} écrivent…",
+      "many": "Plusieurs personnes écrivent…"
+    },
+    "menu": {
+      "aria": "Actions du message",
+      "reply": "Répondre",
+      "edit": "Modifier",
+      "copy": "Copier le texte",
+      "delete": "Supprimer le message",
+      "deleteTitle": "Supprimer le message",
+      "deleteBody": "Ce message sera supprimé pour tout le monde.",
+      "deleteConfirm": "Supprimer",
+      "react": "Ajouter une réaction",
+      "copied": "Copié dans le presse-papiers"
+    },
+    "attachments": {
+      "encrypting": "Chiffrement de {name}…",
+      "decrypting": "Déchiffrement…",
+      "failed": "Pièce jointe illisible",
+      "download": "Télécharger"
+    }
+  }
+}

@@ -15,6 +15,9 @@ import { useGuildRealtime } from '@/components/alfy/guild/realtime';
 import { setGuildErrorLabels } from '@/components/alfy/guild/actions';
 import { useVoicePresenceSync } from '@/components/alfy/guild/voice/use-guild-voice';
 import { CallMirrorSync } from '@/components/alfy/guild/voice/call-mirror';
+import { useConversationRealtime } from '@/components/alfy/conversation/realtime';
+import { CustomStatusDialog } from '@/components/alfy/status/custom-status-dialog';
+import { useStatusExpiry } from '@/components/alfy/status/use-status';
 import { useMessageErrorToasts } from '@/components/alfy/guild/chat/text-channel-view';
 import { CreateChannelDialog } from '@/components/alfy/guild/dialogs/create-channel';
 import { InviteDialog } from '@/components/alfy/guild/dialogs/invite';
@@ -32,6 +35,10 @@ function GuildEffects() {
   const { t } = useTranslation();
   const { user } = useAuth();
   useGuildRealtime(user?.id);
+  // MP et groupes : un seul jeu d'écouteurs, déchiffrement + coffre.
+  useConversationRealtime();
+  // Statut « pour 1 h », statut perso « effacer après 4 h » : échéances appliquées ici.
+  useStatusExpiry();
   useVoicePresenceSync();
   useMessageErrorToasts();
 
@@ -67,6 +74,7 @@ export function GuildRoot({ children }: { children: ReactNode }) {
       <ServerSettingsDialog />
       <ChannelSettingsDialog />
       <ConfirmDialog />
+      <CustomStatusDialog />
     </ContextMenuProvider>
   );
 }

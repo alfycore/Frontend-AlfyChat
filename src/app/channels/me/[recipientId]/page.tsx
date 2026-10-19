@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { dmPrefetchCache } from '@/lib/dm-prefetch-cache';
 import { loadDmBootstrap } from '@/lib/dm-bootstrap';
 import { useTranslation } from '@/components/locale-provider';
-import { AlfyDmChat } from '@/components/alfy/live/alfy-dm-chat';
+import { DmConversation } from '@/components/alfy/conversation/view/conversation-view';
 
 export default function DMPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -84,5 +84,5 @@ export default function DMPage() {
   // Le layout gère la redirection vers /login.
   if (authLoading || !user || !recipientId) return null;
 
-  return <AlfyDmChat key={recipientId} recipientId={recipientId} />;
+  return <DmConversation key={recipientId} peerId={recipientId} />;
 }

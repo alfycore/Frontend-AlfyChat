@@ -38,6 +38,7 @@ const AUTRE = 'autre-22222222';
 
 const source = (over: Partial<Parameters<typeof ensurePreviews>[0][number]> = {}) => ({
   messageId: `m-${Math.random().toString(36).slice(2)}`,
+  conversationId: 'dm_test',
   senderId: AUTRE,
   content: 'ecdh:eph:iv:ct',
   senderContent: null,

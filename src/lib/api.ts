@@ -1695,6 +1695,14 @@ class ApiService {
     return this.request(`/api/users/keys/${userId}`);
   }
 
+  /** Clés ECDH publiques de plusieurs comptes, par lot — sans consommer de prékey. */
+  async getEcdhKeys(userIds: string[]) {
+    return this.request<{ keys: Record<string, string | null> }>('/api/users/keys/ecdh/batch', {
+      method: 'POST',
+      body: JSON.stringify({ userIds }),
+    });
+  }
+
   /**
    * Vérifie le statut des clés Signal de l'utilisateur courant.
    */

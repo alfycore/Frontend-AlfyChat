@@ -1,0 +1,138 @@
+{
+  "conv": {
+    "e2ee": {
+      "badge": "End-to-end encrypted",
+      "badgeTooltip": "Only participants can read these messages — not AlfyChat, not anyone else.",
+      "introDm": "Messages in this conversation are end-to-end encrypted: nobody else, not even AlfyChat, can read them.",
+      "introGroup": "Messages in this group are end-to-end encrypted for each of its members.",
+      "vaultNote": "Messages you have read stay on this device, encrypted, and are erased when you log out.",
+      "verify": "Verify security",
+      "safetyTitle": "Safety number",
+      "safetyDesc": "Compare these digits with {name}, out loud or in person. If they match on both sides, nobody is sitting in the middle of your conversation.",
+      "safetyUnavailable": "{name} has no encryption key yet: there is nothing to compare for now.",
+      "yourKey": "Your key",
+      "theirKey": "{name}'s key",
+      "markVerified": "Mark as verified",
+      "unmarkVerified": "Remove verification",
+      "verified": "Verified",
+      "unverified": "Not verified",
+      "keyChanged": "{name}'s security key has changed. This happens after logging in on a new device — check with {name} if in doubt.",
+      "keyChangedAction": "Verify",
+      "keyMissing": "{name} has no encryption key yet: they need to log in once to receive your messages.",
+      "close": "Close",
+      "startedHere": "End-to-end encryption enabled — messages above were sent unencrypted"
+    },
+    "locked": {
+      "notMember": "Sent before you joined — encrypted for the members at the time.",
+      "noKey": "Your decryption key is missing on this device. Log in again with your password to restore it.",
+      "unreadable": "This message cannot be decrypted on this device.",
+      "askResend": "Ask {name} to resend it",
+      "askSent": "Request sent to {name}"
+    },
+    "plain": {
+      "tag": "not encrypted",
+      "tooltip": "Sent before end-to-end encryption was enabled."
+    },
+    "send": {
+      "sending": "Sending…",
+      "failed": "Not sent",
+      "retry": "Retry",
+      "discard": "Delete",
+      "skipped": "{n} member(s) without an encryption key won't be able to read this message.",
+      "errors": {
+        "PEER_NO_KEY": "{name} hasn't enabled encryption yet.",
+        "NO_LOCAL_KEY": "Your encryption key is missing on this device — log in again.",
+        "NO_RECIPIENT": "No member can receive this encrypted message.",
+        "TIMEOUT": "The server did not respond.",
+        "RATE_LIMITED": "You're sending messages too fast.",
+        "BLOCKED": "You can't message this person.",
+        "DM_NOT_ALLOWED": "This person doesn't accept your direct messages.",
+        "MUTED": "You are muted for now.",
+        "FORBIDDEN": "You are no longer part of this conversation.",
+        "SAVE_FAILED": "The message could not be saved.",
+        "default": "The message could not be sent."
+      }
+    },
+    "thread": {
+      "startDm": "This is the beginning of your conversation with {name}.",
+      "startGroup": "Welcome to the beginning of the {name} group.",
+      "newMessages": "New",
+      "loadError": "Couldn't load messages.",
+      "retryLoad": "Retry",
+      "offline": "Offline — showing messages saved on this device.",
+      "syncing": "Syncing…",
+      "jumpPresent": "Jump to present",
+      "newBelowOne": "1 new message",
+      "newBelowMany": "{n} new messages",
+      "edited": "(edited)",
+      "today": "Today at {time}",
+      "yesterday": "Yesterday at {time}",
+      "loadingOlder": "Loading older messages"
+    },
+    "header": {
+      "voice": "Start voice call",
+      "video": "Start video call",
+      "profile": "Show profile",
+      "hideProfile": "Hide profile",
+      "members": "Show member list",
+      "hideMembers": "Hide member list",
+      "addMembers": "Add friends to group",
+      "groupSettings": "Group settings",
+      "nav": "Open navigation",
+      "membersCount": "{n} members",
+      "actions": "Conversation actions"
+    },
+    "panel": {
+      "aboutMe": "About me",
+      "memberSince": "AlfyChat member since",
+      "encryption": "Encryption",
+      "keyFingerprint": "Key fingerprint",
+      "online": "Online — {n}",
+      "offline": "Offline — {n}",
+      "owner": "Group owner",
+      "you": "you",
+      "sendMessage": "Send message",
+      "viewFullProfile": "View full profile"
+    },
+    "sidebar": {
+      "search": "Find a conversation",
+      "friends": "Friends",
+      "directMessages": "Direct messages",
+      "newGroup": "Create group",
+      "empty": "No conversations yet.",
+      "emptyHint": "Message a friend to get started.",
+      "noResults": "No conversation matches.",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinned": "Pinned",
+      "membersCount": "{n} members",
+      "you": "You: ",
+      "encrypted": "Encrypted message",
+      "attachment": "Attachment",
+      "aria": "Direct conversations"
+    },
+    "typing": {
+      "one": "{a} is typing…",
+      "two": "{a} and {b} are typing…",
+      "many": "Several people are typing…"
+    },
+    "menu": {
+      "aria": "Message actions",
+      "reply": "Reply",
+      "edit": "Edit",
+      "copy": "Copy text",
+      "delete": "Delete message",
+      "deleteTitle": "Delete message",
+      "deleteBody": "This message will be deleted for everyone.",
+      "deleteConfirm": "Delete",
+      "react": "Add reaction",
+      "copied": "Copied to clipboard"
+    },
+    "attachments": {
+      "encrypting": "Encrypting {name}…",
+      "decrypting": "Decrypting…",
+      "failed": "Unreadable attachment",
+      "download": "Download"
+    }
+  }
+}

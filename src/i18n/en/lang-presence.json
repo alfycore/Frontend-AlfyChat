@@ -1,0 +1,40 @@
+{
+  "presence": {
+    "menuAria": "Change status",
+    "idleDesc": "You appear as away to others.",
+    "dndDesc": "You won't receive any desktop notifications.",
+    "invisibleDesc": "You appear offline, but you still have access to everything.",
+    "durationMenu": "Duration",
+    "durations": {
+      "15m": "For 15 minutes",
+      "1h": "For 1 hour",
+      "8h": "For 8 hours",
+      "24h": "For 24 hours",
+      "3d": "For 3 days",
+      "forever": "Forever"
+    },
+    "until": "Until {time}",
+    "setCustom": "Set a custom status",
+    "editCustom": "Edit custom status",
+    "clearCustom": "Clear custom status",
+    "dialogTitle": "Custom status",
+    "dialogDesc": "It shows under your name, everywhere you appear.",
+    "placeholder": "What's up?",
+    "emoji": "Pick an emoji",
+    "removeEmoji": "Remove emoji",
+    "clearAfter": "Clear after",
+    "clearOptions": {
+      "today": "Today",
+      "4h": "4 hours",
+      "1h": "1 hour",
+      "30m": "30 minutes",
+      "never": "Don't clear"
+    },
+    "preview": "Preview",
+    "save": "Save",
+    "cancel": "Cancel",
+    "copyId": "Copy user ID",
+    "copied": "User ID copied",
+    "counter": "{n} / 100"
+  }
+}

@@ -134,6 +134,7 @@ export function useAlfyDms(): {
             .filter((c) => c.lastMessageId)
             .map((c) => ({
               messageId: c.lastMessageId as string,
+              conversationId: c.id,
               senderId: c.lastMessageSenderId ?? '',
               content: c.lastMessage ?? null,
               senderContent: c.lastMessageSenderContent ?? null,
@@ -195,12 +196,19 @@ export function useAlfyDms(): {
           void load(true);
           return prev;
         }
+        // L'id du dernier message suit : l'aperçu déchiffré (posé par le temps
+        // réel du module conversation) se retrouve par lui. Sans ça la liste
+        // gardait l'aperçu du message PRÉCÉDENT.
         return prev.map((c) =>
           c.id === convId
             ? {
                 ...c,
                 lastMessage: (m.content as string) ?? c.lastMessage,
                 lastMessageAt: (m.createdAt as string) ?? new Date().toISOString(),
+                lastMessageId: (m.id as string) ?? c.lastMessageId,
+                lastMessageSenderId: (m.senderId as string) ?? c.lastMessageSenderId,
+                lastMessageSenderContent: (m.senderContent as string | undefined) ?? undefined,
+                lastMessageE2eeType: (m.e2eeType as number | null | undefined) ?? null,
               }
             : c,
         );

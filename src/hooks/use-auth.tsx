@@ -503,6 +503,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Les aperçus de MP sont du texte EN CLAIR issu de messages chiffrés :
     // les laisser en mémoire après une déconnexion serait la pire fuite du lot.
     clearPreviews();
+    // Coffre local des messages déchiffrés (chiffré au repos) : effacé avec sa
+    // clé, ainsi que les fils en mémoire et les clés publiques mémorisées.
+    try {
+      const [{ resetEngine }, { forgetPublicKeys }, { forgetLocalKey }] = await Promise.all([
+        import('@/components/alfy/conversation/engine'),
+        import('@/lib/e2ee/public-keys'),
+        import('@/lib/e2ee/envelope'),
+      ]);
+      await resetEngine();
+      forgetPublicKeys();
+      forgetLocalKey();
+    } catch {
+      /* non bloquant : la déconnexion doit aboutir */
+    }
     setUser(null);
     setPrivateKey(null);
     setSignalKeysReady(false);
