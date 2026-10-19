@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "Page introuvable",
+      "title": "Ce lien ne mène nulle part.",
+      "description": "L’adresse est peut-être mal saisie, ou la page a été déplacée depuis que le lien a été partagé.",
+      "appTitle": "Ce salon est introuvable.",
+      "appDescription": "Il a peut-être été supprimé, ou vous n’y avez plus accès.",
+      "openApp": "Ouvrir AlfyChat",
+      "goBack": "Revenir en arrière",
+      "discover": "Découvrir des serveurs",
+      "requested": "Adresse demandée"
+    },
     "groups": {
       "emptyTitle": "Vos groupes",
       "emptySubtitle": "Selectionnez un groupe ou creez-en un nouveau."

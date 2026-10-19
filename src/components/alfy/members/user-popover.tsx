@@ -251,12 +251,14 @@ export function UserPopover({
   const bioLong = (displayUser.bio?.length ?? 0) > 90 || (displayUser.bio?.split('\n').length ?? 0) > 3;
   const tint = topRole?.color ?? 'var(--accent)';
 
-  const toggleRole = (roleId: string) =>
-    setMemberRoleIds((ids) => {
-      const next = ids.includes(roleId) ? ids.filter((i) => i !== roleId) : [...ids, roleId];
-      onToggleRole?.(roleId, next.includes(roleId));
-      return next;
-    });
+  /* Le parent est prévenu HORS de la fonction de mise à jour : un updater
+     `setState` doit rester pur — y écrire dans un store (rôles du serveur)
+     déclenchait « Cannot update a component while rendering a different one ». */
+  const toggleRole = (roleId: string) => {
+    const on = !memberRoleIds.includes(roleId);
+    setMemberRoleIds(on ? [...memberRoleIds, roleId] : memberRoleIds.filter((i) => i !== roleId));
+    onToggleRole?.(roleId, on);
+  };
 
   const advanceFriend = async () => {
     const prev = friendState;

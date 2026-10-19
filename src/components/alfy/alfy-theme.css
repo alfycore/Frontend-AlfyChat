@@ -140,15 +140,15 @@
   30% { transform: translateY(-3px); opacity: 1; }
 }
 
-[data-ui="alfy"] .alfy-enter {
+.alfy-enter {
   animation: alfy-fade-up var(--dur-2) var(--ease-out-quart) both;
 }
 
-[data-ui="alfy"] .alfy-pulse {
+.alfy-pulse {
   animation: alfy-pulse-soft var(--dur-pulse) ease-in-out var(--motion-iter);
 }
 
-[data-ui="alfy"] .alfy-typing-dot {
+.alfy-typing-dot {
   animation: alfy-typing-dot var(--dur-typing) ease-in-out var(--motion-iter);
 }
 
@@ -230,4 +230,66 @@
 [data-ui="alfy"] .alfy-no-drag {
   -webkit-app-region: no-drag;
   app-region: no-drag;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+ * Module serveur (guild) — jetons de surface et micro-animations.
+ * Les fonds sont DÉRIVÉS des neutres (ou de la palette active) : aucune
+ * couleur en dur, ils suivent clair/sombre et les thèmes.
+ *   rail (background) < colonne de salons < fil (surface) ; dock légèrement relevé.
+ * ════════════════════════════════════════════════════════════════════════ */
+/* Déclarés sur :root ET sur le conteneur : les fenêtres (portails hors du
+   conteneur) en ont besoin aussi, et le conteneur redéfinit ses neutres. */
+:root,
+[data-ui="alfy"] {
+  --alfy-sidebar: color-mix(in oklab, var(--surface) 58%, var(--background));
+  --alfy-dock: color-mix(in oklab, var(--surface-secondary) 72%, var(--background));
+}
+
+.alfy-sidebar {
+  background-color: var(--alfy-sidebar);
+}
+
+.alfy-sidebar-dock {
+  background-color: var(--background);
+}
+
+.alfy-dock {
+  background-color: var(--alfy-dock);
+}
+
+/* Badge qui apparaît (mentions, réactions) : un léger « pop », sans rebond. */
+@keyframes alfy-badge-pop {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+.alfy-badge-pop {
+  animation: alfy-badge-pop var(--dur-2) var(--ease-out-quart) both;
+}
+
+/* Barre « modifications non enregistrées » : refus de sortie. */
+@keyframes alfy-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.alfy-shake {
+  animation: alfy-shake var(--dur-4) var(--ease-out-quart);
+}
+
+/* Réglages plein écran : entrée en léger zoom arrière, comme Discord. */
+@keyframes alfy-settings-enter {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+.alfy-settings-enter {
+  animation: alfy-settings-enter var(--dur-3) var(--ease-out-quart) both;
+}
+
+/* Barres de défilement fines des colonnes. */
+.alfy-thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--foreground) 22%, transparent) transparent;
 }

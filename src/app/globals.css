@@ -683,6 +683,51 @@
 .alfy-typing-dot:nth-child(2) { animation-delay: calc(var(--dur-typing) * 0.123); }
 .alfy-typing-dot:nth-child(3) { animation-delay: calc(var(--dur-typing) * 0.246); }
 
+/* ── Page 404 ───────────────────────────────────────────────
+ * Le texte monte ligne à ligne, les chiffres sortent de leur
+ * masque l'un après l'autre, puis le segment d'adresse qui ne
+ * mène nulle part se fait barrer.
+ * ─────────────────────────────────────────────────────────── */
+@keyframes nf-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes nf-rise {
+  from { transform: translateY(104%); }
+  to   { transform: translateY(0); }
+}
+@keyframes nf-strike {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.nf-stagger > * { animation: nf-fade-up var(--dur-4) var(--ease-out-quart) both; }
+.nf-stagger > *:nth-child(2) { animation-delay: calc(var(--stagger-step) * 2); }
+.nf-stagger > *:nth-child(3) { animation-delay: calc(var(--stagger-step) * 4); }
+.nf-stagger > *:nth-child(n + 4) { animation-delay: calc(var(--stagger-step) * 6); }
+
+.nf-digit { display: inline-block; animation: nf-rise var(--dur-5) var(--ease-out-expo) both; }
+.nf-digits > :nth-child(2) .nf-digit { animation-delay: calc(var(--stagger-step) * 2); }
+.nf-digits > :nth-child(3) .nf-digit { animation-delay: calc(var(--stagger-step) * 4); }
+
+.nf-path { animation: nf-fade-up var(--dur-3) var(--ease-out-quart) both; animation-delay: calc(var(--dur-5) * 0.6); }
+
+/* Trait qui barre le segment fautif — tiré de gauche à droite une fois
+ * l'adresse posée. scaleX reste sur le compositeur. */
+.nf-strike { position: relative; }
+.nf-strike::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 52%;
+  height: 1.5px;
+  background: var(--danger);
+  transform-origin: left center;
+  animation: nf-strike var(--dur-4) var(--ease-out-quart) both;
+  animation-delay: var(--dur-5);
+}
+
 /* (reduced-motion : plus de bloc dédié — tout passe par var(--dur-*),
  * var(--motion-iter) et var(--stagger-step), coupés en haut du fichier.) */
 

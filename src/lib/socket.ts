@@ -8,7 +8,7 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
  * Version du singleton. Incrémenter à chaque ajout de méthode pour
  * forcer la recréation lors d'un HMR Next.js/Turbopack.
  */
-const SOCKET_VERSION = 8;
+const SOCKET_VERSION = 9;
 
 /**
  * Clé pour le singleton global sur window.
@@ -282,6 +282,23 @@ class SocketService {
     this.socket?.emit(event, data);
   }
 
+  /**
+   * Requête avec accusé de réception, sous forme de promesse : attend la
+   * connexion, borne la durée (rejette au-delà) et ne laisse jamais une UI
+   * suspendue à un callback qui n'arrivera pas.
+   */
+  request<T = any>(event: string, data: unknown, timeoutMs = 10_000): Promise<T> {
+    return this.waitForConnection().then(
+      () =>
+        new Promise<T>((resolve, reject) => {
+          this.socket!.timeout(timeoutMs).emit(event, data, (err: Error | null, res: T) => {
+            if (err) reject(err);
+            else resolve(res);
+          });
+        }),
+    );
+  }
+
   /** Émet un événement avec acknowledgement (callback optionnel). */
   emitWithAck(event: string, data: any, callback?: (response: any) => void): void {
     if (callback) {
@@ -459,8 +476,9 @@ class SocketService {
     this.socket?.emit('SERVER_UPDATED_NOTIFY', { serverId, ...data });
   }
 
-  joinChannel(channelId: string): void {
-    this.socket?.emit('CHANNEL_JOIN', { channelId });
+  /** `serverId` est requis par le gateway (rooms `ch:<serveur>:<salon>`). */
+  joinChannel(channelId: string, serverId?: string): void {
+    this.socket?.emit('CHANNEL_JOIN', { channelId, serverId });
   }
 
   leaveChannel(channelId: string): void {
@@ -647,6 +665,9 @@ class SocketService {
     attachments?: string[];
     replyToId?: string;
     tags?: string[];
+    /** Membres mentionnés (@pseudo) — notifiés par la passerelle. */
+    mentionedUserIds?: string[];
+    channelName?: string;
   }): void {
     this.emitOrQueue('SERVER_MESSAGE_SEND', data);
   }

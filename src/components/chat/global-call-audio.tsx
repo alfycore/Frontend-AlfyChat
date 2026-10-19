@@ -3,10 +3,31 @@
 import { useEffect, useRef } from 'react';
 import { useCallContext } from '@/hooks/use-call-context';
 import { getAudioPreferences } from '@/hooks/use-call';
+import { streamOwner, useVoicePrefs } from '@/components/alfy/guild/voice/voice-prefs';
 
 /** Persistent hidden <audio> for a single remote stream. */
-function PersistentAudio({ stream }: { stream: MediaStream }) {
+function PersistentAudio({ stream, userId }: { stream: MediaStream; userId: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  /* Casque coupé, sourdine locale et volume par utilisateur (menu d'un
+     participant, comme sur Discord). */
+  const deafened = useVoicePrefs((s) => s.deafened);
+  const localMuted = useVoicePrefs((s) => Boolean(s.localMutes[userId]));
+  const userVolume = useVoicePrefs((s) => s.volumes[userId] ?? 100);
+  const outputVersion = useVoicePrefs((s) => s.outputVersion);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.muted = deafened || localMuted;
+    const prefs = getAudioPreferences();
+    // L'élément <audio> plafonne à 1 : au-delà de 100 %, on reste à fond.
+    el.volume = Math.max(0, Math.min(1, ((prefs.outputVolume ?? 100) / 100) * (userVolume / 100)));
+    // Sortie choisie depuis le panneau utilisateur, appliquée à chaud.
+    const withSink = el as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
+    if (outputVersion > 0 && typeof withSink.setSinkId === 'function') {
+      void withSink.setSinkId(prefs.outputDeviceId || 'default').catch(() => {});
+    }
+  }, [deafened, localMuted, userVolume, outputVersion]);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -16,7 +37,9 @@ function PersistentAudio({ stream }: { stream: MediaStream }) {
 
     const applyPrefs = async () => {
       const prefs = getAudioPreferences();
-      el.volume = Math.max(0, Math.min(1, (prefs.outputVolume ?? 100) / 100));
+      const voice = useVoicePrefs.getState();
+      el.muted = voice.deafened || Boolean(voice.localMutes[userId]);
+      el.volume = Math.max(0, Math.min(1, ((prefs.outputVolume ?? 100) / 100) * ((voice.volumes[userId] ?? 100) / 100)));
       const withSink = el as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
       if (prefs.outputDeviceId && prefs.outputDeviceId !== 'default' && typeof withSink.setSinkId === 'function') {
         try { await withSink.setSinkId(prefs.outputDeviceId); } catch { /* device may not be available */ }
@@ -36,7 +59,7 @@ function PersistentAudio({ stream }: { stream: MediaStream }) {
       window.removeEventListener('keydown', tryPlay);
       el.srcObject = null;
     };
-  }, [stream]);
+  }, [stream, userId]);
 
   // eslint-disable-next-line jsx-a11y/media-has-caption
   return <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />;
@@ -96,7 +119,7 @@ export function GlobalCallAudio() {
 
       {/* Play remote audio streams regardless of which page is active */}
       {audioEntries.map(([key, stream]) => (
-        <PersistentAudio key={key} stream={stream} />
+        <PersistentAudio key={key} stream={stream} userId={streamOwner(key)} />
       ))}
     </>
   );

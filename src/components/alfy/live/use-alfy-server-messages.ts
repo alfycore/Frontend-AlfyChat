@@ -43,7 +43,7 @@ export interface AlfyServerMessages {
   isLoadingMore: boolean;
   loadMore: () => Promise<void>;
   typingNames: string[];
-  send: (content: string, opts?: { replyToId?: string; attachments?: string[] }) => void;
+  send: (content: string, opts?: { replyToId?: string; attachments?: string[]; mentionedUserIds?: string[]; channelName?: string }) => void;
   edit: (messageId: string, content: string) => void;
   remove: (messageId: string) => void;
   toggleReaction: (messageId: string, emoji: string) => void;
@@ -114,8 +114,11 @@ export function useAlfyServerMessages(
       if (list.length >= PAGE_SIZE || !dejaConnu) setHasMore(list.length >= PAGE_SIZE);
       setLoading(false);
     });
-    socketService.joinChannel(channelId);
-    return () => socketService.leaveChannel(channelId);
+    /* Rejoindre explicitement (salon créé depuis la connexion…). On ne quitte
+       PAS la room en sortant : le membre reste abonné à tous ses salons
+       visibles, comme sur Discord — sinon les non-lus et mentions de ce
+       salon cessaient d'arriver dès qu'on l'avait ouvert une fois. */
+    socketService.joinChannel(channelId, serverId);
   }, [serverId, channelId]);
 
   /** Charge le lot suivant, plus ancien que le message le plus ancien connu. */
@@ -267,7 +270,7 @@ export function useAlfyServerMessages(
   );
 
   const send = useCallback(
-    (content: string, opts?: { replyToId?: string; attachments?: string[] }) => {
+    (content: string, opts?: { replyToId?: string; attachments?: string[]; mentionedUserIds?: string[]; channelName?: string }) => {
       if (!serverId || !channelId || !content.trim()) return;
       socketService.sendServerMessage({
         serverId,
@@ -275,6 +278,8 @@ export function useAlfyServerMessages(
         content,
         replyToId: opts?.replyToId,
         attachments: opts?.attachments,
+        mentionedUserIds: opts?.mentionedUserIds,
+        channelName: opts?.channelName,
       });
     },
     [serverId, channelId],

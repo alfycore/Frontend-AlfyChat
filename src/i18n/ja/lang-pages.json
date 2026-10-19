@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "ページが見つかりません",
+      "title": "このリンクの先には何もありません。",
+      "description": "アドレスの入力ミスか、リンクが共有された後にページが移動した可能性があります。",
+      "appTitle": "このチャンネルは見つかりません。",
+      "appDescription": "削除されたか、アクセス権がなくなった可能性があります。",
+      "openApp": "AlfyChat を開く",
+      "goBack": "戻る",
+      "discover": "サーバーを探す",
+      "requested": "リクエストされたアドレス"
+    },
     "legal": {
       "updatedPrefix": "Updated:",
       "contactQuestion": "Questions?"

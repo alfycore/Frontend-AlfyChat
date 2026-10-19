@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "Pagina non trovata",
+      "title": "Questo link non porta da nessuna parte.",
+      "description": "L’indirizzo potrebbe essere scritto male, oppure la pagina è stata spostata da quando il link è stato condiviso.",
+      "appTitle": "Questo canale non è stato trovato.",
+      "appDescription": "Potrebbe essere stato eliminato, oppure non hai più accesso.",
+      "openApp": "Apri AlfyChat",
+      "goBack": "Torna indietro",
+      "discover": "Scopri i server",
+      "requested": "Indirizzo richiesto"
+    },
     "legal": {
       "updatedPrefix": "Updated:",
       "contactQuestion": "Questions?"

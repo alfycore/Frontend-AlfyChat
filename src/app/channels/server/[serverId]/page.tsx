@@ -2,11 +2,10 @@
 
 import { useParams } from 'next/navigation';
 
-import { AlfyServerHome } from '@/components/alfy/live/alfy-server-home';
+import { GuildIndex } from '@/components/alfy/guild/routes';
 
-export default function ServerWelcomePage() {
+/** Pas de page d'accueil vide : on rouvre le dernier salon (ou le premier salon textuel). */
+export default function ServerIndexPage() {
   const params = useParams();
-  const serverId = params?.serverId as string;
-
-  return <AlfyServerHome serverId={serverId} />;
+  return <GuildIndex serverId={params?.serverId as string} />;
 }

@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "Seite nicht gefunden",
+      "title": "Dieser Link führt ins Leere.",
+      "description": "Die Adresse ist vielleicht falsch geschrieben, oder die Seite wurde verschoben, seit der Link geteilt wurde.",
+      "appTitle": "Dieser Kanal wurde nicht gefunden.",
+      "appDescription": "Er wurde möglicherweise gelöscht, oder du hast keinen Zugriff mehr darauf.",
+      "openApp": "AlfyChat öffnen",
+      "goBack": "Zurück",
+      "discover": "Server entdecken",
+      "requested": "Angeforderte Adresse"
+    },
     "legal": {
       "updatedPrefix": "Updated:",
       "contactQuestion": "Questions?"

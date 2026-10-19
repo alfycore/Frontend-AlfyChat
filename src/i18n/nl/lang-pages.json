@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "Pagina niet gevonden",
+      "title": "Deze link leidt nergens heen.",
+      "description": "Het adres is misschien verkeerd getypt, of de pagina is verplaatst sinds de link werd gedeeld.",
+      "appTitle": "Dit kanaal is niet gevonden.",
+      "appDescription": "Het is mogelijk verwijderd, of je hebt er geen toegang meer toe.",
+      "openApp": "AlfyChat openen",
+      "goBack": "Ga terug",
+      "discover": "Servers ontdekken",
+      "requested": "Opgevraagd adres"
+    },
     "legal": {
       "updatedPrefix": "Updated:",
       "contactQuestion": "Questions?"

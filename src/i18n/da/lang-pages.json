@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "Siden blev ikke fundet",
+      "title": "Dette link fører ingen steder hen.",
+      "description": "Adressen er måske stavet forkert, eller siden er flyttet, siden linket blev delt.",
+      "appTitle": "Kanalen blev ikke fundet.",
+      "appDescription": "Den er muligvis slettet, eller du har ikke længere adgang til den.",
+      "openApp": "Åbn AlfyChat",
+      "goBack": "Gå tilbage",
+      "discover": "Opdag servere",
+      "requested": "Anmodet adresse"
+    },
     "legal": {
       "updatedPrefix": "Updated:",
       "contactQuestion": "Questions?"

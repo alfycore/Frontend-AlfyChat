@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "Page not found",
+      "title": "This link leads nowhere.",
+      "description": "The address may be mistyped, or the page has moved since the link was shared.",
+      "appTitle": "This channel can’t be found.",
+      "appDescription": "It may have been deleted, or you no longer have access to it.",
+      "openApp": "Open AlfyChat",
+      "goBack": "Go back",
+      "discover": "Discover servers",
+      "requested": "Requested address"
+    },
     "groups": {
       "emptyTitle": "Your groups",
       "emptySubtitle": "Select a group or create a new one."

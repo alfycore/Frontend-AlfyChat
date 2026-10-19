@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "Sidan hittades inte",
+      "title": "Den här länken leder ingenstans.",
+      "description": "Adressen kan vara felstavad, eller så har sidan flyttats sedan länken delades.",
+      "appTitle": "Kanalen hittades inte.",
+      "appDescription": "Den kan ha tagits bort, eller så har du inte längre åtkomst till den.",
+      "openApp": "Öppna AlfyChat",
+      "goBack": "Gå tillbaka",
+      "discover": "Upptäck servrar",
+      "requested": "Begärd adress"
+    },
     "legal": {
       "updatedPrefix": "Updated:",
       "contactQuestion": "Questions?"

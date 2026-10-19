@@ -1,5 +1,16 @@
 {
   "pages": {
+    "notFound": {
+      "eyebrow": "Nie znaleziono strony",
+      "title": "Ten link prowadzi donikąd.",
+      "description": "Adres może zawierać literówkę albo strona została przeniesiona, odkąd link został udostępniony.",
+      "appTitle": "Nie znaleziono tego kanału.",
+      "appDescription": "Mógł zostać usunięty albo nie masz już do niego dostępu.",
+      "openApp": "Otwórz AlfyChat",
+      "goBack": "Wróć",
+      "discover": "Odkrywaj serwery",
+      "requested": "Żądany adres"
+    },
     "legal": {
       "updatedPrefix": "Updated:",
       "contactQuestion": "Questions?"

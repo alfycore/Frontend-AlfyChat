@@ -11,7 +11,6 @@ import { EmptyState } from '@/components/alfy/primitives/empty-state';
 import { SectionLabel } from '@/components/alfy/primitives/section-label';
 import { conversationTime } from '@/components/alfy/chat/date-format';
 import { GroupCreateDialog } from '@/components/alfy/people/group-create-dialog';
-import { UserDock } from '@/components/alfy/servers/user-dock';
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +26,7 @@ interface DmSidebarProps {
   friendsActive?: boolean;
   /** Demandes d'amis en attente (badge). */
   pendingCount?: number;
+  /** Conservé pour compatibilité : le dock utilisateur vit désormais dans la coquille. */
   onOpenUserSettings?: () => void;
   /** Conversations épinglées (préférence locale). */
   pinnedIds?: string[];
@@ -45,7 +45,6 @@ export function DmSidebar({
   onOpenFriends,
   friendsActive = false,
   pendingCount = 0,
-  onOpenUserSettings,
   pinnedIds = [],
   onTogglePin,
 }: DmSidebarProps) {
@@ -311,10 +310,6 @@ export function DmSidebar({
           />
         )}
       </ScrollShadow>
-
-      <div className="p-2">
-        <UserDock user={currentUser} onOpenSettings={onOpenUserSettings} />
-      </div>
     </div>
   );
 }

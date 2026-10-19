@@ -682,8 +682,8 @@ class ApiService {
   }
 
   /** Type 1 uniquement (hébergé par AlfyChat) — création self-hosted/hébergeur certifié pas encore disponible ici. */
-  async createServer(data: { name: string; description?: string; iconUrl?: string; bannerUrl?: string; isPublic?: boolean; category: 'standard' | 'community' }) {
-    return this.request<{ id: string; name: string; category: 'standard' | 'community'; maxMembers: number }>('/api/servers', {
+  async createServer(data: { name: string; description?: string; iconUrl?: string; bannerUrl?: string; isPublic?: boolean; category: 'standard' | 'community'; template?: string }) {
+    return this.request<{ id: string; name: string; category: 'standard' | 'community'; maxMembers: number; firstChannelId?: string | null }>('/api/servers', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -805,6 +805,29 @@ class ApiService {
   }
   async deleteServerWebhook(serverId: string, webhookId: string) {
     return this.request(`/api/servers/${serverId}/webhooks/${webhookId}`, { method: 'DELETE' });
+  }
+
+  // ── AutoMod ──────────────────────────────────────────────────────────
+  async getAutomodRules(serverId: string) {
+    return this.request<Array<Record<string, unknown>>>(`/api/servers/${serverId}/automod`);
+  }
+
+  async createAutomodRule(serverId: string, data: {
+    name: string;
+    triggerType: 'keyword' | 'spam' | 'mention_spam' | 'link' | 'invite';
+    actionType: 'block' | 'alert' | 'timeout' | 'delete';
+    triggerMetadata?: Record<string, unknown>;
+    actionMetadata?: Record<string, unknown>;
+  }) {
+    return this.request<{ id: string }>(`/api/servers/${serverId}/automod`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateAutomodRule(serverId: string, ruleId: string, data: { enabled?: boolean; name?: string; triggerMetadata?: Record<string, unknown> }) {
+    return this.request(`/api/servers/${serverId}/automod/${ruleId}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async deleteAutomodRule(serverId: string, ruleId: string) {
+    return this.request(`/api/servers/${serverId}/automod/${ruleId}`, { method: 'DELETE' });
   }
 
   async deleteServer(serverId: string) {

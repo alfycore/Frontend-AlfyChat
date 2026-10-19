@@ -1,44 +1,29 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Button } from '@heroui/react';
-import { ArrowLeft, House, MessageCircle } from 'lucide-react';
 
-import { ErrorPageShell, ErrorScreen } from '@/components/alfy/errors/error-screen';
+import { useTranslation } from '@/components/locale-provider';
+import { NotFoundView } from '@/components/alfy/errors/not-found-view';
 
 export default function NotFound() {
   const router = useRouter();
+  const { t } = useTranslation();
+  const nf = t.pages.notFound;
+
+  // Arrivé directement par un lien partagé, il n'y a pas d'historique
+  // à remonter : on ouvre l'app plutôt que de quitter le site.
+  const goBack = () => {
+    if (window.history.length > 1) router.back();
+    else router.push('/');
+  };
 
   return (
-    <ErrorPageShell>
-      <ErrorScreen
-        code="404"
-        channel="introuvable"
-        tone="accent"
-        title="Cette page n’existe pas"
-        message={
-          <>
-            L’adresse est peut-être mal orthographiée, ou la page a été déplacée
-            depuis que le lien a été partagé.
-          </>
-        }
-        actions={
-          <>
-            <Button size="sm" onPress={() => router.push('/')}>
-              <House className="size-3.5" aria-hidden />
-              Accueil
-            </Button>
-            <Button size="sm" variant="secondary" onPress={() => router.push('/channels/me')}>
-              <MessageCircle className="size-3.5" aria-hidden />
-              Ouvrir AlfyChat
-            </Button>
-            <Button size="sm" variant="ghost" onPress={() => router.back()}>
-              <ArrowLeft className="size-3.5" aria-hidden />
-              Retour
-            </Button>
-          </>
-        }
-      />
-    </ErrorPageShell>
+    <NotFoundView
+      standalone
+      title={nf.title}
+      description={nf.description}
+      primary={{ label: nf.openApp, onPress: () => router.push('/') }}
+      secondary={{ label: nf.goBack, onPress: goBack }}
+    />
   );
 }
