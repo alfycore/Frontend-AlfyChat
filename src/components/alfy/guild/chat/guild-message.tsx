@@ -34,6 +34,8 @@ export interface AuthorView {
   color?: string;
   avatarUrl?: string;
   isBot?: boolean;
+  /** Webhook : pas un membre — ni fiche de profil, ni menu de modération. */
+  isWebhook?: boolean;
   user: AlfyUser;
   roles: AlfyRole[];
 }
@@ -74,17 +76,21 @@ function AuthorName({ author, popoverExtras, menu, isSelf }: { author: AuthorVie
   const { t } = useTranslation();
   return (
     <span className="inline-flex min-w-0 items-center gap-1" {...menu}>
-      <UserPopover
-        user={{ ...author.user, displayName: author.name }}
-        roles={author.roles}
-        isSelf={isSelf}
-        placement="right"
-        {...popoverExtras}
-        moderatorPermissions={isSelf ? 0 : popoverExtras.moderatorPermissions}
-        triggerClassName="min-w-0 cursor-pointer truncate rounded-sm text-[15px] leading-5.5 font-medium outline-none hover:underline focus-visible:ring-2 focus-visible:ring-focus"
-      >
-        <span style={author.color ? { color: author.color } : undefined}>{author.name}</span>
-      </UserPopover>
+      {author.isWebhook ? (
+        <span className="min-w-0 truncate text-[15px] leading-5.5 font-medium">{author.name}</span>
+      ) : (
+        <UserPopover
+          user={{ ...author.user, displayName: author.name }}
+          roles={author.roles}
+          isSelf={isSelf}
+          placement="right"
+          {...popoverExtras}
+          moderatorPermissions={isSelf ? 0 : popoverExtras.moderatorPermissions}
+          triggerClassName="min-w-0 cursor-pointer truncate rounded-sm text-[15px] leading-5.5 font-medium outline-none hover:underline focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          <span style={author.color ? { color: author.color } : undefined}>{author.name}</span>
+        </UserPopover>
+      )}
       {author.isBot && (
         <span className="shrink-0 rounded-sm bg-accent px-1 text-[10px] leading-4 font-semibold text-accent-foreground">{t.guild.members.app}</span>
       )}
@@ -186,20 +192,27 @@ function Row(props: GuildMessageProps) {
       {header ? (
         <>
           <span className="absolute top-0.5 left-4" {...authorMenu}>
-            <UserPopover
-              user={{ ...author.user, displayName: author.name }}
-              roles={author.roles}
-              isSelf={isOwn}
-              placement="right"
-              {...popoverExtras}
-              moderatorPermissions={isOwn ? 0 : popoverExtras.moderatorPermissions}
-              triggerClassName={cn('cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-focus', replyTo && 'mt-[22px]')}
-            >
-              <Avatar className="size-10 transition-[filter] duration-(--dur-1) hover:brightness-110">
+            {author.isWebhook ? (
+              <Avatar className={cn('size-10', replyTo && 'mt-[22px]')}>
                 {author.avatarUrl && <Avatar.Image src={author.avatarUrl} alt="" />}
                 <Avatar.Fallback>{author.name.slice(0, 1).toUpperCase()}</Avatar.Fallback>
               </Avatar>
-            </UserPopover>
+            ) : (
+              <UserPopover
+                user={{ ...author.user, displayName: author.name }}
+                roles={author.roles}
+                isSelf={isOwn}
+                placement="right"
+                {...popoverExtras}
+                moderatorPermissions={isOwn ? 0 : popoverExtras.moderatorPermissions}
+                triggerClassName={cn('cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-focus', replyTo && 'mt-[22px]')}
+              >
+                <Avatar className="size-10 transition-[filter] duration-(--dur-1) hover:brightness-110">
+                  {author.avatarUrl && <Avatar.Image src={author.avatarUrl} alt="" />}
+                  <Avatar.Fallback>{author.name.slice(0, 1).toUpperCase()}</Avatar.Fallback>
+                </Avatar>
+              </UserPopover>
+            )}
           </span>
           <h3 className="flex min-w-0 items-baseline gap-2">
             <AuthorName author={author} popoverExtras={popoverExtras} menu={authorMenu} isSelf={isOwn} />

@@ -197,15 +197,45 @@ function extractAttachments(content: string, messageId: string): { text: string;
 }
 
 /**
+ * Auteur synthétique d'un message de webhook : `webhook:<nom>|<avatar>`.
+ * Il ne peut correspondre à aucun membre, et les messages consécutifs d'une
+ * même identité se regroupent (deux noms différents, non).
+ */
+export function webhookAuthorId(webhook: { name: string; avatarUrl?: string }): string {
+  return `webhook:${encodeURIComponent(webhook.name)}|${encodeURIComponent(webhook.avatarUrl ?? '')}`;
+}
+
+export function parseWebhookAuthorId(id: string): { name: string; avatarUrl?: string } | null {
+  if (!id.startsWith('webhook:')) return null;
+  const [name = '', avatar = ''] = id.slice('webhook:'.length).split('|');
+  return { name: decodeURIComponent(name) || 'Webhook', avatarUrl: avatar ? decodeURIComponent(avatar) : undefined };
+}
+
+/**
  * Message réel → `AlfyMessage`. Couvre les messages de serveur
  * (SERVER_MESSAGE_*) et de DM/groupe (hook use-messages).
  */
 export function toAlfyMessage(raw: Raw, currentUserId: string, channelId: string): AlfyMessage {
   const sender = pick<Raw>(raw, 'sender', 'author');
-  const authorId =
+  const senderId =
     pick<string>(raw, 'authorId', 'author_id', 'senderId', 'sender_id') ??
     pick<string>(sender, 'id') ??
     '';
+  // Webhook : pas d'expéditeur, une identité (nom, avatar) propre au message.
+  // Sans elle, le message s'affichait « Utilisateur inconnu ».
+  const isWebhook = Boolean(pick(raw, 'isWebhook', 'is_webhook')) || (!senderId && Boolean(pick(raw, 'webhookId', 'webhook_id')));
+  const webhook = isWebhook
+    ? {
+        name:
+          pick<string>(raw, 'senderName', 'webhookName', 'webhook_name') ??
+          pick<string>(sender, 'displayName', 'username') ??
+          'Webhook',
+        avatarUrl: resolveMediaUrl(
+          pick<string>(raw, 'senderAvatar', 'webhookAvatarUrl', 'webhook_avatar_url') ?? pick<string>(sender, 'avatarUrl'),
+        ),
+      }
+    : undefined;
+  const authorId = webhook ? webhookAuthorId(webhook) : senderId;
   // `updatedAt` est un timestamp générique (bouge aussi sur réactions, pin…) :
   // seul le flag explicite `isEdited` doit décider de l'affichage « (modifié) ».
   const isEdited = Boolean(pick(raw, 'isEdited', 'is_edited'));
@@ -227,6 +257,7 @@ export function toAlfyMessage(raw: Raw, currentUserId: string, channelId: string
     pinned: Boolean(pick(raw, 'pinned', 'isPinned')),
     attachments,
     mentions: [],
+    ...(webhook ? { webhook } : {}),
   };
 }
 

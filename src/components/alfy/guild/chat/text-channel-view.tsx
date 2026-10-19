@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import * as notif from '@/lib/notification-store';
 import { useDmScroll } from '@/components/alfy/dm/use-dm-scroll';
 import { useAlfyServerMessages } from '@/components/alfy/live/use-alfy-server-messages';
-import { toAlfyUser } from '@/components/alfy/live/map';
+import { parseWebhookAuthorId, toAlfyUser } from '@/components/alfy/live/map';
 import { socketService } from '@/lib/socket';
 import { messageLink } from '@/lib/domains';
 import type { AlfyMessage } from '@/components/alfy/mock/types';
@@ -53,6 +53,8 @@ type ComponentPropsExtras = GuildMessageProps['popoverExtras'];
 /** Instant d'ouverture du salon : seuls les messages postérieurs s'animent. */
 const openedNow = () => Date.now();
 const QUICK_REACTIONS = ['👍', '❤️', '😂'];
+/** Pas de menu membre sur un webhook (ce n'est pas un membre du serveur). */
+const NO_MENU = {};
 
 interface TextChannelViewProps {
   serverId: string;
@@ -118,14 +120,39 @@ export function TextChannelView({ serverId, channelId, embedded = false }: TextC
     return map;
   }, [members, roles]);
 
+  /* Webhooks : une vue par identité (nom + avatar, encodés dans l'id d'auteur),
+     recalculée seulement quand une nouvelle identité apparaît dans le fil. */
+  const webhookKey = useMemo(() => {
+    const ids = new Set<string>();
+    for (const m of messages) if (m.webhook) ids.add(m.authorId);
+    return [...ids].join('\n');
+  }, [messages]);
+  const webhookAuthors = useMemo(() => {
+    const map = new Map<string, AuthorView>();
+    for (const id of webhookKey ? webhookKey.split('\n') : []) {
+      const w = parseWebhookAuthorId(id);
+      if (!w) continue;
+      map.set(id, {
+        id,
+        name: w.name,
+        avatarUrl: w.avatarUrl,
+        isBot: true,
+        isWebhook: true,
+        user: toAlfyUser({ id, username: w.name, avatarUrl: w.avatarUrl }, id),
+        roles: [],
+      });
+    }
+    return map;
+  }, [webhookKey]);
+
   const authorOf = useCallback(
     (id: string): AuthorView => {
-      const known = authors.get(id);
+      const known = authors.get(id) ?? webhookAuthors.get(id);
       if (known) return known;
       const u = id === me && user ? toAlfyUser(user as unknown as Record<string, unknown>, id) : toAlfyUser({ id, username: t.guild.chat.unknownUser }, id);
       return { id, name: u.displayName, avatarUrl: u.avatarUrl, user: u, roles: [] };
     },
-    [authors, me, user, t],
+    [authors, webhookAuthors, me, user, t],
   );
 
   /* Fiche (rôles, modération) : un objet stable par auteur, pour le memo des lignes. */
@@ -348,7 +375,7 @@ export function TextChannelView({ serverId, channelId, embedded = false }: TextC
                     serverId={serverId}
                     channelId={channelId}
                     popoverExtras={extrasFor(message.authorId)}
-                    authorMenu={bind(() => memberMenu(message.authorId))}
+                    authorMenu={message.webhook ? NO_MENU : bind(() => memberMenu(message.authorId))}
                     messageMenu={bind(() => messageMenu(message))}
                     quickReactions={QUICK_REACTIONS}
                     onReply={onReply}

@@ -220,6 +220,8 @@ export interface AlfyMessage {
   invite?: AlfyInviteEmbed;
   pinned?: boolean;
   mentions: string[];
+  /** Message posté par un webhook : identité affichée (pas un membre du serveur). */
+  webhook?: { name: string; avatarUrl?: string };
 }
 
 export interface AlfyDM {
