@@ -206,6 +206,9 @@ export function useCall(options: UseCallOptions = {}) {
   const callModeRef = useRef<'p2p' | 'sfu'>('p2p');
   const callCategoryRef = useRef<CallCategory | null>(null);
   const pendingSfuProducersRef = useRef<PendingSfuProducer[]>([]);
+  /** Tentative d'appel serveur en cours : une réponse arrivée après un départ est ignorée. */
+  const serverCallSeqRef = useRef(0);
+  const lastMediaErrorRef = useRef<string | undefined>(undefined);
 
   // Keep refs synced
   useEffect(() => { userIdRef.current = userId; }, [userId]);
@@ -354,6 +357,7 @@ export function useCall(options: UseCallOptions = {}) {
           break;
       }
 
+      lastMediaErrorRef.current = msg;
       setState((s) => ({ ...s, mediaError: msg }));
       return null;
     }
@@ -403,6 +407,7 @@ export function useCall(options: UseCallOptions = {}) {
     localStreamRef.current = null;
 
     acceptedCallIdRef.current = null;
+    serverCallSeqRef.current++;
     resetHand();
     setRaisedHands(new Set());
     setState({ ...INITIAL_STATE });
@@ -552,6 +557,9 @@ export function useCall(options: UseCallOptions = {}) {
         console.log('[CALL] Ignoring self-initiated call (same account, other tab)');
         return;
       }
+      // Vocal de serveur : rejoindre un salon ne sonne chez personne (Discord).
+      // La présence s'affiche sous le salon (VOICE_STATE_UPDATE), pas en modal.
+      if (p.callCategory === 'server') return;
       setState((prev) => {
         if (prev.status !== 'idle') {
           console.warn('[CALL] Already in a call, ignoring incoming');
@@ -1154,6 +1162,17 @@ export function useCall(options: UseCallOptions = {}) {
   const initiateServerCall = useCallback(
     async (channelId: string, serverId: string, type: 'voice' | 'video', channelName?: string) => {
       console.log('[CALL] Initiating server call on channel:', channelId, type);
+      const seq = ++serverCallSeqRef.current;
+      // Parti entre-temps (autre salon, raccroché) : cette tentative est caduque.
+      const stale = () => serverCallSeqRef.current !== seq;
+      /** Échec : on sort proprement de l'appel au lieu de rester « en connexion ». */
+      const fail = (message?: string) => {
+        if (stale()) return;
+        if (callIdRef.current) socketService.leaveCall(callIdRef.current);
+        cleanup();
+        if (message) setState((prev) => ({ ...prev, mediaError: message }));
+      };
+
       await unlockAudioPlayback();
 
       setState((prev) => ({
@@ -1168,60 +1187,82 @@ export function useCall(options: UseCallOptions = {}) {
         mediaError: undefined,
       }));
 
+      lastMediaErrorRef.current = undefined;
       const stream = await requestMedia(type);
-      if (!stream) return;
+      if (stale()) {
+        stream?.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      if (!stream) {
+        fail(lastMediaErrorRef.current);
+        return;
+      }
 
       localStreamRef.current = stream;
       setState((prev) => ({ ...prev, localStream: stream }));
 
-      socketService.emitWithAck(
-        'CALL_INITIATE_SERVER',
-        { channelId, serverId, type },
-        async (response: Record<string, unknown>) => {
-          console.log('[CALL] Server call initiate response:', response);
-          if (response?.callId || response?.id) {
-            const cid = (response.callId || response.id) as string;
-            callIdRef.current = cid;
-            setState((prev) => ({ ...prev, callId: cid }));
-            // Server calls are always SFU
-            await initSfuRef.current(cid, localStreamRef.current);
-            setState((prev) => ({ ...prev, status: 'connected' }));
+      /** SFU prêt → connecté ; sinon on sort en le disant. */
+      const connectSfu = async (cid: string, producers: { userId: string; producerId: string; kind: 'audio' | 'video' }[] = []) => {
+        const ok = await initSfuRef.current(cid, localStreamRef.current);
+        if (stale()) {
+          closeSfuRef.current(cid);
+          socketService.leaveCall(cid);
+          return;
+        }
+        if (!ok) {
+          fail('Le serveur vocal est injoignable.');
+          return;
+        }
+        for (const prod of producers) {
+          if (prod.userId !== userId) await consumeProducerRef.current(cid, prod.producerId, prod.userId, prod.kind);
+        }
+        if (!stale()) setState((prev) => ({ ...prev, status: 'connected' }));
+      };
+
+      try {
+        const response = await socketService.request<Record<string, unknown>>(
+          'CALL_INITIATE_SERVER',
+          { channelId, serverId, type },
+          15_000,
+        );
+        console.log('[CALL] Server call initiate response:', response);
+        const created = (response?.callId || response?.id) as string | undefined;
+        if (stale()) {
+          if (created) socketService.leaveCall(created);
+          return;
+        }
+        if (created) {
+          callIdRef.current = created;
+          setState((prev) => ({ ...prev, callId: created }));
+          await connectSfu(created);
+          return;
+        }
+
+        // Quelqu'un est déjà en vocal sur ce salon : on rejoint son appel,
+        // avec les micros / caméras déjà publiés.
+        const existingCallId = response?.existingCallId as string | undefined;
+        if (existingCallId) {
+          callIdRef.current = existingCallId;
+          setState((prev) => ({ ...prev, callId: existingCallId, callMode: 'sfu' }));
+          const joined = await socketService.request<Record<string, unknown>>('CALL_JOIN', { callId: existingCallId }, 15_000);
+          console.log('[CALL] Joined existing server call:', joined);
+          if (stale()) return;
+          if (!joined || joined.error) {
+            fail(`Erreur : ${String(joined?.error ?? 'CALL_JOIN')}`);
             return;
           }
+          type PeerProd = { userId: string; producerId: string; kind: 'audio' | 'video' };
+          await connectSfu(existingCallId, (joined.existingProducers as PeerProd[]) ?? []);
+          return;
+        }
 
-          // Quelqu'un d'autre est déjà en vocal sur ce salon : le service
-          // renvoie 409 + existingCallId plutôt qu'un nouvel appel — le
-          // rejoindre directement au lieu d'échouer avec une erreur.
-          const existingCallId = response?.existingCallId as string | undefined;
-          if (existingCallId) {
-            callIdRef.current = existingCallId;
-            setState((prev) => ({ ...prev, callId: existingCallId, callMode: 'sfu' }));
-            socketService.joinCall(existingCallId, async (joinResponse: Record<string, unknown>) => {
-              console.log('[CALL] Joined existing server call:', joinResponse);
-              if (joinResponse?.error) {
-                setState((prev) => ({ ...prev, mediaError: `Erreur : ${joinResponse.error}` }));
-                return;
-              }
-              await initSfuRef.current(existingCallId, localStreamRef.current);
-              type PeerProd = { userId: string; producerId: string; kind: 'audio' | 'video' };
-              const existingProducers = (joinResponse?.existingProducers as PeerProd[]) ?? [];
-              for (const prod of existingProducers) {
-                if (prod.userId !== userId) {
-                  await consumeProducerRef.current(existingCallId, prod.producerId, prod.userId, prod.kind);
-                }
-              }
-              setState((prev) => ({ ...prev, status: 'connected' }));
-            });
-            return;
-          }
-
-          if (response?.error) {
-            setState((prev) => ({ ...prev, mediaError: `Erreur serveur : ${response.error}` }));
-          }
-        },
-      );
+        fail(`Erreur serveur : ${String(response?.error ?? 'CALL_INITIATE_SERVER')}`);
+      } catch (err) {
+        console.error('[CALL] Server call failed:', err);
+        fail('Le salon vocal ne répond pas. Réessaie dans un instant.');
+      }
     },
-    [requestMedia, userId],
+    [requestMedia, userId, cleanup],
   );
 
   /** Join an existing call (handles both P2P and SFU paths) */

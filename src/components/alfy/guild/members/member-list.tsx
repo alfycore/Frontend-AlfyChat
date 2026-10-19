@@ -32,7 +32,9 @@ import {
   useGuildMembersLoaded,
   useGuildRoles,
   useMyPerms,
+  usePresence,
 } from '@/components/alfy/guild/hooks';
+import { useGuildStore } from '@/components/alfy/guild/store';
 import { useMemberMenu } from '@/components/alfy/guild/members/member-menu';
 import { banMember, kickMember, toggleMemberRole } from '@/components/alfy/guild/actions';
 import type { GuildMember, GuildRole } from '@/components/alfy/guild/types';
@@ -48,14 +50,18 @@ export function toAlfyRole(r: GuildRole): AlfyRole {
 /** Au-delà, Discord ne liste plus les membres hors ligne. */
 const OFFLINE_LIMIT = 1000;
 
-function buildRows(members: GuildMember[], roles: GuildRole[], labels: { online: string; offline: string }): Row[] {
+function buildRows(
+  members: GuildMember[],
+  roles: GuildRole[],
+  onlineIds: Set<string>,
+  labels: { online: string; offline: string },
+): Row[] {
   const hoisted = roles.filter((r) => r.hoist && !r.isDefault);
   const groups = new Map<string, GuildMember[]>();
   const online: GuildMember[] = [];
   const offline: GuildMember[] = [];
   for (const m of members) {
-    const isOffline = m.user.status === 'offline' || m.user.status === 'invisible';
-    if (isOffline) {
+    if (!onlineIds.has(m.userId)) {
       offline.push(m);
       continue;
     }
@@ -93,9 +99,25 @@ export function GuildMemberList({ serverId }: { serverId: string }) {
   const perms = useMyPerms(serverId);
   const { user } = useAuth();
 
+  // Membres en ligne, sous forme de clé : la liste ne se regroupe que quand
+  // quelqu'un passe en ligne / hors ligne, pas à chaque statut perso modifié.
+  const onlineKey = useGuildStore((s) => {
+    const members = s.members[serverId];
+    if (!members) return '';
+    let out = '';
+    for (const id in members) {
+      const st = s.presence[id]?.status;
+      if (st && st !== 'offline' && st !== 'invisible') out += `${id},`;
+    }
+    return out;
+  });
   const rows = useMemo(
-    () => buildRows(Object.values(membersMap), roles, { online: t.guild.members.online, offline: t.guild.members.offline }),
-    [membersMap, roles, t],
+    () =>
+      buildRows(Object.values(membersMap), roles, new Set(onlineKey.split(',')), {
+        online: t.guild.members.online,
+        offline: t.guild.members.offline,
+      }),
+    [membersMap, roles, onlineKey, t],
   );
   const alfyRoles = useMemo(() => roles.filter((r) => !r.isDefault).map(toAlfyRole), [roles]);
 
@@ -182,7 +204,9 @@ const MemberRow = memo(function MemberRow({
   const color = memberColor(member, roles);
   const name = memberName(member);
   const mine = memberRoles(member, roles).map(toAlfyRole);
-  const u = member.user;
+  // Présence en direct (table à part) ; la fiche membre n'en garde que la valeur de chargement.
+  const presence = usePresence(member.userId);
+  const u = presence ? { ...member.user, status: presence.status, customStatus: presence.customStatus } : member.user;
 
   return (
     <div {...menuProps} className="py-px">

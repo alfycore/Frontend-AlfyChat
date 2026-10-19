@@ -14,6 +14,7 @@ import { ContextMenuProvider } from '@/components/alfy/guild/context-menu';
 import { useGuildRealtime } from '@/components/alfy/guild/realtime';
 import { setGuildErrorLabels } from '@/components/alfy/guild/actions';
 import { useVoicePresenceSync } from '@/components/alfy/guild/voice/use-guild-voice';
+import { CallMirrorSync } from '@/components/alfy/guild/voice/call-mirror';
 import { useMessageErrorToasts } from '@/components/alfy/guild/chat/text-channel-view';
 import { CreateChannelDialog } from '@/components/alfy/guild/dialogs/create-channel';
 import { InviteDialog } from '@/components/alfy/guild/dialogs/invite';
@@ -53,6 +54,8 @@ function GuildEffects() {
 export function GuildRoot({ children }: { children: ReactNode }) {
   return (
     <ContextMenuProvider>
+      {/* Avant GuildEffects : les gestes vocaux passent par le miroir d'appel. */}
+      <CallMirrorSync />
       <GuildEffects />
       {children}
       <CreateChannelDialog />

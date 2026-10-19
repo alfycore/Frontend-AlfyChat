@@ -233,8 +233,11 @@ export function useVoicePresenceSync() {
   const voice = useGuildVoice();
   const deafened = useVoicePrefs((s) => s.deafened);
 
-  const channelId = voice.connected ? voice.channelId : null;
-  const serverId = voice.connected ? voice.serverId : null;
+  // Annoncé dès le clic, comme Discord : notre avatar apparaît tout de suite
+  // sous le salon chez tout le monde. Un échec de connexion remet l'appel à
+  // « idle », ce qui retire la présence.
+  const channelId = voice.channelId;
+  const serverId = voice.serverId;
   const announced = useRef<{ serverId: string; channelId: string } | null>(null);
 
   /* Rejoindre / quitter la présence vocale. */
@@ -344,10 +347,11 @@ export function useVoicePresenceSync() {
     return () => socketService.off('VOICE_ERROR', onError);
   }, [t]);
 
-  /* Erreurs remontées par l'appel lui-même (initiation refusée). */
+  /* Erreurs remontées par l'appel lui-même (initiation refusée, micro, SFU). */
   useEffect(() => {
     if (!m.mediaError) return;
-    if (m.mediaError.includes('CHANNEL_FULL')) toast.danger(t.guild.voice.channelFull);
+    if (m.mediaError.includes('CHANNEL_FULL') || m.mediaError.includes('CALL_FULL')) toast.danger(t.guild.voice.channelFull);
     else if (m.mediaError.includes('PERMISSION_DENIED')) toast.danger(t.guild.voice.noConnect);
+    else toast.danger(m.mediaError);
   }, [m.mediaError, t]);
 }

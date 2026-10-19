@@ -48,7 +48,12 @@ function PersistentAudio({ stream, userId }: { stream: MediaStream; userId: stri
     void applyPrefs();
 
     const tryPlay = () => {
-      if (stream && el.paused) el.play().catch(() => {});
+      if (stream && el.paused) {
+        el.play().catch((err: unknown) => {
+          // Lecture bloquée (autoplay) : relancée au prochain clic / touche.
+          console.warn(`[CALL] Lecture audio de ${userId} bloquée :`, (err as Error)?.name ?? err);
+        });
+      }
     };
     tryPlay();
     window.addEventListener('pointerdown', tryPlay);

@@ -94,8 +94,15 @@ export function useSfuTransport() {
         ? device.createSendTransport({ id: transportId, iceParameters, iceCandidates, dtlsParameters })
         : device.createRecvTransport({ id: transportId, iceParameters, iceCandidates, dtlsParameters });
 
+      // État ICE/DTLS : « failed » = le navigateur n'atteint pas le SFU
+      // (adresse annoncée injoignable, pare-feu) → appel muet.
+      transport.on('connectionstatechange', (state: string) => {
+        if (state === 'failed') console.error(`[SFU] Transport ${direction} : ÉCHEC de connexion (ICE)`, iceCandidates);
+        else console.log(`[SFU] Transport ${direction} : ${state}`);
+      });
+
       // ── Connexion DTLS ──
-      transport.on('connect', ({ dtlsParameters: dtls }: any, callback: () => void, errback: (err: Error) => void) => {
+      transport.on('connect',({ dtlsParameters: dtls }: any, callback: () => void, errback: (err: Error) => void) => {
         socketService.emitWithAck('SFU_CONNECT_TRANSPORT', {
           callId,
           transportId: transport.id,
@@ -206,6 +213,7 @@ export function useSfuTransport() {
       });
 
       consumersRef.current.set(consumerId, consumer);
+      console.log(`[SFU] Réception ${kind} de ${userId} (consumer ${consumerId}, pause=${String(paused)})`);
 
       // Créer le MediaStream depuis le consumer
       const stream = new MediaStream([consumer.track]);
@@ -258,12 +266,14 @@ export function useSfuTransport() {
   const initSfu = useCallback(async (
     callId: string,
     localStream: MediaStream | null,
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     const ok = await loadDevice(callId);
-    if (!ok) return;
+    if (!ok) return false;
 
-    await createTransport(callId, 'send');
-    await createTransport(callId, 'recv');
+    const send = await createTransport(callId, 'send');
+    const recv = await createTransport(callId, 'recv');
+    // Sans transports, l'appel paraissait « connecté » mais restait muet.
+    if (!send || !recv) return false;
 
     // Produire les tracks locaux
     if (localStream && sendTransportRef.current) {
@@ -282,6 +292,7 @@ export function useSfuTransport() {
         ]);
       }
     }
+    return true;
   }, [loadDevice, createTransport, produceTrack]);
 
   // ── Fermeture propre ─────────────────────────────────────────────────────────
