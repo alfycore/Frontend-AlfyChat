@@ -1,240 +1,74 @@
-'use client';
+import type { Metadata } from 'next';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { UsersIcon, HashIcon, Loader2Icon, ShieldCheckIcon, ArrowRightIcon, LogInIcon } from '@/components/icons';
-import { api, resolveMediaUrl } from '@/lib/api';
-import { socketService } from '@/lib/socket';
-import { Avatar, Button } from '@heroui/react';
-import { useTranslation } from '@/components/locale-provider';
+import { DEFAULT_LOCALE, translations } from '@/i18n';
+import { InviteView } from '@/components/alfy/invite/invite-view';
 
-interface InviteInfo {
-  server: {
-    id: string;
-    name: string;
-    description?: string;
-    iconUrl?: string;
-    bannerUrl?: string;
+/**
+ * /invite/[code] — composant serveur : il ne fait que préparer l'aperçu du
+ * lien (titre, description, image) pour les applis où il est collé, puis
+ * laisse la page interactive à `InviteView`.
+ */
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+interface PreviewLite {
+  server?: {
+    name?: string;
+    description?: string | null;
+    iconUrl?: string | null;
+    bannerUrl?: string | null;
     memberCount?: number;
-    onlineCount?: number;
-    isPublic?: boolean;
-  };
-  invite: {
-    code: string;
-    customSlug?: string;
-    maxUses?: number;
-    uses?: number;
-    expiresAt?: string;
-    isPermanent?: boolean;
+    onlineCount?: number | null;
   };
 }
 
-export default function InvitePage() {
-  const params = useParams();
-  const router = useRouter();
-  const code = params.code as string;
-  const { t, tx } = useTranslation();
+const absolute = (url?: string | null) => (!url ? undefined : /^https?:\/\//.test(url) ? url : `${API_URL}${url}`);
+const fill = (template: string, vars: Record<string, string | number>) =>
+  template.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? ''));
 
-  const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [isJoining, setIsJoining] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const token = typeof window !== 'undefined' && localStorage.getItem('alfychat_token');
-    setIsLoggedIn(Boolean(token));
-    loadInvite();
-  }, [code]);
-
-  const loadInvite = async () => {
-    setIsLoading(true);
-    setError('');
-    const res = await api.resolveInvite(code);
-    if (res.success && res.data) {
-      setInviteInfo(res.data as InviteInfo);
-    } else {
-      setError(res.error || t.invite.invalidOrExpired);
-    }
-    setIsLoading(false);
-  };
-
-  const handleJoin = async () => {
-    if (!isLoggedIn) {
-      router.push(`/login?next=/invite/${code}`);
-      return;
-    }
-
-    setIsJoining(true);
-    const res = await api.joinServer(code);
-    if (res.success) {
-      const currentUserId = typeof window !== 'undefined'
-        ? (window as any).__alfychat_user_id
-        : null;
-      const ownerId = inviteInfo?.server && ((inviteInfo.server as any).ownerId || (inviteInfo.server as any).owner_id);
-      if (currentUserId && ownerId && currentUserId === ownerId && inviteInfo?.server?.id) {
-        socketService.getSocket()?.emit('SERVER_OWNER_JOINED', { serverId: inviteInfo.server.id });
-      }
-      // Rejoindre les rooms socket + notifier tous les onglets/appareils
-      if (inviteInfo?.server?.id) {
-        socketService.getSocket()?.emit('SERVER_SELF_JOIN', {
-          serverId: inviteInfo.server.id,
-          name: inviteInfo.server.name,
-          iconUrl: inviteInfo.server.iconUrl,
-        });
-      }
-      router.push('/channels');
-    } else {
-      setError(res.error || t.invite.cannotJoin);
-      setIsJoining(false);
-    }
-  };
-
-  // ── Loading ────────────────────────────────────────────────────────────────
-
-  if (isLoading) {
-    return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
-        <Loader2Icon size={22} className="relative z-10 animate-spin text-primary/40" />
-      </div>
-    );
+/** Aperçu anonyme, mis en cache une minute ; jamais bloquant plus de 2,5 s. */
+async function fetchPreview(code: string): Promise<PreviewLite | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/servers/invite/${encodeURIComponent(code)}`, {
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as PreviewLite;
+  } catch {
+    return null;
   }
+}
 
-  // ── Error ──────────────────────────────────────────────────────────────────
+export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
+  const { code } = await params;
+  // Comme le LocaleProvider : l'anglais comble les clés absentes d'une langue.
+  const t: typeof translations.en.invite = { ...translations.en.invite, ...translations[DEFAULT_LOCALE].invite };
+  const server = (await fetchPreview(code))?.server;
+  // Une invitation n'a rien à faire dans un moteur de recherche.
+  if (!server?.name) return { title: t.invalid, robots: { index: false, follow: false } };
 
-  if (error && !inviteInfo) {
-    return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden gap-5 bg-background p-8 text-center">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="flex size-14 items-center justify-center rounded-xl bg-danger/10">
-            <ShieldCheckIcon size={26} className="text-danger" />
-          </div>
-          <div>
-            <h1 className="mb-1.5 text-[22px] font-bold tracking-tight">{t.invite.invalid}</h1>
-            <p className="max-w-sm text-[13px] text-muted/60">{error}</p>
-          </div>
-          <Button variant="outline" onPress={() => router.push('/')} className="rounded-lg border-border/40">
-            {t.invite.backHome}
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const title = fill(t.metaTitle, { name: server.name });
+  const counts = [
+    typeof server.onlineCount === 'number' ? fill(t.online, { n: server.onlineCount }) : null,
+    server.memberCount === 1 ? t.membersOne : fill(t.membersMany, { n: server.memberCount ?? 0 }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const description = server.description?.trim() ? `${server.description.trim()} — ${counts}` : counts;
+  const banner = absolute(server.bannerUrl);
+  const image = banner ?? absolute(server.iconUrl);
 
-  // ── Main card ──────────────────────────────────────────────────────────────
+  return {
+    title,
+    description,
+    robots: { index: false, follow: false },
+    openGraph: { title, description, type: 'website', siteName: 'AlfyChat', images: image ? [image] : undefined },
+    twitter: { card: banner ? 'summary_large_image' : 'summary', title, description, images: image ? [image] : undefined },
+  };
+}
 
-  const server = inviteInfo?.server;
-  const invite = inviteInfo?.invite;
-
-  return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-4">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.5_0_280/3%)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.5_0_280/3%)_1px,transparent_1px)] bg-size-[72px_72px]" />
-
-      <div className="relative z-10 w-full max-w-sm overflow-hidden rounded-2xl border border-border/40 bg-card shadow-2xl">
-
-        {/* Banner */}
-        {server?.bannerUrl ? (
-          <div
-            className="h-24 w-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${resolveMediaUrl(server.bannerUrl)})` }}
-          />
-        ) : (
-          <div className="h-24 w-full bg-linear-to-br from-primary/25 via-primary/10 to-background" />
-        )}
-
-        <div className="px-5 pb-5">
-          {/* Server icon — overlaps banner */}
-          <div className="-mt-7 mb-3">
-            <Avatar className="size-14 rounded-xl ring-4 ring-card">
-              <Avatar.Image src={resolveMediaUrl(server?.iconUrl)} className="object-cover" />
-              <Avatar.Fallback className="rounded-xl text-lg font-bold">
-                {server?.name.substring(0, 2).toUpperCase()}
-              </Avatar.Fallback>
-            </Avatar>
-          </div>
-
-          {/* Invite label */}
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted/50">
-            {t.invite.youreInvited}
-          </p>
-
-          {/* Server name */}
-          <h1 className="text-[20px] font-bold leading-tight">{server?.name}</h1>
-
-          {/* Description */}
-          {server?.description && (
-            <p className="mt-1 text-[12px] text-muted/60">{server.description}</p>
-          )}
-
-          {/* Stats */}
-          <div className="mt-3 flex items-center gap-4">
-            {server?.memberCount !== undefined && (
-              <span className="flex items-center gap-1.5 text-[12px] text-muted/60">
-                <UsersIcon size={13} />
-                {tx(t.invite.memberCount, { n: server.memberCount })}
-              </span>
-            )}
-            {invite?.uses !== undefined && invite?.maxUses && (
-              <span className="flex items-center gap-1.5 text-[12px] text-muted/60">
-                <HashIcon size={13} />
-                {tx(t.invite.usages, { uses: invite.uses, maxUses: invite.maxUses })}
-              </span>
-            )}
-          </div>
-
-          {/* Expiry */}
-          {invite?.expiresAt && !invite.isPermanent && (
-            <p className="mt-2 text-[11px] text-muted/50">
-              {tx(t.invite.expires, {
-                date: new Date(invite.expiresAt).toLocaleDateString('fr-FR', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }),
-              })}
-            </p>
-          )}
-
-          {/* Error inline */}
-          {error && (
-            <p className="mt-3 text-[12px] text-danger">{error}</p>
-          )}
-
-          {/* Actions */}
-          <div className="mt-5 flex flex-col gap-2">
-            <Button
-              size="lg"
-              className="w-full gap-2 rounded-lg text-[14px] font-semibold"
-              onPress={handleJoin}
-              isDisabled={isJoining}
-            >
-              {isJoining ? (
-                <Loader2Icon size={17} className="animate-spin" />
-              ) : isLoggedIn ? (
-                <ArrowRightIcon size={17} />
-              ) : (
-                <LogInIcon size={17} />
-              )}
-              {isLoggedIn ? t.invite.joinServer : t.invite.loginToJoin}
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full rounded-lg text-[13px] text-muted/60"
-              onPress={() => router.push('/')}
-            >
-              {t.invite.notNow}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <p className="relative z-10 mt-4 text-[11px] text-muted/40">
-        {t.invite.footer}
-      </p>
-    </div>
-  );
+export default async function InvitePage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params;
+  return <InviteView code={code} />;
 }
