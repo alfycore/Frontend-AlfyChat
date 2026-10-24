@@ -1,234 +1,255 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Button, Chip, Input, Label, TextField, toast } from '@heroui/react';
+import {
+  Ban, Boxes, Check, ChevronLeft, ChevronRight, Clock, HardDrive, Pause, RotateCcw,
+} from 'lucide-react';
+
 import { hostingApi } from '@/lib/hosting-api';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import {
+  DateText, EmptyState, PageHeader, RowAction, SectionCard, StatCard, TableShell,
+  TableSkeleton, Td, Th, Tr,
+} from '@/components/alfy/admin/primitives';
+import { ConfirmDialog } from '@/components/alfy/admin/confirm-dialog';
 
-const STATUS_OPTIONS = ['all', 'pending', 'active', 'suspended', 'banned'] as const;
-type FilterStatus = typeof STATUS_OPTIONS[number];
+type ProviderStatus = 'pending' | 'active' | 'suspended' | 'banned';
+type Filter = 'all' | ProviderStatus;
 
-const STATUS_COLOR: Record<string, string> = {
-  pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  suspended: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  banned: 'bg-red-500/20 text-red-400 border-red-500/30',
+interface Provider {
+  id: string;
+  name: string;
+  slug: string;
+  email: string;
+  country_code?: string | null;
+  status: ProviderStatus;
+  created_at: string;
+}
+
+interface HostingStats {
+  total_providers: number;
+  active_providers: number;
+  pending_providers: number;
+  online_db_nodes: number;
+  online_media_nodes: number;
+  total_db_nodes: number;
+  total_media_nodes: number;
+}
+
+const PAGE_SIZE = 20;
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'all',       label: 'Tous' },
+  { key: 'pending',   label: 'En attente' },
+  { key: 'active',    label: 'Actifs' },
+  { key: 'suspended', label: 'Suspendus' },
+  { key: 'banned',    label: 'Bannis' },
+];
+
+const STATUS_CHIP: Record<ProviderStatus, { label: string; color: 'warning' | 'success' | 'danger' | 'default' }> = {
+  pending:   { label: 'En attente', color: 'warning' },
+  active:    { label: 'Actif',      color: 'success' },
+  suspended: { label: 'Suspendu',   color: 'default' },
+  banned:    { label: 'Banni',      color: 'danger' },
 };
 
 export default function AdminHostingPage() {
-  const [providers, setProviders] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [filter, setFilter] = useState<FilterStatus>('all');
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState<string | null>(null);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [stats, setStats]         = useState<HostingStats | null>(null);
+  const [total, setTotal]         = useState(0);
+  const [page, setPage]           = useState(1);
+  const [filter, setFilter]       = useState<Filter>('all');
+  const [search, setSearch]       = useState('');
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState<string | null>(null);
+  const [updating, setUpdating]   = useState<string | null>(null);
+  const [banning, setBanning]     = useState<Provider | null>(null);
 
-  const loadData = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const [provRes, statsRes] = await Promise.all([
-        hostingApi.adminListProviders({ page, status: filter !== 'all' ? filter : undefined }),
-        hostingApi.adminStats(),
-      ]);
-      const provData = (provRes as any)?.data ?? provRes ?? {};
-      setProviders(Array.isArray(provData.providers ?? provData) ? (provData.providers ?? provData) : []);
-      setTotal(provData.total ?? 0);
-      setStats((statsRes as any)?.data ?? statsRes ?? {});
-    } catch {
-      toast.error('Erreur chargement');
-    } finally {
-      setLoading(false);
+    const [provRes, statsRes] = await Promise.all([
+      hostingApi.adminListProviders({ page, status: filter !== 'all' ? filter : undefined }),
+      hostingApi.adminStats(),
+    ]);
+    if (provRes.success && provRes.data) {
+      const d = provRes.data as { providers?: Provider[]; total?: number };
+      setProviders(d.providers ?? []);
+      setTotal(Number(d.total ?? 0));
+      setError(null);
+    } else {
+      setError(provRes.error ?? 'Impossible de charger les hébergeurs.');
     }
+    if (statsRes.success && statsRes.data) setStats(statsRes.data as HostingStats);
+    setLoading(false);
   }, [page, filter]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { load(); }, [load]);
 
-  async function updateStatus(id: string, status: string) {
-    setUpdating(id);
-    try {
-      await hostingApi.adminSetProviderStatus(id, status);
-      toast.success(`Statut mis à jour : ${status}`);
-      loadData();
-    } catch (err: any) {
-      toast.error(err?.message || 'Erreur mise à jour');
-    } finally {
-      setUpdating(null);
+  const setStatus = async (p: Provider, status: ProviderStatus) => {
+    setUpdating(p.id);
+    const res = await hostingApi.adminSetProviderStatus(p.id, status);
+    setUpdating(null);
+    if (!res.success) {
+      setError(res.error ?? 'Le statut n’a pas pu être modifié.');
+      return;
     }
-  }
-
-  const filtered = search
-    ? providers.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()) || p.email?.toLowerCase().includes(search.toLowerCase()))
-    : providers;
-
-  return (
-    <div className="min-h-screen bg-background text-foreground p-6">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Titre */}
-        <div>
-          <h1 className="text-2xl font-bold">Admin — Hébergeurs</h1>
-          <p className="text-muted-foreground text-sm">Gestion des partenaires hébergeurs AlfyChat</p>
-        </div>
-
-        {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatCard label="Total hébergeurs" value={stats.total_providers ?? 0} icon="server" color="blue" />
-            <StatCard label="En attente" value={stats.pending_providers ?? 0} icon="clock" color="yellow" />
-            <StatCard label="Actifs" value={stats.active_providers ?? 0} icon="check-circle" color="emerald" />
-            <StatCard label="Nœuds en ligne" value={(stats.online_db_nodes ?? 0) + (stats.online_media_nodes ?? 0)} icon="hdd-stack" color="purple" />
-          </div>
-        )}
-
-        {/* Filtres */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Input
-            placeholder="Rechercher par nom ou email..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="sm:max-w-xs"
-          />
-          <div className="flex gap-1 bg-white/5 p-1 rounded-lg overflow-x-auto">
-            {STATUS_OPTIONS.map(s => (
-              <button
-                key={s}
-                onClick={() => { setFilter(s); setPage(1); }}
-                className={`px-3 py-1 rounded-md text-xs whitespace-nowrap transition-colors ${
-                  filter === s ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Liste hébergeurs */}
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => <div key={i} className="h-24 bg-white/5 rounded-xl animate-pulse" />)}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <i className="bi bi-server text-5xl block mb-2 opacity-20" />
-            <p>Aucun hébergeur trouvé</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map(provider => (
-              <Card key={provider.id} className="bg-white/5 border-white/10">
-                <CardContent className="py-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-semibold">{provider.name}</span>
-                        <span className="text-muted-foreground text-xs">@{provider.slug}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLOR[provider.status] || ''}`}>
-                          {provider.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{provider.email}</p>
-                      <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
-                        {provider.country_code && <span><i className="bi bi-flag mr-1" />{provider.country_code}</span>}
-                        {provider.website_url && (
-                          <a href={provider.website_url} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
-                            <i className="bi bi-globe2 mr-1" />{provider.website_url}
-                          </a>
-                        )}
-                        <span><i className="bi bi-calendar mr-1" />{new Date(provider.created_at).toLocaleDateString('fr-FR')}</span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 flex-wrap shrink-0">
-                      {provider.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          disabled={updating === provider.id}
-                          onClick={() => updateStatus(provider.id, 'active')}
-                          className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs"
-                        >
-                          <i className="bi bi-check-lg mr-1" />Approuver
-                        </Button>
-                      )}
-                      {provider.status === 'active' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={updating === provider.id}
-                          onClick={() => updateStatus(provider.id, 'suspended')}
-                          className="h-7 text-xs border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
-                        >
-                          <i className="bi bi-pause-circle mr-1" />Suspendre
-                        </Button>
-                      )}
-                      {(provider.status === 'suspended' || provider.status === 'pending') && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={updating === provider.id}
-                          onClick={() => updateStatus(provider.id, 'banned')}
-                          className="h-7 text-xs border-red-500/40 text-red-400 hover:bg-red-500/10"
-                        >
-                          <i className="bi bi-ban mr-1" />Bannir
-                        </Button>
-                      )}
-                      {(provider.status === 'suspended' || provider.status === 'banned') && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={updating === provider.id}
-                          onClick={() => updateStatus(provider.id, 'active')}
-                          className="h-7 text-xs border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                        >
-                          <i className="bi bi-check2-circle mr-1" />Réactiver
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {total > 20 && (
-          <div className="flex items-center justify-center gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-              <i className="bi bi-chevron-left" />
-            </Button>
-            <span className="text-sm text-muted-foreground">Page {page}</span>
-            <Button variant="outline" size="sm" disabled={providers.length < 20} onClick={() => setPage(p => p + 1)}>
-              <i className="bi bi-chevron-right" />
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: string; color: string }) {
-  const colors: Record<string, string> = {
-    blue: 'bg-blue-500/10 text-blue-400',
-    yellow: 'bg-yellow-500/10 text-yellow-400',
-    emerald: 'bg-emerald-500/10 text-emerald-400',
-    purple: 'bg-purple-500/10 text-purple-400',
+    toast(`${p.name} : ${STATUS_CHIP[status].label.toLowerCase()}`);
+    load();
   };
+
+  const q = search.trim().toLowerCase();
+  const visible = q
+    ? providers.filter((p) => p.name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q))
+    : providers;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   return (
-    <Card className="bg-white/5 border-white/10">
-      <CardContent className="pt-4">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${colors[color]}`}>
-          <i className={`bi bi-${icon}`} />
+    <>
+      <PageHeader
+        title="Hébergement"
+        description="Partenaires qui fournissent stockage et nœuds aux serveurs AlfyChat."
+      >
+        <Button size="sm" variant="secondary" onPress={load} isPending={loading}>
+          <RotateCcw className="size-3.5" aria-hidden />
+          Actualiser
+        </Button>
+      </PageHeader>
+
+      {error && (
+        <Alert status="danger" className="mb-5">
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Hébergeurs" value={stats?.total_providers ?? 0} icon={Boxes} loading={!stats && loading} />
+        <StatCard
+          label="En attente"
+          value={stats?.pending_providers ?? 0}
+          icon={Clock}
+          tone={stats?.pending_providers ? 'warning' : 'neutral'}
+          loading={!stats && loading}
+        />
+        <StatCard label="Actifs" value={stats?.active_providers ?? 0} icon={Check} tone="success" loading={!stats && loading} />
+        <StatCard
+          label="Nœuds en ligne"
+          value={(stats?.online_db_nodes ?? 0) + (stats?.online_media_nodes ?? 0)}
+          hint={stats ? `sur ${(stats.total_db_nodes ?? 0) + (stats.total_media_nodes ?? 0)} déclarés` : undefined}
+          icon={HardDrive}
+          tone="accent"
+          loading={!stats && loading}
+        />
+      </div>
+
+      <SectionCard
+        flush
+        title="Hébergeurs"
+        description={`${total} au total`}
+        actions={
+          <TextField value={search} onChange={setSearch} aria-label="Rechercher" className="w-56">
+            <Label className="sr-only">Rechercher</Label>
+            <Input placeholder="Nom ou e-mail…" />
+          </TextField>
+        }
+      >
+        <div className="flex flex-wrap gap-1 border-b border-separator px-4 py-2">
+          {FILTERS.map((f) => (
+            <Button
+              key={f.key}
+              size="sm"
+              variant={filter === f.key ? 'secondary' : 'ghost'}
+              className={cn(filter !== f.key && 'text-muted')}
+              onPress={() => { setFilter(f.key); setPage(1); }}
+            >
+              {f.label}
+            </Button>
+          ))}
         </div>
-        <div className="text-2xl font-bold">{value}</div>
-        <div className="text-xs text-muted-foreground">{label}</div>
-      </CardContent>
-    </Card>
+
+        {loading && providers.length === 0 ? (
+          <TableSkeleton rows={4} cols={4} />
+        ) : visible.length === 0 ? (
+          <EmptyState icon={Boxes} title="Aucun hébergeur" description={q ? 'Aucun résultat sur cette page.' : undefined} />
+        ) : (
+          <TableShell
+            minWidth={720}
+            head={
+              <>
+                <Th>Hébergeur</Th>
+                <Th>Statut</Th>
+                <Th>Pays</Th>
+                <Th>Inscrit le</Th>
+                <Th align="right">Actions</Th>
+              </>
+            }
+          >
+            {visible.map((p) => {
+              const chip = STATUS_CHIP[p.status] ?? STATUS_CHIP.pending;
+              const busy = updating === p.id;
+              return (
+                <Tr key={p.id}>
+                  <Td>
+                    <p className="truncate text-sm font-medium">
+                      {p.name} <span className="font-normal text-muted">@{p.slug}</span>
+                    </p>
+                    <p className="truncate text-xs text-muted">{p.email}</p>
+                  </Td>
+                  <Td>
+                    <Chip size="sm" variant="soft" color={chip.color}><Chip.Label>{chip.label}</Chip.Label></Chip>
+                  </Td>
+                  <Td><span className="text-sm text-muted">{p.country_code || '—'}</span></Td>
+                  <Td><DateText value={p.created_at} /></Td>
+                  <Td align="right">
+                    <div className="flex justify-end gap-1">
+                      {p.status !== 'active' && (
+                        <RowAction
+                          icon={Check}
+                          label={p.status === 'pending' ? 'Approuver' : 'Réactiver'}
+                          isDisabled={busy}
+                          onPress={() => setStatus(p, 'active')}
+                        />
+                      )}
+                      {p.status === 'active' && (
+                        <RowAction icon={Pause} label="Suspendre" isDisabled={busy} onPress={() => setStatus(p, 'suspended')} />
+                      )}
+                      {p.status !== 'banned' && (
+                        <RowAction icon={Ban} label="Bannir" tone="danger" isDisabled={busy} onPress={() => setBanning(p)} />
+                      )}
+                    </div>
+                  </Td>
+                </Tr>
+              );
+            })}
+          </TableShell>
+        )}
+
+        {pages > 1 && (
+          <div className="flex items-center justify-end gap-2 border-t border-separator px-4 py-2">
+            <span className="text-xs text-muted">Page {page} / {pages}</span>
+            <Button size="sm" variant="ghost" isIconOnly aria-label="Page précédente" isDisabled={page <= 1} onPress={() => setPage((n) => n - 1)}>
+              <ChevronLeft className="size-4" aria-hidden />
+            </Button>
+            <Button size="sm" variant="ghost" isIconOnly aria-label="Page suivante" isDisabled={page >= pages} onPress={() => setPage((n) => n + 1)}>
+              <ChevronRight className="size-4" aria-hidden />
+            </Button>
+          </div>
+        )}
+      </SectionCard>
+
+      <ConfirmDialog
+        isOpen={banning !== null}
+        title={`Bannir ${banning?.name ?? ''} ?`}
+        description="L’hébergeur ne pourra plus proposer de nœuds. Vous pourrez le réactiver plus tard."
+        confirmLabel="Bannir"
+        onConfirm={async () => {
+          if (banning) await setStatus(banning, 'banned');
+          setBanning(null);
+        }}
+        onClose={() => setBanning(null)}
+      />
+    </>
   );
 }

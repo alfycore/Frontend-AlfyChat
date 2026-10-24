@@ -1376,7 +1376,7 @@ class ApiService {
   // ============ SERVICE REGISTRY ============
 
   async getAdminServices() {
-    return this.request<{ instances: any[] }>('/api/admin/services');
+    return this.request<{ instances: any[]; types?: string[] }>('/api/admin/services');
   }
 
   async getAdminServicesByType(type: string) {
@@ -1387,13 +1387,17 @@ class ApiService {
     id: string;
     serviceType: string;
     endpoint: string;
-    domain: string;
+    domain?: string;
     location: string;
   }) {
-    return this.request('/api/admin/services', {
+    return this.request<{ success: boolean; instance: any; serviceKey: string }>('/api/admin/services', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  async restoreAdminService(id: string) {
+    return this.request(`/api/admin/services/${encodeURIComponent(id)}/restore`, { method: 'POST' });
   }
 
   async deleteAdminService(id: string) {

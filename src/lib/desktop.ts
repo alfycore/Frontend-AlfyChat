@@ -13,17 +13,29 @@
  */
 
 export interface DesktopBridge {
+  /** `process.platform` du processus principal ('win32', 'darwin', 'linux'). */
+  platform: string;
+  /**
+   * L'OS dessine lui-même les boutons de fenêtre par-dessus le bandeau
+   * (overlay Windows/Linux, feux tricolores macOS) : inutile de les refaire.
+   */
+  nativeControls?: boolean;
+
   /** { FRONTEND_URL, APP_VERSION, IS_DEV, SOURCE, PARTITION } */
   getConfig: () => Promise<Record<string, unknown>>;
   openExternal: (url: string) => Promise<unknown>;
   showNotification: (opts: unknown) => Promise<unknown>;
+  /** Pastille de non-lus (macOS / Linux). */
+  setBadge: (count: number) => Promise<void>;
+  /** Fait clignoter la barre des tâches si la fenêtre n'a pas le focus. */
+  flash: () => Promise<void>;
 
   minimize: () => Promise<void>;
   maximize: () => Promise<void>;
   close: () => Promise<void>;
   isMaximized: () => Promise<boolean>;
-  /** Maximisation/restauration poussée par le processus principal. */
-  onWinState: (callback: (state: { maximized: boolean }) => void) => void;
+  /** Maximisation/restauration poussée par le processus principal. Renvoie la désinscription. */
+  onWinState: (callback: (state: { maximized: boolean }) => void) => () => void;
 
   installUpdate: () => Promise<unknown>;
 }

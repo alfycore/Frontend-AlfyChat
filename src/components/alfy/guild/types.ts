@@ -56,6 +56,8 @@ export interface GuildInfo {
   description?: string;
   ownerId: string;
   isPublic: boolean;
+  isCertified?: boolean;
+  isPartnered?: boolean;
   nodeOnline: boolean | null;
   selfHosted: boolean;
   hostingType?: 'platform' | 'self_hosted' | 'certified_host';

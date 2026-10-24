@@ -42,10 +42,13 @@ function WindowControls() {
     void api.isMaximized().then(setMaximized).catch(() => {});
     // Le processus principal pousse l'état : l'utilisateur peut aussi
     // maximiser au double-clic ou au raccourci système.
-    api.onWinState(({ maximized: m }) => setMaximized(m));
+    return api.onWinState(({ maximized: m }) => setMaximized(m));
   }, []);
 
-  if (!bridge) return null;
+  /* Enveloppe actuelle : l'OS dessine ses propres boutons (snap layouts de
+     Windows 11 compris). Ces boutons-ci ne servent plus qu'à une enveloppe sans
+     contrôles natifs. */
+  if (!bridge || bridge.nativeControls) return null;
 
   return (
     <div className="alfy-no-drag flex shrink-0 items-center">
@@ -93,12 +96,23 @@ export function AppTitleBar({ serverId }: AppTitleBarProps) {
   const server = serverId ? servers.find((s) => s.id === serverId) : undefined;
   const titre = server?.name ?? t.serverRail.dms;
 
+  /* Les boutons natifs se posent PAR-DESSUS le bandeau : on leur réserve la
+     place. À droite (Windows/Linux) la largeur vient de `titlebar-area-*`,
+     qui vaut 100vw hors overlay — d'où un retrait nul dans un navigateur. À
+     gauche (macOS) les feux tricolores occupent ~78 px. */
+  const [isMac, setIsMac] = useState(false);
+  useEffect(() => setIsMac(desktopBridge()?.platform === 'darwin'), []);
+
   /* Masqué en mobile : 32 px de hauteur en moins pour rien, le navigateur a
      déjà son propre historique. La fenêtre desktop impose minWidth 940, elle
      reste donc toujours au-dessus du seuil `md`. */
   return (
     <header
       className="alfy-drag-region relative hidden h-8 shrink-0 items-center border-b border-separator bg-background pl-1 select-none md:flex"
+      style={{
+        paddingLeft: isMac ? 78 : undefined,
+        paddingRight: 'calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw))',
+      }}
       data-slot="app-title-bar"
     >
       {/* Historique. Ni `back()` ni `forward()` n'exposent s'il y a une

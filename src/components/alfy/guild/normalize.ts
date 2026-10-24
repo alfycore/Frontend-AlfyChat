@@ -124,6 +124,8 @@ export function normalizeInfo(raw: Raw, serverId: string, previous?: GuildInfo):
     description: pick<string>(raw, 'description') ?? previous?.description,
     ownerId: pick<string>(raw, 'ownerId', 'owner_id') ?? previous?.ownerId ?? '',
     isPublic: Boolean(pick(raw, 'isPublic', 'is_public') ?? previous?.isPublic ?? false),
+    isCertified: Boolean(pick(raw, 'isCertified', 'is_certified') ?? previous?.isCertified ?? false),
+    isPartnered: Boolean(pick(raw, 'isPartnered', 'is_partnered') ?? previous?.isPartnered ?? false),
     nodeOnline: typeof online === 'boolean' ? online : (previous?.nodeOnline ?? null),
     selfHosted:
       pick<string>(raw, 'hostingType', 'hosting_type') === 'self_hosted' ||

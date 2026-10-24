@@ -1,25 +1,21 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Button, Chip, Input, Label, ListBox, Modal, Select, TextField,
+  Alert, Button, Chip, Description, Input, Label, ListBox, Modal, Select, TextField,
 } from '@heroui/react';
 import {
-  Copy, Eye, EyeOff, KeyRound, Pencil, Plus, RotateCcw, Server, Trash2,
+  KeyRound, Pencil, Plus, RefreshCcw, RotateCcw, Server, Trash2,
 } from 'lucide-react';
 
 import { api } from '@/lib/api';
 import {
-  EmptyState, PageHeader, SectionCard, StatusDot, TableShell, TableSkeleton,
+  EmptyState, PageHeader, RowAction, SectionCard, StatusDot, TableShell, TableSkeleton,
   Td, Th, Toggle, Tr,
 } from '@/components/alfy/admin/primitives';
-
-const SERVICE_TYPES = [
-  'users', 'messages', 'friends', 'calls', 'servers', 'bots', 'media',
-  'serverhosting', 'subscriptions',
-];
-
-const LOCATIONS = ['EU', 'NA', 'AS', 'SA', 'OC', 'AF'];
+import { ConfirmDialog } from '@/components/alfy/admin/confirm-dialog';
+import { ServiceKeyDialog, type IssuedServiceKey } from '@/components/alfy/admin/service-key-dialog';
+import { LOCATIONS, SERVICE_PORTS, SERVICE_TYPES } from '@/components/alfy/admin/service-types';
 
 interface ServiceInstance {
   id: string;
@@ -30,8 +26,9 @@ interface ServiceInstance {
   healthy: boolean;
   enabled: boolean;
   degraded?: boolean;
+  degradedReason?: string;
   score?: number;
-  lastHeartbeat: string;
+  lastHeartbeat: string | null;
 }
 
 const EMPTY_FORM = {
@@ -42,36 +39,52 @@ const EMPTY_FORM = {
   location: 'EU',
 };
 
-function health(s: ServiceInstance): 'success' | 'warning' | 'danger' | 'muted' {
+type Tone = 'success' | 'warning' | 'danger' | 'muted';
+
+function health(s: ServiceInstance): Tone {
   if (!s.enabled) return 'muted';
-  if (s.degraded || !s.healthy) return 'danger';
+  if (s.degraded) return 'danger';
+  // Aucun heartbeat depuis le démarrage du gateway (clé absente ou instance arrêtée)
+  if (!s.lastHeartbeat) return 'warning';
+  if (!s.healthy) return 'danger';
   const elapsed = Date.now() - new Date(s.lastHeartbeat).getTime();
   return elapsed > 600_000 ? 'danger' : elapsed > 90_000 ? 'warning' : 'success';
 }
 
+function healthLabel(s: ServiceInstance, tone: Tone): string {
+  if (tone === 'muted') return 'Désactivée';
+  if (s.degraded) return 'Dégradée';
+  if (!s.lastHeartbeat) return 'En attente';
+  return { success: 'En ligne', warning: 'Inactive', danger: 'Hors ligne' }[tone];
+}
+
 export default function AdminServicesPage() {
   const [instances, setInstances] = useState<ServiceInstance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
+  const [types, setTypes]         = useState<string[]>([...SERVICE_TYPES]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState<string | null>(null);
 
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm]       = useState(EMPTY_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving]   = useState(false);
 
   const [editing, setEditing] = useState<ServiceInstance | null>(null);
   const [endpointDraft, setEndpointDraft] = useState('');
+  const [deleting, setDeleting] = useState<ServiceInstance | null>(null);
 
-  // Clé révélée une seule fois après rotation — jamais relisible ensuite
-  const [rotated, setRotated] = useState<{ id: string; key: string } | null>(null);
-  const [keyVisible, setKeyVisible] = useState(false);
-  const [copied, setCopied]   = useState(false);
-  const [rotatingId, setRotatingId] = useState<string | null>(null);
+  // Clé révélée une seule fois (création ou rotation) — jamais relisible ensuite
+  const [issued, setIssued] = useState<IssuedServiceKey | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const res = await api.getAdminServices();
     if (res.success && res.data) {
-      setInstances((res.data as { instances?: ServiceInstance[] }).instances ?? []);
+      setInstances((res.data.instances ?? []) as ServiceInstance[]);
+      // Le gateway fait foi : un type ajouté côté serveur apparaît sans redéployer le front
+      if (res.data.types?.length) setTypes(res.data.types);
+      setError(null);
     } else {
       setError(res.error ?? 'Impossible de charger les instances.');
     }
@@ -80,32 +93,69 @@ export default function AdminServicesPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const grouped = useMemo(() => {
+    const order = new Map(types.map((t, i) => [t, i]));
+    return [...instances].sort((a, b) =>
+      (order.get(a.serviceType) ?? 99) - (order.get(b.serviceType) ?? 99) || a.id.localeCompare(b.id));
+  }, [instances, types]);
+
+  const counts = useMemo(() => {
+    const c = { online: 0, pending: 0, down: 0 };
+    for (const s of instances) {
+      const t = health(s);
+      if (t === 'success') c.online++;
+      else if (!s.lastHeartbeat && s.enabled) c.pending++;
+      else if (t === 'danger') c.down++;
+    }
+    return c;
+  }, [instances]);
+
+  const openAdd = () => {
+    setForm(EMPTY_FORM);
+    setFormError(null);
+    setAddOpen(true);
+  };
+
   const add = async () => {
     if (!form.id.trim() || !form.endpoint.trim()) {
-      setError('L’identifiant et l’URL sont obligatoires.');
+      setFormError('L’identifiant et l’URL sont obligatoires.');
       return;
     }
     setSaving(true);
-    const res = await api.addAdminService(form);
+    const endpoint = form.endpoint.trim();
+    const res = await api.addAdminService({
+      id: form.id.trim(),
+      serviceType: form.serviceType,
+      endpoint,
+      domain: form.domain.trim() || undefined,
+      location: form.location,
+    });
     setSaving(false);
 
     if (!res.success) {
-      setError(res.error ?? 'L’instance n’a pas pu être ajoutée.');
+      setFormError(res.error ?? 'L’instance n’a pas pu être ajoutée.');
       return;
     }
     setAddOpen(false);
-    setForm(EMPTY_FORM);
+    if (res.data?.serviceKey) {
+      setIssued({ id: form.id.trim(), key: res.data.serviceKey, endpoint, created: true });
+    }
     load();
   };
 
   const toggle = async (s: ServiceInstance, enabled: boolean) => {
     setInstances((prev) => prev.map((i) => (i.id === s.id ? { ...i, enabled } : i)));
     const res = await api.patchAdminService(s.id, { enabled });
-    if (!res.success) load();
+    if (!res.success) {
+      setError(res.error ?? 'L’instance n’a pas pu être modifiée.');
+      load();
+    }
   };
 
-  const remove = async (s: ServiceInstance) => {
-    const res = await api.deleteAdminService(s.id);
+  const remove = async () => {
+    if (!deleting) return;
+    const res = await api.deleteAdminService(deleting.id);
+    setDeleting(null);
     if (res.success) load();
     else setError(res.error ?? 'L’instance n’a pas pu être supprimée.');
   };
@@ -118,25 +168,24 @@ export default function AdminServicesPage() {
   };
 
   const rotate = async (s: ServiceInstance) => {
-    setRotatingId(s.id);
+    setBusyId(s.id);
     const res = await api.rotateAdminServiceKey(s.id);
-    setRotatingId(null);
+    setBusyId(null);
 
-    const key = (res.data as { serviceKey?: string } | undefined)?.serviceKey;
-    if (res.success && key) {
-      setRotated({ id: s.id, key });
-      setKeyVisible(false);
-      setCopied(false);
-    } else {
-      setError(res.error ?? 'La clé n’a pas pu être régénérée.');
-    }
+    const key = res.data?.serviceKey;
+    if (res.success && key) setIssued({ id: s.id, key, endpoint: s.endpoint });
+    else setError(res.error ?? 'La clé n’a pas pu être régénérée.');
   };
 
-  const copyKey = async () => {
-    if (!rotated) return;
-    await navigator.clipboard.writeText(rotated.key);
-    setCopied(true);
+  const restore = async (s: ServiceInstance) => {
+    setBusyId(s.id);
+    const res = await api.restoreAdminService(s.id);
+    setBusyId(null);
+    if (res.success) load();
+    else setError(res.error ?? 'L’instance n’a pas pu être restaurée.');
   };
+
+  const port = SERVICE_PORTS[form.serviceType];
 
   return (
     <>
@@ -148,7 +197,7 @@ export default function AdminServicesPage() {
           <RotateCcw className="size-3.5" aria-hidden />
           Actualiser
         </Button>
-        <Button size="sm" onPress={() => { setForm(EMPTY_FORM); setAddOpen(true); }}>
+        <Button size="sm" onPress={openAdd}>
           <Plus className="size-3.5" aria-hidden />
           Ajouter une instance
         </Button>
@@ -165,9 +214,13 @@ export default function AdminServicesPage() {
       <SectionCard
         flush
         title="Instances enregistrées"
-        description={`${instances.length} instance${instances.length > 1 ? 's' : ''}`}
+        description={
+          `${instances.length} instance${instances.length > 1 ? 's' : ''} · ${counts.online} en ligne`
+          + (counts.pending ? ` · ${counts.pending} en attente de connexion` : '')
+          + (counts.down ? ` · ${counts.down} hors ligne` : '')
+        }
       >
-        {loading ? (
+        {loading && instances.length === 0 ? (
           <TableSkeleton rows={5} cols={5} />
         ) : instances.length === 0 ? (
           <EmptyState
@@ -175,7 +228,7 @@ export default function AdminServicesPage() {
             title="Aucune instance"
             description="L’auto-enregistrement est désactivé : les instances doivent être ajoutées ici."
             action={
-              <Button size="sm" onPress={() => setAddOpen(true)}>
+              <Button size="sm" onPress={openAdd}>
                 <Plus className="size-3.5" aria-hidden />
                 Ajouter une instance
               </Button>
@@ -195,26 +248,25 @@ export default function AdminServicesPage() {
               </>
             }
           >
-            {instances.map((s) => {
+            {grouped.map((s) => {
               const tone = health(s);
               return (
                 <Tr key={s.id}>
                   <Td>
                     <p className="truncate text-sm font-medium">{s.id}</p>
-                    <p className="truncate text-xs text-muted">{s.endpoint}</p>
+                    <p className="truncate text-xs text-muted">{s.endpoint || '—'}</p>
                   </Td>
                   <Td>
                     <Chip size="sm" variant="soft"><Chip.Label>{s.serviceType}</Chip.Label></Chip>
                   </Td>
                   <Td><span className="text-sm text-muted">{s.location}</span></Td>
                   <Td>
-                    <StatusDot
-                      tone={tone}
-                      label={{ success: 'En ligne', warning: 'Inactif', danger: 'Hors ligne', muted: 'Désactivée' }[tone]}
-                      pulse={tone === 'success'}
-                    />
-                    {s.degraded && (
-                      <p className="mt-0.5 text-xs text-danger">Dégradée</p>
+                    <StatusDot tone={tone} label={healthLabel(s, tone)} pulse={tone === 'success'} />
+                    {s.degraded && s.degradedReason && (
+                      <p className="mt-0.5 truncate text-xs text-danger">{s.degradedReason}</p>
+                    )}
+                    {!s.lastHeartbeat && s.enabled && (
+                      <p className="mt-0.5 text-xs text-muted">Aucun heartbeat reçu — clé installée ?</p>
                     )}
                   </Td>
                   <Td align="center">
@@ -228,35 +280,31 @@ export default function AdminServicesPage() {
                   </Td>
                   <Td align="right">
                     <div className="flex justify-end gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        isIconOnly
-                        aria-label={`Modifier l'URL de ${s.id}`}
+                      {s.degraded && (
+                        <RowAction
+                          icon={RefreshCcw}
+                          label="Remettre en service"
+                          isDisabled={busyId === s.id}
+                          onPress={() => restore(s)}
+                        />
+                      )}
+                      <RowAction
+                        icon={Pencil}
+                        label="Modifier l’URL"
                         onPress={() => { setEditing(s); setEndpointDraft(s.endpoint); }}
-                      >
-                        <Pencil className="size-4" aria-hidden />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        isIconOnly
-                        aria-label={`Régénérer la clé de ${s.id}`}
-                        isPending={rotatingId === s.id}
+                      />
+                      <RowAction
+                        icon={KeyRound}
+                        label="Régénérer la clé"
+                        isDisabled={busyId === s.id}
                         onPress={() => rotate(s)}
-                      >
-                        <KeyRound className="size-4" aria-hidden />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        isIconOnly
-                        aria-label={`Supprimer ${s.id}`}
-                        className="text-danger hover:bg-danger/10"
-                        onPress={() => remove(s)}
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                      </Button>
+                      />
+                      <RowAction
+                        icon={Trash2}
+                        label="Supprimer"
+                        tone="danger"
+                        onPress={() => setDeleting(s)}
+                      />
                     </div>
                   </Td>
                 </Tr>
@@ -269,7 +317,7 @@ export default function AdminServicesPage() {
       {/* ── Ajout ── */}
       <Modal.Backdrop isOpen={addOpen} onOpenChange={setAddOpen}>
         <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[460px]">
+          <Modal.Dialog className="sm:max-w-[480px]">
             <Modal.CloseTrigger />
             <Modal.Header>
               <Modal.Icon className="bg-accent/12 text-accent">
@@ -279,14 +327,13 @@ export default function AdminServicesPage() {
             </Modal.Header>
 
             <Modal.Body className="space-y-4">
-              <TextField
-                value={form.id}
-                onChange={(v) => setForm((f) => ({ ...f, id: v }))}
-                isRequired
-              >
-                <Label>Identifiant</Label>
-                <Input placeholder="messages-eu-01" autoComplete="off" />
-              </TextField>
+              {formError && (
+                <Alert status="danger">
+                  <Alert.Content>
+                    <Alert.Description>{formError}</Alert.Description>
+                  </Alert.Content>
+                </Alert>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Select
@@ -300,7 +347,7 @@ export default function AdminServicesPage() {
                   </Select.Trigger>
                   <Select.Popover>
                     <ListBox>
-                      {SERVICE_TYPES.map((t) => (
+                      {types.map((t) => (
                         <ListBox.Item key={t} id={t} textValue={t}>
                           <Label>{t}</Label>
                           <ListBox.ItemIndicator />
@@ -333,12 +380,28 @@ export default function AdminServicesPage() {
               </div>
 
               <TextField
+                value={form.id}
+                onChange={(v) => setForm((f) => ({ ...f, id: v }))}
+                isRequired
+              >
+                <Label>Identifiant</Label>
+                <Input placeholder={`${form.serviceType}-${form.location.toLowerCase()}-01`} autoComplete="off" />
+                <Description>Lettres, chiffres, point, tiret ou souligné.</Description>
+              </TextField>
+
+              <TextField
                 value={form.endpoint}
                 onChange={(v) => setForm((f) => ({ ...f, endpoint: v }))}
                 isRequired
               >
-                <Label>URL interne</Label>
-                <Input placeholder="http://10.0.0.12:3002" autoComplete="off" />
+                <Label>URL de l’instance</Label>
+                <Input
+                  placeholder={`https://${form.serviceType}.alfychat.app`}
+                  autoComplete="off"
+                />
+                <Description>
+                  Nom de domaine obligatoire (pas d’IP). En local : http://localhost:{port ?? 3000}
+                </Description>
               </TextField>
 
               <TextField
@@ -346,7 +409,7 @@ export default function AdminServicesPage() {
                 onChange={(v) => setForm((f) => ({ ...f, domain: v }))}
               >
                 <Label>Domaine public</Label>
-                <Input placeholder="messages.alfychat.app" autoComplete="off" />
+                <Input placeholder="Déduit de l’URL si vide" autoComplete="off" />
               </TextField>
             </Modal.Body>
 
@@ -368,8 +431,8 @@ export default function AdminServicesPage() {
             </Modal.Header>
             <Modal.Body>
               <TextField value={endpointDraft} onChange={setEndpointDraft} isRequired>
-                <Label>URL interne</Label>
-                <Input placeholder="http://10.0.0.12:3002" autoComplete="off" />
+                <Label>URL de l’instance</Label>
+                <Input placeholder={`https://${editing?.serviceType ?? 'messages'}.alfychat.app`} autoComplete="off" />
               </TextField>
             </Modal.Body>
             <Modal.Footer>
@@ -380,63 +443,15 @@ export default function AdminServicesPage() {
         </Modal.Container>
       </Modal.Backdrop>
 
-      {/* ── Clé régénérée ── */}
-      <Modal.Backdrop isOpen={rotated !== null} onOpenChange={(o) => !o && setRotated(null)}>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[480px]">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Icon className="bg-warning/12 text-warning">
-                <KeyRound className="size-5" aria-hidden />
-              </Modal.Icon>
-              <Modal.Heading>Nouvelle clé pour {rotated?.id}</Modal.Heading>
-            </Modal.Header>
+      <ConfirmDialog
+        isOpen={deleting !== null}
+        title={`Supprimer ${deleting?.id ?? ''} ?`}
+        description="L’instance ne recevra plus de trafic et sa clé sera révoquée. Son identifiant reste bloqué jusqu’au prochain redémarrage du gateway."
+        onConfirm={remove}
+        onClose={() => setDeleting(null)}
+      />
 
-            <Modal.Body className="space-y-3">
-              <Alert status="warning">
-                <Alert.Content>
-                  <Alert.Description>
-                    Cette clé n’est affichée qu’une fois. Copiez-la maintenant et
-                    reportez-la dans la configuration de l’instance.
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert>
-
-              <div className="flex items-center gap-2 rounded-md border border-border bg-surface-secondary p-2.5">
-                <code className="min-w-0 flex-1 truncate font-mono text-xs">
-                  {keyVisible ? rotated?.key : '•'.repeat(48)}
-                </code>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  isIconOnly
-                  aria-label={keyVisible ? 'Masquer la clé' : 'Afficher la clé'}
-                  onPress={() => setKeyVisible((v) => !v)}
-                >
-                  {keyVisible
-                    ? <EyeOff className="size-4" aria-hidden />
-                    : <Eye className="size-4" aria-hidden />}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  isIconOnly
-                  aria-label="Copier la clé"
-                  onPress={copyKey}
-                >
-                  <Copy className="size-4" aria-hidden />
-                </Button>
-              </div>
-
-              {copied && <p className="text-xs text-success">Clé copiée dans le presse-papiers.</p>}
-            </Modal.Body>
-
-            <Modal.Footer>
-              <Button slot="close">J’ai copié la clé</Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+      <ServiceKeyDialog issued={issued} onClose={() => setIssued(null)} />
     </>
   );
 }

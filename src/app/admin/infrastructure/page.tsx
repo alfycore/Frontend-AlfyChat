@@ -5,7 +5,7 @@ import {
   Alert, Button, Chip, Input, Label, ListBox, Modal, Select, Tabs, TextField,
 } from '@heroui/react';
 import {
-  Copy, Globe, KeyRound, Network, Plus, RefreshCcw, RotateCcw, Trash2,
+  Globe, KeyRound, Network, Plus, RefreshCcw, RotateCcw, Trash2,
 } from 'lucide-react';
 
 import { api } from '@/lib/api';
@@ -13,19 +13,17 @@ import {
   EmptyState, PageHeader, SectionCard, StatusDot, TableShell, TableSkeleton,
   Td, Th, Toggle, Tr,
 } from '@/components/alfy/admin/primitives';
-
-const SERVICE_TYPES = [
-  'users', 'messages', 'friends', 'calls', 'servers', 'bots', 'media',
-  'serverhosting', 'subscriptions',
-];
-const LOCATIONS = ['EU', 'NA', 'AS', 'SA', 'OC', 'AF'];
+import { ConfirmDialog } from '@/components/alfy/admin/confirm-dialog';
+import { ServiceKeyDialog, type IssuedServiceKey } from '@/components/alfy/admin/service-key-dialog';
+import { LOCATIONS, SERVICE_TYPES } from '@/components/alfy/admin/service-types';
 
 interface LBGateway {
   id: string;
   name: string;
   url: string;
   enabled: boolean;
-  healthy?: boolean;
+  online?: boolean;
+  isSelf?: boolean;
 }
 
 interface LBService {
@@ -35,6 +33,17 @@ interface LBService {
   endpoint?: string;
   enabled: boolean;
   degraded?: boolean;
+  status?: 'online' | 'degraded' | 'offline';
+  lastHeartbeat?: string | null;
+}
+
+function serviceTone(s: LBService): { tone: 'success' | 'warning' | 'danger' | 'muted'; label: string } {
+  if (!s.enabled) return { tone: 'muted', label: 'Désactivé' };
+  if (s.degraded) return { tone: 'danger', label: 'Dégradé' };
+  if (s.status === 'online') return { tone: 'success', label: 'En ligne' };
+  // Aucun heartbeat depuis le démarrage du gateway (clé absente ou instance arrêtée)
+  if (!s.lastHeartbeat) return { tone: 'warning', label: 'En attente' };
+  return { tone: 'danger', label: 'Hors ligne' };
 }
 
 export default function AdminInfrastructurePage() {
@@ -49,7 +58,8 @@ export default function AdminInfrastructurePage() {
   const [svcForm, setSvcForm]   = useState({ id: '', serviceType: 'messages', location: 'EU' });
   const [saving, setSaving]     = useState(false);
 
-  const [rotated, setRotated]   = useState<{ id: string; key: string } | null>(null);
+  const [issued, setIssued]     = useState<IssuedServiceKey | null>(null);
+  const [deleting, setDeleting] = useState<{ kind: 'gateway' | 'service'; id: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,15 +67,12 @@ export default function AdminInfrastructurePage() {
 
     const [gwRes, svcRes] = await Promise.all([api.getLBGateways(), api.getLBServices()]);
 
-    if (gwRes.success && gwRes.data) {
-      const d = gwRes.data as LBGateway[] | { gateways?: LBGateway[] };
-      setGateways(Array.isArray(d) ? d : (d.gateways ?? []));
+    if (gwRes.success && gwRes.data) setGateways((gwRes.data.gateways ?? []) as LBGateway[]);
+    // Le gateway renvoie { instances } : lire `services` laissait l'onglet toujours vide
+    if (svcRes.success && svcRes.data) setServices((svcRes.data.instances ?? []) as LBService[]);
+    if (!gwRes.success || !svcRes.success) {
+      setError(gwRes.error ?? svcRes.error ?? 'Impossible de charger le load balancer.');
     }
-    if (svcRes.success && svcRes.data) {
-      const d = svcRes.data as LBService[] | { services?: LBService[] };
-      setServices(Array.isArray(d) ? d : (d.services ?? []));
-    }
-    if (!gwRes.success) setError(gwRes.error ?? 'Impossible de charger le load balancer.');
 
     setLoading(false);
   }, []);
@@ -90,11 +97,13 @@ export default function AdminInfrastructurePage() {
       return;
     }
     setSaving(true);
-    const res = await api.addLBService(svcForm);
+    const id = svcForm.id.trim();
+    const res = await api.addLBService({ ...svcForm, id });
     setSaving(false);
     if (res.success) {
       setSvcOpen(false);
       setSvcForm({ id: '', serviceType: 'messages', location: 'EU' });
+      if (res.data?.serviceKey) setIssued({ id, key: res.data.serviceKey, created: true });
       load();
     } else {
       setError(res.error ?? 'Le service n’a pas pu être ajouté.');
@@ -103,9 +112,19 @@ export default function AdminInfrastructurePage() {
 
   const rotateKey = async (s: LBService) => {
     const res = await api.rotateLBServiceKey(s.id);
-    const key = (res.data as { serviceKey?: string } | undefined)?.serviceKey;
-    if (res.success && key) setRotated({ id: s.id, key });
+    const key = res.data?.serviceKey;
+    if (res.success && key) setIssued({ id: s.id, key, endpoint: s.endpoint });
     else setError(res.error ?? 'La clé n’a pas pu être régénérée.');
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    const res = deleting.kind === 'gateway'
+      ? await api.deleteLBGateway(deleting.id)
+      : await api.deleteLBService(deleting.id);
+    setDeleting(null);
+    if (res.success) load();
+    else setError(res.error ?? 'La suppression a échoué.');
   };
 
   return (
@@ -187,9 +206,9 @@ export default function AdminInfrastructurePage() {
                     <Td><code className="text-xs text-muted">{g.url}</code></Td>
                     <Td>
                       <StatusDot
-                        tone={!g.enabled ? 'muted' : g.healthy === false ? 'danger' : 'success'}
-                        label={!g.enabled ? 'Désactivé' : g.healthy === false ? 'Hors ligne' : 'En ligne'}
-                        pulse={g.enabled && g.healthy !== false}
+                        tone={!g.enabled ? 'muted' : g.online ? 'success' : 'danger'}
+                        label={!g.enabled ? 'Désactivé' : g.online ? (g.isSelf ? 'En ligne · ce gateway' : 'En ligne') : 'Hors ligne'}
+                        pulse={g.enabled && !!g.online}
                       />
                     </Td>
                     <Td align="center">
@@ -198,7 +217,8 @@ export default function AdminInfrastructurePage() {
                           isSelected={g.enabled}
                           onChange={async (v) => {
                             setGateways((p) => p.map((x) => (x.id === g.id ? { ...x, enabled: v } : x)));
-                            await api.patchLBGateway(g.id, { enabled: v });
+                            const res = await api.patchLBGateway(g.id, { enabled: v });
+                            if (!res.success) { setError(res.error ?? 'Le gateway n’a pas pu être modifié.'); load(); }
                           }}
                           label={`Activer ${g.name || g.id}`}
                         />
@@ -211,10 +231,8 @@ export default function AdminInfrastructurePage() {
                         isIconOnly
                         aria-label={`Supprimer ${g.id}`}
                         className="text-danger hover:bg-danger/10"
-                        onPress={async () => {
-                          const res = await api.deleteLBGateway(g.id);
-                          if (res.success) load();
-                        }}
+                        isDisabled={g.isSelf}
+                        onPress={() => setDeleting({ kind: 'gateway', id: g.id })}
                       >
                         <Trash2 className="size-4" aria-hidden />
                       </Button>
@@ -257,7 +275,9 @@ export default function AdminInfrastructurePage() {
                   </>
                 }
               >
-                {services.map((s) => (
+                {services.map((s) => {
+                  const st = serviceTone(s);
+                  return (
                   <Tr key={s.id}>
                     <Td>
                       <p className="truncate text-sm font-medium">{s.id}</p>
@@ -270,11 +290,7 @@ export default function AdminInfrastructurePage() {
                     </Td>
                     <Td><span className="text-sm text-muted">{s.location}</span></Td>
                     <Td>
-                      <StatusDot
-                        tone={!s.enabled ? 'muted' : s.degraded ? 'danger' : 'success'}
-                        label={!s.enabled ? 'Désactivé' : s.degraded ? 'Dégradé' : 'Sain'}
-                        pulse={s.enabled && !s.degraded}
-                      />
+                      <StatusDot tone={st.tone} label={st.label} pulse={st.tone === 'success'} />
                     </Td>
                     <Td align="center">
                       <div className="flex justify-center">
@@ -282,7 +298,8 @@ export default function AdminInfrastructurePage() {
                           isSelected={s.enabled}
                           onChange={async (v) => {
                             setServices((p) => p.map((x) => (x.id === s.id ? { ...x, enabled: v } : x)));
-                            await api.patchLBService(s.id, { enabled: v });
+                            const res = await api.patchLBService(s.id, { enabled: v });
+                            if (!res.success) { setError(res.error ?? 'Le service n’a pas pu être modifié.'); load(); }
                           }}
                           label={`Activer ${s.id}`}
                         />
@@ -319,17 +336,15 @@ export default function AdminInfrastructurePage() {
                           isIconOnly
                           aria-label={`Supprimer ${s.id}`}
                           className="text-danger hover:bg-danger/10"
-                          onPress={async () => {
-                            const res = await api.deleteLBService(s.id);
-                            if (res.success) load();
-                          }}
+                          onPress={() => setDeleting({ kind: 'service', id: s.id })}
                         >
                           <Trash2 className="size-4" aria-hidden />
                         </Button>
                       </div>
                     </Td>
                   </Tr>
-                ))}
+                  );
+                })}
               </TableShell>
             )}
           </SectionCard>
@@ -451,44 +466,17 @@ export default function AdminInfrastructurePage() {
         </Modal.Container>
       </Modal.Backdrop>
 
-      {/* ── Clé régénérée ── */}
-      <Modal.Backdrop isOpen={rotated !== null} onOpenChange={(o) => !o && setRotated(null)}>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[480px]">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Icon className="bg-warning/12 text-warning">
-                <KeyRound className="size-5" aria-hidden />
-              </Modal.Icon>
-              <Modal.Heading>Nouvelle clé pour {rotated?.id}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body className="space-y-3">
-              <Alert status="warning">
-                <Alert.Content>
-                  <Alert.Description>
-                    Affichée une seule fois — copiez-la avant de fermer.
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert>
-              <div className="flex items-center gap-2 rounded-md border border-border bg-surface-secondary p-2.5">
-                <code className="min-w-0 flex-1 truncate font-mono text-xs">{rotated?.key}</code>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  isIconOnly
-                  aria-label="Copier la clé"
-                  onPress={() => rotated && navigator.clipboard.writeText(rotated.key)}
-                >
-                  <Copy className="size-4" aria-hidden />
-                </Button>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button slot="close">J’ai copié la clé</Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+      <ConfirmDialog
+        isOpen={deleting !== null}
+        title={`Supprimer ${deleting?.id ?? ''} ?`}
+        description={deleting?.kind === 'gateway'
+          ? 'Ce gateway ne fera plus partie de la répartition de charge.'
+          : 'Le service et sa clé seront supprimés : l’instance ne pourra plus se connecter.'}
+        onConfirm={confirmDelete}
+        onClose={() => setDeleting(null)}
+      />
+
+      <ServiceKeyDialog issued={issued} onClose={() => setIssued(null)} />
     </>
   );
 }

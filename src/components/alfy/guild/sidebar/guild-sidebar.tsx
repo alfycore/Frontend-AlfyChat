@@ -10,11 +10,13 @@
 
 import { Dropdown, ScrollShadow, Skeleton } from '@heroui/react';
 import {
+  BadgeCheck,
   Bell,
   BellRing,
   ChevronDown,
   Copy,
   FolderPlus,
+  Handshake,
   LogOut,
   PlusCircle,
   Settings,
@@ -143,7 +145,22 @@ function GuildHeader({ serverId, overBanner }: { serverId: string; overBanner: b
           open && !overBanner && 'bg-foreground/6',
         )}
       >
-        <span className={cn('min-w-0 flex-1 truncate text-[15px] font-semibold', overBanner && 'drop-shadow')}>{info?.name}</span>
+        <span className={cn('flex min-w-0 flex-1 items-center gap-1.5', overBanner && 'drop-shadow')}>
+          <span className="min-w-0 truncate text-[15px] font-semibold">{info?.name}</span>
+          {/* Distinctions attribuées depuis /admin/server-badges */}
+          {info?.isCertified && (
+            <span title="Serveur certifié" className={cn('shrink-0', overBanner ? 'text-white' : 'text-accent')}>
+              <BadgeCheck className="size-4" aria-hidden />
+              <span className="sr-only">Serveur certifié</span>
+            </span>
+          )}
+          {info?.isPartnered && (
+            <span title="Serveur partenaire" className={cn('shrink-0', overBanner ? 'text-white' : 'text-success')}>
+              <Handshake className="size-4" aria-hidden />
+              <span className="sr-only">Serveur partenaire</span>
+            </span>
+          )}
+        </span>
         <span className="relative flex size-4.5 shrink-0 items-center justify-center">
           <ChevronDown
             className={cn('absolute size-4.5 transition-[transform,opacity] duration-(--dur-2) ease-out-quart', open ? 'rotate-90 opacity-0' : 'opacity-100')}

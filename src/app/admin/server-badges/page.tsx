@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Chip, Input, SearchField } from '@heroui/react';
 import { BadgeCheck, Handshake, RotateCcw, Server, Star } from 'lucide-react';
 
-import { api } from '@/lib/api';
+import { api, resolveMediaUrl } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import {
   EmptyState, InitialAvatar, PageHeader, SectionCard, TableShell, TableSkeleton,
   Td, Th, Toggle, Tr,
@@ -18,7 +19,18 @@ interface AdminServer {
   isCertified?: boolean;
   isPartnered?: boolean;
   isFeatured?: boolean;
+  discoveryStatus?: 'pending' | 'approved' | 'rejected' | null;
 }
+
+type BadgeFilter = 'all' | 'certified' | 'partnered' | 'featured' | 'pending';
+
+const FILTERS: { key: BadgeFilter; label: string; match: (s: AdminServer) => boolean }[] = [
+  { key: 'all',       label: 'Tous',          match: () => true },
+  { key: 'certified', label: 'Certifiés',     match: (s) => !!s.isCertified },
+  { key: 'partnered', label: 'Partenaires',   match: (s) => !!s.isPartnered },
+  { key: 'featured',  label: 'Mis en avant',  match: (s) => !!s.isFeatured },
+  { key: 'pending',   label: 'Candidature en attente', match: (s) => s.discoveryStatus === 'pending' },
+];
 
 const PAGE_SIZE = 25;
 
@@ -28,13 +40,14 @@ export default function AdminServerBadgesPage() {
   const [error, setError]     = useState<string | null>(null);
   const [search, setSearch]   = useState('');
   const [page, setPage]       = useState(0);
+  const [filter, setFilter]   = useState<BadgeFilter>('all');
 
   const load = useCallback(async () => {
     setLoading(true);
     const res = await api.getAllServersAdmin();
     if (res.success && res.data) {
-      const d = res.data as AdminServer[] | { servers?: AdminServer[] };
-      setServers(Array.isArray(d) ? d : (d.servers ?? []));
+      setServers((res.data as { servers?: AdminServer[] }).servers ?? []);
+      setError(null);
     } else {
       setError(res.error ?? 'Impossible de charger les serveurs.');
     }
@@ -45,9 +58,14 @@ export default function AdminServerBadgesPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return servers;
-    return servers.filter((s) => s.name?.toLowerCase().includes(q));
-  }, [servers, search]);
+    const match = FILTERS.find((f) => f.key === filter)!.match;
+    return servers.filter((s) => match(s) && (!q || s.name?.toLowerCase().includes(q)));
+  }, [servers, search, filter]);
+
+  const counts = useMemo(
+    () => Object.fromEntries(FILTERS.map((f) => [f.key, servers.filter(f.match).length])) as Record<BadgeFilter, number>,
+    [servers],
+  );
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const visible = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -112,13 +130,28 @@ export default function AdminServerBadgesPage() {
           </SearchField>
         }
       >
-        {loading ? (
+        <div className="flex flex-wrap gap-1 border-b border-separator px-4 py-2">
+          {FILTERS.map((f) => (
+            <Button
+              key={f.key}
+              size="sm"
+              variant={filter === f.key ? 'secondary' : 'ghost'}
+              className={cn(filter !== f.key && 'text-muted')}
+              onPress={() => { setFilter(f.key); setPage(0); }}
+            >
+              {f.label}
+              <span className="tabular-nums text-muted">{counts[f.key]}</span>
+            </Button>
+          ))}
+        </div>
+
+        {loading && servers.length === 0 ? (
           <TableSkeleton rows={6} cols={4} />
         ) : visible.length === 0 ? (
           <EmptyState
             icon={Server}
             title="Aucun serveur"
-            description={search ? 'Aucun serveur ne correspond à cette recherche.' : undefined}
+            description={search || filter !== 'all' ? 'Aucun serveur ne correspond à ce filtre.' : undefined}
           />
         ) : (
           <>
@@ -138,7 +171,7 @@ export default function AdminServerBadgesPage() {
                 <Tr key={s.id}>
                   <Td>
                     <div className="flex items-center gap-2.5">
-                      <InitialAvatar name={s.name ?? '?'} src={s.iconUrl} />
+                      <InitialAvatar name={s.name ?? '?'} src={resolveMediaUrl(s.iconUrl)} />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{s.name}</p>
                         <div className="mt-0.5 flex gap-1">
@@ -150,6 +183,11 @@ export default function AdminServerBadgesPage() {
                           {s.isPartnered && (
                             <Chip size="sm" variant="soft" color="success">
                               <Chip.Label>Partenaire</Chip.Label>
+                            </Chip>
+                          )}
+                          {s.discoveryStatus === 'pending' && (
+                            <Chip size="sm" variant="soft" color="warning">
+                              <Chip.Label>Candidature en attente</Chip.Label>
                             </Chip>
                           )}
                         </div>
