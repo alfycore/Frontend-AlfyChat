@@ -20,7 +20,8 @@ const SITE_PATHS = [
   "/brand",
   "/changelogs",
   "/status/:path*",
-  "/developers/docs/:path*",
+  "/developers",
+  "/developers/:path*",
   "/hosting",
 ];
 
