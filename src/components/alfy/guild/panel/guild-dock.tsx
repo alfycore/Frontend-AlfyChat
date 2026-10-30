@@ -172,7 +172,7 @@ function VoicePanel() {
   };
 
   return (
-    <div className="alfy-enter flex flex-col gap-2 border-b border-separator px-2 pt-2 pb-2">
+    <div className="alfy-enter flex flex-col gap-2 bg-foreground/4 px-2 pt-2 pb-2">
       <div className="flex items-center gap-1.5">
         <Tooltip delay={250} closeDelay={0}>
           <span className={cn('flex size-6 shrink-0 items-center justify-center', connecting ? 'text-warning' : 'text-success')}>
@@ -262,9 +262,9 @@ function DeviceMenu({ kind, onOpenSettings }: { kind: 'audioinput' | 'audiooutpu
     <Dropdown isOpen={open} onOpenChange={setOpen}>
       <Dropdown.Trigger
         aria-label={kind === 'audioinput' ? t.guild.dock.inputDevice : t.guild.dock.outputDevice}
-        className="flex h-8 w-4 cursor-pointer items-center justify-center rounded-sm text-muted outline-none transition-colors duration-(--dur-1) hover:bg-foreground/8 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+        className="-ml-1 flex h-8 w-4 cursor-pointer items-center justify-center rounded-md text-muted/70 outline-none transition-colors duration-(--dur-1) hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
       >
-        <ChevronDown className={cn('size-3.5 transition-transform duration-(--dur-2)', open && 'rotate-180')} aria-hidden />
+        <ChevronDown className={cn('size-3 transition-transform duration-(--dur-2)', open && 'rotate-180')} aria-hidden />
       </Dropdown.Trigger>
       <Dropdown.Popover placement="top" className="w-72">
         <Dropdown.Menu aria-label={kind === 'audioinput' ? t.guild.dock.inputDevice : t.guild.dock.outputDevice}>
@@ -311,19 +311,19 @@ function UserPanel({ onOpenSettings }: { onOpenSettings: () => void }) {
   const sub = [emoji, user.customStatus || (emoji ? '' : labels[status])].filter(Boolean).join(' ');
 
   return (
-    <div className="flex h-13 items-center gap-0.5 px-2">
+    <div className="flex h-14 items-center gap-1 px-2">
       <Dropdown>
         <Dropdown.Trigger
           aria-label={t.guild.dock.statusMenu}
-          className="group/me flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md py-1 pr-1 pl-0.5 text-left outline-none transition-colors duration-(--dur-1) hover:bg-foreground/8 focus-visible:ring-2 focus-visible:ring-focus"
+          className="group/me flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-lg py-1.5 pr-1.5 pl-1 text-left outline-none transition-colors duration-(--dur-1) hover:bg-foreground/6 focus-visible:ring-2 focus-visible:ring-focus"
         >
           <span className="relative shrink-0">
-            <Avatar className="size-8">
-              {avatar && <Avatar.Image src={avatar} alt="" />}
+            <Avatar className="size-9 rounded-full">
+              {avatar && <Avatar.Image src={avatar} alt="" className="object-cover" />}
               <Avatar.Fallback>{display.slice(0, 1).toUpperCase()}</Avatar.Fallback>
             </Avatar>
             <span className="absolute -right-0.5 -bottom-0.5">
-              <StatusDot status={status} ringClass="ring-(--alfy-dock)" />
+              <StatusDot status={status} ringClass="ring-surface-secondary" />
             </span>
           </span>
           <span className="flex min-w-0 flex-1 flex-col leading-tight">
@@ -341,7 +341,7 @@ function UserPanel({ onOpenSettings }: { onOpenSettings: () => void }) {
         <StatusMenuPopover />
       </Dropdown>
 
-      <div className="flex items-center">
+      <div className="flex items-center rounded-lg transition-colors duration-(--dur-1) hover:bg-foreground/6">
         <IconButton
           label={voice.isMuted ? t.guild.dock.unmute : t.guild.dock.mute}
           onPress={() => {
@@ -349,18 +349,18 @@ function UserPanel({ onOpenSettings }: { onOpenSettings: () => void }) {
             if (!voice.channelId && !ACTIVE.has(voice.status)) toast(voice.isMuted ? t.guild.dock.micOn : t.guild.dock.micOff);
           }}
           active={voice.isMuted}
-          className={cn('w-7 min-w-7', voice.isMuted && 'text-danger hover:text-danger')}
+          className={cn('w-7 min-w-7 hover:bg-transparent', voice.isMuted && 'text-danger hover:text-danger')}
         >
           {voice.isMuted ? <MicOff className="size-4.5" aria-hidden /> : <Mic className="size-4.5" aria-hidden />}
         </IconButton>
         <DeviceMenu kind="audioinput" onOpenSettings={onOpenSettings} />
       </div>
-      <div className="flex items-center">
+      <div className="flex items-center rounded-lg transition-colors duration-(--dur-1) hover:bg-foreground/6">
         <IconButton
           label={voice.isDeafened ? t.guild.dock.undeafen : t.guild.dock.deafen}
           onPress={voice.toggleDeafen}
           active={voice.isDeafened}
-          className={cn('w-7 min-w-7', voice.isDeafened && 'text-danger hover:text-danger')}
+          className={cn('w-7 min-w-7 hover:bg-transparent', voice.isDeafened && 'text-danger hover:text-danger')}
         >
           {voice.isDeafened ? <HeadphoneOff className="size-4.5" aria-hidden /> : <Headphones className="size-4.5" aria-hidden />}
         </IconButton>
@@ -375,7 +375,7 @@ function UserPanel({ onOpenSettings }: { onOpenSettings: () => void }) {
 
 export function GuildDock({ onOpenSettings }: { onOpenSettings: () => void }) {
   return (
-    <div className="alfy-dock mx-2 mb-2 shrink-0 overflow-hidden rounded-lg border border-separator shadow-sm">
+    <div className="mx-2 mb-2 shrink-0 overflow-hidden rounded-xl bg-surface-secondary">
       <VoicePanel />
       <UserPanel onOpenSettings={onOpenSettings} />
     </div>

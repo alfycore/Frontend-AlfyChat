@@ -224,11 +224,26 @@
         "ariaLabel": "Profondeur du thème"
       },
       "presets": {
-        "light": { "name": "Clair", "detail": "Papier froid" },
-        "dark": { "name": "Sombre", "detail": "Le défaut" },
-        "deep": { "name": "Sombre profond", "detail": "Contraste accru" },
-        "oled": { "name": "Nocturne", "detail": "Noir absolu, OLED" },
-        "system": { "name": "Système", "detail": "Suit l'appareil" }
+        "light": {
+          "name": "Clair",
+          "detail": "Papier froid"
+        },
+        "dark": {
+          "name": "Sombre",
+          "detail": "Le défaut"
+        },
+        "deep": {
+          "name": "Sombre profond",
+          "detail": "Contraste accru"
+        },
+        "oled": {
+          "name": "Nocturne",
+          "detail": "Noir absolu, OLED"
+        },
+        "system": {
+          "name": "Système",
+          "detail": "Suit l'appareil"
+        }
       },
       "serverThemeOptions": {
         "server": "Utiliser le thème du serveur",
@@ -275,6 +290,45 @@
         "tabLabel": "Onglet",
         "homeScreenLabel": "Écran d'accueil",
         "sizesLabel": "Tailles"
+      },
+      "studio": {
+        "tileName": "Perso",
+        "title": "Votre palette",
+        "description": "Deux couleurs suffisent : le thème clair et le thème sombre en sont tirés, avec une lisibilité vérifiée.",
+        "baseLabel": "Teinte des fonds",
+        "baseHint": "Colore les fonds, les menus et les bordures.",
+        "accentLabel": "Accent",
+        "accentHint": "Boutons, liens, sélection et focus.",
+        "tintLabel": "Intensité de la teinte",
+        "tintHint": "À zéro, les fonds restent gris neutre.",
+        "ideas": "Idées",
+        "readability": "Lisibilité du thème {mode}",
+        "checks": {
+          "text": "Texte",
+          "secondary": "Texte secondaire",
+          "accent": "Texte sur l'accent",
+          "input": "Champs de saisie"
+        },
+        "readable": "Lisible",
+        "tooLow": "Trop faible",
+        "advanced": "Réglages avancés",
+        "advancedHint": "Retouchez chaque couleur, séparément pour le clair et le sombre.",
+        "light": "clair",
+        "dark": "sombre",
+        "lightTab": "Clair",
+        "darkTab": "Sombre",
+        "editedNote": "Thème retouché à la main : changer une des couleurs ci-dessus le régénère et remplace vos retouches.",
+        "importedNote": "Thème importé : choisissez des couleurs ci-dessus pour en générer un nouveau.",
+        "export": "Copier le thème",
+        "copied": "Thème copié",
+        "import": "Importer",
+        "importTitle": "Importer un thème",
+        "importHint": "Collez le code d'un thème copié depuis AlfyChat.",
+        "importError": "Ce code n'est pas un thème valide.",
+        "importConfirm": "Appliquer",
+        "cancel": "Annuler",
+        "reset": "Repartir de la palette Alfy",
+        "pick": "Choisir la couleur : {name}"
       }
     },
     "account": {
@@ -318,8 +372,14 @@
       "title": "Accessibilité",
       "description": "Saturation des couleurs, contraste, mouvement et taille du texte.",
       "displays": {
-        "cozy": { "name": "Confortable", "description": "Avatars ronds, espacement généreux — la vue par défaut." },
-        "compact": { "name": "Compact", "description": "Une ligne par message, avatars masquables." }
+        "cozy": {
+          "name": "Confortable",
+          "description": "Avatars ronds, espacement généreux — la vue par défaut."
+        },
+        "compact": {
+          "name": "Compact",
+          "description": "Une ligne par message, avatars masquables."
+        }
       },
       "messageDisplay": {
         "sectionTitle": "Affichage des messages de discussion",
@@ -472,9 +532,18 @@
         "sectionTitle": "Mode d'activation",
         "sectionDescription": "Comment déclencher la transmission vocale.",
         "modes": {
-          "vad": { "label": "Activité vocale", "desc": "Déclenché automatiquement par votre voix." },
-          "ptt": { "label": "Push-to-talk", "desc": "Maintenez une touche pour parler." },
-          "always": { "label": "Toujours ouvert", "desc": "Microphone constamment actif." }
+          "vad": {
+            "label": "Activité vocale",
+            "desc": "Déclenché automatiquement par votre voix."
+          },
+          "ptt": {
+            "label": "Push-to-talk",
+            "desc": "Maintenez une touche pour parler."
+          },
+          "always": {
+            "label": "Toujours ouvert",
+            "desc": "Microphone constamment actif."
+          }
         }
       }
     },

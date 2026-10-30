@@ -1099,3 +1099,17 @@
   100% { box-shadow: 0 0 0 16px transparent; }
 }
 .call-ringing { animation: call-ring var(--dur-pulse) var(--ease-out-quart) var(--motion-iter); }
+
+/* ── Cases à cocher et boutons radio visibles ─────────────────────────────
+ * Sans bordure (--field-border transparent) et avec le fond des champs,
+ * une case non cochée se confondait avec la page en sombre (contraste
+ * non textuel < 3:1). Un fond teinté par le texte la rend perceptible,
+ * sans trait, dans toutes les palettes et la palette personnalisée. */
+.checkbox:not([data-selected="true"]):not([data-indeterminate="true"]) .checkbox__control,
+.radio:not([data-selected="true"]) .radio__control {
+  background-color: color-mix(in oklab, var(--foreground) 20%, var(--field-background));
+}
+.checkbox:not([data-selected="true"]):not([data-indeterminate="true"]):hover .checkbox__control,
+.radio:not([data-selected="true"]):hover .radio__control {
+  background-color: color-mix(in oklab, var(--foreground) 30%, var(--field-background));
+}

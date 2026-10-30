@@ -39,6 +39,7 @@ import {
   type CustomVars,
   type ThemeMode,
 } from './custom';
+import { generateTheme, type ThemeSeed } from './generate';
 
 export const THEMEKIT_STORAGE_KEY = 'alfychat.themekit.v1';
 const LEGACY_KEYS = ['alfychat_custom_theme', 'alfychat_accent'];
@@ -54,6 +55,8 @@ export interface ThemeKitState {
   accent: AccentId;
   accentCustom: AccentCustom | null;
   custom: { light: CustomVars; dark: CustomVars } | null;
+  /** Couleurs d'origine du thème personnalisé (pour le rééditer) ; null s'il a été importé. */
+  customSeed: ThemeSeed | null;
 }
 
 const DEFAULT_STATE: ThemeKitState = {
@@ -61,6 +64,7 @@ const DEFAULT_STATE: ThemeKitState = {
   accent: 'auto',
   accentCustom: null,
   custom: null,
+  customSeed: null,
 };
 
 interface ThemeKitContextType {
@@ -72,6 +76,8 @@ interface ThemeKitContextType {
   setAccentCustomHex: (hex: string) => void;
   setCustomVar: (mode: ThemeMode, cssVar: string, oklchValue: string) => void;
   importCustom: (custom: { light: CustomVars; dark: CustomVars }) => void;
+  /** Génère un thème complet (clair + sombre) à partir de deux couleurs et l'applique. */
+  applySeed: (seed: ThemeSeed) => void;
   resetCustom: () => void;
   resetAll: () => void;
 }
@@ -99,6 +105,7 @@ function loadState(): ThemeKitState {
       accent,
       accentCustom: parsed.accentCustom ?? null,
       custom: parsed.custom ?? null,
+      customSeed: parsed.customSeed ?? null,
     };
   } catch {
     return DEFAULT_STATE;
@@ -212,10 +219,15 @@ export function ThemeKit({ children }: { children: ReactNode }) {
 
   const importCustom = useCallback(
     (custom: { light: CustomVars; dark: CustomVars }) => {
-      setState((s) => ({ ...s, palette: 'custom', custom }));
+      setState((s) => ({ ...s, palette: 'custom', custom, customSeed: null }));
     },
     [],
   );
+
+  const applySeed = useCallback((seed: ThemeSeed) => {
+    // L'accent fait partie du thème généré : un accent libre posé avant l'écraserait.
+    setState((s) => ({ ...s, palette: 'custom', custom: generateTheme(seed), customSeed: seed, accent: 'auto' }));
+  }, []);
 
   const resetCustom = useCallback(() => {
     setState((s) => ({
@@ -238,6 +250,7 @@ export function ThemeKit({ children }: { children: ReactNode }) {
         setAccentCustomHex,
         setCustomVar,
         importCustom,
+        applySeed,
         resetCustom,
         resetAll,
       }}

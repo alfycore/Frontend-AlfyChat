@@ -87,16 +87,28 @@ function AuthorizeContent() {
       api.getOAuth2Application(clientId),
       hasBotScope ? api.getServers() : Promise.resolve({ success: true, data: { servers: [] } } as never),
     ])
-      .then(([appRes, serversRes]) => {
+      .then(async ([appRes, serversRes]) => {
         if (!appRes.success) {
           setError(o.appNotFound);
           return;
         }
         setApp((appRes.data as { app: PublicApp }).app);
         if (hasBotScope && serversRes.success) {
-          const all: ServerItem[] = (serversRes.data as { servers?: ServerItem[] }).servers || [];
-          // Seuls le propriétaire et les administrateurs peuvent installer un bot.
-          setServers(all.filter((s) => s.ownerId === user.id || s.role === 'admin' || s.role === 'owner'));
+          // /api/servers renvoie le tableau brut (anciennement lu dans `.servers`, toujours vide).
+          const raw = serversRes.data as ServerItem[] | { servers?: ServerItem[] };
+          const all: ServerItem[] = Array.isArray(raw) ? raw : raw?.servers ?? [];
+          // Seuls le propriétaire et les administrateurs (bit ADMIN 0x40) peuvent installer un bot :
+          // la liste ne porte pas les droits, on les lit pour les serveurs dont on n'est pas propriétaire.
+          const allowed = await Promise.all(
+            all.map(async (s) => {
+              if (s.ownerId === user.id) return true;
+              const res = await api.get<{ isOwner?: boolean; permissions?: number }>(
+                `/api/servers/${encodeURIComponent(s.id)}/members/${encodeURIComponent(user.id)}/permissions`,
+              );
+              return !!res.success && (!!res.data?.isOwner || ((res.data?.permissions ?? 0) & 0x40) !== 0);
+            }),
+          );
+          setServers(all.filter((_, i) => allowed[i]));
         }
       })
       .catch(() => setError(o.loadError))

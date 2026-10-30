@@ -12,11 +12,13 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@heroui/react';
-import { Accessibility, Check, ChevronRight, RotateCcw } from 'lucide-react';
+import { Accessibility, Check, ChevronRight, Palette, RotateCcw } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 
 import { AppIconPreview, ThemePreview } from '@/components/alfy/settings/user/theme-preview';
+import { ColorStudio } from '@/components/alfy/settings/user/color-studio';
+import { DEFAULT_SEED } from '@/components/atelier/theme/generate';
 import { useSettingsNav } from '@/components/alfy/settings/settings-shell';
 import { PALETTES, type PaletteId } from '@/components/atelier/theme/palettes';
 import { useThemeKit } from '@/components/atelier/theme/ThemeKit';
@@ -154,7 +156,7 @@ function Bascule({
 
 export function AppearancePanel() {
   const { setTheme } = useTheme();
-  const { state, setPalette, setAccent, setAccentCustomHex } = useThemeKit();
+  const { state, setPalette, setAccent, setAccentCustomHex, applySeed } = useThemeKit();
   const { prefs, updatePrefs } = useAppPrefs();
   const { goTo } = useSettingsNav();
   const { t } = useTranslation();
@@ -178,9 +180,21 @@ export function AppearancePanel() {
   };
 
   /* La palette de couleur et l'accent sont deux axes indépendants : une
-   * palette reste sélectionnée même si l'accent a été personnalisé. */
-  const paletteActive: PaletteId = state.palette === 'custom' ? 'alfy' : state.palette;
+   * palette reste sélectionnée même si l'accent a été personnalisé.
+   * « custom » = palette du studio, générée ou retouchée. */
+  const paletteActive: PaletteId = state.palette;
+  const studio = paletteActive === 'custom';
   const accentLibre = state.accent === 'custom' && state.accentCustom !== null;
+
+  const choisirPalette = (id: PaletteId) => {
+    if (id === 'custom') {
+      // Première ouverture du studio : on part d'une palette générée.
+      if (state.custom) setPalette('custom');
+      else applySeed(DEFAULT_SEED);
+      return;
+    }
+    setPalette(id);
+  };
 
   /** Lecture d'une sélection unique de ToggleButtonGroup. */
   const premiereCle = (cles: Iterable<string | number>) => {
@@ -280,9 +294,9 @@ export function AppearancePanel() {
           selectedKeys={[paletteActive]}
           onSelectionChange={(cles) => {
             const id = premiereCle(cles as Iterable<string>);
-            if (id) setPalette(id as PaletteId);
+            if (id) choisirPalette(id as PaletteId);
           }}
-          className="grid w-full grid-cols-4 gap-3 sm:grid-cols-8"
+          className="grid w-full grid-cols-3 gap-3 sm:grid-cols-9"
         >
           {PALETTES.map((p) => {
             const actif = paletteActive === p.id;
@@ -312,8 +326,37 @@ export function AppearancePanel() {
               </ToggleButton>
             );
           })}
+          {/* Palette personnalisée : l'aperçu reprend ses propres couleurs. */}
+          <ToggleButton
+            id="custom"
+            aria-label={t.profile.appearance.studio.tileName}
+            style={TILE_TOKENS}
+            className="group/pastille relative h-auto w-full flex-col gap-0 p-0"
+          >
+            <span
+              className={cn(
+                'relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl',
+                'transition-transform duration-300 ease-out group-hover/pastille:scale-105',
+                studio && 'shadow-lg',
+              )}
+              style={{
+                background: state.custom
+                  ? `linear-gradient(140deg, ${state.custom.dark['--accent']} 0%, ${state.custom.dark['--surface']} 62%, ${state.custom.dark['--background']} 100%)`
+                  : 'conic-gradient(from 200deg, oklch(70% 0.2 30), oklch(80% 0.17 90), oklch(72% 0.17 160), oklch(65% 0.2 250), oklch(62% 0.25 320), oklch(70% 0.2 30))',
+              }}
+            >
+              {!state.custom && <Palette className="size-5 text-white drop-shadow" aria-hidden />}
+              <Coche actif={studio} />
+            </span>
+            <span className={cn('mt-2 block truncate text-[10px] transition-colors', studio ? 'text-foreground' : 'text-muted')}>
+              {t.profile.appearance.studio.tileName}
+            </span>
+          </ToggleButton>
         </ToggleButtonGroup>
 
+        {studio && <ColorStudio />}
+
+        {!studio && (
         <div className="mt-4 flex items-center justify-between gap-6 rounded-2xl bg-surface px-5 py-4">
           <div className="min-w-0">
             <p className="text-sm font-medium">{t.profile.appearance.color.customTitle}</p>
@@ -340,6 +383,7 @@ export function AppearancePanel() {
             </ColorPicker.Popover>
           </ColorPicker>
         </div>
+        )}
       </Bloc>
 
       {/* ── Application ───────────────────────────────────────────────── */}

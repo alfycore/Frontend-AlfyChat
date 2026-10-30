@@ -14,7 +14,7 @@
 
 import '@/components/alfy/alfy-theme.css';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Spinner } from '@heroui/react';
 
@@ -289,20 +289,35 @@ function ShellLayout({
     openSettings();
   };
 
+  /* Hauteur du panneau utilisateur flottant (callback ref : le bloc de navigation peut
+   * n'apparaître qu'à l'ouverture du tiroir mobile). */
+  const [dockHeight, setDockHeight] = useState(72);
+  const dockObserver = useRef<ResizeObserver | null>(null);
+  const dockRef = useCallback((el: HTMLDivElement | null) => {
+    dockObserver.current?.disconnect();
+    if (!el) return;
+    dockObserver.current = new ResizeObserver(() => setDockHeight(Math.ceil(el.getBoundingClientRect().height)));
+    dockObserver.current.observe(el);
+  }, []);
+
   const column = activeServerId ? (
     <GuildSidebar serverId={activeServerId} activeChannelId={activeChannelId} />
   ) : (
     <AlfySidebar activeDmId={activeDmId} friendsActive={selectedChannel === 'friends'} />
   );
 
-  /* Rail + colonne + dock : un seul bloc, partagé par le bureau et le tiroir mobile. */
+  /* Rail + colonne : un seul bloc, partagé par le bureau et le tiroir mobile. Les deux
+   * descendent jusqu'en bas ; le panneau utilisateur flotte par-dessus, à cheval sur les
+   * deux, et sa hauteur (qui grandit pendant un appel) est réservée en bas de chacun. */
   const navigation = (
-    <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex min-h-0 flex-1">
+    <div className="relative flex h-full min-h-0 bg-background" style={{ '--alfy-dock-h': `${dockHeight}px` } as CSSProperties}>
+      <div className="flex h-full shrink-0 flex-col pb-(--alfy-dock-h)">
         <GuildRail activeServerId={activeServerId} homeActive={homeActive} />
-        <div className="alfy-sidebar flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-lg border-t border-l border-separator">{column}</div>
       </div>
-      <div className="alfy-sidebar-dock pt-2">
+      <div className="alfy-sidebar flex min-w-0 flex-1 flex-col overflow-hidden rounded-tl-lg border-t border-l border-separator">
+        <div className="flex min-h-0 flex-1 flex-col pb-(--alfy-dock-h)">{column}</div>
+      </div>
+      <div ref={dockRef} className="absolute inset-x-0 bottom-0 z-10">
         <GuildDock onOpenSettings={openUserSettings} />
       </div>
     </div>

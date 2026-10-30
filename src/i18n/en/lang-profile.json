@@ -224,11 +224,26 @@
         "ariaLabel": "Theme depth"
       },
       "presets": {
-        "light": { "name": "Light", "detail": "Cold paper" },
-        "dark": { "name": "Dark", "detail": "The default" },
-        "deep": { "name": "Deep dark", "detail": "Higher contrast" },
-        "oled": { "name": "Nocturnal", "detail": "Absolute black, OLED" },
-        "system": { "name": "System", "detail": "Follows the device" }
+        "light": {
+          "name": "Light",
+          "detail": "Cold paper"
+        },
+        "dark": {
+          "name": "Dark",
+          "detail": "The default"
+        },
+        "deep": {
+          "name": "Deep dark",
+          "detail": "Higher contrast"
+        },
+        "oled": {
+          "name": "Nocturnal",
+          "detail": "Absolute black, OLED"
+        },
+        "system": {
+          "name": "System",
+          "detail": "Follows the device"
+        }
       },
       "serverThemeOptions": {
         "server": "Use the server's theme",
@@ -275,6 +290,45 @@
         "tabLabel": "Tab",
         "homeScreenLabel": "Home screen",
         "sizesLabel": "Sizes"
+      },
+      "studio": {
+        "tileName": "Custom",
+        "title": "Your palette",
+        "description": "Two colors are enough: the light and dark themes are derived from them, with checked readability.",
+        "baseLabel": "Background tint",
+        "baseHint": "Colors backgrounds, menus and borders.",
+        "accentLabel": "Accent",
+        "accentHint": "Buttons, links, selection and focus.",
+        "tintLabel": "Tint strength",
+        "tintHint": "At zero, backgrounds stay neutral grey.",
+        "ideas": "Ideas",
+        "readability": "Readability of the {mode} theme",
+        "checks": {
+          "text": "Text",
+          "secondary": "Secondary text",
+          "accent": "Text on accent",
+          "input": "Input fields"
+        },
+        "readable": "Readable",
+        "tooLow": "Too low",
+        "advanced": "Advanced settings",
+        "advancedHint": "Fine-tune each color, separately for light and dark.",
+        "light": "light",
+        "dark": "dark",
+        "lightTab": "Light",
+        "darkTab": "Dark",
+        "editedNote": "Hand-tuned theme: changing one of the colors above regenerates it and replaces your tweaks.",
+        "importedNote": "Imported theme: pick colors above to generate a new one.",
+        "export": "Copy theme",
+        "copied": "Theme copied",
+        "import": "Import",
+        "importTitle": "Import a theme",
+        "importHint": "Paste the code of a theme copied from AlfyChat.",
+        "importError": "This code is not a valid theme.",
+        "importConfirm": "Apply",
+        "cancel": "Cancel",
+        "reset": "Back to the Alfy palette",
+        "pick": "Pick color: {name}"
       }
     },
     "account": {
@@ -318,8 +372,14 @@
       "title": "Accessibility",
       "description": "Color saturation, contrast, motion and text size.",
       "displays": {
-        "cozy": { "name": "Cozy", "description": "Round avatars, generous spacing — the default view." },
-        "compact": { "name": "Compact", "description": "One line per message, avatars can be hidden." }
+        "cozy": {
+          "name": "Cozy",
+          "description": "Round avatars, generous spacing — the default view."
+        },
+        "compact": {
+          "name": "Compact",
+          "description": "One line per message, avatars can be hidden."
+        }
       },
       "messageDisplay": {
         "sectionTitle": "Chat message display",
@@ -472,9 +532,18 @@
         "sectionTitle": "Activation mode",
         "sectionDescription": "How to trigger voice transmission.",
         "modes": {
-          "vad": { "label": "Voice activity", "desc": "Triggered automatically by your voice." },
-          "ptt": { "label": "Push-to-talk", "desc": "Hold a key to talk." },
-          "always": { "label": "Always on", "desc": "Microphone constantly active." }
+          "vad": {
+            "label": "Voice activity",
+            "desc": "Triggered automatically by your voice."
+          },
+          "ptt": {
+            "label": "Push-to-talk",
+            "desc": "Hold a key to talk."
+          },
+          "always": {
+            "label": "Always on",
+            "desc": "Microphone constantly active."
+          }
         }
       }
     },
