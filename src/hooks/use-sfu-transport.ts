@@ -96,8 +96,13 @@ export function useSfuTransport() {
 
       // État ICE/DTLS : « failed » = le navigateur n'atteint pas le SFU
       // (adresse annoncée injoignable, pare-feu) → appel muet.
+      // Candidats en clair (ip:port/protocole) : un tableau replié dans la
+      // console ne dit pas QUELLE adresse le SFU annonce.
+      const announced = (iceCandidates as { address?: string; ip?: string; port: number; protocol: string }[])
+        .map((c) => `${c.address ?? c.ip}:${c.port}/${c.protocol}`)
+        .join(', ');
       transport.on('connectionstatechange', (state: string) => {
-        if (state === 'failed') console.error(`[SFU] Transport ${direction} : ÉCHEC de connexion (ICE)`, iceCandidates);
+        if (state === 'failed') console.error(`[SFU] Transport ${direction} : ÉCHEC de connexion (ICE) — SFU annoncé sur ${announced}`);
         else console.log(`[SFU] Transport ${direction} : ${state}`);
       });
 

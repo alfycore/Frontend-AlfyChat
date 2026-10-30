@@ -367,10 +367,11 @@ export function useCall(options: UseCallOptions = {}) {
   // CLEANUP
   // ──────────────────────────────────────────────
 
-  const cleanup = useCallback(() => {
+  /** `reason` : qui a coupé l'appel — indispensable pour lire une console. */
+  const cleanup = useCallback((reason = 'inconnue') => {
     if (cleaningUpRef.current) return;
     cleaningUpRef.current = true;
-    console.log('[CALL] Cleanup');
+    console.log('[CALL] Cleanup —', reason);
 
     if (callTimeoutRef.current) {
       clearTimeout(callTimeoutRef.current);
@@ -661,8 +662,22 @@ export function useCall(options: UseCallOptions = {}) {
       }
     };
 
-    const handleRejected = () => { console.log('[CALL] Call rejected'); cleanup(); };
-    const handleEnded = () => { console.log('[CALL] Call ended'); cleanup(); };
+    // Fin / refus d'un AUTRE appel (le précédent, un autre onglet) : l'appel
+    // en cours ne doit pas tomber avec lui.
+    const isOtherCall = (data: unknown) => {
+      const id = parsePayload(data).callId as string | undefined;
+      return !!id && !!callIdRef.current && id !== callIdRef.current;
+    };
+    const handleRejected = (data: unknown) => {
+      if (isOtherCall(data)) return;
+      console.log('[CALL] Call rejected');
+      cleanup('refus distant');
+    };
+    const handleEnded = (data: unknown) => {
+      if (isOtherCall(data)) return;
+      console.log('[CALL] Call ended');
+      cleanup('fin distante');
+    };
 
     // ── Peer left ──
     const handlePeerLeft = (data: unknown) => {
@@ -920,7 +935,7 @@ export function useCall(options: UseCallOptions = {}) {
       callTimeoutRef.current = setTimeout(() => {
         console.warn('[CALL] DM timeout — no answer after 30s');
         if (callIdRef.current) socketService.endCall(callIdRef.current);
-        cleanup();
+        cleanup('délai de sonnerie (30 s)');
       }, 30_000);
     } else {
       if (callTimeoutRef.current) {
@@ -1003,14 +1018,17 @@ export function useCall(options: UseCallOptions = {}) {
     socketService.acceptCall(state.callId);
   }, [state.callId, state.type, state.status, requestMedia]);
 
+  // Pile d'appel : dit QUEL bouton / composant a raccroché.
   const declineCall = useCallback(() => {
+    console.trace('[CALL] declineCall');
     if (state.callId) socketService.rejectCall(state.callId);
-    cleanup();
+    cleanup('refus local');
   }, [state.callId, cleanup]);
 
   const endCall = useCallback(() => {
+    console.trace('[CALL] endCall');
     if (state.callId) socketService.endCall(state.callId);
-    cleanup();
+    cleanup('raccroché localement');
   }, [state.callId, cleanup]);
 
   const toggleMute = useCallback(() => {
@@ -1169,7 +1187,7 @@ export function useCall(options: UseCallOptions = {}) {
       const fail = (message?: string) => {
         if (stale()) return;
         if (callIdRef.current) socketService.leaveCall(callIdRef.current);
-        cleanup();
+        cleanup(`échec appel serveur : ${message ?? '?'}`);
         if (message) setState((prev) => ({ ...prev, mediaError: message }));
       };
 
@@ -1347,7 +1365,7 @@ export function useCall(options: UseCallOptions = {}) {
   const leaveCall = useCallback(() => {
     console.log('[CALL] Leaving:', state.callId);
     if (state.callId) socketService.leaveCall(state.callId);
-    cleanup();
+    cleanup('départ');
   }, [state.callId, cleanup]);
 
   const handleRaiseHand = useCallback(() => {
