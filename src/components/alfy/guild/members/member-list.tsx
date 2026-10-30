@@ -8,17 +8,21 @@
  *    statut personnalisé en seconde ligne ;
  *  - clic = profil (rôles, modération), clic droit = menu membre.
  *
+ * Les bots installés (table bot_servers du service bots, pas server_members) ont
+ * leur propre section, après les membres en ligne.
+ *
  * Virtualisée : un serveur de 4 000 membres ne monte qu'une trentaine de lignes.
  */
 
 import { Avatar, ScrollShadow, Skeleton, Tooltip } from '@heroui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Crown } from 'lucide-react';
-import { memo, useMemo, useRef, type HTMLAttributes } from 'react';
+import { BadgeCheck, Crown } from 'lucide-react';
+import { memo, useEffect, useMemo, useRef, useState, type HTMLAttributes } from 'react';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
+import { api, resolveMediaUrl } from '@/lib/api';
 import { StatusDot } from '@/components/alfy/primitives/status-dot';
 import { UserPopover } from '@/components/alfy/members/user-popover';
 import type { AlfyRole } from '@/components/alfy/mock/types';
@@ -39,9 +43,19 @@ import { useMemberMenu } from '@/components/alfy/guild/members/member-menu';
 import { banMember, kickMember, toggleMemberRole } from '@/components/alfy/guild/actions';
 import type { GuildMember, GuildRole } from '@/components/alfy/guild/types';
 
+/** Bot installé sur le serveur (réponse de GET /api/bots/servers/:serverId). */
+interface ServerBot {
+  id: string;
+  name: string;
+  avatarUrl?: string | null;
+  status: 'online' | 'offline' | 'maintenance';
+  isVerified: boolean;
+}
+
 type Row =
   | { kind: 'header'; key: string; label: string; count: number }
-  | { kind: 'member'; key: string; member: GuildMember; offline: boolean };
+  | { kind: 'member'; key: string; member: GuildMember; offline: boolean }
+  | { kind: 'bot'; key: string; bot: ServerBot };
 
 export function toAlfyRole(r: GuildRole): AlfyRole {
   return { id: r.id, name: r.name, color: r.color, emoji: r.iconEmoji ?? undefined, permissions: r.permissions, hoisted: r.hoist, position: r.position };
@@ -54,7 +68,8 @@ function buildRows(
   members: GuildMember[],
   roles: GuildRole[],
   onlineIds: Set<string>,
-  labels: { online: string; offline: string },
+  labels: { online: string; offline: string; bots: string },
+  bots: ServerBot[],
 ): Row[] {
   const hoisted = roles.filter((r) => r.hoist && !r.isDefault);
   const groups = new Map<string, GuildMember[]>();
@@ -81,6 +96,10 @@ function buildRows(
     rows.push({ kind: 'header', key: 'h-online', label: labels.online, count: online.length });
     for (const m of online.sort(byName)) rows.push({ kind: 'member', key: m.userId, member: m, offline: false });
   }
+  if (bots.length) {
+    rows.push({ kind: 'header', key: 'h-bots', label: labels.bots, count: bots.length });
+    for (const b of [...bots].sort((a, z) => a.name.localeCompare(z.name))) rows.push({ kind: 'bot', key: `bot-${b.id}`, bot: b });
+  }
   if (offline.length && members.length <= OFFLINE_LIMIT) {
     rows.push({ kind: 'header', key: 'h-offline', label: labels.offline, count: offline.length });
     for (const m of offline.sort(byName)) rows.push({ kind: 'member', key: m.userId, member: m, offline: true });
@@ -98,6 +117,7 @@ export function GuildMemberList({ serverId }: { serverId: string }) {
   const menu = useMemberMenu(serverId);
   const perms = useMyPerms(serverId);
   const { user } = useAuth();
+  const bots = useServerBots(serverId);
 
   // Membres en ligne, sous forme de clé : la liste ne se regroupe que quand
   // quelqu'un passe en ligne / hors ligne, pas à chaque statut perso modifié.
@@ -116,8 +136,9 @@ export function GuildMemberList({ serverId }: { serverId: string }) {
       buildRows(Object.values(membersMap), roles, new Set(onlineKey.split(',')), {
         online: t.guild.members.online,
         offline: t.guild.members.offline,
-      }),
-    [membersMap, roles, onlineKey, t],
+        bots: t.guild.members.bots,
+      }, bots),
+    [membersMap, roles, onlineKey, t, bots],
   );
   const alfyRoles = useMemo(() => roles.filter((r) => !r.isDefault).map(toAlfyRole), [roles]);
 
@@ -150,6 +171,8 @@ export function GuildMemberList({ serverId }: { serverId: string }) {
                     <h3 className="flex h-10 items-end truncate px-2 pb-1 text-[11px] font-semibold tracking-[0.04em] text-muted uppercase">
                       {row.label} — {row.count}
                     </h3>
+                  ) : row.kind === 'bot' ? (
+                    <BotRow bot={row.bot} />
                   ) : (
                     <MemberRow
                       member={row.member}
@@ -257,6 +280,58 @@ const MemberRow = memo(function MemberRow({
           {u.customStatus && !offline && <span className="truncate text-xs text-muted">{u.customStatus}</span>}
         </span>
       </UserPopover>
+    </div>
+  );
+});
+
+/** Bots du serveur, rechargés quand on change de serveur. */
+function useServerBots(serverId: string): ServerBot[] {
+  const [bots, setBots] = useState<ServerBot[]>([]);
+  useEffect(() => {
+    let alive = true;
+    setBots([]);
+    api.getBotsInServer(serverId).then((res) => {
+      if (!alive || !res.success) return;
+      const list = (res.data as { bots?: ServerBot[] } | undefined)?.bots;
+      setBots(Array.isArray(list) ? list : []);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [serverId]);
+  return bots;
+}
+
+const BotRow = memo(function BotRow({ bot }: { bot: ServerBot }) {
+  const { t } = useTranslation();
+  const avatar = bot.avatarUrl ? resolveMediaUrl(bot.avatarUrl) : undefined;
+  const status = bot.status === 'online' ? 'online' : bot.status === 'maintenance' ? 'dnd' : 'offline';
+  return (
+    <div className="py-px">
+      <div
+        className={cn(
+          'flex h-[42px] w-full items-center gap-3 rounded-md px-2 transition-colors duration-(--dur-1) hover:bg-foreground/6',
+          bot.status !== 'online' && 'opacity-60 hover:opacity-100',
+        )}
+        title={bot.status === 'maintenance' ? t.guild.members.maintenance : undefined}
+      >
+        <span className="relative shrink-0">
+          <Avatar className="size-8 rounded-full">
+            {avatar && <Avatar.Image src={avatar} alt="" className="object-cover" />}
+            <Avatar.Fallback>{bot.name.slice(0, 1).toUpperCase()}</Avatar.Fallback>
+          </Avatar>
+          <span className="absolute -right-0.5 -bottom-0.5">
+            <StatusDot status={status} ringClass="ring-(--alfy-sidebar)" />
+          </span>
+        </span>
+        <span className="flex min-w-0 flex-1 items-center gap-1">
+          <span className="truncate text-[15px] font-medium text-foreground/90">{bot.name}</span>
+          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-sm bg-accent px-1 text-[10px] leading-4 font-semibold text-accent-foreground">
+            {bot.isVerified && <BadgeCheck className="size-3" aria-label={t.guild.members.verifiedApp} />}
+            {t.guild.members.app}
+          </span>
+        </span>
+      </div>
     </div>
   );
 });

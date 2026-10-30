@@ -203,7 +203,10 @@
       "online": "Online",
       "offline": "Offline",
       "owner": "Server Owner",
-      "app": "APP"
+      "app": "APP",
+      "bots": "Bots",
+      "verifiedApp": "Verified app",
+      "maintenance": "Under maintenance"
     },
     "chat": {
       "channelFallback": "channel",
@@ -703,6 +706,191 @@
       "MANAGE_EVENTS": {
         "label": "Manage Events",
         "desc": "Allows members to create, edit and cancel events."
+      }
+    },
+    "forum": {
+      "newPost": "New post",
+      "search": "Search posts",
+      "sortActive": "Recent activity",
+      "sortNew": "Newest",
+      "empty": "No posts yet",
+      "emptyDesc": "Start the first discussion in this forum.",
+      "noResults": "No post matches your search.",
+      "replyOne": "1 reply",
+      "replyMany": "{n} replies",
+      "noReply": "No replies yet",
+      "pinned": "Pinned",
+      "locked": "Locked",
+      "titleLabel": "Title",
+      "contentLabel": "Message",
+      "tagsLabel": "Tags",
+      "tagsHint": "Comma separated, 5 at most.",
+      "publish": "Publish",
+      "cancel": "Cancel",
+      "back": "All posts",
+      "replyPlaceholder": "Reply to this post…",
+      "send": "Reply",
+      "lockedNote": "This post is locked: only moderators can reply.",
+      "noSendNote": "You can't write in this channel.",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "deletePost": "Delete this post?",
+      "deletePostDesc": "The post and all its replies will be permanently deleted.",
+      "deleteReply": "Delete reply",
+      "loadFailed": "Could not load the forum.",
+      "failed": "Action failed",
+      "by": "by {name}",
+      "activity": "active {when}",
+      "repliesTitle": "Replies",
+      "edited": "edited"
+    },
+    "kinds": {
+      "groups": {
+        "basic": "Essentials",
+        "text": "Purpose channels",
+        "forum": "Forums",
+        "voice": "Voice"
+      },
+      "search": "Search channel types",
+      "noMatch": "No type matches.",
+      "modsBypass": "Moderators are not subject to this rule.",
+      "rules": {
+        "READ_ONLY": "Only moderators can write here.",
+        "MEDIA_ONLY": "Images or files only.",
+        "LINKS_ONLY": "Messages with a link only.",
+        "MEDIA_OR_LINKS": "Media or links only.",
+        "QUESTION_ONLY": "Questions only (end with “?”).",
+        "ONE_WORD": "One word per message.",
+        "EMOJI_ONLY": "Emojis only.",
+        "CODE_ONLY": "A code block (```) is expected.",
+        "COMMANDS_ONLY": "Bot commands only (/… or !…)."
+      },
+      "types": {
+        "rules": {
+          "name": "Rules",
+          "desc": "The server rules. Only moderators write."
+        },
+        "welcome": {
+          "name": "Welcome",
+          "desc": "Welcome message and server overview, read-only."
+        },
+        "changelog": {
+          "name": "Changelog",
+          "desc": "Updates and release notes, read-only."
+        },
+        "logs": {
+          "name": "Logs",
+          "desc": "Moderation events and bot messages, read-only."
+        },
+        "resources": {
+          "name": "Resources",
+          "desc": "Useful links, tutorials and documentation."
+        },
+        "links": {
+          "name": "Links",
+          "desc": "Link sharing: every message must contain one."
+        },
+        "memes": {
+          "name": "Memes",
+          "desc": "Images only, for laughs."
+        },
+        "art": {
+          "name": "Art",
+          "desc": "Drawings, photos and creations: images only."
+        },
+        "screenshots": {
+          "name": "Screenshots",
+          "desc": "Screenshots of your games or projects."
+        },
+        "music": {
+          "name": "Music",
+          "desc": "Share tracks and playlists (links)."
+        },
+        "clips": {
+          "name": "Clips",
+          "desc": "Videos and clips: files or links."
+        },
+        "questions": {
+          "name": "Questions",
+          "desc": "One question per message, ending with “?”."
+        },
+        "oneword": {
+          "name": "One-word story",
+          "desc": "Write a story together, one word at a time."
+        },
+        "emoji": {
+          "name": "Emojis",
+          "desc": "Emojis only, no text."
+        },
+        "code": {
+          "name": "Code",
+          "desc": "Code snippets in ``` blocks."
+        },
+        "selfpromo": {
+          "name": "Self-promo",
+          "desc": "Show your projects: one message per hour."
+        },
+        "focus": {
+          "name": "Calm",
+          "desc": "Thoughtful discussion with a one-minute slow mode."
+        },
+        "commands": {
+          "name": "Commands",
+          "desc": "Bot commands only (/… or !…)."
+        },
+        "introductions": {
+          "name": "Introductions",
+          "desc": "Introduce yourself: one message every six hours."
+        },
+        "lfg": {
+          "name": "Looking for group",
+          "desc": "Find teammates, five minutes between posts."
+        },
+        "support": {
+          "name": "Support",
+          "desc": "One topic per help request, with its replies."
+        },
+        "bugs": {
+          "name": "Bug reports",
+          "desc": "One topic per reported bug."
+        },
+        "feedback": {
+          "name": "Feedback",
+          "desc": "Community feedback and opinions."
+        },
+        "jobs": {
+          "name": "Jobs",
+          "desc": "Job offers, gigs and collaborations."
+        },
+        "wiki": {
+          "name": "Wiki",
+          "desc": "Knowledge pages written by the community."
+        },
+        "showcase": {
+          "name": "Showcase",
+          "desc": "Show your work and get feedback."
+        },
+        "listening": {
+          "name": "Listening party",
+          "desc": "Voice channel to listen to music together."
+        },
+        "gaming": {
+          "name": "Gaming voice",
+          "desc": "Voice channel to play together."
+        },
+        "afk": {
+          "name": "AFK",
+          "desc": "Voice channel for people who are away."
+        },
+        "podcast": {
+          "name": "Podcast",
+          "desc": "Stage for shows and talks: speakers and an audience."
+        }
       }
     }
   }

@@ -203,7 +203,10 @@
       "online": "En ligne",
       "offline": "Hors ligne",
       "owner": "Propriétaire du serveur",
-      "app": "APP"
+      "app": "APP",
+      "bots": "Bots",
+      "verifiedApp": "Application vérifiée",
+      "maintenance": "En maintenance"
     },
     "chat": {
       "channelFallback": "salon",
@@ -703,6 +706,191 @@
       "MANAGE_EVENTS": {
         "label": "Gérer les événements",
         "desc": "Permet de créer, modifier et annuler des événements."
+      }
+    },
+    "forum": {
+      "newPost": "Nouveau sujet",
+      "search": "Rechercher un sujet",
+      "sortActive": "Activité récente",
+      "sortNew": "Plus récents",
+      "empty": "Aucun sujet pour l'instant",
+      "emptyDesc": "Lancez la première discussion de ce forum.",
+      "noResults": "Aucun sujet ne correspond à votre recherche.",
+      "replyOne": "1 réponse",
+      "replyMany": "{n} réponses",
+      "noReply": "Pas encore de réponse",
+      "pinned": "Épinglé",
+      "locked": "Verrouillé",
+      "titleLabel": "Titre",
+      "contentLabel": "Message",
+      "tagsLabel": "Étiquettes",
+      "tagsHint": "Séparées par des virgules, 5 au plus.",
+      "publish": "Publier",
+      "cancel": "Annuler",
+      "back": "Tous les sujets",
+      "replyPlaceholder": "Répondre à ce sujet…",
+      "send": "Répondre",
+      "lockedNote": "Ce sujet est verrouillé : seuls les modérateurs peuvent y répondre.",
+      "noSendNote": "Vous ne pouvez pas écrire dans ce salon.",
+      "pin": "Épingler",
+      "unpin": "Désépingler",
+      "lock": "Verrouiller",
+      "unlock": "Déverrouiller",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "save": "Enregistrer",
+      "deletePost": "Supprimer ce sujet ?",
+      "deletePostDesc": "Le sujet et toutes ses réponses seront supprimés définitivement.",
+      "deleteReply": "Supprimer la réponse",
+      "loadFailed": "Impossible de charger le forum.",
+      "failed": "Action impossible",
+      "by": "par {name}",
+      "activity": "actif {when}",
+      "repliesTitle": "Réponses",
+      "edited": "modifié"
+    },
+    "kinds": {
+      "groups": {
+        "basic": "Essentiels",
+        "text": "Salons à usage",
+        "forum": "Forums",
+        "voice": "Vocal"
+      },
+      "search": "Chercher un type de salon",
+      "noMatch": "Aucun type ne correspond.",
+      "modsBypass": "La modération n’est pas soumise à cette règle.",
+      "rules": {
+        "READ_ONLY": "Seule la modération peut écrire ici.",
+        "MEDIA_ONLY": "Images ou fichiers uniquement.",
+        "LINKS_ONLY": "Messages avec un lien uniquement.",
+        "MEDIA_OR_LINKS": "Médias ou liens uniquement.",
+        "QUESTION_ONLY": "Questions uniquement (terminez par « ? »).",
+        "ONE_WORD": "Un seul mot par message.",
+        "EMOJI_ONLY": "Émojis uniquement.",
+        "CODE_ONLY": "Un bloc de code (```) est attendu.",
+        "COMMANDS_ONLY": "Commandes de bot uniquement (/… ou !…)."
+      },
+      "types": {
+        "rules": {
+          "name": "Règlement",
+          "desc": "Les règles du serveur. Seule la modération écrit."
+        },
+        "welcome": {
+          "name": "Bienvenue",
+          "desc": "Message d’accueil et présentation du serveur, en lecture seule."
+        },
+        "changelog": {
+          "name": "Nouveautés",
+          "desc": "Mises à jour et journal des changements, en lecture seule."
+        },
+        "logs": {
+          "name": "Journal",
+          "desc": "Événements de modération et messages de bots, en lecture seule."
+        },
+        "resources": {
+          "name": "Ressources",
+          "desc": "Liens utiles, tutoriels et documentation."
+        },
+        "links": {
+          "name": "Liens",
+          "desc": "Partage de liens : chaque message doit en contenir un."
+        },
+        "memes": {
+          "name": "Mèmes",
+          "desc": "Images uniquement, pour rire ensemble."
+        },
+        "art": {
+          "name": "Créations",
+          "desc": "Dessins, photos et créations : images uniquement."
+        },
+        "screenshots": {
+          "name": "Captures",
+          "desc": "Captures d’écran de vos jeux ou projets."
+        },
+        "music": {
+          "name": "Musique",
+          "desc": "Partage de morceaux et playlists (liens)."
+        },
+        "clips": {
+          "name": "Clips",
+          "desc": "Vidéos et clips : fichiers ou liens."
+        },
+        "questions": {
+          "name": "Questions",
+          "desc": "Une question par message, terminée par « ? »."
+        },
+        "oneword": {
+          "name": "Histoire mot à mot",
+          "desc": "Écrivez une histoire ensemble, un mot à la fois."
+        },
+        "emoji": {
+          "name": "Émojis",
+          "desc": "Uniquement des émojis, sans texte."
+        },
+        "code": {
+          "name": "Code",
+          "desc": "Extraits de code dans des blocs ```."
+        },
+        "selfpromo": {
+          "name": "Auto-promo",
+          "desc": "Présentez vos projets : un message par heure."
+        },
+        "focus": {
+          "name": "Calme",
+          "desc": "Discussion posée avec un mode lent d’une minute."
+        },
+        "commands": {
+          "name": "Commandes",
+          "desc": "Réservé aux commandes de bots (/… ou !…)."
+        },
+        "introductions": {
+          "name": "Présentations",
+          "desc": "Présentez-vous : un message toutes les six heures."
+        },
+        "lfg": {
+          "name": "Recherche de groupe",
+          "desc": "Trouvez des coéquipiers pour jouer, cinq minutes entre deux annonces."
+        },
+        "support": {
+          "name": "Assistance",
+          "desc": "Un sujet par demande d’aide, avec ses réponses."
+        },
+        "bugs": {
+          "name": "Signalements",
+          "desc": "Un sujet par bug signalé."
+        },
+        "feedback": {
+          "name": "Avis",
+          "desc": "Retours et avis de la communauté."
+        },
+        "jobs": {
+          "name": "Offres",
+          "desc": "Offres d’emploi, missions et collaborations."
+        },
+        "wiki": {
+          "name": "Wiki",
+          "desc": "Pages de connaissance rédigées par la communauté."
+        },
+        "showcase": {
+          "name": "Vitrine",
+          "desc": "Montrez vos réalisations et recevez des retours."
+        },
+        "listening": {
+          "name": "Écoute musicale",
+          "desc": "Salon vocal pour écouter de la musique ensemble."
+        },
+        "gaming": {
+          "name": "Vocal de jeu",
+          "desc": "Salon vocal pour jouer ensemble."
+        },
+        "afk": {
+          "name": "Absents",
+          "desc": "Salon vocal pour ceux qui s’absentent."
+        },
+        "podcast": {
+          "name": "Podcast",
+          "desc": "Scène pour émissions et conférences : des intervenants, un public."
+        }
       }
     }
   }

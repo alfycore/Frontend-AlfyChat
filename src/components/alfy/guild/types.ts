@@ -8,7 +8,12 @@ import type { AlfyUser } from '@/components/alfy/mock/types';
 /** Types de salons rendus par la sidebar. `category` n'est jamais un salon. */
 export type GuildChannelType =
   | 'text' | 'voice' | 'announcement' | 'forum' | 'stage' | 'gallery' | 'media' | 'doc'
-  | 'poll' | 'counting' | 'minigame' | 'trivia' | 'suggestion' | 'vent' | 'thread' | 'category';
+  | 'poll' | 'counting' | 'minigame' | 'trivia' | 'suggestion' | 'vent' | 'thread' | 'category'
+  /* Types « à usage » (voir channel-kinds.ts) */
+  | 'rules' | 'welcome' | 'changelog' | 'logs' | 'resources' | 'links' | 'memes' | 'art' | 'screenshots'
+  | 'music' | 'clips' | 'questions' | 'oneword' | 'emoji' | 'code' | 'selfpromo' | 'focus' | 'commands'
+  | 'introductions' | 'lfg' | 'support' | 'bugs' | 'feedback' | 'jobs' | 'wiki' | 'showcase'
+  | 'listening' | 'gaming' | 'afk' | 'podcast';
 
 export interface GuildChannel {
   id: string;

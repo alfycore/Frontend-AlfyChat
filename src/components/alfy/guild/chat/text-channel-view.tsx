@@ -11,7 +11,7 @@
  */
 
 import { Button, Spinner, toast } from '@heroui/react';
-import { ArrowDown, Copy, CornerUpLeft, Link2, Pencil, SmilePlus, Trash2 } from 'lucide-react';
+import { ArrowDown, Copy, CornerUpLeft, Link2, Pencil, ShieldCheck, SmilePlus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -45,6 +45,7 @@ import { ChannelHeader } from '@/components/alfy/guild/chat/channel-header';
 import { GuildComposer } from '@/components/alfy/guild/chat/guild-composer';
 import { GuildMessage, type AuthorView, type GuildMessageProps } from '@/components/alfy/guild/chat/guild-message';
 import { dayDivider, sameDay, shortTime } from '@/components/alfy/guild/chat/time';
+import { ruleOf } from '@/components/alfy/guild/channel-kinds';
 
 const GROUP_WINDOW_MS = 7 * 60 * 1000;
 
@@ -294,6 +295,10 @@ export function TextChannelView({ serverId, channelId, embedded = false }: TextC
   const Icon = CHANNEL_ICONS[channel.type] ?? CHANNEL_ICONS.text;
   const canSend = perms.can('READ') && perms.can('SEND');
 
+  // Type de salon « à usage » : règle d'écriture (voir channel-kinds.ts).
+  const channelRule = ruleOf(channel.type);
+  const ruleExempt = perms.can('MANAGE_MESSAGES');
+
   return (
     <section aria-label={channel.name} className="flex h-full min-w-0 flex-1 flex-col bg-surface">
       {!embedded && (
@@ -421,13 +426,20 @@ export function TextChannelView({ serverId, channelId, embedded = false }: TextC
         </div>
       </div>
 
+      {channelRule && channelRule !== 'READ_ONLY' && !ruleExempt && (
+        <p className="mx-4 mb-1 flex items-center gap-1.5 text-xs text-muted">
+          <ShieldCheck className="size-3.5 shrink-0 text-accent" aria-hidden />
+          {t.guild.kinds.rules[channelRule]}
+        </p>
+      )}
       <GuildComposer
         serverId={serverId}
         channel={channel}
         members={members}
         roles={roles}
         channels={channels}
-        canSend={!perms.exact || canSend}
+        canSend={(!perms.exact || canSend) && !(channelRule === 'READ_ONLY' && perms.exact && !ruleExempt)}
+        ruleExempt={ruleExempt}
         canAttach={perms.can('ATTACH_FILES')}
         canMentionEveryone={perms.can('MENTION_EVERYONE')}
         slowExempt={perms.can('MANAGE_MESSAGES') || perms.can('MANAGE_CHANNELS')}
@@ -485,6 +497,7 @@ export function useMessageErrorToasts() {
       if (d?.error === 'SLOWMODE') toast.warning(tx(t.guild.chat.slowmodeError, { s: d.retryAfter ?? 1 }));
       else if (d?.error === 'MUTED') toast.danger(d.message || t.guild.chat.mutedError);
       else if (d?.error === 'connection_failed') toast.danger(t.guild.chat.sendFailed);
+      else if (d?.error === 'CHANNEL_RULE') toast.warning(d.message || t.guild.chat.sendFailed);
     };
     const onError = (data: unknown) => {
       const d = data as { type?: string; payload?: { message?: string } };

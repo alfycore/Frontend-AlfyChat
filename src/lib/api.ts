@@ -715,6 +715,33 @@ class ApiService {
     }>('/api/servers/import/discord', { method: 'POST', body: JSON.stringify({ template, name }) });
   }
 
+  // ── Salons forum ─────────────────────────────────────────────────────
+  async getForumPosts(serverId: string, channelId: string, opts: { limit?: number; offset?: number } = {}) {
+    const q = new URLSearchParams({ limit: String(opts.limit ?? 50), offset: String(opts.offset ?? 0) });
+    return this.request<Record<string, unknown>[]>(`/api/servers/${serverId}/channels/${channelId}/posts?${q}`);
+  }
+  async createForumPost(serverId: string, channelId: string, data: { title: string; content: string; tags?: string[] }) {
+    return this.request<Record<string, unknown>>(`/api/servers/${serverId}/channels/${channelId}/posts`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getForumPost(serverId: string, channelId: string, postId: string) {
+    return this.request<Record<string, unknown>>(`/api/servers/${serverId}/channels/${channelId}/posts/${postId}`);
+  }
+  async updateForumPost(serverId: string, channelId: string, postId: string, data: { title?: string; content?: string; tags?: string[]; isPinned?: boolean; isLocked?: boolean }) {
+    return this.request<Record<string, unknown>>(`/api/servers/${serverId}/channels/${channelId}/posts/${postId}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteForumPost(serverId: string, channelId: string, postId: string) {
+    return this.request(`/api/servers/${serverId}/channels/${channelId}/posts/${postId}`, { method: 'DELETE' });
+  }
+  async getForumReplies(serverId: string, channelId: string, postId: string) {
+    return this.request<Record<string, unknown>[]>(`/api/servers/${serverId}/channels/${channelId}/posts/${postId}/replies?limit=200`);
+  }
+  async createForumReply(serverId: string, channelId: string, postId: string, content: string) {
+    return this.request<Record<string, unknown>>(`/api/servers/${serverId}/channels/${channelId}/posts/${postId}/replies`, { method: 'POST', body: JSON.stringify({ content }) });
+  }
+  async deleteForumReply(serverId: string, channelId: string, postId: string, replyId: string) {
+    return this.request(`/api/servers/${serverId}/channels/${channelId}/posts/${postId}/replies/${replyId}`, { method: 'DELETE' });
+  }
+
   /** Quota de serveurs Type 1 (plateforme) restant pour l'utilisateur courant. */
   async getServerQuota() {
     return this.request<{

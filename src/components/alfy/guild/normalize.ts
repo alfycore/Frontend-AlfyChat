@@ -41,6 +41,9 @@ export function listOf(data: unknown, key: string): Raw[] {
 const KNOWN_TYPES: GuildChannelType[] = [
   'text', 'voice', 'announcement', 'forum', 'stage', 'gallery', 'media', 'doc',
   'poll', 'counting', 'minigame', 'trivia', 'suggestion', 'vent', 'thread', 'category',
+  'rules', 'welcome', 'changelog', 'logs', 'resources', 'links', 'memes', 'art', 'screenshots', 'music',
+  'clips', 'questions', 'oneword', 'emoji', 'code', 'selfpromo', 'focus', 'commands', 'introductions', 'lfg',
+  'support', 'bugs', 'feedback', 'jobs', 'wiki', 'showcase', 'listening', 'gaming', 'afk', 'podcast',
 ];
 
 export function normalizeChannel(raw: Raw, serverId: string): GuildChannel {

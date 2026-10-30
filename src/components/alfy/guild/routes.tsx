@@ -25,6 +25,8 @@ import { isVoiceType } from '@/components/alfy/guild/channel-icons';
 import { ChannelHeader } from '@/components/alfy/guild/chat/channel-header';
 import { TextChannelView } from '@/components/alfy/guild/chat/text-channel-view';
 import { VoiceChannelView } from '@/components/alfy/guild/voice/voice-channel-view';
+import { ForumChannelView } from '@/components/alfy/guild/forum/forum-view';
+import { isForumKind } from '@/components/alfy/guild/channel-kinds';
 
 function MainSkeleton() {
   return (
@@ -101,19 +103,33 @@ export function GuildChannelRoute({ serverId, channelId }: { serverId: string; c
     return <TextChannelView key={channel.id} serverId={serverId} channelId={channel.id} />;
   }
 
+  const header = (
+    <ChannelHeader
+      channel={channel}
+      messages={[]}
+      onJump={() => false}
+      membersOpen={memberListDesktopVisible}
+      onToggleMembers={isMobile ? toggleMemberList : toggleMemberListDesktop}
+      onOpenNav={isMobile ? openSidebar : undefined}
+    />
+  );
+
+  /* Forum réel : sujets et réponses du service servers (la vue spéciale n'était qu'une maquette). */
+  if (isForumKind(channel.type)) {
+    return (
+      <section aria-label={channel.name} className="flex h-full min-w-0 flex-1 flex-col bg-surface">
+        {header}
+        <ForumChannelView key={channel.id} serverId={serverId} channelId={channel.id} />
+      </section>
+    );
+  }
+
   const entry = SPECIAL_VIEWS[channel.type as SpecialViewType];
   if (!entry) return <TextChannelView key={channel.id} serverId={serverId} channelId={channel.id} />;
   const View = entry.Component;
   return (
     <section aria-label={channel.name} className="flex h-full min-w-0 flex-1 flex-col bg-surface">
-      <ChannelHeader
-        channel={channel}
-        messages={[]}
-        onJump={() => false}
-        membersOpen={memberListDesktopVisible}
-        onToggleMembers={isMobile ? toggleMemberList : toggleMemberListDesktop}
-        onOpenNav={isMobile ? openSidebar : undefined}
-      />
+      {header}
       <ScrollShadow className="alfy-thin-scroll min-h-0 flex-1 overflow-y-auto" aria-label={t.guild.routes.specialAria}>
         <View serverId={serverId} channelId={channel.id} />
       </ScrollShadow>

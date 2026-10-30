@@ -1,25 +1,27 @@
 'use client';
 
 /**
- * « Créer un salon » / « Créer une catégorie » (gabarit Discord) : type en
- * cartes, nom avec préfixe, commutateur « Salon privé ». Un salon textuel créé
- * s'ouvre aussitôt.
+ * « Créer un salon » / « Créer une catégorie » (gabarit Discord) : type choisi
+ * dans une grille groupée et filtrable (35 types, voir channel-kinds.ts), nom
+ * avec préfixe, commutateur « Salon privé ». Un salon textuel créé s'ouvre aussitôt.
  */
 
-import { Button, InputGroup, Label, Modal, RadioGroup, TextField } from '@heroui/react';
-import { Lock } from 'lucide-react';
+import { Button, InputGroup, Label, Modal, Radio, RadioGroup, SearchField, TextField } from '@heroui/react';
+import { Lock, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useTranslation } from '@/components/locale-provider';
-import { RadioCard, SettingSwitch } from '@/components/alfy/guild/kit';
-import { CHANNEL_ICONS } from '@/components/alfy/guild/channel-icons';
+import { SettingSwitch } from '@/components/alfy/guild/kit';
+import { CHANNEL_ICONS, isVoiceType } from '@/components/alfy/guild/channel-icons';
+import { CHANNEL_KINDS, type KindGroup } from '@/components/alfy/guild/channel-kinds';
+import { cn } from '@/lib/utils';
 import { createChannel, slugChannelName } from '@/components/alfy/guild/actions';
 import { useGuildChannel } from '@/components/alfy/guild/hooks';
 import { guildUi, useGuildUi } from '@/components/alfy/guild/ui';
 import type { GuildChannelType } from '@/components/alfy/guild/types';
 
-const TYPES: GuildChannelType[] = ['text', 'voice', 'announcement', 'forum', 'stage'];
+const GROUPS: KindGroup[] = ['basic', 'text', 'forum', 'voice'];
 
 export function CreateChannelDialog() {
   const req = useGuildUi((s) => s.createChannel);
@@ -27,7 +29,7 @@ export function CreateChannelDialog() {
     <Modal isOpen={!!req} onOpenChange={(open) => !open && guildUi.close('createChannel')}>
       <Modal.Backdrop>
         <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[460px]">
+          <Modal.Dialog className="sm:max-w-[560px]">
             {req && <Form key={`${req.serverId}:${req.parentId ?? ''}:${req.type ?? ''}`} serverId={req.serverId} parentId={req.parentId ?? null} initialType={req.type} />}
           </Modal.Dialog>
         </Modal.Container>
@@ -45,6 +47,7 @@ function Form({ serverId, parentId, initialType }: { serverId: string; parentId:
   const [name, setName] = useState('');
   const [isPrivate, setPrivate] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState('');
 
   const preview = slugChannelName(name, type);
   const Icon = CHANNEL_ICONS[type] ?? CHANNEL_ICONS.text;
@@ -57,23 +60,33 @@ function Form({ serverId, parentId, initialType }: { serverId: string; parentId:
     setBusy(false);
     if (!created) return;
     guildUi.close('createChannel');
-    if (type !== 'category' && type !== 'voice' && type !== 'stage') router.push(`/channels/server/${serverId}/${created.id}`);
+    if (type !== 'category' && !isVoiceType(type)) router.push(`/channels/server/${serverId}/${created.id}`);
   };
 
-  const DESC: Partial<Record<GuildChannelType, string>> = {
-    text: t.guild.create.textDesc,
-    voice: t.guild.create.voiceDesc,
-    announcement: t.guild.create.announcementDesc,
-    forum: t.guild.create.forumDesc,
-    stage: t.guild.create.stageDesc,
+  const k = t.guild.kinds;
+  const BASIC: Partial<Record<GuildChannelType, { name: string; desc: string }>> = {
+    text: { name: t.guild.create.text, desc: t.guild.create.textDesc },
+    voice: { name: t.guild.create.voice, desc: t.guild.create.voiceDesc },
+    announcement: { name: t.guild.create.announcement, desc: t.guild.create.announcementDesc },
+    forum: { name: t.guild.create.forum, desc: t.guild.create.forumDesc },
+    stage: { name: t.guild.create.stage, desc: t.guild.create.stageDesc },
   };
-  const LABEL: Partial<Record<GuildChannelType, string>> = {
-    text: t.guild.create.text,
-    voice: t.guild.create.voice,
-    announcement: t.guild.create.announcement,
-    forum: t.guild.create.forum,
-    stage: t.guild.create.stage,
-  };
+  const labelOf = (id: GuildChannelType) =>
+    BASIC[id] ?? (k.types as Record<string, { name: string; desc: string }>)[id] ?? { name: id, desc: '' };
+
+  const fold = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const groups = useMemo(() => {
+    const q = fold(query.trim());
+    return GROUPS.map((g) => ({
+      id: g,
+      kinds: CHANNEL_KINDS.filter((kind) => kind.group === g).filter((kind) => {
+        if (!q) return true;
+        const l = labelOf(kind.id);
+        return fold(`${l.name} ${l.desc} ${kind.id}`).includes(q);
+      }),
+    })).filter((g) => g.kinds.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, t]);
 
   return (
     <>
@@ -86,11 +99,59 @@ function Form({ serverId, parentId, initialType }: { serverId: string; parentId:
         {!isCategory && (
           <div className="flex flex-col gap-2">
             <p className="text-xs font-bold tracking-[0.02em] text-muted uppercase">{t.guild.create.type}</p>
-            <RadioGroup value={type} onChange={(v) => setType(v as GuildChannelType)} aria-label={t.guild.create.type} className="flex flex-col gap-2">
-              {TYPES.map((k) => (
-                <RadioCard key={k} value={k} icon={CHANNEL_ICONS[k]} title={LABEL[k] ?? k} description={DESC[k]} />
+            <SearchField aria-label={k.search} value={query} onChange={setQuery}>
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input placeholder={k.search} />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
+            <RadioGroup
+              value={type}
+              onChange={(v) => setType(v as GuildChannelType)}
+              aria-label={t.guild.create.type}
+              className="alfy-thin-scroll flex max-h-[min(44vh,380px)] flex-col gap-4 overflow-y-auto pr-1"
+            >
+              {groups.length === 0 && <p className="py-6 text-center text-sm text-muted">{k.noMatch}</p>}
+              {groups.map((g) => (
+                <div key={g.id} className="flex flex-col gap-1.5">
+                  <p className="text-[11px] font-bold tracking-[0.04em] text-muted uppercase">{k.groups[g.id]}</p>
+                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                    {g.kinds.map((kind) => {
+                      const KindIcon = CHANNEL_ICONS[kind.id] ?? CHANNEL_ICONS.text;
+                      const l = labelOf(kind.id);
+                      return (
+                        <Radio key={kind.id} value={kind.id}>
+                          <Radio.Content
+                            className={cn(
+                              'group/kind flex w-full cursor-pointer items-start gap-2.5 rounded-lg bg-surface-secondary px-2.5 py-2',
+                              'transition-colors duration-(--dur-1) hover:bg-surface-tertiary data-selected:bg-accent/12',
+                            )}
+                          >
+                            <KindIcon className="mt-0.5 size-4.5 shrink-0 text-muted group-data-selected/kind:text-accent" aria-hidden />
+                            <span className="min-w-0 flex-1">
+                              <Label className="block text-sm font-semibold">{l.name}</Label>
+                              <span className="line-clamp-2 text-xs leading-snug text-muted">{l.desc}</span>
+                            </span>
+                          </Radio.Content>
+                        </Radio>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
             </RadioGroup>
+            {(() => {
+              const rule = CHANNEL_KINDS.find((kind) => kind.id === type)?.rule;
+              return rule ? (
+                <p className="flex items-start gap-2 rounded-lg bg-accent/8 px-3 py-2 text-xs text-foreground/85">
+                  <ShieldCheck className="mt-px size-3.5 shrink-0 text-accent" aria-hidden />
+                  <span>
+                    {k.rules[rule]} {k.modsBypass}
+                  </span>
+                </p>
+              ) : null;
+            })()}
           </div>
         )}
 
@@ -103,7 +164,7 @@ function Form({ serverId, parentId, initialType }: { serverId: string; parentId:
               </InputGroup.Prefix>
             )}
             <InputGroup.Input
-              placeholder={isCategory ? t.guild.create.categoryPlaceholder : type === 'voice' || type === 'stage' ? t.guild.create.voicePlaceholder : t.guild.create.textPlaceholder}
+              placeholder={isCategory ? t.guild.create.categoryPlaceholder : isVoiceType(type) ? t.guild.create.voicePlaceholder : t.guild.create.textPlaceholder}
               maxLength={100}
               onKeyDown={(e) => e.key === 'Enter' && void submit()}
             />

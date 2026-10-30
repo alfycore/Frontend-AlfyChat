@@ -26,6 +26,7 @@ import { EmojiPicker } from '@/components/alfy/chat/emoji-picker';
 import type { AlfyMessage } from '@/components/alfy/mock/types';
 import { CHANNEL_ICONS } from '@/components/alfy/guild/channel-icons';
 import type { GuildChannel, GuildMember, GuildRole } from '@/components/alfy/guild/types';
+import { ruleAllows, ruleOf } from '@/components/alfy/guild/channel-kinds';
 
 const MAX_LENGTH = 2000;
 const MAX_HEIGHT = 50 * 22;
@@ -70,6 +71,8 @@ interface GuildComposerProps {
   canMentionEveryone: boolean;
   /** Exempté du mode lent (gère les messages ou le salon). */
   slowExempt: boolean;
+  /** Dispensé de la règle du type de salon (MANAGE_MESSAGES). */
+  ruleExempt?: boolean;
   replyTo?: { message: AlfyMessage; authorName: string } | null;
   onCancelReply: () => void;
   onSend: (payload: ComposerSendPayload) => void;
@@ -89,6 +92,7 @@ export function GuildComposer({
   canAttach,
   canMentionEveryone,
   slowExempt,
+  ruleExempt = false,
   replyTo,
   onCancelReply,
   onSend,
@@ -289,6 +293,12 @@ export function GuildComposer({
     for (const f of files) {
       const line = f.isImage ? `\n[attach:img]:${f.url}` : `\n[attach:file]:${f.name}|${f.url}`;
       payload = payload ? payload + line : line.trimStart();
+    }
+    // Règle du type de salon (médias seuls, liens seuls…) : prévenue ici, appliquée par le gateway.
+    const rule = ruleOf(channel.type);
+    if (rule && !ruleExempt && !ruleAllows(rule, payload, files.length > 0)) {
+      toast.warning(t.guild.kinds.rules[rule]);
+      return;
     }
     // Mentions réelles : @pseudo correspondant à un membre du serveur.
     const handles = new Set(Array.from(content.matchAll(/@([\p{L}\p{N}_.-]{2,32})/gu)).map((m) => m[1].toLowerCase()));
