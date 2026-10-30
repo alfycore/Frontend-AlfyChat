@@ -370,7 +370,33 @@
       "joinInvalid": "Invitation invalide ou expirée.",
       "join": "Rejoindre le serveur",
       "discoverTitle": "Pas d'invitation ?",
-      "discoverDesc": "Explore les communautés publiques."
+      "discoverDesc": "Explore les communautés publiques.",
+      "discord": {
+        "option": "Importer depuis Discord",
+        "title": "Importer un serveur Discord",
+        "subtitle": "Recopiez la structure d'un serveur Discord : rôles, catégories, salons et leurs permissions.",
+        "howTitle": "Récupérer le lien sur Discord",
+        "how": [
+          "Ouvrez les paramètres du serveur Discord.",
+          "Allez dans « Modèle de serveur » et générez un modèle.",
+          "Copiez le lien (discord.new/…) et collez-le ici."
+        ],
+        "linkLabel": "Lien du modèle",
+        "linkPlaceholder": "https://discord.new/…",
+        "preview": "Voir l'aperçu",
+        "nameLabel": "Nom du serveur",
+        "categories": "catégories",
+        "text": "salons textuels",
+        "voice": "salons vocaux",
+        "roles": "rôles",
+        "notImported": "Non importés : messages, membres, émojis et icône. Les permissions propres à un membre Discord et les fils sont ignorés.",
+        "skipped": "{channels} salon(s) et {overrides} permission(s) de membre ignorés.",
+        "import": "Importer",
+        "importing": "Import en cours…",
+        "failed": "L'import a échoué",
+        "done": "Serveur importé",
+        "doneDesc": "{text} salons textuels, {voice} vocaux et {roles} rôles recréés."
+      }
     },
     "profile": {
       "title": "Profil de serveur",

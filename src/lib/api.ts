@@ -26,6 +26,17 @@ interface ApiResponse<T = unknown> {
 
 // ── Modération globale ───────────────────────────────────────────────────────
 
+/** Aperçu d'un modèle de serveur Discord (voir previewDiscordImport). */
+export interface DiscordImportPreview {
+  code: string;
+  name: string;
+  description: string;
+  roles: { name: string; color: string }[];
+  channels: { id: string; name: string; type: string; parentId: string | null }[];
+  counts: { categories: number; text: number; voice: number; roles: number };
+  skipped: { channels: number; memberOverrides: number };
+}
+
 export type AdminRole =
   | 'user' | 'moderator' | 'admin' | 'support_l1' | 'support_l2' | 'technician';
 
@@ -689,6 +700,21 @@ class ApiService {
     });
   }
 
+  /** Import Discord : aperçu de la structure d'un modèle (discord.new/…), sans rien créer. */
+  async previewDiscordImport(template: string) {
+    return this.request<DiscordImportPreview>(`/api/servers/import/discord?template=${encodeURIComponent(template)}`);
+  }
+
+  /** Import Discord : crée un serveur AlfyChat avec les rôles, salons et permissions du modèle. */
+  async importDiscordServer(template: string, name?: string) {
+    return this.request<{
+      id: string;
+      name: string;
+      firstChannelId?: string | null;
+      imported: { categories: number; text: number; voice: number; roles: number; skippedChannels: number; skippedMemberOverrides: number };
+    }>('/api/servers/import/discord', { method: 'POST', body: JSON.stringify({ template, name }) });
+  }
+
   /** Quota de serveurs Type 1 (plateforme) restant pour l'utilisateur courant. */
   async getServerQuota() {
     return this.request<{
@@ -1134,7 +1160,7 @@ class ApiService {
   async oauth2Authorize(data: {
     clientId: string;
     serverId?: string;
-    redirectUri: string;
+    redirectUri?: string;
     scopes: string[];
     permissions: number;
     state?: string;

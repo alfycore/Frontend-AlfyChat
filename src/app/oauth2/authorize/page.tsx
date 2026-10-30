@@ -124,7 +124,8 @@ function AuthorizeContent() {
       const res = await api.oauth2Authorize({
         clientId: app.id,
         serverId: hasBotScope ? selectedServer : undefined,
-        redirectUri,
+        // Absent plutôt que vide : le service valide toute chaîne présente comme une URL.
+        redirectUri: redirectUri || undefined,
         scopes,
         permissions,
         state: state || undefined,

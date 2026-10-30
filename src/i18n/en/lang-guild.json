@@ -370,7 +370,33 @@
       "joinInvalid": "The invite is invalid or has expired.",
       "join": "Join Server",
       "discoverTitle": "Don't have an invite?",
-      "discoverDesc": "Check out public communities."
+      "discoverDesc": "Check out public communities.",
+      "discord": {
+        "option": "Import from Discord",
+        "title": "Import a Discord server",
+        "subtitle": "Copy the structure of a Discord server: roles, categories, channels and their permissions.",
+        "howTitle": "Get the link on Discord",
+        "how": [
+          "Open the Discord server settings.",
+          "Go to “Server Template” and generate a template.",
+          "Copy the link (discord.new/…) and paste it here."
+        ],
+        "linkLabel": "Template link",
+        "linkPlaceholder": "https://discord.new/…",
+        "preview": "Preview",
+        "nameLabel": "Server name",
+        "categories": "categories",
+        "text": "text channels",
+        "voice": "voice channels",
+        "roles": "roles",
+        "notImported": "Not imported: messages, members, emojis and icon. Member-specific Discord permissions and threads are skipped.",
+        "skipped": "{channels} channel(s) and {overrides} member permission(s) skipped.",
+        "import": "Import",
+        "importing": "Importing…",
+        "failed": "Import failed",
+        "done": "Server imported",
+        "doneDesc": "{text} text channels, {voice} voice channels and {roles} roles recreated."
+      }
     },
     "profile": {
       "title": "Server Profile",

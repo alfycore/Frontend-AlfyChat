@@ -7,34 +7,40 @@
  *     (→ catégorie communautaire ou standard de l'hébergement AlfyChat) ;
  *  3. « Personnalise ton serveur » : icône + nom, puis création et ouverture du premier salon.
  * « Rejoindre » : coller un lien ou un code d'invitation.
+ * « Importer depuis Discord » : un modèle discord.new/… recrée rôles, salons et permissions.
  */
 
-import { Button, Input, Label, Modal, TextField, toast } from '@heroui/react';
+import { Button, Chip, Input, Label, Modal, TextField, toast } from '@heroui/react';
 import {
   BookOpen,
   Camera,
   ChevronRight,
   Gamepad2,
   GraduationCap,
+  Hash,
   Heart,
+  Import,
+  Megaphone,
+  MessagesSquare,
   Palette,
   Sparkles,
   Users,
   UsersRound,
+  Volume2,
   type LucideIcon,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAuth } from '@/hooks/use-auth';
-import { api, resolveMediaUrl } from '@/lib/api';
+import { api, resolveMediaUrl, type DiscordImportPreview } from '@/lib/api';
 import { serverListStore } from '@/lib/server-list-store';
 import { socketService } from '@/lib/socket';
 import { useTranslation } from '@/components/locale-provider';
 import { cn } from '@/lib/utils';
 import { guildUi, useGuildUi } from '@/components/alfy/guild/ui';
 
-type Step = 'choose' | 'audience' | 'customize' | 'join';
+type Step = 'choose' | 'audience' | 'customize' | 'join' | 'discord';
 type Template = 'default' | 'gaming' | 'friends' | 'study' | 'school' | 'creators' | 'community';
 
 const TEMPLATES: { id: Exclude<Template, 'default'>; icon: LucideIcon }[] = [
@@ -200,6 +206,7 @@ function Flow({ initial, onClose }: { initial: Step; onClose: () => void }) {
                 setStep('audience');
               }}
             />
+            <Option icon={Import} label={t.guild.entry.discord.option} onPress={() => setStep('discord')} />
             <p className="mt-3 mb-1 text-xs font-bold tracking-[0.02em] text-muted uppercase">{t.guild.entry.fromTemplate}</p>
             {TEMPLATES.map((tpl) => (
               <Option
@@ -220,6 +227,19 @@ function Flow({ initial, onClose }: { initial: Step; onClose: () => void }) {
             </Button>
           </Modal.Footer>
         </>
+      )}
+
+      {step === 'discord' && (
+        <DiscordImport
+          onBack={() => setStep('choose')}
+          onCreated={(created) => {
+            const server = { id: created.id, name: created.name, ownerId: user?.id };
+            serverListStore.add(server);
+            socketService.emit('SERVER_SELF_JOIN', { serverId: server.id, name: server.name });
+            onClose();
+            router.push(created.firstChannelId ? `/channels/server/${server.id}/${created.firstChannelId}` : `/channels/server/${server.id}`);
+          }}
+        />
       )}
 
       {step === 'audience' && (
@@ -346,5 +366,155 @@ function Flow({ initial, onClose }: { initial: Step; onClose: () => void }) {
         </>
       )}
     </div>
+  );
+}
+
+/* ── Import depuis un modèle Discord ─────────────────────────────────── */
+
+const CHANNEL_ICON: Record<string, LucideIcon> = { voice: Volume2, stage: Volume2, announcement: Megaphone, forum: MessagesSquare };
+
+function DiscordImport({
+  onBack,
+  onCreated,
+}: {
+  onBack: () => void;
+  onCreated: (s: { id: string; name: string; firstChannelId?: string | null }) => void;
+}) {
+  const { t, tx } = useTranslation();
+  const d = t.guild.entry.discord;
+  const [link, setLink] = useState('');
+  const [preview, setPreview] = useState<DiscordImportPreview | null>(null);
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = async () => {
+    if (!link.trim() || loading) return;
+    setLoading(true);
+    setError('');
+    const res = await api.previewDiscordImport(link.trim());
+    setLoading(false);
+    if (res.success && res.data) {
+      setPreview(res.data);
+      setName(res.data.name);
+    } else setError(res.error ?? d.failed);
+  };
+
+  const run = async () => {
+    if (!preview || name.trim().length < 2 || loading) return;
+    setLoading(true);
+    const res = await api.importDiscordServer(preview.code, name.trim());
+    setLoading(false);
+    if (!res.success || !res.data) {
+      toast.danger(d.failed, { description: res.error ?? '' });
+      return;
+    }
+    const i = res.data.imported;
+    toast.success(d.done, { description: tx(d.doneDesc, { text: String(i.text), voice: String(i.voice), roles: String(i.roles) }) });
+    onCreated(res.data);
+  };
+
+  return (
+    <>
+      <Modal.Header className="flex-col items-center gap-2 pt-6 text-center">
+        <Modal.Heading className="text-2xl font-bold">{d.title}</Modal.Heading>
+        <p className="text-sm text-muted">{d.subtitle}</p>
+      </Modal.Header>
+      <Modal.Body className="flex max-h-[min(62vh,480px)] flex-col gap-4 overflow-y-auto">
+        {!preview ? (
+          <>
+            <ol className="flex flex-col gap-2 rounded-xl bg-surface-secondary p-4 text-sm">
+              <li className="mb-1 text-xs font-bold tracking-[0.02em] text-muted uppercase">{d.howTitle}</li>
+              {d.how.map((step, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">{i + 1}</span>
+                  <span className="text-foreground/90">{step}</span>
+                </li>
+              ))}
+            </ol>
+            <TextField
+              value={link}
+              onChange={(v) => {
+                setLink(v);
+                setError('');
+              }}
+              className="flex flex-col gap-2"
+            >
+              <Label className="text-xs font-bold tracking-[0.02em] text-muted uppercase">{d.linkLabel}</Label>
+              <Input placeholder={d.linkPlaceholder} autoFocus onKeyDown={(e) => e.key === 'Enter' && load()} />
+            </TextField>
+            {error && <p className="text-sm text-danger">{error}</p>}
+          </>
+        ) : (
+          <>
+            <TextField value={name} onChange={setName} maxLength={100} className="flex flex-col gap-2">
+              <Label className="text-xs font-bold tracking-[0.02em] text-muted uppercase">{d.nameLabel}</Label>
+              <Input />
+            </TextField>
+            <div className="flex flex-wrap gap-1.5">
+              {(
+                [
+                  [preview.counts.categories, d.categories],
+                  [preview.counts.text, d.text],
+                  [preview.counts.voice, d.voice],
+                  [preview.counts.roles, d.roles],
+                ] as const
+              ).map(([n, label]) => (
+                <Chip key={label} size="sm" variant="soft">
+                  {n} {label}
+                </Chip>
+              ))}
+            </div>
+            <ul className="flex max-h-56 flex-col gap-0.5 overflow-y-auto rounded-xl bg-surface-secondary p-2 text-sm" aria-label={d.title}>
+              {preview.channels.map((c) => {
+                if (c.type === 'category') {
+                  return (
+                    <li key={c.id} className="mt-2 px-1 text-[11px] font-bold tracking-[0.02em] text-muted uppercase first:mt-0">
+                      {c.name}
+                    </li>
+                  );
+                }
+                const Icon = CHANNEL_ICON[c.type] ?? Hash;
+                return (
+                  <li key={c.id} className={cn('flex items-center gap-2 rounded-md px-2 py-1 text-foreground/90', c.parentId && 'pl-3')}>
+                    <Icon className="size-4 shrink-0 text-muted" aria-hidden />
+                    <span className="truncate">{c.name}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            {preview.roles.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {preview.roles.slice(0, 24).map((r, i) => (
+                  <span key={i} className="flex items-center gap-1.5 rounded-full bg-surface-secondary px-2.5 py-1 text-xs">
+                    <span className="size-2.5 rounded-full" style={{ background: r.color }} aria-hidden />
+                    {r.name}
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-xs leading-relaxed text-muted">
+              {d.notImported}
+              {(preview.skipped.channels > 0 || preview.skipped.memberOverrides > 0) &&
+                ' ' + tx(d.skipped, { channels: String(preview.skipped.channels), overrides: String(preview.skipped.memberOverrides) })}
+            </p>
+          </>
+        )}
+      </Modal.Body>
+      <Modal.Footer className="justify-between bg-surface-secondary">
+        <Button variant="ghost" onPress={preview ? () => setPreview(null) : onBack} isDisabled={loading}>
+          {t.guild.entry.back}
+        </Button>
+        {preview ? (
+          <Button onPress={run} isDisabled={name.trim().length < 2} isPending={loading}>
+            {loading ? d.importing : d.import}
+          </Button>
+        ) : (
+          <Button onPress={load} isDisabled={!link.trim()} isPending={loading}>
+            {d.preview}
+          </Button>
+        )}
+      </Modal.Footer>
+    </>
   );
 }
