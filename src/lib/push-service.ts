@@ -9,6 +9,7 @@
  */
 
 import { api } from '@/lib/api';
+import { desktopBridge } from '@/lib/desktop';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -41,6 +42,9 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
  */
 export async function subscribePush(): Promise<boolean> {
   if (typeof window === 'undefined' || !('PushManager' in window)) return false;
+  // Electron n'a pas de service push : l'abonnement échouerait toujours.
+  // L'app desktop reçoit ses notifications par le socket.
+  if (desktopBridge()) return false;
 
   const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!vapidKey) {

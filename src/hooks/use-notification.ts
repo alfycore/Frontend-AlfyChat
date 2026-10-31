@@ -27,6 +27,7 @@ import {
 } from '@/lib/notification-store';
 import { v4 as uuidv4 } from 'uuid';
 import { subscribePush } from '@/lib/push-service';
+import { desktopBridge } from '@/lib/desktop';
 
 // ── Helpers utilitaires ───────────────────────────────────────────────────────
 
@@ -191,8 +192,17 @@ export function useNotification() {
 
   const showOSNotification = useCallback((title: string, body?: string, isMention = false) => {
     if (!prefsRef.current.notificationsDesktop) return;
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
+    if (typeof window === 'undefined') return;
+
+    // App desktop : notification du processus principal. Celle du web ne sait
+    // pas ramener la fenêtre (réduite, derrière une autre) au clic.
+    const bridge = desktopBridge();
+    if (bridge) {
+      bridge.showNotification({ title, body, silent: true, urgent: isMention }).catch(() => {});
+      return;
+    }
+
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
       const n = new Notification(title, {
         body,
@@ -200,7 +210,14 @@ export function useNotification() {
         badge: '/logoicon/Logomark-1.png',
         tag: isMention ? 'alfychat-mention' : 'alfychat-msg',
         requireInteraction: isMention,
+        // Le son est déjà joué par l'app (playMessageSound) : pas de second
+        // son système par-dessus.
+        silent: true,
       } as NotificationOptions);
+      n.onclick = () => {
+        window.focus();
+        n.close();
+      };
       if (!isMention) setTimeout(() => n.close(), 6000);
     } catch { /* ignore */ }
   }, []);
@@ -293,6 +310,9 @@ export function useNotification() {
 
     // Statut « Ne pas déranger » : silence total, badges et historique conservés.
     if (presenceRef.current === 'dnd') return;
+
+    // App desktop : la barre des tâches clignote si la fenêtre n'a pas le focus.
+    desktopBridge()?.flash?.().catch(() => {});
 
     // Son
     if (effectiveMention) playMentionSound();
@@ -591,14 +611,21 @@ export function useNotification() {
   }, []);
 
   // ── Titre de l'onglet (total unread + mentions) ───────────────────────────
+  // App desktop : le même total sur l'icône (dock, barre des tâches).
   useEffect(() => {
     const BASE_TITLE = 'AlfyChat';
+    const bridge = desktopBridge();
+    let badge = -1;
     const updateTitle = () => {
       const snap = getSnapshot();
       let total = 0;
       snap.unread.forEach((v) => { total += v; });
       snap.mentions.forEach((v) => { total += v; });
       document.title = total > 0 ? `(${total > 99 ? '99+' : total}) ${BASE_TITLE}` : BASE_TITLE;
+      if (bridge && total !== badge) {
+        badge = total;
+        bridge.setBadge(total).catch(() => {});
+      }
     };
     const unsub = subscribeNotifications(updateTitle);
     window.addEventListener('focus', updateTitle);
@@ -606,6 +633,8 @@ export function useNotification() {
     return () => {
       unsub();
       window.removeEventListener('focus', updateTitle);
+      // Déconnexion : pas de pastille orpheline sur l'icône.
+      bridge?.setBadge(0).catch(() => {});
     };
   }, []);
 

@@ -1,25 +1,21 @@
 'use client';
 
 /**
- * Bandeau de titre de l'application.
+ * Bandeau de titre de l'application : historique (précédent/suivant),
+ * identité du contexte courant au centre, notifications et aide à droite.
  *
- * Deux rôles, selon l'enveloppe :
- *
- *  - **Partout** : historique (précédent/suivant), identité du contexte courant
- *    au centre, boîte de notifications et aide à droite.
- *  - **Desktop uniquement** : les boutons de fenêtre. La fenêtre Electron est
- *    créée avec `titleBarStyle: 'hidden'`, donc sans barre système — jusqu'ici
- *    l'application desktop n'offrait aucun moyen de réduire, agrandir ou
- *    fermer sa propre fenêtre, ni même de la déplacer. Le préchargement
- *    exposait pourtant déjà tout le nécessaire.
+ * Dans l'enveloppe desktop, c'est aussi la barre de la fenêtre : zone de
+ * déplacement, et place réservée aux boutons de fenêtre que l'OS dessine
+ * par-dessus (overlay Windows/Linux, feux tricolores macOS).
  */
 
 import { Button, Tooltip } from '@heroui/react';
-import { ArrowLeft, ArrowRight, CircleHelp, Minus, Square, Copy, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CircleHelp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import { desktopBridge } from '@/lib/desktop';
+import { siteLink } from '@/lib/domains';
 import { serverListStore } from '@/lib/server-list-store';
 import { AlfyMark } from '@/components/alfy/primitives/alfy-mark';
 import { NotificationCenter } from '@/components/alfy/notifications/notification-center';
@@ -30,61 +26,20 @@ interface AppTitleBarProps {
   serverId: string | null;
 }
 
-/** Boutons de fenêtre — rendus seulement dans l'enveloppe desktop. */
-function WindowControls() {
-  const { t } = useTranslation();
-  const [maximized, setMaximized] = useState(false);
-  const bridge = desktopBridge();
-
-  useEffect(() => {
-    const api = desktopBridge();
-    if (!api) return;
-    void api.isMaximized().then(setMaximized).catch(() => {});
-    // Le processus principal pousse l'état : l'utilisateur peut aussi
-    // maximiser au double-clic ou au raccourci système.
-    return api.onWinState(({ maximized: m }) => setMaximized(m));
-  }, []);
-
-  /* Enveloppe actuelle : l'OS dessine ses propres boutons (snap layouts de
-     Windows 11 compris). Ces boutons-ci ne servent plus qu'à une enveloppe sans
-     contrôles natifs. */
-  if (!bridge || bridge.nativeControls) return null;
-
-  return (
-    <div className="alfy-no-drag flex shrink-0 items-center">
-      <button
-        type="button"
-        aria-label={t.titleBar.minimize}
-        onClick={() => void bridge.minimize()}
-        className="flex h-8 w-11 cursor-pointer items-center justify-center text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset"
-      >
-        <Minus className="size-4" aria-hidden />
-      </button>
-      <button
-        type="button"
-        aria-label={maximized ? t.titleBar.restore : t.titleBar.maximize}
-        onClick={() => void bridge.maximize()}
-        className="flex h-8 w-11 cursor-pointer items-center justify-center text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset"
-      >
-        {maximized ? <Copy className="size-3.5" aria-hidden /> : <Square className="size-3.5" aria-hidden />}
-      </button>
-      {/* Rouge au survol : c'est la convention Windows, et la seule action
-          destructrice de la rangée. */}
-      <button
-        type="button"
-        aria-label={t.titleBar.close}
-        onClick={() => void bridge.close()}
-        className="flex h-8 w-11 cursor-pointer items-center justify-center text-muted outline-none transition-colors hover:bg-danger hover:text-(--danger-foreground) focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset"
-      >
-        <X className="size-4" aria-hidden />
-      </button>
-    </div>
-  );
-}
+/** La plateforme ne change pas : rien à écouter. */
+const noSubscribe = () => () => {};
 
 export function AppTitleBar({ serverId }: AppTitleBarProps) {
   const { t } = useTranslation();
   const router = useRouter();
+
+  /* Signale le bandeau à `desktop.css` : la bande de déplacement des pages
+     qui n'en ont pas s'efface. */
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-app-titlebar', '');
+    return () => root.removeAttribute('data-app-titlebar');
+  }, []);
 
   /* La liste des serveurs porte déjà nom et icône : s'appuyer dessus évite de
      rebrancher `useAlfyChannels` (et ses écouteurs socket) juste pour un titre. */
@@ -100,15 +55,15 @@ export function AppTitleBar({ serverId }: AppTitleBarProps) {
      place. À droite (Windows/Linux) la largeur vient de `titlebar-area-*`,
      qui vaut 100vw hors overlay — d'où un retrait nul dans un navigateur. À
      gauche (macOS) les feux tricolores occupent ~78 px. */
-  const [isMac, setIsMac] = useState(false);
-  useEffect(() => setIsMac(desktopBridge()?.platform === 'darwin'), []);
+  const isMac = useSyncExternalStore(noSubscribe, () => desktopBridge()?.platform === 'darwin', () => false);
 
   /* Masqué en mobile : 32 px de hauteur en moins pour rien, le navigateur a
-     déjà son propre historique. La fenêtre desktop impose minWidth 940, elle
-     reste donc toujours au-dessus du seuil `md`. */
+     déjà son propre historique. Toujours affiché dans l'app desktop : zoomée
+     (Ctrl +), une petite fenêtre passe sous le seuil `md`, et sans bandeau
+     elle ne serait plus déplaçable. */
   return (
     <header
-      className="alfy-drag-region relative hidden h-8 shrink-0 items-center border-b border-separator bg-background pl-1 select-none md:flex"
+      className="alfy-drag-region relative hidden h-8 shrink-0 items-center border-b border-separator bg-background pl-1 select-none md:flex [html[data-desktop]_&]:flex"
       style={{
         paddingLeft: isMac ? 78 : undefined,
         paddingRight: 'calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw))',
@@ -175,7 +130,10 @@ export function AppTitleBar({ serverId }: AppTitleBarProps) {
             variant="ghost"
             aria-label={t.titleBar.help}
             className="size-7 text-muted"
-            onPress={() => router.push('/support')}
+            /* Le support vit sur alfychat.com : `/support` n'est qu'une
+               redirection, qui faisait quitter l'app (et couper un appel en
+               cours). Nouvel onglet ici, navigateur système en desktop. */
+            onPress={() => window.open(siteLink('/support'), '_blank', 'noopener,noreferrer')}
           >
             <CircleHelp className="size-4" aria-hidden />
           </Button>
@@ -184,8 +142,6 @@ export function AppTitleBar({ serverId }: AppTitleBarProps) {
           </Tooltip.Content>
         </Tooltip>
       </div>
-
-      <WindowControls />
     </header>
   );
 }

@@ -14,6 +14,7 @@ import { MotionProvider } from "@/components/motion-provider";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { ChunkErrorHandler } from "@/components/chunk-error-handler";
+import { DesktopIntegration } from "@/components/alfy/shell/desktop-integration";
 
 const ralewayHeading = Raleway({subsets:['latin'],variable:'--font-heading'});
 
@@ -79,6 +80,8 @@ export default function RootLayout({
         className="bg-background text-foreground antialiased"
         suppressHydrationWarning
       >
+        {/* En tête du document : voir desktop-integration.tsx. */}
+        <DesktopIntegration />
         <ChunkErrorHandler />
         <ThemeProvider>
           <LocaleProvider>

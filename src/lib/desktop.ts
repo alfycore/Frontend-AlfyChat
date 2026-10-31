@@ -2,15 +2,27 @@
  * desktop.ts
  * Pont vers l'enveloppe Electron (`desktop/preload.js`).
  *
- * La fenêtre desktop est créée avec `titleBarStyle: 'hidden'` : elle n'a donc
- * ni barre de titre ni boutons système. Le préchargement expose pourtant déjà
- * `minimize` / `maximize` / `close` / `isMaximized` et pousse un événement
- * `win-state` — mais rien côté interface ne s'en servait, si bien que la
- * fenêtre n'était tout simplement pas pilotable. `AppTitleBar` s'y branche.
+ * La fenêtre desktop charge le site directement, sans barre système : le
+ * bandeau est `AppTitleBar`, les boutons de fenêtre sont ceux de l'OS posés
+ * par-dessus. `DesktopIntegration` (layout racine) synchronise leurs couleurs
+ * avec le thème et rend la fenêtre déplaçable sur les pages sans bandeau.
  *
  * Dans un navigateur, `window.electronAPI` n'existe pas : `desktopBridge()`
- * renvoie `null` et l'appelant masque les contrôles de fenêtre.
+ * renvoie `null`.
+ *
+ * Le site est servi à distance : une version récente du frontend peut tourner
+ * dans une enveloppe plus ancienne. Les méthodes ajoutées après coup sont donc
+ * optionnelles, et s'appellent avec `?.`.
  */
+
+export interface DesktopNotification {
+  title: string;
+  body?: string;
+  /** Pas de son système : le frontend joue déjà le sien. */
+  silent?: boolean;
+  /** Reste affichée jusqu'à une action (mentions). */
+  urgent?: boolean;
+}
 
 export interface DesktopBridge {
   /** `process.platform` du processus principal ('win32', 'darwin', 'linux'). */
@@ -24,11 +36,14 @@ export interface DesktopBridge {
   /** { FRONTEND_URL, APP_VERSION, IS_DEV, SOURCE, PARTITION } */
   getConfig: () => Promise<Record<string, unknown>>;
   openExternal: (url: string) => Promise<unknown>;
-  showNotification: (opts: unknown) => Promise<unknown>;
-  /** Pastille de non-lus (macOS / Linux). */
+  /** Notification native : un clic ramène la fenêtre au premier plan. */
+  showNotification: (opts: DesktopNotification) => Promise<unknown>;
+  /** Pastille de non-lus : nombre (macOS / Linux), point rouge (Windows). */
   setBadge: (count: number) => Promise<void>;
   /** Fait clignoter la barre des tâches si la fenêtre n'a pas le focus. */
   flash: () => Promise<void>;
+  /** Fond et symboles des boutons de fenêtre natifs, en `#rrggbb`. */
+  setTitleBarColors?: (colors: { color: string; symbolColor: string }) => Promise<void>;
 
   minimize: () => Promise<void>;
   maximize: () => Promise<void>;

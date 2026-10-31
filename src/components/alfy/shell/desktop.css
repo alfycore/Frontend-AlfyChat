@@ -1,0 +1,41 @@
+/* ────────────────────────────────────────────────────────────────────────
+ * Enveloppe desktop (Electron)
+ *
+ * Actif seulement sous `html[data-desktop]`, posé par DesktopIntegration :
+ * sans effet dans un navigateur.
+ *
+ * Electron calcule la zone de déplacement dans l'ordre du document, sans
+ * tenir compte du z-index : une région `drag` reste active sous ce qui la
+ * recouvre, et y avale les clics. Ce qui passe par-dessus le bandeau doit
+ * donc s'en exclure explicitement.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/* Modales, popovers, menus : quand ils débordent sur le bandeau (visionneuse
+   d'image, réglages plein écran…), leurs boutons restent cliquables. */
+html[data-desktop]
+  :is(.modal__dialog, .alert-dialog__dialog, .drawer__dialog, .popover, .dropdown__popover, .select__popover, .combo-box__popover) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* Pages sans AppTitleBar (connexion, invitation, OAuth, écrans d'erreur…) :
+   sans cette bande, la fenêtre n'y est pas déplaçable du tout. Elle est
+   rendue en tête du document ; les éléments interactifs, qui la suivent,
+   s'en excluent. Limité à ces pages : sur /channels, des milliers de
+   boutons déclarant une région alourdiraient chaque mise en page. */
+.alfy-desktop-drag {
+  display: none;
+}
+html[data-desktop]:not([data-app-titlebar]) .alfy-desktop-drag {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 32px;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+html[data-desktop]:not([data-app-titlebar])
+  :is(a[href], button, input, select, textarea, label, summary, [role="button"], [role="link"], [role="tab"], [role="checkbox"], [role="switch"], [role="menuitem"], [contenteditable="true"]) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
